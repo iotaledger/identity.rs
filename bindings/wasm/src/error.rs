@@ -85,8 +85,6 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  // identity::comm::Error,
-  identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
   identity::did::DIDError,
@@ -107,6 +105,132 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
     Self {
       name: Cow::Borrowed("bee_message::Error"),
       message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
+#[macro_export]
+macro_rules! impl_wasm_error_from_with_struct_name {
+  ( $($t:ty),* ) => {
+  $(impl From<$t> for WasmError<'_> {
+    fn from(error: $t) -> Self {
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(stringify!($t)),
+      }
+    }
+  })*
+  }
+}
+mod wasm_error_from_identity_core {
+  use super::*;
+  use identity::core::errors::Base58DecodingError;
+  use identity::core::errors::Base64DecodingError;
+  use identity::core::errors::FatalError;
+  use identity::core::errors::JsonDecodingError;
+  use identity::core::errors::JsonEncodingError;
+  use identity::core::errors::KeyCollectionError;
+  use identity::core::errors::KeyCollectionSizeError;
+  use identity::core::errors::KeyPairGenerationError;
+  use identity::core::errors::KeyParsingError;
+  use identity::core::errors::MerkleDigestKeyTagError;
+  use identity::core::errors::MerkleKeyTagExtractionError;
+  use identity::core::errors::MerkleSignatureKeyTagError;
+  use identity::core::errors::MissingSignatureError;
+  use identity::core::errors::ProofSizeError;
+  use identity::core::errors::SigningError;
+  use identity::core::errors::TimeStampParsingError;
+  use identity::core::errors::UrlParsingError;
+  use identity::core::errors::VerificationError;
+
+  // Simple conversions just using the name of the struct and their display implementation
+  impl_wasm_error_from_with_struct_name!(
+    TimeStampParsingError,
+    UrlParsingError,
+    Base64DecodingError,
+    Base58DecodingError,
+    KeyPairGenerationError,
+    KeyParsingError,
+    ProofSizeError,
+    JsonDecodingError,
+    JsonEncodingError,
+    MerkleDigestKeyTagError,
+    MerkleSignatureKeyTagError,
+    MissingSignatureError,
+    SigningError,
+    FatalError
+  );
+
+  // More involved conversions adding enum variant details to the name:
+  impl From<KeyCollectionSizeError> for WasmError<'_> {
+    fn from(error: KeyCollectionSizeError) -> Self {
+      let name = match error {
+        KeyCollectionSizeError::Empty => "KeyCollectionSizeError - Empty",
+        KeyCollectionSizeError::NotAPowerOfTwo(_) => "KeyCollectionSizeError - NotAPowerOfTwo",
+        KeyCollectionSizeError::MaximumExceeded(_) => "KeyCollectionSizeError - MaximumExceeded",
+        KeyCollectionSizeError::KeyPairImbalance { .. } => "KeyCollectionSizeError - KeyPairImbalance",
+      };
+
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  impl From<KeyCollectionError> for WasmError<'_> {
+    fn from(error: KeyCollectionError) -> Self {
+      let name = match error {
+        KeyCollectionError::GenerationFailed(_) => "keyCollectionError - GenerationFailed",
+        KeyCollectionError::InvalidSize(_) => "KeyCollectionError - InvalidSize",
+      };
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  impl From<MerkleKeyTagExtractionError> for WasmError<'_> {
+    fn from(error: MerkleKeyTagExtractionError) -> Self {
+      let name = match error {
+        MerkleKeyTagExtractionError::InvalidMerkleDigestKeyTag(_) => {
+          "MerkleKeyTagExtractionError - InvalidMerkleDigestKeyTag"
+        }
+        MerkleKeyTagExtractionError::InvalidMerkleSignatureKeyTag(_) => {
+          "MerkleKeyTagExtractionError - InvalidSignatureKeyTag"
+        }
+      };
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  impl From<VerificationError> for WasmError<'_> {
+    fn from(error: VerificationError) -> Self {
+      let name = match error {
+        VerificationError::InvalidProofValue(_) => "VerificationError - InvalidProofValue",
+        VerificationError::ProcessingFailed(_) => "VerificationError - ProcessingFailed",
+        VerificationError::Revoked(_) => "VerificationError - Revoked",
+      };
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    #[test]
+    fn into_wasm_error() {
+      let wasm_error: WasmError = FatalError::from("fatal test error".to_string()).into();
+      // check that the name of the error type gets used in the name field of WasmError after conversion
+      assert_eq!("FatalError", wasm_error.name)
     }
   }
 }

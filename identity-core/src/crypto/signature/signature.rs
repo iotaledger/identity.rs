@@ -12,7 +12,6 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
 use crate::crypto::SignatureValue;
-use crate::error::Result;
 
 /// A DID Document digital signature.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize)]

@@ -3,12 +3,12 @@
 
 use serde::Serialize;
 
+use crate::crypto::signature::errors::SigningError;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;
 use crate::crypto::TrySignature;
-use crate::error::Error;
-use crate::error::Result;
+use crate::crypto::VerificationError;
 
 /// A common interface for digital signature creation.
 pub trait Sign {
@@ -19,7 +19,7 @@ pub trait Sign {
   type Output;
 
   /// Signs the given `message` with `key` and returns a digital signature.
-  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output>;
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output, SigningError>;
 }
 
 // =============================================================================
@@ -31,7 +31,7 @@ pub trait Verify {
   type Public: ?Sized;
 
   /// Verifies the authenticity of `data` and `signature` with `key`.
-  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<()>;
+  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), VerificationError>;
 }
 
 // =============================================================================
@@ -49,12 +49,12 @@ pub trait Named {
 /// A common interface for digital signature creation.
 pub trait Signer<Secret: ?Sized>: Named {
   /// Signs the given `data` and returns a digital signature.
-  fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue>
+  fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue, SigningError>
   where
     T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret) -> Result<()>
+  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret) -> Result<(), SigningError>
   where
     T: Serialize + SetSignature,
   {
@@ -75,19 +75,19 @@ pub trait Signer<Secret: ?Sized>: Named {
 /// A common interface for digital signature verification
 pub trait Verifier<Public: ?Sized>: Named {
   /// Verifies the authenticity of `data` and `signature`.
-  fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<()>
+  fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<(), VerificationError>
   where
     T: Serialize;
 
   /// Extracts and verifies a [signature][`Signature`] from the given `data`.
-  fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
+  fn verify_signature<T>(data: &T, public: &Public) -> Result<(), VerificationError>
   where
     T: Serialize + TrySignature,
   {
     let signature: &Signature = data.try_signature()?;
 
     if signature.type_() != Self::NAME {
-      return Err(Error::InvalidProofValue("signature name"));
+      return Err(VerificationError::InvalidProofValue("signature name".into()));
     }
 
     signature.hide_value();

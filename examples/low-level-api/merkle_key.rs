@@ -19,6 +19,7 @@ use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
+use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -39,7 +40,7 @@ async fn main() -> Result<()> {
   let (subject_doc, _, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // Generate a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
-  let keys: KeyCollection = KeyCollection::new_ed25519(8)?;
+  let keys: KeyCollection = KeyCollection::new_ed25519(8).map_err(|_| Error::KeyCollectionError)?;
   let method_did: IotaDID = issuer_doc.id().clone();
   let method = IotaVerificationMethod::create_merkle_key::<Sha256>(method_did, &keys, "merkle-key")?;
 
@@ -74,7 +75,7 @@ async fn main() -> Result<()> {
 
   println!("Credential JSON > {:#}", credential);
 
-  let credential_json: String = credential.to_json()?;
+  let credential_json: String = credential.to_json().map_err(|_| Error::InvalidSerialization)?;
 
   // Check the verifiable credential is valid
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);

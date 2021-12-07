@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::utils;
 use core::fmt::Formatter;
-
+pub(crate) use errors::BitSetDecodingError;
+pub(crate) use errors::BitSetEncodingError;
 use roaring::RoaringBitmap;
 use serde::de;
 use serde::de::Deserializer;
@@ -11,11 +13,6 @@ use serde::ser::Error as _;
 use serde::ser::Serializer;
 use serde::Deserialize;
 use serde::Serialize;
-
-use crate::error::Error;
-use crate::error::Result;
-use crate::utils::decode_b64;
-use crate::utils::encode_b64;
 
 /// A general-purpose compressed bitset.
 #[derive(Clone, Debug, PartialEq)]
@@ -68,29 +65,30 @@ impl BitSet {
   }
 
   /// Serializes the [`BitSet`] as a base64-encoded `String`.
-  pub fn serialize_b64(&self) -> Result<String> {
-    self.serialize_vec().map(|data| encode_b64(&data))
+  fn serialize_b64(&self) -> Result<String, BitSetEncodingError> {
+    self.serialize_vec().map(|data| utils::encode_b64(&data))
   }
 
   /// Serializes the [`BitSet`] as a vector of bytes.
-  pub fn serialize_vec(&self) -> Result<Vec<u8>> {
+  fn serialize_vec(&self) -> Result<Vec<u8>, BitSetEncodingError> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
 
-    self.0.serialize_into(&mut output).map_err(Error::EncodeBitmap)?;
+    self.0.serialize_into(&mut output)?;
 
     Ok(output)
   }
 
   /// Deserializes a [`BitSet`] from base64-encoded `data`.
-  pub fn deserialize_b64(data: &str) -> Result<Self> {
-    Self::deserialize_slice(&decode_b64(data)?)
+  fn deserialize_b64(data: &str) -> Result<Self, BitSetDecodingError> {
+    Self::deserialize_slice(
+      &utils::decode_b64(data)
+        .map_err(|decode_error| std::io::Error::new(std::io::ErrorKind::InvalidData, decode_error))?,
+    )
   }
 
   /// Deserializes a [`BitSet`] from a slice of bytes.
-  pub fn deserialize_slice(data: &[u8]) -> Result<Self> {
-    RoaringBitmap::deserialize_from(data)
-      .map_err(Error::DecodeBitmap)
-      .map(Self)
+  fn deserialize_slice(data: &[u8]) -> Result<Self, BitSetDecodingError> {
+    Ok(Self(RoaringBitmap::deserialize_from(data)?))
   }
 }
 
@@ -135,6 +133,25 @@ impl<'de> Deserialize<'de> for BitSet {
     }
 
     deserializer.deserialize_str(__Visitor)
+  }
+}
+mod errors {
+
+  use thiserror::Error as DeriveError;
+  /// Caused by a failure to encode a Roaring Bitmap.
+  #[derive(Debug, DeriveError)]
+  #[error("failed to encode roaring bitmap {inner}")]
+  pub(crate) struct BitSetEncodingError {
+    #[from]
+    inner: std::io::Error,
+  }
+
+  /// Caused by a failure to decode a Roaring Bitmap.
+  #[derive(Debug, DeriveError)]
+  #[error("failed to decode roaring bitmap {inner}")]
+  pub(crate) struct BitSetDecodingError {
+    #[from]
+    inner: std::io::Error,
   }
 }
 

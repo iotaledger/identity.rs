@@ -3,8 +3,11 @@
 
 use core::marker::PhantomData;
 use serde::Serialize;
+use std::borrow::Cow;
 
 use crate::convert::ToJson;
+use crate::crypto::signature::errors::SigningError;
+use crate::crypto::signature::errors::VerificationError;
 use crate::crypto::Ed25519;
 use crate::crypto::Named;
 use crate::crypto::Sign;
@@ -12,10 +15,7 @@ use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::error::Error;
-use crate::error::Result;
-use crate::utils::decode_b58;
-use crate::utils::encode_b58;
+use crate::utils;
 
 // TODO: Marker trait for Ed25519 implementations (?)
 
@@ -38,13 +38,13 @@ where
   T: Sign,
   T::Output: AsRef<[u8]>,
 {
-  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue>
+  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue, SigningError>
   where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: T::Output = T::sign(&message, private)?;
-    let signature: String = encode_b58(signature.as_ref());
+    let signature: String = utils::encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
   }
@@ -54,15 +54,20 @@ impl<T> Verifier<T::Public> for JcsEd25519<T>
 where
   T: Verify,
 {
-  fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<()>
+  /// Proof verification algorithm implementation based on the JCS Ed25519 Signature 2020 signature suite.
+  ///
+  /// If a `VerificationError` is returned one may disregard the `Revoked` variant as it is not utilized by this
+  /// implementation.
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<(), VerificationError>
   where
     X: Serialize,
   {
     let signature: &str = signature
       .as_signature()
-      .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
+      .ok_or(VerificationError::InvalidProofValue(Cow::Borrowed("jcs ed25519")))?;
 
-    let signature: Vec<u8> = decode_b58(signature)?;
+    let signature: Vec<u8> = utils::decode_b58(signature)
+      .map_err(|_| VerificationError::ProcessingFailed(Cow::Borrowed("unable to decode the signature")))?;
     let message: Vec<u8> = data.to_jcs()?;
 
     T::verify(&message, &signature, public)?;

@@ -7,11 +7,15 @@ use crypto::signatures::ed25519;
 use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
 use crypto::signatures::ed25519::SECRET_KEY_LENGTH;
 use crypto::signatures::ed25519::SIGNATURE_LENGTH;
+use std::borrow::Cow;
 
+use crate::crypto::key::KeyParsingError;
 use crate::crypto::Sign;
 use crate::crypto::Verify;
-use crate::error::Error;
-use crate::error::Result;
+
+use self::errors::SignatureParsingError;
+use super::errors::SigningError;
+use super::errors::VerificationError;
 
 /// An implementation of `Ed25519` signatures.
 #[derive(Clone, Copy, Debug)]
@@ -25,10 +29,12 @@ where
   type Output = [u8; SIGNATURE_LENGTH];
   /// Computes an EdDSA/Ed25519 signature.
   ///
-  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
-    parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output, SigningError> {
+    parse_secret(key.as_ref())
+      .map(|key| key.sign(message).to_bytes())
+      .map_err(Into::into)
   }
 }
 
@@ -38,42 +44,66 @@ where
 {
   type Public = T;
 
-  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<()> {
+  /// Verify a message signed with the Ed25519 signature scheme.
+  ///
+  /// If a [`VerificationError`] is returned one may disregard the `Revoked` variant as it is not utilized by this
+  /// implementation.
+  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), VerificationError> {
     let key: ed25519::PublicKey = parse_public(key.as_ref())?;
     let sig: ed25519::Signature = parse_signature(signature)?;
 
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(Error::InvalidProofValue("ed25519"))
+      Err(VerificationError::InvalidProofValue(Cow::Borrowed("ed25519")))
     }
   }
 }
 
-fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
-  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
-    .try_into()
-    .map_err(|_| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
-
-  ed25519::PublicKey::try_from_bytes(bytes).map_err(Into::into)
+fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey, KeyParsingError> {
+  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice.try_into().map_err(|_| {
+    KeyParsingError(Cow::Borrowed(
+      "could not create a public key from the supplied bytes: incorrect length",
+    ))
+  })?;
+  ed25519::PublicKey::try_from_bytes(bytes)
+    .map_err(|_| KeyParsingError(Cow::Borrowed("could not parse public key from the supplied bytes")))
 }
 
-fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
-  let bytes: [u8; SECRET_KEY_LENGTH] = slice
-    .try_into()
-    .map_err(|_| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
+fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey, KeyParsingError> {
+  let bytes: [u8; SECRET_KEY_LENGTH] = slice.try_into().map_err(|_| {
+    KeyParsingError(Cow::Borrowed(
+      "could not create a secret key from the supplied bytes: incorrect length",
+    ))
+  })?;
 
   Ok(ed25519::SecretKey::from_bytes(bytes))
 }
 
-fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {
+fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature, SignatureParsingError> {
   let bytes: [u8; SIGNATURE_LENGTH] = slice
     .try_into()
-    .map_err(|_| Error::InvalidSigLength(slice.len(), SIGNATURE_LENGTH))?;
-
+    .map_err(|_| SignatureParsingError("could not parse a signature from the supplied bytes"))?;
   Ok(ed25519::Signature::from_bytes(bytes))
 }
 
+mod errors {
+  use std::borrow::Cow;
+
+  use thiserror::Error as DeriveError;
+
+  use crate::crypto::VerificationError;
+  #[derive(Debug, DeriveError)]
+  /// Caused by a failure to parse a signature
+  #[error("{0}")]
+  pub(super) struct SignatureParsingError(pub(super) &'static str);
+
+  impl From<SignatureParsingError> for VerificationError {
+    fn from(error: SignatureParsingError) -> Self {
+      Self::ProcessingFailed(Cow::Borrowed(error.0))
+    }
+  }
+}
 #[cfg(test)]
 mod tests {
   use crate::crypto::Ed25519;

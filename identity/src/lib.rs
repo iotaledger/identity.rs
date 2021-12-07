@@ -22,7 +22,6 @@ pub mod core {
 
   pub use identity_core::common::*;
   pub use identity_core::convert::*;
-  pub use identity_core::error::*;
   pub use identity_core::utils::*;
 
   #[doc(inline)]
@@ -30,6 +29,8 @@ pub mod core {
 
   #[doc(inline)]
   pub use identity_core::json;
+
+  pub use identity_core::errors;
 }
 
 pub mod crypto {

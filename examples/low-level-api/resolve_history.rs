@@ -17,6 +17,7 @@ use identity::iota::ChainHistory;
 use identity::iota::Client;
 use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
+use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -60,7 +61,7 @@ async fn main() -> Result<()> {
     let mut int_doc_1 = document.clone();
 
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
-    let keys_1: KeyPair = KeyPair::new_ed25519()?;
+    let keys_1: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
     let method_1: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_1.id().clone(), keys_1.type_(), keys_1.public(), "keys-1")?;
     assert!(int_doc_1.insert_method(method_1, MethodScope::VerificationMethod).is_ok());
 
@@ -93,7 +94,7 @@ async fn main() -> Result<()> {
       "id": diff_doc_1.id().to_url().join("#linked-domain-1")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org/"
-    }))?;
+    })).map_err(|_|Error::InvalidDeserialization)?;
     assert!(diff_doc_1.insert_service(service));
     diff_doc_1.set_updated(Timestamp::now_utc());
     diff_doc_1
@@ -123,7 +124,7 @@ async fn main() -> Result<()> {
       "serviceEndpoint": {
         "origins": ["https://iota.org/", "https://example.com/"]
       }
-    }))?;
+    })).map_err(|_|Error::InvalidDeserialization)?;
     diff_doc_2.insert_service(service);
     diff_doc_2.set_updated(Timestamp::now_utc());
     diff_doc_2
@@ -175,7 +176,7 @@ async fn main() -> Result<()> {
     int_doc_2.remove_service(int_doc_2.id().to_url().join("#linked-domain-1")?)?;
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
-    let keys_2: KeyPair = KeyPair::new_ed25519()?;
+    let keys_2: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
     let method_2: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_2.id().clone(), keys_2.type_(), keys_2.public(), "keys-2")?;
     assert!(int_doc_2.insert_method(method_2, MethodScope::VerificationMethod).is_ok());
 

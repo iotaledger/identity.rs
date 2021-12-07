@@ -198,10 +198,10 @@ impl IotaVerificationMethod {
     let index: u32 = index.try_into().map_err(|_| Error::CannotRevokeMethod)?;
     let revoked: bool = revocation.insert(index);
 
-    self
-      .0
-      .properties_mut()
-      .insert("revocation".into(), revocation.to_json_value()?);
+    self.0.properties_mut().insert(
+      "revocation".into(),
+      revocation.to_json_value().map_err(|_| Error::InvalidSerialization)?,
+    );
 
     Ok(revoked)
   }

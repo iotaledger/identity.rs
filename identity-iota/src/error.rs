@@ -5,8 +5,25 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
-  #[error("{0}")]
-  CoreError(#[from] identity_core::Error),
+  #[error("failed to generate key-pair")]
+  FailedKeyPairGeneration, //TODO: Remove this when this crate has its error types refactored
+  /// Caused by a failure to produce a KeyCollection
+  #[error("key collection error")]
+  KeyCollectionError, // TODO: temporary solution to make this crate work with new errors from identity-core
+  /// caused by a failure to deserialize a value
+  #[error("deserialization error")]
+  InvalidDeserialization, // TODO: temporary solution to make this crate work with new errors from identity-core
+  /// caused by a failure to serialize a value
+  #[error("serialization error")]
+  InvalidSerialization, //TODO: temporary solution to make this crate work with new errors from identity-core
+  /// caused by attempting to parse an invalid url
+  #[error("url parsing error")]
+  InvalidUrl, /* TODO: temporary solution to make this crate work
+               * with new errors from iota-core */
+  #[error("base decoding error")]
+  BaseDecoding, // TODO: This is a temporary solution to make this crate work with the new errors from iota-core.
+  #[error("error from the core crate. Remove this upon refactoring")]
+  CoreError, // TODO: Remove this when refactoring the errors in this crate
   #[error("{0}")]
   DiffError(#[from] identity_core::diff::Error),
   #[error("{0}")]

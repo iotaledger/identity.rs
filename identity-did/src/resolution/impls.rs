@@ -342,7 +342,8 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 
   // Decode and join the `relative-ref` query param, if it exists.
   if let Some((_, relative)) = did.query_pairs().find(|(key, _)| key == "relative-ref") {
-    output = output.join(&relative)?;
+    output = output.join(&relative).map_err(|_| Error::InvalidUrl)?; //temporary fix until error handling gets
+                                                                     // refactored
   }
 
   // 4. Append the path component of the input DID URL to the output

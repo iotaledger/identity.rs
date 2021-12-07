@@ -12,8 +12,8 @@ use core::str::FromStr;
 use crate::diff;
 use crate::diff::Diff;
 use crate::diff::DiffString;
-use crate::error::Error;
-use crate::error::Result;
+
+use crate::errors::UrlParsingError;
 
 /// A parsed URL.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -23,7 +23,7 @@ pub struct Url(::url::Url);
 
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
-  pub fn parse(input: impl AsRef<str>) -> Result<Self> {
+  pub fn parse(input: impl AsRef<str>) -> Result<Self, UrlParsingError> {
     ::url::Url::parse(input.as_ref()).map_err(Into::into).map(Self)
   }
 
@@ -33,7 +33,7 @@ impl Url {
   }
 
   /// Parses the given input string as a [`Url`], with `self` as the base Url.
-  pub fn join(&self, input: impl AsRef<str>) -> Result<Self> {
+  pub fn join(&self, input: impl AsRef<str>) -> Result<Self, UrlParsingError> {
     self.0.join(input.as_ref()).map_err(Into::into).map(Self)
   }
 }
@@ -71,7 +71,7 @@ impl From<::url::Url> for Url {
 }
 
 impl FromStr for Url {
-  type Err = Error;
+  type Err = UrlParsingError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)

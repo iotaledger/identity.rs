@@ -10,9 +10,7 @@ use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::error::Result;
-use crate::utils::generate_ed25519_keypair;
-use crate::utils::keypair_from_ed25519_private_key;
+use crate::utils;
 
 /// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -24,14 +22,14 @@ pub struct KeyPair {
 
 impl KeyPair {
   /// Creates a new [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`].
-  pub fn new_ed25519() -> Result<Self> {
+  pub fn new_ed25519() -> Result<Self, KeyPairGenerationError> {
     Self::new(KeyType::Ed25519)
   }
 
   /// Creates a new [`KeyPair`] with the given [`key type`][`KeyType`].
-  pub fn new(type_: KeyType) -> Result<Self> {
+  pub fn new(type_: KeyType) -> Result<Self, KeyPairGenerationError> {
     let (public, private): (PublicKey, PrivateKey) = match type_ {
-      KeyType::Ed25519 => generate_ed25519_keypair()?,
+      KeyType::Ed25519 => utils::generate_ed25519_keypair()?,
     };
 
     Ok(Self { type_, public, private })
@@ -41,14 +39,15 @@ impl KeyPair {
   ///
   ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-  pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
-    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
-      .try_into()
-      .map_err(|_| crypto::Error::PrivateKeyError)?;
+  pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, KeyPairGenerationError> {
+    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] =
+      private_key_bytes.try_into().map_err(|_| KeyPairGenerationError {
+        inner: crypto::Error::PrivateKeyError,
+      })?;
 
     let private_key = ed25519::SecretKey::from_bytes(private_key_bytes);
 
-    let (public, private) = keypair_from_ed25519_private_key(private_key);
+    let (public, private) = utils::keypair_from_ed25519_private_key(private_key);
 
     Ok(Self {
       type_: KeyType::Ed25519,
@@ -105,6 +104,14 @@ impl From<(KeyType, PublicKey, PrivateKey)> for KeyPair {
       private: other.2,
     }
   }
+}
+
+/// Caused by a failure to generate a Keypair
+#[derive(Debug, thiserror::Error)]
+#[error("key-pair generation failed: {inner}")]
+pub struct KeyPairGenerationError {
+  #[source]
+  pub(crate) inner: crypto::Error,
 }
 
 #[cfg(test)]

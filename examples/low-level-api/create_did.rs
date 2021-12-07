@@ -7,6 +7,7 @@
 //! cargo run --example create_did
 
 use identity::iota::ClientMap;
+use identity::iota::Error;
 use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
@@ -17,7 +18,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   let client: ClientMap = ClientMap::new();
 
   // Generate a new Ed25519 public/private key pair.
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::FailedKeyPairGeneration)?;
 
   // Create a DID Document (an identity) from the generated key pair.
   let mut document: IotaDocument = IotaDocument::new(&keypair)?;

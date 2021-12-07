@@ -8,6 +8,8 @@ use core::slice::Iter;
 use core::slice::SliceIndex;
 use std::vec::IntoIter;
 
+pub use self::errors::KeyCollectionError;
+pub use self::errors::KeyCollectionSizeError;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::SigningKey;
 use crate::crypto::merkle_tree::compute_merkle_proof;
@@ -20,72 +22,108 @@ use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::error::Error;
-use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
-
-/// Defines an upper limit to the amount of keys that can be created (2^12)
-/// This value respects a current stronghold limitation
-const MAX_KEYS_ALLOWED: usize = 4_096;
 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
 pub struct KeyCollection {
   type_: KeyType,
+  /* constructors must ensure that the number of public keys corresponds to the number of private keys
+  and that this number is a non-zero power of two.
+
+  It would be tempting to combine the two following `public` and `private` fields into something of type `Box<[(PublicKey,PrivateKey)]>`,
+  but this becomes impractical as several of this struct's methods internally need to access the public keys as a slice `&[PublicKey]`.
+  */
   public: Box<[PublicKey]>,
   private: Box<[PrivateKey]>,
 }
 
 impl KeyCollection {
+  /// Defines an upper limit to the amount of keys that can be created (2^12)
+  /// This value respects a current stronghold limitation
+  pub const MAX_KEYS_ALLOWED: usize = 4_096;
+
   /// Creates a new [`KeyCollection`] from an iterator of
   /// [`PublicKey`]/[`PrivateKey`] pairs.
-  pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self>
+  ///
+  /// # Errors
+  /// The number of items provided by `iter` must be a power of two contained in the interval
+  /// [1,[`KeyCollection::MAX_KEYS_ALLOWED`]], otherwise an error is returned. If this function (internally) fails to
+  /// create a [`KeyCollection`] with a matching private key for every public key as provided by the iterator then
+  /// [`Err(KeyCollectionSizeError::KeyPairImbalance)`] will be returned. This is not something we expect to happen in
+  /// practice.
+  pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self, KeyCollectionSizeError>
   where
     I: IntoIterator<Item = (PublicKey, PrivateKey)>,
   {
     let (public, private): (Vec<_>, Vec<_>) = iter.into_iter().unzip();
+    let num_public_keys = public.len();
+    let num_private_keys = private.len();
 
-    if public.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(public.len()));
+    if num_public_keys != num_private_keys {
+      // TODO: Did we choose the correct return type? It is probably impossible for public and private to have different
+      // lengths
+      return Err(KeyCollectionSizeError::KeyPairImbalance {
+        num_public_keys,
+        num_private_keys,
+      });
     }
-
-    if private.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(private.len()));
+    if num_public_keys == 0 {
+      Err(KeyCollectionSizeError::Empty)
+    } else if !num_public_keys.is_power_of_two() {
+      Err(KeyCollectionSizeError::NotAPowerOfTwo(num_public_keys))
+    } else if num_public_keys > Self::MAX_KEYS_ALLOWED {
+      Err(KeyCollectionSizeError::MaximumExceeded(num_public_keys))
+    } else {
+      Ok(Self {
+        type_,
+        public: public.into_boxed_slice(),
+        private: private.into_boxed_slice(),
+      })
     }
-
-    Ok(Self {
-      type_,
-      public: public.into_boxed_slice(),
-      private: private.into_boxed_slice(),
-    })
   }
 
   /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
-  /// If `count` is not a power of two, with the exception of 0, which will result in an error,
-  /// it will be rounded up to the next one.
-  /// E.g. 230 -> 256
-  pub fn new_ed25519(count: usize) -> Result<Self> {
+  /// If `count` is different from zero, but not a power of two it will be rounded up to the next one.
+  /// E.g. 230 -> 256.
+  ///
+  /// # Errors
+  /// `count` must be contained in the interval [1,[`KeyCollection::MAX_KEYS_ALLOWED`]] otherwise an error will be
+  /// returned.
+  ///
+  /// If this function returns [`KeyCollectionError::InvalidSize`] then the `NotAPowerOfTwo` variant of
+  /// [`KeyCollectionSizeError`] may be dismissed from consideration as it cannot be caused by this constructor. We
+  /// also don't expect the `KeyPairImbalance` variant to occur in practice.
+  pub fn new_ed25519(count: usize) -> Result<Self, KeyCollectionError> {
     Self::new(KeyType::Ed25519, count)
   }
 
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
-  /// If `count` is not a power of two, with the exception of 0, which will result in an error,
-  /// it will be rounded up to the next one.
-  /// E.g. 230 -> 256
-  pub fn new(type_: KeyType, count: usize) -> Result<Self> {
+  /// If `count` is different from zero, but not a power of two it will be rounded up to the next one.
+  /// E.g. 230 -> 256.
+  ///
+  /// # Errors
+  /// `count` must be contained in the interval [1,4096] otherwise an error will be returned. This upper limit may be
+  /// increased in the future.
+  ///
+  /// If this function returns [`KeyCollectionError::InvalidSize`] then the `NotAPowerOfTwo` variant of
+  /// [`KeyCollectionSizeError`] may be dismissed from consideration as it cannot be caused by this constructor. We
+  /// also don't expect the `KeyPairImbalance` variant to occur in practice.
+  pub fn new(type_: KeyType, count: usize) -> Result<Self, KeyCollectionError> {
     if count == 0 {
-      return Err(Error::InvalidKeyCollectionSize(0));
+      return Err(KeyCollectionSizeError::Empty.into());
+    } else if count > Self::MAX_KEYS_ALLOWED {
+      return Err(KeyCollectionSizeError::MaximumExceeded(count).into());
     }
-    let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
-    if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
-      return Err(Error::InvalidKeyCollectionSize(count_next_power));
-    }
+
+    let count_next_power = count.next_power_of_two();
 
     let keys: Vec<(PublicKey, PrivateKey)> = match type_ {
-      KeyType::Ed25519 => generate_ed25519_keypairs(count_next_power)?,
+      KeyType::Ed25519 => generate_ed25519_keypairs(count_next_power)
+        .map_err(|error| KeyCollectionError::GenerationFailed(error.to_string()))?,
     };
 
-    Self::from_iterator(type_, keys.into_iter())
+    Self::from_iterator(type_, keys.into_iter()).map_err(|error| error.into())
   }
 
   /// Returns the [`type`][`KeyType`] of the `KeyCollection` object.
@@ -215,10 +253,63 @@ impl IntoIterator for KeyCollection {
   }
 }
 
+mod errors {
+  use super::KeyCollection;
+  use thiserror::Error as DeriveError;
+  /// Caused by attempting to create a key collection with an invalid number of keys
+  #[derive(Debug, PartialEq, DeriveError, Eq, Clone)]
+  pub enum KeyCollectionSizeError {
+    /// A [`KeyCollection`] cannot be empty
+    #[error("key collections cannot be empty")]
+    Empty,
+    /// The number of keys in a [`KeyCollection`] cannot exceed 4096.
+    ///
+    /// The maximum number of keys allowed may increase in the future.
+    // TODO: once rustdoc gets support for including constants we should use KeyCollection::MAX_KEYS_ALLOWED directly.
+    // Alternatively we could make KeyCollection::MAX_KEYS_ALLOWED public and link to that.
+    #[error(
+      "the maximum number of keys allowed is {}, but {0} were provided",
+      KeyCollection::MAX_KEYS_ALLOWED
+    )]
+    MaximumExceeded(usize),
+
+    /// The number of keys is not a non-zero power of two.
+    #[error("the number of keys must be a power of two, but {0} were provided")]
+    NotAPowerOfTwo(usize),
+
+    /// The number of public keys does not correspond to the number of private keys
+    #[error(
+      "the number of public keys: {num_public_keys} does not match the number of private keys: {num_private_keys}"
+    )]
+    KeyPairImbalance {
+      /// The number of public keys
+      num_public_keys: usize,
+      /// The number of private keys
+      num_private_keys: usize,
+    },
+  }
+
+  /// Caused by a failure to produce a valid [`keyCollection`]
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
+  pub enum KeyCollectionError {
+    /// Size expectations were not met. See [`KeyCollectionSizeError`] for more information.
+    #[error("failed to produce KeyCollection: {0}")]
+    InvalidSize(#[from] KeyCollectionSizeError),
+    /// Key generation failed due to an underlying error.
+    #[error("failed to produce KeyCollection: {0}")]
+    GenerationFailed(String),
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
 
+  #[test]
+  fn max_keys_allowed_is_a_power_of_two() {
+    //TODO: This is a fundamental assumption. Would it maybe be better to check this at compile time with [static_assertions](https://crates.io/crates/static_assertions)?
+    assert!(KeyCollection::MAX_KEYS_ALLOWED.is_power_of_two());
+  }
   #[test]
   fn test_ed25519() {
     let keys: KeyCollection = KeyCollection::new_ed25519(100).unwrap();
@@ -254,10 +345,10 @@ mod tests {
   #[test]
   fn test_key_collection_size() {
     // Key Collection can not exceed 4_096 keys
-    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(4_097);
+    let keys: Result<KeyCollection, KeyCollectionError> = KeyCollection::new_ed25519(4_097);
     assert!(keys.is_err());
     // Key Collection should not hold 0 keys
-    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(0);
+    let keys: Result<KeyCollection, KeyCollectionError> = KeyCollection::new_ed25519(0);
     assert!(keys.is_err());
     // The number of keys created rounds up to the next power of two
     let keys: KeyCollection = KeyCollection::new_ed25519(2_049).unwrap();
@@ -266,7 +357,7 @@ mod tests {
     let keys: KeyCollection = KeyCollection::new_ed25519(4_096).unwrap();
     assert_eq!(keys.len(), 4_096);
     // In case of overflow an error is returned
-    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(usize::MAX);
+    let keys: Result<KeyCollection, KeyCollectionError> = KeyCollection::new_ed25519(usize::MAX);
     assert!(keys.is_err());
   }
 }

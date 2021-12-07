@@ -8,6 +8,7 @@ use crate::account::AccountConfig;
 use crate::account::AccountSetup;
 use crate::identity::IdentitySetup;
 use crate::storage::MemStore;
+use crate::Error;
 use crate::Result;
 
 use identity_core::common::Url;
@@ -86,7 +87,7 @@ async fn test_account_chain_state() -> Result<()> {
     .create_service()
     .fragment("my-service-1")
     .type_("MyCustomService")
-    .endpoint(Url::parse("https://example.com")?)
+    .endpoint(Url::parse("https://example.com").map_err(|_| Error::InvalidUrl)?)
     .apply()
     .await?;
 

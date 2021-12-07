@@ -20,6 +20,7 @@ use identity_did::verification::TryMethod;
 
 use crate::did::IotaDID;
 use crate::document::IotaDocument;
+use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
@@ -48,9 +49,9 @@ impl DiffMessage {
   /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
   /// set a proof, use the `set_signature()` method.
   pub fn new(current: &IotaDocument, updated: &IotaDocument, previous_message_id: MessageId) -> Result<Self> {
-    let a: CoreDocument = current.serde_into()?;
-    let b: CoreDocument = updated.serde_into()?;
-    let diff: String = Diff::diff(&a, &b)?.to_json()?;
+    let a: CoreDocument = current.serde_into().map_err(|_| Error::InvalidSerialization)?;
+    let b: CoreDocument = updated.serde_into().map_err(|_| Error::InvalidSerialization)?;
+    let diff: String = Diff::diff(&a, &b)?.to_json().map_err(|_| Error::InvalidSerialization)?;
 
     Ok(Self {
       did: current.id().clone(),
@@ -84,11 +85,10 @@ impl DiffMessage {
   /// Returns a new DID Document which is the result of merging `self`
   /// with the given Document.
   pub fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {
-    let data: DiffDocument = DiffDocument::from_json(&self.diff)?;
-    let core: CoreDocument = document.serde_into()?;
+    let data: DiffDocument = DiffDocument::from_json(&self.diff).map_err(|_| Error::InvalidDeserialization)?;
+    let core: CoreDocument = document.serde_into().map_err(|_| Error::InvalidSerialization)?;
     let this: CoreDocument = Diff::merge(&core, data)?;
-
-    Ok(this.serde_into()?)
+    this.serde_into().map_err(|_| Error::InvalidSerialization)
   }
 }
 

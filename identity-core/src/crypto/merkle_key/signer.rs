@@ -10,14 +10,14 @@ use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_tree::Proof;
+use crate::crypto::signature::errors::SigningError;
 use crate::crypto::Named;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
-use crate::error::Result;
-use crate::utils::encode_b58;
+use crate::utils;
 
 /// Key components used to create a Merkle Key Collection signature.
 #[derive(Clone)]
@@ -57,11 +57,11 @@ where
   PrivateKey: AsRef<S::Private>,
 {
   fn proof(&self) -> String {
-    encode_b58(&self.proof.encode())
+    utils::encode_b58(&self.proof.encode())
   }
 
   fn public(&self) -> String {
-    encode_b58(self.public.as_ref())
+    utils::encode_b58(self.public.as_ref())
   }
 
   fn private(&self) -> &S::Private {
@@ -121,13 +121,13 @@ where
   K: MerkleSigningKey<D, S>,
   S::Output: AsRef<[u8]>,
 {
-  fn sign<X>(data: &X, private: &K) -> Result<SignatureValue>
+  fn sign<X>(data: &X, private: &K) -> Result<SignatureValue, SigningError>
   where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: S::Output = S::sign(&message, private.private())?;
-    let signature: String = encode_b58(signature.as_ref());
+    let signature: String = utils::encode_b58(signature.as_ref());
     let formatted: String = format!("{}.{}.{}", private.public(), private.proof(), signature);
 
     Ok(SignatureValue::Signature(formatted))

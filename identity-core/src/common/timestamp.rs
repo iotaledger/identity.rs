@@ -14,19 +14,32 @@ use chrono::SecondsFormat;
 use chrono::Timelike;
 use chrono::Utc;
 
-use crate::error::Error;
-use crate::error::Result;
-
 /// A parsed Timestamp.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(try_from = "String", into = "String")]
 pub struct Timestamp(DateTime<Utc>);
 
+pub use self::errors::TimeStampParsingError;
+mod errors {
+  use thiserror::Error as DeriveError; // following the stronghold team's convention :)
+
+  /// Caused by attempting to parse an invalid `Timestamp`.
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
+  #[error("invalid timestamp: {inner}")]
+  pub struct TimeStampParsingError {
+    #[source]
+    pub(super) inner: chrono::ParseError, /* it is debatable whether we even should be using chrono, but we do it
+                                           * like this for now. */
+  }
+}
+
 impl Timestamp {
   /// Parses a `Timestamp` from the provided input string.
-  pub fn parse(input: &str) -> Result<Self> {
-    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
+  pub fn parse(input: &str) -> Result<Self, TimeStampParsingError> {
+    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)
+      .map_err(|inner| TimeStampParsingError { inner })?
+      .into();
     let datetime: DateTime<Utc> = Self::truncate(datetime);
 
     Ok(Self(datetime))
@@ -87,7 +100,7 @@ impl From<Timestamp> for String {
 }
 
 impl TryFrom<&'_ str> for Timestamp {
-  type Error = Error;
+  type Error = TimeStampParsingError;
 
   fn try_from(string: &'_ str) -> Result<Self, Self::Error> {
     Self::parse(string)
@@ -95,7 +108,7 @@ impl TryFrom<&'_ str> for Timestamp {
 }
 
 impl TryFrom<String> for Timestamp {
-  type Error = Error;
+  type Error = TimeStampParsingError;
 
   fn try_from(string: String) -> Result<Self, Self::Error> {
     Self::parse(&string)
@@ -103,7 +116,7 @@ impl TryFrom<String> for Timestamp {
 }
 
 impl FromStr for Timestamp {
-  type Err = Error;
+  type Err = TimeStampParsingError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)
@@ -139,20 +152,20 @@ mod tests {
   }
 
   #[test]
-  #[should_panic = "InvalidTimestamp"]
-  fn test_parse_empty() {
+  #[should_panic = "TooShort"]
+  fn test_parse_empty_characterisation() {
     Timestamp::parse("").unwrap();
   }
 
   #[test]
-  #[should_panic = "InvalidTimestamp"]
-  fn test_parse_invalid_date() {
+  #[should_panic = "Invalid"]
+  fn test_parse_invalid_date_characterisation() {
     Timestamp::parse("foo bar").unwrap();
   }
 
   #[test]
-  #[should_panic = "InvalidTimestamp"]
-  fn test_parse_invalid_fmt() {
+  #[should_panic = "Invalid"]
+  fn test_parse_invalid_fmt_characterisation() {
     Timestamp::parse("2020/01/01 03:30:16").unwrap();
   }
 

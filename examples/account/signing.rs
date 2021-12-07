@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
+use identity::account::Error;
 use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::json;
@@ -51,7 +52,7 @@ async fn main() -> Result<()> {
     .await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
-  let subject_key: KeyPair = KeyPair::new_ed25519()?;
+  let subject_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let subject_did: IotaDID = IotaDID::new(subject_key.public().as_ref())?;
 
   // Create the actual Verifiable Credential subject.
@@ -61,11 +62,12 @@ async fn main() -> Result<()> {
       "type": "BachelorDegree",
       "name": "Bachelor of Science and Arts"
     }
-  }))?;
+  }))
+  .map_err(|_| Error::InvalidDeserialization)?;
 
   // Issue an unsigned Credential...
   let mut credential: Credential = Credential::builder(Default::default())
-    .issuer(Url::parse(account.did().as_str())?)
+    .issuer(Url::parse(account.did().as_str()).map_err(|_| Error::InvalidUrl)?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;

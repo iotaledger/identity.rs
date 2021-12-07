@@ -108,7 +108,7 @@ async fn test_create_identity_invalid_network() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
-  let keypair = KeyPair::new_ed25519()?;
+  let keypair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let identity_create = IdentitySetup::default()
     .key_type(KeyType::Ed25519)
     .method_secret(MethodSecret::Ed25519(keypair.private().clone()));
@@ -300,7 +300,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 async fn test_create_method_from_private_key() -> Result<()> {
   let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
-  let keypair = KeyPair::new_ed25519()?;
+  let keypair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let fragment = "key-1".to_owned();
   let method_type = MethodType::Ed25519VerificationKey2018;
 

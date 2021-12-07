@@ -13,6 +13,7 @@ use identity::did::MethodScope;
 use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ClientMap;
+use identity::iota::Error;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -29,7 +30,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   let (mut document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // Add a new VerificationMethod with a new keypair
-  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let method: IotaVerificationMethod =
     IotaVerificationMethod::from_did(document.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
@@ -39,7 +40,8 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org"
-  }))?;
+  }))
+  .map_err(|_| Error::InvalidDeserialization)?;
   assert!(document.insert_service(service));
 
   // Add the messageId of the previous message in the chain.

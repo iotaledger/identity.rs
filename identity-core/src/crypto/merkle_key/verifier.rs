@@ -14,14 +14,17 @@ use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
+use crate::crypto::signature::errors::VerificationError;
 use crate::crypto::Named;
 use crate::crypto::PublicKey;
 use crate::crypto::SignatureValue;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::error::Error;
-use crate::error::Result;
-use crate::utils::decode_b58;
+use crate::utils;
+
+use crate::crypto::merkle_key::MerkleDigestKeyTagError;
+use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
+use errors::InvalidProofFormat;
 
 /// Key components used to verify a Merkle Key Collection signature.
 #[derive(Clone)]
@@ -87,7 +90,7 @@ where
   D: MerkleDigest,
   S: MerkleSignature + Verify<Public = [u8]>,
 {
-  fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<()>
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<(), VerificationError>
   where
     X: Serialize,
   {
@@ -96,20 +99,24 @@ where
     let (target, proof, signature): _ = expand_signature_value(signature)?;
 
     let merkle_root: Hash<D> = decompose_public_key::<D, S>(public)?;
-    let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(Error::InvalidProofFormat)?;
+    let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(InvalidProofFormat)?;
     let target_hash: Hash<D> = digest.hash_leaf(target.as_ref());
 
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(Error::InvalidProofValue("merkle key - bad proof"));
+      return Err(VerificationError::InvalidProofValue(Cow::Borrowed(
+        "did not retrieve the expected Merkle tree root",
+      )));
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(Error::InvalidProofValue("merkle key - revoked"));
+        return Err(VerificationError::Revoked(Cow::Borrowed(
+          "encountered a revoked key during Merkle signature verification",
+        )));
       }
     }
 
@@ -123,7 +130,11 @@ where
 // =============================================================================
 // =============================================================================
 
-fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>>
+/* If this function gets used outside of verification as well, we might have to come up with a better error type.
+Since this function is private this is not a problem in terms of stability.
+*/
+
+fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>, VerificationError>
 where
   D: MerkleDigest,
   S: MerkleSignature,
@@ -132,12 +143,12 @@ where
 
   // Validate the signature algorithm tag
   if tag_s != S::TAG {
-    return Err(Error::InvalidMerkleSignatureKeyTag(Some(tag_s)));
+    return Err(MerkleSignatureKeyTagError(Some(tag_s)).into());
   }
 
   // Validate the digest algorithm tag
   if tag_d != D::TAG {
-    return Err(Error::InvalidMerkleDigestKeyTag(Some(tag_d)));
+    return Err(MerkleDigestKeyTagError(Some(tag_d)).into());
   }
 
   // Extract and return the Merkle root hash
@@ -145,28 +156,57 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or(Error::InvalidKeyFormat)
+    .ok_or(VerificationError::ProcessingFailed(Cow::Borrowed("invalid key format")))
 }
 
-fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>)> {
+/* If this function gets used outside of verification as well, we might have to come up with a better error type.
+Since this function is private this is not a problem in terms of stability.
+*/
+fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>), VerificationError> {
   let data: &str = signature.as_str();
   let mut parts: _ = data.split('.');
 
   // Split the signature data into `public-key/proof/signature`
-  let public: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
-  let proof: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
-  let signature: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
+  let public: &str = parts.next().ok_or(InvalidProofFormat)?;
+  let proof: &str = parts.next().ok_or(InvalidProofFormat)?;
+  let signature: &str = parts.next().ok_or(InvalidProofFormat)?;
 
   // Extract bytes of the base58-encoded public key
-  let public: PublicKey = decode_b58(public)
-    .map_err(|_| Error::InvalidProofFormat)
+  let public: PublicKey = utils::decode_b58(public)
+    .map_err(|_| InvalidProofFormat)
     .map(Into::into)?;
 
   // Extract bytes of the base58-encoded proof
-  let proof: Vec<u8> = decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
+  let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
-  let signature: Vec<u8> = decode_b58(signature)?;
+  let signature: Vec<u8> = utils::decode_b58(signature)
+    .map_err(|_| VerificationError::ProcessingFailed(Cow::Borrowed("failed to parse signature")))?;
 
   Ok((public, proof, signature))
+}
+
+mod errors {
+  use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
+  use crate::crypto::signature::errors::VerificationError;
+  use std::borrow::Cow;
+
+  pub(super) struct InvalidProofFormat;
+
+  impl From<InvalidProofFormat> for VerificationError {
+    fn from(_: InvalidProofFormat) -> Self {
+      Self::ProcessingFailed(Cow::Borrowed("invalid proof format"))
+    }
+  }
+
+  impl From<MerkleKeyTagExtractionError> for VerificationError {
+    fn from(err: MerkleKeyTagExtractionError) -> Self {
+      match err {
+        MerkleKeyTagExtractionError::InvalidMerkleDigestKeyTag(digest_key_tag_err) => digest_key_tag_err.into(),
+        MerkleKeyTagExtractionError::InvalidMerkleSignatureKeyTag(signature_key_tag_err) => {
+          signature_key_tag_err.into()
+        }
+      }
+    }
+  }
 }

@@ -18,6 +18,7 @@ use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
+use identity::iota::Error;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -112,7 +113,7 @@ pub async fn add_new_key(
   let mut updated_doc = doc.clone();
 
   // Add #newKey to the document
-  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let method: IotaVerificationMethod =
     IotaVerificationMethod::from_did(updated_doc.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc

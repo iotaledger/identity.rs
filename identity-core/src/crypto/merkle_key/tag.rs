@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub use errors::MerkleDigestKeyTagError;
+pub use errors::MerkleKeyTagExtractionError;
+pub use errors::MerkleSignatureKeyTagError;
 /// A tag identifying a Merkle Key Collection digest algorithm.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
@@ -55,5 +58,32 @@ impl From<u8> for MerkleSignatureTag {
 impl From<MerkleSignatureTag> for u8 {
   fn from(other: MerkleSignatureTag) -> Self {
     other.0
+  }
+}
+
+mod errors {
+  use thiserror::Error as DeriveError;
+
+  use crate::crypto::merkle_key::MerkleDigestTag;
+  use crate::crypto::merkle_key::MerkleSignatureTag;
+  /// Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
+  #[derive(Debug, DeriveError)]
+  #[error("invalid Merkle digest key tag: {0:?}")]
+  pub struct MerkleDigestKeyTagError(pub Option<MerkleDigestTag>);
+
+  /// Caused by attempting to parse an invalid Merkle Signature Key Collection tag.  d
+  #[derive(Debug, DeriveError)]
+  #[error("Invalid Merkle Signature Key Tag: {0:?}")]
+  pub struct MerkleSignatureKeyTagError(pub Option<MerkleSignatureTag>);
+
+  #[derive(Debug, DeriveError)]
+  /// Caused by an attempt to parse an invalid Merkle Digest or Signature key tag
+  pub enum MerkleKeyTagExtractionError {
+    /// See [`MerkleDigestKeyTagError`]
+    #[error("{0}")]
+    InvalidMerkleDigestKeyTag(#[from] MerkleDigestKeyTagError),
+    /// See [`MerkleSignatureKeyTagError`]
+    #[error("{0}")]
+    InvalidMerkleSignatureKeyTag(#[from] MerkleSignatureKeyTagError),
   }
 }

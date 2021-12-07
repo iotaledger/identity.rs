@@ -9,12 +9,25 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  #[error("failed to generate key-pair")]
+  FailedKeyPairGeneration, //TODO: Remove this when this crate has its error types refactored
+  #[error("invalid serialization")]
+  InvalidSerialization, // TODO: Remove this when this crate has its error types refactored
+  #[error("invalid deserialization")]
+  InvalidDeserialization, //TODO: Remove this when this crate has its error types refactored
+  /// caused by attempting to parse an invalid url
+  #[error("url parsing error")]
+  InvalidUrl, /* TODO: temporary solution to make this crate work
+               * with new errors from iota-core */
+  #[error("base decoding error")]
+  BaseDecoding, // TODO: temporary solution to make this crate work with the new errors from iota-core
+  /// Caused by errors from the [identity_did] crate.
   /// Caused by errors from the [crypto] crate.
   #[error(transparent)]
   CryptoError(#[from] crypto::Error),
   /// Caused by errors from the [identity_core] crate.
-  #[error(transparent)]
-  CoreError(#[from] identity_core::Error),
+  #[error("remove this variant")]
+  CoreError, // TODO: Remove this error upon refactoring the errors in this crate
   /// Caused by errors from the [identity_did] crate.
   #[error(transparent)]
   DIDError(#[from] identity_did::Error),

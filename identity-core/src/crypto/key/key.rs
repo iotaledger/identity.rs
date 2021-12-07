@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
+use std::borrow::Cow;
 use std::marker::PhantomData;
 use zeroize::Zeroize;
 
@@ -16,6 +17,10 @@ pub type PrivateKey = Key<Private>;
 
 // =============================================================================
 // =============================================================================
+#[derive(Debug, thiserror::Error)]
+/// An error representing the fact that a [`Key`] could not be parsed.
+#[error("{0}")]
+pub struct KeyParsingError(pub Cow<'static, str>);
 
 mod private {
   pub trait Sealed {}

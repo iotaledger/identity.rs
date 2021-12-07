@@ -3,12 +3,11 @@
 
 use core::str::FromStr;
 
+use super::key::KeyParsingError;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::Ed25519;
-use crate::error::Error;
-use crate::error::Result;
 
 /// Supported cryptographic key types.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -38,13 +37,13 @@ impl KeyType {
 }
 
 impl FromStr for KeyType {
-  type Err = Error;
+  type Err = KeyParsingError;
 
-  fn from_str(string: &str) -> Result<Self, Self::Err> {
+  fn from_str(string: &str) -> Result<Self, KeyParsingError> {
     if string.eq_ignore_ascii_case("ed25519") {
       Ok(Self::Ed25519)
     } else {
-      Err(Error::InvalidKeyFormat)
+      Err(KeyParsingError("specified type is not supported".into()))
     }
   }
 }

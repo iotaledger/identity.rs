@@ -17,5 +17,6 @@ pub use self::fragment::Fragment;
 pub use self::object::Object;
 pub use self::object::Value;
 pub use self::one_or_many::OneOrMany;
+pub use self::timestamp::TimeStampParsingError; /* needs its own line see: https://github.com/rust-lang/rust/issues/64762 */
 pub use self::timestamp::Timestamp;
 pub use self::url::Url;

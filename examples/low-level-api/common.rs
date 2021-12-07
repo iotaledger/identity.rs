@@ -18,6 +18,7 @@ use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
+use identity::iota::Error;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
@@ -25,7 +26,7 @@ use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
 /// creates an unsigned credential with claims about subject by issuer.
-pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
+pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential, Error> {
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
     "id": subject.id().as_str(),
@@ -35,12 +36,13 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
       "name": "Bachelor of Science and Arts",
     },
     "GPA": "4.0",
-  }))?;
+  }))
+  .map_err(|_| Error::InvalidDeserialization)?;
 
   // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()
-    .id(Url::parse("https://example.edu/credentials/3732")?)
-    .issuer(Url::parse(issuer.id().as_str())?)
+    .id(Url::parse("https://example.edu/credentials/3732").map_err(|_| Error::InvalidUrl)?)
+    .issuer(Url::parse(issuer.id().as_str()).map_err(|_| Error::InvalidUrl)?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;
@@ -49,9 +51,9 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
 }
 
 /// Convenience function for checking that a verifiable credential is valid and not revoked.
-pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<CredentialValidation> {
+pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<CredentialValidation, Error> {
   // Convert the Verifiable Credential to JSON to potentially "exchange" with a verifier
-  let credential_json = credential.to_json()?;
+  let credential_json = credential.to_json().map_err(|_| Error::InvalidSerialization)?;
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.
@@ -75,7 +77,7 @@ pub async fn add_new_key(
   let mut updated_doc = doc.clone();
 
   // Add #newKey to the document
-  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let method: IotaVerificationMethod =
     IotaVerificationMethod::from_did(updated_doc.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc

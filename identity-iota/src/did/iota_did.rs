@@ -147,7 +147,7 @@ impl IotaDID {
 
     // We checked if `id_segments` was empty so this should not panic
     let mid: &str = segments.last().unwrap();
-    let len: usize = decode_b58(mid)?.len();
+    let len: usize = decode_b58(mid).map_err(|_| Error::BaseDecoding)?.len(); //todo: change this once this crate changes its error approach.
 
     if len == BLAKE2B_256_LEN {
       Ok(())

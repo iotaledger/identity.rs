@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::crypto::merkle_key::MerkleDigest;
+use crate::crypto::merkle_key::MerkleDigestKeyTagError;
 use crate::crypto::merkle_key::MerkleDigestTag;
+use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
 use crate::crypto::merkle_key::MerkleSignature;
+use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
-use crate::error::Error;
-use crate::error::Result;
-
 /// Common utilities for working with Merkle Key Collection Signatures.
 #[derive(Clone, Copy, Debug)]
 pub struct MerkleKey;
@@ -21,7 +21,7 @@ impl MerkleKey {
   pub const TYPE_SIG: &'static str = "MerkleKeySignature2021";
 
   /// Extracts the signature and digest algorithm tags from the public key value.
-  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag)> {
+  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag), MerkleKeyTagExtractionError> {
     let tag_s: MerkleSignatureTag = Self::signature_tag(data, 0)?;
     let tag_d: MerkleDigestTag = Self::digest_tag(data, 1)?;
 
@@ -41,20 +41,20 @@ impl MerkleKey {
     output
   }
 
-  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag> {
+  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag, MerkleDigestKeyTagError> {
     data
       .get(index)
       .copied()
       .map(MerkleDigestTag::new)
-      .ok_or(Error::InvalidMerkleDigestKeyTag(None))
+      .ok_or(MerkleDigestKeyTagError(None))
   }
 
-  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag> {
+  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag, MerkleSignatureKeyTagError> {
     data
       .get(index)
       .copied()
       .map(MerkleSignatureTag::new)
-      .ok_or(Error::InvalidMerkleSignatureKeyTag(None))
+      .ok_or(MerkleSignatureKeyTagError(None))
   }
 }
 
