@@ -209,7 +209,7 @@ mod tests {
   }
 
   #[quickcheck]
-  fn test_valid_random_values_from_unix_to_rfc3339(value: ValidUnixTimestampFixture) -> bool {
+  fn test_valid_random_values_from_unix_to_rfc3339_do_not_panic(value: ValidUnixTimestampFixture) -> bool {
     let timestamp = Timestamp::from_unix(value.0).unwrap();
     let expected_length = "dddd-dd-ddTdd:dd:ddZ".len();
     timestamp.to_rfc3339().len() == expected_length
