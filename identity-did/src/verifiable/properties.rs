@@ -15,7 +15,7 @@ use crate::verification::TryMethod;
 /// A generic container for a set of properties (`T`) and a
 /// [`digital signature`][Signature].
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub struct Properties<T = Object> {
+pub struct VerifiableProperties<T = Object> {
   #[serde(flatten)]
   pub(crate) properties: T,
   // TODO: Support multiple signatures (?)
@@ -23,7 +23,7 @@ pub struct Properties<T = Object> {
   pub(crate) proof: Option<Signature>,
 }
 
-impl<T> Properties<T> {
+impl<T> VerifiableProperties<T> {
   /// Creates a new `Properties` object.
   pub const fn new(properties: T) -> Self {
     Self {
@@ -56,7 +56,7 @@ impl<T> Properties<T> {
   }
 }
 
-impl<T> Deref for Properties<T> {
+impl<T> Deref for VerifiableProperties<T> {
   type Target = T;
 
   fn deref(&self) -> &Self::Target {
@@ -64,30 +64,30 @@ impl<T> Deref for Properties<T> {
   }
 }
 
-impl<T> DerefMut for Properties<T> {
+impl<T> DerefMut for VerifiableProperties<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.properties
   }
 }
 
-impl<T> TrySignature for Properties<T> {
+impl<T> TrySignature for VerifiableProperties<T> {
   fn signature(&self) -> Option<&Signature> {
     self.proof()
   }
 }
 
-impl<T> TrySignatureMut for Properties<T> {
+impl<T> TrySignatureMut for VerifiableProperties<T> {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
     self.proof_mut()
   }
 }
 
-impl<T> SetSignature for Properties<T> {
+impl<T> SetSignature for VerifiableProperties<T> {
   fn set_signature(&mut self, signature: Signature) {
     self.set_proof(signature)
   }
 }
 
-impl<T> TryMethod for Properties<T> {
+impl<T> TryMethod for VerifiableProperties<T> {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }

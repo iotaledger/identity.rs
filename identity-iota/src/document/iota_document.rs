@@ -32,7 +32,7 @@ use identity_did::service::Service;
 use identity_did::utils::OrderedSet;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
-use identity_did::verifiable::Properties as VerifiableProperties;
+use identity_did::verifiable::VerifiableProperties;
 use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
