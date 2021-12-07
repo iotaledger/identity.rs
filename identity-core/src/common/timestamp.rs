@@ -10,6 +10,7 @@ use core::str::FromStr;
 use time::format_description::well_known::Rfc3339;
 use time::Duration;
 use time::OffsetDateTime;
+use time::UtcOffset;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -21,15 +22,23 @@ use crate::error::Result;
 pub struct Timestamp(OffsetDateTime);
 
 impl Timestamp {
-  /// Parses a `Timestamp` from the provided input string.
+  /// Parses a `Timestamp` from the provided input string, normalized to UTC+00:00 with fractional
+  /// seconds truncated.
+  ///
+  /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
   pub fn parse(input: &str) -> Result<Self> {
-    let offset_date_time = OffsetDateTime::parse(input, &Rfc3339).map_err(time::Error::from)?;
-    Ok(Timestamp(truncate(offset_date_time)))
+    let offset_date_time = OffsetDateTime::parse(input, &Rfc3339)
+      .map_err(time::Error::from)?
+      .to_offset(UtcOffset::UTC);
+    Ok(Timestamp(truncate_fractional_seconds(offset_date_time)))
   }
 
-  /// Creates a new `Timestamp` with the current date and time.
+  /// Creates a new `Timestamp` with the current date and time, normalized to UTC+00:00 with
+  /// fractional seconds truncated.
+  ///
+  /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
   pub fn now_utc() -> Self {
-    Self(truncate(OffsetDateTime::now_utc()))
+    Self(truncate_fractional_seconds(OffsetDateTime::now_utc()))
   }
 
   /// Returns the `Timestamp` as an RFC 3339 `String`.
@@ -118,9 +127,32 @@ fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTi
 
 #[cfg(test)]
 mod tests {
+  use quickcheck::Arbitrary;
+  use quickcheck_macros::quickcheck;
+  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799;
+  const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200;
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
+
+  #[derive(Debug, Clone)]
+  struct ValidUnixTimestampFixture(i64);
+
+  impl Arbitrary for ValidUnixTimestampFixture {
+    fn arbitrary(g: &mut quickcheck::Gen) -> Self {
+      // collect 10_000 numbers between FIRST_VALID_UNIX_TIMESTAMP and LAST_VALID_UNIX_TIMESTAMP
+      // such that the distance between any two consecutive numbers is the same.
+      let interval_length = (LAST_VALID_UNIX_TIMESTAMP - FIRST_VALID_UNIX_TIMESTAMP) / 10_000;
+      let markers: Vec<i64> = (FIRST_VALID_UNIX_TIMESTAMP..LAST_VALID_UNIX_TIMESTAMP)
+        .step_by(interval_length as usize)
+        .collect();
+      let random_marker = *g.choose(&markers).unwrap();
+      // add another randomly chosen number between 1 and 1000 for extra randomness
+      let first_thousand: Vec<i64> = (1..=1000).collect();
+      let random_number = *g.choose(&first_thousand).unwrap();
+      Self(random_marker + random_number)
+    }
+  }
 
   #[test]
   fn test_parse_valid() {
@@ -142,6 +174,42 @@ mod tests {
     let timestamp = Timestamp::parse(original).unwrap();
 
     assert_eq!(timestamp.to_rfc3339(), expected);
+  }
+
+  #[test]
+  fn test_parse_valid_offset_normalised() {
+    let original = "1937-01-01T12:00:27.87+00:20";
+    let expected = "1937-01-01T11:40:27Z";
+    let timestamp = Timestamp::parse(original).unwrap();
+
+    assert_eq!(timestamp.to_rfc3339(), expected);
+  }
+
+  #[test]
+  fn test_from_unix_zero_to_rfc3339() {
+    let unix_epoch = Timestamp::from_unix(0).unwrap();
+    assert_eq!(unix_epoch.to_rfc3339(), "1970-01-01T00:00:00Z");
+  }
+
+  #[test]
+  fn test_from_unix_invalid_edge_cases() {
+    assert!(Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP + 1).is_err());
+    assert!(Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP - 1).is_err());
+  }
+
+  #[test]
+  fn test_from_unix_to_rfc3339_boundaries() {
+    let beginning = Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP).unwrap();
+    let end = Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP).unwrap();
+    assert_eq!(beginning.to_rfc3339(), "0000-01-01T00:00:00Z");
+    assert_eq!(end.to_rfc3339(), "9999-12-31T23:59:59Z");
+  }
+
+  #[quickcheck]
+  fn test_valid_random_values_from_unix_to_rfc3339(value: ValidUnixTimestampFixture) -> bool {
+    let timestamp = Timestamp::from_unix(value.0).unwrap();
+    let expected_length = "dddd-dd-ddTdd:dd:ddZ".len();
+    timestamp.to_rfc3339().len() == expected_length
   }
 
   #[test]
