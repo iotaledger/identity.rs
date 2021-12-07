@@ -60,6 +60,9 @@ impl Timestamp {
   }
 
   /// Creates a new `Timestamp` from the given Unix timestamp.
+  ///
+  /// # Errors
+  /// Fails if `seconds` is outside of the interval [-62167219200,253402300799].
   pub fn from_unix(seconds: i64) -> Result<Self> {
     let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds).map_err(time::error::Error::from)?;
     // Reject years outside of the range 0000AD - 9999AD per Rfc3339
