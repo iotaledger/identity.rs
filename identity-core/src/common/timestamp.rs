@@ -132,8 +132,8 @@ fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTi
 mod tests {
   use quickcheck::Arbitrary;
   use quickcheck_macros::quickcheck;
-  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799;
-  const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200;
+  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799;  // 9999-12-31T23:59:59Z
+  const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
