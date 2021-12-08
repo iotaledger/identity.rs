@@ -47,10 +47,7 @@ impl Timestamp {
   pub fn to_rfc3339(&self) -> String {
     // expect is okay, constructors ensure RFC 3339 compatible timestamps.
     // Making this fallible would break our interface such as From<Timestamp> for String.
-    self
-      .0
-      .format(&Rfc3339)
-      .expect("Timestamp incompatible with RFC 3339")
+    self.0.format(&Rfc3339).expect("Timestamp incompatible with RFC 3339")
   }
 
   /// Returns the `Timestamp` as a Unix timestamp.
@@ -131,32 +128,12 @@ fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTi
 
 #[cfg(test)]
 mod tests {
-  use quickcheck::Arbitrary;
-  use quickcheck_macros::quickcheck;
-  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799;  // 9999-12-31T23:59:59Z
+  use proptest::proptest;
+  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
   const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
-
-  #[derive(Debug, Clone)]
-  struct ValidUnixTimestampFixture(i64);
-
-  impl Arbitrary for ValidUnixTimestampFixture {
-    fn arbitrary(g: &mut quickcheck::Gen) -> Self {
-      // collect 10_000 numbers between FIRST_VALID_UNIX_TIMESTAMP and LAST_VALID_UNIX_TIMESTAMP
-      // such that the distance between any two consecutive numbers is the same.
-      let interval_length = (LAST_VALID_UNIX_TIMESTAMP - FIRST_VALID_UNIX_TIMESTAMP) / 10_000;
-      let markers: Vec<i64> = (FIRST_VALID_UNIX_TIMESTAMP..LAST_VALID_UNIX_TIMESTAMP)
-        .step_by(interval_length as usize)
-        .collect();
-      let random_marker = *g.choose(&markers).unwrap();
-      // add another randomly chosen number between 1 and 1000 for extra randomness
-      let first_thousand: Vec<i64> = (1..=1000).collect();
-      let random_number = *g.choose(&first_thousand).unwrap();
-      Self(random_marker + random_number)
-    }
-  }
 
   #[test]
   fn test_parse_valid() {
@@ -209,11 +186,13 @@ mod tests {
     assert_eq!(end.to_rfc3339(), "9999-12-31T23:59:59Z");
   }
 
-  #[quickcheck]
-  fn test_valid_random_values_from_unix_to_rfc3339_do_not_panic(value: ValidUnixTimestampFixture) -> bool {
-    let timestamp = Timestamp::from_unix(value.0).unwrap();
-    let expected_length = "dddd-dd-ddTdd:dd:ddZ".len();
-    timestamp.to_rfc3339().len() == expected_length
+  proptest! {
+    #[test]
+    fn test_from_unix_to_rfc3339_valid_no_panic(seconds in FIRST_VALID_UNIX_TIMESTAMP..=LAST_VALID_UNIX_TIMESTAMP) {
+      let timestamp = Timestamp::from_unix(seconds).unwrap();
+      let expected_length = "dddd-dd-ddTdd:dd:ddZ".len();
+      assert_eq!(timestamp.to_rfc3339().len(), expected_length);
+    }
   }
 
   #[test]
