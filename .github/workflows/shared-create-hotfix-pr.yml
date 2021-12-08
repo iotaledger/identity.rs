@@ -8,7 +8,7 @@ on:
   workflow_call:
     inputs:
       tag-prefix:
-        description: "will be prepended to tag-base"
+        description: "will be pre-pended to tag-base"
         required: false
         type: string
       branch:
@@ -58,6 +58,8 @@ jobs:
       - name: Determine Hotfix Version
         run: |
 
+          TAG_PREFIX=${{ inputs.tag-prefix }}
+
           ALL_TAGS=$(git tag --sort=creatordate -l)
           temp_array=()
           for value in ${ALL_TAGS[@]}
@@ -81,13 +83,13 @@ jobs:
               printf "${1}"
           }
 
-          HOTFIX_VERSION=$(updateVersion $LATEST_TAG)
-          echo HOTFIX_VERSION=$HOTFIX_VERSION
-          echo HOTFIX_VERSION=$HOTFIX_VERSION >> $GITHUB_ENV
-
-          HOTFIX_TAG=${{ inputs.tag-prefix }}$HOTFIX_VERSION
+          HOTFIX_TAG=$(updateVersion $LATEST_TAG)
           echo HOTFIX_TAG=$HOTFIX_TAG
           echo HOTFIX_TAG=$HOTFIX_TAG >> $GITHUB_ENV
+
+          HOTFIX_VERSION=$(echo "$HOTFIX_TAG" | sed "s/$TAG_PREFIX*//")
+          echo HOTFIX_VERSION=$HOTFIX_VERSION
+          echo HOTFIX_VERSION=$HOTFIX_VERSION >> $GITHUB_ENV
 
       - name: Determine Excluded Tags
         run: |
