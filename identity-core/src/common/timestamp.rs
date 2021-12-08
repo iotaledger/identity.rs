@@ -45,13 +45,12 @@ impl Timestamp {
   ///
   /// See: https://tools.ietf.org/html/rfc3339
   pub fn to_rfc3339(&self) -> String {
-    // expect is OK, because all constructors provide well defined RFC 3339 compatible OffSetDateTime
-    // if this is to be made fallible instead then we need to change some things in our interface such as the
-    // From<Timestamp> for String implementation.
+    // expect is okay, constructors ensure RFC 3339 compatible timestamps.
+    // Making this fallible would break our interface such as From<Timestamp> for String.
     self
       .0
       .format(&Rfc3339)
-      .expect("unexpected Timestamp incompatibility with RFC 3339")
+      .expect("Timestamp incompatible with RFC 3339")
   }
 
   /// Returns the `Timestamp` as a Unix timestamp.
