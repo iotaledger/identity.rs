@@ -5,7 +5,7 @@ on:
   pull_request:
     branches:
       - dev
-      - main
+      - support/v*
     types: [closed]
 jobs:
   call-create-release-workflow:
