@@ -1,19 +1,18 @@
 ---
 title: Identity.rs workflow
 sidebar_label: Workflow
-description: Contribute to IOTA Identity by joining the Identity initiative, via the projects GitHub repository, documentation, or sharing your knowledge.
+description: Learn about the software development process of the IOTA Identity repository.
 image: /img/Identity_icon.png
 keywords:
 - Workflow
 - Contribute
 - GitHub
 ---
-
-## Git
-
-### Issues
+## Issues
 
 Issues are opened when a certain task or problem is noted but cannot immediately be fixed. Issues contain long term work, requests and larger topics. Please use the correct issue template for a particular issue. Only IOTA Foundation members should use the issue template flagged for maintainers. Make sure to [label](#Issue-Labels) the issue correctly. As a contributor you may also add issues to a certain `project`.
+
+## Git
 
 ### Pull Requests
 
