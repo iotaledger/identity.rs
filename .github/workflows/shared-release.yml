@@ -124,7 +124,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-path: RELEASE_CHANGELOG.md
           changelog-config-path: ${{ inputs.changelog-config-path }}
-          future-release: ${{ env.NEXTVERSION }} 
+          future-release: ${{ env.CURRENT_VERSION }} 
           optional-arg: ${{ env.SINCE_ARG }}
 
       - name: Create GitHub release
