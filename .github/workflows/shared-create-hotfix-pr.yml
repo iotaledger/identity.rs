@@ -1,4 +1,4 @@
-name: Shared / Create Main Release PR
+name: Shared / Create Hotfix PR
 
 # This workflow creates a Pull Request meant for creating releases. 
 # A changelog, including the new version, is generated and version strings in relevant files are replaced. 
@@ -71,7 +71,7 @@ jobs:
           echo LATEST_TAG=$LATEST_TAG
 
           # takes a string and increments the last number
-          # e.g. $(updateVersion 1.1.0-dev.1) -> 1.1.0-dev.2 
+          # e.g. $(updateVersion 1.1.0) -> 1.1.1
           updateVersion()
           {
             [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
