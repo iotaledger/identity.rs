@@ -114,15 +114,15 @@ Please note that a PR can only be listed in one section of a changelog. So attac
 To attach a release summary to a version in the changelog create an issues with the label `release-summary`. Create a GitHub milestone matching the version you want to describe and attach it to the issue. The issue can be closed immediately. The text of the issue will be included in the changelog as the release summary.
 
 ### Issue Labels
-The following labels are used to categorize issues, they don't have any effect on changelogs:`Request`, `Enhancement`, `Bug`, `Chore`, `Dependecies`, `Help wanted`, `Duplicate`, `release-summary`, `Wontfix`.
+The following labels are used to categorize issues, they don't have any effect on changelogs:`Request`, `Enhancement`, `Bug`, `Chore`, `Dependencies`, `Help wanted`, `Duplicate`, `release-summary`, `Wontfix`.
 
 ## Release
 
-With the release process we can deliver versions of our software to the community. We use sensible automation where it helps to remove tidium. Some steps and decision remain manual, since they require active decision making.
+With the release process we can deliver versions of our software to the community. We use sensible automation where it helps to remove tedium. Some steps and decision remain manual, since they require active decision making.
 
 The final list of changes from the [changelog](#Changelog) informs the version of the release. If at least one change mapping to a major version is included, the major version needs to be incremented. In this case the minor and patch version are not incremented but set to `0`. If there are no change related to a major version, but changes related to a minor version are present the minor version needs to be incremented. The major version stays untouched, the patch version is set to `0` and so on. Determining the version of the release is the responsibility of the person doing the release.
 The determined version of the release is used to create the [hotfix](#hotfix) or [release](#release) branch. For example a major release from the previous version `v2.3.1` will create the `release/v3.0.0` branch.
-Notice the `v` infront of the version. We [tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging) all release in git in the form of `vMAJOR.MINOR.PATCH`. For bindings we prefix the tag with the binding name, so a tag for Wasm would look like `wasm-v1.2.3`. Bindings and the "core" are versioned and released independently.
+Notice the `v` in front of the version. We [tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging) all release in git in the form of `vMAJOR.MINOR.PATCH`. For bindings we prefix the tag with the binding name, so a tag for Wasm would look like `wasm-v1.2.3`. Bindings and the "core" are versioned and released independently.
 
 For bindings and and the "core" we may release `dev` versions. Those versions are meant as a preview of upcoming versions. For example if the current version is 1.2.3 with the tag `v1.2.3` we may release `v1.3.0-dev` which is then superseded by the actual `1.3.0` release.
 
@@ -143,8 +143,8 @@ To create a release follow the following steps:
 #### The changelog in the release PR is missing entries, has unrelated entries, entries in the wrong section.
 Fix the [labels](#PR-Labels) on the related PRs and rerun the workflow with the same parameters. The PR will be updated with the updated changelog.
 #### The release description in the release PR is missing or wrong.
-Fix the issues description, milestone and label according to the [release summaries guide](#Release-Summary)e and rerun the workflow with the same parameters. The PR will be updated with the updated changelog.
+Fix the issues description, milestone and label according to the [release summaries guide](#Release-Summary) and rerun the workflow with the same parameters. The PR will be updated with the updated changelog.
 #### Features / Code is missing from the release.
-Merge the code into the `dev` branch. Rerun the workflow witht he same paramters.
+Merge the code into the `dev` branch. Rerun the workflow with the same parameters.
 #### I want to abort the release for any reason.
 CLose the PR. You can reopen it later.
