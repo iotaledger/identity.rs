@@ -53,6 +53,7 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::NetworkName;
 use crate::tangle::TangleRef;
+use crate::tangle::UPDATE_METHOD_TYPES;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
@@ -234,12 +235,16 @@ impl IotaDocument {
     IotaVerificationMethod::check_validity(method)?;
 
     // Ensure the verification method type is supported
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {}
-      MethodType::MerkleKeyCollection2021 => return Err(Error::InvalidDocumentSigningMethodType),
+    if !Self::is_signing_method_type(method.key_type()) {
+      return Err(Error::InvalidDocumentSigningMethodType);
     }
 
     Ok(())
+  }
+
+  /// Returns whether the given [`MethodType`] can be used to sign document updates.
+  pub fn is_signing_method_type(method_type: MethodType) -> bool {
+    UPDATE_METHOD_TYPES.contains(&method_type)
   }
 
   /// Returns a reference to the underlying [`CoreDocument`].
@@ -456,6 +461,41 @@ impl IotaDocument {
     Q: Into<MethodQuery<'query>>,
   {
     self.document.try_resolve_method_mut(query).map_err(Into::into)
+  }
+
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the provided `query`
+  /// and the verification relationship specified by `scope`.
+  pub fn resolve_method_with_scope<'query, Q>(&self, query: Q, scope: MethodScope) -> Option<&IotaVerificationMethod>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
+    unsafe {
+      self
+        .document
+        .resolve_method_with_scope(query, scope)
+        .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
+    }
+  }
+
+  /// Attempts to resolve the given method query into a method capable of signing a document update.
+  pub fn resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    self
+      .document
+      .resolve_method_with_scope(query, MethodScope::capability_invocation())
+      // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
+      .map(|m| unsafe { IotaVerificationMethod::new_unchecked_ref(m) })
+      .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
+      .and_then(|method| {
+        if Self::is_signing_method_type(method.key_type()) {
+          Ok(method)
+        } else {
+          Err(Error::InvalidDocumentSigningMethodType)
+        }
+      })
   }
 
   // ===========================================================================

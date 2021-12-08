@@ -39,6 +39,10 @@ name = "account_multiple"
 path = "account/multiple_identities.rs"
 
 [[example]]
+name = "account_unchecked"
+path = "account/unchecked.rs"
+
+[[example]]
 name = "create_did"
 path = "low-level-api/create_did.rs"
 

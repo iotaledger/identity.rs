@@ -6,8 +6,10 @@ use crate::account::Account;
 use crate::account::AccountBuilder;
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
+use crate::account::PublishOptions;
 use crate::identity::IdentitySetup;
 use crate::storage::MemStore;
+use crate::Error;
 use crate::Result;
 
 use identity_core::common::Url;
@@ -142,7 +144,7 @@ async fn test_account_autopublish() -> Result<()> {
   assert!(account.chain_state().last_integration_message_id().is_null());
   assert!(account.chain_state().last_diff_message_id().is_null());
 
-  account.publish_updates().await?;
+  account.publish().await?;
 
   let last_int_message_id = *account.chain_state().last_integration_message_id();
 
@@ -187,7 +189,7 @@ async fn test_account_autopublish() -> Result<()> {
     .apply()
     .await?;
 
-  account.publish_updates().await?;
+  account.publish().await?;
 
   // No integration message was published
   assert_eq!(
@@ -224,7 +226,7 @@ async fn test_account_autopublish() -> Result<()> {
     .apply()
     .await?;
 
-  account.publish_updates().await?;
+  account.publish().await?;
 
   // Another int update was published.
   assert_ne!(
@@ -234,6 +236,89 @@ async fn test_account_autopublish() -> Result<()> {
 
   // Diff message id was reset.
   assert!(account.chain_state().last_diff_message_id().is_null());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_publish_options_sign_with() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false).testmode(true);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+
+  let auth_method = "auth-method";
+  let signing_method = "singing-method-2";
+
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment(auth_method)
+    .scope(MethodScope::authentication())
+    .apply()
+    .await?;
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment(signing_method)
+    .scope(MethodScope::capability_invocation())
+    .apply()
+    .await?;
+
+  assert!(matches!(
+    account
+      .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
+      .await
+      .unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+  ));
+
+  assert!(matches!(
+    account
+      .publish_with_options(PublishOptions::default().sign_with(auth_method))
+      .await
+      .unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+  ));
+
+  // TODO: Once implemented, add a merkle key collection method with capability invocation relationship and test for
+  // Error::IotaError(identity_iota::Error::InvalidDocumentSigningMethodType).
+
+  assert!(account
+    .publish_with_options(PublishOptions::default().sign_with(signing_method))
+    .await
+    .is_ok());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_publish_options_force_integration() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false).testmode(true);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+
+  account.publish().await.unwrap();
+
+  let last_int_id = *account.chain_state().last_integration_message_id();
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment("test-auth")
+    .scope(MethodScope::authentication())
+    .apply()
+    .await?;
+
+  account
+    .publish_with_options(PublishOptions::default().force_integration_update(true))
+    .await
+    .unwrap();
+
+  // Ensure update was published on integration chain.
+  assert_ne!(account.chain_state().last_integration_message_id(), &last_int_id);
+  assert_eq!(account.chain_state().last_diff_message_id(), &MessageId::null());
 
   Ok(())
 }
