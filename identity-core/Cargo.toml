@@ -23,7 +23,7 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 strum = { version = "0.21", features = ["derive"] }
 subtle = { version = "2.4", default-features = false }
 thiserror = { version = "1.0", default-features = false }
-time = { version = "0.3.5", features = ["std", "serde", "parsing", "formatting"] }
+time = { version = "0.3.5", default-features = false, features = ["std", "serde", "parsing", "formatting"] }
 typenum = { version = "1.13", default-features = false }
 url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.4", default-features = false }
