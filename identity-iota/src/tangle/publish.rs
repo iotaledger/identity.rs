@@ -2,13 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_did::verification::MethodRef;
-use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::document::IotaDocument;
-
-// Method types allowed to sign a DID document update.
-pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
 #[derive(Clone, Copy, Debug)]

@@ -53,7 +53,6 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::NetworkName;
 use crate::tangle::TangleRef;
-use crate::tangle::UPDATE_METHOD_TYPES;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
@@ -76,6 +75,8 @@ impl TryMethod for IotaDocument {
 }
 
 impl IotaDocument {
+  // Method types allowed to sign a DID document update.
+  pub const UPDATE_METHOD_TYPES: &'static [MethodType] = &[MethodType::Ed25519VerificationKey2018];
   pub const DEFAULT_METHOD_FRAGMENT: &'static str = "sign-0";
 
   /// Creates a new DID Document from the given [`KeyPair`].
@@ -244,7 +245,7 @@ impl IotaDocument {
 
   /// Returns whether the given [`MethodType`] can be used to sign document updates.
   pub fn is_signing_method_type(method_type: MethodType) -> bool {
-    UPDATE_METHOD_TYPES.contains(&method_type)
+    Self::UPDATE_METHOD_TYPES.contains(&method_type)
   }
 
   /// Returns a reference to the underlying [`CoreDocument`].
