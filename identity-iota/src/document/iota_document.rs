@@ -153,7 +153,11 @@ impl IotaDocument {
   ///
   /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_self`].
   pub fn from_verification_method(method: IotaVerificationMethod) -> Result<Self> {
-    Self::check_signing_method(&method)?;
+    // Ensure the verification method key type is allowed to sign document updates.
+    if !Self::is_signing_method_type(method.key_type()) {
+      return Err(Error::InvalidDocumentSigningMethodType);
+    }
+
     CoreDocument::builder(Default::default())
       .id(method.id_core().did().clone())
       .capability_invocation(MethodRef::Embed(method.into()))
@@ -227,19 +231,6 @@ impl IotaDocument {
         MethodRef::Embed(method) => IotaVerificationMethod::check_validity(method)?,
         MethodRef::Refer(did_url) => IotaDID::check_validity(did_url.did())?,
       }
-    }
-
-    Ok(())
-  }
-
-  /// Validates whether the verification method is a valid [`IotaVerificationMethod`] and that
-  /// its key type is allowed to sign document updates.
-  fn check_signing_method<T>(method: &VerificationMethod<T>) -> Result<()> {
-    IotaVerificationMethod::check_validity(method)?;
-
-    // Ensure the verification method type is supported
-    if !Self::is_signing_method_type(method.key_type()) {
-      return Err(Error::InvalidDocumentSigningMethodType);
     }
 
     Ok(())
@@ -699,7 +690,7 @@ impl IotaDocument {
     let mut diff: DiffMessage = DiffMessage::new(self, other, message_id)?;
 
     // Ensure the method is allowed to sign document updates.
-    let method_query: MethodQuery = method_query.into();
+    let method_query: MethodQuery<'_> = method_query.into();
     let _ = self.try_resolve_signing_method(method_query.clone())?;
 
     self.sign_data(&mut diff, private_key, method_query)?;
@@ -1532,7 +1523,9 @@ mod tests {
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
     let signing_method: IotaVerificationMethod = document.default_signing_method().unwrap().clone();
-    assert!(IotaDocument::check_signing_method(&signing_method).is_ok());
+
+    // Ensure signing method has an appropriate type.
+    assert!(IotaDocument::is_signing_method_type(signing_method.key_type()));
 
     // Ensure signing method has a capability invocation relationship.
     let capability_invocation: IotaVerificationMethod = IotaVerificationMethod::try_from_core(
@@ -1544,6 +1537,12 @@ mod tests {
     )
     .unwrap();
     assert_eq!(&signing_method, &capability_invocation);
+
+    // Ensure try_resolve_signing_method resolves it.
+    assert_eq!(
+      &signing_method,
+      document.try_resolve_signing_method(signing_method.id()).unwrap()
+    );
 
     // Adding a new capability invocation method still returns the original method.
     let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
