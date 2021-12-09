@@ -6,12 +6,12 @@ use identity_iota::did::IotaDID;
 use identity_iota::document::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
+use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
-use identity_iota::tangle::TangleRef;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
@@ -144,7 +144,7 @@ impl Account {
 
   /// Returns the did of the managed identity.
   pub fn did(&self) -> &IotaDID {
-    self.document().did()
+    self.document().id()
   }
 
   /// Return the latest state of the identity.
@@ -179,7 +179,7 @@ impl Account {
   // ===========================================================================
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
-  pub async fn resolve_identity(&self) -> Result<IotaDocument> {
+  pub async fn resolve_identity(&self) -> Result<ResolvedIotaDocument> {
     self.client_map.resolve(self.did()).await.map_err(Into::into)
   }
 
@@ -374,7 +374,7 @@ impl Account {
     old_state: Option<&IdentityState>,
     signing_method_query: &Option<String>,
   ) -> Result<()> {
-    log::debug!("[publish_integration_change] publishing {:?}", self.document().did());
+    log::debug!("[publish_integration_change] publishing {:?}", self.document().id());
 
     let new_state: &IdentityState = self.state();
 
@@ -413,7 +413,7 @@ impl Account {
     old_state: &IdentityState,
     signing_method_query: &Option<String>,
   ) -> Result<()> {
-    log::debug!("[publish_diff_change] publishing {:?}", self.document().did());
+    log::debug!("[publish_diff_change] publishing {:?}", self.document().id());
 
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();

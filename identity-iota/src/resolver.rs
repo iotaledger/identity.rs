@@ -11,7 +11,7 @@ use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 
 use crate::did::IotaDID;
-use crate::document::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::tangle::Client;
 use crate::tangle::ClientMap;
 use crate::tangle::TangleResolve;
@@ -23,18 +23,18 @@ impl ResolverMethod for Client {
   }
 
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let document: IotaDocument = IotaDID::try_from_borrowed(did)
+    let resolved: ResolvedIotaDocument = IotaDID::try_from_borrowed(did)
       .map_err(|_| Error::MissingResolutionDID)
       .map(|did| self.resolve(did))?
       .await
       .map_err(|_| Error::MissingResolutionDocument)?;
 
     let mut metadata: DocumentMetadata = DocumentMetadata::new();
-    metadata.created = Some(document.metadata.created);
-    metadata.updated = Some(document.metadata.updated);
+    metadata.created = Some(resolved.document.metadata.created);
+    metadata.updated = Some(resolved.document.metadata.updated);
 
     Ok(Some(MetaDocument {
-      data: document.into(),
+      data: resolved.document.into(),
       meta: metadata,
     }))
   }

@@ -16,7 +16,6 @@ use identity::iota::ClientMap;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod create_did;
@@ -31,7 +30,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   // Add a new VerificationMethod with a new keypair
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(document.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::from_did(document.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
 
   // Add a new Service
@@ -62,7 +61,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
     "DID Document Transaction > {}",
     explorer.message_url(update_receipt.message_id())?
   );
-  println!("Explore the DID Document > {}", explorer.resolver_url(document.did())?);
+  println!("Explore the DID Document > {}", explorer.resolver_url(document.id())?);
 
   Ok((document, keypair, new_key, receipt, update_receipt))
 }

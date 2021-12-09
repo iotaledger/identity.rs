@@ -49,7 +49,6 @@ use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::NetworkName;
-use crate::tangle::TangleRef;
 
 // TODO: remove
 pub type IotaDocumentSigner<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Object, Object, Object>;
@@ -62,9 +61,6 @@ pub type IotaDocumentVerifier<'a> = DocumentVerifier<'a, Object, Object, Object>
 pub struct IotaDocument {
   #[serde(deserialize_with = "deserialize_iota_core_document")]
   pub(in crate::document) document: CoreDocument,
-  // TODO: remove message_id
-  #[serde(skip, default = "MessageId::null")]
-  message_id: MessageId,
   pub metadata: IotaDocumentMetadata,
 }
 
@@ -184,11 +180,7 @@ impl IotaDocument {
   pub fn try_from_core(document: CoreDocument, metadata: IotaDocumentMetadata) -> Result<Self> {
     IotaDocument::validate_core_document(&document)?;
 
-    Ok(Self {
-      document,
-      message_id: MessageId::null(),
-      metadata,
-    })
+    Ok(Self { document, metadata })
   }
 
   /// Performs validation that a [`CoreDocument`] adheres to the IOTA spec.
@@ -543,7 +535,7 @@ impl IotaDocument {
   /// the DID tag.
   pub fn verify_root_document(document: &IotaDocument) -> Result<()> {
     // The previous message id must be null.
-    if !document.previous_message_id().is_null() {
+    if !document.metadata.previous_message_id.is_null() {
       return Err(Error::InvalidRootDocument);
     }
 
@@ -676,7 +668,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature operation fails.
-  pub fn merge(&mut self, diff: &DiffMessage) -> Result<()> {
+  pub fn merge_diff(&mut self, diff: &DiffMessage) -> Result<()> {
     self.verify_diff(diff)?;
 
     *self = diff.merge(self)?;
@@ -696,7 +688,7 @@ impl IotaDocument {
   /// For an [`IotaDocument`] `doc` with `"did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"`,
   /// `doc.integration_index() == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"`
   pub fn integration_index(&self) -> &str {
-    self.did().tag()
+    self.id().tag()
   }
 
   /// Returns the Tangle index of the DID diff chain. This should only be called on messages
@@ -741,29 +733,6 @@ impl TrySignatureMut for IotaDocument {
 impl SetSignature for IotaDocument {
   fn set_signature(&mut self, signature: Signature) {
     self.metadata.set_proof(signature)
-  }
-}
-
-// TODO: move to ResolvedTangleDocument
-impl TangleRef for IotaDocument {
-  fn did(&self) -> &IotaDID {
-    self.id()
-  }
-
-  fn message_id(&self) -> &MessageId {
-    &self.message_id
-  }
-
-  fn set_message_id(&mut self, message_id: MessageId) {
-    self.message_id = message_id;
-  }
-
-  fn previous_message_id(&self) -> &MessageId {
-    &self.metadata.previous_message_id
-  }
-
-  fn set_previous_message_id(&mut self, message_id: MessageId) {
-    self.metadata.previous_message_id = message_id;
   }
 }
 
@@ -1250,7 +1219,6 @@ mod tests {
         .core_document()
         .try_resolve_method_with_scope(method_fragment.as_str(), scope)
         .is_ok());
-      doc1.set_message_id(MessageId::new([3_u8; 32]));
 
       // Add a service to an updated document.
       let mut doc2: IotaDocument = doc1.clone();
@@ -1265,7 +1233,12 @@ mod tests {
       doc2.insert_service(service);
 
       // Try generate and sign a diff using the specified method.
-      let diff_result = doc1.diff(&doc2, *doc1.message_id(), key2.private(), method_fragment.as_str());
+      let diff_result = doc1.diff(
+        &doc2,
+        MessageId::new([3_u8; 32]),
+        key2.private(),
+        method_fragment.as_str(),
+      );
       if scope == MethodScope::capability_invocation() {
         let diff = diff_result.unwrap();
         assert!(doc1.verify_data(&diff).is_ok());

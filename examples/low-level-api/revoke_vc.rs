@@ -22,7 +22,6 @@ use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod common;
@@ -54,7 +53,7 @@ async fn main() -> Result<()> {
   );
   println!(
     "Explore the Issuer DID Document > {}",
-    explorer.resolver_url(issuer_doc.did())?
+    explorer.resolver_url(issuer_doc.id())?
   );
 
   // Check the verifiable credential
@@ -114,7 +113,7 @@ pub async fn add_new_key(
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(updated_doc.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::from_did(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc
     .insert_method(method, MethodScope::VerificationMethod)
     .is_ok());
