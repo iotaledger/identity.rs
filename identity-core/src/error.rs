@@ -47,7 +47,7 @@ pub enum Error {
   InvalidUrl(#[from] url::ParseError),
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
-  InvalidTimestamp(#[from] chrono::ParseError),
+  InvalidTimestamp(#[from] time::error::Error),
   /// Raised by a validation attempt against an invalid DID proof.
   #[error("Invalid Proof Value: {0}")]
   InvalidProofValue(&'static str),
