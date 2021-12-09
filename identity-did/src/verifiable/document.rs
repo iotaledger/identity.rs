@@ -33,11 +33,9 @@ use crate::document::CoreDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verifiable::Revocation;
-use crate::verifiable::VerifiableProperties;
 use crate::verification::MethodQuery;
 use crate::verification::MethodScope;
 use crate::verification::MethodType;
-use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
 

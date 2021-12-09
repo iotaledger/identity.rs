@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::convert::TryInto;
 use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
@@ -15,7 +14,6 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::convert::SerdeInto;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::KeyPair;
@@ -719,6 +717,12 @@ impl IotaDocument {
 
 impl<'a, 'b, 'c> IotaDocument {}
 
+impl From<IotaDocument> for CoreDocument {
+  fn from(document: IotaDocument) -> Self {
+    document.document
+  }
+}
+
 impl Display for IotaDocument {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     self.fmt_json(f)
@@ -768,14 +772,11 @@ impl TangleRef for IotaDocument {
 
 #[cfg(test)]
 mod tests {
-  use std::collections::BTreeMap;
-  use std::collections::HashMap;
   use std::str::FromStr;
 
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
-  use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
@@ -1036,7 +1037,7 @@ mod tests {
     compare_document(&document);
 
     // VALID try_from_core()
-    let document: IotaDocument = IotaDocument::try_from_core(document.serde_into().unwrap(), valid_metadata()).unwrap();
+    let document: IotaDocument = IotaDocument::try_from_core(document.into(), valid_metadata()).unwrap();
     compare_document(&document);
   }
 

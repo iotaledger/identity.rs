@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_core::convert::SerdeInto;
 use identity_did::did::CoreDID;
 use identity_did::error::Error;
 use identity_did::error::Result;
@@ -30,13 +29,13 @@ impl ResolverMethod for Client {
       .await
       .map_err(|_| Error::MissingResolutionDocument)?;
 
-    let mut meta: DocumentMetadata = DocumentMetadata::new();
-    meta.created = Some(document.metadata.created);
-    meta.updated = Some(document.metadata.updated);
+    let mut metadata: DocumentMetadata = DocumentMetadata::new();
+    metadata.created = Some(document.metadata.created);
+    metadata.updated = Some(document.metadata.updated);
 
     Ok(Some(MetaDocument {
-      data: document.serde_into()?,
-      meta,
+      data: document.into(),
+      meta: metadata,
     }))
   }
 }

@@ -6,7 +6,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::convert::FromJson;
-use identity_core::convert::SerdeInto;
 use identity_core::convert::ToJson;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
@@ -49,8 +48,8 @@ impl DiffMessage {
   /// set a proof, use the `set_signature()` method.
   pub fn new(current: &IotaDocument, updated: &IotaDocument, previous_message_id: MessageId) -> Result<Self> {
     // TODO: remove serde_into?
-    let a: CoreDocument = current.serde_into()?;
-    let b: CoreDocument = updated.serde_into()?;
+    let a: &CoreDocument = current.core_document();
+    let b: &CoreDocument = updated.core_document();
     let diff: String = Diff::diff(&a, &b)?.to_json()?;
 
     Ok(Self {
@@ -86,9 +85,10 @@ impl DiffMessage {
   /// with the given Document.
   pub fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {
     let data: DiffDocument = DiffDocument::from_json(&self.diff)?;
-    let core: CoreDocument = document.serde_into()?;
-    let this: CoreDocument = Diff::merge(&core, data)?;
+    let core: &CoreDocument = document.core_document();
+    let this: CoreDocument = Diff::merge(core, data)?;
 
+    // TODO
     Ok(this.serde_into()?)
   }
 }
