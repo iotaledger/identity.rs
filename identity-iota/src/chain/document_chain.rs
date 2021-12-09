@@ -172,3 +172,129 @@ impl Display for DocumentChain {
     self.fmt_json(f)
   }
 }
+
+#[cfg(test)]
+mod test {
+  use identity_core::common::Timestamp;
+  use identity_core::crypto::KeyPair;
+  use identity_did::did::CoreDIDUrl;
+  use identity_did::did::DID;
+  use identity_did::verification::MethodBuilder;
+  use identity_did::verification::MethodData;
+  use identity_did::verification::MethodRef;
+  use identity_did::verification::MethodType;
+
+  use crate::document::IotaDocument;
+
+  use super::*;
+
+  #[test]
+  fn test_document_chain() {
+    let mut chain: DocumentChain;
+    let mut keys: Vec<KeyPair> = Vec::new();
+
+    // =========================================================================
+    // Create Initial Document
+    // =========================================================================
+    {
+      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+      document
+        .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+        .unwrap();
+      let mut resolved: ResolvedIotaDocument = ResolvedIotaDocument::from(document);
+      resolved.set_message_id(MessageId::new([1; 32]));
+      chain = DocumentChain::new(IntegrationChain::new(resolved).unwrap());
+      keys.push(keypair);
+
+      assert_eq!(
+        chain.current().document.metadata.proof().unwrap().verification_method(),
+        format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
+      );
+      assert_eq!(chain.current().diff_message_id, MessageId::null());
+      assert_eq!(chain.current().integration_message_id, MessageId::from([1; 32]));
+    }
+
+    // =========================================================================
+    // Push Integration Chain Update
+    // =========================================================================
+    {
+      let new_integration_message_id = MessageId::new([2; 32]);
+      let mut new: ResolvedIotaDocument = chain.current().clone();
+      new.integration_message_id = new_integration_message_id;
+
+      // Replace the capability invocation signing key (one step key rotation).
+      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let signing_method: MethodRef = MethodBuilder::default()
+        .id(CoreDIDUrl::from(chain.id().to_url().join("#key-2").unwrap()))
+        .controller(chain.id().clone().into())
+        .key_type(MethodType::Ed25519VerificationKey2018)
+        .key_data(MethodData::new_multibase(keypair.public()))
+        .build()
+        .map(Into::into)
+        .unwrap();
+
+      unsafe {
+        new.document.core_document_mut().capability_invocation_mut().clear();
+        new
+          .document
+          .core_document_mut()
+          .capability_invocation_mut()
+          .append(signing_method);
+      }
+
+      new.document.metadata.updated = Timestamp::now_utc();
+      new.document.metadata.previous_message_id = *chain.integration_message_id();
+
+      // Sign the update using the old document.
+      assert!(chain
+        .current()
+        .document
+        .sign_data(
+          &mut new.document,
+          keys[0].private(),
+          chain.current().document.default_signing_method().unwrap().id(),
+        )
+        .is_ok());
+      assert_eq!(
+        chain.current().document.metadata.proof().unwrap().verification_method(),
+        format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
+      );
+
+      keys.push(keypair);
+      assert!(chain.try_push_integration(new).is_ok());
+
+      assert_eq!(chain.current().diff_message_id, MessageId::null());
+      assert_eq!(chain.current().integration_message_id, new_integration_message_id);
+    }
+
+    // =========================================================================
+    // Push Diff Chain Update
+    // =========================================================================
+    {
+      let new: ResolvedIotaDocument = {
+        let mut this: ResolvedIotaDocument = chain.current().clone();
+        this.document.properties_mut().insert("foo".into(), 123.into());
+        this.document.properties_mut().insert("bar".into(), 456.into());
+        this.document.metadata.updated = Timestamp::now_utc();
+        this
+      };
+
+      // Sign using the new key added in the previous integration chain update.
+      let message_id: MessageId = *chain.diff_message_id();
+      let mut diff: DiffMessage = chain
+        .current()
+        .document
+        .diff(&new.document, message_id, keys[1].private(), "#key-2")
+        .unwrap();
+
+      let new_diff_message_id: MessageId = MessageId::from([3; 32]);
+      diff.set_message_id(new_diff_message_id);
+      assert!(chain.try_push_diff(diff).is_ok());
+
+      // Ensure diff_message_id is updated on ResolvedIotaDocument.
+      assert_eq!(chain.current().diff_message_id, new_diff_message_id);
+      assert_eq!(chain.current().integration_message_id, message_id);
+    }
+  }
+}

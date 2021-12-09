@@ -18,7 +18,7 @@ pub trait TangleRef {
   fn set_previous_message_id(&mut self, message_id: MessageId);
 }
 
-// TODO: remove TangleResolve with ClientMap
+// TODO: remove TangleResolve with ClientMap refactor?
 #[async_trait::async_trait(?Send)]
 pub trait TangleResolve {
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
