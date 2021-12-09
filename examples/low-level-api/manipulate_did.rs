@@ -45,8 +45,8 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   // Add the messageId of the previous message in the chain.
   // This is REQUIRED in order for the messages to form a chain.
   // Skipping / forgetting this will render the publication useless.
-  document.set_previous_message_id(*receipt.message_id());
-  document.set_updated(Timestamp::now_utc());
+  document.metadata.previous_message_id = *receipt.message_id();
+  document.metadata.updated = Timestamp::now_utc();
 
   // Sign the DID Document with the original private key.
   document.sign_self(keypair.private(), &document.default_signing_method()?.id())?;

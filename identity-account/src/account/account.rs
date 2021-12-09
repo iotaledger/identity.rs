@@ -380,7 +380,7 @@ impl Account {
 
     let mut new_doc: IotaDocument = new_state.document().to_owned();
 
-    new_doc.set_previous_message_id(*self.chain_state().last_integration_message_id());
+    new_doc.metadata.previous_message_id = *self.chain_state().last_integration_message_id();
 
     self
       .sign_self(

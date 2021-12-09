@@ -8,6 +8,7 @@ use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_core::diff::Diff;
 
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
@@ -53,6 +54,37 @@ impl<T> VerifiableProperties<T> {
   /// Sets the value of the [`proof`][`Signature`].
   pub fn set_proof(&mut self, signature: Signature) {
     self.proof = Some(signature);
+  }
+}
+
+/// NOTE: excludes the `proof` Signature from the diff to save space on the Tangle and because
+/// a merged signature will be invalid in general.
+impl<T> Diff for VerifiableProperties<T>
+where
+  T: Diff,
+{
+  type Type = <T as Diff>::Type;
+
+  fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
+    self.properties.diff(&other.properties)
+  }
+
+  fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
+    let mut this: VerifiableProperties<T> = self.clone();
+    this.properties = this.properties.merge(diff)?;
+    Ok(this)
+  }
+
+  fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
+    let properties: T = T::from_diff(diff)?;
+    Ok(VerifiableProperties {
+      properties,
+      proof: None, // proof intentionally excluded
+    })
+  }
+
+  fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
+    self.properties.into_diff()
   }
 }
 

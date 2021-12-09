@@ -83,8 +83,8 @@ pub async fn add_new_key(
     .is_ok());
 
   // Prepare the update
-  updated_doc.set_previous_message_id(*receipt.message_id());
-  updated_doc.set_updated(Timestamp::now_utc());
+  updated_doc.metadata.previous_message_id = *receipt.message_id();
+  updated_doc.metadata.updated = Timestamp::now_utc();
   updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle

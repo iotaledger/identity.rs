@@ -11,7 +11,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
-use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
@@ -31,7 +30,6 @@ use identity_did::service::Service;
 use identity_did::utils::OrderedSet;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
-use identity_did::verifiable::VerifiableProperties;
 use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
@@ -63,9 +61,10 @@ pub type IotaDocumentVerifier<'a> = DocumentVerifier<'a, Object, Object, Object>
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IotaDocument {
   #[serde(deserialize_with = "deserialize_iota_core_document")]
-  document: CoreDocument,
+  pub(in crate::document) document: CoreDocument,
+  // TODO: remove message_id
+  #[serde(skip, default = "MessageId::null")]
   message_id: MessageId,
-  // TODO: remove
   pub metadata: IotaDocumentMetadata,
 }
 
@@ -297,7 +296,7 @@ impl IotaDocument {
 
   /// Returns a reference to the custom DID Document properties.
   pub fn properties(&self) -> &Object {
-    &self.document.properties()
+    self.document.properties()
   }
 
   /// Returns a mutable reference to the custom DID Document properties.
@@ -511,9 +510,7 @@ impl IotaDocument {
   pub fn verify_document(signed: &IotaDocument, signer: &IotaDocument) -> Result<()> {
     // Ensure signing key has a capability invocation verification relationship.
     let signature: &Signature = signed.try_signature()?;
-    let method: &VerificationMethod<_> = signer
-      .core_document()
-      .try_resolve_method_with_scope(signature, MethodScope::capability_invocation())?;
+    let method: &IotaVerificationMethod = signer.try_resolve_signing_method(signature)?;
 
     // Verify signature.
     let public: PublicKey = method.key_data().try_decode()?.into();
@@ -552,7 +549,7 @@ impl IotaDocument {
 
     // Validate the hash of the public key matches the DID tag.
     let signature: &Signature = document.try_signature()?;
-    let method: &VerificationMethod<_> = document.core_document().try_resolve_method(signature)?;
+    let method: &IotaVerificationMethod = document.try_resolve_method(signature)?;
     let public: PublicKey = method.key_data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
       return Err(Error::InvalidRootDocument);
@@ -777,6 +774,7 @@ mod tests {
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
+  use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
@@ -784,6 +782,7 @@ mod tests {
   use identity_core::utils::encode_b58;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
+  use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
 
   use crate::tangle::Network;
@@ -1024,8 +1023,6 @@ mod tests {
 
   #[test]
   fn test_new() {
-    let metadata: IotaDocumentMetadata = valid_metadata();
-
     // VALID new()
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
@@ -1369,7 +1366,7 @@ mod tests {
     // INVALID - root document previousMessageId not null.
     {
       let (mut document, keypair) = generate_root_document();
-      document.set_previous_message_id(MessageId::new([3u8; MESSAGE_ID_LENGTH]));
+      document.metadata.previous_message_id = MessageId::new([3u8; MESSAGE_ID_LENGTH]);
       document
         .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
         .unwrap();

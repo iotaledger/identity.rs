@@ -36,8 +36,13 @@ use crate::verifiable::Revocation;
 use crate::verification::MethodQuery;
 use crate::verification::MethodScope;
 use crate::verification::MethodType;
+use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
+
+impl<T, U, V> TryMethod for CoreDocument<T, U, V> {
+  const TYPE: MethodUriType = MethodUriType::Relative;
+}
 
 // =============================================================================
 // Signature Extensions

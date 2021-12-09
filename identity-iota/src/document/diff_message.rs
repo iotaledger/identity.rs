@@ -12,12 +12,11 @@ use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
-use identity_did::diff::DiffDocument;
-use identity_did::document::CoreDocument;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 
 use crate::did::IotaDID;
+use crate::document::DiffIotaDocument;
 use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;
@@ -47,10 +46,7 @@ impl DiffMessage {
   /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
   /// set a proof, use the `set_signature()` method.
   pub fn new(current: &IotaDocument, updated: &IotaDocument, previous_message_id: MessageId) -> Result<Self> {
-    // TODO: remove serde_into?
-    let a: &CoreDocument = current.core_document();
-    let b: &CoreDocument = updated.core_document();
-    let diff: String = Diff::diff(&a, &b)?.to_json()?;
+    let diff: String = <IotaDocument as Diff>::diff(current, updated)?.to_json()?;
 
     Ok(Self {
       did: current.id().clone(),
@@ -84,12 +80,9 @@ impl DiffMessage {
   /// Returns a new DID Document which is the result of merging `self`
   /// with the given Document.
   pub fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {
-    let data: DiffDocument = DiffDocument::from_json(&self.diff)?;
-    let core: &CoreDocument = document.core_document();
-    let this: CoreDocument = Diff::merge(core, data)?;
-
-    // TODO
-    Ok(this.serde_into()?)
+    let diff: DiffIotaDocument = DiffIotaDocument::from_json(&self.diff)?;
+    let merged: IotaDocument = Diff::merge(document, diff)?;
+    Ok(merged)
   }
 }
 
