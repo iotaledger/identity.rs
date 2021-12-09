@@ -3,6 +3,7 @@
 
 use core::any::Any;
 use identity_core::common::BitSet;
+use identity_core::common::Object;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleDigestTag;
@@ -66,7 +67,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, 'proof, T, U, V> {
+pub struct DocumentSigner<'base, 'query, 'proof, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
   private: &'base PrivateKey,
   method: Option<MethodQuery<'query>>,
@@ -171,7 +172,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 // Document Verifier - Simplifying Digital Signature Verification Since 2021
 // =============================================================================
 
-pub struct DocumentVerifier<'base, T, U, V> {
+pub struct DocumentVerifier<'base, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
 }
 

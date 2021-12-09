@@ -50,10 +50,6 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::NetworkName;
 
-// TODO: remove
-pub type IotaDocumentSigner<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Object, Object, Object>;
-pub type IotaDocumentVerifier<'a> = DocumentVerifier<'a, Object, Object, Object>;
-
 /// A DID Document adhering to the IOTA DID method specification.
 ///
 /// This is a thin wrapper around [`CoreDocument`].
@@ -483,9 +479,9 @@ impl IotaDocument {
     Ok(())
   }
 
-  /// Creates a new [`IotaDocumentSigner`] that can be used to create digital
+  /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> IotaDocumentSigner<'base, 'base, 'base> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, 'base, 'base> {
     self.document.signer(private_key)
   }
 
@@ -551,9 +547,9 @@ impl IotaDocument {
     document.verify_self_signed()
   }
 
-  /// Creates a new [`IotaDocumentVerifier`] that can be used to verify signatures
+  /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
   /// created with this DID Document.
-  pub fn verifier(&self) -> IotaDocumentVerifier<'_> {
+  pub fn verifier(&self) -> DocumentVerifier<'_> {
     self.document.verifier()
   }
 

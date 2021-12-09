@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use self::iota_document::IotaDocument;
-pub use self::iota_document::IotaDocumentSigner;
-pub use self::iota_document::IotaDocumentVerifier;
 pub use self::iota_document_metadata::IotaDocumentMetadata;
 pub use self::iota_verification_method::IotaVerificationMethod;
 pub use self::resolved_iota_document::ResolvedIotaDocument;
