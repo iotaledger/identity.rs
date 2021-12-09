@@ -31,8 +31,8 @@ impl ResolverMethod for Client {
       .map_err(|_| Error::MissingResolutionDocument)?;
 
     let mut meta: DocumentMetadata = DocumentMetadata::new();
-    meta.created = Some(document.created());
-    meta.updated = Some(document.updated());
+    meta.created = Some(document.metadata.created);
+    meta.updated = Some(document.metadata.updated);
 
     Ok(Some(MetaDocument {
       data: document.serde_into()?,

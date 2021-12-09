@@ -48,6 +48,7 @@ impl DiffMessage {
   /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
   /// set a proof, use the `set_signature()` method.
   pub fn new(current: &IotaDocument, updated: &IotaDocument, previous_message_id: MessageId) -> Result<Self> {
+    // TODO: remove serde_into?
     let a: CoreDocument = current.serde_into()?;
     let b: CoreDocument = updated.serde_into()?;
     let diff: String = Diff::diff(&a, &b)?.to_json()?;

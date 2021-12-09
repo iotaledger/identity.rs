@@ -247,7 +247,7 @@ mod test {
     }
 
     assert_eq!(
-      chain.current().proof().unwrap().verification_method(),
+      chain.current().metadata.proof().unwrap().verification_method(),
       format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
     );
 
@@ -269,12 +269,15 @@ mod test {
         .unwrap();
 
       unsafe {
-        new.as_document_mut().capability_invocation_mut().clear();
-        new.as_document_mut().capability_invocation_mut().append(signing_method);
+        new.core_document_mut().capability_invocation_mut().clear();
+        new
+          .core_document_mut()
+          .capability_invocation_mut()
+          .append(signing_method);
       }
 
-      new.set_updated(Timestamp::now_utc());
-      new.set_previous_message_id(*chain.integration_message_id());
+      new.metadata.updated = Timestamp::now_utc();
+      new.metadata.previous_message_id = *chain.integration_message_id();
 
       // Sign the update using the old document.
       assert!(chain
@@ -286,7 +289,7 @@ mod test {
         )
         .is_ok());
       assert_eq!(
-        chain.current().proof().unwrap().verification_method(),
+        chain.current().metadata.proof().unwrap().verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
 
@@ -302,7 +305,7 @@ mod test {
         let mut this: IotaDocument = chain.current().clone();
         this.properties_mut().insert("foo".into(), 123.into());
         this.properties_mut().insert("bar".into(), 456.into());
-        this.set_updated(Timestamp::now_utc());
+        this.metadata.updated = Timestamp::now_utc();
         this
       };
 

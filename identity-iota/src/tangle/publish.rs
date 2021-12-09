@@ -36,12 +36,12 @@ impl PublishType {
 
   fn extract_signing_keys(document: &IotaDocument) -> Vec<Option<&VerificationMethod>> {
     document
-      .as_document()
+      .core_document()
       .capability_invocation()
       .iter()
       .map(|method_ref| match method_ref {
         MethodRef::Embed(method) => Some(method),
-        MethodRef::Refer(did_url) => document.as_document().resolve_method(did_url),
+        MethodRef::Refer(did_url) => document.core_document().resolve_method(did_url),
       })
       .filter(|method| {
         if let Some(method) = method {
@@ -154,7 +154,7 @@ mod test {
 
     assert!(unsafe {
       new_doc
-        .as_document_mut()
+        .core_document_mut()
         .verification_method_mut()
         .update(method_updated.into())
     });
@@ -245,7 +245,7 @@ mod test {
 
     assert!(unsafe {
       new_doc
-        .as_document_mut()
+        .core_document_mut()
         .capability_invocation_mut()
         .update(method_new.into())
     });

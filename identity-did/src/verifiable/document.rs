@@ -24,7 +24,6 @@ use identity_core::crypto::Sign;
 use identity_core::crypto::Signature;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
 use identity_core::error::Error as CoreError;
@@ -41,56 +40,6 @@ use crate::verification::MethodType;
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
-
-// =============================================================================
-// Generic Crypto Extensions
-// =============================================================================
-
-impl<T, U, V> CoreDocument<T, U, V> {
-  pub fn into_verifiable(self) -> CoreDocument<VerifiableProperties<T>, U, V> {
-    self.map(VerifiableProperties::new)
-  }
-
-  pub fn into_verifiable_with_proof(self, proof: Signature) -> CoreDocument<VerifiableProperties<T>, U, V> {
-    self.map(|old| VerifiableProperties::with_proof(old, proof))
-  }
-}
-
-impl<T, U, V> CoreDocument<VerifiableProperties<T>, U, V> {
-  pub fn proof(&self) -> Option<&Signature> {
-    self.properties().proof()
-  }
-
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
-    self.properties_mut().proof_mut()
-  }
-
-  pub fn set_proof(&mut self, signature: Signature) {
-    self.properties_mut().set_proof(signature);
-  }
-}
-
-impl<T, U, V> TrySignature for CoreDocument<VerifiableProperties<T>, U, V> {
-  fn signature(&self) -> Option<&Signature> {
-    self.proof()
-  }
-}
-
-impl<T, U, V> TrySignatureMut for CoreDocument<VerifiableProperties<T>, U, V> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.proof_mut()
-  }
-}
-
-impl<T, U, V> SetSignature for CoreDocument<VerifiableProperties<T>, U, V> {
-  fn set_signature(&mut self, signature: Signature) {
-    self.set_proof(signature)
-  }
-}
-
-impl<T, U, V> TryMethod for CoreDocument<VerifiableProperties<T>, U, V> {
-  const TYPE: MethodUriType = MethodUriType::Relative;
-}
 
 // =============================================================================
 // Signature Extensions

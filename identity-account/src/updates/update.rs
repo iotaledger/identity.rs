@@ -178,7 +178,7 @@ impl Update {
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent deleting the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().as_document().capability_invocation();
+        let capability_invocation_set = state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &core_method_url);
@@ -215,7 +215,7 @@ impl Update {
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent detaching the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().as_document().capability_invocation();
+        let capability_invocation_set = state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &core_method_url);

@@ -48,8 +48,8 @@ async fn test_create_identity() -> Result<()> {
   let state: &IdentityState = account.state();
 
   assert!(state.document().resolve_method(&expected_fragment).is_some());
-  assert_eq!(state.document().as_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().as_document().methods().count(), 1);
+  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
+  assert_eq!(state.document().core_document().methods().count(), 1);
 
   let location = state
     .method_location(MethodType::Ed25519VerificationKey2018, expected_fragment.clone())
@@ -174,8 +174,8 @@ async fn test_create_method() -> Result<()> {
   );
 
   // Still only the default relationship.
-  assert_eq!(state.document().as_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().as_document().methods().count(), 2);
+  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
+  assert_eq!(state.document().core_document().methods().count(), 2);
 
   let location = state.method_location(method_type, fragment.clone()).unwrap();
 
@@ -225,11 +225,11 @@ async fn test_create_scoped_method() -> Result<()> {
 
     let state: &IdentityState = account.state();
 
-    assert_eq!(state.document().as_document().verification_relationships().count(), 2);
+    assert_eq!(state.document().core_document().verification_relationships().count(), 2);
 
-    assert_eq!(state.document().as_document().methods().count(), 2);
+    assert_eq!(state.document().core_document().methods().count(), 2);
 
-    let core_doc = state.document().as_document();
+    let core_doc = state.document().core_document();
 
     let contains = match scope {
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
@@ -366,7 +366,7 @@ async fn test_attach_method_relationship() -> Result<()> {
     account
       .state()
       .document()
-      .as_document()
+      .core_document()
       .verification_relationships()
       .count(),
     1
@@ -397,10 +397,13 @@ async fn test_attach_method_relationship() -> Result<()> {
   ));
 
   // No relationships were created.
-  assert_eq!(account.document().as_document().verification_relationships().count(), 1);
+  assert_eq!(
+    account.document().core_document().verification_relationships().count(),
+    1
+  );
 
-  assert_eq!(account.document().as_document().assertion_method().iter().count(), 0);
-  assert_eq!(account.document().as_document().key_agreement().iter().count(), 0);
+  assert_eq!(account.document().core_document().assertion_method().iter().count(), 0);
+  assert_eq!(account.document().core_document().key_agreement().iter().count(), 0);
 
   let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
@@ -410,13 +413,16 @@ async fn test_attach_method_relationship() -> Result<()> {
   account.process_update(update).await?;
 
   // Relationships were created.
-  assert_eq!(account.document().as_document().verification_relationships().count(), 3);
+  assert_eq!(
+    account.document().core_document().verification_relationships().count(),
+    3
+  );
 
-  assert_eq!(account.document().as_document().assertion_method().len(), 1);
+  assert_eq!(account.document().core_document().assertion_method().len(), 1);
   assert_eq!(
     account
       .document()
-      .as_document()
+      .core_document()
       .assertion_method()
       .first()
       .unwrap()
@@ -425,11 +431,11 @@ async fn test_attach_method_relationship() -> Result<()> {
       .unwrap(),
     fragment
   );
-  assert_eq!(account.document().as_document().key_agreement().len(), 1);
+  assert_eq!(account.document().core_document().key_agreement().len(), 1);
   assert_eq!(
     account
       .document()
-      .as_document()
+      .core_document()
       .key_agreement()
       .first()
       .unwrap()
@@ -475,7 +481,10 @@ async fn test_detach_method_relationship() -> Result<()> {
   ));
 
   // No relationships were removed.
-  assert_eq!(account.document().as_document().verification_relationships().count(), 2);
+  assert_eq!(
+    account.document().core_document().verification_relationships().count(),
+    2
+  );
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -493,8 +502,8 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   account.process_update(update).await?;
 
-  assert_eq!(account.document().as_document().assertion_method().len(), 1);
-  assert_eq!(account.document().as_document().key_agreement().len(), 1);
+  assert_eq!(account.document().core_document().assertion_method().len(), 1);
+  assert_eq!(account.document().core_document().key_agreement().len(), 1);
 
   let update: Update = Update::DetachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
@@ -503,8 +512,8 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   account.process_update(update).await?;
 
-  assert_eq!(account.document().as_document().assertion_method().len(), 0);
-  assert_eq!(account.document().as_document().key_agreement().len(), 0);
+  assert_eq!(account.document().core_document().assertion_method().len(), 0);
+  assert_eq!(account.document().core_document().key_agreement().len(), 0);
 
   Ok(())
 }
@@ -575,9 +584,9 @@ async fn test_delete_method() -> Result<()> {
   assert!(state.document().resolve_method(&fragment).is_none());
 
   // Still only the default relationship.
-  assert_eq!(state.document().as_document().verification_relationships().count(), 1);
+  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
 
-  assert_eq!(state.document().as_document().methods().count(), 1);
+  assert_eq!(state.document().core_document().methods().count(), 1);
 
   let location = state.method_location(method_type, fragment.clone()).unwrap();
 

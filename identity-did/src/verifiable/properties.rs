@@ -17,7 +17,7 @@ use crate::verification::TryMethod;
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct VerifiableProperties<T = Object> {
   #[serde(flatten)]
-  pub(crate) properties: T,
+  pub properties: T,
   // TODO: Support multiple signatures (?)
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) proof: Option<Signature>,
@@ -33,7 +33,7 @@ impl<T> VerifiableProperties<T> {
   }
 
   /// Creates a new `Properties` object with the given `proof`.
-  pub const fn with_proof(properties: T, proof: Signature) -> Self {
+  pub const fn new_with_proof(properties: T, proof: Signature) -> Self {
     Self {
       properties,
       proof: Some(proof),
