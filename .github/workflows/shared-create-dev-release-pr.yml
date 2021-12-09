@@ -90,7 +90,7 @@ jobs:
           }
 
           # create a list of tags that are unrelated to the current release
-          ALL_TAGS=$(git tag --sort=creatordate -l)
+          ALL_TAGS=$(git tag -l)
           temp_array=()
           for value in ${ALL_TAGS[@]}
           do

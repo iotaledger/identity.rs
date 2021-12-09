@@ -59,12 +59,16 @@ jobs:
         run: |
 
           TAG_PREFIX=${{ inputs.tag-prefix }}
+          BRANCHNAME=${{ inputs.branch }}
 
-          ALL_TAGS=$(git tag --sort=creatordate -l)
+          SUPPORT_TAG_BASE=${BRANCHNAME##*/}
+
+          ALL_TAGS=$(git tag --sort=-version:refname -l)
           temp_array=()
           for value in ${ALL_TAGS[@]}
           do
-              if [[ $value =~ ${{ inputs.main-tag-regex }} ]]; then
+              # consider tags matching the RegEx for main tags and matching the support branch base
+              if [[ $value =~ ${{ inputs.main-tag-regex }} && $value == $SUPPORT_TAG_BASE* ]]; then
                 LATEST_TAG=$value
                 break
               fi
@@ -170,7 +174,7 @@ jobs:
           body: |
             This automatically generated PR contains changes for the `${{ env.HOTFIX_TAG }}` hotfix.
             ${{inputs.pr-body-text}}
-            If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR.
+            If you discover any mistakes fix them with commits on this branch. If you want to abort the hotfix simply close the PR.
           labels: |
             No changelog
       
