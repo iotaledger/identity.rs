@@ -7,12 +7,10 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use core::str::FromStr;
-
-use chrono::DateTime;
-use chrono::NaiveDateTime;
-use chrono::SecondsFormat;
-use chrono::Timelike;
-use chrono::Utc;
+use time::format_description::well_known::Rfc3339;
+use time::Duration;
+use time::OffsetDateTime;
+use time::UtcOffset;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -21,44 +19,57 @@ use crate::error::Result;
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(try_from = "String", into = "String")]
-pub struct Timestamp(DateTime<Utc>);
+pub struct Timestamp(OffsetDateTime);
 
 impl Timestamp {
-  /// Parses a `Timestamp` from the provided input string.
+  /// Parses a `Timestamp` from the provided input string, normalized to UTC+00:00 with fractional
+  /// seconds truncated.
+  ///
+  /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
   pub fn parse(input: &str) -> Result<Self> {
-    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
-    let datetime: DateTime<Utc> = Self::truncate(datetime);
-
-    Ok(Self(datetime))
+    let offset_date_time = OffsetDateTime::parse(input, &Rfc3339)
+      .map_err(time::Error::from)?
+      .to_offset(UtcOffset::UTC);
+    Ok(Timestamp(truncate_fractional_seconds(offset_date_time)))
   }
 
-  /// Creates a new `Timestamp` with the current date and time.
+  /// Creates a new `Timestamp` with the current date and time, normalized to UTC+00:00 with
+  /// fractional seconds truncated.
+  ///
+  /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
   pub fn now_utc() -> Self {
-    Self(Self::truncate(Utc::now()))
-  }
-
-  /// Returns the `Timestamp` as a Unix timestamp.
-  #[allow(clippy::wrong_self_convention)]
-  pub fn to_unix(&self) -> i64 {
-    self.0.timestamp()
-  }
-
-  /// Creates a new `Timestamp` from the given Unix timestamp.
-  pub fn from_unix(seconds: i64) -> Self {
-    Self(DateTime::from_utc(NaiveDateTime::from_timestamp(seconds, 0), Utc))
+    Self(truncate_fractional_seconds(OffsetDateTime::now_utc()))
   }
 
   /// Returns the `Timestamp` as an RFC 3339 `String`.
   ///
   /// See: https://tools.ietf.org/html/rfc3339
-  #[allow(clippy::wrong_self_convention)]
   pub fn to_rfc3339(&self) -> String {
-    self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
+    // expect is okay, constructors ensure RFC 3339 compatible timestamps.
+    // Making this fallible would break our interface such as From<Timestamp> for String.
+    self.0.format(&Rfc3339).expect("Timestamp incompatible with RFC 3339")
   }
 
-  fn truncate(value: DateTime<Utc>) -> DateTime<Utc> {
-    // Safe to unwrap because 0 is a valid nanosecond
-    value.with_nanosecond(0).unwrap()
+  /// Returns the `Timestamp` as a Unix timestamp.
+  pub fn to_unix(&self) -> i64 {
+    self.0.unix_timestamp()
+  }
+
+  /// Creates a new `Timestamp` from the given Unix timestamp.
+  ///  
+  /// The timestamp must be in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  ///
+  /// # Errors
+  /// [`Error::InvalidTimestamp`] if `seconds` is outside of the interval [-62167219200,253402300799].
+  pub fn from_unix(seconds: i64) -> Result<Self> {
+    let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds).map_err(time::error::Error::from)?;
+    // Reject years outside of the range 0000AD - 9999AD per Rfc3339
+    // upfront to prevent conversion errors in to_rfc3339().
+    // https://datatracker.ietf.org/doc/html/rfc3339#section-1
+    if !(0..10_000).contains(&offset_date_time.year()) {
+      return Err(time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into());
+    }
+    Ok(Self(offset_date_time))
   }
 }
 
@@ -110,8 +121,16 @@ impl FromStr for Timestamp {
   }
 }
 
+/// Truncates an `OffsetDateTime` to the second.
+fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTime {
+  offset_date_time - Duration::nanoseconds(offset_date_time.nanosecond() as i64)
+}
+
 #[cfg(test)]
 mod tests {
+  use proptest::proptest;
+  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
+  const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
@@ -136,6 +155,44 @@ mod tests {
     let timestamp = Timestamp::parse(original).unwrap();
 
     assert_eq!(timestamp.to_rfc3339(), expected);
+  }
+
+  #[test]
+  fn test_parse_valid_offset_normalised() {
+    let original = "1937-01-01T12:00:27.87+00:20";
+    let expected = "1937-01-01T11:40:27Z";
+    let timestamp = Timestamp::parse(original).unwrap();
+
+    assert_eq!(timestamp.to_rfc3339(), expected);
+  }
+
+  #[test]
+  fn test_from_unix_zero_to_rfc3339() {
+    let unix_epoch = Timestamp::from_unix(0).unwrap();
+    assert_eq!(unix_epoch.to_rfc3339(), "1970-01-01T00:00:00Z");
+  }
+
+  #[test]
+  fn test_from_unix_invalid_edge_cases() {
+    assert!(Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP + 1).is_err());
+    assert!(Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP - 1).is_err());
+  }
+
+  #[test]
+  fn test_from_unix_to_rfc3339_boundaries() {
+    let beginning = Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP).unwrap();
+    let end = Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP).unwrap();
+    assert_eq!(beginning.to_rfc3339(), "0000-01-01T00:00:00Z");
+    assert_eq!(end.to_rfc3339(), "9999-12-31T23:59:59Z");
+  }
+
+  proptest! {
+    #[test]
+    fn test_from_unix_to_rfc3339_valid_no_panic(seconds in FIRST_VALID_UNIX_TIMESTAMP..=LAST_VALID_UNIX_TIMESTAMP) {
+      let timestamp = Timestamp::from_unix(seconds).unwrap();
+      let expected_length = "dddd-dd-ddTdd:dd:ddZ".len();
+      assert_eq!(timestamp.to_rfc3339().len(), expected_length);
+    }
   }
 
   #[test]

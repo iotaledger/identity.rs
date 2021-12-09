@@ -13,7 +13,6 @@ description = "The core traits and types for the identity-rs library."
 [dependencies]
 base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
-chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 hex = { version = "0.4", default-features = false }
 identity-diff = { version = "=0.4.0", path = "../identity-diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
@@ -24,6 +23,7 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 strum = { version = "0.21", features = ["derive"] }
 subtle = { version = "2.4", default-features = false }
 thiserror = { version = "1.0", default-features = false }
+time = { version = "0.3.5", default-features = false, features = ["std", "serde", "parsing", "formatting"] }
 typenum = { version = "1.13", default-features = false }
 url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.4", default-features = false }
@@ -34,6 +34,7 @@ default-features = false
 features = ["blake2b", "ed25519", "random", "sha"]
 
 [dev-dependencies]
+proptest = "1.0.0"
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
 rand = { version = "0.8" }
