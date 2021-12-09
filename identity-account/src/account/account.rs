@@ -3,7 +3,7 @@
 
 use identity_core::crypto::SetSignature;
 use identity_iota::did::IotaDID;
-use identity_iota::document::DiffMessage;
+use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::document::ResolvedIotaDocument;

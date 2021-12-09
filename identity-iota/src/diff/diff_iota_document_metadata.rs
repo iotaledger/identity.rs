@@ -1,9 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use serde::Deserialize;
 use serde::Serialize;
-use std::str::FromStr;
 
 use identity_core::common::Timestamp;
 use identity_core::diff::Diff;
@@ -147,8 +148,9 @@ impl Diff for IotaDocumentMetadata {
 
 #[cfg(test)]
 mod test {
-  use identity_core::common::Object;
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
+
+  use identity_core::common::Object;
 
   use super::*;
 

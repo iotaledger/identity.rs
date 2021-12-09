@@ -15,7 +15,7 @@ use crate::chain::DocumentChain;
 use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;

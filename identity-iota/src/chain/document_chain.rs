@@ -12,7 +12,7 @@ use identity_core::convert::FmtJson;
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;

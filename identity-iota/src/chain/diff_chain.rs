@@ -15,7 +15,7 @@ use identity_core::convert::FmtJson;
 
 use crate::chain::milestone::sort_by_milestone;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
@@ -222,7 +222,7 @@ mod test {
 
   use crate::chain::DocumentChain;
   use crate::chain::IntegrationChain;
-  use crate::document::DiffMessage;
+  use crate::diff::DiffMessage;
   use crate::document::IotaDocument;
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::MessageId;

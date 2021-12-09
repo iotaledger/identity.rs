@@ -7,7 +7,7 @@ use dashmap::DashMap;
 
 use crate::chain::DocumentChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;

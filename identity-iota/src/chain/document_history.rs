@@ -11,7 +11,7 @@ use serde::Serialize;
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
@@ -131,8 +131,8 @@ impl From<(IntegrationChain, &[Message])> for ChainHistory<ResolvedIotaDocument>
 /// Construct [`ChainHistory`] from a [`DiffChain`].
 impl From<(DiffChain, &[Message])> for ChainHistory<DiffMessage> {
   fn from((diff_chain, messages): (DiffChain, &[Message])) -> Self {
-    let chain_data = Vec::from(diff_chain);
-    let spam = ChainHistory::separate_spam(&chain_data, messages);
+    let chain_data: Vec<DiffMessage> = Vec::from(diff_chain);
+    let spam: Vec<MessageId> = ChainHistory::separate_spam(&chain_data, messages);
 
     Self { chain_data, spam }
   }

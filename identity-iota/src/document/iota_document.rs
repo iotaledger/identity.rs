@@ -41,7 +41,7 @@ use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDID;
 use crate::did::IotaDIDUrl;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocumentMetadata;
 use crate::document::IotaVerificationMethod;
 use crate::error::Error;
@@ -60,7 +60,7 @@ pub type IotaDocumentVerifier<'a> = DocumentVerifier<'a, Object, Object, Object>
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IotaDocument {
   #[serde(deserialize_with = "deserialize_iota_core_document")]
-  pub(in crate::document) document: CoreDocument,
+  pub(crate) document: CoreDocument,
   pub metadata: IotaDocumentMetadata,
 }
 

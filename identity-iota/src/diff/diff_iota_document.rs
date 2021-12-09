@@ -10,7 +10,7 @@ use identity_core::diff::Result;
 use identity_did::diff::DiffDocument;
 use identity_did::document::CoreDocument;
 
-use crate::document::diff_iota_document_metadata::DiffIotaDocumentMetadata;
+use crate::diff::DiffIotaDocumentMetadata;
 use crate::document::IotaDocument;
 use crate::document::IotaDocumentMetadata;
 
