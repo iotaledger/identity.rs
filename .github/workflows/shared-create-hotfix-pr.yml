@@ -1,6 +1,6 @@
 name: Shared / Create Hotfix PR
 
-# This workflow creates a Pull Request meant for creating releases. 
+# This workflow creates a Pull Request towards support branches. 
 # A changelog, including the new version, is generated and version strings in relevant files are replaced. 
 # All these changes are committed and submitted as a Pull Request.
 
