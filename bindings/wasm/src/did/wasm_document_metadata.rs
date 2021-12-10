@@ -1,36 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
-use identity::core::decode_b58;
-use identity::crypto::merkle_key::MerkleDigestTag;
-use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::Sha256;
-use identity::crypto::merkle_tree::Proof;
-use identity::crypto::PublicKey;
-use identity::crypto::{PrivateKey, Signature};
-use identity::did::verifiable;
-use identity::did::MethodScope;
-use identity::iota::IotaDocument;
-use identity::iota::IotaVerificationMethod;
-use identity::iota::MessageId;
-use identity::iota::NetworkName;
-use identity::iota::TangleRef;
-use identity::iota::{Error, IotaDocumentMetadata};
-use wasm_bindgen::prelude::*;
+use identity::iota::IotaDocumentMetadata;
 
 use crate::common::WasmTimestamp;
-use crate::credential::VerifiableCredential;
-use crate::credential::VerifiablePresentation;
-use crate::crypto::KeyPair;
-use crate::did::wasm_did_url::WasmDIDUrl;
-use crate::did::WasmDID;
-use crate::did::WasmDiffMessage;
-use crate::did::WasmVerificationMethod;
+use wasm_bindgen::prelude::*;
+
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::service::Service;
 
 // =============================================================================
 // =============================================================================
@@ -58,7 +35,7 @@ impl WasmDocumentMetadata {
 
   #[wasm_bindgen(getter = previousMessageId)]
   pub fn previous_message_id(&self) -> String {
-    self.0.previous_message_id().to_string()
+    self.0.previous_message_id.to_string()
   }
 
   /// Returns a reference to the `proof`.

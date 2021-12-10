@@ -10,14 +10,13 @@ use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::did::verifiable;
+use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
 use identity::iota::NetworkName;
-use identity::iota::TangleRef;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
@@ -36,15 +35,8 @@ use crate::service::Service;
 // =============================================================================
 
 #[wasm_bindgen(js_name = Document, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct WasmDocument(pub(crate) IotaDocument);
-
-// Workaround for Typescript type annotations on async function returns.
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<Document>")]
-  pub type PromiseDocument;
-}
 
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
@@ -230,7 +222,7 @@ impl WasmDocument {
       },
     }
 
-    let mut data: verifiable::Properties = data.into_serde().wasm_result()?;
+    let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
     let args: Args = args.into_serde().wasm_result()?;
 
     match args {
@@ -275,7 +267,7 @@ impl WasmDocument {
   /// Verifies the authenticity of `data` using the target verification method.
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue) -> Result<bool> {
-    let data: verifiable::Properties = data.into_serde().wasm_result()?;
+    let data: VerifiableProperties = data.into_serde().wasm_result()?;
 
     Ok(self.0.verify_data(&data).is_ok())
   }
@@ -285,7 +277,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = verifyDataWithScope)]
   pub fn verify_data_with_scope(&self, data: &JsValue, scope: String) -> Result<bool> {
     let scope: MethodScope = scope.parse().wasm_result()?;
-    let data: verifiable::Properties = data.into_serde().wasm_result()?;
+    let data: VerifiableProperties = data.into_serde().wasm_result()?;
 
     Ok(self.0.verify_data_with_scope(&data, scope).is_ok())
   }

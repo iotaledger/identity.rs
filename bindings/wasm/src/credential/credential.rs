@@ -1,10 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::FromJson;
 use identity::core::Object;
 use identity::core::OneOrMany;
-use identity::core::SerdeInto;
 use identity::core::Timestamp;
+use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
@@ -36,23 +37,23 @@ impl VerifiableCredential {
     if !base.contains_key("@context") {
       base.insert(
         "@context".into(),
-        Credential::<()>::base_context().serde_into().map_err(wasm_error)?,
+        serde_into(Credential::<()>::base_context()).map_err(wasm_error)?,
       );
     }
 
     let mut types: Vec<String> = match base.remove("type") {
-      Some(value) => value.serde_into().map(OneOrMany::into_vec).map_err(wasm_error)?,
+      Some(value) => serde_into(value).map(OneOrMany::into_vec).map_err(wasm_error)?,
       None => Vec::new(),
     };
 
     types.insert(0, Credential::<()>::base_type().into());
-    base.insert("type".into(), types.serde_into().map_err(wasm_error)?);
+    base.insert("type".into(), serde_into(types).map_err(wasm_error)?);
 
     if !base.contains_key("issuanceDate") {
       base.insert("issuanceDate".into(), Timestamp::now_utc().to_string().into());
     }
 
-    base.serde_into().map_err(wasm_error).map(Self)
+    serde_into(base).map_err(wasm_error).map(Self)
   }
 
   #[wasm_bindgen]
@@ -92,4 +93,16 @@ impl VerifiableCredential {
   pub fn from_json(json: &JsValue) -> Result<VerifiableCredential, JsValue> {
     json.into_serde().map_err(wasm_error).map(Self)
   }
+}
+
+/// Converts `T` to `U` by converting to/from JSON.
+///
+/// An escape-hatch for converting between types that represent the same JSON
+/// structure.
+fn serde_into<T, U>(obj: T) -> identity::core::Result<U>
+where
+  T: ToJson,
+  U: FromJson,
+{
+  obj.to_json_value().and_then(U::from_json_value)
 }

@@ -10,6 +10,7 @@ use wasm_bindgen::JsCast;
 
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
+use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -52,7 +53,7 @@ impl WasmDocumentHistory {
       .integration_chain_data
       .iter()
       .cloned()
-      .map(WasmDocument::from)
+      .map(WasmResolvedDocument::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayDocument>()
