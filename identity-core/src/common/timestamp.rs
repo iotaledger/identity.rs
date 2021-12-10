@@ -37,8 +37,22 @@ impl Timestamp {
   /// fractional seconds truncated.
   ///
   /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
+  #[cfg(not(all(target_arch = "wasm32", not(target_os = "wasi"), feature = "wasm")))]
   pub fn now_utc() -> Self {
     Self(truncate_fractional_seconds(OffsetDateTime::now_utc()))
+  }
+
+  /// Creates a new `Timestamp` with the current date and time, normalized to UTC+00:00 with
+  /// fractional seconds truncated.
+  ///
+  /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi"), feature = "wasm"))]
+  pub fn now_utc() -> Self {
+    let date = js_sys::Date::new_0();
+    let milliseconds_since_unix_epoch: u64 = date.get_time() as u64;
+    let seconds = milliseconds_since_unix_epoch / 1000;
+    // expect is okay, since we assume that the current time is less than 9999AD
+    Self::from_unix(seconds as i64).expect("Failed to accurately convert host Timestamp")
   }
 
   /// Returns the `Timestamp` as an RFC 3339 `String`.
