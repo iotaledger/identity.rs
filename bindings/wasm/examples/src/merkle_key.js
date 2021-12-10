@@ -81,8 +81,8 @@ async function merkleKey(clientConfig) {
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
-    issuer.metadataPreviousMessageId = receipt.messageId;
-    issuer.metadataUpdated = Timestamp.nowUTC();
+    issuer.doc.metadataPreviousMessageId = receipt.messageId;
+    issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     const nextReceipt = await client.publishDocument(issuer.doc);
     logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);
