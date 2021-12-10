@@ -1191,7 +1191,7 @@ A DID Document's history and current state.
 
 * [DocumentHistory](#DocumentHistory)
     * _instance_
-        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
         * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
@@ -1201,7 +1201,7 @@ A DID Document's history and current state.
 
 <a name="DocumentHistory+integrationChainData"></a>
 
-### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Returns an `Array` of integration chain `Documents`.
 
 NOTE: clones the data.
@@ -1363,7 +1363,7 @@ Returns the Tangle explorer URL for the devnet.
 
 * [IntegrationChainHistory](#IntegrationChainHistory)
     * _instance_
-        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1371,7 +1371,7 @@ Returns the Tangle explorer URL for the devnet.
 
 <a name="IntegrationChainHistory+chainData"></a>
 
-### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Returns an `Array` of the integration chain `Documents`.
 
 NOTE: this clones the field.
