@@ -1,0 +1,78 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::str::FromStr;
+
+use identity::core::decode_b58;
+use identity::crypto::merkle_key::MerkleDigestTag;
+use identity::crypto::merkle_key::MerkleKey;
+use identity::crypto::merkle_key::Sha256;
+use identity::crypto::merkle_tree::Proof;
+use identity::crypto::PublicKey;
+use identity::crypto::{PrivateKey, Signature};
+use identity::did::verifiable;
+use identity::did::MethodScope;
+use identity::iota::IotaDocument;
+use identity::iota::IotaVerificationMethod;
+use identity::iota::MessageId;
+use identity::iota::NetworkName;
+use identity::iota::TangleRef;
+use identity::iota::{Error, IotaDocumentMetadata};
+use wasm_bindgen::prelude::*;
+
+use crate::common::WasmTimestamp;
+use crate::credential::VerifiableCredential;
+use crate::credential::VerifiablePresentation;
+use crate::crypto::KeyPair;
+use crate::did::wasm_did_url::WasmDIDUrl;
+use crate::did::WasmDID;
+use crate::did::WasmDiffMessage;
+use crate::did::WasmVerificationMethod;
+use crate::error::Result;
+use crate::error::WasmResult;
+use crate::service::Service;
+
+// =============================================================================
+// =============================================================================
+
+/// Additional attributes related to an IOTA DID Document.
+#[wasm_bindgen(js_name = DocumentMetadata, inspectable)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct WasmDocumentMetadata(pub(crate) IotaDocumentMetadata);
+
+// NOTE: these properties are read-only (no setters) to prevent bugs where a clone of the metadata
+//       is updated instead of the actual instance in the document.
+#[wasm_bindgen(js_class = DocumentMetadata)]
+impl WasmDocumentMetadata {
+  /// Returns the timestamp of when the DID document was created.
+  #[wasm_bindgen(getter)]
+  pub fn created(&self) -> WasmTimestamp {
+    WasmTimestamp::from(self.0.created)
+  }
+
+  /// Returns the timestamp of the last DID document update.
+  #[wasm_bindgen(getter)]
+  pub fn updated(&self) -> WasmTimestamp {
+    WasmTimestamp::from(self.0.updated)
+  }
+
+  #[wasm_bindgen(getter = previousMessageId)]
+  pub fn previous_message_id(&self) -> String {
+    self.0.previous_message_id().to_string()
+  }
+
+  /// Returns a reference to the `proof`.
+  #[wasm_bindgen(getter)]
+  pub fn proof(&self) -> Result<JsValue> {
+    match self.0.proof() {
+      Some(proof) => JsValue::from_serde(proof).wasm_result(),
+      None => Ok(JsValue::NULL),
+    }
+  }
+}
+
+impl From<IotaDocumentMetadata> for WasmDocumentMetadata {
+  fn from(metadata: IotaDocumentMetadata) -> Self {
+    Self(metadata)
+  }
+}
