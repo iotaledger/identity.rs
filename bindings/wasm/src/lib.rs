@@ -21,6 +21,7 @@ pub mod crypto;
 pub mod did;
 pub mod service;
 pub mod tangle;
+pub mod account;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
