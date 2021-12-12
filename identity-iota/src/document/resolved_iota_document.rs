@@ -35,7 +35,8 @@ pub struct ResolvedIotaDocument {
   )]
   pub integration_message_id: MessageId,
 
-  /// [`MessageId`] of the last diff chain message merged into this during resolution.
+  /// [`MessageId`] of the last diff chain message merged into this during resolution, or null.
+  ///
   /// See [`DocumentChain`](crate::chain::DocumentChain).
   #[serde(
     rename = "diffMessageId",

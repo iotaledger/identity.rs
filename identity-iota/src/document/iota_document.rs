@@ -55,8 +55,9 @@ use crate::tangle::NetworkName;
 /// This is a thin wrapper around [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IotaDocument {
-  #[serde(deserialize_with = "deserialize_iota_core_document")]
+  #[serde(rename = "d", deserialize_with = "deserialize_iota_core_document")]
   pub(crate) document: CoreDocument,
+  #[serde(rename = "m")]
   pub metadata: IotaDocumentMetadata,
 }
 
