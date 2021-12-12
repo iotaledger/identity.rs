@@ -12,21 +12,20 @@ use serde::Serialize;
 use identity_core::convert::FmtJson;
 
 use crate::did::IotaDID;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
+use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more diff messages.
-///
-/// NOTE: see [`DocumentChain`](crate::chain::DocumentChain) for how `diff_message_id` is set.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ResolvedIotaDocument {
   #[serde(flatten)]
   pub document: IotaDocument,
 
-  // TODO: combine these fields into `TangleMetadata` / `ResolvedMetadata`?
   /// [`MessageId`] of this integration chain document.
   #[serde(
     rename = "integrationMessageId",
@@ -36,8 +35,6 @@ pub struct ResolvedIotaDocument {
   pub integration_message_id: MessageId,
 
   /// [`MessageId`] of the last diff chain message merged into this during resolution, or null.
-  ///
-  /// See [`DocumentChain`](crate::chain::DocumentChain).
   #[serde(
     rename = "diffMessageId",
     default = "MessageId::null",
@@ -45,6 +42,26 @@ pub struct ResolvedIotaDocument {
   )]
   pub diff_message_id: MessageId,
   // TODO: version_id
+}
+
+impl ResolvedIotaDocument {
+  /// Attempts to merge changes from a [`DiffMessage`] into this document and
+  /// updates the [`ResolvedIotaDocument::diff_message_id`].
+  ///
+  /// If merging fails the document remains unmodified, otherwise this represents
+  /// the merged document state.
+  ///
+  /// See [`IotaDocument::merge_diff`].
+  ///
+  /// # Errors
+  ///
+  /// Fails if the merge operation or signature verification on the diff fails.
+  pub fn merge_diff_message(&mut self, diff_message: &DiffMessage) -> Result<()> {
+    self.document.merge_diff(diff_message)?;
+    self.diff_message_id = diff_message.message_id;
+
+    Ok(())
+  }
 }
 
 impl TangleRef for ResolvedIotaDocument {

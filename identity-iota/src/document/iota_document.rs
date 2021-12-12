@@ -655,7 +655,7 @@ impl IotaDocument {
     self.verify_data_with_scope(diff, MethodScope::capability_invocation())
   }
 
-  /// Verifies a `DiffMessage` signature and merges the changes into `self`.
+  /// Verifies a [`DiffMessage`] signature and merges the changes into `self`.
   ///
   /// If merging fails `self` remains unmodified, otherwise `self` represents
   /// the merged document state.

@@ -16,7 +16,6 @@ use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;
-use crate::tangle::TangleRef;
 
 /// Holds an [`IntegrationChain`] and its corresponding [`DiffChain`] that can be used to resolve the
 /// latest version of a [`ResolvedIotaDocument`].
@@ -38,21 +37,11 @@ impl DocumentChain {
   pub(crate) fn __fold(chain_i: &IntegrationChain, chain_d: &DiffChain) -> Result<ResolvedIotaDocument> {
     let mut document: ResolvedIotaDocument = chain_i.current().clone();
 
-    for diff in chain_d.iter() {
-      Self::merge_diff_message(&mut document, diff)?;
+    for diff_message in chain_d.iter() {
+      document.merge_diff_message(diff_message)?;
     }
 
     Ok(document)
-  }
-
-  /// Applies the changes from a [`DiffMessage`] to a [`ResolvedIotaDocument`], also updating its
-  /// `diff_message_id`.
-  ///
-  /// Assumes the diff is already validated by the [`DiffChain`].
-  fn merge_diff_message(document: &mut ResolvedIotaDocument, diff_message: &DiffMessage) -> Result<()> {
-    document.document.merge_diff(diff_message)?;
-    document.diff_message_id = *diff_message.message_id();
-    Ok(())
   }
 
   /// Creates a new [`DocumentChain`] from the given [`IntegrationChain`].
@@ -155,9 +144,9 @@ impl DocumentChain {
     let expected_prev_message_id: &MessageId = self.diff_message_id();
     DiffChain::check_valid_addition(&diff, integration_document, expected_prev_message_id)?;
 
-    // Merge the diff into the latest state
+    // Merge the diff into the latest state.
     let mut document: ResolvedIotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
-    Self::merge_diff_message(&mut document, &diff)?;
+    document.merge_diff_message(&diff)?;
 
     // Extend the diff chain and store the merged result.
     self.chain_d.try_push(diff, &self.chain_i)?;
@@ -185,6 +174,7 @@ mod test {
   use identity_did::verification::MethodType;
 
   use crate::document::IotaDocument;
+  use crate::tangle::TangleRef;
 
   use super::*;
 
