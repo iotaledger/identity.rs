@@ -61,7 +61,6 @@ pub struct IotaDocument {
   pub metadata: IotaDocumentMetadata,
 }
 
-// TODO: add serde tests
 /// Deserializes CoreDocument while enforcing IotaDocument invariants.
 fn deserialize_iota_core_document<'de, D>(deserializer: D) -> Result<CoreDocument, D::Error>
 where
@@ -742,6 +741,7 @@ mod tests {
   use identity_core::common::Object;
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyType;
@@ -1397,6 +1397,17 @@ mod tests {
     let json_doc: String = document.to_string();
     let document2: IotaDocument = IotaDocument::from_json(&json_doc).unwrap();
     assert_eq!(document, document2);
+  }
+
+  #[test]
+  fn test_json_fieldnames() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    let serialization: String = document.to_json().unwrap();
+    assert_eq!(
+      serialization,
+      format!("{{\"d\":{},\"m\":{}}}", document.document, document.metadata)
+    );
   }
 
   #[test]
