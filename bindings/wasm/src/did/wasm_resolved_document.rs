@@ -5,6 +5,7 @@ use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
 use std::str::FromStr;
 
+use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -25,6 +26,27 @@ extern "C" {
 
 #[wasm_bindgen(js_class = ResolvedDocument)]
 impl WasmResolvedDocument {
+  /// Attempts to merge changes from a `DiffMessage` into this document and
+  /// updates the `ResolvedDocument::diffMessageId`.
+  ///
+  /// If merging fails the document remains unmodified, otherwise this represents
+  /// the merged document state.
+  ///
+  /// See `Document::mergeDiff`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the merge operation or signature verification on the diff fails.
+  #[wasm_bindgen(js_name = "mergeDiffMessage")]
+  pub fn merge_diff_message(&mut self, diff_message: &WasmDiffMessage) -> Result<()> {
+    self.0.merge_diff_message(&diff_message.0).wasm_result()?;
+    Ok(())
+  }
+
+  // ===========================================================================
+  // Properties
+  // ===========================================================================
+
   /// Returns the inner DID document.
   ///
   /// NOTE: clones the data. Use `intoDocument()` for efficiency.

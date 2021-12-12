@@ -1694,6 +1694,7 @@ merged with one or more `DiffMessages`.
         * [.diffMessageId](#ResolvedDocument+diffMessageId)
         * [.metadataPreviousMessageId](#ResolvedDocument+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.integrationMessageId](#ResolvedDocument+integrationMessageId)
+        * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
         * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
         * [.toJSON()](#ResolvedDocument+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1740,6 +1741,27 @@ Sets the integration chain message id.
 | Param | Type |
 | --- | --- |
 | value | <code>string</code> | 
+
+<a name="ResolvedDocument+mergeDiffMessage"></a>
+
+### resolvedDocument.mergeDiffMessage(diff_message)
+Attempts to merge changes from a `DiffMessage` into this document and
+updates the `ResolvedDocument::diffMessageId`.
+
+If merging fails the document remains unmodified, otherwise this represents
+the merged document state.
+
+See `Document::mergeDiff`.
+
+# Errors
+
+Fails if the merge operation or signature verification on the diff fails.
+
+**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+
+| Param | Type |
+| --- | --- |
+| diff_message | [<code>DiffMessage</code>](#DiffMessage) | 
 
 <a name="ResolvedDocument+intoDocument"></a>
 
