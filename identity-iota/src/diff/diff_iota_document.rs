@@ -16,9 +16,9 @@ use crate::document::IotaDocumentMetadata;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffIotaDocument {
-  #[serde(skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
   document: Option<DiffDocument>,
-  #[serde(skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "m", skip_serializing_if = "Option::is_none")]
   metadata: Option<DiffIotaDocumentMetadata>,
 }
 
