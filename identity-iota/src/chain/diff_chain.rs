@@ -362,7 +362,7 @@ mod test {
       .unwrap();
     diff_msg.set_message_id(*chain.diff_message_id());
 
-    match DiffChain::check_valid_addition(&diff_msg, &document, &chain.integration_message_id()).unwrap_err() {
+    match DiffChain::check_valid_addition(&diff_msg, &document, chain.integration_message_id()).unwrap_err() {
       Error::ChainError { error } => assert_eq!(error, "Diff Messages Cannot Alter Capability Invocation Set"),
       _ => unreachable!(),
     }
