@@ -387,8 +387,8 @@ async fn test_account_sync_integration_msg_found() -> Result<()> {
   let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
 
   account.synchronize_state().await.unwrap();
-  assert!(account.state().document().properties().contains_key("foo".into()));
-  assert!(account.state().document().properties().contains_key("bar".into()));
+  assert!(account.state().document().properties().contains_key("foo"));
+  assert!(account.state().document().properties().contains_key("bar"));
   assert_eq!(
     account.chain_state().last_integration_message_id(),
     chain.integration_message_id()
@@ -427,8 +427,8 @@ async fn test_account_sync_diff_msg_found() -> Result<()> {
 
   let old_chain_state: ChainState = account.chain_state().clone();
   account.synchronize_state().await.unwrap();
-  assert!(account.state().document().properties().contains_key("foo".into()));
-  assert!(account.state().document().properties().contains_key("bar".into()));
+  assert!(account.state().document().properties().contains_key("foo"));
+  assert!(account.state().document().properties().contains_key("bar"));
   assert_eq!(
     old_chain_state.last_integration_message_id(),
     account.chain_state().last_integration_message_id()
