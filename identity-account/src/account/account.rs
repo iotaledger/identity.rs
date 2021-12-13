@@ -472,7 +472,7 @@ impl Account {
     Ok(())
   }
 
-  /// Fetches the latest changes for the given did from the tangle and 
+  /// Fetches the latest changes for the account did from the tangle and 
   /// updates the local state
   pub async fn synchronize_state(&mut self) -> Result<()> {
     let iota_did: &IotaDID = self.did();
