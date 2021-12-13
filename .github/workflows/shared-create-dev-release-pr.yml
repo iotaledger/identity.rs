@@ -75,20 +75,6 @@ jobs:
           TAG_BASE=${{ inputs.tag-base }}
           TAG_POSTFIX=${{ inputs.tag-postfix }}
 
-          # joins an array with a delimiter
-          function join_by { local IFS="$1"; shift; echo "$*"; }
-
-          # takes a string and increments the last number
-          # e.g. $(updateVersion 1.1.0-dev.1) -> 1.1.0-dev.2 
-          updateVersion()
-          {
-            [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
-              [[ ${#BASH_REMATCH[1]} -gt 0 ]] && \
-                printf "%s%0${#BASH_REMATCH[2]}d" "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]} + 1 ))" || \
-                printf "%0${#BASH_REMATCH[2]}d" "$((10#${BASH_REMATCH[2]} + 1))" || \
-              printf "${1}"
-          }
-
           # create a list of tags that are unrelated to the current release
           ALL_TAGS=$(git tag -l)
           temp_array=()
@@ -98,7 +84,7 @@ jobs:
                 temp_array+=($value)
               fi
           done
-          UNRELATED_TAGS=$(join_by , "${temp_array[@]}")
+          UNRELATED_TAGS=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
           unset temp_array
           echo UNRELATED_TAGS=$UNRELATED_TAGS
           
@@ -113,7 +99,7 @@ jobs:
             SECOND=$UNRELATED_TAGS
             EXCLUDE_ARG=$FIRST$SECOND
           else
-            NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
+            NEW_DEV_TAG=$(.github/workflows/scripts/updateVersion.sh $LATEST_DEV_TAG)
 
             # exclude dev version already merged in main
             ALL_DEV_TAGS_IN_MAIN=$(git tag -l "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" --merged $(git log -n 1 refs/remotes/origin/main --pretty=format:"%H"))
@@ -123,7 +109,7 @@ jobs:
                 [[ $value != $LATEST_DEV_TAG ]] && temp_array+=($value)
             done
             FIRST="--exclude-tags "
-            SECOND=$(join_by , "${temp_array[@]}")
+            SECOND=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
             if [[ $SECOND != '' ]]; then
               SECOND+=,
             fi
