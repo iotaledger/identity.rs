@@ -8,7 +8,7 @@ on:
   workflow_call:
     inputs:
       tag-prefix:
-        description: "will be prepended to tag-base"
+        description: "will be pre-pended to tag-base"
         required: false
         type: string
       tag-base:
@@ -69,10 +69,6 @@ jobs:
 
       - name: Determine Excluded Tags
         run: |
-
-          # joins an array with a delimiter
-          function join_by { local IFS="$1"; shift; echo "$*"; }
-
           # create a list of tags that are unrelated to the current release
           ALL_TAGS=$(git tag -l)
           temp_array=()
@@ -82,7 +78,7 @@ jobs:
                 temp_array+=($value)
               fi
           done
-          UNRELATED_TAGS=$(join_by , "${temp_array[@]}")
+          UNRELATED_TAGS=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
           unset temp_array
           echo UNRELATED_TAGS=$UNRELATED_TAGS
 

@@ -77,9 +77,9 @@ jobs:
           echo "::set-output name=is-release::=$IS_RELEASE"
           if [[ $(echo $CURRENT_VERSION | grep -w -P '${{ inputs.dev-tag-regex }}') ]]; then
             IS_DEV_RELEASE=true
-            PREVIOUS_VERSION=$(git tag --sort=-committerdate | grep -w -P '${{ inputs.dev-tag-regex }}' | head -n 1)
+            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.dev-tag-regex }}' | head -n 1)
           else
-            PREVIOUS_VERSION=$(git tag --sort=-committerdate | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
+            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
           fi
 
           if [[ $PREVIOUS_VERSION ]]; then
