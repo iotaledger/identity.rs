@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::SetSignature;
+use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
 use identity_iota::document::DiffMessage;
 use identity_iota::document::IotaDocument;
@@ -468,6 +469,27 @@ impl Account {
 
     self.chain_state.set_last_diff_message_id(message_id);
 
+    Ok(())
+  }
+
+  pub async fn synchronize_state(&mut self) -> Result<()> {
+    let iota_did: &IotaDID = self.did();
+    let document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
+    // Checks if the local document is up to date
+    if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
+      && (document_chain.diff().is_empty()
+        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+    {
+      return Ok(());
+    }
+    // Overwrite the current state with the most recent document
+    self.state.set_document(document_chain.current().clone());
+    self
+      .chain_state
+      .set_last_integration_message_id(*document_chain.integration_message_id());
+    self
+      .chain_state
+      .set_last_diff_message_id(*document_chain.diff_message_id());
     Ok(())
   }
 

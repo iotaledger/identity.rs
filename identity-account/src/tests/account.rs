@@ -7,16 +7,24 @@ use crate::account::AccountBuilder;
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
 use crate::account::PublishOptions;
+use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
+use crate::identity::IdentityState;
 use crate::storage::MemStore;
 use crate::Error;
 use crate::Result;
 
+use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_did::verification::MethodScope;
+use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
+use identity_iota::document::DiffMessage;
+use identity_iota::document::IotaDocument;
+use identity_iota::tangle::Client;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
+use identity_iota::tangle::TangleRef;
 
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
@@ -320,5 +328,112 @@ async fn test_account_publish_options_force_integration() -> Result<()> {
   assert_ne!(account.chain_state().last_integration_message_id(), &last_int_id);
   assert_eq!(account.chain_state().last_diff_message_id(), &MessageId::null());
 
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_sync_no_changes() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+
+  // Case 0: Since nothing has been published to the tangle, read_document must return DID not found
+  assert!(account.synchronize_state().await.is_err());
+
+  // Case 1: Tangle and account are synched
+  account.publish().await.unwrap();
+  let old_state: IdentityState = account.state().clone();
+  let old_chain_state: ChainState = account.chain_state().clone();
+  account.synchronize_state().await.unwrap();
+  assert_eq!(old_state.document(), account.state().document());
+  assert_eq!(&old_chain_state, account.chain_state());
+
+  // Case 2: Local state is ahead of the tangle
+  account
+    .update_identity()
+    .create_service()
+    .fragment("my-other-service")
+    .type_("LinkedDomains")
+    .endpoint(Url::parse("https://example.org").unwrap())
+    .apply()
+    .await?;
+  let old_state: IdentityState = account.state().clone();
+  let old_chain_state: ChainState = account.chain_state().clone();
+  account.synchronize_state().await.unwrap();
+  assert_eq!(old_state.document(), account.state().document());
+  assert_eq!(&old_chain_state, account.chain_state());
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_sync_integration_msg_found() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  account.publish().await.unwrap();
+
+  let client: Client = Client::new().await.unwrap();
+  let mut new_doc: IotaDocument = account.document().clone();
+  new_doc.properties_mut().insert("foo".into(), 123.into());
+  new_doc.properties_mut().insert("bar".into(), 456.into());
+  new_doc.set_message_id(MessageId::new([8; 32]));
+  new_doc.set_previous_message_id(*account.chain_state().last_integration_message_id());
+  new_doc.set_updated(Timestamp::now_utc());
+  account
+    .sign(IotaDocument::DEFAULT_METHOD_FRAGMENT, &mut new_doc)
+    .await
+    .unwrap();
+  client.publish_document(&new_doc).await.unwrap();
+  let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
+
+  account.synchronize_state().await.unwrap();
+  assert!(account.state().document().properties().contains_key("foo".into()));
+  assert!(account.state().document().properties().contains_key("bar".into()));
+  assert_eq!(
+    account.chain_state().last_integration_message_id(),
+    chain.integration_message_id()
+  );
+  assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
+  assert!(false);
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_sync_diff_msg_found() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  account.publish().await.unwrap();
+
+  let client: Client = Client::new().await.unwrap();
+  let mut new_doc: IotaDocument = account.document().clone();
+  new_doc.properties_mut().insert("foo".into(), 123.into());
+  new_doc.properties_mut().insert("bar".into(), 456.into());
+  new_doc.set_updated(Timestamp::now_utc());
+  let mut diff_msg: DiffMessage = DiffMessage::new(
+    account.document(),
+    &new_doc,
+    *account.chain_state().last_integration_message_id(),
+  )
+  .unwrap();
+  account
+    .sign(IotaDocument::DEFAULT_METHOD_FRAGMENT, &mut diff_msg)
+    .await
+    .unwrap();
+  client
+    .publish_diff(&*account.chain_state().last_integration_message_id(), &diff_msg)
+    .await
+    .unwrap();
+  let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
+
+  let old_chain_state: ChainState = account.chain_state().clone();
+  account.synchronize_state().await.unwrap();
+  assert!(account.state().document().properties().contains_key("foo".into()));
+  assert!(account.state().document().properties().contains_key("bar".into()));
+  assert_eq!(
+    old_chain_state.last_integration_message_id(),
+    account.chain_state().last_integration_message_id()
+  );
+  assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
   Ok(())
 }
