@@ -70,7 +70,7 @@ fn test_js_error_from_wasm_error() {
   assert_eq!(js_error.message(), "Error message");
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn test_did() {
   let key = KeyPair::new(KeyType::Ed25519).unwrap();
   let did = WasmDID::new(&key, None).unwrap();
@@ -88,7 +88,7 @@ fn test_did() {
   assert_eq!(base58.network_name(), "dev");
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn test_did_url() {
   // Base DID Url
   let key = KeyPair::new(KeyType::Ed25519).unwrap();
@@ -114,7 +114,7 @@ fn test_did_url() {
   );
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn test_document_new() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
@@ -126,7 +126,7 @@ fn test_document_new() {
   assert!(document.verify_self_signed());
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn test_document_network() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();

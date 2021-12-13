@@ -14,7 +14,7 @@ description = "Tools for working with Self-sovereign Identity."
 [dependencies]
 identity-account = { version = "=0.4.0", path = "../identity-account", optional = true }
 identity-comm = { version = "=0.4.0", path = "../identity-comm", optional = true }
-identity-core = { version = "=0.4.0", path = "../identity-core" }
+identity-core = { version = "=0.4.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.4.0", path = "../identity-credential" }
 identity-did = { version = "=0.4.0", path = "../identity-did" }
 identity-iota = { version = "=0.4.0", path = "../identity-iota", default-features = false }
@@ -34,7 +34,7 @@ default = ["async"]
 async = ["identity-iota/async"]
 
 # Enables Web Assembly support
-wasm = ["identity-iota/wasm", "identity-comm/wasm"]
+wasm = ["identity-iota/wasm", "identity-comm/wasm", "identity-core/wasm"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]
