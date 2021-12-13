@@ -33,7 +33,6 @@ features = ["wasm"]
 wasm-bindgen-test = { version = "0.3" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-chrono = { version = "0.4", features = ["wasmbind"] }
 getrandom = { version = "0.2", features = ["js"] }
 parking_lot = { version = "0.11.2", features = ["wasm-bindgen"] }
 
