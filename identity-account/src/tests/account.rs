@@ -394,7 +394,6 @@ async fn test_account_sync_integration_msg_found() -> Result<()> {
     chain.integration_message_id()
   );
   assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
-  assert!(false);
   Ok(())
 }
 

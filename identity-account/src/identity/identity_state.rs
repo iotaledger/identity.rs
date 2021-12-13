@@ -81,6 +81,10 @@ impl IdentityState {
     &mut self.document
   }
 
+  pub fn set_document(&mut self, document: IotaDocument) {
+    self.document = document;
+  }
+
   /// Returns a key location suitable for the specified `fragment`.
   pub fn key_location(&self, method: MethodType, fragment: String) -> Result<KeyLocation> {
     Ok(KeyLocation::new(method, fragment, self.generation()))
