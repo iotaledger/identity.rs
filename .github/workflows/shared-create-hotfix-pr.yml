@@ -1,19 +1,23 @@
 name: Shared / Create Hotfix PR
 
-# This workflow creates a Pull Request towards support branches. 
+# This workflow creates a Pull Request meant for creating releases. 
 # A changelog, including the new version, is generated and version strings in relevant files are replaced. 
 # All these changes are committed and submitted as a Pull Request.
 
 on:
   workflow_call:
     inputs:
-      tag-prefix:
-        description: "will be pre-pended to tag-base"
-        required: false
+      branch-regex:
+        description: "regex to validate branch input against"
+        required: true
         type: string
       branch:
         description: "branch to hotfix on"
         required: true
+        type: string
+      tag-prefix:
+        description: "will be pre-pended to tag-base"
+        required: false
         type: string
       main-tag-regex:
         description: "the regex to find all related main releases"
@@ -48,6 +52,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Validate branch
+        run: |
+          if ! [[ ${{ inputs.branch }} =~ ${{ inputs.branch-regex }} ]]; then
+            echo unrecognized branch ${{ inputs.branch }}, must match ${{ inputs.branch-regex }}
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
