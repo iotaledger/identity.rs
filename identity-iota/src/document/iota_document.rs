@@ -55,9 +55,9 @@ use crate::tangle::NetworkName;
 /// This is a thin wrapper around [`CoreDocument`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IotaDocument {
-  #[serde(rename = "d", deserialize_with = "deserialize_iota_core_document")]
+  #[serde(rename = "doc", deserialize_with = "deserialize_iota_core_document")]
   pub(crate) document: CoreDocument,
-  #[serde(rename = "m")]
+  #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
 }
 
@@ -1406,7 +1406,7 @@ mod tests {
     let serialization: String = document.to_json().unwrap();
     assert_eq!(
       serialization,
-      format!("{{\"d\":{},\"m\":{}}}", document.document, document.metadata)
+      format!("{{\"doc\":{},\"meta\":{}}}", document.document, document.metadata)
     );
   }
 
