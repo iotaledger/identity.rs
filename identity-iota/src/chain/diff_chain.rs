@@ -25,6 +25,7 @@ use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
+use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -187,6 +188,13 @@ impl DiffChain {
       });
     }
 
+    let updated_doc: IotaDocument = diff.merge(document)?;
+    if let Some(PublishType::Integration) = PublishType::new(document, &updated_doc) {
+      return Err(Error::ChainError {
+        error: "Diff Messages Cannot Alter Capability Invocation Set",
+      });
+    }
+
     Ok(())
   }
 }
@@ -220,12 +228,14 @@ mod test {
   use identity_did::verification::MethodRef;
   use identity_did::verification::MethodType;
 
+  use crate::chain::DiffChain;
   use crate::chain::DocumentChain;
   use crate::chain::IntegrationChain;
   use crate::document::DiffMessage;
   use crate::document::IotaDocument;
   use crate::tangle::MessageId;
   use crate::tangle::TangleRef;
+  use crate::Error;
 
   #[test]
   fn test_diff_chain() {
@@ -314,6 +324,47 @@ mod test {
         .unwrap();
       diff.set_message_id(message_id);
       assert!(chain.try_push_diff(diff).is_ok());
+    }
+  }
+
+  #[tokio::test]
+  async fn test_check_valid_addition_updating_capability_invocation() {
+    // =========================================================================
+    // Create Initial Document
+    // =========================================================================
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    document
+      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .unwrap();
+    document.set_message_id(MessageId::new([8; 32]));
+    let chain: DocumentChain = DocumentChain::new(IntegrationChain::new(document.clone()).unwrap());
+
+    // =========================================================================
+    // Create Document Altering Capability Invocation
+    // =========================================================================
+    let mut new_document: IotaDocument = document.clone();
+    new_document.properties_mut().insert("foo".into(), 123.into());
+    unsafe {
+      new_document.as_document_mut().capability_invocation_mut().clear();
+    }
+    new_document.set_previous_message_id(*chain.integration_message_id());
+    new_document.set_updated(Timestamp::now_utc());
+
+    let mut diff_msg: DiffMessage =
+      DiffMessage::new(&document, &new_document, *chain.integration_message_id()).unwrap();
+    document
+      .sign_data(
+        &mut diff_msg,
+        keypair.private(),
+        document.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
+    diff_msg.set_message_id(*chain.diff_message_id());
+
+    match DiffChain::check_valid_addition(&diff_msg, &document, &chain.integration_message_id()).unwrap_err() {
+      Error::ChainError { error } => assert_eq!(error, "Diff Messages Cannot Alter Capability Invocation Set"),
+      _ => unreachable!(),
     }
   }
 }

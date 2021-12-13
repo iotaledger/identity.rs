@@ -1,7 +1,5 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
-use identity_did::verification::MethodRef;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
@@ -28,33 +26,14 @@ impl PublishType {
       return None;
     }
 
-    let old_capability_invocation_set: Vec<Option<&VerificationMethod>> = Self::extract_signing_keys(old_doc);
-    let new_capability_invocation_set: Vec<Option<&VerificationMethod>> = Self::extract_signing_keys(new_doc);
+    let old_capability_invocation_set: Vec<Option<&VerificationMethod>> = old_doc.extract_signing_keys();
+    let new_capability_invocation_set: Vec<Option<&VerificationMethod>> = new_doc.extract_signing_keys();
 
     if old_capability_invocation_set != new_capability_invocation_set {
       Some(PublishType::Integration)
     } else {
       Some(PublishType::Diff)
     }
-  }
-
-  fn extract_signing_keys(document: &IotaDocument) -> Vec<Option<&VerificationMethod>> {
-    document
-      .as_document()
-      .capability_invocation()
-      .iter()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(method) => Some(method),
-        MethodRef::Refer(did_url) => document.as_document().resolve_method(did_url),
-      })
-      .filter(|method| {
-        if let Some(method) = method {
-          IotaDocument::is_signing_method_type(method.key_type())
-        } else {
-          true
-        }
-      })
-      .collect()
   }
 }
 

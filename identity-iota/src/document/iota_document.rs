@@ -768,6 +768,25 @@ impl IotaDocument {
 
     Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
   }
+
+  pub(crate) fn extract_signing_keys(&self) -> Vec<Option<&VerificationMethod>> {
+    self
+      .as_document()
+      .capability_invocation()
+      .iter()
+      .map(|method_ref| match method_ref {
+        MethodRef::Embed(method) => Some(method),
+        MethodRef::Refer(did_url) => self.as_document().resolve_method(did_url),
+      })
+      .filter(|method| {
+        if let Some(method) = method {
+          IotaDocument::is_signing_method_type(method.key_type())
+        } else {
+          true
+        }
+      })
+      .collect()
+  }
 }
 
 impl<'a, 'b, 'c> IotaDocument {}
