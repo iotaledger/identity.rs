@@ -22,10 +22,6 @@ The repository requires a review to be provided by at least one (other) develope
 In order to generate good [changelogs](#Changelog), the PR title must be written in a way that is suitable as an changelog entry and the PR needs to be [labeled](#PR-Labels) correctly.
 Once a PR is approved, the preferred method is "squash-and-merge" to keep the destination branch clean and allow many small commits while work is in-progress. Once merged in, the source branch may be deleted.
 
-Linting: `cargo clippy --all-targets --all-features -- -D warnings`
-
-Formatting: `cargo fmt --all`
-
 ### Branches
 This repository uses an adaption of the commonly used [Gitflow Workflow](#Gitflow). IOTA Identity always has two permanent branches: `main` and `dev`. Both branches are protected and disallow direct commits; the only changes allowed are from pull requests approved and merged by maintainers.
 
