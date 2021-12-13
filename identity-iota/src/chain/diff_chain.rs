@@ -327,8 +327,8 @@ mod test {
     }
   }
 
-  #[tokio::test]
-  async fn test_check_valid_addition_updating_capability_invocation() {
+  #[test]
+  fn test_check_valid_addition_updating_capability_invocation() {
     // =========================================================================
     // Create Initial Document
     // =========================================================================
