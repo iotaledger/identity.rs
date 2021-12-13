@@ -472,6 +472,8 @@ impl Account {
     Ok(())
   }
 
+  /// Fetches the latest changes for the given did from the tangle and 
+  /// updates the local state
   pub async fn synchronize_state(&mut self) -> Result<()> {
     let iota_did: &IotaDID = self.did();
     let document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
