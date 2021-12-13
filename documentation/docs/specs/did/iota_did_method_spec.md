@@ -120,24 +120,24 @@ An Integration (Int) DID message MUST contain both a valid DID Document and a [D
 Example of an Integration DID Message:
 ```json
 {
-  "d": {
-    "id": "did:iota:DLQCgzCJkAxt66yHoEXtoSCFUBmk3qJ23RaJQ4MCqt2S",
+  "doc": {
+    "id": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ",
     "capabilityInvocation": [
       {
-        "id": "did:iota:DLQCgzCJkAxt66yHoEXtoSCFUBmk3qJ23RaJQ4MCqt2S#sign-0",
-        "controller": "did:iota:DLQCgzCJkAxt66yHoEXtoSCFUBmk3qJ23RaJQ4MCqt2S",
+        "id": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ#sign-0",
+        "controller": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "zGvcVH2hAfbmb4t6kefG2sgXeEHMd2REt3MPmpGgzHR5h"
+        "publicKeyMultibase": "zAibEeQAru66yK8TBGvzU2VXGQzQNo3n3DZmnRgTi4Y5c"
       }
     ]
   },
-  "m": {
-    "created": "2021-12-12T15:59:54Z",
-    "updated": "2021-12-12T15:59:54Z",
+  "meta": {
+    "created": "2021-12-13T16:20:25Z",
+    "updated": "2021-12-13T16:20:25Z",
     "proof": {
       "type": "JcsEd25519Signature2020",
       "verificationMethod": "#sign-0",
-      "signatureValue": "2oVeUeuvVJrN6wZ2Gt7We1RvhNtZeXT74n9i6iBe3CzcKq9EQdE4nGFUMXcr4HjLe8M6CyuzCyHqJT7Hnpnjiu6j"
+      "signatureValue": "5THVPoHymZMoQi7ZbbQr5ff7VkboiJgcjkDx3X4DAHTEnn3nBFkx6nC5dfwxcT7DuUH63rttAb9e91DQ1rR6ofqP"
     }
   }
 }
@@ -158,13 +158,13 @@ A Differentiation (Diff) DID message does not contain a valid DID Document. Inst
 Example of a Diff DID message:
 ```json
 {
-  "did": "did:iota:DLQCgzCJkAxt66yHoEXtoSCFUBmk3qJ23RaJQ4MCqt2S",
-  "diff": "{\"d\":{\"service\":[{\"id\":\"did:iota:DLQCgzCJkAxt66yHoEXtoSCFUBmk3qJ23RaJQ4MCqt2S#service-1\",\"type_\":\"LinkedDomains\",\"service_endpoint\":\"\\\"https://example.com/\\\"\",\"properties\":null}]},\"m\":{\"updated\":\"2021-12-12T16:00:17Z\"}}",
-  "previousMessageId" :"bc76f7af6640ceb7ccc9cb1c6d4fee5d9f0002621f7b543caa297aa27ee12735",
+  "id": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ",
+  "diff": "{\"doc\":{\"service\":[{\"id\":\"did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ#service-1\",\"type_\":\"LinkedDomains\",\"service_endpoint\":\"\\\"https://example.com/\\\"\",\"properties\":null}]},\"meta\":{\"updated\":\"2021-12-13T16:20:43Z\"}}",
+  "previousMessageId": "844dd476cf6f0e7d4db1aae8b18e84d0dba951ac7beaacbf4f5748631929f09e",
   "proof": {
     "type": "JcsEd25519Signature2020",
     "verificationMethod": "#sign-0",
-    "signatureValue": "45jVUEf86GwJhPYB12enD1QY4PbYPu4xHx8sxnXy2MQy1uQYcCQ424sT1Qfj3zKi522G9bqu7NL52LrfHGEtzMFP"
+    "signatureValue": "21wWP4prYn2YLvQabCsWT3qc1Q84Am8q6SRLuQfkXqB6Pm3be47kTQD3axdvidntavKk3PoJtV35XusTFyfJCy3m"
   }
 }
 ```
@@ -206,7 +206,7 @@ The `diff` object MUST contain all the differences between the current and previ
 Example `diff` of adding a new service entry to the document and changing the `updated` field in the metadata:
 ```json
 {
-  "diff": "{\"d\":{\"service\":[{\"id\":\"did:iota:DLQCgzCJkAxt66yHoEXtoSCFUBmk3qJ23RaJQ4MCqt2S#service-1\",\"type_\":\"LinkedDomains\",\"service_endpoint\":\"\\\"https://example.com/\\\"\",\"properties\":null}]},\"m\":{\"updated\":\"2021-12-12T16:00:17Z\"}}"
+  "diff": "{\"doc\":{\"service\":[{\"id\":\"did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ#service-1\",\"type_\":\"LinkedDomains\",\"service_endpoint\":\"\\\"https://example.com/\\\"\",\"properties\":null}]},\"meta\":{\"updated\":\"2021-12-13T16:20:43Z\"}}"
 } 
 ```
 
