@@ -159,7 +159,7 @@ impl DiffChain {
     document: &ResolvedIotaDocument,
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
-    if document.document.id() != &diff.did {
+    if document.document.id() != &diff.id {
       return Err(Error::ChainError { error: "Invalid DID" });
     }
 

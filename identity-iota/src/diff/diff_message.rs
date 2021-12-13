@@ -26,7 +26,7 @@ use crate::tangle::TangleRef;
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffMessage {
-  pub(crate) did: IotaDID,
+  pub(crate) id: IotaDID,
   pub(crate) diff: String,
   #[serde(
     rename = "previousMessageId",
@@ -49,7 +49,7 @@ impl DiffMessage {
     let diff: String = <IotaDocument as Diff>::diff(current, updated)?.to_json()?;
 
     Ok(Self {
-      did: current.id().clone(),
+      id: current.id().clone(),
       previous_message_id,
       diff,
       proof: None,
@@ -59,7 +59,7 @@ impl DiffMessage {
 
   /// Returns the DID of associated DID Document.
   pub fn id(&self) -> &IotaDID {
-    &self.did
+    &self.id
   }
 
   /// Returns the raw contents of the DID Document diff.
