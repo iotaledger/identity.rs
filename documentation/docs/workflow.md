@@ -18,7 +18,7 @@ Issues are opened when a certain task or problem is noted but cannot immediately
 
 New branches should be pushed to the GitHub repository as soon as possible, making it public to all contributors. In addition, a pull request (PR) should be opened in draft status, describing the goals and any requirements of the changes. Any code written and committed should frequently be pushed back to the GitHub branch. This both acts as a back-up mechanism and provides transparency towards other contributors and the community. You should pull from the origin branch of the PR regularly to prevent merge conflicts.
 Other contributors are encouraged to provide feedback on a PR during its development. A PR should be flagged as 'ready for review' once the PR has implemented all changes and no further commits are planned by the main contributors.
-The repository requires a review to be provided by at least one (other) developer in the team that works in the same language or has knowledge of the work before it can be merged.
+The repository requires a review to be provided by at least one (other) developer in the team that works in the same language or has knowledge of the work before it can be merged. For larger PRs the review of two maintainers is recommended.
 In order to generate good [changelogs](#Changelog), the PR title must be written in a way that is suitable as an changelog entry and the PR needs to be [labeled](#PR-Labels) correctly.
 Once a PR is approved, the preferred method is "squash-and-merge" to keep the destination branch clean and allow many small commits while work is in-progress. Once merged in, the source branch may be deleted.
 
