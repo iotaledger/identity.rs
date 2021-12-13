@@ -23,7 +23,7 @@ In order to generate good [changelogs](#Changelog), the PR title must be written
 Once a PR is approved, the preferred method is "squash-and-merge" to keep the destination branch clean and allow many small commits while work is in-progress. Once merged in, the source branch may be deleted.
 
 ### Branches
-This repository uses an adaption of the commonly used [Gitflow Workflow](#Gitflow). IOTA Identity always has two permanent branches: `main` and `dev`. Both branches are protected and disallow direct commits; the only changes allowed are from pull requests approved and merged by maintainers.
+IOTA Identity always has two permanent branches: `main` and `dev`. Both branches are protected and disallow direct commits; the only changes allowed are from pull requests approved and merged by maintainers.
 
 #### Main (main)
 The `main` branch contains a stable version of the code that is released towards package managers such as `crates.io` and `npm`. This branch only accepts PRs that merge from `release` or `hotfix` branches. 
@@ -48,21 +48,10 @@ It is recommended to integrate `dev` or `epic` regularly, depending on from wher
 #### Epic (epic/)
 Long-lived `epic` branches should be created as soon as a feature is expected to require more than one PR. The `epic` branch should be branched from `dev` and should only accept merges that are related to the feature being developed. A PR should be opened as soon as the branch is created to publicly notify contributors about the development, the goals and requirements of the feature and the existence of the branch. It is recommended to integrate `dev` often to reduce the possibility and potential size of merge conflicts.
 
-#### Release (release/) {#release}
-Release branches allow to move changes from `dev` to `main`. They must be created from `dev`. If version strings need to be updated in files (like `package.json` e.g.) this should happen in commits on this branch. These branches need to be merged to `main` and `dev`. Since release branches will lead to a [release](#Release) they must contain a [changelog](#Changelog) and must be versioned.
-
-#### Hotfix (hotfix/) {#hotfix}
-Hotfix branches allow to fix critical bugs on the `main` branch, without the need to merge them in the `dev` branch first. They must be created from `main`. If version strings need to be updated in files (like `package.json` e.g.) this should happen in commits on this branch. These branches need to be merged to `main` and `dev`, so that both branches contain the fix. Since hotfix branches will lead to a [release](#Release) they must contain a [changelog](#Changelog) and must be versioned.
-
 ### Semantic Versioning
 Semantic Versioning (SemVer) describes a methodology for versioning of software to convey meaning and guarantees through the version string. A typical version string looks like `2.3.1`, where `2` is called the major, `3` the minor and `1` the patch or bugfix version. 
 The central idea is that every part of the version string conveys meaning. A major change introduces behavior that is incompatible with previous versions of the software, while a minor change adds backwards-compatible functionality and a patch simply fixes a problem. So just by looking at the version string an implementer will have an understanding of the effort needed to integrate a new version.
 For more detailed information and an overview of advanced features see [Semantic Versioning 2.0.0](https://semver.org/). Not to be confused with [Sentimental Versioning](http://sentimentalversioning.org/).
-
-### Gitflow
-Gitflow is a well established branching model for developing and releasing tightly versioned software products. It was [proposed in 2010](https://nvie.com/posts/a-successful-git-branching-model/) and has seen wide adoption. For a good introduction to the workflow and CLI integration see the [Atlassian Guide](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) or the [Gitflow Cheatsheet](https://danielkummer.github.io/git-flow-cheatsheet/index.html).
-In recent years, through a shift toward continuously delivered applications, the need for strict versioning lessened and other branching models became more popular. Since this project is a library rather then an application, it needs to have strong guarantees towards implementers that we express through [Semantic Versioning](#Semantic-Versioning). Gitflow helps us manage our work- and release-flow to uphold those guarantees.
-Gitflow is a merge-based workflow, rebasing of commits is not required and not desired.
 
 ### Changelog
 A changelog is a file describing a software project for humans to grasp the type and content of changes from version to version. Changelogs are closely related to the versioning of software, since individual changes are grouped into versions that are in our case referenced by a [SemVer string](#Semantic-Versioning). We generally follow the recommendations from [keepachangelog](https://keepachangelog.com/en/1.0.0/). The changelog in this project is generated from the titles and [labels](#PR-Labels) of [Pull-Requests](#Pull-Requests). 
