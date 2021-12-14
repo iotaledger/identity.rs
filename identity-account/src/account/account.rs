@@ -258,6 +258,30 @@ impl Account {
     Ok(())
   }
 
+  /// Fetches the latest changes for the account did from the tangle and
+  /// updates the local state
+  pub async fn fetch_state(&mut self) -> Result<()> {
+    let iota_did: &IotaDID = self.did();
+    let mut document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
+    // Checks if the local document is up to date
+    if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
+      && (document_chain.diff().is_empty()
+        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+    {
+      return Ok(());
+    }
+    // Overwrite the current state with the most recent document
+    self
+      .chain_state
+      .set_last_integration_message_id(*document_chain.integration_message_id());
+    self
+      .chain_state
+      .set_last_diff_message_id(*document_chain.diff_message_id());
+    std::mem::swap(self.state.document_mut(), document_chain.current_mut());
+    self.save(true).await?;
+    Ok(())
+  }
+
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
@@ -469,29 +493,6 @@ impl Account {
 
     self.chain_state.set_last_diff_message_id(message_id);
 
-    Ok(())
-  }
-
-  /// Fetches the latest changes for the account did from the tangle and
-  /// updates the local state
-  pub async fn synchronize_state(&mut self) -> Result<()> {
-    let iota_did: &IotaDID = self.did();
-    let document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
-    // Checks if the local document is up to date
-    if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
-      && (document_chain.diff().is_empty()
-        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
-    {
-      return Ok(());
-    }
-    // Overwrite the current state with the most recent document
-    self.state.set_document(document_chain.current().clone());
-    self
-      .chain_state
-      .set_last_integration_message_id(*document_chain.integration_message_id());
-    self
-      .chain_state
-      .set_last_diff_message_id(*document_chain.diff_message_id());
     Ok(())
   }
 
