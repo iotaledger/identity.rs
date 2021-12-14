@@ -16,6 +16,7 @@ use identity::credential::Credential;
 use identity::credential::Subject;
 use identity::crypto::KeyPair;
 use identity::crypto::SignatureOptions;
+use identity::did::verifiable::VerifierOptions;
 use identity::did::DID;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
@@ -95,7 +96,10 @@ async fn main() -> Result<()> {
   );
 
   // Ensure the resolved DID Document can verify the credential signature
-  let verified: bool = resolved.document.verify_data(&credential).is_ok();
+  let verified: bool = resolved
+    .document
+    .verify_data(&credential, VerifierOptions::default())
+    .is_ok();
 
   println!("[Example] Credential Verified = {}", verified);
 

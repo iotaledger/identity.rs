@@ -1,7 +1,6 @@
 use crate::common::Timestamp;
 
-/// Convenience struct for holding attributes to pass to a new
-/// [`Signature`](crate::crypto::Signature).
+/// Holds attributes for a new [`Signature`](crate::crypto::Signature).
 #[derive(Clone, Debug, Default)]
 pub struct SignatureOptions {
   /// [`Signature::created`](crate::crypto::Signature::created)

@@ -24,13 +24,13 @@ use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
-use identity_core::crypto::Verifier;
 use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
 use identity_did::utils::OrderedSet;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
+use identity_did::verifiable::VerifierOptions;
 use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
@@ -491,23 +491,13 @@ impl IotaDocument {
   /// - An unsupported verification method is used.
   /// - The signature verification operation fails.
   pub fn verify_document(signed: &IotaDocument, signer: &IotaDocument) -> Result<()> {
-    // Ensure signing key has a capability invocation verification relationship.
-    let signature: &Signature = signed.try_signature()?;
-    let method: &IotaVerificationMethod = signer.try_resolve_signing_method(signature)?;
-
-    // Verify signature.
-    let public: PublicKey = method.key_data().try_decode()?.into();
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(signed, public.as_ref())?;
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        // Merkle Key Collections cannot be used to sign documents.
-        return Err(identity_did::error::Error::InvalidMethodType.into());
-      }
-    }
-
-    Ok(())
+    // Ensure signing method is allowed to sign document updates.
+    signer
+      .verifier()
+      .method_scope(MethodScope::capability_invocation())
+      .method_type(Self::UPDATE_METHOD_TYPES)
+      .verify(signed)
+      .map_err(Into::into)
   }
 
   /// Verifies a self-signed signature on this DID document.
@@ -555,7 +545,7 @@ impl IotaDocument {
   }
 
   /// Signs the provided `data` with the verification method specified by `method_query`.
-  /// See [`IotaDocument::signer`] for a more convenient way to create signatures.
+  /// See [`IotaDocument::signer`] for creating signatures with a builder pattern.
   ///
   /// NOTE: does not validate whether `private_key` corresponds to the verification method.
   /// See [`IotaDocument::verify_data`].
@@ -584,33 +574,18 @@ impl IotaDocument {
   }
 
   /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document.
-  ///
-  /// NOTE: does not restrict which verification relationship signed the data.
-  /// See [`IotaDocument::verify_data_with_scope`].
+  /// in this DID Document. See [`IotaDocument::verifier`] for verifying signatures with
+  /// a builder pattern.
   ///
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X) -> Result<()>
+  pub fn verify_data<X>(&self, data: &X, options: VerifierOptions<'_>) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
-    self.verifier().verify(data).map_err(Into::into)
-  }
-
-  /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document with the verification relationship specified by `scope`.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used or the verification operation fails.
-  pub fn verify_data_with_scope<X>(&self, data: &X, scope: MethodScope) -> Result<()>
-  where
-    X: Serialize + TrySignature,
-  {
-    self.verifier().verify_with_scope(data, scope).map_err(Into::into)
+    self.verifier().options(options).verify(data).map_err(Into::into)
   }
 
   // ===========================================================================
@@ -655,7 +630,12 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
   pub fn verify_diff(&self, diff: &DiffMessage) -> Result<()> {
-    self.verify_data_with_scope(diff, MethodScope::capability_invocation())
+    // Ensure signing method is allowed to sign document updates.
+    self.verifier()
+      .method_scope(MethodScope::capability_invocation())
+      .method_type(Self::UPDATE_METHOD_TYPES)
+      .verify(diff)
+      .map_err(Into::into)
   }
 
   /// Verifies a [`DiffMessage`] signature and merges the changes into `self`.
@@ -1242,7 +1222,7 @@ mod tests {
       );
       if scope == MethodScope::capability_invocation() {
         let diff = diff_result.unwrap();
-        assert!(doc1.verify_data(&diff).is_ok());
+        assert!(doc1.verify_data(&diff, VerifierOptions::default()).is_ok());
         assert!(doc1.verify_diff(&diff).is_ok());
       } else {
         assert!(diff_result.is_err());
@@ -1293,7 +1273,7 @@ mod tests {
         )
         .unwrap();
       // Signature should still be valid for every scope.
-      assert!(document.verify_data(&data).is_ok());
+      assert!(document.verify_data(&data, VerifierOptions::default()).is_ok());
 
       // Ensure only the correct scope is valid.
       for scope_check in [
@@ -1304,7 +1284,7 @@ mod tests {
         MethodScope::key_agreement(),
         MethodScope::VerificationMethod,
       ] {
-        let result = document.verify_data_with_scope(&data, scope_check);
+        let result = document.verify_data(&data, VerifierOptions::new().method_scope(scope_check));
         // Any other scope should fail validation.
         if scope_check == scope {
           assert!(result.is_ok());

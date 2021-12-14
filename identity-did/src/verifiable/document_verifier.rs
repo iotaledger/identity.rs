@@ -5,6 +5,7 @@ use serde::Serialize;
 
 use identity_core::common::BitSet;
 use identity_core::common::Object;
+use identity_core::common::Timestamp;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleDigestTag;
@@ -22,6 +23,7 @@ use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
 
 use crate::document::CoreDocument;
+use crate::verifiable::verifier_options::VerifierOptions;
 use crate::verifiable::Revocation;
 use crate::verification::MethodScope;
 use crate::verification::MethodType;
@@ -35,11 +37,59 @@ use crate::Result;
 
 pub struct DocumentVerifier<'base, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
+  options: VerifierOptions<'base>,
 }
 
 impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   pub fn new(document: &'base CoreDocument<T, U, V>) -> Self {
-    Self { document }
+    Self {
+      document,
+      options: VerifierOptions::default(),
+    }
+  }
+
+  /// Overwrites the [`VerifierOptions`].
+  pub fn options(mut self, options: VerifierOptions<'base>) -> Self {
+    self.options = options;
+    self
+  }
+
+  /// Verify the signing verification method relationship matches this.
+  pub fn method_scope(mut self, method_scope: MethodScope) -> Self {
+    self.options = self.options.method_scope(method_scope);
+    self
+  }
+
+  /// Verify the signing verification method type matches one specified.
+  pub fn method_type(mut self, method_type: &'base [MethodType]) -> Self {
+    self.options = self.options.method_type(method_type);
+    self
+  }
+
+  /// Verify the [`Signature::challenge`] field matches this.
+  pub fn challenge(mut self, challenge: &'base str) -> Self {
+    self.options = self.options.challenge(challenge);
+    self
+  }
+
+  /// Verify the [`Signature::domain`] field matches this.
+  pub fn domain(mut self, domain: &'base str) -> Self {
+    self.options = self.options.domain(domain);
+    self
+  }
+
+  /// Verify the [`Signature::purpose`] field matches this.
+  pub fn purpose(mut self, purpose: &'base str) -> Self {
+    self.options = self.options.purpose(purpose);
+    self
+  }
+
+  /// Determines whether to error if the current time exceeds the [`Signature::expires`] field.
+  ///
+  /// Default: false (reject expired signatures).
+  pub fn allow_expired(mut self, allow_expired: bool) -> Self {
+    self.options = self.options.allow_expired(allow_expired);
+    self
   }
 }
 
@@ -51,57 +101,83 @@ where
   ///
   /// # Errors
   ///
-  /// Fails if an unsupported verification method is used, document
+  /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
-  pub fn verify<X>(&self, that: &X) -> Result<()>
+  pub fn verify<X>(&self, data: &X) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = that.try_signature()?;
-    let method: &VerificationMethod<U> = self.document.try_resolve_method(signature)?;
+    let signature: &Signature = data
+      .try_signature()
+      .map_err(|_| Error::InvalidSignature("missing signature"))?;
+    let method: &VerificationMethod<U> = if let Some(scope) = &self.options.method_scope {
+      self
+        .document
+        .try_resolve_method_with_scope(signature, *scope)
+        .map_err(|_| Error::InvalidSignature("method with scope not found"))?
+    } else {
+      self
+        .document
+        .try_resolve_method(signature)
+        .map_err(|_| Error::InvalidSignature("method not found"))?
+    };
 
-    Self::do_verify(method, that)
+    // Check method type.
+    if let Some(method_types) = &self.options.method_type {
+      if !method_types.contains(&method.key_type) {
+        return Err(Error::InvalidSignature("invalid method type"));
+      }
+    }
+
+    // Check challenge.
+    if self.options.challenge.is_some() && self.options.challenge != signature.challenge.as_deref() {
+      return Err(Error::InvalidSignature("invalid challenge"));
+    }
+
+    // Check domain.
+    if self.options.domain.is_some() && self.options.domain != signature.domain.as_deref() {
+      return Err(Error::InvalidSignature("invalid domain"));
+    }
+
+    // Check purpose.
+    if self.options.purpose.is_some() && self.options.purpose != signature.purpose.as_deref() {
+      return Err(Error::InvalidSignature("invalid purpose"));
+    }
+
+    // Check expired.
+    if let Some(expires) = signature.expires {
+      if !self.options.allow_expired.unwrap_or(false) && Timestamp::now_utc() > expires {
+        return Err(Error::InvalidSignature("expired"));
+      }
+    }
+
+    // Check signature.
+    Self::do_verify(method, data)
   }
 
-  /// Verifies the signature of the provided data and that it was signed with a verification method
-  /// with a verification relationship specified by `scope`.
+  /// Verifies the signature of the provided data matches the public key data from the given
+  /// verification method.
   ///
   /// # Errors
   ///
-  /// Fails if an unsupported verification method is used, document
+  /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
-  pub fn verify_with_scope<X>(&self, that: &X, scope: MethodScope) -> Result<()>
+  pub fn do_verify<X>(method: &VerificationMethod<U>, data: &X) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = that.try_signature()?;
-    let method: &VerificationMethod<U> = self.document.try_resolve_method_with_scope(signature, scope)?;
-
-    Self::do_verify(method, that)
-  }
-
-  /// Verifies the signature of the provided data.
-  ///
-  /// # Errors
-  ///
-  /// Fails if an unsupported verification method is used, document
-  /// serialization fails, or the verification operation fails.
-  pub fn do_verify<X>(method: &VerificationMethod<U>, that: &X) -> Result<()>
-  where
-    X: Serialize + TrySignature,
-  {
-    let data: Vec<u8> = method.key_data().try_decode()?;
+    let public_key: Vec<u8> = method.key_data().try_decode()?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(that, &data)?;
+        JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
       }
-      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data)? {
+      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&public_key)? {
         (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
-          merkle_key_verify::<X, Sha256, Ed25519, U>(that, method, &data)?;
+          merkle_key_verify::<X, Sha256, Ed25519, U>(data, method, &public_key)?;
         }
         (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
-          merkle_key_verify::<X, Blake2b256, Ed25519, U>(that, method, &data)?;
+          merkle_key_verify::<X, Blake2b256, Ed25519, U>(data, method, &public_key)?;
         }
         (_, _) => {
           return Err(Error::InvalidMethodType);

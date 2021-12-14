@@ -58,7 +58,7 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
     }
   }
 
-  /// Overwrites all [`SignatureOptions`].
+  /// Overwrites the [`SignatureOptions`].
   pub fn sign_options(mut self, sign_options: SignatureOptions) -> Self {
     self.options = sign_options;
     self

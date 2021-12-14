@@ -10,6 +10,7 @@ use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_did::verifiable::VerifierOptions;
 
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -97,7 +98,11 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the credential signature using the issuers DID Document
-    let credential_verified: bool = issuer_doc.document.document.verify_data(&credential).is_ok();
+    let credential_verified: bool = issuer_doc
+      .document
+      .document
+      .verify_data(&credential, VerifierOptions::default())
+      .is_ok();
 
     // Check if all subjects have valid signatures
     let subjects_verified: bool = subjects.values().all(|subject| subject.verified);
@@ -142,7 +147,11 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the presentation signature using the holders DID Document
-    let presentation_verified: bool = holder_doc.document.document.verify_data(&presentation).is_ok();
+    let presentation_verified: bool = holder_doc
+      .document
+      .document
+      .verify_data(&presentation, VerifierOptions::default())
+      .is_ok();
 
     // Check if all credentials are verified
     let credentials_verified: bool = credentials.iter().all(|credential| credential.verified);
