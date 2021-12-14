@@ -18,7 +18,6 @@ use identity_core::crypto::TrySignatureMut;
 use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
-use crate::verifiable::ProofProperties;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::MethodUriType;
@@ -26,37 +25,37 @@ use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
 
 #[derive(Debug, Serialize)]
-struct That {
+struct MockObject {
   data: u32,
   #[serde(skip_serializing_if = "Option::is_none")]
   proof: Option<Signature>,
 }
 
-impl That {
+impl MockObject {
   fn new(data: u32) -> Self {
     Self { data, proof: None }
   }
 }
 
-impl TrySignature for That {
+impl TrySignature for MockObject {
   fn signature(&self) -> Option<&Signature> {
     self.proof.as_ref()
   }
 }
 
-impl TrySignatureMut for That {
+impl TrySignatureMut for MockObject {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
   }
 }
 
-impl SetSignature for That {
+impl SetSignature for MockObject {
   fn set_signature(&mut self, signature: Signature) {
     self.proof = Some(signature);
   }
 }
 
-impl TryMethod for That {
+impl TryMethod for MockObject {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
@@ -78,13 +77,13 @@ fn test_sign_verify_that_ed25519() {
       .build()
       .unwrap();
 
-    let document: CoreDocument<ProofProperties> = CoreDocument::builder(Default::default())
+    let document: CoreDocument = CoreDocument::builder(Default::default())
       .id(controller)
       .verification_method(method)
       .build()
       .unwrap();
 
-    let mut that: That = That::new(123);
+    let mut that: MockObject = MockObject::new(123);
 
     assert!(document.verifier().verify(&that).is_err());
 
@@ -120,7 +119,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
       .build()
       .unwrap();
 
-    let document: CoreDocument<ProofProperties> = CoreDocument::builder(Default::default())
+    let document: CoreDocument = CoreDocument::builder(Default::default())
       .id(controller)
       .verification_method(method)
       .build()
@@ -129,7 +128,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
     let public: &PublicKey = keys.public(index).unwrap();
     let private: &PrivateKey = keys.private(index).unwrap();
 
-    let mut that: That = That::new(123);
+    let mut that: MockObject = MockObject::new(123);
 
     assert!(document.verifier().verify(&that).is_err());
 
