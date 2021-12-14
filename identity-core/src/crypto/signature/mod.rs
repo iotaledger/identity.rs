@@ -5,11 +5,13 @@
 
 mod ed25519;
 mod signature;
+mod signature_options;
 mod signature_value;
 mod traits;
 
 pub use self::ed25519::Ed25519;
 pub use self::signature::Signature;
+pub use self::signature_options::SignatureOptions;
 pub use self::signature_value::SignatureValue;
 pub use self::traits::Named;
 pub use self::traits::SetSignature;

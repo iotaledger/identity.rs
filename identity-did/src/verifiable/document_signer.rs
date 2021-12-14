@@ -23,6 +23,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Sign;
+use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::Error as CoreError;
 
@@ -43,11 +44,7 @@ pub struct DocumentSigner<'base, 'query, 'proof, T = Object, U = Object, V = Obj
   private: &'base PrivateKey,
   method: Option<MethodQuery<'query>>,
   merkle_key: Option<(&'proof PublicKey, &'proof dyn Any)>,
-  created: Option<Timestamp>,
-  expires: Option<Timestamp>,
-  challenge: Option<String>,
-  domain: Option<String>,
-  purpose: Option<String>,
+  options: SignatureOptions,
 }
 
 impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
@@ -57,42 +54,44 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
       private,
       method: None,
       merkle_key: None,
-      created: None,
-      expires: None,
-      challenge: None,
-      domain: None,
-      purpose: None,
+      options: SignatureOptions::default(),
     }
   }
 
-  /// Sets the [`Signature::created`] field.
-  pub fn created(mut self, created: Option<Timestamp>) -> Self {
-    self.created = created;
+  /// Overwrites all [`SignatureOptions`].
+  pub fn sign_options(mut self, sign_options: SignatureOptions) -> Self {
+    self.options = sign_options;
     self
   }
 
-  /// Sets the [`Signature::expires`] field. The signature will fail validation after the specified
-  /// datetime.
-  pub fn expires(mut self, expires: Option<Timestamp>) -> Self {
-    self.expires = expires;
+  /// Sets the [`Signature::created`](identity_core::crypto::Signature::created) field.
+  pub fn created(mut self, created: Timestamp) -> Self {
+    self.options = self.options.created(created);
     self
   }
 
-  /// Sets the [`Signature::challenge`] field.
-  pub fn challenge(mut self, challenge: Option<String>) -> Self {
-    self.challenge = challenge;
+  /// Sets the [`Signature::expires`](identity_core::crypto::Signature::expires) field.
+  /// The signature will fail validation after the specified datetime.
+  pub fn expires(mut self, expires: Timestamp) -> Self {
+    self.options = self.options.expires(expires);
     self
   }
 
-  /// Sets the [`Signature::domain`] field.
-  pub fn domain(mut self, domain: Option<String>) -> Self {
-    self.domain = domain;
+  /// Sets the [`Signature::challenge`](identity_core::crypto::Signature::challenge) field.
+  pub fn challenge(mut self, challenge: String) -> Self {
+    self.options = self.options.challenge(challenge);
     self
   }
 
-  /// Sets the [`Signature::purpose`] field.
-  pub fn purpose(mut self, purpose: Option<String>) -> Self {
-    self.purpose = purpose;
+  /// Sets the [`Signature::domain`](identity_core::crypto::Signature::domain) field.
+  pub fn domain(mut self, domain: String) -> Self {
+    self.options = self.options.domain(domain);
+    self
+  }
+
+  /// Sets the [`Signature::purpose`](identity_core::crypto::Signature::purpose) field.
+  pub fn purpose(mut self, purpose: String) -> Self {
+    self.options = self.options.purpose(purpose);
     self
   }
 }
@@ -134,16 +133,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(
-          that,
-          method_uri,
-          self.private.as_ref(),
-          self.created,
-          self.expires,
-          self.challenge.clone(),
-          self.domain.clone(),
-          self.purpose.clone(),
-        )?;
+        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
@@ -180,16 +170,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
 
-        MerkleSigner::<D, S>::create_signature(
-          that,
-          method,
-          &skey,
-          self.created,
-          self.expires,
-          self.challenge.clone(),
-          self.domain.clone(),
-          self.purpose.clone(),
-        )?;
+        MerkleSigner::<D, S>::create_signature(that, method, &skey, self.options.clone())?;
 
         Ok(())
       }

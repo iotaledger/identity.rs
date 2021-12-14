@@ -15,6 +15,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Subject;
 use identity::crypto::KeyPair;
+use identity::crypto::SignatureOptions;
 use identity::did::DID;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
@@ -71,7 +72,9 @@ async fn main() -> Result<()> {
     .build()?;
 
   // ...and sign the Credential with the previously created Verification Method
-  account.sign("key-1", &mut credential).await?;
+  account
+    .sign("key-1", &mut credential, SignatureOptions::default())
+    .await?;
 
   println!("[Example] Local Credential = {:#}", credential);
 

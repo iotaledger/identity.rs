@@ -3,13 +3,13 @@
 
 use core::marker::PhantomData;
 
-use identity_core::common::Timestamp;
 use serde::Serialize;
 
 use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
@@ -30,17 +30,12 @@ impl RemoteEd25519 {
     data: &mut U,
     method: impl Into<String>,
     secret: &RemoteKey<'_>,
-    created: Option<Timestamp>,
-    expires: Option<Timestamp>,
-    challenge: Option<String>,
-    domain: Option<String>,
-    purpose: Option<String>,
+    options: SignatureOptions,
   ) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
-    let signature: Signature =
-      Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
+    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
     data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret).await?;

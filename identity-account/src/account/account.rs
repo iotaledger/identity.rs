@@ -7,8 +7,8 @@ use std::sync::Arc;
 
 use serde::Serialize;
 
-use identity_core::common::Timestamp;
 use identity_core::crypto::SetSignature;
+use identity_core::crypto::SignatureOptions;
 use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
@@ -226,31 +226,7 @@ impl Account {
   }
 
   /// Signs `data` with the key specified by `fragment`.
-  ///
-  /// See [`Account::sign_with_options`].
-  pub async fn sign<U>(&self, fragment: &str, data: &mut U) -> Result<()>
-  where
-    U: Serialize + SetSignature,
-  {
-    self
-      .sign_with_options(fragment, data, None, None, None, None, None)
-      .await
-  }
-
-  /// Signs `data` with the key specified by `fragment`.
-  ///
-  /// See [`Signature`] for signing property definitions.
-  pub async fn sign_with_options<U>(
-    &self,
-    fragment: &str,
-    data: &mut U,
-    created: Option<Timestamp>,
-    expires: Option<Timestamp>,
-    challenge: Option<String>,
-    domain: Option<String>,
-    purpose: Option<String>,
-    // TODO: SignOptions to make it easier to pass these properties around?
-  ) -> Result<()>
+  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
@@ -264,17 +240,7 @@ impl Account {
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
     state
-      .sign_data(
-        self.did(),
-        self.storage(),
-        &location,
-        data,
-        created,
-        expires,
-        challenge,
-        domain,
-        purpose,
-      )
+      .sign_data(self.did(), self.storage(), &location, data, options)
       .await?;
 
     Ok(())
@@ -356,11 +322,7 @@ impl Account {
         self.storage(),
         &signing_key_location,
         document,
-        None,
-        None,
-        None,
-        None,
-        None,
+        SignatureOptions::default(),
       )
       .await?;
 
@@ -502,11 +464,7 @@ impl Account {
         self.storage(),
         &signing_key_location,
         &mut diff,
-        None,
-        None,
-        None,
-        None,
-        None,
+        SignatureOptions::default(),
       )
       .await?;
 

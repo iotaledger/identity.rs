@@ -22,6 +22,7 @@ pub use self::signature::Named;
 pub use self::signature::SetSignature;
 pub use self::signature::Sign;
 pub use self::signature::Signature;
+pub use self::signature::SignatureOptions;
 pub use self::signature::SignatureValue;
 pub use self::signature::Signer;
 pub use self::signature::TrySignature;

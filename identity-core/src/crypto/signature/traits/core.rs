@@ -3,9 +3,9 @@
 
 use serde::Serialize;
 
-use crate::common::Timestamp;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
+use crate::crypto::SignatureOptions;
 use crate::crypto::SignatureValue;
 use crate::crypto::TrySignature;
 use crate::error::Error;
@@ -59,17 +59,12 @@ pub trait Signer<Secret: ?Sized>: Named {
     data: &mut T,
     method: impl Into<String>,
     secret: &Secret,
-    created: Option<Timestamp>,
-    expires: Option<Timestamp>,
-    challenge: Option<String>,
-    domain: Option<String>,
-    purpose: Option<String>,
+    options: SignatureOptions,
   ) -> Result<()>
   where
     T: Serialize + SetSignature,
   {
-    let signature: Signature =
-      Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
+    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
     data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret)?;

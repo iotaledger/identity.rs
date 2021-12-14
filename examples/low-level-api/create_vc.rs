@@ -8,6 +8,7 @@
 //! cargo run --example create_vc
 
 use identity::credential::Credential;
+use identity::crypto::SignatureOptions;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::Receipt;
@@ -34,11 +35,7 @@ pub async fn create_vc() -> Result<()> {
     &mut credential,
     issuer_key.private(),
     issuer_doc.default_signing_method()?.id(),
-    None,
-    None,
-    None,
-    None,
-    None,
+    SignatureOptions::default(),
   )?;
 
   println!("Credential JSON > {:#}", credential);

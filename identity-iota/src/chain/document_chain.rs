@@ -166,6 +166,7 @@ impl Display for DocumentChain {
 mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::SignatureOptions;
   use identity_core::crypto::TrySignature;
   use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
@@ -252,11 +253,7 @@ mod test {
           &mut new.document,
           keys[0].private(),
           chain.current().document.default_signing_method().unwrap().id(),
-          None,
-          None,
-          None,
-          None,
-          None,
+          SignatureOptions::default(),
         )
         .is_ok());
       assert_eq!(

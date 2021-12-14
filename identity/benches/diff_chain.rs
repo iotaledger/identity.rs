@@ -14,6 +14,7 @@ use identity::iota::DocumentChain;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
+use identity_core::crypto::SignatureOptions;
 use identity_iota::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
@@ -96,11 +97,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
         &mut new.document,
         keypair.private(),
         chain.current().document.default_signing_method().unwrap().id(),
-        None,
-        None,
-        None,
-        None,
-        None,
+        SignatureOptions::default(),
       )
       .unwrap();
     chain.try_push_integration(new).unwrap();

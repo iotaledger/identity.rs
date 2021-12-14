@@ -11,6 +11,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
+use identity::crypto::SignatureOptions;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidation;
@@ -35,11 +36,7 @@ pub async fn create_vp() -> Result<Presentation> {
     &mut credential,
     key_iss.private(),
     doc_iss.default_signing_method()?.id(),
-    None,
-    None,
-    None,
-    None,
-    None,
+    SignatureOptions::default(),
   )?;
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
@@ -54,11 +51,7 @@ pub async fn create_vp() -> Result<Presentation> {
     &mut presentation,
     key_sub.private(),
     doc_sub.default_signing_method()?.id(),
-    None,
-    None,
-    None,
-    None,
-    None,
+    SignatureOptions::default(),
   )?;
 
   Ok(presentation)

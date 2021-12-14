@@ -12,6 +12,7 @@ use serde::Serialize;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
+use crate::crypto::SignatureOptions;
 use crate::crypto::SignatureValue;
 use crate::error::Result;
 
@@ -27,19 +28,19 @@ pub struct Signature {
   #[serde(rename = "verificationMethod")]
   method: String,
 
-  /// When the proof was generated (optional).
+  /// When the proof was generated.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub created: Option<Timestamp>,
-  /// When the proof expires (optional).
+  /// When the proof expires.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub expires: Option<Timestamp>,
-  /// Challenge from a proof requester to mitigate replay attacks (optional).
+  /// Challenge from a proof requester to mitigate replay attacks.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub challenge: Option<String>,
-  /// Domain for which a proof is valid to mitigate replay attacks (optional).
+  /// Domain for which a proof is valid to mitigate replay attacks.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub domain: Option<String>,
-  /// Purpose for which the proof was generated (optional). "assertionMethod" or "authentication".
+  /// Purpose for which the proof was generated. "assertionMethod" or "authentication".
   #[serde(rename = "proofPurpose", skip_serializing_if = "Option::is_none")]
   pub purpose: Option<String>, // TODO: ProofPurpose enum?
 
@@ -51,29 +52,20 @@ impl Signature {
   /// Creates a new [`Signature`] instance with the given `type_` and `method`, with the rest
   /// of its properties left unset.
   pub fn new(type_: impl Into<String>, method: impl Into<String>) -> Self {
-    Self::new_with_options(type_, method, None, None, None, None, None, None)
+    Self::new_with_options(type_, method, SignatureOptions::default())
   }
 
   /// Creates a new [`Signature`] instance with the given properties.
-  pub fn new_with_options(
-    type_: impl Into<String>,
-    method: impl Into<String>,
-    value: Option<SignatureValue>,
-    created: Option<Timestamp>,
-    expires: Option<Timestamp>,
-    challenge: Option<String>,
-    domain: Option<String>,
-    purpose: Option<String>,
-  ) -> Self {
+  pub fn new_with_options(type_: impl Into<String>, method: impl Into<String>, options: SignatureOptions) -> Self {
     Self {
       type_: type_.into(),
-      value: value.unwrap_or(SignatureValue::None),
+      value: SignatureValue::None,
       method: method.into(),
-      created,
-      expires,
-      challenge,
-      domain,
-      purpose,
+      created: options.created,
+      expires: options.expires,
+      challenge: options.challenge,
+      domain: options.domain,
+      purpose: options.purpose,
       hidden: AtomicBoolCell(AtomicBool::new(false)),
     }
   }

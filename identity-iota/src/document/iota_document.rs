@@ -11,7 +11,6 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
-use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
@@ -21,6 +20,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
@@ -469,7 +469,7 @@ impl IotaDocument {
     // Sign document.
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), None, None, None, None, None)?;
+        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
@@ -569,11 +569,7 @@ impl IotaDocument {
     data: &mut X,
     private_key: &'query PrivateKey,
     method_query: Q,
-    created: Option<Timestamp>,
-    expires: Option<Timestamp>,
-    challenge: Option<String>,
-    domain: Option<String>,
-    purpose: Option<String>,
+    sign_options: SignatureOptions,
   ) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
@@ -582,11 +578,7 @@ impl IotaDocument {
     self
       .signer(private_key)
       .method(method_query)
-      .created(created)
-      .expires(expires)
-      .challenge(challenge)
-      .domain(domain)
-      .purpose(purpose)
+      .sign_options(sign_options)
       .sign(data)
       .map_err(Into::into)
   }
@@ -651,7 +643,7 @@ impl IotaDocument {
     let method_query: MethodQuery<'_> = method_query.into();
     let _ = self.try_resolve_signing_method(method_query.clone())?;
 
-    self.sign_data(&mut diff, private_key, method_query, None, None, None, None, None)?;
+    self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;
 
     Ok(diff)
   }
@@ -1297,11 +1289,7 @@ mod tests {
           &mut data,
           key_new.private(),
           method_fragment.as_str(),
-          None,
-          None,
-          None,
-          None,
-          None,
+          SignatureOptions::default(),
         )
         .unwrap();
       // Signature should still be valid for every scope.
