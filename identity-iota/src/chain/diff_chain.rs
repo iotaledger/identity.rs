@@ -10,13 +10,14 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::chain::IntegrationChain;
 use identity_core::convert::FmtJson;
 
 use crate::chain::milestone::sort_by_milestone;
-use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
@@ -41,7 +42,7 @@ impl DiffChain {
     messages: &[Message],
     client: &Client,
   ) -> Result<Self> {
-    let did: &IotaDID = integration_chain.current().id();
+    let did: &IotaDID = integration_chain.current().document.id();
 
     let index: MessageIndex<DiffMessage> = messages
       .iter()
@@ -66,7 +67,7 @@ impl DiffChain {
   /// Constructs a new [`DiffChain`] from the given [`MessageIndex`], using an integration document
   /// to validate.
   pub(in crate::chain) async fn try_from_index_with_document(
-    integration_document: &IotaDocument,
+    integration_document: &ResolvedIotaDocument,
     mut index: MessageIndex<DiffMessage>,
     client: &Client,
   ) -> Result<Self> {
@@ -136,7 +137,7 @@ impl DiffChain {
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
   pub fn try_push(&mut self, diff: DiffMessage, integration_chain: &IntegrationChain) -> Result<()> {
-    let document: &IotaDocument = integration_chain.current();
+    let document: &ResolvedIotaDocument = integration_chain.current();
     let expected_prev_message_id: &MessageId = self.current_message_id().unwrap_or_else(|| document.message_id());
     Self::check_valid_addition(&diff, document, expected_prev_message_id)?;
     self.push_unchecked(diff);
@@ -157,10 +158,10 @@ impl DiffChain {
   /// Fails if the [`DiffMessage`] is not a valid addition.
   pub fn check_valid_addition(
     diff: &DiffMessage,
-    document: &IotaDocument,
+    document: &ResolvedIotaDocument,
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
-    if document.id() != &diff.did {
+    if document.document.id() != &diff.id {
       return Err(Error::ChainError { error: "Invalid DID" });
     }
 
@@ -182,14 +183,14 @@ impl DiffChain {
       });
     }
 
-    if document.verify_diff(diff).is_err() {
+    if document.document.verify_diff(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });
     }
 
-    let updated_doc: IotaDocument = diff.merge(document)?;
-    if let Some(PublishType::Integration) = PublishType::new(document, &updated_doc) {
+    let updated_doc: IotaDocument = diff.merge(&document.document)?;
+    if let Some(PublishType::Integration) = PublishType::new(&document.document, &updated_doc) {
       return Err(Error::ChainError {
         error: "diff cannot alter update signing methods",
       });
@@ -214,316 +215,5 @@ impl Display for DiffChain {
 impl From<DiffChain> for Vec<DiffMessage> {
   fn from(diff_chain: DiffChain) -> Self {
     diff_chain.inner
-  }
-}
-
-#[cfg(test)]
-mod test {
-  use identity_core::common::Timestamp;
-  use identity_core::crypto::KeyPair;
-  use identity_core::crypto::PrivateKey;
-  use identity_did::did::CoreDIDUrl;
-  use identity_did::did::DID;
-  use identity_did::verification::MethodBuilder;
-  use identity_did::verification::MethodData;
-  use identity_did::verification::MethodRef;
-  use identity_did::verification::MethodRelationship;
-  use identity_did::verification::MethodScope;
-  use identity_did::verification::MethodType;
-  use identity_did::verification::VerificationMethod;
-
-  use crate::chain::DiffChain;
-  use crate::chain::DocumentChain;
-  use crate::chain::IntegrationChain;
-  use crate::did::IotaDIDUrl;
-  use crate::document::DiffMessage;
-  use crate::document::IotaDocument;
-  use crate::document::IotaVerificationMethod;
-  use crate::tangle::MessageId;
-  use crate::tangle::TangleRef;
-  use crate::Error;
-
-  #[test]
-  fn test_diff_chain() {
-    let mut chain: DocumentChain;
-    let mut keys: Vec<KeyPair> = Vec::new();
-
-    // =========================================================================
-    // Create Initial Document
-    // =========================================================================
-    {
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-      let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-      document
-        .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
-        .unwrap();
-      document.set_message_id(MessageId::new([8; 32]));
-      chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
-      keys.push(keypair);
-    }
-
-    assert_eq!(
-      chain.current().proof().unwrap().verification_method(),
-      format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
-    );
-
-    // =========================================================================
-    // Push Integration Chain Update
-    // =========================================================================
-    {
-      let mut new: IotaDocument = chain.current().clone();
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-
-      // Replace the capability invocation signing key (one step key rotation).
-      let signing_method: MethodRef = MethodBuilder::default()
-        .id(CoreDIDUrl::from(chain.id().to_url().join("#key-2").unwrap()))
-        .controller(chain.id().clone().into())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_multibase(keypair.public()))
-        .build()
-        .map(Into::into)
-        .unwrap();
-
-      unsafe {
-        new.as_document_mut().capability_invocation_mut().clear();
-        new.as_document_mut().capability_invocation_mut().append(signing_method);
-      }
-
-      new.set_updated(Timestamp::now_utc());
-      new.set_previous_message_id(*chain.integration_message_id());
-
-      // Sign the update using the old document.
-      assert!(chain
-        .current()
-        .sign_data(
-          &mut new,
-          keys[0].private(),
-          chain.current().default_signing_method().unwrap().id(),
-        )
-        .is_ok());
-      assert_eq!(
-        chain.current().proof().unwrap().verification_method(),
-        format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
-      );
-
-      keys.push(keypair);
-      assert!(chain.try_push_integration(new).is_ok());
-    }
-
-    // =========================================================================
-    // Push Diff Chain Update
-    // =========================================================================
-    {
-      let new: IotaDocument = {
-        let mut this: IotaDocument = chain.current().clone();
-        this.properties_mut().insert("foo".into(), 123.into());
-        this.properties_mut().insert("bar".into(), 456.into());
-        this.set_updated(Timestamp::now_utc());
-        this
-      };
-
-      // Sign using the new key added in the previous integration chain update.
-      let message_id = *chain.diff_message_id();
-      let mut diff: DiffMessage = chain
-        .current()
-        .diff(&new, message_id, keys[1].private(), "#key-2")
-        .unwrap();
-      diff.set_message_id(message_id);
-      assert!(chain.try_push_diff(diff).is_ok());
-    }
-  }
-
-  #[test]
-  fn test_check_valid_addition_rejects_removing_signing_method() {
-    // =========================================================================
-    // Create Initial Document
-    // =========================================================================
-    let (document, keypair): (IotaDocument, KeyPair) = create_initial_document();
-    let chain: DocumentChain = DocumentChain::new(IntegrationChain::new(document.clone()).unwrap());
-
-    // =========================================================================
-    // Create DiffMessage Removing the Capability Invocation Method
-    // =========================================================================
-    let mut new_document: IotaDocument = document.clone();
-    new_document.properties_mut().insert("foo".into(), 123.into());
-    unsafe {
-      new_document.as_document_mut().capability_invocation_mut().clear();
-    }
-    new_document.set_previous_message_id(*chain.integration_message_id());
-    new_document.set_updated(Timestamp::now_utc());
-
-    let diff_msg: DiffMessage = create_signed_diff_message(&document, &new_document, &chain, keypair.private());
-
-    let valid_addition_error: Error =
-      DiffChain::check_valid_addition(&diff_msg, &document, chain.integration_message_id()).unwrap_err();
-    assert!(matches!(
-      valid_addition_error,
-      Error::ChainError {
-        error: "diff cannot alter update signing methods"
-      }
-    ));
-  }
-
-  #[test]
-  fn test_check_valid_addition_rejects_adding_signing_method() {
-    // =========================================================================
-    // Create Initial Document
-    // =========================================================================
-    let (document, keypair): (IotaDocument, KeyPair) = create_initial_document();
-    let chain: DocumentChain = DocumentChain::new(IntegrationChain::new(document.clone()).unwrap());
-
-    // =========================================================================
-    // Create DiffMessage Adding a Capability Invocation Method
-    // =========================================================================
-    let mut new_document: IotaDocument = document.clone();
-    let new_signing_method: IotaVerificationMethod = IotaVerificationMethod::from_did(
-      new_document.id().clone(),
-      keypair.type_(),
-      keypair.public(),
-      "new-signing-key",
-    )
-    .unwrap();
-    new_document
-      .insert_method(new_signing_method, MethodScope::capability_invocation())
-      .unwrap();
-    new_document.set_previous_message_id(*chain.integration_message_id());
-    new_document.set_updated(Timestamp::now_utc());
-
-    let mut diff_msg: DiffMessage =
-      DiffMessage::new(&document, &new_document, *chain.integration_message_id()).unwrap();
-    document
-      .sign_data(
-        &mut diff_msg,
-        keypair.private(),
-        document.default_signing_method().unwrap().id(),
-      )
-      .unwrap();
-    diff_msg.set_message_id(*chain.diff_message_id());
-
-    let valid_addition_error: Error =
-      DiffChain::check_valid_addition(&diff_msg, &document, chain.integration_message_id()).unwrap_err();
-    assert!(matches!(
-      valid_addition_error,
-      Error::ChainError {
-        error: "diff cannot alter update signing methods"
-      }
-    ));
-  }
-
-  #[test]
-  fn test_check_valid_addition_rejects_altering_signing_method() {
-    // =========================================================================
-    // Create Initial Document
-    // =========================================================================
-    let (document, keypair): (IotaDocument, KeyPair) = create_initial_document();
-    let chain: DocumentChain = DocumentChain::new(IntegrationChain::new(document.clone()).unwrap());
-
-    // =========================================================================
-    // Create DiffMessage Altering a Capability Invocation Method
-    // =========================================================================
-    let mut new_document: IotaDocument = document.clone();
-    // Replace the public key data.
-    unsafe {
-      match new_document
-        .as_document_mut()
-        .capability_invocation_mut()
-        .head_mut()
-        .unwrap()
-      {
-        MethodRef::Embed(method) => {
-          *method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
-        }
-        MethodRef::Refer(_) => unreachable!(),
-      };
-    }
-    new_document.set_previous_message_id(*chain.integration_message_id());
-    new_document.set_updated(Timestamp::now_utc());
-
-    let diff_msg: DiffMessage = create_signed_diff_message(&document, &new_document, &chain, keypair.private());
-
-    let valid_addition_error: Error =
-      DiffChain::check_valid_addition(&diff_msg, &document, chain.integration_message_id()).unwrap_err();
-    assert!(matches!(
-      valid_addition_error,
-      Error::ChainError {
-        error: "diff cannot alter update signing methods"
-      }
-    ));
-  }
-
-  #[test]
-  fn test_check_valid_addition_rejects_altering_referenced_signing_method() {
-    // =========================================================================
-    // Create Initial Document
-    // =========================================================================
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-
-    let signing_method: IotaVerificationMethod = document.default_signing_method().unwrap().clone();
-    let signing_method_id: IotaDIDUrl = signing_method.id();
-    document.remove_method(signing_method.id()).unwrap();
-    document
-      .insert_method(signing_method, MethodScope::VerificationMethod)
-      .unwrap();
-    assert!(document
-      .attach_method_relationship(signing_method_id, MethodRelationship::CapabilityInvocation)
-      .unwrap());
-    document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
-      .unwrap();
-    document.set_message_id(MessageId::new([8; 32]));
-    let chain: DocumentChain = DocumentChain::new(IntegrationChain::new(document.clone()).unwrap());
-
-    // =======================================================================================================
-    // Create DiffMessage Altering the Verification Method that Has an Attached Capability Invocation Relationship
-    // =======================================================================================================
-    let mut new_document: IotaDocument = document.clone();
-    // Replace the public key data.
-    unsafe {
-      let updated_method: &mut VerificationMethod = new_document
-        .as_document_mut()
-        .verification_method_mut()
-        .head_mut()
-        .unwrap();
-      *updated_method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
-    }
-    new_document.set_previous_message_id(*chain.integration_message_id());
-    new_document.set_updated(Timestamp::now_utc());
-
-    let diff_msg: DiffMessage = create_signed_diff_message(&document, &new_document, &chain, keypair.private());
-
-    let valid_addition_error: Error =
-      DiffChain::check_valid_addition(&diff_msg, &document, chain.integration_message_id()).unwrap_err();
-    assert!(matches!(
-      valid_addition_error,
-      Error::ChainError {
-        error: "diff cannot alter update signing methods"
-      }
-    ));
-  }
-
-  fn create_initial_document() -> (IotaDocument, KeyPair) {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-    document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
-      .unwrap();
-    document.set_message_id(MessageId::new([8; 32]));
-    (document, keypair)
-  }
-
-  fn create_signed_diff_message(
-    current_doc: &IotaDocument,
-    updated_doc: &IotaDocument,
-    chain: &DocumentChain,
-    key: &PrivateKey,
-  ) -> DiffMessage {
-    let mut diff_msg: DiffMessage =
-      DiffMessage::new(&current_doc, &updated_doc, *chain.integration_message_id()).unwrap();
-    current_doc
-      .sign_data(&mut diff_msg, key, current_doc.default_signing_method().unwrap().id())
-      .unwrap();
-    diff_msg.set_message_id(*chain.diff_message_id());
-    diff_msg
   }
 }

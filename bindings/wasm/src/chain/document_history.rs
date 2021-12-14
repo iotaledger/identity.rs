@@ -4,12 +4,12 @@
 use identity::iota::ChainHistory;
 use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
-use identity::iota::IotaDocument;
+use identity::iota::ResolvedIotaDocument;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::did::WasmDiffMessage;
-use crate::did::WasmDocument;
+use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -33,8 +33,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Array<string>")]
   pub type ArrayString;
 
-  #[wasm_bindgen(typescript_type = "Array<Document>")]
-  pub type ArrayDocument;
+  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
+  pub type ArrayResolvedDocument;
 
   #[wasm_bindgen(typescript_type = "Array<DiffMessage>")]
   pub type ArrayDiffMessage;
@@ -46,16 +46,16 @@ impl WasmDocumentHistory {
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = integrationChainData)]
-  pub fn integration_chain_data(&self) -> ArrayDocument {
+  pub fn integration_chain_data(&self) -> ArrayResolvedDocument {
     self
       .0
       .integration_chain_data
       .iter()
       .cloned()
-      .map(WasmDocument::from)
+      .map(WasmResolvedDocument::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayDocument>()
+      .unchecked_into::<ArrayResolvedDocument>()
   }
 
   /// Returns an `Array` of message id strings for "spam" messages on the same index
@@ -129,7 +129,7 @@ impl From<DocumentHistory> for WasmDocumentHistory {
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IntegrationChainHistory(ChainHistory<IotaDocument>);
+pub struct IntegrationChainHistory(ChainHistory<ResolvedIotaDocument>);
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -141,16 +141,16 @@ impl IntegrationChainHistory {
   ///
   /// NOTE: this clones the field.
   #[wasm_bindgen(js_name = chainData)]
-  pub fn chain_data(&self) -> ArrayDocument {
+  pub fn chain_data(&self) -> ArrayResolvedDocument {
     self
       .0
       .chain_data
       .iter()
       .cloned()
-      .map(WasmDocument::from)
+      .map(WasmResolvedDocument::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayDocument>()
+      .unchecked_into::<ArrayResolvedDocument>()
   }
 }
 
@@ -214,5 +214,5 @@ macro_rules! impl_wasm_chain_history {
   };
 }
 
-impl_wasm_chain_history!(IntegrationChainHistory, IotaDocument, WasmDocument);
+impl_wasm_chain_history!(IntegrationChainHistory, ResolvedIotaDocument, WasmResolvedDocument);
 impl_wasm_chain_history!(DiffChainHistory, DiffMessage, WasmDiffMessage);

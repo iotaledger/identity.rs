@@ -16,7 +16,6 @@ use identity::iota::ClientMap;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod create_did;
@@ -31,7 +30,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   // Add a new VerificationMethod with a new keypair
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(document.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::from_did(document.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
 
   // Add a new Service
@@ -45,8 +44,8 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   // Add the messageId of the previous message in the chain.
   // This is REQUIRED in order for the messages to form a chain.
   // Skipping / forgetting this will render the publication useless.
-  document.set_previous_message_id(*receipt.message_id());
-  document.set_updated(Timestamp::now_utc());
+  document.metadata.previous_message_id = *receipt.message_id();
+  document.metadata.updated = Timestamp::now_utc();
 
   // Sign the DID Document with the original private key.
   document.sign_self(keypair.private(), &document.default_signing_method()?.id())?;
@@ -62,7 +61,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
     "DID Document Transaction > {}",
     explorer.message_url(update_receipt.message_id())?
   );
-  println!("Explore the DID Document > {}", explorer.resolver_url(document.did())?);
+  println!("Explore the DID Document > {}", explorer.resolver_url(document.id())?);
 
   Ok((document, keypair, new_key, receipt, update_receipt))
 }

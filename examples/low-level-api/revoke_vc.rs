@@ -22,7 +22,6 @@ use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod common;
@@ -40,8 +39,8 @@ async fn main() -> Result<()> {
   // - effectively revoking the VC as it will no longer be able to verified.
   let (mut issuer_doc, issuer_key, issuer_receipt) = issuer;
   issuer_doc.remove_method(issuer_doc.id().to_url().join("#newKey")?)?;
-  issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
-  issuer_doc.set_updated(Timestamp::now_utc());
+  issuer_doc.metadata.previous_message_id = *issuer_receipt.message_id();
+  issuer_doc.metadata.updated = Timestamp::now_utc();
   issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
@@ -54,7 +53,7 @@ async fn main() -> Result<()> {
   );
   println!(
     "Explore the Issuer DID Document > {}",
-    explorer.resolver_url(issuer_doc.did())?
+    explorer.resolver_url(issuer_doc.id())?
   );
 
   // Check the verifiable credential
@@ -114,14 +113,14 @@ pub async fn add_new_key(
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(updated_doc.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::from_did(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc
     .insert_method(method, MethodScope::VerificationMethod)
     .is_ok());
 
   // Prepare the update
-  updated_doc.set_previous_message_id(*receipt.message_id());
-  updated_doc.set_updated(Timestamp::now_utc());
+  updated_doc.metadata.previous_message_id = *receipt.message_id();
+  updated_doc.metadata.updated = Timestamp::now_utc();
   updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle
