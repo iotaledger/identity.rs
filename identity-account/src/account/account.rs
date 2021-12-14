@@ -277,7 +277,7 @@ impl Account {
     self
       .chain_state
       .set_last_diff_message_id(*document_chain.diff_message_id());
-    std::mem::swap(self.state.document_mut(), document_chain.current_mut());
+    std::mem::swap(self.state.document_mut(), &mut document_chain.current_mut().document);
     self.save(true).await?;
     Ok(())
   }

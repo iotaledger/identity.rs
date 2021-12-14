@@ -22,7 +22,7 @@ use identity_core::common::Url;
 use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
-use identity_iota::document::DiffMessage;
+use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
@@ -405,8 +405,8 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       let mut new_doc: IotaDocument = account.document().clone();
       new_doc.properties_mut().insert("foo".into(), 123.into());
       new_doc.properties_mut().insert("bar".into(), 456.into());
-      new_doc.set_previous_message_id(*account.chain_state().last_integration_message_id());
-      new_doc.set_updated(Timestamp::now_utc());
+      new_doc.metadata.previous_message_id = *account.chain_state().last_integration_message_id();
+      new_doc.metadata.updated = Timestamp::now_utc();
       account
         .sign(IotaDocument::DEFAULT_METHOD_FRAGMENT, &mut new_doc)
         .await
@@ -448,7 +448,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       let mut new_doc: IotaDocument = account.document().clone();
       new_doc.properties_mut().insert("foo".into(), 123.into());
       new_doc.properties_mut().insert("bar".into(), 456.into());
-      new_doc.set_updated(Timestamp::now_utc());
+      new_doc.metadata.updated = Timestamp::now_utc();
       let mut diff_msg: DiffMessage = DiffMessage::new(
         account.document(),
         &new_doc,
