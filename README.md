@@ -93,7 +93,7 @@ use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
-use identity::iota::IotaDocument;
+use identity::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -115,7 +115,7 @@ async fn main() -> Result<()> {
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity().await?;
+  let resolved: ResolvedIotaDocument = account.resolve_identity().await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 

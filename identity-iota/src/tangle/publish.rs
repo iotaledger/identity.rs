@@ -2,13 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_did::verification::MethodRef;
-use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::document::IotaDocument;
-
-// Method types allowed to sign a DID document update.
-pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
 #[derive(Clone, Copy, Debug)]
@@ -40,12 +36,12 @@ impl PublishType {
 
   fn extract_signing_keys(document: &IotaDocument) -> Vec<Option<&VerificationMethod>> {
     document
-      .as_document()
+      .core_document()
       .capability_invocation()
       .iter()
       .map(|method_ref| match method_ref {
         MethodRef::Embed(method) => Some(method),
-        MethodRef::Refer(did_url) => document.as_document().resolve_method(did_url),
+        MethodRef::Refer(did_url) => document.core_document().resolve_method(did_url),
       })
       .filter(|method| {
         if let Some(method) = method {
@@ -67,7 +63,6 @@ mod test {
   use identity_did::verification::MethodScope;
 
   use crate::document::IotaVerificationMethod;
-  use crate::tangle::TangleRef;
   use crate::Result;
 
   use super::*;
@@ -82,7 +77,7 @@ mod test {
 
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "generic").unwrap();
+      IotaVerificationMethod::from_did(old_doc.id().to_owned(), keypair.type_(), keypair.public(), "generic").unwrap();
 
     let method3_url = method2.id();
 
@@ -107,7 +102,7 @@ mod test {
 
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
+      IotaVerificationMethod::from_did(old_doc.id().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
     new_doc
       .insert_method(method2, MethodScope::capability_invocation())
@@ -129,10 +124,10 @@ mod test {
 
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let verif_method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "embedded")?;
+      IotaVerificationMethod::from_did(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "embedded")?;
 
     new_doc
-      .remove_method(new_doc.did().to_url().join("#embedded").unwrap())
+      .remove_method(new_doc.id().to_url().join("#embedded").unwrap())
       .unwrap();
     new_doc
       .insert_method(verif_method2, MethodScope::capability_invocation())
@@ -154,11 +149,11 @@ mod test {
 
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let method_updated: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "generic")?;
+      IotaVerificationMethod::from_did(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "generic")?;
 
     assert!(unsafe {
       new_doc
-        .as_document_mut()
+        .core_document_mut()
         .verification_method_mut()
         .update(method_updated.into())
     });
@@ -179,7 +174,7 @@ mod test {
 
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let verif_method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
+      IotaVerificationMethod::from_did(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
     new_doc
       .insert_method(verif_method2, MethodScope::authentication())
@@ -218,7 +213,7 @@ mod test {
 
     let collection = KeyCollection::new_ed25519(8)?;
     let method: IotaVerificationMethod =
-      IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &collection, "merkle")?;
+      IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.id().to_owned(), &collection, "merkle")?;
 
     new_doc.insert_method(method, MethodScope::authentication()).unwrap();
 
@@ -233,7 +228,7 @@ mod test {
 
     let collection = KeyCollection::new_ed25519(8)?;
     let method: IotaVerificationMethod =
-      IotaVerificationMethod::create_merkle_key::<Sha256>(old_doc.did().to_owned(), &collection, "merkle")?;
+      IotaVerificationMethod::create_merkle_key::<Sha256>(old_doc.id().to_owned(), &collection, "merkle")?;
 
     old_doc
       .insert_method(method, MethodScope::capability_invocation())
@@ -245,11 +240,11 @@ mod test {
     let new_collection = KeyCollection::new_ed25519(8)?;
 
     let method_new: IotaVerificationMethod =
-      IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &new_collection, "merkle")?;
+      IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.id().to_owned(), &new_collection, "merkle")?;
 
     assert!(unsafe {
       new_doc
-        .as_document_mut()
+        .core_document_mut()
         .capability_invocation_mut()
         .update(method_new.into())
     });

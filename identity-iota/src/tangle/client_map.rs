@@ -7,8 +7,9 @@ use dashmap::DashMap;
 
 use crate::chain::DocumentChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::ClientBuilder;
@@ -68,7 +69,7 @@ impl ClientMap {
     client.publish_diff(message_id, diff).await
   }
 
-  pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn read_document(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     let network: Network = did.network()?;
     let client: Arc<Client> = self.client(network).await?;
 
@@ -104,7 +105,7 @@ impl Default for ClientMap {
 
 #[async_trait::async_trait(?Send)]
 impl TangleResolve for ClientMap {
-  async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
+  async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     self.read_document(did).await
   }
 }

@@ -11,8 +11,9 @@ use serde::Serialize;
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::Message;
@@ -27,7 +28,7 @@ use crate::tangle::TangleRef;
 pub struct DocumentHistory {
   /// List of integration chain documents.
   #[serde(rename = "integrationChainData")]
-  pub integration_chain_data: Vec<IotaDocument>,
+  pub integration_chain_data: Vec<ResolvedIotaDocument>,
   /// List of "spam" messages on the integration chain index.
   #[serde(rename = "integrationChainSpam")]
   pub integration_chain_spam: Vec<MessageId>,
@@ -52,7 +53,7 @@ impl DocumentHistory {
     let diff_messages: Vec<Message> = client.read_messages(&diff_index).await?;
     let diff_chain: DiffChain = DiffChain::try_from_messages(&integration_chain, &diff_messages, client).await?;
 
-    let integration_chain_history: ChainHistory<IotaDocument> =
+    let integration_chain_history: ChainHistory<ResolvedIotaDocument> =
       ChainHistory::from((integration_chain, integration_messages.deref()));
     let diff_chain_history: ChainHistory<DiffMessage> = ChainHistory::from((diff_chain, diff_messages.deref()));
     Ok(Self {
@@ -96,12 +97,16 @@ where
 
 impl ChainHistory<DiffMessage> {
   /// Construct a [`ChainHistory`] of [`DiffMessages`](DiffMessage) for an integration chain
-  /// [`IotaDocument`].
+  /// [`ResolvedIotaDocument`].
   ///
   /// This is useful for constructing histories of old diff chains no longer at the end of an
   /// integration chain.
-  pub async fn try_from_raw_messages(document: &IotaDocument, messages: &[Message], client: &Client) -> Result<Self> {
-    let did: &IotaDID = document.did();
+  pub async fn try_from_raw_messages(
+    document: &ResolvedIotaDocument,
+    messages: &[Message],
+    client: &Client,
+  ) -> Result<Self> {
+    let did: &IotaDID = document.document.id();
     let index: MessageIndex<DiffMessage> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))
@@ -113,11 +118,11 @@ impl ChainHistory<DiffMessage> {
 }
 
 /// Construct [`ChainHistory`] from an [`IntegrationChain`].
-impl From<(IntegrationChain, &[Message])> for ChainHistory<IotaDocument> {
+impl From<(IntegrationChain, &[Message])> for ChainHistory<ResolvedIotaDocument> {
   fn from((integration_chain, messages): (IntegrationChain, &[Message])) -> Self {
     // The list contains the history and current document as the last element.
-    let chain_data = Vec::from(integration_chain);
-    let spam = ChainHistory::separate_spam(&chain_data, messages);
+    let chain_data: Vec<ResolvedIotaDocument> = Vec::from(integration_chain);
+    let spam: Vec<MessageId> = ChainHistory::separate_spam(&chain_data, messages);
 
     Self { chain_data, spam }
   }
@@ -126,8 +131,8 @@ impl From<(IntegrationChain, &[Message])> for ChainHistory<IotaDocument> {
 /// Construct [`ChainHistory`] from a [`DiffChain`].
 impl From<(DiffChain, &[Message])> for ChainHistory<DiffMessage> {
   fn from((diff_chain, messages): (DiffChain, &[Message])) -> Self {
-    let chain_data = Vec::from(diff_chain);
-    let spam = ChainHistory::separate_spam(&chain_data, messages);
+    let chain_data: Vec<DiffMessage> = Vec::from(diff_chain);
+    let spam: Vec<MessageId> = ChainHistory::separate_spam(&chain_data, messages);
 
     Self { chain_data, spam }
   }

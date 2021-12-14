@@ -12,10 +12,8 @@
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
 use identity::iota::Network;
 use identity::iota::Receipt;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 #[tokio::main]
@@ -68,10 +66,9 @@ pub async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
-  let iota_did: &IotaDID = document.did();
   println!(
     "[Example] Explore the DID Document = {}",
-    explorer.resolver_url(iota_did)?
+    explorer.resolver_url(document.id())?
   );
 
   Ok(())

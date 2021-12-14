@@ -12,7 +12,7 @@ use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 
 use crate::did::IotaDID;
-use crate::document::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
@@ -37,7 +37,7 @@ pub struct PresentationValidation<T = Object, U = Object> {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
   pub did: IotaDID,
-  pub document: IotaDocument,
+  pub document: ResolvedIotaDocument,
   pub metadata: Object,
   pub verified: bool,
 }
@@ -97,7 +97,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the credential signature using the issuers DID Document
-    let credential_verified: bool = issuer_doc.document.verify_data(&credential).is_ok();
+    let credential_verified: bool = issuer_doc.document.document.verify_data(&credential).is_ok();
 
     // Check if all subjects have valid signatures
     let subjects_verified: bool = subjects.values().all(|subject| subject.verified);
@@ -142,7 +142,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the presentation signature using the holders DID Document
-    let presentation_verified: bool = holder_doc.document.verify_data(&presentation).is_ok();
+    let presentation_verified: bool = holder_doc.document.document.verify_data(&presentation).is_ok();
 
     // Check if all credentials are verified
     let credentials_verified: bool = credentials.iter().all(|credential| credential.verified);
@@ -161,7 +161,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   /// Resolves the document from the Tangle, which performs checks on all signatures etc.
   async fn validate_document(&self, did: impl AsRef<str>) -> Result<DocumentValidation> {
     let did: IotaDID = did.as_ref().parse()?;
-    let document: IotaDocument = self.client.resolve(&did).await?;
+    let document: ResolvedIotaDocument = self.client.resolve(&did).await?;
     // TODO: check if document is deactivated, does that matter?
 
     Ok(DocumentValidation {

@@ -44,8 +44,8 @@ async function manipulateIdentity(clientConfig) {
         This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
-    doc.previousMessageId = receipt.messageId;
-    doc.updated = Timestamp.nowUTC();
+    doc.metadataPreviousMessageId = receipt.messageId;
+    doc.metadataUpdated = Timestamp.nowUTC();
 
     // Sign the DID Document with the appropriate key.
     doc.signSelf(key, doc.defaultSigningMethod().id.toString());

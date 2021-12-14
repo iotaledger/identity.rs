@@ -18,7 +18,7 @@ use identity::crypto::KeyPair;
 use identity::did::DID;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
+use identity::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -78,7 +78,7 @@ async fn main() -> Result<()> {
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity().await?;
+  let resolved: ResolvedIotaDocument = account.resolve_identity().await?;
 
   // Retrieve the DID from the newly created identity.
   let iota_did: &IotaDID = account.did();
@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
   );
 
   // Ensure the resolved DID Document can verify the credential signature
-  let verified: bool = resolved.verify_data(&credential).is_ok();
+  let verified: bool = resolved.document.verify_data(&credential).is_ok();
 
   println!("[Example] Credential Verified = {}", verified);
 

@@ -63,8 +63,8 @@ async function resolveHistory(clientConfig) {
     // Add the `messageId` of the previous message in the chain.
     // This is REQUIRED in order for the messages to form a chain.
     // Skipping / forgetting this will render the publication useless.
-    intDoc1.previousMessageId = originalReceipt.messageId;
-    intDoc1.updated = Timestamp.nowUTC();
+    intDoc1.metadataPreviousMessageId = originalReceipt.messageId;
+    intDoc1.metadataUpdated = Timestamp.nowUTC();
 
     // Sign the DID Document with the original private key.
     intDoc1.signSelf(key, intDoc1.defaultSigningMethod().id.toString());
@@ -90,7 +90,7 @@ async function resolveHistory(clientConfig) {
         serviceEndpoint: "https://iota.org",
     };
     diffDoc1.insertService(Service.fromJSON(serviceJSON1));
-    diffDoc1.updated = Timestamp.nowUTC();
+    diffDoc1.metadataUpdated = Timestamp.nowUTC();
 
     // Create a signed diff update.
     //
@@ -118,7 +118,7 @@ async function resolveHistory(clientConfig) {
         },
     };
     diffDoc2.insertService(Service.fromJSON(serviceJSON2));
-    diffDoc2.updated = Timestamp.nowUTC();
+    diffDoc2.metadataUpdated = Timestamp.nowUTC();
 
     // This is the second diff therefore its `previousMessageId` property is
     // set to the first published diff to extend the diff chain.
@@ -172,8 +172,8 @@ async function resolveHistory(clientConfig) {
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
-    intDoc2.previousMessageId = intReceipt1.messageId;
-    intDoc2.updated = Timestamp.nowUTC();
+    intDoc2.metadataPreviousMessageId = intReceipt1.messageId;
+    intDoc2.metadataUpdated = Timestamp.nowUTC();
     intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id.toString());
     const intReceipt2 = await client.publishDocument(intDoc2);
 

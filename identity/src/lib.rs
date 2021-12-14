@@ -71,6 +71,7 @@ pub mod iota {
   pub use identity_iota::chain::*;
   pub use identity_iota::credential::*;
   pub use identity_iota::did::*;
+  pub use identity_iota::diff::*;
   pub use identity_iota::document::*;
   pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;

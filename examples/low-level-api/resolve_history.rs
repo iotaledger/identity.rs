@@ -67,8 +67,8 @@ async fn main() -> Result<()> {
     // Add the `message_id` of the previous message in the chain.
     // This is REQUIRED in order for the messages to form a chain.
     // Skipping / forgetting this will render the publication useless.
-    int_doc_1.set_previous_message_id(*original_receipt.message_id());
-    int_doc_1.set_updated(Timestamp::now_utc());
+    int_doc_1.metadata.previous_message_id = *original_receipt.message_id();
+    int_doc_1.metadata.updated = Timestamp::now_utc();
 
     // Sign the DID Document with the original private key.
     int_doc_1.sign_self(keypair.private(), &int_doc_1.default_signing_method()?.id())?;
@@ -95,7 +95,7 @@ async fn main() -> Result<()> {
       "serviceEndpoint": "https://iota.org/"
     }))?;
     assert!(diff_doc_1.insert_service(service));
-    diff_doc_1.set_updated(Timestamp::now_utc());
+    diff_doc_1.metadata.updated = Timestamp::now_utc();
     diff_doc_1
   };
 
@@ -125,7 +125,7 @@ async fn main() -> Result<()> {
       }
     }))?;
     diff_doc_2.insert_service(service);
-    diff_doc_2.set_updated(Timestamp::now_utc());
+    diff_doc_2.metadata.updated = Timestamp::now_utc();
     diff_doc_2
   };
 
@@ -181,8 +181,8 @@ async fn main() -> Result<()> {
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
-    int_doc_2.set_previous_message_id(*int_receipt_1.message_id());
-    int_doc_2.set_updated(Timestamp::now_utc());
+    int_doc_2.metadata.previous_message_id = *int_receipt_1.message_id();
+    int_doc_2.metadata.updated = Timestamp::now_utc();
 
     int_doc_2.sign_self(keypair.private(), &int_doc_2.default_signing_method()?.id())?;
     int_doc_2
