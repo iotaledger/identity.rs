@@ -13,7 +13,6 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Signature;
-use identity_did::verifiable::ProofProperties;
 
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
@@ -29,9 +28,9 @@ pub struct IotaDocumentMetadata {
     skip_serializing_if = "MessageIdExt::is_null"
   )]
   pub previous_message_id: MessageId,
-  /// `VerifiableProperties` contains the proof / signature section.
-  #[serde(flatten)]
-  pub properties: ProofProperties,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub proof: Option<Signature>,
+  pub properties: Object,
 }
 
 impl IotaDocumentMetadata {
@@ -43,23 +42,9 @@ impl IotaDocumentMetadata {
       created: now,
       updated: now,
       previous_message_id: MessageId::null(),
-      properties: ProofProperties::new(Object::new()),
+      proof: None,
+      properties: Object::default(),
     }
-  }
-
-  /// Returns a reference to the [`proof`][`Signature`].
-  pub fn proof(&self) -> Option<&Signature> {
-    self.properties.proof()
-  }
-
-  /// Returns a mutable reference to the [`proof`][`Signature`].
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
-    self.properties.proof_mut()
-  }
-
-  /// Sets the value of the [`proof`][`Signature`].
-  pub fn set_proof(&mut self, signature: Signature) {
-    self.properties.set_proof(signature)
   }
 }
 

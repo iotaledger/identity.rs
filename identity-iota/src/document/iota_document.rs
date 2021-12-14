@@ -716,19 +716,19 @@ impl Display for IotaDocument {
 
 impl TrySignature for IotaDocument {
   fn signature(&self) -> Option<&Signature> {
-    self.metadata.proof()
+    self.metadata.proof.as_ref()
   }
 }
 
 impl TrySignatureMut for IotaDocument {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.metadata.proof_mut()
+    self.metadata.proof.as_mut()
   }
 }
 
 impl SetSignature for IotaDocument {
   fn set_signature(&mut self, signature: Signature) {
-    self.metadata.set_proof(signature)
+    self.metadata.proof = Some(signature)
   }
 }
 
@@ -1493,12 +1493,12 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
-    assert!(document.metadata.proof().is_none());
+    assert!(document.signature().is_none());
     assert!(document
       .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
       .is_ok());
 
-    assert_eq!(document.metadata.proof().unwrap().verification_method(), "#sign-0");
+    assert_eq!(document.signature().unwrap().verification_method(), "#sign-0");
   }
 
   #[test]

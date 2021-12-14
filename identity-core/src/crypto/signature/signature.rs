@@ -4,6 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use crate::common::Timestamp;
 use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
@@ -14,7 +15,9 @@ use std::sync::atomic::Ordering;
 use crate::crypto::SignatureValue;
 use crate::error::Result;
 
-/// A DID Document digital signature.
+/// A digital signature.
+///
+/// For field definitions see: https://w3c-ccg.github.io/security-vocab/
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
 pub struct Signature {
   #[serde(rename = "type")]
@@ -23,17 +26,53 @@ pub struct Signature {
   value: SignatureValue,
   #[serde(rename = "verificationMethod")]
   method: String,
+
+  /// When the proof was generated (optional).
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub created: Option<Timestamp>,
+  /// When the proof expires (optional).
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub expires: Option<Timestamp>,
+  /// Challenge from a proof requester to mitigate replay attacks (optional).
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub challenge: Option<String>,
+  /// Domain for which a proof is valid to mitigate replay attacks (optional).
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub domain: Option<String>,
+  /// Purpose for which the proof was generated (optional). "assertionMethod" or "authentication".
+  #[serde(rename = "proofPurpose", skip_serializing_if = "Option::is_none")]
+  pub purpose: Option<String>, // TODO: ProofPurpose enum?
+
   #[serde(default, skip_deserializing)]
   hidden: AtomicBoolCell,
 }
 
 impl Signature {
-  /// Creates a new [`Signature`] instance with the given `type_` and `method`.
+  /// Creates a new [`Signature`] instance with the given `type_` and `method`, with the rest
+  /// of its properties left unset.
   pub fn new(type_: impl Into<String>, method: impl Into<String>) -> Self {
+    Self::new_with_options(type_, method, None, None, None, None, None)
+  }
+
+  /// Creates a new [`Signature`] instance with the given properties.
+  pub fn new_with_options(
+    type_: impl Into<String>,
+    method: impl Into<String>,
+    created: Option<Timestamp>,
+    expires: Option<Timestamp>,
+    challenge: Option<String>,
+    domain: Option<String>,
+    purpose: Option<String>,
+  ) -> Self {
     Self {
       type_: type_.into(),
       value: SignatureValue::None,
       method: method.into(),
+      created,
+      expires,
+      challenge,
+      domain,
+      purpose,
       hidden: AtomicBoolCell(AtomicBool::new(false)),
     }
   }

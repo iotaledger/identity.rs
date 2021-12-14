@@ -166,6 +166,7 @@ impl Display for DocumentChain {
 mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::TrySignature;
   use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
@@ -198,7 +199,14 @@ mod test {
       keys.push(keypair);
 
       assert_eq!(
-        chain.current().document.metadata.proof().unwrap().verification_method(),
+        chain
+          .current()
+          .document
+          .metadata
+          .proof
+          .as_ref()
+          .unwrap()
+          .verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
       assert_eq!(chain.current().diff_message_id, MessageId::null());
@@ -247,7 +255,7 @@ mod test {
         )
         .is_ok());
       assert_eq!(
-        chain.current().document.metadata.proof().unwrap().verification_method(),
+        chain.current().document.signature().unwrap().verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
 
