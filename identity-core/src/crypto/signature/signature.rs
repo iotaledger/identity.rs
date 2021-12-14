@@ -51,13 +51,14 @@ impl Signature {
   /// Creates a new [`Signature`] instance with the given `type_` and `method`, with the rest
   /// of its properties left unset.
   pub fn new(type_: impl Into<String>, method: impl Into<String>) -> Self {
-    Self::new_with_options(type_, method, None, None, None, None, None)
+    Self::new_with_options(type_, method, None, None, None, None, None, None)
   }
 
   /// Creates a new [`Signature`] instance with the given properties.
   pub fn new_with_options(
     type_: impl Into<String>,
     method: impl Into<String>,
+    value: Option<SignatureValue>,
     created: Option<Timestamp>,
     expires: Option<Timestamp>,
     challenge: Option<String>,
@@ -66,7 +67,7 @@ impl Signature {
   ) -> Self {
     Self {
       type_: type_.into(),
-      value: SignatureValue::None,
+      value: value.unwrap_or(SignatureValue::None),
       method: method.into(),
       created,
       expires,

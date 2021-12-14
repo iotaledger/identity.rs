@@ -35,6 +35,11 @@ pub async fn create_vp() -> Result<Presentation> {
     &mut credential,
     key_iss.private(),
     doc_iss.default_signing_method()?.id(),
+    None,
+    None,
+    None,
+    None,
+    None,
   )?;
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
@@ -49,6 +54,11 @@ pub async fn create_vp() -> Result<Presentation> {
     &mut presentation,
     key_sub.private(),
     doc_sub.default_signing_method()?.id(),
+    None,
+    None,
+    None,
+    None,
+    None,
   )?;
 
   Ok(presentation)

@@ -4,7 +4,7 @@
 use hashbrown::HashMap;
 use serde::Serialize;
 
-use identity_core::common::Fragment;
+use identity_core::common::{Fragment, Timestamp};
 use identity_core::crypto::SetSignature;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
@@ -90,7 +90,12 @@ impl IdentityState {
     did: &IotaDID,
     store: &dyn Storage,
     location: &KeyLocation,
-    target: &mut U,
+    data: &mut U,
+    created: Option<Timestamp>,
+    expires: Option<Timestamp>,
+    challenge: Option<String>,
+    domain: Option<String>,
+    purpose: Option<String>,
   ) -> Result<()>
   where
     U: Serialize + SetSignature,
@@ -104,7 +109,7 @@ impl IdentityState {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method_url.to_string(), &private).await?;
+        RemoteEd25519::create_signature(data, method_url.to_string(), &private, created, expires, challenge, domain, purpose).await?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")

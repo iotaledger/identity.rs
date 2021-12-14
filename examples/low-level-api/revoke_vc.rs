@@ -92,6 +92,11 @@ async fn create_vc_helper(
     &mut credential,
     issuer_new_key.private(),
     issuer_doc.default_signing_method()?.id(),
+    None,
+    None,
+    None,
+    None,
+    None,
   )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);

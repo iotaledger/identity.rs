@@ -3,6 +3,7 @@
 
 use serde::Serialize;
 
+use crate::common::Timestamp;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;
@@ -50,15 +51,25 @@ pub trait Named {
 pub trait Signer<Secret: ?Sized>: Named {
   /// Signs the given `data` and returns a digital signature.
   fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue>
-  where
-    T: Serialize;
+    where
+      T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret) -> Result<()>
-  where
-    T: Serialize + SetSignature,
+  fn create_signature<T>(
+    data: &mut T,
+    method: impl Into<String>,
+    secret: &Secret,
+    created: Option<Timestamp>,
+    expires: Option<Timestamp>,
+    challenge: Option<String>,
+    domain: Option<String>,
+    purpose: Option<String>,
+  ) -> Result<()>
+    where
+      T: Serialize + SetSignature,
   {
-    data.set_signature(Signature::new(Self::NAME, method));
+    let signature: Signature = Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
+    data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret)?;
     let write: &mut Signature = data.try_signature_mut()?;
@@ -76,13 +87,13 @@ pub trait Signer<Secret: ?Sized>: Named {
 pub trait Verifier<Public: ?Sized>: Named {
   /// Verifies the authenticity of `data` and `signature`.
   fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<()>
-  where
-    T: Serialize;
+    where
+      T: Serialize;
 
   /// Extracts and verifies a [signature][`Signature`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
-  where
-    T: Serialize + TrySignature,
+    where
+      T: Serialize + TrySignature,
   {
     let signature: &Signature = data.try_signature()?;
 

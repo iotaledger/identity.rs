@@ -252,6 +252,11 @@ mod test {
           &mut new.document,
           keys[0].private(),
           chain.current().document.default_signing_method().unwrap().id(),
+          None,
+          None,
+          None,
+          None,
+          None,
         )
         .is_ok());
       assert_eq!(

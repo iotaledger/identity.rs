@@ -34,6 +34,11 @@ pub async fn create_vc() -> Result<()> {
     &mut credential,
     issuer_key.private(),
     issuer_doc.default_signing_method()?.id(),
+    None,
+    None,
+    None,
+    None,
+    None,
   )?;
 
   println!("Credential JSON > {:#}", credential);

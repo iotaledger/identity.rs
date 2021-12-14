@@ -96,6 +96,11 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
         &mut new.document,
         keypair.private(),
         chain.current().document.default_signing_method().unwrap().id(),
+        None,
+        None,
+        None,
+        None,
+        None,
       )
       .unwrap();
     chain.try_push_integration(new).unwrap();
