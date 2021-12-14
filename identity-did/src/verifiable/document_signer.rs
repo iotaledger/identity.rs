@@ -20,6 +20,7 @@ use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Sign;
@@ -90,7 +91,7 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
   }
 
   /// Sets the [`Signature::purpose`](identity_core::crypto::Signature::purpose) field.
-  pub fn purpose(mut self, purpose: String) -> Self {
+  pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.options = self.options.purpose(purpose);
     self
   }

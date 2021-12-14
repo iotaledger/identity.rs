@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use crate::common::Timestamp;
+use crate::crypto::signature::signature_options::ProofPurpose;
 use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
@@ -40,9 +41,9 @@ pub struct Signature {
   /// Domain for which a proof is valid to mitigate replay attacks.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub domain: Option<String>,
-  /// Purpose for which the proof was generated. "assertionMethod" or "authentication".
+  /// Purpose for which the proof was generated.
   #[serde(rename = "proofPurpose", skip_serializing_if = "Option::is_none")]
-  pub purpose: Option<String>, // TODO: ProofPurpose enum?
+  pub purpose: Option<ProofPurpose>,
 
   #[serde(default, skip_deserializing)]
   hidden: AtomicBoolCell,

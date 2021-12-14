@@ -48,6 +48,9 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] time::error::Error),
+  /// Caused by attempting to parse an invalid `ProofPurpose`.
+  #[error("Invalid ProofPurpose")]
+  InvalidProofPurpose,
   /// Raised by a validation attempt against an invalid DID proof.
   #[error("Invalid Proof Value: {0}")]
   InvalidProofValue(&'static str),

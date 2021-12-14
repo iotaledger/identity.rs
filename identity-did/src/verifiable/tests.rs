@@ -10,6 +10,7 @@ use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
@@ -297,28 +298,40 @@ fn test_sign_verify_domain() {
 
 #[test]
 fn test_sign_verify_purpose() {
-  let (key, document) = setup();
+  let (key, mut document) = setup();
   let mut data: MockObject = MockObject::new(123);
   assert!(document.verifier().verify(&data).is_err());
+  document
+    .attach_method_relationship("#key-1", MethodRelationship::Authentication)
+    .unwrap();
 
   // Sign with a purpose.
   document
     .signer(key.private())
     .method("#key-1")
-    .purpose("authentication".into())
+    .purpose(ProofPurpose::Authentication)
     .sign(&mut data)
     .unwrap();
-  assert_eq!(data.proof.clone().unwrap().purpose.unwrap(), "authentication");
+  assert_eq!(
+    data.proof.clone().unwrap().purpose.unwrap(),
+    ProofPurpose::Authentication
+  );
 
   // VALID: verifying without checking the purpose succeeds.
   document.verifier().verify(&data).unwrap();
   // VALID: verifying with the correct purpose succeeds.
-  document.verifier().purpose("authentication").verify(&data).unwrap();
+  document
+    .verifier()
+    .purpose(ProofPurpose::Authentication)
+    .verify(&data)
+    .unwrap();
 
   // INVALID: verifying with the wrong purpose fails.
-  assert!(document.verifier().purpose("invalid").verify(&data).is_err());
-  assert!(document.verifier().purpose(" ").verify(&data).is_err());
-  assert!(document.verifier().purpose("").verify(&data).is_err());
+  assert!(document
+    .verifier()
+    .purpose(ProofPurpose::AssertionMethod)
+    .verify(&data)
+    .is_err());
 }
 
 #[test]

@@ -17,6 +17,7 @@ use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_key::VerificationKey;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
+use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::Verifier;
@@ -55,6 +56,8 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   }
 
   /// Verify the signing verification method relationship matches this.
+  ///
+  /// NOTE: `purpose` overrides the `method_scope` option.
   pub fn method_scope(mut self, method_scope: MethodScope) -> Self {
     self.options = self.options.method_scope(method_scope);
     self
@@ -78,8 +81,14 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
     self
   }
 
-  /// Verify the [`Signature::purpose`] field matches this.
-  pub fn purpose(mut self, purpose: &'base str) -> Self {
+  /// Verify the [`Signature::purpose`] field matches this. Also verifies that the signing
+  /// method has the corresponding verification method relationship.
+  ///
+  /// E.g. [`ProofPurpose::Authentication`] must be signed using a method
+  /// with [`MethodRelationship::Authentication`].
+  ///
+  /// NOTE: `purpose` overrides the `method_scope` option.
+  pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.options = self.options.purpose(purpose);
     self
   }
@@ -110,11 +119,23 @@ where
     let signature: &Signature = data
       .try_signature()
       .map_err(|_| Error::InvalidSignature("missing signature"))?;
-    let method: &VerificationMethod<U> = if let Some(scope) = &self.options.method_scope {
+
+    // Retrieve the method used to create the signature and check it has the required verification
+    // method relationship (purpose takes precedence over method_scope).
+    let purpose_scope = self.options.purpose.map(|purpose| match purpose {
+      ProofPurpose::AssertionMethod => MethodScope::assertion_method(),
+      ProofPurpose::Authentication => MethodScope::authentication(),
+    });
+    let method: &VerificationMethod<U> = if let Some(purpose_scope) = purpose_scope {
       self
         .document
-        .try_resolve_method_with_scope(signature, *scope)
-        .map_err(|_| Error::InvalidSignature("method with scope not found"))?
+        .try_resolve_method_with_scope(signature, purpose_scope)
+        .map_err(|_| Error::InvalidSignature("method with purpose scope not found"))?
+    } else if let Some(scope) = self.options.method_scope {
+      self
+        .document
+        .try_resolve_method_with_scope(signature, scope)
+        .map_err(|_| Error::InvalidSignature("method with specified scope not found"))?
     } else {
       self
         .document
@@ -140,7 +161,7 @@ where
     }
 
     // Check purpose.
-    if self.options.purpose.is_some() && self.options.purpose != signature.purpose.as_deref() {
+    if self.options.purpose.is_some() && self.options.purpose != signature.purpose {
       return Err(Error::InvalidSignature("invalid purpose"));
     }
 

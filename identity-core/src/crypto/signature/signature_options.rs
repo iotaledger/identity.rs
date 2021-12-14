@@ -1,4 +1,10 @@
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+use std::str::FromStr;
+
 use crate::common::Timestamp;
+use crate::Error;
 
 /// Holds attributes for a new [`Signature`](crate::crypto::Signature).
 #[derive(Clone, Debug, Default)]
@@ -12,7 +18,7 @@ pub struct SignatureOptions {
   /// [`Signature::domain`](crate::crypto::Signature::domain)
   pub domain: Option<String>,
   /// [`Signature::purpose`](crate::crypto::Signature::purpose)
-  pub purpose: Option<String>,
+  pub purpose: Option<ProofPurpose>,
 }
 
 impl SignatureOptions {
@@ -53,8 +59,35 @@ impl SignatureOptions {
   }
 
   /// Sets the [`Signature::purpose`](crate::crypto::Signature::purpose) field.
-  pub fn purpose(mut self, purpose: String) -> Self {
+  pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.purpose = Some(purpose);
     self
+  }
+}
+
+/// Associates a purpose with a [`Signature`](crate::crypto::Signature).
+///
+/// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum ProofPurpose {
+  /// Purpose is to assert a claim.
+  /// See https://www.w3.org/TR/did-core/#assertion
+  #[serde(rename = "assertionMethod")]
+  AssertionMethod,
+  /// Purpose is to authenticate the signer.
+  /// See https://www.w3.org/TR/did-core/#authentication
+  #[serde(rename = "authentication")]
+  Authentication,
+}
+
+impl FromStr for ProofPurpose {
+  type Err = Error;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Ok(match s {
+      "assertionMethod" => ProofPurpose::AssertionMethod,
+      "authentication" => ProofPurpose::Authentication,
+      _ => return Err(Error::InvalidProofPurpose),
+    })
   }
 }

@@ -19,6 +19,7 @@ pub use self::key::PublicKey;
 pub use self::proof::JcsEd25519;
 pub use self::signature::Ed25519;
 pub use self::signature::Named;
+pub use self::signature::ProofPurpose;
 pub use self::signature::SetSignature;
 pub use self::signature::Sign;
 pub use self::signature::Signature;
