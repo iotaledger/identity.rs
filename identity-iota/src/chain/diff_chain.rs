@@ -16,6 +16,7 @@ use identity_core::convert::FmtJson;
 use crate::chain::milestone::sort_by_milestone;
 use crate::did::IotaDID;
 use crate::diff::DiffMessage;
+use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
@@ -25,6 +26,7 @@ use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
+use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -184,6 +186,13 @@ impl DiffChain {
     if document.document.verify_diff(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
+      });
+    }
+
+    let updated_doc: IotaDocument = diff.merge(&document.document)?;
+    if let Some(PublishType::Integration) = PublishType::new(&document.document, &updated_doc) {
+      return Err(Error::ChainError {
+        error: "diff cannot alter update signing methods",
       });
     }
 
