@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::any::Any;
-use identity_core::common::{BitSet, Timestamp};
+use identity_core::common::BitSet;
 use identity_core::common::Object;
+use identity_core::common::Timestamp;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleDigestTag;
@@ -90,7 +91,7 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
       expires: None,
       challenge: None,
       domain: None,
-      purpose: None
+      purpose: None,
     }
   }
 
@@ -163,7 +164,16 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.created, self.expires, self.challenge.clone(), self.domain.clone(), self.purpose.clone())?;
+        JcsEd25519::<Ed25519>::create_signature(
+          that,
+          method_uri,
+          self.private.as_ref(),
+          self.created,
+          self.expires,
+          self.challenge.clone(),
+          self.domain.clone(),
+          self.purpose.clone(),
+        )?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
@@ -200,7 +210,16 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, method, &skey, self.created, self.expires, self.challenge.clone(), self.domain.clone(), self.purpose.clone())?;
+        MerkleSigner::<D, S>::create_signature(
+          that,
+          method,
+          &skey,
+          self.created,
+          self.expires,
+          self.challenge.clone(),
+          self.domain.clone(),
+          self.purpose.clone(),
+        )?;
 
         Ok(())
       }

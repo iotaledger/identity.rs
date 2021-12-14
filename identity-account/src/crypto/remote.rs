@@ -3,8 +3,8 @@
 
 use core::marker::PhantomData;
 
-use serde::Serialize;
 use identity_core::common::Timestamp;
+use serde::Serialize;
 
 use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
@@ -39,7 +39,8 @@ impl RemoteEd25519 {
   where
     U: Serialize + SetSignature,
   {
-    let signature: Signature = Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
+    let signature: Signature =
+      Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
     data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret).await?;

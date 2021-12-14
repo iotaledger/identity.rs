@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 
 use serde::Serialize;
 
@@ -23,7 +23,6 @@ use identity_iota::tangle::TangleResolve;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::identity::DIDLease;
@@ -34,10 +33,11 @@ use crate::storage::Storage;
 use crate::types::KeyLocation;
 use crate::updates::create_identity;
 use crate::updates::Update;
+use crate::Error;
 
-use super::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
+use super::AccountConfig;
 
 /// An account manages one identity.
 ///
@@ -53,7 +53,7 @@ pub struct Account {
   state: IdentityState,
   _did_lease: DIDLease,
   /* This field is not read, but has special behaviour on drop which is why it is needed in
-                          * the Account. */
+   * the Account. */
 }
 
 impl Account {
@@ -229,10 +229,12 @@ impl Account {
   ///
   /// See [`Account::sign_with_options`].
   pub async fn sign<U>(&self, fragment: &str, data: &mut U) -> Result<()>
-    where
-      U: Serialize + SetSignature,
+  where
+    U: Serialize + SetSignature,
   {
-    self.sign_with_options(fragment, data, None, None, None, None, None).await
+    self
+      .sign_with_options(fragment, data, None, None, None, None, None)
+      .await
   }
 
   /// Signs `data` with the key specified by `fragment`.
@@ -249,8 +251,8 @@ impl Account {
     purpose: Option<String>,
     // TODO: SignOptions to make it easier to pass these properties around?
   ) -> Result<()>
-    where
-      U: Serialize + SetSignature,
+  where
+    U: Serialize + SetSignature,
   {
     let state: &IdentityState = self.state();
 
@@ -261,7 +263,19 @@ impl Account {
 
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
-    state.sign_data(self.did(), self.storage(), &location, data, created, expires, challenge, domain, purpose).await?;
+    state
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &location,
+        data,
+        created,
+        expires,
+        challenge,
+        domain,
+        purpose,
+      )
+      .await?;
 
     Ok(())
   }
@@ -337,7 +351,17 @@ impl Account {
     )?;
 
     signing_state
-      .sign_data(self.did(), self.storage(), &signing_key_location, document, None, None, None, None, None)
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &signing_key_location,
+        document,
+        None,
+        None,
+        None,
+        None,
+        None,
+      )
       .await?;
 
     Ok(())
@@ -473,7 +497,17 @@ impl Account {
     )?;
 
     old_state
-      .sign_data(self.did(), self.storage(), &signing_key_location, &mut diff, None, None, None, None, None)
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &signing_key_location,
+        &mut diff,
+        None,
+        None,
+        None,
+        None,
+        None,
+      )
       .await?;
 
     log::debug!(

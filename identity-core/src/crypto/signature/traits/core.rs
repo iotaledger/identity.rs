@@ -51,8 +51,8 @@ pub trait Named {
 pub trait Signer<Secret: ?Sized>: Named {
   /// Signs the given `data` and returns a digital signature.
   fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue>
-    where
-      T: Serialize;
+  where
+    T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
   fn create_signature<T>(
@@ -65,10 +65,11 @@ pub trait Signer<Secret: ?Sized>: Named {
     domain: Option<String>,
     purpose: Option<String>,
   ) -> Result<()>
-    where
-      T: Serialize + SetSignature,
+  where
+    T: Serialize + SetSignature,
   {
-    let signature: Signature = Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
+    let signature: Signature =
+      Signature::new_with_options(Self::NAME, method, None, created, expires, challenge, domain, purpose);
     data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret)?;
@@ -87,13 +88,13 @@ pub trait Signer<Secret: ?Sized>: Named {
 pub trait Verifier<Public: ?Sized>: Named {
   /// Verifies the authenticity of `data` and `signature`.
   fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<()>
-    where
-      T: Serialize;
+  where
+    T: Serialize;
 
   /// Extracts and verifies a [signature][`Signature`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
-    where
-      T: Serialize + TrySignature,
+  where
+    T: Serialize + TrySignature,
   {
     let signature: &Signature = data.try_signature()?;
 

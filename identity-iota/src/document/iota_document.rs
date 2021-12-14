@@ -10,7 +10,8 @@ use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::common::{Object, Timestamp};
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
@@ -1292,7 +1293,16 @@ mod tests {
       // Sign and verify data.
       let mut data = generate_data();
       document
-        .sign_data(&mut data, key_new.private(), method_fragment.as_str(), None, None, None, None, None)
+        .sign_data(
+          &mut data,
+          key_new.private(),
+          method_fragment.as_str(),
+          None,
+          None,
+          None,
+          None,
+          None,
+        )
         .unwrap();
       // Signature should still be valid for every scope.
       assert!(document.verify_data(&data).is_ok());
