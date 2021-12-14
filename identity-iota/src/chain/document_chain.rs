@@ -170,10 +170,10 @@ mod test {
   use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
-  use identity_did::verification::MethodRelationship;
-  use identity_did::verification::MethodScope;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
+  use identity_did::verification::MethodRelationship;
+  use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
 
@@ -309,12 +309,17 @@ mod test {
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
     new_resolved.document.properties_mut().insert("foo".into(), 123.into());
     unsafe {
-      new_resolved.document.core_document_mut().capability_invocation_mut().clear();
+      new_resolved
+        .document
+        .core_document_mut()
+        .capability_invocation_mut()
+        .clear();
     }
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
-    let diff_msg: DiffMessage = create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
+    let diff_msg: DiffMessage =
+      create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
     let valid_addition_error: Error =
       DiffChain::check_valid_addition(&diff_msg, &resolved, chain.integration_message_id()).unwrap_err();
     assert!(matches!(
@@ -344,13 +349,15 @@ mod test {
       "new-signing-key",
     )
     .unwrap();
-    new_resolved.document
+    new_resolved
+      .document
       .insert_method(new_signing_method, MethodScope::capability_invocation())
       .unwrap();
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
-    let diff_msg: DiffMessage = create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
+    let diff_msg: DiffMessage =
+      create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
 
     let valid_addition_error: Error =
       DiffChain::check_valid_addition(&diff_msg, &resolved, chain.integration_message_id()).unwrap_err();
@@ -376,7 +383,8 @@ mod test {
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
     // Replace the public key data.
     unsafe {
-      match new_resolved.document
+      match new_resolved
+        .document
         .core_document_mut()
         .capability_invocation_mut()
         .head_mut()
@@ -391,7 +399,8 @@ mod test {
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
-    let diff_msg: DiffMessage = create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
+    let diff_msg: DiffMessage =
+      create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
 
     let valid_addition_error: Error =
       DiffChain::check_valid_addition(&diff_msg, &resolved, chain.integration_message_id()).unwrap_err();
@@ -413,16 +422,22 @@ mod test {
     let signing_method: IotaVerificationMethod = resolved.document.default_signing_method().unwrap().clone();
     let signing_method_id: IotaDIDUrl = signing_method.id();
     resolved.document.remove_method(signing_method.id()).unwrap();
-    resolved.document
+    resolved
+      .document
       .insert_method(signing_method, MethodScope::VerificationMethod)
       .unwrap();
-    assert!(resolved.document
+    assert!(resolved
+      .document
       .attach_method_relationship(signing_method_id, MethodRelationship::CapabilityInvocation)
       .unwrap());
-      resolved.document
-      .sign_self(keypair.private(), &resolved.document.default_signing_method().unwrap().id())
+    resolved
+      .document
+      .sign_self(
+        keypair.private(),
+        &resolved.document.default_signing_method().unwrap().id(),
+      )
       .unwrap();
-    
+
     let chain: DocumentChain = DocumentChain::new(IntegrationChain::new(resolved.clone()).unwrap());
 
     // =======================================================================================================
@@ -431,7 +446,8 @@ mod test {
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
     // Replace the public key data.
     unsafe {
-      let updated_method: &mut VerificationMethod = new_resolved.document
+      let updated_method: &mut VerificationMethod = new_resolved
+        .document
         .core_document_mut()
         .verification_method_mut()
         .head_mut()
@@ -441,7 +457,8 @@ mod test {
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
-    let diff_msg: DiffMessage = create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
+    let diff_msg: DiffMessage =
+      create_signed_diff_message(&resolved.document, &new_resolved.document, &chain, keypair.private());
 
     let valid_addition_error: Error =
       DiffChain::check_valid_addition(&diff_msg, &resolved, chain.integration_message_id()).unwrap_err();
