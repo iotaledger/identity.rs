@@ -463,9 +463,9 @@ impl IotaDocument {
     method_query: Q,
     sign_options: SignatureOptions,
   ) -> Result<()>
-    where
-      X: Serialize + SetSignature + TryMethod,
-      Q: Into<MethodQuery<'query>>,
+  where
+    X: Serialize + SetSignature + TryMethod,
+    Q: Into<MethodQuery<'query>>,
   {
     self
       .signer(private_key)
@@ -534,8 +534,8 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: VerifierOptions<'_>) -> Result<()>
-    where
-      X: Serialize + TrySignature,
+  where
+    X: Serialize + TrySignature,
   {
     self.verifier().options(options).verify(data).map_err(Into::into)
   }
@@ -580,7 +580,7 @@ impl IotaDocument {
     }
 
     // Validate the document is signed correctly.
-    Self::verify_document(&document, &document)
+    Self::verify_document(document, document)
   }
 
   // ===========================================================================
@@ -626,7 +626,8 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used or the verification operation fails.
   pub fn verify_diff(&self, diff: &DiffMessage) -> Result<()> {
     // Ensure signing method is allowed to sign document updates.
-    self.verifier()
+    self
+      .verifier()
       .method_scope(MethodScope::capability_invocation())
       .method_type(Self::UPDATE_METHOD_TYPES)
       .verify(diff)
