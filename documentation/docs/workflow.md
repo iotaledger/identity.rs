@@ -10,16 +10,18 @@ keywords:
 ---
 ## Issues
 
-Issues are opened when a certain task or problem is noted but cannot immediately be fixed. Issues may contain bug reports, requests, or larger topics. Please use the correct GitHub issue template for your issue type. Only IOTA Foundation members should use the task templates flagged for maintainers. Make sure to [label](#Issue-Labels) the issue correctly. As a contributor you may also add issues to a certain `project`.
+Issues are opened when a certain task or problem is noted but cannot immediately be fixed. Issues may contain bug reports, requests, or larger topics. Please use the correct GitHub issue template for your issue type. Only IOTA Foundation members should use the task templates flagged for maintainers. Make sure to [label](#Issue-Labels) the issue correctly. As a contributor you may also add issues to a certain [project](https://github.com/iotaledger/identity.rs/projects/).
 
 ## Git
 
 ### Pull Requests
 
-New branches should be pushed to the GitHub repository as soon as possible, making it public to all contributors. In addition, a pull request (PR) should be opened in draft status, describing the goals and any requirements of the changes. Any code written and committed should frequently be pushed back to the GitHub branch. This both acts as a back-up mechanism and provides transparency towards other contributors and the community. You should pull from the origin branch of the PR regularly to prevent merge conflicts.
-Other contributors are encouraged to provide feedback on a PR during its development. A PR should be flagged as 'ready for review' once the PR has implemented all changes and no further commits are planned by the main contributors.
-The repository requires a review to be provided by at least one (other) developer in the team that works in the same language or has knowledge of the work before it can be merged. For larger PRs the review of two maintainers is recommended.
-In order to generate good [changelogs](#Changelog), the PR title must be written in a way that is suitable as an changelog entry and the PR needs to be [labeled](#PR-Labels) correctly.
+New branches should be pushed to the GitHub repository as soon as possible, making them public to all contributors. In addition, a pull request (PR) should be opened in draft status, describing the goals and any requirements of the changes. In order to generate good [changelogs](#Changelog), the PR title must be written in a way that is suitable as an changelog entry and the PR needs to be [labeled](#PR-Labels) correctly.
+
+Any code written should frequently be committed and pushed back to the GitHub branch. This both acts as a back-up mechanism and provides transparency towards other contributors and the community. You should also pull from the origin branch of the PR regularly to prevent merge conflicts.
+
+Other contributors are encouraged to provide feedback on a PR during its development. A PR should be flagged as 'ready for review' once the PR has implemented all changes and no further commits are planned by the main contributors. The repository requires a review to be provided by at least one (other) developer in the team that works in the same language or has knowledge of the work before it can be merged. For larger PRs the review of two maintainers is recommended.
+
 Once a PR is approved, the preferred method is "squash-and-merge" to keep the destination branch clean and allow many small commits while work is in-progress. Once merged in, the source branch may be deleted.
 
 ### Branches
@@ -39,7 +41,7 @@ These are branches that developers work on directly. Their names should be prefi
 Singular PR contributions should create either a `feat`, `doc`, `chore`, or `fix` branch, depending on the type of changes. These may be branched from either the `dev` branch or an `epic` branch. If the number of lines of code is going to be relatively small and the work completed in a single PR, the branch should be created from `dev` and merged back into `dev` once completed. Otherwise, the branches should be created from their associated `epic` branch and be merged back into the same `epic` branch. 
 
 - `feat` branches should contain changes to the code that expand or modify functionality. They should also include updates to the documentation and examples related to the feature, though `doc` branches may be used to catch up on documenting a feature.
-- `doc` branches contain changes to code documentation or the wiki. These PRs should be kept relatively small in order to not burden a reviewer with too many documentation updates. For example, during a documentation catch-up, we will have a branch/PR per documentation page.
+- `doc` branches contain changes to code documentation or the wiki. These PRs should be kept relatively small in order to avoid burdening a reviewer with too many documentation updates at once. For example, during a documentation catch-up we will have a branch/PR per documentation page.
 - `chore` branches are short lived branches that contain no significant features or functionality changes, but rather smaller fixes such as typos, code fixes, minor refactors, and CI changes.
 - `fix` branches correct bugs such as compilation errors or where existing features do not behave as expected, generally without introducing any new functionality or breaking changes.
 
@@ -49,15 +51,15 @@ It is recommended to integrate `dev` or `epic` regularly, depending on from wher
 Long-lived `epic` branches should be created as soon as a feature is expected to require more than one PR. The `epic` branch should be branched from `dev` and should only accept merges that are related to the feature being developed. A PR should be opened as soon as the branch is created to publicly notify contributors about the development, the goals and requirements of the feature and the existence of the branch. It is recommended to integrate `dev` often to reduce the possibility and potential size of merge conflicts.
 
 ### Semantic Versioning
-Semantic Versioning (SemVer) describes a methodology for versioning of software to convey meaning and guarantees through the version string. A typical version string looks like `2.3.1`, where `2` is called the major, `3` the minor and `1` the patch or bugfix version. 
+Semantic Versioning (SemVer) describes a methodology for versioning of software to convey meaning and guarantees through the version string. A typical version string looks like `2.3.1`, where `2` is called the major version, `3` the minor version and `1` the patch or bugfix version. 
 The central idea is that every part of the version string conveys meaning. A major change introduces behavior that is incompatible with previous versions of the software, while a minor change adds backwards-compatible functionality and a patch simply fixes a problem. So just by looking at the version string an implementer will have an understanding of the effort needed to integrate a new version.
 For more detailed information and an overview of advanced features see [Semantic Versioning 2.0.0](https://semver.org/). Not to be confused with [Sentimental Versioning](http://sentimentalversioning.org/).
 
 ### Changelog
-A changelog is a file describing a software project for humans to grasp the type and content of changes from version to version. Changelogs are closely related to the versioning of software, since individual changes are grouped into versions that are in our case referenced by a [SemVer string](#Semantic-Versioning). We generally follow the recommendations from [keepachangelog](https://keepachangelog.com/en/1.0.0/). The changelog in this project is generated from the titles and [labels](#PR-Labels) of [Pull-Requests](#Pull-Requests). 
+A changelog is a file describing a software project for humans to grasp the type and content of changes from version to version. Changelogs are closely related to the versioning of software, since individual changes are grouped into versions that are in our case referenced by a [SemVer string](#Semantic-Versioning). We generally follow the recommendations from [keepachangelog](https://keepachangelog.com/en/1.0.0/). The changelog in this project is generated from the titles and [labels](#PR-Labels) of [pull requests](#Pull-Requests). 
 
 #### PR Labels
-Labels are used to categorize changes in [Pull-Requests](#Pull-Requests). Adding a label will include the labeled [Pull-Request](#Pull-Requests) in the related section of the generated [Changelog](#Changelog).
+Labels are used to categorize changes in [pull requests](#Pull-Requests). Adding a label will include the labeled [PR](#Pull-Requests) title in the related section of the generated [changelog](#Changelog).
 
 Changelogs are generated for the core Rust library and each binding separately. To attach a PR to a specific changelog use the following labels:
 ##### `Rust` 
@@ -92,7 +94,7 @@ labels: `Removed`
 Marks changes that should not be part of the changelog. This should only be used for documentation and rare exceptions
 labels: `Documentation`, `No changelog`
 
-Please note that a PR can only be listed in one section of a changelog. So attaching the labels `Rust` `Added` `Patch` to a PR is invalid.
+Please note that a PR can only be listed in one section of a changelog. So attaching the labels `Rust` `Added` `Patch` to a PR, for example, is invalid because `Added` and `Patch` conflict.
 
 ##### Release Summary
 To attach a release summary to a version in the changelog, an issue with the label `release-summary` must be created. Create a GitHub milestone matching the version you want to describe and attach it to the issue. The issue can be closed immediately. The text of the issue will be included in the changelog as the release summary.
@@ -104,8 +106,9 @@ The following labels are used to categorize issues but do not have any effect on
 
 With the release process we can deliver versions of our software to the community. We use sensible automation where it helps to remove tedium. However, some steps that require active decision making remain manual.
 
-The final list of changes from the [changelog](#Changelog) informs the version of the release. If at least one change mapping to a major version is included, the major version needs to be incremented. In that case the minor and patch version are set to `0`. If there are no change related to a major version, but changes related to a minor version are present the minor version needs to be incremented while the patch version is set to `0`. Otherwise only the patch version is incremented. Determining the version of the release is the responsibility of the person performing the release.
-The determined version of the release is used to create the [hotfix](#hotfix) or [release](#release) branch. For example a major release from the previous version `v2.3.1` will create the `release/v3.0.0` branch.
+The final list of changes from the [changelog](#Changelog) informs the version of the release. If at least one change mapping to a major version is included, the major version needs to be incremented. In that case the minor and patch versions are set to `0`. If there are no change related to a major version, but changes related to a minor version are present, the minor version needs to be incremented while the patch version is set to `0`. Otherwise only the patch version is incremented. Determining the version of the release is the responsibility of the person performing the release.
+
+The determined version of the release is used to create the [hotfix](#hotfix) or [release](#release) branch. For example, a major release from the previous version `v2.3.1` will create the `release/v3.0.0` branch.
 Notice the `v` in front of the version. We [tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging) all release in git in the form of `vMAJOR.MINOR.PATCH`. For bindings we prefix the tag with the binding name, so a tag for Wasm would look like `wasm-v1.2.3`. Bindings and the core Rust library are versioned and released independently.
 
 Additionally, we may release `dev` versions separately for both bindings and the core Rust library. These releases are meant as a preview of upcoming versions. For example, if the current version is `1.2.3` with the tag `v1.2.3`, we may release `v1.3.0-dev.1` which is then superseded by the actual `1.3.0` release.
@@ -117,16 +120,16 @@ To create a release perform the following steps:
 2.2. Determine the next version string.
 2.3. Run the workflow. The workflow will create a PR from `dev` targeting `dev` with release related changes.
 3. Review the PR.
-3.1 The PR will contain an updated changelog, check that it has all expected entries in the appropriate sections and the determined version matches the changelog according to [SemVer](#Semantic-Versioning).
-3.2 The PR will contain changes to files including versions or version strings, ensure these are correct and match the expected version.
-3.3 Refer to [troubleshooting](#Troubleshooting) if anything is incorrect.
+3.1. The PR will update the changelog, check that it has all expected entries in the appropriate sections and the determined version matches the changelog according to [SemVer](#Semantic-Versioning).
+3.2. The PR will update project version strings, ensure these are correct and match the expected version.
+3.3. Refer to [Troubleshooting](#Troubleshooting) if anything is incorrect.
 4. Merge the PR.
 4.1. On merging to `dev`, an automatic workflow is triggered that builds and publishes artifacts to the appropriate package manager (`crates.io` for Rust, `npm` for the Wasm bindings), and creates a GitHub Release (only for `main` version releases of the core Rust library).
 5. For `main` version releases, merge the `dev` branch into the `main` branch.
 
 ### Troubleshooting
 
-#### The changelog entries have the wrong description in the release PR
+#### The changelog entries have the wrong description in the release PR.
 Update the titles of the relevant PRs then rerun the workflow with the same parameters. The release PR will be updated with the new changelog.
 
 #### The changelog in the release PR is missing entries, has unrelated entries, entries in the wrong section.
