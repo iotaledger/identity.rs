@@ -18,7 +18,7 @@ use identity_core::crypto::TrySignatureMut;
 use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
-use crate::verifiable::VerifiableProperties;
+use crate::verifiable::ProofProperties;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::MethodUriType;
@@ -78,7 +78,7 @@ fn test_sign_verify_that_ed25519() {
       .build()
       .unwrap();
 
-    let document: CoreDocument<VerifiableProperties> = CoreDocument::builder(Default::default())
+    let document: CoreDocument<ProofProperties> = CoreDocument::builder(Default::default())
       .id(controller)
       .verification_method(method)
       .build()
@@ -120,7 +120,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
       .build()
       .unwrap();
 
-    let document: CoreDocument<VerifiableProperties> = CoreDocument::builder(Default::default())
+    let document: CoreDocument<ProofProperties> = CoreDocument::builder(Default::default())
       .id(controller)
       .verification_method(method)
       .build()

@@ -11,7 +11,7 @@ use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
-use identity_did::verifiable::VerifiableProperties;
+use identity_did::verifiable::ProofProperties;
 
 use crate::document::IotaDocumentMetadata;
 use crate::tangle::MessageId;
@@ -25,7 +25,7 @@ pub struct DiffIotaDocumentMetadata {
   #[serde(skip_serializing_if = "Option::is_none")]
   previous_message_id: Option<DiffString>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<VerifiableProperties as Diff>::Type>,
+  properties: Option<<ProofProperties as Diff>::Type>,
 }
 
 impl Diff for IotaDocumentMetadata {
@@ -85,7 +85,7 @@ impl Diff for IotaDocumentMetadata {
       .map_err(identity_core::diff::Error::merge)?
       .unwrap_or(self.previous_message_id);
 
-    let properties: VerifiableProperties = diff
+    let properties: ProofProperties = diff
       .properties
       .map(|value| self.properties.merge(value))
       .transpose()?
@@ -122,9 +122,9 @@ impl Diff for IotaDocumentMetadata {
       .map_err(identity_core::diff::Error::merge)?
       .ok_or_else(|| Error::convert("Missing field `metadata.previous_message_id`"))?;
 
-    let properties: VerifiableProperties = diff
+    let properties: ProofProperties = diff
       .properties
-      .map(VerifiableProperties::from_diff)
+      .map(ProofProperties::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `metadata.properties`"))?;
 
@@ -207,7 +207,7 @@ mod test {
   #[test]
   fn test_add_properties() {
     let mut original: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    let mut properties: VerifiableProperties = VerifiableProperties::new(Object::default());
+    let mut properties: ProofProperties = ProofProperties::new(Object::default());
     properties.properties.insert("key1".into(), "value2".into());
     original.properties = properties;
 
@@ -223,12 +223,12 @@ mod test {
   #[test]
   fn test_replace_properties() {
     let mut original: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    let mut properties: VerifiableProperties = VerifiableProperties::new(Object::default());
+    let mut properties: ProofProperties = ProofProperties::new(Object::default());
     properties.properties.insert("key".to_string(), "value".into());
     original.properties = properties;
 
     let mut updated: IotaDocumentMetadata = original.clone();
-    updated.properties = VerifiableProperties::new(Object::default());
+    updated.properties = ProofProperties::new(Object::default());
 
     assert_ne!(original, updated);
     let diff: DiffIotaDocumentMetadata = original.diff(&updated).unwrap();

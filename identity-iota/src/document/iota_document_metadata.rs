@@ -13,7 +13,7 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Signature;
-use identity_did::verifiable::VerifiableProperties;
+use identity_did::verifiable::ProofProperties;
 
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
@@ -31,7 +31,7 @@ pub struct IotaDocumentMetadata {
   pub previous_message_id: MessageId,
   /// `VerifiableProperties` contains the proof / signature section.
   #[serde(flatten)]
-  pub properties: VerifiableProperties,
+  pub properties: ProofProperties,
 }
 
 impl IotaDocumentMetadata {
@@ -43,7 +43,7 @@ impl IotaDocumentMetadata {
       created: now,
       updated: now,
       previous_message_id: MessageId::null(),
-      properties: VerifiableProperties::new(Object::new()),
+      properties: ProofProperties::new(Object::new()),
     }
   }
 

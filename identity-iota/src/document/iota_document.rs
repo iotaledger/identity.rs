@@ -748,7 +748,7 @@ mod tests {
   use identity_core::utils::encode_b58;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
-  use identity_did::verifiable::VerifiableProperties;
+  use identity_did::verifiable::ProofProperties;
   use identity_did::verification::MethodData;
 
   use crate::tangle::Network;
@@ -1248,9 +1248,9 @@ mod tests {
 
   #[test]
   fn test_verify_data_with_scope() {
-    fn generate_data() -> VerifiableProperties {
+    fn generate_data() -> ProofProperties {
       use identity_core::json;
-      let mut properties: VerifiableProperties = VerifiableProperties::default();
+      let mut properties: ProofProperties = ProofProperties::default();
       properties.properties.insert("int_key".to_owned(), json!(1));
       properties.properties.insert("str".to_owned(), json!("some value"));
       properties
