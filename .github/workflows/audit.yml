@@ -9,12 +9,14 @@ on:
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
+      - ".github/workflows/audit.yml"
   pull_request:
     branches:
       - main
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
+      - ".github/workflows/audit.yml"
 
 jobs:
   audit:

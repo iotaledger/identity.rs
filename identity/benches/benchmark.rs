@@ -12,7 +12,6 @@ use identity::iota::IntegrationChain;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
-use self::diff_chain::create_diff_chain;
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;
 use self::diff_chain::update_integration_chain;
@@ -42,11 +41,6 @@ fn bench_generate_signed_document(c: &mut Criterion) {
 fn bench_generate_did(c: &mut Criterion) {
   let keypair = KeyPair::new_ed25519().unwrap();
   c.bench_function("generate did", |b| b.iter(|| generate_did(&keypair)));
-}
-
-fn bench_generate_doc_chain(c: &mut Criterion) {
-  let (doc, _) = setup_diff_chain_bench();
-  c.bench_function("generate document chain", |b| b.iter(|| create_diff_chain(doc.clone())));
 }
 
 fn bench_diff_chain_updates(c: &mut Criterion) {
@@ -90,7 +84,6 @@ criterion_group!(
   benches,
   bench_generate_signed_document,
   bench_generate_did,
-  bench_generate_doc_chain,
   bench_diff_chain_updates,
   bench_integration_chain_updates,
 );

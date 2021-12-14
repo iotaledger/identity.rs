@@ -4,15 +4,15 @@
 use identity_core::crypto::SetSignature;
 use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
-use identity_iota::document::DiffMessage;
+use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
+use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
-use identity_iota::tangle::TangleRef;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
@@ -145,7 +145,7 @@ impl Account {
 
   /// Returns the did of the managed identity.
   pub fn did(&self) -> &IotaDID {
-    self.document().did()
+    self.document().id()
   }
 
   /// Return the latest state of the identity.
@@ -180,7 +180,7 @@ impl Account {
   // ===========================================================================
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
-  pub async fn resolve_identity(&self) -> Result<IotaDocument> {
+  pub async fn resolve_identity(&self) -> Result<ResolvedIotaDocument> {
     self.client_map.resolve(self.did()).await.map_err(Into::into)
   }
 
@@ -321,7 +321,7 @@ impl Account {
     };
 
     let signing_method: &IotaVerificationMethod = match signing_method_query {
-      Some(fragment) => signing_state.document().resolve_signing_method(fragment)?,
+      Some(fragment) => signing_state.document().try_resolve_signing_method(fragment)?,
       None => signing_state.document().default_signing_method()?,
     };
 
@@ -399,13 +399,13 @@ impl Account {
     old_state: Option<&IdentityState>,
     signing_method_query: &Option<String>,
   ) -> Result<()> {
-    log::debug!("[publish_integration_change] publishing {:?}", self.document().did());
+    log::debug!("[publish_integration_change] publishing {:?}", self.document().id());
 
     let new_state: &IdentityState = self.state();
 
     let mut new_doc: IotaDocument = new_state.document().to_owned();
 
-    new_doc.set_previous_message_id(*self.chain_state().last_integration_message_id());
+    new_doc.metadata.previous_message_id = *self.chain_state().last_integration_message_id();
 
     self
       .sign_self(
@@ -438,7 +438,7 @@ impl Account {
     old_state: &IdentityState,
     signing_method_query: &Option<String>,
   ) -> Result<()> {
-    log::debug!("[publish_diff_change] publishing {:?}", self.document().did());
+    log::debug!("[publish_diff_change] publishing {:?}", self.document().id());
 
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();
@@ -457,7 +457,7 @@ impl Account {
     let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
     let signing_method: &IotaVerificationMethod = match signing_method_query {
-      Some(fragment) => old_state.document().resolve_signing_method(fragment)?,
+      Some(fragment) => old_state.document().try_resolve_signing_method(fragment)?,
       None => old_state.document().default_signing_method()?,
     };
 

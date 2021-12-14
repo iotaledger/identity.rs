@@ -3,6 +3,7 @@
 
 use core::any::Any;
 use identity_core::common::BitSet;
+use identity_core::common::Object;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleDigestTag;
@@ -24,7 +25,6 @@ use identity_core::crypto::Sign;
 use identity_core::crypto::Signature;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
 use identity_core::error::Error as CoreError;
@@ -33,7 +33,6 @@ use serde::Serialize;
 use crate::document::CoreDocument;
 use crate::error::Error;
 use crate::error::Result;
-use crate::verifiable::Properties;
 use crate::verifiable::Revocation;
 use crate::verification::MethodQuery;
 use crate::verification::MethodScope;
@@ -42,53 +41,7 @@ use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
 
-// =============================================================================
-// Generic Crypto Extensions
-// =============================================================================
-
-impl<T, U, V> CoreDocument<T, U, V> {
-  pub fn into_verifiable(self) -> CoreDocument<Properties<T>, U, V> {
-    self.map(Properties::new)
-  }
-
-  pub fn into_verifiable_with_proof(self, proof: Signature) -> CoreDocument<Properties<T>, U, V> {
-    self.map(|old| Properties::with_proof(old, proof))
-  }
-}
-
-impl<T, U, V> CoreDocument<Properties<T>, U, V> {
-  pub fn proof(&self) -> Option<&Signature> {
-    self.properties().proof()
-  }
-
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
-    self.properties_mut().proof_mut()
-  }
-
-  pub fn set_proof(&mut self, signature: Signature) {
-    self.properties_mut().set_proof(signature);
-  }
-}
-
-impl<T, U, V> TrySignature for CoreDocument<Properties<T>, U, V> {
-  fn signature(&self) -> Option<&Signature> {
-    self.proof()
-  }
-}
-
-impl<T, U, V> TrySignatureMut for CoreDocument<Properties<T>, U, V> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.proof_mut()
-  }
-}
-
-impl<T, U, V> SetSignature for CoreDocument<Properties<T>, U, V> {
-  fn set_signature(&mut self, signature: Signature) {
-    self.set_proof(signature)
-  }
-}
-
-impl<T, U, V> TryMethod for CoreDocument<Properties<T>, U, V> {
+impl<T, U, V> TryMethod for CoreDocument<T, U, V> {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
@@ -114,7 +67,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, 'proof, T, U, V> {
+pub struct DocumentSigner<'base, 'query, 'proof, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
   private: &'base PrivateKey,
   method: Option<MethodQuery<'query>>,
@@ -219,7 +172,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 // Document Verifier - Simplifying Digital Signature Verification Since 2021
 // =============================================================================
 
-pub struct DocumentVerifier<'base, T, U, V> {
+pub struct DocumentVerifier<'base, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
 }
 

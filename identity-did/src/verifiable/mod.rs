@@ -7,7 +7,7 @@ mod traits;
 
 pub use self::document::DocumentSigner;
 pub use self::document::DocumentVerifier;
-pub use self::properties::Properties;
+pub use self::properties::VerifiableProperties;
 pub use self::traits::Revocation;
 
 #[cfg(test)]

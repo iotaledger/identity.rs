@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use hashbrown::HashMap;
-use identity_did::did::DID;
 use serde::Serialize;
 
 use identity_core::common::Fragment;
 use identity_core::crypto::SetSignature;
+use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
-use identity_iota::tangle::TangleRef;
 
 use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;
@@ -101,7 +100,7 @@ impl IdentityState {
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment().identifier();
-    let method_url: IotaDIDUrl = self.document.did().to_url().join(fragment)?;
+    let method_url: IotaDIDUrl = self.document.id().to_url().join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
