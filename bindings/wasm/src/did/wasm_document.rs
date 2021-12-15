@@ -10,7 +10,6 @@ use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::did::MethodScope;
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::Error;
 use identity::iota::IotaDocument;

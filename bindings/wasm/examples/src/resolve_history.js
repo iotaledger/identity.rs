@@ -169,7 +169,7 @@ async function resolveHistory(clientConfig) {
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     const keys2 = new KeyPair(KeyType.Ed25519);
     const method2 = VerificationMethod.fromDID(intDoc2.id, keys2, "keys-2");
-    intDoc2.insertMethod(method2, MethodScope.VerificationMethod().toString());
+    intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.

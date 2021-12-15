@@ -103,8 +103,8 @@ See <code>IVerifierOptions</code>.</p>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
-        * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.checkCredential(data, options)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.checkPresentation(data, options)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
         * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
         * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
@@ -210,7 +210,7 @@ capability invocation method.
 
 <a name="Client+checkCredential"></a>
 
-### client.checkCredential(data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.checkCredential(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
 Validates a credential with the DID Document from the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -218,10 +218,11 @@ Validates a credential with the DID Document from the Tangle.
 | Param | Type |
 | --- | --- |
 | data | <code>string</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Client+checkPresentation"></a>
 
-### client.checkPresentation(data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.checkPresentation(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
 Validates a presentation with the DID Document from the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -229,6 +230,7 @@ Validates a presentation with the DID Document from the Tangle.
 | Param | Type |
 | --- | --- |
 | data | <code>string</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Client.fromConfig"></a>
 
@@ -958,7 +960,7 @@ Adds a new Verification Method to the DID Document.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
-| scope | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
 
 <a name="Document+removeMethod"></a>
 
@@ -1612,6 +1614,7 @@ Supported verification method types.
 
 * [MethodScope](#MethodScope)
     * _instance_
+        * [.toString()](#MethodScope+toString) ⇒ <code>string</code>
         * [.toJSON()](#MethodScope+toJSON) ⇒ <code>any</code>
     * _static_
         * [.VerificationMethod()](#MethodScope.VerificationMethod) ⇒ [<code>MethodScope</code>](#MethodScope)
@@ -1622,10 +1625,16 @@ Supported verification method types.
         * [.CapabilityInvocation()](#MethodScope.CapabilityInvocation) ⇒ [<code>MethodScope</code>](#MethodScope)
         * [.fromJSON(json)](#MethodScope.fromJSON) ⇒ [<code>MethodScope</code>](#MethodScope)
 
+<a name="MethodScope+toString"></a>
+
+### methodScope.toString() ⇒ <code>string</code>
+Returns the `MethodScope` as a string.
+
+**Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope+toJSON"></a>
 
 ### methodScope.toJSON() ⇒ <code>any</code>
-Serializes a `ProofPurpose` object as a JSON object.
+Serializes a `MethodScope` object as a JSON object.
 
 **Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope.VerificationMethod"></a>
@@ -1655,7 +1664,7 @@ Serializes a `ProofPurpose` object as a JSON object.
 <a name="MethodScope.fromJSON"></a>
 
 ### MethodScope.fromJSON(json) ⇒ [<code>MethodScope</code>](#MethodScope)
-Deserializes a `ProofPurpose` object from a JSON object.
+Deserializes a `MethodScope` object from a JSON object.
 
 **Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
 
@@ -1681,7 +1690,7 @@ Supported verification method types.
 <a name="MethodType+toJSON"></a>
 
 ### methodType.toJSON() ⇒ <code>any</code>
-Serializes a `ProofPurpose` object as a JSON object.
+Serializes a `MethodType` object as a JSON object.
 
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.Ed25519VerificationKey2018"></a>
@@ -1695,7 +1704,7 @@ Serializes a `ProofPurpose` object as a JSON object.
 <a name="MethodType.fromJSON"></a>
 
 ### MethodType.fromJSON(json) ⇒ [<code>MethodType</code>](#MethodType)
-Deserializes a `ProofPurpose` object from a JSON object.
+Deserializes a `MethodType` object from a JSON object.
 
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 

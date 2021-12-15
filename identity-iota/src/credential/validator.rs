@@ -56,21 +56,27 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
 
   /// Deserializes the given JSON-encoded `Credential` and validates
   /// all associated DID documents.
-  pub async fn check<T>(&self, data: &str) -> Result<CredentialValidation<T>>
+  pub async fn check_credential<T>(&self, data: &str, options: VerifierOptions) -> Result<CredentialValidation<T>>
   where
     T: DeserializeOwned + Serialize,
   {
-    self.validate_credential(Credential::from_json(data)?).await
+    self.validate_credential(Credential::from_json(data)?, options).await
   }
 
   /// Deserializes the given JSON-encoded `Presentation` and
   /// validates all associated DID documents/`Credential`s.
-  pub async fn check_presentation<T, U>(&self, data: &str) -> Result<PresentationValidation<T, U>>
+  pub async fn check_presentation<T, U>(
+    &self,
+    data: &str,
+    options: VerifierOptions,
+  ) -> Result<PresentationValidation<T, U>>
   where
     T: Clone + DeserializeOwned + Serialize,
     U: Clone + DeserializeOwned + Serialize,
   {
-    self.validate_presentation(Presentation::from_json(data)?).await
+    self
+      .validate_presentation(Presentation::from_json(data)?, options)
+      .await
   }
 
   /// Validates the `Credential` proof and all relevant DID documents.
@@ -78,7 +84,11 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   /// Note: The credential is expected to have a proof created by the issuing party.
   /// Note: The credential issuer URL is expected to be a valid DID.
   /// Note: Credential subject IDs are expected to be valid DIDs (if present).
-  pub async fn validate_credential<T>(&self, credential: Credential<T>) -> Result<CredentialValidation<T>>
+  pub async fn validate_credential<T>(
+    &self,
+    credential: Credential<T>,
+    options: VerifierOptions,
+  ) -> Result<CredentialValidation<T>>
   where
     T: Serialize,
   {
@@ -98,11 +108,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the credential signature using the issuers DID Document
-    let credential_verified: bool = issuer_doc
-      .document
-      .document
-      .verify_data(&credential, VerifierOptions::default())
-      .is_ok();
+    let credential_verified: bool = issuer_doc.document.document.verify_data(&credential, options).is_ok();
 
     // Check if all subjects have valid signatures
     let subjects_verified: bool = subjects.values().all(|subject| subject.verified);
@@ -122,9 +128,12 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   ///
   /// Note: The presentation holder is expected to be a valid DID.
   /// Note: The presentation is expected to have a proof created by the holder.
+  /// Note: `options` only affects validation of the signature on the presentation and does not
+  ///       affect the validation of any of its credentials.
   pub async fn validate_presentation<T, U>(
     &self,
     presentation: Presentation<T, U>,
+    options: VerifierOptions,
   ) -> Result<PresentationValidation<T, U>>
   where
     T: Clone + Serialize,
@@ -143,15 +152,16 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
 
     // Resolve and validate all associated credentials.
     for credential in presentation.verifiable_credential.iter() {
-      credentials.push(self.validate_credential(credential.clone()).await?);
+      // TODO: do we need to allow different VerifierOptions for each credential?
+      credentials.push(
+        self
+          .validate_credential(credential.clone(), VerifierOptions::default())
+          .await?,
+      );
     }
 
     // Verify the presentation signature using the holders DID Document
-    let presentation_verified: bool = holder_doc
-      .document
-      .document
-      .verify_data(&presentation, VerifierOptions::default())
-      .is_ok();
+    let presentation_verified: bool = holder_doc.document.document.verify_data(&presentation, options).is_ok();
 
     // Check if all credentials are verified
     let credentials_verified: bool = credentials.iter().all(|credential| credential.verified);

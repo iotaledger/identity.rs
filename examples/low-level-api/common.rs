@@ -13,6 +13,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
+use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
@@ -57,7 +58,9 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(client);
 
   // Perform the validation operation.
-  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  let validation: CredentialValidation = validator
+    .check_credential(&credential_json, VerifierOptions::default())
+    .await?;
   Ok(validation)
 }
 

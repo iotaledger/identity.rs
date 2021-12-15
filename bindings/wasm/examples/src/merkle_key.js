@@ -5,12 +5,14 @@ import {
     Client,
     Config,
     Digest,
+    KeyCollection,
     KeyType,
     MethodScope,
+    SignatureOptions,
     Timestamp,
     VerifiableCredential,
     VerificationMethod,
-    KeyCollection
+    VerifierOptions
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {logExplorerUrl} from './utils';
@@ -73,10 +75,10 @@ async function merkleKey(clientConfig) {
         public: keys.public(0),
         private: keys.private(0),
         proof: keys.merkleProof(Digest.Sha256, 0)
-    });
+    }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const result = await client.checkCredential(signedVc.toString());
+    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
     console.log(`VC verification result: ${result.verified}`);
     if (!result.verified) throw new Error("VC not valid");
 
@@ -89,7 +91,7 @@ async function merkleKey(clientConfig) {
     logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);
 
     // Check the verifiable credential is revoked
-    const newResult = await client.checkCredential(signedVc.toString());
+    const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
     console.log(`VC verification result (false = revoked): ${newResult.verified}`);
     if (newResult.verified) throw new Error("VC not revoked");
 }

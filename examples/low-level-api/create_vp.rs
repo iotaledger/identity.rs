@@ -12,6 +12,7 @@ use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
+use identity::did::verifiable::VerifierOptions;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidation;
@@ -73,7 +74,9 @@ async fn main() -> Result<()> {
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
 
   // Perform the validation operation.
-  let validation: PresentationValidation = validator.check_presentation(&presentation_json).await?;
+  let validation: PresentationValidation = validator
+    .check_presentation(&presentation_json, VerifierOptions::default())
+    .await?;
   println!("validation = {:#?}", validation);
   assert!(validation.verified);
 
