@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, KeyPair, KeyType, VerifiableCredential, VerifierOptions} from '@iota/identity-wasm';
+import {Client, Config, Document, KeyPair, KeyType} from '@iota/identity-wasm';
 import { logExplorerUrl, logResolverUrl } from './utils';
 
 /**
@@ -22,57 +22,18 @@ async function createIdentity(clientConfig) {
     // Sign the DID Document with the generated key.
     doc.signSelf(key, doc.defaultSigningMethod().id.toString());
 
-    // Prepare a credential subject indicating the degree earned by Alice
-    let credentialSubject = {
-        id: doc.id.toString(),
-        name: "Alice",
-        degreeName: "Bachelor of Science and Arts",
-        degreeType: "BachelorDegree",
-        GPA: "4.0"
-    };
+    // Create a default client configuration from the parent config network.
+    const config = Config.fromNetwork(clientConfig.network);
 
-    // Create an unsigned `UniversityDegree` credential for Alice
-    const unsignedVc = VerifiableCredential.extend({
-        id: "https://example.edu/credentials/3732",
-        type: "UniversityDegreeCredential",
-        issuer: doc.id.toString(),
-        credentialSubject,
-    });
+    // Create a client instance to publish messages to the Tangle.
+    const client = Client.fromConfig(config);
 
-    // Sign the credential with the Issuer's newKey
-    const signedVc = doc.signCredential(unsignedVc, {
-        method: doc.id.toString() + "#sign-0",
-        public: key.public,
-        private: key.private,
-    }, new VerifierOptions({
-        challenge: "some-challenge-string",
-        domain: "some.domain.string",
-    }));
+    // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
+    const receipt = await client.publishDocument(doc);
 
-    // Check if the credential is verifiable.
-    const result = doc.verifyData(signedVc, new VerifierOptions({
-        methodScope: "CapabilityInvocation",
-        // methodType: ["Ed25519VerificationKey2018", "MerkleKeyCollection2021"],
-        // challenge: "some-challenge-string",
-        // domain: "some.domain.string",
-        // purpose: "authentication",
-        // allowExpired: false,
-    }));
-
-    console.log(`VC verification result: ${result}`);
-
-    // // Create a default client configuration from the parent config network.
-    // const config = Config.fromNetwork(clientConfig.network);
-    //
-    // // Create a client instance to publish messages to the Tangle.
-    // const client = Client.fromConfig(config);
-    //
-    // // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    // const receipt = await client.publishDocument(doc);
-    //
-    // // Log the results.
-    // logExplorerUrl("DID Document Transaction:", clientConfig.explorer, receipt.messageId);
-    // logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
+    // Log the results.
+    logExplorerUrl("DID Document Transaction:", clientConfig.explorer, receipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
 
     // Return the results.
     return {key, doc, receipt};

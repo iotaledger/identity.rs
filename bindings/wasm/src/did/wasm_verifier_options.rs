@@ -52,8 +52,7 @@ impl WasmVerifierOptions {
       .map(|method_type| {
         method_type
           .into_iter()
-          .map(|s| s.as_str())
-          .map(MethodType::from_str)
+          .map(|method_type| MethodType::from_str(&method_type))
           .collect::<std::result::Result<_, _>>()
       })
       .transpose()
@@ -140,7 +139,7 @@ interface IVerifierOptions {
     *
     * NOTE: `purpose` overrides the `method_scope` option.
     */
-    readonly purpose: string | undefined;
+    readonly purpose: "authentication" | "assertionMethod" | undefined;
 
     /** Determines whether to error if the current time exceeds the `Signature::expires` field.
     *

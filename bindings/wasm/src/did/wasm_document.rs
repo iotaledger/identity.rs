@@ -27,6 +27,7 @@ use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
+use crate::did::WasmSignatureOptions;
 use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
@@ -203,6 +204,7 @@ impl WasmDocument {
   /// Collection verification Method.
   #[wasm_bindgen(js_name = signData)]
   pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: WasmSignatureOptions) -> Result<JsValue> {
+    // TODO: clean this up and annotate types if possible.
     #[derive(Deserialize)]
     #[serde(untagged)]
     enum Args {
@@ -240,11 +242,16 @@ impl WasmDocument {
         let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
         let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
 
-        let signer: _ = self.0.signer(&private).method(&method);
-
         match digest {
           MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
-            Some(proof) => signer.merkle_key((&public, &proof)).sign(&mut data).wasm_result()?,
+            Some(proof) => self
+              .0
+              .signer(&private)
+              .method(&method)
+              .options(options.0)
+              .merkle_key((&public, &proof))
+              .sign(&mut data)
+              .wasm_result()?,
             None => return Err("Invalid Public Key Proof".into()),
           },
           _ => return Err("Invalid Merkle Key Digest".into()),
@@ -253,7 +260,13 @@ impl WasmDocument {
       Args::Default { method, private } => {
         let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
 
-        self.0.signer(&private).method(&method).sign(&mut data).wasm_result()?;
+        self
+          .0
+          .signer(&private)
+          .method(&method)
+          .options(options.0)
+          .sign(&mut data)
+          .wasm_result()?;
       }
     }
 
@@ -268,8 +281,6 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue, options: WasmVerifierOptions) -> Result<bool> {
     let data: VerifiableProperties = data.into_serde().wasm_result()?;
-
-    // TODO: replace default
     Ok(self.0.verify_data(&data, options.0).is_ok())
   }
 

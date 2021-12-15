@@ -8,6 +8,7 @@ pub use self::wasm_document::WasmDocument;
 pub use self::wasm_document_metadata::WasmDocumentMetadata;
 pub use self::wasm_resolved_document::PromiseResolvedDocument;
 pub use self::wasm_resolved_document::WasmResolvedDocument;
+pub use self::wasm_signature_options::WasmSignatureOptions;
 pub use self::wasm_verification_method::WasmVerificationMethod;
 pub use self::wasm_verifier_options::WasmVerifierOptions;
 
@@ -17,5 +18,6 @@ mod wasm_diff_message;
 mod wasm_document;
 mod wasm_document_metadata;
 mod wasm_resolved_document;
+mod wasm_signature_options;
 mod wasm_verification_method;
 mod wasm_verifier_options;

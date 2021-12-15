@@ -123,7 +123,7 @@ fn test_document_new() {
     .sign_self(&keypair, document.default_signing_method().unwrap().id().to_string())
     .unwrap();
 
-  assert!(document.verify_self_signed());
+  assert!(WasmDocument::verify_document(&document, &document).is_ok());
 }
 
 #[wasm_bindgen_test]

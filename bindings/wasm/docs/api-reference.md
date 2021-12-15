@@ -40,6 +40,10 @@ merged with one or more <code>DiffMessages</code>.</p>
 </dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
+<dt><a href="#SignatureOptions">SignatureOptions</a></dt>
+<dd><p>Holds additional options for creating signatures.
+See <code>ISignatureOptions</code>.</p>
+</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
 <dt><a href="#VerifiableCredential">VerifiableCredential</a></dt>
@@ -1016,7 +1020,7 @@ verification method. See `Document::verifySelfSigned`.
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+signPresentation"></a>
 
@@ -1027,7 +1031,7 @@ verification method. See `Document::verifySelfSigned`.
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+signData"></a>
 
@@ -1044,7 +1048,7 @@ Collection verification Method.
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+verifyData"></a>
 
@@ -1825,6 +1829,36 @@ Deserializes a `Service` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="SignatureOptions"></a>
+
+## SignatureOptions
+Holds additional options for creating signatures.
+See `ISignatureOptions`.
+
+**Kind**: global class  
+
+* [SignatureOptions](#SignatureOptions)
+    * [new SignatureOptions(options)](#new_SignatureOptions_new)
+    * [.default()](#SignatureOptions.default) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+
+<a name="new_SignatureOptions_new"></a>
+
+### new SignatureOptions(options)
+Creates a new `SignatureOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>ISignatureOptions</code> | 
+
+<a name="SignatureOptions.default"></a>
+
+### SignatureOptions.default() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+Creates a new `SignatureOptions` with default options.
+
+**Kind**: static method of [<code>SignatureOptions</code>](#SignatureOptions)  
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -2076,6 +2110,8 @@ See `IVerifierOptions`.
 
 ### new VerifierOptions(options)
 Creates a new `VerifierOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
 
 
 | Param | Type |
