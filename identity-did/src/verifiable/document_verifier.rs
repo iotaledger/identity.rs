@@ -126,21 +126,19 @@ where
       ProofPurpose::AssertionMethod => MethodScope::assertion_method(),
       ProofPurpose::Authentication => MethodScope::authentication(),
     });
-    let method: &VerificationMethod<U> = if let Some(purpose_scope) = purpose_scope {
-      self
+    let method: &VerificationMethod<U> = match (purpose_scope, self.options.method_scope) {
+      (Some(purpose_scope), _) => self
         .document
         .try_resolve_method_with_scope(signature, purpose_scope)
-        .map_err(|_| Error::InvalidSignature("method with purpose scope not found"))?
-    } else if let Some(scope) = self.options.method_scope {
-      self
+        .map_err(|_| Error::InvalidSignature("method with purpose scope not found"))?,
+      (None, Some(scope)) => self
         .document
         .try_resolve_method_with_scope(signature, scope)
-        .map_err(|_| Error::InvalidSignature("method with specified scope not found"))?
-    } else {
-      self
+        .map_err(|_| Error::InvalidSignature("method with specified scope not found"))?,
+      (None, None) => self
         .document
         .try_resolve_method(signature)
-        .map_err(|_| Error::InvalidSignature("method not found"))?
+        .map_err(|_| Error::InvalidSignature("method not found"))?,
     };
 
     // Check method type.
