@@ -10,8 +10,8 @@ use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
+use identity::did::verifiable::VerifiableProperties;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
@@ -23,7 +23,7 @@ use crate::common::WasmTimestamp;
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
-use crate::did::WasmDID;
+use crate::did::{WasmDID, WasmMethodScope};
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
@@ -108,9 +108,8 @@ impl WasmDocument {
 
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<()> {
-    let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
-    self.0.insert_method(method.0.clone(), scope).wasm_result()?;
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: WasmMethodScope) -> Result<()> {
+    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
     Ok(())
   }
 

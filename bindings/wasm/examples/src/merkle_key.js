@@ -6,6 +6,7 @@ import {
     Config,
     Digest,
     KeyType,
+    MethodScope,
     Timestamp,
     VerifiableCredential,
     VerificationMethod,
@@ -39,7 +40,7 @@ async function merkleKey(clientConfig) {
     const method = VerificationMethod.createMerkleKey(Digest.Sha256, issuer.doc.id, keys, "key-collection")
 
     // Add to the DID Document as a general-purpose verification method
-    issuer.doc.insertMethod(method, "VerificationMethod");
+    issuer.doc.insertMethod(method, MethodScope.VerificationMethod());
     issuer.doc.metadataPreviousMessageId = issuer.receipt.messageId;
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
