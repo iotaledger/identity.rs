@@ -18,7 +18,7 @@ use identity_core::crypto::TrySignatureMut;
 use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
-use crate::verifiable::Properties;
+use crate::verifiable::VerifiableProperties;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::MethodUriType;
@@ -64,7 +64,7 @@ impl TryMethod for That {
 // ===========================================================================
 
 #[test]
-fn test_sign_verify_this_ed25519() {
+fn test_sign_verify_that_ed25519() {
   for method_data_base in [MethodData::new_b58, MethodData::new_multibase] {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let controller: CoreDID = "did:example:1234".parse().unwrap();
@@ -78,22 +78,24 @@ fn test_sign_verify_this_ed25519() {
       .build()
       .unwrap();
 
-    let mut document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
+    let document: CoreDocument<VerifiableProperties> = CoreDocument::builder(Default::default())
       .id(controller)
       .verification_method(method)
       .build()
       .unwrap();
 
-    assert!(document.verifier().verify(&document).is_err());
+    let mut that: That = That::new(123);
+
+    assert!(document.verifier().verify(&that).is_err());
 
     document
       .clone()
       .signer(key.private())
       .method("#key-1")
-      .sign(&mut document)
+      .sign(&mut that)
       .unwrap();
 
-    assert!(document.verifier().verify(&document).is_ok());
+    assert!(document.verifier().verify(&that).is_ok());
   }
 }
 
@@ -118,7 +120,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
       .build()
       .unwrap();
 
-    let document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
+    let document: CoreDocument<VerifiableProperties> = CoreDocument::builder(Default::default())
       .id(controller)
       .verification_method(method)
       .build()

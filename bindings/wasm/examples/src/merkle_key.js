@@ -40,8 +40,8 @@ async function merkleKey(clientConfig) {
 
     // Add to the DID Document as a general-purpose verification method
     issuer.doc.insertMethod(method, "VerificationMethod");
-    issuer.doc.previousMessageId = issuer.receipt.messageId;
-    issuer.doc.updated = Timestamp.nowUTC();
+    issuer.doc.metadataPreviousMessageId = issuer.receipt.messageId;
+    issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
 
     // Publish the Identity to the IOTA Network and log the results.
@@ -81,8 +81,8 @@ async function merkleKey(clientConfig) {
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
-    issuer.doc.previousMessageId = receipt.messageId;
-    issuer.doc.updated = Timestamp.nowUTC();
+    issuer.doc.metadataPreviousMessageId = receipt.messageId;
+    issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     const nextReceipt = await client.publishDocument(issuer.doc);
     logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);

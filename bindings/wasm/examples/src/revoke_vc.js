@@ -33,8 +33,8 @@ async function revokeVC(clientConfig) {
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
-    issuer.doc.previousMessageId = issuer.updatedMessageId;
-    issuer.doc.updated = Timestamp.nowUTC();
+    issuer.doc.metadataPreviousMessageId = issuer.updatedMessageId;
+    issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     // This is an integration chain update, so we publish the full document.
     const {messageId} = await client.publishDocument(issuer.doc);

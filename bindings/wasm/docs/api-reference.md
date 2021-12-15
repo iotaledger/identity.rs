@@ -19,6 +19,9 @@
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
 </dd>
+<dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
+<dd><p>Additional attributes related to an IOTA DID Document.</p>
+</dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -31,6 +34,10 @@
 <dd></dd>
 <dt><a href="#Receipt">Receipt</a></dt>
 <dd></dd>
+<dt><a href="#ResolvedDocument">ResolvedDocument</a></dt>
+<dd><p>An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
+merged with one or more <code>DiffMessages</code>.</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
@@ -46,9 +53,9 @@
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -75,7 +82,7 @@
         * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+        * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -148,7 +155,9 @@ Default interval is 5 seconds and max attempts is 40.
 
 <a name="Client+resolve"></a>
 
-### client.resolve(did) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+### client.resolve(did) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetch the DID document specified by the given `DID`.
+
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
@@ -179,7 +188,7 @@ capability invocation method.
 
 | Param | Type |
 | --- | --- |
-| document | [<code>Document</code>](#Document) | 
+| document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 
 <a name="Client+checkCredential"></a>
 
@@ -769,20 +778,21 @@ with the given Document.
     * [new Document(keypair, network, fragment)](#new_Document_new)
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
-        * [.created](#Document+created) ⇒ [<code>Timestamp</code>](#Timestamp)
-        * [.created](#Document+created)
-        * [.updated](#Document+updated) ⇒ [<code>Timestamp</code>](#Timestamp)
-        * [.updated](#Document+updated)
-        * [.proof](#Document+proof) ⇒ <code>any</code>
-        * [.messageId](#Document+messageId) ⇒ <code>string</code>
-        * [.messageId](#Document+messageId)
-        * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
-        * [.previousMessageId](#Document+previousMessageId)
-        * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.insertMethod(method, scope)](#Document+insertMethod)
-        * [.removeMethod(did)](#Document+removeMethod)
+        * [.metadata](#Document+metadata) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+        * [.metadataCreated](#Document+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.metadataCreated](#Document+metadataCreated)
+        * [.metadataUpdated](#Document+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.metadataUpdated](#Document+metadataUpdated)
+        * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
+        * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId)
+        * [.metadataProof](#Document+metadataProof) ⇒ <code>any</code>
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
+        * [.insertMethod(method, scope)](#Document+insertMethod)
+        * [.removeMethod(did)](#Document+removeMethod)
+        * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
@@ -790,11 +800,9 @@ with the given Document.
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
-        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
-        * [.merge(diff)](#Document+merge)
+        * [.merge_diff(diff)](#Document+merge_diff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
@@ -835,15 +843,24 @@ Arguments:
 Returns the DID Document `id`.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
-<a name="Document+created"></a>
+<a name="Document+metadata"></a>
 
-### document.created ⇒ [<code>Timestamp</code>](#Timestamp)
+### document.metadata ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+Returns the metadata associated with this document.
+
+NOTE: clones the data. Use the `metadataCreated`, `metadataUpdated`,
+`metadataPreviousMessageId`, `metadataProof` properties instead.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+metadataCreated"></a>
+
+### document.metadataCreated ⇒ [<code>Timestamp</code>](#Timestamp)
 Returns the timestamp of when the DID document was created.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
-<a name="Document+created"></a>
+<a name="Document+metadataCreated"></a>
 
-### document.created
+### document.metadataCreated
 Sets the timestamp of when the DID document was created.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
@@ -852,15 +869,15 @@ Sets the timestamp of when the DID document was created.
 | --- | --- |
 | timestamp | [<code>Timestamp</code>](#Timestamp) | 
 
-<a name="Document+updated"></a>
+<a name="Document+metadataUpdated"></a>
 
-### document.updated ⇒ [<code>Timestamp</code>](#Timestamp)
+### document.metadataUpdated ⇒ [<code>Timestamp</code>](#Timestamp)
 Returns the timestamp of the last DID document update.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
-<a name="Document+updated"></a>
+<a name="Document+metadataUpdated"></a>
 
-### document.updated
+### document.metadataUpdated
 Sets the timestamp of the last DID document update.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
@@ -869,51 +886,51 @@ Sets the timestamp of the last DID document update.
 | --- | --- |
 | timestamp | [<code>Timestamp</code>](#Timestamp) | 
 
-<a name="Document+proof"></a>
+<a name="Document+metadataPreviousMessageId"></a>
 
-### document.proof ⇒ <code>any</code>
-Returns the DID Document `proof` object.
-
-**Kind**: instance property of [<code>Document</code>](#Document)  
-<a name="Document+messageId"></a>
-
-### document.messageId ⇒ <code>string</code>
-Get the message_id of the DID Document.
+### document.metadataPreviousMessageId ⇒ <code>string</code>
+Returns the previous integration chain message id.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
-<a name="Document+messageId"></a>
+<a name="Document+metadataPreviousMessageId"></a>
 
-### document.messageId
-Set the message_id of the DID Document.
+### document.metadataPreviousMessageId
+Sets the previous integration chain message id.
 
-**Kind**: instance property of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="Document+previousMessageId"></a>
-
-### document.previousMessageId ⇒ <code>string</code>
-**Kind**: instance property of [<code>Document</code>](#Document)  
-<a name="Document+previousMessageId"></a>
-
-### document.previousMessageId
 **Kind**: instance property of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="Document+defaultSigningMethod"></a>
+<a name="Document+metadataProof"></a>
 
-### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
-capable of signing this DID document.
+### document.metadataProof ⇒ <code>any</code>
+Returns the `proof` object.
 
-Throws an error if no signing method is present.
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+insertService"></a>
+
+### document.insertService(service) ⇒ <code>boolean</code>
+Add a new `Service` to the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>Service</code>](#Service) | 
+
+<a name="Document+removeService"></a>
+
+### document.removeService(did)
+Remove a `Service` identified by the given `DIDUrl` from the document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DIDUrl</code>](#DIDUrl) | 
+
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope)
@@ -937,27 +954,38 @@ Removes all references to the specified Verification Method.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="Document+insertService"></a>
+<a name="Document+defaultSigningMethod"></a>
 
-### document.insertService(service) ⇒ <code>boolean</code>
-Add a new `Service` to the document.
+### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Returns the first `VerificationMethod` with a capability invocation relationship
+capable of signing this DID document.
+
+Throws an error if no signing method is present.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+resolveMethod"></a>
+
+### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Returns the first `VerificationMethod` with an `id` property
+matching the provided `query`.
+
+Throws an error if the method is not found.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| service | [<code>Service</code>](#Service) | 
+| query | <code>string</code> | 
 
-<a name="Document+removeService"></a>
+<a name="Document+revokeMerkleKey"></a>
 
-### document.removeService(did)
-Remove a `Service` identified by the given `DIDUrl` from the document.
-
+### document.revokeMerkleKey(query, index) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DIDUrl</code>](#DIDUrl) | 
+| query | <code>string</code> | 
+| index | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
 
@@ -1042,25 +1070,6 @@ in this DID Document with the verification relationship specified by `scope`.
 | data | <code>any</code> | 
 | scope | <code>string</code> | 
 
-<a name="Document+resolveMethod"></a>
-
-### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| query | <code>string</code> | 
-
-<a name="Document+revokeMerkleKey"></a>
-
-### document.revokeMerkleKey(query, index) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| query | <code>string</code> | 
-| index | <code>number</code> | 
-
 <a name="Document+diff"></a>
 
 ### document.diff(other, message, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
@@ -1092,10 +1101,10 @@ Fails if an unsupported verification method is used or the verification operatio
 | --- | --- |
 | diff | [<code>DiffMessage</code>](#DiffMessage) | 
 
-<a name="Document+merge"></a>
+<a name="Document+merge_diff"></a>
 
-### document.merge(diff)
-Verifies a `DiffMessage` signature and merges the changes into `self`.
+### document.merge\_diff(diff)
+Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1182,7 +1191,7 @@ A DID Document's history and current state.
 
 * [DocumentHistory](#DocumentHistory)
     * _instance_
-        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
         * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
@@ -1192,7 +1201,7 @@ A DID Document's history and current state.
 
 <a name="DocumentHistory+integrationChainData"></a>
 
-### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Returns an `Array` of integration chain `Documents`.
 
 NOTE: clones the data.
@@ -1241,6 +1250,41 @@ Deserializes `DocumentHistory` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DocumentMetadata"></a>
+
+## DocumentMetadata
+Additional attributes related to an IOTA DID Document.
+
+**Kind**: global class  
+
+* [DocumentMetadata](#DocumentMetadata)
+    * [.created](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp)
+    * [.updated](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp)
+    * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
+    * [.proof](#DocumentMetadata+proof) ⇒ <code>any</code>
+
+<a name="DocumentMetadata+created"></a>
+
+### documentMetadata.created ⇒ [<code>Timestamp</code>](#Timestamp)
+Returns the timestamp of when the DID document was created.
+
+**Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+updated"></a>
+
+### documentMetadata.updated ⇒ [<code>Timestamp</code>](#Timestamp)
+Returns the timestamp of the last DID document update.
+
+**Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+previousMessageId"></a>
+
+### documentMetadata.previousMessageId ⇒ <code>string</code>
+**Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+proof"></a>
+
+### documentMetadata.proof ⇒ <code>any</code>
+Returns a reference to the `proof`.
+
+**Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="ExplorerUrl"></a>
 
 ## ExplorerUrl
@@ -1319,7 +1363,7 @@ Returns the Tangle explorer URL for the devnet.
 
 * [IntegrationChainHistory](#IntegrationChainHistory)
     * _instance_
-        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1327,7 +1371,7 @@ Returns the Tangle explorer URL for the devnet.
 
 <a name="IntegrationChainHistory+chainData"></a>
 
-### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Returns an `Array` of the integration chain `Documents`.
 
 NOTE: this clones the field.
@@ -1635,6 +1679,115 @@ Deserializes a `Receipt` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="ResolvedDocument"></a>
+
+## ResolvedDocument
+An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
+merged with one or more `DiffMessages`.
+
+**Kind**: global class  
+
+* [ResolvedDocument](#ResolvedDocument)
+    * _instance_
+        * [.document](#ResolvedDocument+document) ⇒ [<code>Document</code>](#Document)
+        * [.diffMessageId](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>
+        * [.diffMessageId](#ResolvedDocument+diffMessageId)
+        * [.metadataPreviousMessageId](#ResolvedDocument+metadataPreviousMessageId) ⇒ <code>string</code>
+        * [.integrationMessageId](#ResolvedDocument+integrationMessageId)
+        * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
+        * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
+        * [.toJSON()](#ResolvedDocument+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#ResolvedDocument.fromJSON) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
+
+<a name="ResolvedDocument+document"></a>
+
+### resolvedDocument.document ⇒ [<code>Document</code>](#Document)
+Returns the inner DID document.
+
+NOTE: clones the data. Use `intoDocument()` for efficiency.
+
+**Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+<a name="ResolvedDocument+diffMessageId"></a>
+
+### resolvedDocument.diffMessageId ⇒ <code>string</code>
+Returns the diff chain message id.
+
+**Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+<a name="ResolvedDocument+diffMessageId"></a>
+
+### resolvedDocument.diffMessageId
+Sets the diff chain message id.
+
+**Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="ResolvedDocument+metadataPreviousMessageId"></a>
+
+### resolvedDocument.metadataPreviousMessageId ⇒ <code>string</code>
+Returns the integration chain message id.
+
+**Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+<a name="ResolvedDocument+integrationMessageId"></a>
+
+### resolvedDocument.integrationMessageId
+Sets the integration chain message id.
+
+**Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="ResolvedDocument+mergeDiffMessage"></a>
+
+### resolvedDocument.mergeDiffMessage(diff_message)
+Attempts to merge changes from a `DiffMessage` into this document and
+updates the `ResolvedDocument::diffMessageId`.
+
+If merging fails the document remains unmodified, otherwise this represents
+the merged document state.
+
+See `Document::mergeDiff`.
+
+# Errors
+
+Fails if the merge operation or signature verification on the diff fails.
+
+**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+
+| Param | Type |
+| --- | --- |
+| diff_message | [<code>DiffMessage</code>](#DiffMessage) | 
+
+<a name="ResolvedDocument+intoDocument"></a>
+
+### resolvedDocument.intoDocument() ⇒ [<code>Document</code>](#Document)
+Consumes this object and returns the inner DID document.
+
+NOTE: trying to use the `ResolvedDocument` after calling this will throw an error.
+
+**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+<a name="ResolvedDocument+toJSON"></a>
+
+### resolvedDocument.toJSON() ⇒ <code>any</code>
+Serializes a `Document` object as a JSON object.
+
+**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+<a name="ResolvedDocument.fromJSON"></a>
+
+### ResolvedDocument.fromJSON(json) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
+Deserializes a `Document` object from a JSON object.
+
+**Kind**: static method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -1898,13 +2051,13 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 

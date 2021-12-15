@@ -8,7 +8,6 @@
 //!
 //! cargo run --example resolution
 
-use identity::core::SerdeInto;
 use identity::did::resolution;
 use identity::did::resolution::Dereference;
 use identity::did::resolution::InputMetadata;
@@ -46,7 +45,7 @@ async fn main() -> Result<()> {
   println!("Resolution > {:#?}", output);
 
   // The resolved Document should be the same as what we published.
-  assert_eq!(output.document.unwrap(), document.serde_into().unwrap());
+  assert_eq!(&output.document.unwrap(), document.core_document());
 
   // ===========================================================================
   // DID Dereferencing

@@ -23,7 +23,6 @@ pub use self::message::TryFromMessage;
 pub use self::network::Network;
 pub use self::network::NetworkName;
 pub use self::publish::PublishType;
-pub use self::publish::UPDATE_METHOD_TYPES;
 pub use self::receipt::Receipt;
 pub use self::traits::TangleRef;
 pub use self::traits::TangleResolve;

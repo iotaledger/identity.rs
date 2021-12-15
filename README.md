@@ -93,7 +93,7 @@ use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
-use identity::iota::IotaDocument;
+use identity::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -115,7 +115,7 @@ async fn main() -> Result<()> {
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity().await?;
+  let resolved: ResolvedIotaDocument = account.resolve_identity().await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
@@ -164,6 +164,8 @@ Afterwards, we are already planning a future update containing privacy enhancing
 
 We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
 
+Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) and [workflow](https://wiki.iota.org/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
+
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 
-The best place to get involved in discussions about this framework or to look for support at is the `#identity-discussion` channel on the [IOTA Discord](http://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).
+The best place to get involved in discussions about this framework or to look for support at is the `#identity-discussion` channel on the [IOTA Discord](https://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).
