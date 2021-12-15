@@ -58,30 +58,30 @@ interface IVerifierOptions {
     *
     * NOTE: `purpose` overrides the `method_scope` option.
     */
-    readonly methodScope: MethodScope | undefined;
+    readonly methodScope?: MethodScope;
 
     /** Verify the signing verification method type matches one specified.
     *
     * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.MerkleKeyCollection2021()]`
     */
-    readonly methodType: Array<MethodType> | undefined;
+    readonly methodType?: Array<MethodType>;
 
     /** Verify the `Signature::challenge` field matches this. */
-    readonly challenge: string | undefined;
+    readonly challenge?: string;
 
     /** Verify the `Signature::domain` field matches this. */
-    readonly domain: string | undefined;
+    readonly domain?: string;
 
     /** Verify the `Signature::purpose` field matches this. Also verifies that the signing
     * method has the corresponding verification method relationship.
     *
     * NOTE: `purpose` overrides the `method_scope` option.
     */
-    readonly purpose: ProofPurpose | undefined;
+    readonly purpose?: ProofPurpose;
 
     /** Determines whether to error if the current time exceeds the `Signature::expires` field.
     *
     * Default: false (reject expired signatures).
     */
-    readonly allowExpired: boolean | undefined;
+    readonly allowExpired?: boolean;
 }"#;

@@ -55,17 +55,17 @@ const I_SIGNATURE_OPTIONS: &'static str = r#"
 /** Holds options to create a new `SignatureOptions`. */
 interface ISignatureOptions {
     /** When the proof was generated. */
-    created: Timestamp | undefined;
+    readonly created?: Timestamp;
 
     /** When the proof expires. */
-    expires: Timestamp | undefined;
+    readonly expires?: Timestamp;
 
     /** Challenge from a proof requester to mitigate replay attacks. */
-    challenge: string | undefined;
+    readonly challenge?: string;
 
     /** Domain for which a proof is valid to mitigate replay attacks. */
-    domain: string | undefined;
+    readonly domain?: string;
 
     /** Purpose for which the proof was generated. */
-    purpose: ProofPurpose | undefined;
+    readonly purpose?: ProofPurpose;
 }"#;
