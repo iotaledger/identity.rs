@@ -11,7 +11,7 @@ use crate::convert::FmtJson;
 use crate::Error;
 
 /// Holds attributes for a new [`Signature`](crate::crypto::Signature).
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SignatureOptions {
   /// [`Signature::created`](crate::crypto::Signature::created)
   pub created: Option<Timestamp>,

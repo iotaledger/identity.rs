@@ -461,7 +461,7 @@ impl IotaDocument {
     data: &mut X,
     private_key: &'query PrivateKey,
     method_query: Q,
-    sign_options: SignatureOptions,
+    options: SignatureOptions,
   ) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
@@ -470,7 +470,7 @@ impl IotaDocument {
     self
       .signer(private_key)
       .method(method_query)
-      .sign_options(sign_options)
+      .options(options)
       .sign(data)
       .map_err(Into::into)
   }

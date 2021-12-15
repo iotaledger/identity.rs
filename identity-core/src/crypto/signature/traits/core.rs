@@ -69,7 +69,6 @@ pub trait Signer<Secret: ?Sized>: Named {
 
     let value: SignatureValue = Self::sign(&data, secret)?;
     let write: &mut Signature = data.try_signature_mut()?;
-
     write.set_value(value);
 
     Ok(())

@@ -3,16 +3,16 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 
-use crate::common::Timestamp;
-use crate::crypto::signature::signature_options::ProofPurpose;
 use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
 use serde::Serialize;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
 
+use crate::common::Timestamp;
+use crate::crypto::signature::signature_options::ProofPurpose;
 use crate::crypto::SignatureOptions;
 use crate::crypto::SignatureValue;
 use crate::error::Result;
@@ -122,6 +122,11 @@ impl Debug for Signature {
       .field("type_", &self.type_)
       .field("value", &self.value)
       .field("method", &self.method)
+      .field("created", &self.created)
+      .field("expires", &self.expires)
+      .field("challenge", &self.challenge)
+      .field("domain", &self.domain)
+      .field("purpose", &self.purpose)
       .finish()
   }
 }
@@ -133,17 +138,45 @@ impl Serialize for Signature {
   {
     let hide: bool = self.__hide();
 
-    let mut state: S::SerializeMap = if hide {
-      serializer.serialize_map(Some(1 + 5))?
+    // TODO: why was this + 5??
+    // let mut state: S::SerializeStruct = if hide {
+    //   serializer.serialize_map(Some(1 + 5))?
+    // } else {
+    //   serializer.serialize_map(Some(2 + 5))?
+    // };
+
+    let mut count_fields: usize = if hide {
+      2 // type + method
     } else {
-      serializer.serialize_map(Some(2 + 5))?
+      3 // type + method + value
     };
+    count_fields += self.created.as_ref().map_or(0, |_| 1);
+    count_fields += self.expires.as_ref().map_or(0, |_| 1);
+    count_fields += self.challenge.as_ref().map_or(0, |_| 1);
+    count_fields += self.domain.as_ref().map_or(0, |_| 1);
+    count_fields += self.purpose.as_ref().map_or(0, |_| 1);
+    let mut state: S::SerializeMap = serializer.serialize_map(Some(count_fields))?;
 
     state.serialize_entry("type", &self.type_)?;
     state.serialize_entry("verificationMethod", &self.method)?;
-
     if !hide {
       Serialize::serialize(&self.value, FlatMapSerializer(&mut state))?;
+    }
+
+    if let Some(created) = &self.created {
+      state.serialize_entry("created", &created)?;
+    }
+    if let Some(expires) = &self.expires {
+      state.serialize_entry("expires", &expires)?;
+    }
+    if let Some(challenge) = &self.challenge {
+      state.serialize_entry("challenge", &challenge)?;
+    }
+    if let Some(domain) = &self.domain {
+      state.serialize_entry("domain", &domain)?;
+    }
+    if let Some(purpose) = &self.purpose {
+      state.serialize_entry("proofPurpose", &purpose)?;
     }
 
     state.end()
@@ -196,5 +229,63 @@ impl PartialOrd for AtomicBoolCell {
 impl Ord for AtomicBoolCell {
   fn cmp(&self, other: &Self) -> std::cmp::Ordering {
     self.0.load(Ordering::Relaxed).cmp(&other.0.load(Ordering::Relaxed))
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use std::str::FromStr;
+
+  use crate::convert::FromJson;
+  use crate::convert::ToJson;
+  use crate::json;
+
+  use super::*;
+
+  fn generate_options() -> SignatureOptions {
+    SignatureOptions {
+      created: Some(Timestamp::from_str("1970-01-01T00:00:00Z").unwrap()),
+      expires: Some(Timestamp::from_str("2000-01-01T00:00:00Z").unwrap()),
+      challenge: Some("some-challenge".to_owned()),
+      domain: Some("some.domain".to_owned()),
+      purpose: Some(ProofPurpose::Authentication),
+    }
+  }
+
+  #[test]
+  fn test_signature_serialise() {
+    let signature: Signature =
+      Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", SignatureOptions::default());
+    let expected = r##"{"type":"JcsEd25519Signature2020","verificationMethod":"#sign-0"}"##;
+    assert_eq!(signature.to_json().unwrap(), expected);
+  }
+
+  #[test]
+  fn test_signature_serialise_options() {
+    let mut signature: Signature =
+      Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
+    signature.set_value(SignatureValue::Signature("somesignaturevalue123456789".to_owned()));
+    // Compare against JSON to ignore field order.
+    let expected = json!({
+      "type":"JcsEd25519Signature2020",
+      "verificationMethod":"#sign-0",
+      "signatureValue":"somesignaturevalue123456789",
+      "created":"1970-01-01T00:00:00Z",
+      "expires":"2000-01-01T00:00:00Z",
+      "challenge":"some-challenge",
+      "domain":"some.domain",
+      "proofPurpose":"authentication",
+    });
+    assert_eq!(signature.to_json_value().unwrap(), expected);
+  }
+
+  #[test]
+  fn test_signature_json() {
+    let mut signature: Signature =
+      Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
+    signature.set_value(SignatureValue::Signature("somesignaturevalue123456789".to_owned()));
+
+    let deserialized: Signature = Signature::from_json(&signature.to_json().unwrap()).unwrap();
+    assert_eq!(signature, deserialized);
   }
 }
