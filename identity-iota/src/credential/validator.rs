@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
+use std::collections::HashSet;
+use std::marker::PhantomData;
 
+use either::Either;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -18,6 +21,7 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::TangleResolve;
 
+/* 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation<T = Object> {
   pub credential: Credential<T>,
@@ -41,6 +45,38 @@ pub struct DocumentValidation {
   pub metadata: Object,
   pub verified: bool,
 }
+*/ 
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct DocumentValidation<const VERIFIED: bool> {
+  pub did: IotaDID, 
+  pub document: ResolvedIotaDocument, 
+  pub metadata: Object,
+  _marker: PhantomData<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct PartialCredentialValidation<T = Object> {
+  credential: Credential<T>,
+  issuer: Either<DocumentValidation<true>, DocumentValidation<false>>,
+  verified_subjects: BTreeMap<String, DocumentValidation<true>>,
+  unverified_subjects: BTreeMap<String, DocumentValidation<false>>,
+  encountered_error_categories: HashSet<CredentialValidationErrorCategory>, 
+}
+
+impl PartialCredentialValidation {
+
+  pub fn fully_verified(&self) -> bool {
+    self.encountered_error_categories.len() == 0 
+  }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct CredentialValidation<T = Object> {
+  pub credential: Credential<T>,
+  pub issuer: DocumentValidation<true>,
+  pub subjects: BTreeMap<String, DocumentValidation<true>>,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct CredentialValidator<'a, R: TangleResolve = Client> {
@@ -59,7 +95,8 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   where
     T: DeserializeOwned + Serialize,
   {
-    self.validate_credential(Credential::from_json(data)?).await
+    //self.validate_credential(Credential::from_json(data)?).await
+    todo!()
   }
 
   /// Deserializes the given JSON-encoded `Presentation` and
@@ -69,7 +106,8 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     T: Clone + DeserializeOwned + Serialize,
     U: Clone + DeserializeOwned + Serialize,
   {
-    self.validate_presentation(Presentation::from_json(data)?).await
+    // self.validate_presentation(Presentation::from_json(data)?).await
+    todo!()
   }
 
   /// Validates the `Credential` proof and all relevant DID documents.
@@ -81,6 +119,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   where
     T: Serialize,
   {
+    /* 
     // Resolve the issuer DID Document and validate the digital signature.
     let issuer_url: &str = credential.issuer.url().as_str();
     let issuer_doc: DocumentValidation = self.validate_document(issuer_url).await?;
@@ -111,6 +150,8 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       subjects,
       verified,
     })
+    */
+    todo!()
   }
 
   /// Validates the `Presentation` proof and all relevant DID documents.
@@ -125,6 +166,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     T: Clone + Serialize,
     U: Clone + Serialize,
   {
+    /*
     let holder_url: &str = presentation
       .holder
       .as_ref()
@@ -156,19 +198,29 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       credentials,
       verified,
     })
+    */
+    todo!()
   }
 
   /// Resolves the document from the Tangle, which performs checks on all signatures etc.
-  async fn validate_document(&self, did: impl AsRef<str>) -> Result<DocumentValidation> {
+  async fn validate_document(&self, did: impl AsRef<str>) -> Result<Either<DocumentValidation<true>,DocumentValidation<false>>> {
     let did: IotaDID = did.as_ref().parse()?;
     let document: ResolvedIotaDocument = self.client.resolve(&did).await?;
-    // TODO: check if document is deactivated, does that matter?
-
-    Ok(DocumentValidation {
-      did,
-      document,
-      metadata: Object::new(),
-      verified: true,
-    })
+    // TODO: check if document is deactivated, does that matter? If it does then we return the Right variant 
+    Ok(Either::Left(DocumentValidation::<true> {did, document, metadata: Object::new(), _marker: PhantomData::<bool>}))
   }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
+enum CredentialValidationErrorCategory {
+  // The credential signature does not match the expected value 
+  InvalidCredentialSignature,
+  // At least one subject document is not verified 
+  InvalidSubjectDocuments,
+  // The issuers document is not verified 
+  InvalidIssuerDocument,
+  // The credential has expired 
+  Expired, 
+  // The credential has not yet become active (issuance_date is in the future)
+  Dormant 
 }
