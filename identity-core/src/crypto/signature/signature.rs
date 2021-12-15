@@ -138,13 +138,6 @@ impl Serialize for Signature {
   {
     let hide: bool = self.__hide();
 
-    // TODO: why was this + 5??
-    // let mut state: S::SerializeStruct = if hide {
-    //   serializer.serialize_map(Some(1 + 5))?
-    // } else {
-    //   serializer.serialize_map(Some(2 + 5))?
-    // };
-
     let mut count_fields: usize = if hide {
       2 // type + method
     } else {
