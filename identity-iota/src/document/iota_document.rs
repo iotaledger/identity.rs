@@ -533,7 +533,7 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X, options: VerifierOptions<'_>) -> Result<()>
+  pub fn verify_data<X>(&self, data: &X, options: VerifierOptions) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
@@ -555,7 +555,7 @@ impl IotaDocument {
     signer
       .verifier()
       .method_scope(MethodScope::capability_invocation())
-      .method_type(Self::UPDATE_METHOD_TYPES)
+      .method_type(Self::UPDATE_METHOD_TYPES.to_vec())
       .verify(signed)
       .map_err(Into::into)
   }
@@ -629,7 +629,7 @@ impl IotaDocument {
     self
       .verifier()
       .method_scope(MethodScope::capability_invocation())
-      .method_type(Self::UPDATE_METHOD_TYPES)
+      .method_type(Self::UPDATE_METHOD_TYPES.to_vec())
       .verify(diff)
       .map_err(Into::into)
   }

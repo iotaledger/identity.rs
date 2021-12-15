@@ -7,16 +7,22 @@ use identity_core::crypto::ProofPurpose;
 
 /// Holds additional options for verifying a signature with [`DocumentVerifier`](crate::verifiable::DocumentVerifier).
 #[derive(Debug, Clone, Default)]
-pub struct VerifierOptions<'base> {
-  pub(crate) method_scope: Option<MethodScope>,
-  pub(crate) method_type: Option<&'base [MethodType]>,
-  pub(crate) challenge: Option<&'base str>,
-  pub(crate) domain: Option<&'base str>,
-  pub(crate) purpose: Option<ProofPurpose>,
-  pub(crate) allow_expired: Option<bool>,
+pub struct VerifierOptions {
+  /// [`DocumentVerifier::method_scope'].
+  pub method_scope: Option<MethodScope>,
+  /// [`DocumentVerifier::method_type'].
+  pub method_type: Option<Vec<MethodType>>,
+  /// [`DocumentVerifier::challenge'].
+  pub challenge: Option<String>,
+  /// [`DocumentVerifier::domain'].
+  pub domain: Option<String>,
+  /// [`DocumentVerifier::purpose'].
+  pub purpose: Option<ProofPurpose>,
+  /// [`DocumentVerifier::allow_expired'].
+  pub allow_expired: Option<bool>,
 }
 
-impl<'base> VerifierOptions<'base> {
+impl VerifierOptions {
   /// Creates a new `VerifierOptions` with all options unset.
   pub fn new() -> Self {
     Self {
@@ -36,19 +42,19 @@ impl<'base> VerifierOptions<'base> {
   }
 
   /// See [`DocumentVerifier::method_type'].
-  pub fn method_type(mut self, method_type: &'base [MethodType]) -> Self {
+  pub fn method_type(mut self, method_type: Vec<MethodType>) -> Self {
     self.method_type = Some(method_type);
     self
   }
 
   /// See [`DocumentVerifier::challenge'].
-  pub fn challenge(mut self, challenge: &'base str) -> Self {
+  pub fn challenge(mut self, challenge: String) -> Self {
     self.challenge = Some(challenge);
     self
   }
 
   /// See [`DocumentVerifier::domain'].
-  pub fn domain(mut self, domain: &'base str) -> Self {
+  pub fn domain(mut self, domain: String) -> Self {
     self.domain = Some(domain);
     self
   }

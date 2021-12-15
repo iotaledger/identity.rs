@@ -179,15 +179,16 @@ fn test_sign_verify_method_type() {
 
   // VALID: verifying without checking the method type succeeds.
   document.verifier().verify(&data).unwrap();
+  document.verifier().method_type(vec![]).verify(&data).unwrap();
   // VALID: verifying with the correct method type succeeds.
   document
     .verifier()
-    .method_type(&[MethodType::Ed25519VerificationKey2018])
+    .method_type(vec![MethodType::Ed25519VerificationKey2018])
     .verify(&data)
     .unwrap();
   document
     .verifier()
-    .method_type(&[
+    .method_type(vec![
       MethodType::Ed25519VerificationKey2018,
       MethodType::MerkleKeyCollection2021,
     ])
@@ -195,7 +196,7 @@ fn test_sign_verify_method_type() {
     .unwrap();
   document
     .verifier()
-    .method_type(&[
+    .method_type(vec![
       MethodType::MerkleKeyCollection2021,
       MethodType::Ed25519VerificationKey2018,
     ])
@@ -205,10 +206,9 @@ fn test_sign_verify_method_type() {
   // INVALID: verifying with the wrong method type fails.
   assert!(document
     .verifier()
-    .method_type(&[MethodType::MerkleKeyCollection2021])
+    .method_type(vec![MethodType::MerkleKeyCollection2021])
     .verify(&data)
     .is_err());
-  assert!(document.verifier().method_type(&[]).verify(&data).is_err());
 }
 
 #[test]
@@ -262,12 +262,16 @@ fn test_sign_verify_challenge() {
   // VALID: verifying without checking the challenge succeeds.
   document.verifier().verify(&data).unwrap();
   // VALID: verifying with the correct challenge succeeds.
-  document.verifier().challenge("some-challenge").verify(&data).unwrap();
+  document
+    .verifier()
+    .challenge("some-challenge".into())
+    .verify(&data)
+    .unwrap();
 
   // INVALID: verifying with the wrong challenge fails.
-  assert!(document.verifier().challenge("invalid").verify(&data).is_err());
-  assert!(document.verifier().challenge(" ").verify(&data).is_err());
-  assert!(document.verifier().challenge("").verify(&data).is_err());
+  assert!(document.verifier().challenge("invalid".into()).verify(&data).is_err());
+  assert!(document.verifier().challenge(" ".into()).verify(&data).is_err());
+  assert!(document.verifier().challenge("".into()).verify(&data).is_err());
 }
 
 #[test]
@@ -288,12 +292,12 @@ fn test_sign_verify_domain() {
   // VALID: verifying without checking the domain succeeds.
   document.verifier().verify(&data).unwrap();
   // VALID: verifying with the correct domain succeeds.
-  document.verifier().domain("some.domain").verify(&data).unwrap();
+  document.verifier().domain("some.domain".into()).verify(&data).unwrap();
 
   // INVALID: verifying with the wrong domain fails.
-  assert!(document.verifier().domain("invalid").verify(&data).is_err());
-  assert!(document.verifier().domain(" ").verify(&data).is_err());
-  assert!(document.verifier().domain("").verify(&data).is_err());
+  assert!(document.verifier().domain("invalid".into()).verify(&data).is_err());
+  assert!(document.verifier().domain(" ".into()).verify(&data).is_err());
+  assert!(document.verifier().domain("".into()).verify(&data).is_err());
 }
 
 #[test]

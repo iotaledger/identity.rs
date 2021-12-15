@@ -1,9 +1,13 @@
+use core::fmt;
+use core::fmt::Display;
+use core::str::FromStr;
+
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
-use std::str::FromStr;
 
 use crate::common::Timestamp;
+use crate::convert::FmtJson;
 use crate::Error;
 
 /// Holds attributes for a new [`Signature`](crate::crypto::Signature).
@@ -89,5 +93,11 @@ impl FromStr for ProofPurpose {
       "authentication" => ProofPurpose::Authentication,
       _ => return Err(Error::InvalidProofPurpose),
     })
+  }
+}
+
+impl Display for ProofPurpose {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.fmt_json(f)
   }
 }

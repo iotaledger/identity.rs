@@ -38,7 +38,7 @@ use crate::Result;
 
 pub struct DocumentVerifier<'base, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
-  options: VerifierOptions<'base>,
+  options: VerifierOptions,
 }
 
 impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
@@ -50,7 +50,7 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   }
 
   /// Overwrites the [`VerifierOptions`].
-  pub fn options(mut self, options: VerifierOptions<'base>) -> Self {
+  pub fn options(mut self, options: VerifierOptions) -> Self {
     self.options = options;
     self
   }
@@ -64,19 +64,19 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   }
 
   /// Verify the signing verification method type matches one specified.
-  pub fn method_type(mut self, method_type: &'base [MethodType]) -> Self {
+  pub fn method_type(mut self, method_type: Vec<MethodType>) -> Self {
     self.options = self.options.method_type(method_type);
     self
   }
 
   /// Verify the [`Signature::challenge`] field matches this.
-  pub fn challenge(mut self, challenge: &'base str) -> Self {
+  pub fn challenge(mut self, challenge: String) -> Self {
     self.options = self.options.challenge(challenge);
     self
   }
 
   /// Verify the [`Signature::domain`] field matches this.
-  pub fn domain(mut self, domain: &'base str) -> Self {
+  pub fn domain(mut self, domain: String) -> Self {
     self.options = self.options.domain(domain);
     self
   }
@@ -145,18 +145,18 @@ where
 
     // Check method type.
     if let Some(method_types) = &self.options.method_type {
-      if !method_types.contains(&method.key_type) {
+      if !method_types.is_empty() && !method_types.contains(&method.key_type) {
         return Err(Error::InvalidSignature("invalid method type"));
       }
     }
 
     // Check challenge.
-    if self.options.challenge.is_some() && self.options.challenge != signature.challenge.as_deref() {
+    if self.options.challenge.is_some() && self.options.challenge != signature.challenge {
       return Err(Error::InvalidSignature("invalid challenge"));
     }
 
     // Check domain.
-    if self.options.domain.is_some() && self.options.domain != signature.domain.as_deref() {
+    if self.options.domain.is_some() && self.options.domain != signature.domain {
       return Err(Error::InvalidSignature("invalid domain"));
     }
 

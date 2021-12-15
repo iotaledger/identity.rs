@@ -48,6 +48,10 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
+<dt><a href="#VerifierOptions">VerifierOptions</a></dt>
+<dd><p>Holds additional signature verification options.
+See <code>IVerifierOptions</code>.</p>
+</dd>
 </dl>
 
 ## Members
@@ -794,12 +798,10 @@ with the given Document.
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
-        * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
-        * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-        * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
-        * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
-        * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
+        * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+        * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
+        * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
+        * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge_diff(diff)](#Document+merge_diff)
@@ -807,6 +809,7 @@ with the given Document.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
+        * [.verifyDocument(signed, signer)](#Document.verifyDocument)
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
@@ -1004,35 +1007,31 @@ verification method. See `Document::verifySelfSigned`.
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
 | method_query | <code>string</code> | 
 
-<a name="Document+verifySelfSigned"></a>
-
-### document.verifySelfSigned() ⇒ <code>boolean</code>
-Verifies a self-signed signature on this DID document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+signCredential"></a>
 
-### document.signCredential(data, args) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+### document.signCredential(data, args, options) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Document+signPresentation"></a>
 
-### document.signPresentation(data, args) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
+### document.signPresentation(data, args, options) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Document+signData"></a>
 
-### document.signData(data, args) ⇒ <code>any</code>
+### document.signData(data, args, options) ⇒ <code>any</code>
 Creates a signature for the given `data` with the specified DID Document
 Verification Method.
 
@@ -1045,10 +1044,11 @@ Collection verification Method.
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Document+verifyData"></a>
 
-### document.verifyData(data) ⇒ <code>boolean</code>
+### document.verifyData(data, options) ⇒ <code>boolean</code>
 Verifies the authenticity of `data` using the target verification method.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1056,19 +1056,7 @@ Verifies the authenticity of `data` using the target verification method.
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-
-<a name="Document+verifyDataWithScope"></a>
-
-### document.verifyDataWithScope(data, scope) ⇒ <code>boolean</code>
-Verifies the signature of the provided `data` was created using a verification method
-in this DID Document with the verification relationship specified by `scope`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| scope | <code>string</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Document+diff"></a>
 
@@ -1141,6 +1129,27 @@ NOTE: the generated document is unsigned, see `Document::signSelf`.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.verifyDocument"></a>
+
+### Document.verifyDocument(signed, signer)
+Verifies that the signature on the DID document `signed` was generated by a valid method from
+the `signer` DID document.
+
+# Errors
+
+Fails if:
+- The signature proof section is missing in the `signed` document.
+- The method is not found in the `signer` document.
+- An unsupported verification method is used.
+- The signature verification operation fails.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| signed | [<code>Document</code>](#Document) | 
+| signer | [<code>Document</code>](#Document) | 
 
 <a name="Document.verifyRootDocument"></a>
 
@@ -2051,6 +2060,34 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="VerifierOptions"></a>
+
+## VerifierOptions
+Holds additional signature verification options.
+See `IVerifierOptions`.
+
+**Kind**: global class  
+
+* [VerifierOptions](#VerifierOptions)
+    * [new VerifierOptions(options)](#new_VerifierOptions_new)
+    * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+
+<a name="new_VerifierOptions_new"></a>
+
+### new VerifierOptions(options)
+Creates a new `VerifierOptions` from the given fields.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IVerifierOptions</code> | 
+
+<a name="VerifierOptions.default"></a>
+
+### VerifierOptions.default() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+Creates a new `VerifierOptions` with default options.
+
+**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding

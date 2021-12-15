@@ -21,7 +21,7 @@ pub struct VerifiableProperties<T = Object> {
   pub properties: T,
   // TODO: Support multiple signatures (?)
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
+  pub(crate) proof: Option<Signature>,
 }
 
 impl<T> VerifiableProperties<T> {
