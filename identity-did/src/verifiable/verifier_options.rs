@@ -1,12 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::crypto::ProofPurpose;
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::verification::MethodScope;
 use crate::verification::MethodType;
-use identity_core::crypto::ProofPurpose;
 
 /// Holds additional options for verifying a signature with [`DocumentVerifier`](crate::verifiable::DocumentVerifier).
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VerifierOptions {
   /// [`DocumentVerifier::method_scope'].
   pub method_scope: Option<MethodScope>,

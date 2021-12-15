@@ -30,6 +30,12 @@
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
+<dt><a href="#MethodScope">MethodScope</a></dt>
+<dd><p>Supported verification method types.</p>
+</dd>
+<dt><a href="#MethodType">MethodType</a></dt>
+<dd><p>Supported verification method types.</p>
+</dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
@@ -65,9 +71,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -1597,6 +1603,106 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="MethodScope"></a>
+
+## MethodScope
+Supported verification method types.
+
+**Kind**: global class  
+
+* [MethodScope](#MethodScope)
+    * _instance_
+        * [.toJSON()](#MethodScope+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.VerificationMethod()](#MethodScope.VerificationMethod) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.Authentication()](#MethodScope.Authentication) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.AssertionMethod()](#MethodScope.AssertionMethod) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.KeyAgreement()](#MethodScope.KeyAgreement) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.CapabilityDelegation()](#MethodScope.CapabilityDelegation) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.CapabilityInvocation()](#MethodScope.CapabilityInvocation) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.fromJSON(json)](#MethodScope.fromJSON) ⇒ [<code>MethodScope</code>](#MethodScope)
+
+<a name="MethodScope+toJSON"></a>
+
+### methodScope.toJSON() ⇒ <code>any</code>
+Serializes a `ProofPurpose` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.VerificationMethod"></a>
+
+### MethodScope.VerificationMethod() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.Authentication"></a>
+
+### MethodScope.Authentication() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.AssertionMethod"></a>
+
+### MethodScope.AssertionMethod() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.KeyAgreement"></a>
+
+### MethodScope.KeyAgreement() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.CapabilityDelegation"></a>
+
+### MethodScope.CapabilityDelegation() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.CapabilityInvocation"></a>
+
+### MethodScope.CapabilityInvocation() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.fromJSON"></a>
+
+### MethodScope.fromJSON(json) ⇒ [<code>MethodScope</code>](#MethodScope)
+Deserializes a `ProofPurpose` object from a JSON object.
+
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="MethodType"></a>
+
+## MethodType
+Supported verification method types.
+
+**Kind**: global class  
+
+* [MethodType](#MethodType)
+    * _instance_
+        * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.MerkleKeyCollection2021()](#MethodType.MerkleKeyCollection2021) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
+
+<a name="MethodType+toJSON"></a>
+
+### methodType.toJSON() ⇒ <code>any</code>
+Serializes a `ProofPurpose` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.Ed25519VerificationKey2018"></a>
+
+### MethodType.Ed25519VerificationKey2018() ⇒ [<code>MethodType</code>](#MethodType)
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.MerkleKeyCollection2021"></a>
+
+### MethodType.MerkleKeyCollection2021() ⇒ [<code>MethodType</code>](#MethodType)
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.fromJSON"></a>
+
+### MethodType.fromJSON(json) ⇒ [<code>MethodType</code>](#MethodType)
+Deserializes a `ProofPurpose` object from a JSON object.
+
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Network"></a>
 
 ## Network
@@ -2176,13 +2282,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 

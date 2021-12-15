@@ -1,11 +1,4 @@
-use core::str::FromStr;
-
-use identity::crypto::ProofPurpose;
 use identity::did::verifiable::VerifierOptions;
-use identity::did::MethodScope;
-use identity::did::MethodType;
-use serde;
-use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -24,50 +17,14 @@ impl WasmVerifierOptions {
   /// Throws an error if any of the options are invalid.
   #[wasm_bindgen(constructor)]
   pub fn new(options: IVerifierOptions) -> Result<WasmVerifierOptions> {
-    // TODO: see if we can just re-use VerifierOptions deserializer, only problem is method_type?
-    //       Could expose the enum with MethodType.Ed25519VerificationKey2018 etc.?
-    #[derive(Deserialize)]
-    struct IVerifierOptionsDeserializer {
-      #[serde(rename = "methodScope")]
-      method_scope: Option<String>,
-      #[serde(rename = "methodType")]
-      method_type: Option<Vec<String>>,
-      challenge: Option<String>,
-      domain: Option<String>,
-      purpose: Option<ProofPurpose>,
-      #[serde(rename = "allowExpired")]
-      allow_expired: Option<bool>,
-    }
-    let options: IVerifierOptionsDeserializer = options.into_serde().wasm_result()?;
-
-    let mut this: VerifierOptions = VerifierOptions::new();
-    this.method_scope = options
-      .method_scope
-      .as_deref()
-      .map(MethodScope::from_str)
-      .transpose()
-      .wasm_result()?;
-    this.method_type = options
-      .method_type
-      .map(|method_type| {
-        method_type
-          .into_iter()
-          .map(|method_type| MethodType::from_str(&method_type))
-          .collect::<std::result::Result<_, _>>()
-      })
-      .transpose()
-      .wasm_result()?;
-    this.domain = options.domain;
-    this.challenge = options.challenge;
-    this.purpose = options.purpose;
-    this.allow_expired = options.allow_expired;
-    Ok(WasmVerifierOptions::from(this))
+    let options: VerifierOptions = options.into_serde().wasm_result()?;
+    Ok(WasmVerifierOptions(options))
   }
 
   /// Creates a new `VerifierOptions` with default options.
   #[wasm_bindgen]
   pub fn default() -> WasmVerifierOptions {
-    WasmVerifierOptions::from(VerifierOptions::default())
+    WasmVerifierOptions(VerifierOptions::default())
   }
 }
 
@@ -88,20 +45,6 @@ impl From<WasmVerifierOptions> for VerifierOptions {
 extern "C" {
   #[wasm_bindgen(typescript_type = "IVerifierOptions")]
   pub type IVerifierOptions;
-
-  // TODO: remove? Alternative to IVerifierOptionsDeserializer
-  // #[serde(structural, getter = methodScope)]
-  // pub fn method_scope(this: &IVerifierOptions) -> Option<String>;
-  // #[serde(structural, getter = methodType)]
-  // pub fn method_type(this: &IVerifierOptions) -> Option<Vec<String>>;
-  // #[serde(structural, getter)]
-  // pub fn challenge(this: &IVerifierOptions) -> Option<String>;
-  // #[serde(structural, getter)]
-  // pub fn domain(this: &IVerifierOptions) -> Option<String>;
-  // #[serde(structural, getter)]
-  // pub fn purpose(this: &IVerifierOptions) -> Option<String>;
-  // #[serde(structural, getter = allowExpired)]
-  // pub fn allow_expired(this: &IVerifierOptions) -> Option<bool>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -110,16 +53,15 @@ const I_VERIFIER_OPTIONS: &'static str = r#"
 interface IVerifierOptions {
     /** Verify the signing verification method relationship matches this.
     *
-    * E.g. "Authentication", "CapabilityInvocation", etc.
     * NOTE: `purpose` overrides the `method_scope` option.
     */
-    readonly methodScope: string | undefined;
+    readonly methodScope: MethodScope | undefined;
 
     /** Verify the signing verification method type matches one specified.
     *
-    * E.g. ["Ed25519VerificationKey2018", "MerkleKeyCollection2021"]
+    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.MerkleKeyCollection2021()]`
     */
-    readonly methodType: Array<string> | undefined;
+    readonly methodType: Array<MethodType> | undefined;
 
     /** Verify the `Signature::challenge` field matches this. */
     readonly challenge: string | undefined;
