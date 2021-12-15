@@ -1,5 +1,4 @@
-issues=true
-issues-wo-labels=false
+issues=false
 pr-wo-labels=false
 author=false
 breaking-label=Changed
