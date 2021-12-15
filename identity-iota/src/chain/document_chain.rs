@@ -500,7 +500,12 @@ mod test {
     let mut diff_msg: DiffMessage =
       DiffMessage::new(current_doc, updated_doc, *chain.integration_message_id()).unwrap();
     current_doc
-      .sign_data(&mut diff_msg, key, current_doc.default_signing_method().unwrap().id(), SignatureOptions::default())
+      .sign_data(
+        &mut diff_msg,
+        key,
+        current_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
       .unwrap();
     diff_msg.set_message_id(*chain.diff_message_id());
     diff_msg
