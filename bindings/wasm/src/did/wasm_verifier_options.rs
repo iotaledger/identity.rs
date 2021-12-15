@@ -34,7 +34,7 @@ impl WasmVerifierOptions {
       method_type: Option<Vec<String>>,
       challenge: Option<String>,
       domain: Option<String>,
-      purpose: Option<String>,
+      purpose: Option<ProofPurpose>,
       #[serde(rename = "allowExpired")]
       allow_expired: Option<bool>,
     }
@@ -59,12 +59,7 @@ impl WasmVerifierOptions {
       .wasm_result()?;
     this.domain = options.domain;
     this.challenge = options.challenge;
-    this.purpose = options
-      .purpose
-      .as_deref()
-      .map(ProofPurpose::from_str)
-      .transpose()
-      .wasm_result()?;
+    this.purpose = options.purpose;
     this.allow_expired = options.allow_expired;
     Ok(WasmVerifierOptions::from(this))
   }
@@ -135,11 +130,9 @@ interface IVerifierOptions {
     /** Verify the `Signature::purpose` field matches this. Also verifies that the signing
     * method has the corresponding verification method relationship.
     *
-    * Only "authentication" and "assertionMethod" are allowed.
-    *
     * NOTE: `purpose` overrides the `method_scope` option.
     */
-    readonly purpose: "authentication" | "assertionMethod" | undefined;
+    readonly purpose: ProofPurpose | undefined;
 
     /** Determines whether to error if the current time exceeds the `Signature::expires` field.
     *

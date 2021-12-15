@@ -32,6 +32,10 @@
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
+<dt><a href="#ProofPurpose">ProofPurpose</a></dt>
+<dd><p>Associates a purpose with a <code>Signature</code>.</p>
+<p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
+</dd>
 <dt><a href="#Receipt">Receipt</a></dt>
 <dd></dd>
 <dt><a href="#ResolvedDocument">ResolvedDocument</a></dt>
@@ -61,9 +65,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -1636,6 +1640,54 @@ Parses the provided string to a `Network`.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
+<a name="ProofPurpose"></a>
+
+## ProofPurpose
+Associates a purpose with a `Signature`.
+
+See https://w3c-ccg.github.io/security-vocab/#proofPurpose
+
+**Kind**: global class  
+
+* [ProofPurpose](#ProofPurpose)
+    * _instance_
+        * [.toJSON()](#ProofPurpose+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.assertionMethod()](#ProofPurpose.assertionMethod) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+        * [.authentication()](#ProofPurpose.authentication) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+        * [.fromJSON(json)](#ProofPurpose.fromJSON) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+
+<a name="ProofPurpose+toJSON"></a>
+
+### proofPurpose.toJSON() ⇒ <code>any</code>
+Serializes a `ProofPurpose` object as a JSON object.
+
+**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose.assertionMethod"></a>
+
+### ProofPurpose.assertionMethod() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Purpose is to assert a claim.
+See https://www.w3.org/TR/did-core/#assertion
+
+**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose.authentication"></a>
+
+### ProofPurpose.authentication() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Purpose is to authenticate the signer.
+See https://www.w3.org/TR/did-core/#authentication
+
+**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose.fromJSON"></a>
+
+### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Deserializes a `ProofPurpose` object from a JSON object.
+
+**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Receipt"></a>
 
 ## Receipt
@@ -2124,13 +2176,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 

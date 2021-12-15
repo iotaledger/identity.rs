@@ -64,5 +64,5 @@ interface ISignatureOptions {
     domain: string | undefined;
 
     /** Purpose for which the proof was generated. */
-    purpose: "authentication" | "assertionMethod" | undefined;
+    purpose: ProofPurpose | undefined;
 }"#;
