@@ -1,11 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt;
+use core::fmt::Display;
 use core::str::FromStr;
+
+use identity_core::convert::FmtJson;
 
 use crate::error::Error;
 use crate::error::Result;
-
 use crate::verification::MethodRelationship;
 
 /// Verification method group used to refine the scope of a method query.
@@ -69,5 +72,11 @@ impl FromStr for MethodScope {
 impl From<MethodRelationship> for MethodScope {
   fn from(relationship: MethodRelationship) -> Self {
     Self::VerificationRelationship(relationship)
+  }
+}
+
+impl Display for MethodScope {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.fmt_json(f)
   }
 }

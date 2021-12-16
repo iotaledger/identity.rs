@@ -167,6 +167,8 @@ mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::PrivateKey;
+  use identity_core::crypto::SignatureOptions;
+  use identity_core::crypto::TrySignature;
   use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
@@ -205,7 +207,14 @@ mod test {
       keys.push(keypair);
 
       assert_eq!(
-        chain.current().document.metadata.proof().unwrap().verification_method(),
+        chain
+          .current()
+          .document
+          .metadata
+          .proof
+          .as_ref()
+          .unwrap()
+          .verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
       assert_eq!(chain.current().diff_message_id, MessageId::null());
@@ -251,10 +260,11 @@ mod test {
           &mut new.document,
           keys[0].private(),
           chain.current().document.default_signing_method().unwrap().id(),
+          SignatureOptions::default(),
         )
         .is_ok());
       assert_eq!(
-        chain.current().document.metadata.proof().unwrap().verification_method(),
+        chain.current().document.signature().unwrap().verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
 
@@ -490,7 +500,12 @@ mod test {
     let mut diff_msg: DiffMessage =
       DiffMessage::new(current_doc, updated_doc, *chain.integration_message_id()).unwrap();
     current_doc
-      .sign_data(&mut diff_msg, key, current_doc.default_signing_method().unwrap().id())
+      .sign_data(
+        &mut diff_msg,
+        key,
+        current_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
       .unwrap();
     diff_msg.set_message_id(*chain.diff_message_id());
     diff_msg
