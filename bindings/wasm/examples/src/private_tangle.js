@@ -1,15 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, ExplorerUrl, KeyPair, KeyType, Network, DIDMessageEncoding} from '@iota/identity-wasm';
+import {
+    Client,
+    Config,
+    DIDMessageEncoding,
+    Document,
+    ExplorerUrl,
+    KeyPair,
+    KeyType,
+    Network
+} from '@iota/identity-wasm';
 import {logResolverUrl} from "./utils";
 
 /**
-    This example shows how a DID document can be created on a private tangle.
-    It can be run together with a local hornet node.
-    Refer to https://github.com/iotaledger/one-click-tangle/tree/chrysalis/hornet-private-net
-    for setup instructions.
-**/
+ This example shows how a DID document can be created on a private tangle.
+ It can be run together with a local hornet node.
+ Refer to https://github.com/iotaledger/one-click-tangle/tree/chrysalis/hornet-private-net
+ for setup instructions.
+ **/
 async function privateTangle(restURL, networkName) {
     // This name needs to match the id of the network or part of it.
     // Since the id of the one-click private tangle is `private-tangle`
@@ -53,7 +62,7 @@ async function privateTangle(restURL, networkName) {
     logResolverUrl("Explore the DID Document:", explorer, doc.id.toString());
 
     // Return the results.
-    return { key, resolved, receipt };
+    return {key, resolved, receipt};
 }
 
 export {privateTangle};
