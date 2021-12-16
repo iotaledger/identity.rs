@@ -83,13 +83,13 @@ impl WasmCredential {
     builder.build().map(Self).wasm_result()
   }
 
-  /// Serializes a `VerifiableCredential` object as a JSON object.
+  /// Serializes a `Credential` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a `VerifiableCredential` object from a JSON object.
+  /// Deserializes a `Credential` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmCredential> {
     json.into_serde().map(Self).wasm_result()
@@ -100,7 +100,6 @@ impl WasmCredential {
 ///
 /// An escape-hatch for converting between types that represent the same JSON
 /// structure.
-// TODO: can we replace this with into_serde()?
 fn serde_into<T, U>(obj: T) -> identity::core::Result<U>
 where
   T: ToJson,

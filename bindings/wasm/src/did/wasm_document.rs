@@ -20,8 +20,8 @@ use identity::iota::NetworkName;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
-use crate::credential::VerifiablePresentation;
 use crate::credential::WasmCredential;
+use crate::credential::WasmPresentation;
 use crate::crypto::KeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
@@ -194,9 +194,9 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = signPresentation)]
-  pub fn sign_presentation(&self, data: &JsValue, args: &JsValue) -> Result<VerifiablePresentation> {
+  pub fn sign_presentation(&self, data: &JsValue, args: &JsValue) -> Result<WasmPresentation> {
     let json: JsValue = self.sign_data(data, args)?;
-    let data: VerifiablePresentation = VerifiablePresentation::from_json(&json)?;
+    let data: WasmPresentation = WasmPresentation::from_json(&json)?;
 
     Ok(data)
   }
