@@ -9,6 +9,8 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Mutex;
+use identity::core::OneOrMany;
+use identity::core::OneOrMany::{Many, One};
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -26,11 +28,29 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
     let x = self.0.as_ref().borrow();
-    WasmDID::from(x.document().did().clone())
+    WasmDID::from(x.document().id().clone())
   }
 
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, input: &CreateMethodInput) -> Result<Promise> {
+    let elements: OneOrMany<String> = input.elements().into_serde().wasm_result()?;
+    wasm_logger::init(wasm_logger::Config::default());
+    log::info!("logging works");
+
+    if let One(el) = elements.clone() {
+      log::info!("one");
+      log::info!("{}", el);
+    }
+
+
+    if let Many(el) = elements.clone() {
+      log::info!("many");
+      log::info!("first {} second {}", el.get(0).unwrap(), el.get(1).unwrap());
+    }
+
+
+
+
     let fragment = input.fragment().unwrap();
     let account = self.0.clone();
 
@@ -62,11 +82,16 @@ extern "C" {
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn fragment(this: &CreateMethodInput) -> Option<String>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn elements(this: &CreateMethodInput) -> JsValue;
+
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type CreateMethodInput = {
   "fragment": string,
+  "elements": string | string[]
 };
 "#;
