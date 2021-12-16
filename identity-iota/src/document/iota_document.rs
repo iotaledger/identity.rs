@@ -442,7 +442,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, 'base, 'base> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, '_> {
     self.document.signer(private_key)
   }
 
@@ -456,10 +456,10 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the signature operation fails.
-  pub fn sign_data<'query, 's: 'query, X, Q>(
-    &'s self,
+  pub fn sign_data<'query, 'this: 'query, X, Q>(
+    &'this self,
     data: &mut X,
-    private_key: &'query PrivateKey,
+    private_key: &'this PrivateKey,
     method_query: Q,
     options: SignatureOptions,
   ) -> Result<()>

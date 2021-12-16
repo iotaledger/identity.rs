@@ -336,6 +336,21 @@ fn test_sign_verify_purpose() {
     .purpose(ProofPurpose::AssertionMethod)
     .verify(&data)
     .is_err());
+
+  // VALID: purpose overrides the method scope.
+  document
+    .verifier()
+    .method_scope(MethodScope::capability_delegation())
+    .purpose(ProofPurpose::Authentication)
+    .verify(&data)
+    .unwrap();
+  // INVALID: purpose overrides the otherwise correct method scope.
+  assert!(document
+    .verifier()
+    .method_scope(MethodScope::authentication())
+    .purpose(ProofPurpose::AssertionMethod)
+    .verify(&data)
+    .is_err());
 }
 
 #[test]

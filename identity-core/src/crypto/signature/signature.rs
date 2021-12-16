@@ -143,11 +143,11 @@ impl Serialize for Signature {
     } else {
       3 // type + method + value
     };
-    count_fields += self.created.as_ref().map_or(0, |_| 1);
-    count_fields += self.expires.as_ref().map_or(0, |_| 1);
-    count_fields += self.challenge.as_ref().map_or(0, |_| 1);
-    count_fields += self.domain.as_ref().map_or(0, |_| 1);
-    count_fields += self.purpose.as_ref().map_or(0, |_| 1);
+    count_fields += if self.created.is_some() { 1 } else { 0 };
+    count_fields += if self.expires.is_some() { 1 } else { 0 };
+    count_fields += if self.challenge.is_some() { 1 } else { 0 };
+    count_fields += if self.domain.is_some() { 1 } else { 0 };
+    count_fields += if self.purpose.is_some() { 1 } else { 0 };
     let mut state: S::SerializeMap = serializer.serialize_map(Some(count_fields))?;
 
     state.serialize_entry("type", &self.type_)?;
