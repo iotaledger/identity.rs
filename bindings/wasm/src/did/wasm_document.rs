@@ -11,7 +11,6 @@ use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::did::verifiable::VerifiableProperties;
-use identity::did::MethodScope;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
@@ -23,11 +22,14 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::KeyPair;
-use crate::did::wasm_did_url::WasmDIDUrl;
+use crate::crypto::WasmSignatureOptions;
 use crate::did::WasmDID;
+use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
+use crate::did::WasmMethodScope;
 use crate::did::WasmVerificationMethod;
+use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::service::Service;
@@ -106,9 +108,8 @@ impl WasmDocument {
 
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<()> {
-    let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
-    self.0.insert_method(method.0.clone(), scope).wasm_result()?;
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: WasmMethodScope) -> Result<()> {
+    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
     Ok(())
   }
 
@@ -169,33 +170,27 @@ impl WasmDocument {
     self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
 
-  /// Verifies a self-signed signature on this DID document.
-  #[wasm_bindgen(js_name = verifySelfSigned)]
-  pub fn verify_self_signed(&self) -> bool {
-    self.0.verify_self_signed().is_ok()
-  }
-
-  /// Verifies whether `document` is a valid root DID document according to the IOTA DID method
-  /// specification.
-  ///
-  /// It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
-  /// the DID tag.
-  #[wasm_bindgen(js_name = verifyRootDocument)]
-  pub fn verify_root_document(document: &WasmDocument) -> Result<()> {
-    IotaDocument::verify_root_document(&document.0).wasm_result()
-  }
-
   #[wasm_bindgen(js_name = signCredential)]
-  pub fn sign_credential(&self, data: &JsValue, args: &JsValue) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, args)?;
+  pub fn sign_credential(
+    &self,
+    data: &JsValue,
+    args: &JsValue,
+    options: WasmSignatureOptions,
+  ) -> Result<WasmCredential> {
+    let json: JsValue = self.sign_data(data, args, options)?;
     let data: WasmCredential = WasmCredential::from_json(&json)?;
 
     Ok(data)
   }
 
   #[wasm_bindgen(js_name = signPresentation)]
-  pub fn sign_presentation(&self, data: &JsValue, args: &JsValue) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, args)?;
+  pub fn sign_presentation(
+    &self,
+    data: &JsValue,
+    args: &JsValue,
+    options: WasmSignatureOptions,
+  ) -> Result<WasmPresentation> {
+    let json: JsValue = self.sign_data(data, args, options)?;
     let data: WasmPresentation = WasmPresentation::from_json(&json)?;
 
     Ok(data)
@@ -207,7 +202,8 @@ impl WasmDocument {
   /// An additional `proof` property is required if using a Merkle Key
   /// Collection verification Method.
   #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(&self, data: &JsValue, args: &JsValue) -> Result<JsValue> {
+  pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: WasmSignatureOptions) -> Result<JsValue> {
+    // TODO: clean this up and annotate types if possible.
     #[derive(Deserialize)]
     #[serde(untagged)]
     enum Args {
@@ -245,11 +241,16 @@ impl WasmDocument {
         let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
         let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
 
-        let signer: _ = self.0.signer(&private).method(&method);
-
         match digest {
           MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
-            Some(proof) => signer.merkle_key((&public, &proof)).sign(&mut data).wasm_result()?,
+            Some(proof) => self
+              .0
+              .signer(&private)
+              .method(&method)
+              .options(options.0)
+              .merkle_key((&public, &proof))
+              .sign(&mut data)
+              .wasm_result()?,
             None => return Err("Invalid Public Key Proof".into()),
           },
           _ => return Err("Invalid Merkle Key Digest".into()),
@@ -258,29 +259,53 @@ impl WasmDocument {
       Args::Default { method, private } => {
         let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
 
-        self.0.signer(&private).method(&method).sign(&mut data).wasm_result()?;
+        self
+          .0
+          .signer(&private)
+          .method(&method)
+          .options(options.0)
+          .sign(&mut data)
+          .wasm_result()?;
       }
     }
 
     JsValue::from_serde(&data).wasm_result()
   }
 
+  // ===========================================================================
+  // Verification
+  // ===========================================================================
+
   /// Verifies the authenticity of `data` using the target verification method.
   #[wasm_bindgen(js_name = verifyData)]
-  pub fn verify_data(&self, data: &JsValue) -> Result<bool> {
+  pub fn verify_data(&self, data: &JsValue, options: WasmVerifierOptions) -> Result<bool> {
     let data: VerifiableProperties = data.into_serde().wasm_result()?;
-
-    Ok(self.0.verify_data(&data).is_ok())
+    Ok(self.0.verify_data(&data, options.0).is_ok())
   }
 
-  /// Verifies the signature of the provided `data` was created using a verification method
-  /// in this DID Document with the verification relationship specified by `scope`.
-  #[wasm_bindgen(js_name = verifyDataWithScope)]
-  pub fn verify_data_with_scope(&self, data: &JsValue, scope: String) -> Result<bool> {
-    let scope: MethodScope = scope.parse().wasm_result()?;
-    let data: VerifiableProperties = data.into_serde().wasm_result()?;
+  /// Verifies that the signature on the DID document `signed` was generated by a valid method from
+  /// the `signer` DID document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if:
+  /// - The signature proof section is missing in the `signed` document.
+  /// - The method is not found in the `signer` document.
+  /// - An unsupported verification method is used.
+  /// - The signature verification operation fails.
+  #[wasm_bindgen(js_name = verifyDocument)]
+  pub fn verify_document(signed: &WasmDocument, signer: &WasmDocument) -> Result<()> {
+    IotaDocument::verify_document(&signed.0, &signer.0).wasm_result()
+  }
 
-    Ok(self.0.verify_data_with_scope(&data, scope).is_ok())
+  /// Verifies whether `document` is a valid root DID document according to the IOTA DID method
+  /// specification.
+  ///
+  /// It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+  /// the DID tag.
+  #[wasm_bindgen(js_name = verifyRootDocument)]
+  pub fn verify_root_document(document: &WasmDocument) -> Result<()> {
+    IotaDocument::verify_root_document(&document.0).wasm_result()
   }
 
   // ===========================================================================
@@ -399,7 +424,8 @@ impl WasmDocument {
   /// Returns the `proof` object.
   #[wasm_bindgen(getter = metadataProof)]
   pub fn metadata_proof(&self) -> Result<JsValue> {
-    match self.0.metadata.proof() {
+    // TODO: implement proper bindings for the proof
+    match &self.0.metadata.proof {
       Some(proof) => JsValue::from_serde(proof).wasm_result(),
       None => Ok(JsValue::NULL),
     }

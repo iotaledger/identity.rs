@@ -8,8 +8,11 @@ import {
     Digest,
     KeyCollection,
     KeyType,
+    MethodScope,
+    SignatureOptions,
     Timestamp,
-    VerificationMethod
+    VerificationMethod,
+    VerifierOptions
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {logExplorerUrl} from './utils';
@@ -39,7 +42,7 @@ async function merkleKey(clientConfig) {
     const method = VerificationMethod.createMerkleKey(Digest.Sha256, issuer.doc.id, keys, "key-collection")
 
     // Add to the DID Document as a general-purpose verification method
-    issuer.doc.insertMethod(method, "VerificationMethod");
+    issuer.doc.insertMethod(method, MethodScope.VerificationMethod());
     issuer.doc.metadataPreviousMessageId = issuer.receipt.messageId;
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
@@ -72,10 +75,10 @@ async function merkleKey(clientConfig) {
         public: keys.public(0),
         private: keys.private(0),
         proof: keys.merkleProof(Digest.Sha256, 0)
-    });
+    }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const result = await client.checkCredential(signedVc.toString());
+    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
     console.log(`VC verification result: ${result.verified}`);
     if (!result.verified) throw new Error("VC not valid");
 
@@ -88,7 +91,7 @@ async function merkleKey(clientConfig) {
     logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);
 
     // Check the verifiable credential is revoked
-    const newResult = await client.checkCredential(signedVc.toString());
+    const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
     console.log(`VC verification result (false = revoked): ${newResult.verified}`);
     if (newResult.verified) throw new Error("VC not revoked");
 }

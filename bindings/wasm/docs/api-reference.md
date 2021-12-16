@@ -32,10 +32,20 @@
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
+<dt><a href="#MethodScope">MethodScope</a></dt>
+<dd><p>Supported verification method types.</p>
+</dd>
+<dt><a href="#MethodType">MethodType</a></dt>
+<dd><p>Supported verification method types.</p>
+</dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
 <dd></dd>
+<dt><a href="#ProofPurpose">ProofPurpose</a></dt>
+<dd><p>Associates a purpose with a <code>Signature</code>.</p>
+<p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
+</dd>
 <dt><a href="#Receipt">Receipt</a></dt>
 <dd></dd>
 <dt><a href="#ResolvedDocument">ResolvedDocument</a></dt>
@@ -44,10 +54,18 @@ merged with one or more <code>DiffMessages</code>.</p>
 </dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
+<dt><a href="#SignatureOptions">SignatureOptions</a></dt>
+<dd><p>Holds additional options for creating signatures.
+See <code>ISignatureOptions</code>.</p>
+</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
+<dt><a href="#VerifierOptions">VerifierOptions</a></dt>
+<dd><p>Holds additional signature verification options.
+See <code>IVerifierOptions</code>.</p>
+</dd>
 </dl>
 
 ## Members
@@ -85,8 +103,8 @@ merged with one or more <code>DiffMessages</code>.</p>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
-        * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.checkCredential(data, options)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.checkPresentation(data, options)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
         * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
         * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
@@ -192,7 +210,7 @@ capability invocation method.
 
 <a name="Client+checkCredential"></a>
 
-### client.checkCredential(data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.checkCredential(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
 Validates a credential with the DID Document from the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -200,10 +218,11 @@ Validates a credential with the DID Document from the Tangle.
 | Param | Type |
 | --- | --- |
 | data | <code>string</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Client+checkPresentation"></a>
 
-### client.checkPresentation(data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.checkPresentation(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
 Validates a presentation with the DID Document from the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -211,6 +230,7 @@ Validates a presentation with the DID Document from the Tangle.
 | Param | Type |
 | --- | --- |
 | data | <code>string</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Client.fromConfig"></a>
 
@@ -845,12 +865,10 @@ with the given Document.
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
-        * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
-        * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
-        * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
-        * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
+        * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
+        * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
+        * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
+        * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge_diff(diff)](#Document+merge_diff)
@@ -858,6 +876,7 @@ with the given Document.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
+        * [.verifyDocument(signed, signer)](#Document.verifyDocument)
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
@@ -992,7 +1011,7 @@ Adds a new Verification Method to the DID Document.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
-| scope | <code>string</code> \| <code>undefined</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) | 
 
 <a name="Document+removeMethod"></a>
 
@@ -1055,35 +1074,31 @@ verification method. See `Document::verifySelfSigned`.
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
 | method_query | <code>string</code> | 
 
-<a name="Document+verifySelfSigned"></a>
-
-### document.verifySelfSigned() ⇒ <code>boolean</code>
-Verifies a self-signed signature on this DID document.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+signCredential"></a>
 
-### document.signCredential(data, args) ⇒ [<code>Credential</code>](#Credential)
+### document.signCredential(data, args, options) ⇒ [<code>Credential</code>](#Credential)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
+| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+signPresentation"></a>
 
-### document.signPresentation(data, args) ⇒ [<code>Presentation</code>](#Presentation)
+### document.signPresentation(data, args, options) ⇒ [<code>Presentation</code>](#Presentation)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
+| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+signData"></a>
 
-### document.signData(data, args) ⇒ <code>any</code>
+### document.signData(data, args, options) ⇒ <code>any</code>
 Creates a signature for the given `data` with the specified DID Document
 Verification Method.
 
@@ -1096,10 +1111,11 @@ Collection verification Method.
 | --- | --- |
 | data | <code>any</code> | 
 | args | <code>any</code> | 
+| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+verifyData"></a>
 
-### document.verifyData(data) ⇒ <code>boolean</code>
+### document.verifyData(data, options) ⇒ <code>boolean</code>
 Verifies the authenticity of `data` using the target verification method.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1107,19 +1123,7 @@ Verifies the authenticity of `data` using the target verification method.
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-
-<a name="Document+verifyDataWithScope"></a>
-
-### document.verifyDataWithScope(data, scope) ⇒ <code>boolean</code>
-Verifies the signature of the provided `data` was created using a verification method
-in this DID Document with the verification relationship specified by `scope`.
-
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-| scope | <code>string</code> | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Document+diff"></a>
 
@@ -1192,6 +1196,27 @@ NOTE: the generated document is unsigned, see `Document::signSelf`.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.verifyDocument"></a>
+
+### Document.verifyDocument(signed, signer)
+Verifies that the signature on the DID document `signed` was generated by a valid method from
+the `signer` DID document.
+
+# Errors
+
+Fails if:
+- The signature proof section is missing in the `signed` document.
+- The method is not found in the `signer` document.
+- An unsupported verification method is used.
+- The signature verification operation fails.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| signed | [<code>Document</code>](#Document) | 
+| signer | [<code>Document</code>](#Document) | 
 
 <a name="Document.verifyRootDocument"></a>
 
@@ -1631,6 +1656,113 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="MethodScope"></a>
+
+## MethodScope
+Supported verification method types.
+
+**Kind**: global class  
+
+* [MethodScope](#MethodScope)
+    * _instance_
+        * [.toString()](#MethodScope+toString) ⇒ <code>string</code>
+        * [.toJSON()](#MethodScope+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.VerificationMethod()](#MethodScope.VerificationMethod) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.Authentication()](#MethodScope.Authentication) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.AssertionMethod()](#MethodScope.AssertionMethod) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.KeyAgreement()](#MethodScope.KeyAgreement) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.CapabilityDelegation()](#MethodScope.CapabilityDelegation) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.CapabilityInvocation()](#MethodScope.CapabilityInvocation) ⇒ [<code>MethodScope</code>](#MethodScope)
+        * [.fromJSON(json)](#MethodScope.fromJSON) ⇒ [<code>MethodScope</code>](#MethodScope)
+
+<a name="MethodScope+toString"></a>
+
+### methodScope.toString() ⇒ <code>string</code>
+Returns the `MethodScope` as a string.
+
+**Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope+toJSON"></a>
+
+### methodScope.toJSON() ⇒ <code>any</code>
+Serializes a `MethodScope` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.VerificationMethod"></a>
+
+### MethodScope.VerificationMethod() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.Authentication"></a>
+
+### MethodScope.Authentication() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.AssertionMethod"></a>
+
+### MethodScope.AssertionMethod() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.KeyAgreement"></a>
+
+### MethodScope.KeyAgreement() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.CapabilityDelegation"></a>
+
+### MethodScope.CapabilityDelegation() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.CapabilityInvocation"></a>
+
+### MethodScope.CapabilityInvocation() ⇒ [<code>MethodScope</code>](#MethodScope)
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope.fromJSON"></a>
+
+### MethodScope.fromJSON(json) ⇒ [<code>MethodScope</code>](#MethodScope)
+Deserializes a `MethodScope` object from a JSON object.
+
+**Kind**: static method of [<code>MethodScope</code>](#MethodScope)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="MethodType"></a>
+
+## MethodType
+Supported verification method types.
+
+**Kind**: global class  
+
+* [MethodType](#MethodType)
+    * _instance_
+        * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.MerkleKeyCollection2021()](#MethodType.MerkleKeyCollection2021) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
+
+<a name="MethodType+toJSON"></a>
+
+### methodType.toJSON() ⇒ <code>any</code>
+Serializes a `MethodType` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.Ed25519VerificationKey2018"></a>
+
+### MethodType.Ed25519VerificationKey2018() ⇒ [<code>MethodType</code>](#MethodType)
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.MerkleKeyCollection2021"></a>
+
+### MethodType.MerkleKeyCollection2021() ⇒ [<code>MethodType</code>](#MethodType)
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.fromJSON"></a>
+
+### MethodType.fromJSON(json) ⇒ [<code>MethodType</code>](#MethodType)
+Deserializes a `MethodType` object from a JSON object.
+
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Network"></a>
 
 ## Network
@@ -1709,6 +1841,54 @@ Serializes a `Presentation` object as a JSON object.
 Deserializes a `Presentation` object from a JSON object.
 
 **Kind**: static method of [<code>Presentation</code>](#Presentation)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="ProofPurpose"></a>
+
+## ProofPurpose
+Associates a purpose with a `Signature`.
+
+See https://w3c-ccg.github.io/security-vocab/#proofPurpose
+
+**Kind**: global class  
+
+* [ProofPurpose](#ProofPurpose)
+    * _instance_
+        * [.toJSON()](#ProofPurpose+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.assertionMethod()](#ProofPurpose.assertionMethod) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+        * [.authentication()](#ProofPurpose.authentication) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+        * [.fromJSON(json)](#ProofPurpose.fromJSON) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+
+<a name="ProofPurpose+toJSON"></a>
+
+### proofPurpose.toJSON() ⇒ <code>any</code>
+Serializes a `ProofPurpose` object as a JSON object.
+
+**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose.assertionMethod"></a>
+
+### ProofPurpose.assertionMethod() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Purpose is to assert a claim.
+See https://www.w3.org/TR/did-core/#assertion
+
+**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose.authentication"></a>
+
+### ProofPurpose.authentication() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Purpose is to authenticate the signer.
+See https://www.w3.org/TR/did-core/#authentication
+
+**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose.fromJSON"></a>
+
+### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Deserializes a `ProofPurpose` object from a JSON object.
+
+**Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
 
 | Param | Type |
 | --- | --- |
@@ -1907,6 +2087,36 @@ Deserializes a `Service` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="SignatureOptions"></a>
+
+## SignatureOptions
+Holds additional options for creating signatures.
+See `ISignatureOptions`.
+
+**Kind**: global class  
+
+* [SignatureOptions](#SignatureOptions)
+    * [new SignatureOptions(options)](#new_SignatureOptions_new)
+    * [.default()](#SignatureOptions.default) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+
+<a name="new_SignatureOptions_new"></a>
+
+### new SignatureOptions(options)
+Creates a new `SignatureOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>ISignatureOptions</code> | 
+
+<a name="SignatureOptions.default"></a>
+
+### SignatureOptions.default() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+Creates a new `SignatureOptions` with default options.
+
+**Kind**: static method of [<code>SignatureOptions</code>](#SignatureOptions)  
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -2051,6 +2261,36 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="VerifierOptions"></a>
+
+## VerifierOptions
+Holds additional signature verification options.
+See `IVerifierOptions`.
+
+**Kind**: global class  
+
+* [VerifierOptions](#VerifierOptions)
+    * [new VerifierOptions(options)](#new_VerifierOptions_new)
+    * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+
+<a name="new_VerifierOptions_new"></a>
+
+### new VerifierOptions(options)
+Creates a new `VerifierOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IVerifierOptions</code> | 
+
+<a name="VerifierOptions.default"></a>
+
+### VerifierOptions.default() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+Creates a new `VerifierOptions` with default options.
+
+**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
