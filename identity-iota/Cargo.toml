@@ -29,6 +29,7 @@ serde = { version = "1.0", default-features = false, features = ["std", "derive"
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 either =  {version = "1.6.1", default-features = false, features = ["serde"]}
+indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
