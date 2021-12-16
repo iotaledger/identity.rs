@@ -6,16 +6,18 @@ use std::str::FromStr;
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
-use identity_did::verifiable::VerifiableProperties;
 
 use crate::document::IotaDocumentMetadata;
 use crate::tangle::MessageId;
 
+/// NOTE: excludes the `proof` [`Signature`] from the diff to save space on the Tangle and because
+/// a merged signature will be invalid in general.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffIotaDocumentMetadata {
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -25,7 +27,7 @@ pub struct DiffIotaDocumentMetadata {
   #[serde(skip_serializing_if = "Option::is_none")]
   previous_message_id: Option<DiffString>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  properties: Option<<VerifiableProperties as Diff>::Type>,
+  properties: Option<<Object as Diff>::Type>,
 }
 
 impl Diff for IotaDocumentMetadata {
@@ -85,7 +87,7 @@ impl Diff for IotaDocumentMetadata {
       .map_err(identity_core::diff::Error::merge)?
       .unwrap_or(self.previous_message_id);
 
-    let properties: VerifiableProperties = diff
+    let properties: Object = diff
       .properties
       .map(|value| self.properties.merge(value))
       .transpose()?
@@ -95,6 +97,7 @@ impl Diff for IotaDocumentMetadata {
       created,
       updated,
       previous_message_id,
+      proof: None, // NOTE: proof intentionally excluded.
       properties,
     })
   }
@@ -122,9 +125,9 @@ impl Diff for IotaDocumentMetadata {
       .map_err(identity_core::diff::Error::merge)?
       .ok_or_else(|| Error::convert("Missing field `metadata.previous_message_id`"))?;
 
-    let properties: VerifiableProperties = diff
+    let properties: Object = diff
       .properties
-      .map(VerifiableProperties::from_diff)
+      .map(Object::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `metadata.properties`"))?;
 
@@ -132,6 +135,7 @@ impl Diff for IotaDocumentMetadata {
       created,
       updated,
       previous_message_id,
+      proof: None, // NOTE: proof intentionally excluded.
       properties,
     })
   }
@@ -207,8 +211,8 @@ mod test {
   #[test]
   fn test_add_properties() {
     let mut original: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    let mut properties: VerifiableProperties = VerifiableProperties::new(Object::default());
-    properties.properties.insert("key1".into(), "value2".into());
+    let mut properties: Object = Object::default();
+    properties.insert("key1".into(), "value2".into());
     original.properties = properties;
 
     let mut updated: IotaDocumentMetadata = original.clone();
@@ -223,12 +227,12 @@ mod test {
   #[test]
   fn test_replace_properties() {
     let mut original: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    let mut properties: VerifiableProperties = VerifiableProperties::new(Object::default());
-    properties.properties.insert("key".to_string(), "value".into());
+    let mut properties: Object = Object::default();
+    properties.insert("key".to_string(), "value".into());
     original.properties = properties;
 
     let mut updated: IotaDocumentMetadata = original.clone();
-    updated.properties = VerifiableProperties::new(Object::default());
+    updated.properties = Object::default();
 
     assert_ne!(original, updated);
     let diff: DiffIotaDocumentMetadata = original.diff(&updated).unwrap();

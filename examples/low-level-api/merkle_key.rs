@@ -16,6 +16,7 @@ use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
+use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
@@ -80,7 +81,9 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential is valid
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
-  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  let validation: CredentialValidation = validator
+    .check_credential(&credential_json, VerifierOptions::default())
+    .await?;
   assert!(validation.verified);
 
   println!("Credential Validation > {:#?}", validation);
@@ -99,7 +102,9 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Check the verifiable credential is revoked
-  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  let validation: CredentialValidation = validator
+    .check_credential(&credential_json, VerifierOptions::default())
+    .await?;
   assert!(!validation.verified);
 
   println!("Credential Validation > {:#?}", validation);

@@ -1,7 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+
+use serde::Serialize;
+
 use identity_core::crypto::SetSignature;
+use identity_core::crypto::SignatureOptions;
 use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
@@ -13,10 +20,6 @@ use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
 use identity_iota::tangle::TangleResolve;
-use serde::Serialize;
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
@@ -48,8 +51,9 @@ pub struct Account {
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
-  _did_lease: DIDLease, /* This field is not read, but has special behaviour on drop which is why it is needed in
-                         * the Account. */
+  _did_lease: DIDLease,
+  /* This field is not read, but has special behaviour on drop which is why it is needed in
+   * the Account. */
 }
 
 impl Account {
@@ -222,7 +226,7 @@ impl Account {
   }
 
   /// Signs `data` with the key specified by `fragment`.
-  pub async fn sign<U>(&self, fragment: &str, target: &mut U) -> Result<()>
+  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
@@ -235,7 +239,9 @@ impl Account {
 
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
-    state.sign_data(self.did(), self.storage(), &location, target).await?;
+    state
+      .sign_data(self.did(), self.storage(), &location, data, options)
+      .await?;
 
     Ok(())
   }
@@ -311,7 +317,13 @@ impl Account {
     )?;
 
     signing_state
-      .sign_data(self.did(), self.storage(), &signing_key_location, document)
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &signing_key_location,
+        document,
+        SignatureOptions::default(),
+      )
       .await?;
 
     Ok(())
@@ -447,7 +459,13 @@ impl Account {
     )?;
 
     old_state
-      .sign_data(self.did(), self.storage(), &signing_key_location, &mut diff)
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &signing_key_location,
+        &mut diff,
+        SignatureOptions::default(),
+      )
       .await?;
 
     log::debug!(

@@ -1,8 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::Deref;
-use core::ops::DerefMut;
+use std::ops::Deref;
+use std::ops::DerefMut;
+
 use identity_core::common::Object;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
@@ -13,8 +14,7 @@ use identity_core::diff::Diff;
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 
-/// A generic container for a set of properties (`T`) and a
-/// [`digital signature`][Signature].
+/// A generic container for a [`digital signature`][Signature] and a set of properties.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct VerifiableProperties<T = Object> {
   #[serde(flatten)]
@@ -39,21 +39,6 @@ impl<T> VerifiableProperties<T> {
       properties,
       proof: Some(proof),
     }
-  }
-
-  /// Returns a reference to the [`proof`][`Signature`].
-  pub fn proof(&self) -> Option<&Signature> {
-    self.proof.as_ref()
-  }
-
-  /// Returns a mutable reference to the [`proof`][`Signature`].
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
-    self.proof.as_mut()
-  }
-
-  /// Sets the value of the [`proof`][`Signature`].
-  pub fn set_proof(&mut self, signature: Signature) {
-    self.proof = Some(signature);
   }
 }
 
@@ -104,19 +89,19 @@ impl<T> DerefMut for VerifiableProperties<T> {
 
 impl<T> TrySignature for VerifiableProperties<T> {
   fn signature(&self) -> Option<&Signature> {
-    self.proof()
+    self.proof.as_ref()
   }
 }
 
 impl<T> TrySignatureMut for VerifiableProperties<T> {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.proof_mut()
+    self.proof.as_mut()
   }
 }
 
 impl<T> SetSignature for VerifiableProperties<T> {
   fn set_signature(&mut self, signature: Signature) {
-    self.set_proof(signature)
+    self.proof = Some(signature);
   }
 }
 

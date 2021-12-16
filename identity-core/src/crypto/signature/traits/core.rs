@@ -5,6 +5,7 @@ use serde::Serialize;
 
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
+use crate::crypto::SignatureOptions;
 use crate::crypto::SignatureValue;
 use crate::crypto::TrySignature;
 use crate::error::Error;
@@ -54,15 +55,20 @@ pub trait Signer<Secret: ?Sized>: Named {
     T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret) -> Result<()>
+  fn create_signature<T>(
+    data: &mut T,
+    method: impl Into<String>,
+    secret: &Secret,
+    options: SignatureOptions,
+  ) -> Result<()>
   where
     T: Serialize + SetSignature,
   {
-    data.set_signature(Signature::new(Self::NAME, method));
+    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret)?;
     let write: &mut Signature = data.try_signature_mut()?;
-
     write.set_value(value);
 
     Ok(())

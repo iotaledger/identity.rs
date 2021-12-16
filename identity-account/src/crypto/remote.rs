@@ -9,6 +9,7 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
@@ -25,11 +26,17 @@ impl Named for RemoteEd25519 {
 }
 
 impl RemoteEd25519 {
-  pub async fn create_signature<U>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_>) -> Result<()>
+  pub async fn create_signature<U>(
+    data: &mut U,
+    method: impl Into<String>,
+    secret: &RemoteKey<'_>,
+    options: SignatureOptions,
+  ) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
-    data.set_signature(Signature::new(Self::NAME, method));
+    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret).await?;
     let write: &mut Signature = data.try_signature_mut()?;

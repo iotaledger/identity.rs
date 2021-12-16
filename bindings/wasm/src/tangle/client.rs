@@ -29,6 +29,7 @@ use crate::did::PromiseResolvedDocument;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
+use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Config;
@@ -231,14 +232,15 @@ impl Client {
   }
 
   /// Validates a credential with the DID Document from the Tangle.
+  // TODO: move out of client to dedicated verifier
   #[wasm_bindgen(js_name = checkCredential)]
-  pub fn check_credential(&self, data: &str) -> Result<Promise> {
+  pub fn check_credential(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
     let data: Credential = Credential::from_json(&data).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
-        .validate_credential(data)
+        .validate_credential(data, options.0)
         .await
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())
@@ -248,14 +250,15 @@ impl Client {
   }
 
   /// Validates a presentation with the DID Document from the Tangle.
+  // TODO: move out of client to dedicated verifier
   #[wasm_bindgen(js_name = checkPresentation)]
-  pub fn check_presentation(&self, data: &str) -> Result<Promise> {
+  pub fn check_presentation(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
     let data: Presentation = Presentation::from_json(&data).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
-        .validate_presentation(data)
+        .validate_presentation(data, options.0)
         .await
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())

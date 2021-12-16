@@ -5,11 +5,12 @@ import {
     Client,
     Config,
     Document,
-    Service,
     KeyPair,
-    VerificationMethod,
     KeyType,
-    Timestamp, DID
+    MethodScope,
+    Service,
+    Timestamp,
+    VerificationMethod
 } from '@iota/identity-wasm';
 import {logExplorerUrl, prettyPrintJSON} from "./utils";
 import {createIdentity} from "./create_did";
@@ -58,7 +59,7 @@ async function resolveHistory(clientConfig) {
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     const keys1 = new KeyPair(KeyType.Ed25519);
     const method1 = VerificationMethod.fromDID(intDoc1.id, keys1, "keys-1");
-    intDoc1.insertMethod(method1, "VerificationMethod");
+    intDoc1.insertMethod(method1, MethodScope.VerificationMethod());
 
     // Add the `messageId` of the previous message in the chain.
     // This is REQUIRED in order for the messages to form a chain.
@@ -168,7 +169,7 @@ async function resolveHistory(clientConfig) {
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     const keys2 = new KeyPair(KeyType.Ed25519);
     const method2 = VerificationMethod.fromDID(intDoc2.id, keys2, "keys-2");
-    intDoc2.insertMethod(method2, "VerificationMethod");
+    intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
