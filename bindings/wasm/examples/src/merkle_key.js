@@ -4,12 +4,12 @@
 import {
     Client,
     Config,
+    Credential,
     Digest,
+    KeyCollection,
     KeyType,
     Timestamp,
-    VerifiableCredential,
-    VerificationMethod,
-    KeyCollection
+    VerificationMethod
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {logExplorerUrl} from './utils';
@@ -59,7 +59,7 @@ async function merkleKey(clientConfig) {
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
-    const unsignedVc = VerifiableCredential.extend({
+    const unsignedVc = Credential.extend({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.doc.id.toString(),

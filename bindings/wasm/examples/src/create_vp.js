@@ -1,16 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, Config, VerifiablePresentation } from '@iota/identity-wasm';
-import { createVC } from './create_vc';
+import {Client, Config, Presentation} from '@iota/identity-wasm';
+import {createVC} from './create_vc';
 
 /**
-    This example shows how to create a Verifiable Presentation and validate it.
-    A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
-    It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+ This example shows how to create a Verifiable Presentation and validate it.
+ A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
+ It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 
-    @param {{network: Network, explorer: ExplorerUrl}} clientConfig
-**/
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
+ **/
 async function createVP(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
@@ -23,7 +23,7 @@ async function createVP(clientConfig) {
 
     // Create a Verifiable Presentation from the Credential - signed by Alice's key
     // TODO: Sign with a challenge
-    const unsignedVp = new VerifiablePresentation(alice.doc, signedVc.toJSON())
+    const unsignedVp = new Presentation(alice.doc, signedVc.toJSON())
 
     const signedVp = alice.doc.signPresentation(unsignedVp, {
         method: "#sign-0",
