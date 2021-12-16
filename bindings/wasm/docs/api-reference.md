@@ -5,6 +5,8 @@
 <dd></dd>
 <dt><a href="#Config">Config</a></dt>
 <dd></dd>
+<dt><a href="#Credential">Credential</a></dt>
+<dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
@@ -38,6 +40,8 @@
 </dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
+<dt><a href="#Presentation">Presentation</a></dt>
+<dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <code>Signature</code>.</p>
 <p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
@@ -55,10 +59,6 @@ merged with one or more <code>DiffMessages</code>.</p>
 See <code>ISignatureOptions</code>.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
-<dd></dd>
-<dt><a href="#VerifiableCredential">VerifiableCredential</a></dt>
-<dd></dd>
-<dt><a href="#VerifiablePresentation">VerifiablePresentation</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
@@ -429,6 +429,57 @@ Creates a new `Client` with default settings for the given `Network`.
 | Param | Type |
 | --- | --- |
 | network | [<code>Network</code>](#Network) | 
+
+<a name="Credential"></a>
+
+## Credential
+**Kind**: global class  
+
+* [Credential](#Credential)
+    * _instance_
+        * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.extend(value)](#Credential.extend) ⇒ [<code>Credential</code>](#Credential)
+        * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#Credential.issue) ⇒ [<code>Credential</code>](#Credential)
+        * [.fromJSON(json)](#Credential.fromJSON) ⇒ [<code>Credential</code>](#Credential)
+
+<a name="Credential+toJSON"></a>
+
+### credential.toJSON() ⇒ <code>any</code>
+Serializes a `Credential` object as a JSON object.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential.extend"></a>
+
+### Credential.extend(value) ⇒ [<code>Credential</code>](#Credential)
+**Kind**: static method of [<code>Credential</code>](#Credential)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="Credential.issue"></a>
+
+### Credential.issue(issuer_doc, subject_data, credential_type, credential_id) ⇒ [<code>Credential</code>](#Credential)
+**Kind**: static method of [<code>Credential</code>](#Credential)  
+
+| Param | Type |
+| --- | --- |
+| issuer_doc | [<code>Document</code>](#Document) | 
+| subject_data | <code>any</code> | 
+| credential_type | <code>string</code> \| <code>undefined</code> | 
+| credential_id | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Credential.fromJSON"></a>
+
+### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
+Deserializes a `Credential` object from a JSON object.
+
+**Kind**: static method of [<code>Credential</code>](#Credential)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="DID"></a>
 
@@ -814,8 +865,8 @@ with the given Document.
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
-        * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-        * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
+        * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
+        * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
@@ -1025,7 +1076,7 @@ verification method. See `Document::verifySelfSigned`.
 
 <a name="Document+signCredential"></a>
 
-### document.signCredential(data, args, options) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+### document.signCredential(data, args, options) ⇒ [<code>Credential</code>](#Credential)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1036,7 +1087,7 @@ verification method. See `Document::verifySelfSigned`.
 
 <a name="Document+signPresentation"></a>
 
-### document.signPresentation(data, args, options) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
+### document.signPresentation(data, args, options) ⇒ [<code>Presentation</code>](#Presentation)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1755,6 +1806,46 @@ Parses the provided string to a `Network`.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
+<a name="Presentation"></a>
+
+## Presentation
+**Kind**: global class  
+
+* [Presentation](#Presentation)
+    * [new Presentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_Presentation_new)
+    * _instance_
+        * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
+
+<a name="new_Presentation_new"></a>
+
+### new Presentation(holder_doc, credential_data, presentation_type, presentation_id)
+
+| Param | Type |
+| --- | --- |
+| holder_doc | [<code>Document</code>](#Document) | 
+| credential_data | <code>any</code> | 
+| presentation_type | <code>string</code> \| <code>undefined</code> | 
+| presentation_id | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Presentation+toJSON"></a>
+
+### presentation.toJSON() ⇒ <code>any</code>
+Serializes a `Presentation` object as a JSON object.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation.fromJSON"></a>
+
+### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
+Deserializes a `Presentation` object from a JSON object.
+
+**Kind**: static method of [<code>Presentation</code>](#Presentation)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
@@ -2061,97 +2152,6 @@ Parses a `Timestamp` from the provided input string.
 Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
-<a name="VerifiableCredential"></a>
-
-## VerifiableCredential
-**Kind**: global class  
-
-* [VerifiableCredential](#VerifiableCredential)
-    * _instance_
-        * [.toJSON()](#VerifiableCredential+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.extend(value)](#VerifiableCredential.extend) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-        * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#VerifiableCredential.issue) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-        * [.fromJSON(json)](#VerifiableCredential.fromJSON) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-
-<a name="VerifiableCredential+toJSON"></a>
-
-### verifiableCredential.toJSON() ⇒ <code>any</code>
-Serializes a `VerifiableCredential` object as a JSON object.
-
-**Kind**: instance method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
-<a name="VerifiableCredential.extend"></a>
-
-### VerifiableCredential.extend(value) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-**Kind**: static method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="VerifiableCredential.issue"></a>
-
-### VerifiableCredential.issue(issuer_doc, subject_data, credential_type, credential_id) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-**Kind**: static method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
-
-| Param | Type |
-| --- | --- |
-| issuer_doc | [<code>Document</code>](#Document) | 
-| subject_data | <code>any</code> | 
-| credential_type | <code>string</code> \| <code>undefined</code> | 
-| credential_id | <code>string</code> \| <code>undefined</code> | 
-
-<a name="VerifiableCredential.fromJSON"></a>
-
-### VerifiableCredential.fromJSON(json) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-Deserializes a `VerifiableCredential` object from a JSON object.
-
-**Kind**: static method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="VerifiablePresentation"></a>
-
-## VerifiablePresentation
-**Kind**: global class  
-
-* [VerifiablePresentation](#VerifiablePresentation)
-    * [new VerifiablePresentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_VerifiablePresentation_new)
-    * _instance_
-        * [.toJSON()](#VerifiablePresentation+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json)](#VerifiablePresentation.fromJSON) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
-
-<a name="new_VerifiablePresentation_new"></a>
-
-### new VerifiablePresentation(holder_doc, credential_data, presentation_type, presentation_id)
-
-| Param | Type |
-| --- | --- |
-| holder_doc | [<code>Document</code>](#Document) | 
-| credential_data | <code>any</code> | 
-| presentation_type | <code>string</code> \| <code>undefined</code> | 
-| presentation_id | <code>string</code> \| <code>undefined</code> | 
-
-<a name="VerifiablePresentation+toJSON"></a>
-
-### verifiablePresentation.toJSON() ⇒ <code>any</code>
-Serializes a `VerifiablePresentation` object as a JSON object.
-
-**Kind**: instance method of [<code>VerifiablePresentation</code>](#VerifiablePresentation)  
-<a name="VerifiablePresentation.fromJSON"></a>
-
-### VerifiablePresentation.fromJSON(json) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
-Deserializes a `VerifiablePresentation` object from a JSON object.
-
-**Kind**: static method of [<code>VerifiablePresentation</code>](#VerifiablePresentation)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod

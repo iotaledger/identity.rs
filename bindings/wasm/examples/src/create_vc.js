@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, SignatureOptions, VerifiableCredential, VerifierOptions} from '@iota/identity-wasm';
+import {Client, Config, SignatureOptions, Credential, VerifierOptions} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -34,7 +34,7 @@ async function createVC(clientConfig) {
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
-    const unsignedVc = VerifiableCredential.extend({
+    const unsignedVc = Credential.extend({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.doc.id.toString(),

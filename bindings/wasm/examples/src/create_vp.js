@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, SignatureOptions, VerifiablePresentation, VerifierOptions} from '@iota/identity-wasm';
+import {Client, Config, SignatureOptions, Presentation, VerifierOptions} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -22,7 +22,7 @@ async function createVP(clientConfig) {
     const {alice, signedVc} = await createVC(clientConfig);
 
     // Create a Verifiable Presentation from the Credential
-    const unsignedVp = new VerifiablePresentation(alice.doc, signedVc.toJSON())
+    const unsignedVp = new Presentation(alice.doc, signedVc.toJSON())
 
     // Sign the presentation with the holders private key.
     //
