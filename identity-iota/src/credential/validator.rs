@@ -22,6 +22,11 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::TangleResolve;
 
+use self::private::Refuted;
+use self::private::Sealed;
+use self::private::Unspecified;
+use self::private::Verified;
+
 /* 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation<T = Object> {
@@ -48,35 +53,94 @@ pub struct DocumentValidation {
 }
 */ 
 
+mod private {
+  pub trait Sealed {}
+  #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+  pub struct Verified; 
+  #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+  pub struct Refuted; 
+
+  #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+  pub struct Unspecified; 
+  impl Sealed for Verified {}
+  impl Sealed for Refuted {}
+  impl Sealed for Unspecified {} 
+}
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DocumentValidation<const VERIFIED: bool> {
+pub struct DocumentValidation<T = private::Verified> 
+  where T: private::Sealed 
+{
   pub did: IotaDID, 
   pub document: ResolvedIotaDocument, 
   pub metadata: Object,
-  _marker: PhantomData<bool>,
+  _marker: PhantomData<T>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct PartialCredentialValidation<T = Object> {
-  credential: Credential<T>,
-  issuer: Either<DocumentValidation<true>, DocumentValidation<false>>,
-  verified_subjects: BTreeMap<String, DocumentValidation<true>>,
-  unverified_subjects: BTreeMap<String, DocumentValidation<false>>,
-  encountered_error_categories: HashSet<CredentialValidationErrorCategory>, 
+/// A credential validation that may or may not have been completely successful 
+// todo: Add more explanations here 
+pub struct PartialCredentialValidation<Filter = Unspecified, T = Object>
+    where Filter: private::Sealed
+{
+  pub credential: Credential<T>,
+  issuer: Either<DocumentValidation, DocumentValidation<Refuted>>,
+  verified_subjects: Option<BTreeMap<String, DocumentValidation>>,
+  refuted_subjects: Option<BTreeMap<String, DocumentValidation<Refuted>>>,
+  encountered_refutation_categories: HashSet<CredentialValidationRefutationCategory>, 
+  _marker: PhantomData<Filter>,
 }
 
-impl PartialCredentialValidation {
+impl<Filter: Sealed, T: Sealed> PartialCredentialValidation<Filter, T> {
 
-  pub fn fully_verified(&self) -> bool {
-    self.encountered_error_categories.len() == 0 
+  pub fn successful_validation(&self) -> bool {
+    self.encountered_refutation_categories.len() == 0 
+  }
+
+  pub fn valid_signature(&self) -> bool {
+    !self.encountered_refutation_categories.contains(&CredentialValidationRefutationCategory::InvalidCredentialSignature) 
+  }
+
+  pub fn with_verified_filter(self) -> PartialCredentialValidation<Verified, T> {
+    let Self {credential, issuer, verified_subjects, refuted_subjects: unverified_subjects, encountered_refutation_categories: encountered_error_categories,..} = self; 
+    PartialCredentialValidation::<Verified,T>{ credential, issuer, verified_subjects, refuted_subjects: unverified_subjects, encountered_refutation_categories: encountered_error_categories, _marker: PhantomData::<Verified> }
+  }
+
+  pub fn with_refuted_filter(self) -> PartialCredentialValidation<Refuted, T> {
+    let Self {credential, issuer, verified_subjects, refuted_subjects: unverified_subjects, encountered_refutation_categories: encountered_error_categories,..} = self; 
+    PartialCredentialValidation::<Refuted,T>{ credential, issuer, verified_subjects, refuted_subjects: unverified_subjects, encountered_refutation_categories: encountered_error_categories, _marker: PhantomData::<Refuted>}
+  }
+
+
+  pub fn encountered_refutation_categories(&self) -> impl Iterator<Item = &CredentialValidationRefutationCategory> {
+    self.encountered_refutation_categories.iter()
+  }
+}
+
+impl PartialCredentialValidation<Verified> {
+  pub fn issuer(&self) -> Option<&DocumentValidation> {
+    self.issuer.left().as_ref()
+  }
+
+  pub fn subjects(&self) -> Option<&BTreeMap<String, DocumentValidation>> {
+    self.verified_subjects.as_ref()
+  }
+}
+
+impl PartialCredentialValidation<Refuted> {
+  pub fn issuer(&self) -> Option<&DocumentValidation<Refuted>> {
+    self.issuer.right().as_ref()
+  }
+
+  pub fn subjects(&self) -> Option<&BTreeMap<String, DocumentValidation<Refuted>>> {
+    self.refuted_subjects.as_ref()
   }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation<T = Object> {
   pub credential: Credential<T>,
-  pub issuer: DocumentValidation<true>,
-  pub subjects: BTreeMap<String, DocumentValidation<true>>,
+  pub issuer: DocumentValidation,
+  pub subjects: BTreeMap<String, DocumentValidation>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -220,16 +284,16 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   }
 
   /// Resolves the document from the Tangle, which performs checks on all signatures etc.
-  async fn validate_document(&self, did: impl AsRef<str>) -> Result<Either<DocumentValidation<true>,DocumentValidation<false>>> {
+  async fn validate_document(&self, did: impl AsRef<str>) -> Result<Either<DocumentValidation,DocumentValidation<Refuted>>> {
     let did: IotaDID = did.as_ref().parse()?;
     let document: ResolvedIotaDocument = self.client.resolve(&did).await?;
     // TODO: check if document is deactivated, does that matter? If it does then we return the Right variant 
-    Ok(Either::Left(DocumentValidation::<true> {did, document, metadata: Object::new(), _marker: PhantomData::<bool>}))
+    Ok(Either::Left(DocumentValidation{did, document, metadata: Object::new(), _marker: PhantomData::<Verified>}))
   }
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
-enum CredentialValidationErrorCategory {
+enum CredentialValidationRefutationCategory {
   // The credential signature does not match the expected value 
   InvalidCredentialSignature,
   // At least one subject document is not verified 
