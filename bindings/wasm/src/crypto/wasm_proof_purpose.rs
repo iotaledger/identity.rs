@@ -1,10 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Result;
-use crate::error::WasmResult;
 use identity::crypto::ProofPurpose;
 use wasm_bindgen::prelude::*;
+
+use crate::error::Result;
+use crate::error::WasmResult;
 
 /// Associates a purpose with a `Signature`.
 ///
