@@ -85,7 +85,7 @@ impl<Filter: Sealed, T> PartialCredentialValidation<Filter, T> {
   pub fn valid_signature(&self) -> bool {
     !self
       .encountered_refutation_categories
-      .contains(&CredentialRefutationCategory::InvalidCredentialSignature)
+      .contains(&CredentialRefutationCategory::InvalidSignature)
   }
 
   pub fn with_verified_filter(self) -> PartialCredentialValidation<Verified, T> {
@@ -294,7 +294,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
         .verify_data(&credential, options)
         .is_err()
     {
-      *refuted_signature = Some(CredentialRefutationCategory::InvalidCredentialSignature);
+      *refuted_signature = Some(CredentialRefutationCategory::InvalidSignature);
     }
 
     // Verify the expiration date
@@ -421,11 +421,14 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
+#[non_exhaustive]
 pub enum CredentialRefutationCategory {
-  /// The credential signature does not match the expected value
-  InvalidCredentialSignature,
+  /// The credential's signature does not match the expected value
+  InvalidSignature,
+  #[doc(hidden)]
   /// The issuers document is deactivated
   DeactivatedIssuerDocument,
+  #[doc(hidden)]
   /// At least one subject document is deactivated
   DeactivatedSubjectDocuments,
   /// The credential has expired
@@ -439,7 +442,7 @@ impl CredentialRefutationCategory {
   /// Provides a description of the category
   pub fn description(&self) -> &str {
     match self {
-      &Self::InvalidCredentialSignature => "the signature does not match the expected value",
+      &Self::InvalidSignature => "the signature does not match the expected value",
       &Self::DeactivatedIssuerDocument => "the issuer's DID document is deactivated",
       &Self::DeactivatedSubjectDocuments => "contains subjects with deactivated DID documents",
       &Self::Expired => "the expiry date is in the past",
@@ -447,6 +450,7 @@ impl CredentialRefutationCategory {
     }
   }
 }
+
 
 #[derive(Debug)]
 pub struct RefutedCredentialDismissalError {
@@ -469,14 +473,53 @@ impl Display for RefutedCredentialDismissalError {
 
 impl std::error::Error for RefutedCredentialDismissalError {}
 
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
+pub enum PresentationRefutationCategory {
+  /// The presentation's signature does not match the expected value 
+  InvalidSignature,
+  /// The presentiation contains at least one refuted credential 
+  RefutedCredentials,  
+}
+
+impl PresentationRefutationCategory {
+  pub fn description(&self) -> &str {
+    match self {
+      &Self::InvalidSignature => "the signature does not match the expected value", 
+      &Self::RefutedCredentials => "contains refuted credentials",  
+    }
+  }
+}
+
+
+#[derive(Debug)]
+pub struct RefutedPresentationDismissalError {
+  categories: IndexSet<PresentationRefutationCategory>,
+}
+
+impl Display for RefutedPresentationDismissalError {
+
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let start = "attempted to mark a presentation as valid that was refuted for the following reasons: ".chars();
+    let continued = self
+      .categories
+      .iter()
+      .map(|category| category.description())
+      .flat_map(|description| description.chars().chain(", ".chars()));
+    let description: String = start.chain(continued).collect(); // contains ", " at the end which we don't want
+    let description_len = description.len();
+    write!(f, "{}", &description[..(description_len - 2)])
+  }
+}
+
+impl std::error::Error for RefutedPresentationDismissalError {}
 #[cfg(test)]
 mod tests {
   use super::*;
 
   #[test]
-  fn display_refuted_credential_dismissal_error() {
+  fn display_refuted_credential_dismissal_error_all_categories() {
     let categories: IndexSet<CredentialRefutationCategory> = [
-      CredentialRefutationCategory::InvalidCredentialSignature,
+      CredentialRefutationCategory::InvalidSignature,
       CredentialRefutationCategory::DeactivatedIssuerDocument,
       CredentialRefutationCategory::DeactivatedSubjectDocuments,
       CredentialRefutationCategory::Expired,
@@ -486,6 +529,16 @@ mod tests {
     .collect();
     let error = RefutedCredentialDismissalError { categories };
     let expected_str = "attempted to mark a credential as valid that was refuted for the following reasons: the signature does not match the expected value, the issuer's DID document is deactivated, contains subjects with deactivated DID documents, the expiry date is in the past, the activation date is in the future";
+    assert_eq!(expected_str, error.to_string());
+  }
+
+  #[test]
+  fn display_refuted_presentation_dismissal_error_refuted_credentials() {
+    let categories: IndexSet<PresentationRefutationCategory> = [
+      PresentationRefutationCategory::RefutedCredentials,
+    ].into_iter().collect();
+    let error = RefutedPresentationDismissalError {categories}; 
+    let expected_str = "attempted to mark a presentation as valid that was refuted for the following reasons: contains refuted credentials";
     assert_eq!(expected_str, error.to_string());
   }
 }

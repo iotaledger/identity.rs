@@ -8,4 +8,7 @@ pub use self::validator::CredentialValidator;
 pub use self::validator::DocumentValidation;
 pub use self::validator::PartialCredentialValidation;
 pub use self::validator::RefutedCredentialDismissalError;
+pub use self::validator::CredentialRefutationCategory;
+pub use self::validator::PresentationRefutationCategory; 
+pub use self::validator::RefutedPresentationDismissalError; 
 //pub use self::validator::PresentationValidation;
