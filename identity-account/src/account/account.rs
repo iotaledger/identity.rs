@@ -9,6 +9,7 @@ use serde::Serialize;
 
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
+use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
@@ -260,6 +261,33 @@ impl Account {
   pub async fn publish_with_options(&mut self, options: PublishOptions) -> Result<()> {
     self.publish_internal(true, options).await?;
 
+    Ok(())
+  }
+
+  /// Fetches the latest changes from the tangle and **overwrites** the local document.
+  ///
+  /// If a DID is managed from distributed accounts, this should be called before making changes
+  /// to the identity, to avoid publishing updates that would be ignored.
+  pub async fn fetch_state(&mut self) -> Result<()> {
+    let iota_did: &IotaDID = self.did();
+    let mut document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
+    // Checks if the local document is up to date
+    if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
+      && (document_chain.diff().is_empty()
+        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+    {
+      return Ok(());
+    }
+    // Overwrite the current state with the most recent document
+    self
+      .chain_state
+      .set_last_integration_message_id(*document_chain.integration_message_id());
+    self
+      .chain_state
+      .set_last_diff_message_id(*document_chain.diff_message_id());
+    std::mem::swap(self.state.document_mut(), &mut document_chain.current_mut().document);
+    self.increment_actions();
+    self.store_state().await?;
     Ok(())
   }
 
