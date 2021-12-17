@@ -112,11 +112,11 @@ jobs:
           echo UNRELATED_TAGS=$UNRELATED_TAGS
 
           # set variables
-          FIRST="--exclude-tags "
+          FIRST="--release-branch ${{ inputs.branch }} --exclude-tags "
           SECOND=$UNRELATED_TAGS
-          EXCLUDE_ARG=$FIRST$SECOND
-          echo EXCLUDE_ARG=$EXCLUDE_ARG
-          echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
+          OPTIONAL_ARG=$FIRST$SECOND
+          echo OPTIONAL_ARG=$OPTIONAL_ARG
+          echo OPTIONAL_ARG=$OPTIONAL_ARG >> $GITHUB_ENV
 
       - name: Run Changelog Generator
         uses: './.github/actions/release/changelog-generator'
@@ -125,7 +125,7 @@ jobs:
           changelog-path: ${{ inputs.changelog-path }}
           changelog-config-path: ${{ inputs.changelog-config-path }}
           future-release: ${{ env.HOTFIX_TAG }} 
-          optional-arg: ${{env.EXCLUDE_ARG}}
+          optional-arg: ${{env.OPTIONAL_ARG}}
 
       - name: Check Changelog For Modification
         run: |
