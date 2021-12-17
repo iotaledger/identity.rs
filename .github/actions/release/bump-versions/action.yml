@@ -1,0 +1,69 @@
+name: 'bump-versions'
+description: 'Bump project versions for the release target'
+inputs:
+  release-target:
+    description: "target of the release (rust|wasm)"
+    required: true
+  version:
+    description: "version to set (e.g. `1.2.3` or `1.2.3-dev.1`)"
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Rust stable toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Install cargo-workspaces
+      uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: --version ^0.2 cargo-workspaces
+
+    - name: Install cargo-edit # to use cargo add
+      uses: actions-rs/cargo@v1
+      if: ${{inputs.release-target == 'rust'}}
+      with:
+        command: install
+        args: -f --no-default-features --features "add" --version ^0.8 cargo-edit
+
+    - name: Replace identity version in Wasm bindings
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: bindings/wasm
+      run: |
+        cargo add identity@=${{ inputs.version }} --path=../../identity
+    
+    - name: Bump Rust crate version
+      shell: bash
+      # cargo-release creates a signed commit automatically
+      if: ${{inputs.release-target == 'rust'}}
+      run: |
+        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+
+    - name: Bump Wasm bindings crate version
+      shell: bash
+      # cargo-release creates a signed commit automatically
+      if: ${{inputs.release-target == 'wasm'}}
+      working-directory: bindings/wasm
+      run: |
+        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      if: ${{inputs.release-target == 'wasm'}}
+      with:
+        node-version: '16.x'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Bump Wasm npm package version
+      shell: bash
+      if: ${{inputs.release-target == 'wasm'}}
+      working-directory: bindings/wasm
+      run: |
+        npm version ${{ inputs.version }}

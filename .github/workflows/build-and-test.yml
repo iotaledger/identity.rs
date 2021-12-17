@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - epic/*
     paths:
       - '.github/workflows/build-and-test.yml'
       - '.github/actions'
@@ -164,7 +165,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 15.x
+          node-version: 16.x
 
       - name: Install wasm-pack
         run: npm install -g wasm-pack
