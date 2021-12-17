@@ -21,14 +21,13 @@ use crate::Result;
 
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::crypto::SignatureOptions;
 use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::tangle::Client;
-use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::Network;
@@ -392,7 +391,11 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       new_doc.metadata.previous_message_id = *account.chain_state().last_integration_message_id();
       new_doc.metadata.updated = Timestamp::now_utc();
       account
-        .sign(IotaDocument::DEFAULT_METHOD_FRAGMENT, &mut new_doc)
+        .sign(
+          IotaDocument::DEFAULT_METHOD_FRAGMENT,
+          &mut new_doc,
+          SignatureOptions::default(),
+        )
         .await
         .unwrap();
       client.publish_document(&new_doc).await.unwrap();
@@ -436,7 +439,11 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       )
       .unwrap();
       account
-        .sign(IotaDocument::DEFAULT_METHOD_FRAGMENT, &mut diff_msg)
+        .sign(
+          IotaDocument::DEFAULT_METHOD_FRAGMENT,
+          &mut diff_msg,
+          SignatureOptions::default(),
+        )
         .await
         .unwrap();
       client

@@ -41,7 +41,7 @@ impl WasmDocumentMetadata {
   /// Returns a reference to the `proof`.
   #[wasm_bindgen(getter)]
   pub fn proof(&self) -> Result<JsValue> {
-    match self.0.proof() {
+    match &self.0.proof {
       Some(proof) => JsValue::from_serde(proof).wasm_result(),
       None => Ok(JsValue::NULL),
     }
