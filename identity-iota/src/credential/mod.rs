@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod validator;
+mod refutation;
 
 pub use self::validator::CredentialValidation;
 pub use self::validator::CredentialValidator;
 pub use self::validator::DocumentValidation;
-pub use self::validator::PartialCredentialValidation;
-pub use self::validator::RefutedCredentialDismissalError;
-pub use self::validator::CredentialRefutationCategory;
-pub use self::validator::PresentationRefutationCategory; 
-pub use self::validator::RefutedPresentationDismissalError; 
+pub use self::validator::ProvisionalCredentialValidation;
+pub use self::refutation::RefutedCredentialDismissalError;
+pub use self::refutation::CredentialRefutationCategory;
+pub use self::refutation::PresentationRefutationCategory; 
+pub use self::refutation::RefutedPresentationDismissalError; 
 //pub use self::validator::PresentationValidation;

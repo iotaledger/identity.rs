@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
-use std::fmt::Display;
 use std::marker::PhantomData;
+use super::{RefutedCredentialDismissalError, RefutedPresentationDismissalError, CredentialRefutationCategory, PresentationRefutationCategory};
 
 use either::Either;
 use identity_core::common::Timestamp;
@@ -24,10 +24,10 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::TangleResolve;
 
-use self::private::Refuted;
-use self::private::Sealed;
-use self::private::Unspecified;
-use self::private::Verified;
+use self::document_state::Deactivated;
+use self::document_state::Sealed;
+use self::document_state::Unspecified;
+use self::document_state::Active;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PresentationValidation<T = Object, U = Object> {
@@ -37,24 +37,24 @@ pub struct PresentationValidation<T = Object, U = Object> {
   pub verified: bool,
 }
 
-mod private {
+mod document_state {
   pub trait Sealed {}
   #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-  pub struct Verified;
+  pub struct Active;
   #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-  pub struct Refuted;
+  pub struct Deactivated;
 
   #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
   pub struct Unspecified;
 
-  impl Sealed for Verified {}
-  impl Sealed for Refuted {}
+  impl Sealed for Active {}
+  impl Sealed for Deactivated {}
   impl Sealed for Unspecified {}
 }
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DocumentValidation<T = private::Verified>
+pub struct DocumentValidation<T = document_state::Active>
 where
-  T: private::Sealed,
+  T: document_state::Sealed,
 {
   pub did: IotaDID,
   pub document: ResolvedIotaDocument,
@@ -65,19 +65,19 @@ where
 #[derive(Clone, Debug, PartialEq, Serialize)]
 /// A credential validation that may or may not have been completely successful
 // todo: Add more explanations here
-pub struct PartialCredentialValidation<Filter = Unspecified, T = Object>
+pub struct ProvisionalCredentialValidation<Filter = Unspecified, T = Object>
 where
-  Filter: private::Sealed,
+  Filter: document_state::Sealed,
 {
   pub credential: Credential<T>,
-  issuer: Either<DocumentValidation<Verified>, DocumentValidation<Refuted>>,
-  verified_subjects: Option<BTreeMap<String, DocumentValidation<Verified>>>,
-  refuted_subjects: Option<BTreeMap<String, DocumentValidation<Refuted>>>,
+  issuer: Either<DocumentValidation<Active>, DocumentValidation<Deactivated>>,
+  verified_subjects: Option<BTreeMap<String, DocumentValidation<Active>>>,
+  refuted_subjects: Option<BTreeMap<String, DocumentValidation<Deactivated>>>,
   encountered_refutation_categories: IndexSet<CredentialRefutationCategory>,
   _marker: PhantomData<Filter>,
 }
 
-impl<Filter: Sealed, T> PartialCredentialValidation<Filter, T> {
+impl<Filter: Sealed, T> ProvisionalCredentialValidation<Filter, T> {
   pub fn successful_validation(&self) -> bool {
     self.encountered_refutation_categories.len() == 0
   }
@@ -88,7 +88,7 @@ impl<Filter: Sealed, T> PartialCredentialValidation<Filter, T> {
       .contains(&CredentialRefutationCategory::InvalidSignature)
   }
 
-  pub fn with_verified_filter(self) -> PartialCredentialValidation<Verified, T> {
+  pub fn with_active_document_filter(self) -> ProvisionalCredentialValidation<Active, T> {
     let Self {
       credential,
       issuer,
@@ -97,17 +97,17 @@ impl<Filter: Sealed, T> PartialCredentialValidation<Filter, T> {
       encountered_refutation_categories: encountered_error_categories,
       ..
     } = self;
-    PartialCredentialValidation::<Verified, T> {
+    ProvisionalCredentialValidation::<Active, T> {
       credential,
       issuer,
       verified_subjects,
       refuted_subjects: unverified_subjects,
       encountered_refutation_categories: encountered_error_categories,
-      _marker: PhantomData::<Verified>,
+      _marker: PhantomData::<Active>,
     }
   }
 
-  pub fn with_refuted_filter(self) -> PartialCredentialValidation<Refuted, T> {
+  pub fn with_deactivated_document_filter(self) -> ProvisionalCredentialValidation<Deactivated, T> {
     let Self {
       credential,
       issuer,
@@ -116,13 +116,13 @@ impl<Filter: Sealed, T> PartialCredentialValidation<Filter, T> {
       encountered_refutation_categories: encountered_error_categories,
       ..
     } = self;
-    PartialCredentialValidation::<Refuted, T> {
+    ProvisionalCredentialValidation::<Deactivated, T> {
       credential,
       issuer,
       verified_subjects,
       refuted_subjects: unverified_subjects,
       encountered_refutation_categories: encountered_error_categories,
-      _marker: PhantomData::<Refuted>,
+      _marker: PhantomData::<Deactivated>,
     }
   }
 
@@ -131,8 +131,8 @@ impl<Filter: Sealed, T> PartialCredentialValidation<Filter, T> {
   }
 }
 
-impl PartialCredentialValidation<Verified> {
-  pub fn issuer(&self) -> Option<&DocumentValidation<Verified>> {
+impl ProvisionalCredentialValidation<Active> {
+  pub fn issuer(&self) -> Option<&DocumentValidation<Active>> {
     if let Either::Left(ref document_validation) = &self.issuer {
       Some(&document_validation)
     } else {
@@ -140,13 +140,13 @@ impl PartialCredentialValidation<Verified> {
     }
   }
 
-  pub fn subjects(&self) -> Option<&BTreeMap<String, DocumentValidation<Verified>>> {
+  pub fn subjects(&self) -> Option<&BTreeMap<String, DocumentValidation<Active>>> {
     self.verified_subjects.as_ref()
   }
 }
 
-impl PartialCredentialValidation<Refuted> {
-  pub fn issuer(&self) -> Option<&DocumentValidation<Refuted>> {
+impl ProvisionalCredentialValidation<Deactivated> {
+  pub fn issuer(&self) -> Option<&DocumentValidation<Deactivated>> {
     if let Either::Right(ref document_validation) = &self.issuer {
       Some(&document_validation)
     } else {
@@ -154,7 +154,7 @@ impl PartialCredentialValidation<Refuted> {
     }
   }
 
-  pub fn subjects(&self) -> Option<&BTreeMap<String, DocumentValidation<Refuted>>> {
+  pub fn subjects(&self) -> Option<&BTreeMap<String, DocumentValidation<Deactivated>>> {
     self.refuted_subjects.as_ref()
   }
 }
@@ -166,11 +166,11 @@ pub struct CredentialValidation<T = Object> {
   pub subjects: BTreeMap<String, DocumentValidation>,
 }
 
-impl<Filter: private::Sealed, T> TryFrom<PartialCredentialValidation<Filter, T>> for CredentialValidation<T> {
+impl<Filter: document_state::Sealed, T> TryFrom<ProvisionalCredentialValidation<Filter, T>> for CredentialValidation<T> {
   type Error = Error; // will change Error with RefutedCredentialDismissalError when we get round to fixing the errors in this crate
-  fn try_from(partial_credential_validation: PartialCredentialValidation<Filter, T>) -> Result<Self, Self::Error> {
+  fn try_from(partial_credential_validation: ProvisionalCredentialValidation<Filter, T>) -> Result<Self, Self::Error> {
     if partial_credential_validation.successful_validation() {
-      let PartialCredentialValidation::<Filter, T> {
+      let ProvisionalCredentialValidation::<Filter, T> {
         credential,
         issuer,
         verified_subjects,
@@ -197,6 +197,10 @@ impl<Filter: private::Sealed, T> TryFrom<PartialCredentialValidation<Filter, T>>
   }
 }
 
+pub struct ProvisionalPresentationValidation<Filter, T = Object, U = Object> {
+  pub presentation: Presentation<T,U>, 
+  _marker: PhantomData<Filter>,
+}
 #[derive(Clone, Copy, Debug)]
 pub struct CredentialValidator<'a, R: TangleResolve = Client> {
   client: &'a R,
@@ -246,7 +250,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     &self,
     credential: Credential<T>,
     options: VerifierOptions,
-  ) -> Result<PartialCredentialValidation<Unspecified, T>>
+  ) -> Result<ProvisionalCredentialValidation<Unspecified, T>>
   where
     T: Serialize,
   {
@@ -268,8 +272,8 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       }
     };
 
-    let mut verified_subjects: BTreeMap<String, DocumentValidation<Verified>> = BTreeMap::new();
-    let mut refuted_subjects: BTreeMap<String, DocumentValidation<Refuted>> = BTreeMap::new();
+    let mut verified_subjects: BTreeMap<String, DocumentValidation<Active>> = BTreeMap::new();
+    let mut refuted_subjects: BTreeMap<String, DocumentValidation<Deactivated>> = BTreeMap::new();
 
     // Resolve all credential subjects with `id`s - we assume all ids are DIDs.
     for id in credential
@@ -325,7 +329,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     } else {
       None
     };
-    Ok(PartialCredentialValidation {
+    Ok(ProvisionalCredentialValidation {
       credential,
       issuer,
       verified_subjects,
@@ -395,7 +399,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   async fn validate_document(
     &self,
     did: impl AsRef<str>,
-  ) -> Result<Either<DocumentValidation<Verified>, DocumentValidation<Refuted>>> {
+  ) -> Result<Either<DocumentValidation<Active>, DocumentValidation<Deactivated>>> {
     let did: IotaDID = did.as_ref().parse()?;
     let document: ResolvedIotaDocument = self.client.resolve(&did).await?;
     // TODO: check if document is deactivated, does that matter? If it does then we return the Right variant
@@ -403,142 +407,21 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     #[cfg(test)]
     {
       if document.document.methods().nth(0).is_none() {
-        return Ok(Either::Right(DocumentValidation::<Refuted> {
+        return Ok(Either::Right(DocumentValidation::<Deactivated> {
           did,
           document,
           metadata: Object::new(),
-          _marker: PhantomData::<Refuted>,
+          _marker: PhantomData::<Deactivated>,
         }));
       }
     }
-    Ok(Either::Left(DocumentValidation::<Verified> {
+    Ok(Either::Left(DocumentValidation::<Active> {
       did,
       document,
       metadata: Object::new(),
-      _marker: PhantomData::<Verified>,
+      _marker: PhantomData::<Active>,
     }))
   }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
-#[non_exhaustive]
-pub enum CredentialRefutationCategory {
-  /// The credential's signature does not match the expected value
-  InvalidSignature,
-  #[doc(hidden)]
-  /// The issuers document is deactivated
-  DeactivatedIssuerDocument,
-  #[doc(hidden)]
-  /// At least one subject document is deactivated
-  DeactivatedSubjectDocuments,
-  /// The credential has expired
-  Expired,
-  /// The credential has not yet become active
-  // (issuance_date is in the future)
-  Dormant,
-}
 
-impl CredentialRefutationCategory {
-  /// Provides a description of the category
-  pub fn description(&self) -> &str {
-    match self {
-      &Self::InvalidSignature => "the signature does not match the expected value",
-      &Self::DeactivatedIssuerDocument => "the issuer's DID document is deactivated",
-      &Self::DeactivatedSubjectDocuments => "contains subjects with deactivated DID documents",
-      &Self::Expired => "the expiry date is in the past",
-      &Self::Dormant => "the activation date is in the future",
-    }
-  }
-}
-
-
-#[derive(Debug)]
-pub struct RefutedCredentialDismissalError {
-  categories: IndexSet<CredentialRefutationCategory>,
-}
-
-impl Display for RefutedCredentialDismissalError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let start = "attempted to mark a credential as valid that was refuted for the following reasons: ".chars();
-    let continued = self
-      .categories
-      .iter()
-      .map(|category| category.description())
-      .flat_map(|description| description.chars().chain(", ".chars()));
-    let description: String = start.chain(continued).collect(); // contains ", " at the end which we don't want
-    let description_len = description.len();
-    write!(f, "{}", &description[..(description_len - 2)])
-  }
-}
-
-impl std::error::Error for RefutedCredentialDismissalError {}
-
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
-pub enum PresentationRefutationCategory {
-  /// The presentation's signature does not match the expected value 
-  InvalidSignature,
-  /// The presentiation contains at least one refuted credential 
-  RefutedCredentials,  
-}
-
-impl PresentationRefutationCategory {
-  pub fn description(&self) -> &str {
-    match self {
-      &Self::InvalidSignature => "the signature does not match the expected value", 
-      &Self::RefutedCredentials => "contains refuted credentials",  
-    }
-  }
-}
-
-
-#[derive(Debug)]
-pub struct RefutedPresentationDismissalError {
-  categories: IndexSet<PresentationRefutationCategory>,
-}
-
-impl Display for RefutedPresentationDismissalError {
-
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let start = "attempted to mark a presentation as valid that was refuted for the following reasons: ".chars();
-    let continued = self
-      .categories
-      .iter()
-      .map(|category| category.description())
-      .flat_map(|description| description.chars().chain(", ".chars()));
-    let description: String = start.chain(continued).collect(); // contains ", " at the end which we don't want
-    let description_len = description.len();
-    write!(f, "{}", &description[..(description_len - 2)])
-  }
-}
-
-impl std::error::Error for RefutedPresentationDismissalError {}
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn display_refuted_credential_dismissal_error_all_categories() {
-    let categories: IndexSet<CredentialRefutationCategory> = [
-      CredentialRefutationCategory::InvalidSignature,
-      CredentialRefutationCategory::DeactivatedIssuerDocument,
-      CredentialRefutationCategory::DeactivatedSubjectDocuments,
-      CredentialRefutationCategory::Expired,
-      CredentialRefutationCategory::Dormant,
-    ]
-    .into_iter()
-    .collect();
-    let error = RefutedCredentialDismissalError { categories };
-    let expected_str = "attempted to mark a credential as valid that was refuted for the following reasons: the signature does not match the expected value, the issuer's DID document is deactivated, contains subjects with deactivated DID documents, the expiry date is in the past, the activation date is in the future";
-    assert_eq!(expected_str, error.to_string());
-  }
-
-  #[test]
-  fn display_refuted_presentation_dismissal_error_refuted_credentials() {
-    let categories: IndexSet<PresentationRefutationCategory> = [
-      PresentationRefutationCategory::RefutedCredentials,
-    ].into_iter().collect();
-    let error = RefutedPresentationDismissalError {categories}; 
-    let expected_str = "attempted to mark a presentation as valid that was refuted for the following reasons: contains refuted credentials";
-    assert_eq!(expected_str, error.to_string());
-  }
-}
