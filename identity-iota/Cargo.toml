@@ -15,11 +15,13 @@ async-trait = { version = "0.1", default-features = false }
 bee-rest-api = { version = "0.1.7", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
+either = { version = "1.6.1", default-features = false, features = ["serde"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.5.0-dev.1", path = "../identity-core" }
 identity-credential = { version = "=0.5.0-dev.1", path = "../identity-credential" }
 identity-did = { version = "=0.5.0-dev.1", path = "../identity-did" }
+indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -28,8 +30,6 @@ num-traits = { version = "0.2", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-either =  {version = "1.6.1", default-features = false, features = ["serde"]}
-indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"

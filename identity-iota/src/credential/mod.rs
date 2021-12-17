@@ -4,8 +4,8 @@
 mod validator;
 
 pub use self::validator::CredentialValidation;
-pub use self::validator::RefutedCredentialDismissalError; 
-//pub use self::validator::CredentialValidator;
+pub use self::validator::CredentialValidator;
 pub use self::validator::DocumentValidation;
 pub use self::validator::PartialCredentialValidation;
+pub use self::validator::RefutedCredentialDismissalError;
 //pub use self::validator::PresentationValidation;
