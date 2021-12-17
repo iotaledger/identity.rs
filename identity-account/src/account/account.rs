@@ -258,8 +258,10 @@ impl Account {
     Ok(())
   }
 
-  /// Fetches the latest changes for the account did from the tangle and
-  /// updates the local state
+  /// Fetches the latest changes from the tangle and **overwrites** the local document.
+  ///
+  /// If a DID is managed from distributed accounts, this should be called before making changes
+  /// to the identity, to avoid publishing updates that would be ignored.
   pub async fn fetch_state(&mut self) -> Result<()> {
     let iota_did: &IotaDID = self.did();
     let mut document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
@@ -278,7 +280,8 @@ impl Account {
       .chain_state
       .set_last_diff_message_id(*document_chain.diff_message_id());
     std::mem::swap(self.state.document_mut(), &mut document_chain.current_mut().document);
-    self.save(true).await?;
+    self.increment_actions();
+    self.store_state().await?;
     Ok(())
   }
 

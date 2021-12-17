@@ -9,6 +9,8 @@ use crate::account::Account;
 use crate::account::AccountBuilder;
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
+use crate::account::AccountStorage;
+use crate::account::AutoSave;
 use crate::account::PublishOptions;
 use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
@@ -341,18 +343,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
   network_resilient_test(2, |n| {
     Box::pin(async move {
       let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
-      let config = AccountConfig::default().autopublish(false);
-      let account_config = AccountSetup::new_with_options(
-        Arc::new(MemStore::new()),
-        Some(config),
-        Some(Arc::new(
-          ClientMap::from_builder(ClientBuilder::new().network(network.clone()))
-            .await
-            .unwrap(),
-        )),
-      );
-      let mut account =
-        Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap()).await?;
+      let mut account = create_account(network).await;
 
       // Case 0: Since nothing has been published to the tangle, read_document must return DID not found
       assert!(account.fetch_state().await.is_err());
@@ -391,14 +382,7 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
   network_resilient_test(2, |n| {
     Box::pin(async move {
       let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
-      let config = AccountConfig::default().autopublish(false);
-      let account_config = AccountSetup::new_with_options(
-        Arc::new(MemStore::new()),
-        Some(config),
-        Some(Arc::new(ClientMap::from_network(network.clone()).await.unwrap())),
-      );
-      let mut account =
-        Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap()).await?;
+      let mut account = create_account(network.clone()).await;
       account.publish().await.unwrap();
 
       let client: Client = Client::from_network(network).await.unwrap();
@@ -422,6 +406,9 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
         chain.integration_message_id()
       );
       assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
+      // Ensure state was written into storage.
+      let storage_state: IdentityState = account.load_state().await?;
+      assert_eq!(&storage_state, account.state());
       Ok(())
     })
   })
@@ -434,14 +421,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
   network_resilient_test(2, |n| {
     Box::pin(async move {
       let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
-      let config = AccountConfig::default().autopublish(false);
-      let account_config = AccountSetup::new_with_options(
-        Arc::new(MemStore::new()),
-        Some(config),
-        Some(Arc::new(ClientMap::from_network(network.clone()).await.unwrap())),
-      );
-      let mut account =
-        Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap()).await?;
+      let mut account = create_account(network.clone()).await;
       account.publish().await.unwrap();
 
       let client: Client = Client::from_network(network).await.unwrap();
@@ -474,11 +454,29 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
         account.chain_state().last_integration_message_id()
       );
       assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
+      // Ensure state was written into storage.
+      let storage_state: IdentityState = account.load_state().await?;
+      assert_eq!(&storage_state, account.state());
       Ok(())
     })
   })
   .await?;
   Ok(())
+}
+
+async fn create_account(network: Network) -> Account {
+  Account::builder()
+    .storage(AccountStorage::Stronghold(
+      "./example-strong.hodl".into(),
+      Some("my-password".into()),
+      None,
+    ))
+    .autopublish(false)
+    .autosave(AutoSave::Every)
+    .client(network.clone(), |builder| builder.network(network.clone()))
+    .create_identity(IdentitySetup::new().network(network.name()).unwrap())
+    .await
+    .unwrap()
 }
 
 // Repeats the test in the closure `test_runs` number of times.
