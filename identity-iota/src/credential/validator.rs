@@ -143,7 +143,7 @@ impl<Filter: private::Sealed, T> TryFrom<PartialCredentialValidation<Filter, T>>
         let PartialCredentialValidation::<Filter, T> {credential, issuer, verified_subjects,  ..} = partial_credential_validation; 
         // use of expect below is okay, the constructor ensures that if any refuted documents were encountered then the successful_validation method returns false
         // once the error refactor gets merged we could consider using the FatalError type here instead. 
-        let issuer = issuer.left().expect("unexpected deactivated issuer document in successfully validated credential. Please report this bug!"); 
+        let issuer = issuer.expect_left("unexpected deactivated issuer document in successfully validated credential. Please report this bug!"); 
         Ok(Self{credential, issuer, subjects: verified_subjects.expect("unexpected deactivated subject document(s) in succesfully validated credential. Please report this bug!")})
       } else {
         Err(Self::Error::from(RefutedCredentialDismissalError{ categories: partial_credential_validation.encountered_refutation_categories}))
@@ -224,10 +224,14 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       .filter_map(|subject| subject.id.as_ref())
     {
       //subjects.insert(id.to_string(), self.validate_document(id.as_str()).await?);
-      match self.validate_document(id.as_str()).await?{
-        Either::Left(verified_subject_document) => {verified_subjects.insert(id.to_string(), verified_subject_document); ()} , 
-        Either::Right(refuted_subject_document) => {refuted_subjects.insert(id.to_string(), refuted_subject_document); encountered_refutation_categories.insert(CredentialRefutationCategory::InvalidSubjectDocuments);()},
-      };
+      let validated_document = self.validate_document(id.as_str()).await?; 
+      if let Either::Left(verified_subject_document) = validated_document {
+        verified_subjects.insert(id.to_string(), verified_subject_document);
+      } 
+      if let Either::Right(refuted_subject_document) = validated_document {
+        refuted_subjects.insert(id.to_string(), refuted_subject_document); 
+        encountered_refutation_categories.insert(CredentialRefutationCategory::InvalidSubjectDocuments);
+      }
     }
 
 
@@ -328,10 +332,10 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
 pub enum CredentialRefutationCategory {
   /// The credential signature does not match the expected value 
   InvalidCredentialSignature,
-  /// At least one subject document is not verified 
-  InvalidSubjectDocuments,
   /// The issuers document is not verified 
   InvalidIssuerDocument,
+  /// At least one subject document is not verified 
+  InvalidSubjectDocuments,
   /// The credential has expired 
   Expired, 
   /// The credential has not yet become active 
@@ -344,8 +348,8 @@ impl CredentialRefutationCategory {
   pub fn description(&self) -> &str {
     match self {
       &Self::InvalidCredentialSignature => "the signature does not match the expected value", 
-      &Self::InvalidSubjectDocuments => "contains subjects with deactivated DID documents", 
       &Self::InvalidIssuerDocument => "the issuer's DID document is deactivated",
+      &Self::InvalidSubjectDocuments => "contains subjects with deactivated DID documents", 
       &Self::Expired => "the expiry date is in the past", 
       &Self::Dormant => "the activation date is in the future", 
     }
