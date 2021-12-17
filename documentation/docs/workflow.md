@@ -22,7 +22,7 @@ Any code written should frequently be committed and pushed back to the GitHub br
 
 Other contributors are encouraged to provide feedback on a PR during its development. A PR should be flagged as 'ready for review' once the PR has implemented all changes and no further commits are planned by the main contributors. The repository requires a review to be provided by at least one (other) developer in the team that works in the same language or has knowledge of the work before it can be merged. For larger PRs the review of two maintainers is recommended.
 
-Once a PR is approved, the preferred method is "squash-and-merge" to keep the destination branch clean and allow many small commits while work is in-progress. Once merged in, the source branch may be deleted.
+Once a PR is approved, the preferred method is "squash-and-merge" for non-epic branches to keep the destination branch clean and allow many small commits while work is in-progress. Epic branches must be merged with the merge commits of included PRs intact, so the [changelog generator](#Changelog) can detect included changes. Once merged in, the source branch may be deleted.
 
 ### Branches
 IOTA Identity always has two permanent branches: `main` and `dev`. Both branches are protected and disallow direct commits; the only changes allowed are from pull requests approved and merged by maintainers.
@@ -48,7 +48,7 @@ Singular PR contributions should create either a `feat`, `doc`, `chore`, or `fix
 It is recommended to integrate `dev` or `epic` regularly, depending on from where the branch started, to reduce the possibility and potential size of merge conflicts.
 
 #### Epic (epic/)
-Long-lived `epic` branches should be created as soon as a feature is expected to require more than one PR. The `epic` branch should be branched from `dev` and should only accept merges that are related to the feature being developed. A PR should be opened as soon as the branch is created to publicly notify contributors about the development, the goals and requirements of the feature and the existence of the branch. It is recommended to integrate `dev` often to reduce the possibility and potential size of merge conflicts.
+Long-lived `epic` branches should be created as soon as a feature is expected to require more than one PR. The `epic` branch should be branched from `dev` and should only accept merges that are related to the feature being developed. A PR should be opened as soon as the branch is created to publicly notify contributors about the development, the goals and requirements of the feature and the existence of the branch. It is recommended to integrate `dev` often to reduce the possibility and potential size of merge conflicts. When finishing an epic branch the branch must not be squash-merged, otherwise the [changelog process](#Changelog) will not detect included PRs.
 
 ### Semantic Versioning
 Semantic Versioning (SemVer) describes a methodology for versioning of software to convey meaning and guarantees through the version string. A typical version string looks like `2.3.1`, where `2` is called the major version, `3` the minor version and `1` the patch or bugfix version. 
