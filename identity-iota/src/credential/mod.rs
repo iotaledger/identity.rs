@@ -11,5 +11,5 @@ pub use self::validator::ProvisionalCredentialValidation;
 pub use self::refutation::RefutedCredentialDismissalError;
 pub use self::refutation::CredentialRefutationCategory;
 pub use self::refutation::PresentationRefutationCategory; 
-pub use self::refutation::RefutedPresentationDismissalError; 
+//pub use self::refutation::RefutedPresentationDismissalError; 
 //pub use self::validator::PresentationValidation;
