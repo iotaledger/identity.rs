@@ -3,11 +3,12 @@
 
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
+use std::ops::ControlFlow;
 use super::refutation::CredentialRefutations;
 use super::{RefutedCredentialDismissalError, CredentialRefutationCategory, PresentationRefutationCategory};
 
 use either::Either;
-use identity_core::common::Timestamp;
+use identity_core::common::{Timestamp, Url};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -57,75 +58,36 @@ where
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 /// A credential validation that may or may not have been completely successful
-pub struct ProvisionalCredentialValidation<T = Object>
+pub struct CredentialValidation<T = Object>
 where
 {
   pub credential: Credential<T>,
-  issuer: DocumentValidation<Active>,
-  active_subject_documents: Option<BTreeMap<String, DocumentValidation<Active>>>,
+  pub issuer: DocumentValidation<Active>,
+  pub active_subject_documents: Option<BTreeMap<String, DocumentValidation<Active>>>,
   deactivated_subject_documents: Option<BTreeMap<String, DocumentValidation<Deactivated>>>,
   encountered_refutation_categories: CredentialRefutations,
 }
 
-impl<T> ProvisionalCredentialValidation<T> {
-  pub fn successful_validation(&self) -> bool {
+impl<T> CredentialValidation<T> {
+  /// Returns true if this credential would have been successfully validated with the strictest credential validation options
+  pub fn full_validation(&self) -> bool {
     self.encountered_refutation_categories.count() == 0
   }
 
+  /// An iterator over the encountered refutation categories that were tolerated due to the choice of credential validation options
   pub fn encountered_refutation_categories(&self) -> impl Iterator<Item = CredentialRefutationCategory> + '_ {
     self.encountered_refutation_categories.iter()
   }
 }
 
-impl ProvisionalCredentialValidation {
-  pub fn issuer(&self) -> &DocumentValidation<Active> {
-    &self.issuer 
-  }
-
-  pub fn active_subject_documents(&self) -> Option<&BTreeMap<String, DocumentValidation<Active>>> {
-    self.active_subject_documents.as_ref()
-  }
-
+impl CredentialValidation {
+  #[doc(hidden)]
+  /// Gets the credentials deactivated resolved documents that were tolerated due to the choice of validation options
   pub fn deactivated_subject_documents(&self) -> Option<&BTreeMap<String, DocumentValidation<Deactivated>>> {
     self.deactivated_subject_documents.as_ref()
   }
 }
 
-
-#[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CredentialValidation<T = Object> {
-  pub credential: Credential<T>,
-  pub issuer: DocumentValidation,
-  pub subjects: BTreeMap<String, DocumentValidation>,
-}
-
-impl<T> TryFrom<ProvisionalCredentialValidation<T>> for CredentialValidation<T> {
-  type Error = Error; // will change Error with RefutedCredentialDismissalError when we get round to fixing the errors in this crate
-  fn try_from(partial_credential_validation: ProvisionalCredentialValidation<T>) -> Result<Self, Self::Error> {
-    if partial_credential_validation.successful_validation() {
-      let ProvisionalCredentialValidation::<T> {
-        credential,
-        issuer,
-        active_subject_documents: verified_subjects,
-        ..
-      } = partial_credential_validation;
-      // use of expect below is okay, the constructor ensures that if any refuted documents were encountered then the
-      // successful_validation method returns false once the error refactor gets merged we could consider using
-      // the FatalError type here instead.
-      Ok(Self {
-        credential,
-        issuer,
-        subjects: verified_subjects.expect(
-          "unexpected deactivated subject document(s) in successfully validated credential. Please report this bug!",
-        ),
-      })
-    } else {
-      Err(Self::Error::from(RefutedCredentialDismissalError {
-        categories: partial_credential_validation.encountered_refutation_categories,
-      }))
-    }
-  }
-}
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PresentationValidation<T = Object, U = Object> {
@@ -136,6 +98,21 @@ pub struct PresentationValidation<T = Object, U = Object> {
 }
 
 
+// used internally during credential validation 
+enum CredentialRefutationEvent<'a> {
+  DeactivatedSubjectDocument((&'a Url,DocumentValidation<Deactivated>)), 
+  Expired(Timestamp),
+  Dormant(Timestamp), 
+}
+impl CredentialRefutationEvent<'_> {
+  fn associated_category(&self) -> CredentialRefutationCategory {
+    match self {
+      &Self::DeactivatedSubjectDocument(_) => CredentialRefutationCategory::DeactivatedSubjectDocuments, 
+      &Self::Expired(_) => CredentialRefutationCategory::Expired, 
+      &Self::Dormant(_) => CredentialRefutationCategory::Dormant, 
+    }
+  }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct CredentialValidator<'a, R: TangleResolve = Client> {
@@ -186,22 +163,58 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     &self,
     credential: Credential<T>,
     options: VerifierOptions,
-  ) -> Result<ProvisionalCredentialValidation<T>>
+  ) -> Result<CredentialValidation<T>>
   where
     T: Serialize,
   {
-    // possible forms of refutation we may encounter
+    
     let mut encountered_refutation_categories = CredentialRefutations::empty();
+    let mut deactivated_subject_documents: BTreeMap<String, DocumentValidation<Deactivated>> = BTreeMap::new();
+    let mut f = |event: CredentialRefutationEvent<'_>| -> Result<()> {
+      match event {
+        CredentialRefutationEvent::DeactivatedSubjectDocument((id, document)) => {
+          deactivated_subject_documents.insert(id.to_string(), document); Ok(())
+        }, 
+        CredentialRefutationEvent::Dormant(_) => { encountered_refutation_categories.insert(CredentialRefutationCategory::Dormant); Ok(())}, 
+        CredentialRefutationEvent::Expired(_) => {encountered_refutation_categories.insert(CredentialRefutationCategory::Expired); Ok(())}
+      }
+    }; 
+    let CredentialValidation { 
+      credential, 
+      issuer, 
+      active_subject_documents, 
+      ..} = self.validate_credential_early_exit(credential, options, f).await?; 
 
-    // Resolve the issuer DID Document and validate the digital signature.
+      let deactivated_subject_documents = if deactivated_subject_documents.len() > 0 {
+        Some(deactivated_subject_documents)
+      } else {
+        None
+      };
+      Ok(
+        CredentialValidation{
+          credential,
+          issuer,
+          active_subject_documents,
+          deactivated_subject_documents,
+          encountered_refutation_categories,
+        }
+      )
+  }
+
+  async fn validate_credential_early_exit<T: Serialize, F: FnMut(CredentialRefutationEvent)->Result<()>>(
+    &self, 
+    credential: Credential<T>,
+    options: VerifierOptions,
+    mut f: F) -> Result<CredentialValidation<T>>
+    {
+       // Resolve the issuer DID Document and validate the digital signature.
     let issuer_url: &str = credential.issuer.url().as_str();
     // if the issuer's DID document is deactivated then the signature cannot be valid
-    let issuer = self.validate_document(issuer_url).await?.left().ok_or(identity_did::Error::InvalidSignature("method not found"))?; 
-
-    let mut verified_subjects: BTreeMap<String, DocumentValidation<Active>> = BTreeMap::new();
-    let mut refuted_subjects: BTreeMap<String, DocumentValidation<Deactivated>> = BTreeMap::new();
+    let issuer = self.validate_document(issuer_url).await?.left().ok_or(identity_did::Error::InvalidSignature("method not found"))?;
 
     // Resolve all credential subjects with `id`s - we assume all ids are DIDs.
+    let mut verified_subjects: BTreeMap<String, DocumentValidation<Active>> = BTreeMap::new();
+
     for id in credential
       .credential_subject
       .iter()
@@ -211,12 +224,12 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       if let Either::Left(verified_subject_document) = validated_document {
         verified_subjects.insert(id.to_string(), verified_subject_document);
       } else if let Either::Right(refuted_subject_document) = validated_document {
-        refuted_subjects.insert(id.to_string(), refuted_subject_document);
-        encountered_refutation_categories.insert(CredentialRefutationCategory::DeactivatedSubjectDocuments);
+        f(CredentialRefutationEvent::DeactivatedSubjectDocument((id,refuted_subject_document)))?;
+          //return Err(Error::IntolerableCredentialRefutation(event.associated_category())); 
       }
     }
 
-    // Verify the credential signature using the issuers DID Document
+     // Verify the credential signature using the issuers DID Document
     // If the issuer document is deactivated then we may immediately refute the credentials signature
     issuer.document
         .document
@@ -225,34 +238,31 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     // Verify the expiration date
     if let Some(expiration_date) = credential.expiration_date {
       if Timestamp::now_utc() > expiration_date {
-        encountered_refutation_categories.insert(CredentialRefutationCategory::Expired);
+        f(CredentialRefutationEvent::Expired(expiration_date))?;
+        // encountered_refutation_categories.insert(CredentialRefutationCategory::Expired);
       }
     }
 
     // Verify that the credential has been activated
     if Timestamp::now_utc() < credential.issuance_date {
-      encountered_refutation_categories.insert(CredentialRefutationCategory::Dormant);
+      f(CredentialRefutationEvent::Dormant(credential.issuance_date))?;
+      // encountered_refutation_categories.insert(CredentialRefutationCategory::Dormant);
     }
 
-    // transform the data into the required formats
+    // transform the data into the required formats and return the best case scenario from this function 
     let verified_subjects = if verified_subjects.len() > 0 {
       Some(verified_subjects)
     } else {
       None
     };
-    let refuted_subjects = if refuted_subjects.len() > 0 {
-      Some(refuted_subjects)
-    } else {
-      None
-    };
-    Ok(ProvisionalCredentialValidation {
+    Ok(CredentialValidation {
       credential,
       issuer,
       active_subject_documents: verified_subjects,
-      deactivated_subject_documents: refuted_subjects,
-      encountered_refutation_categories,
+      deactivated_subject_documents: None,
+      encountered_refutation_categories: CredentialRefutations::empty(),
     })
-  }
+    }
 
   /// Validates the `Presentation` proof and all relevant DID documents.
   ///
@@ -338,5 +348,3 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }))
   }
 }
-
-

@@ -17,7 +17,6 @@ pub enum CredentialRefutationCategory {
   Dormant = 2,
 }
 
-
 impl CredentialRefutationCategory {
 
   /// Provides a description of the category
