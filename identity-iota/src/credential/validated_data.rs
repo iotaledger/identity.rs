@@ -4,6 +4,7 @@
 use self::document_state::Active;
 use self::document_state::Deactivated;
 use serde::Serialize;
+use serde::ser::SerializeStruct;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
@@ -27,7 +28,7 @@ pub(super) mod document_state {
   impl Sealed for Active {}
   impl Sealed for Deactivated {}
 }
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DocumentValidation<T>
 where
   T: document_state::Sealed,
@@ -36,6 +37,33 @@ where
   pub document: ResolvedIotaDocument,
   pub metadata: Object,
   pub(super) _marker: PhantomData<T>,
+}
+
+// Now some workarounds for backward compatibility with the Wasm bindings until we get round to implementing the changes there too. 
+impl Serialize for DocumentValidation<Active> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+          S: serde::Serializer {
+      let mut state = serializer.serialize_struct("DocumentValidation", 4)?;
+      state.serialize_field("did", &self.did);
+      state.serialize_field("document", &self.document);
+      state.serialize_field("metadata", &self.metadata); 
+      state.serialize_field("verified", &true); 
+      state.end()
+  }
+}
+
+impl Serialize for DocumentValidation<Deactivated> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+          S: serde::Serializer {
+      let mut state = serializer.serialize_struct("DocumentValidation", 4)?;
+      state.serialize_field("did", &self.did);
+      state.serialize_field("document", &self.document);
+      state.serialize_field("metadata", &self.metadata); 
+      state.serialize_field("verified", &false); 
+      state.end()
+  }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
