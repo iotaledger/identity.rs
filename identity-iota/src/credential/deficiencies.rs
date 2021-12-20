@@ -132,7 +132,7 @@ mod tests {
   }
 
   #[test]
-  fn credential_deficiencies_iterator_roundtrip() {
+  fn credential_deficiency_set_iterator_roundtrip() {
     let categories = [
       CredentialDeficiency::DeactivatedSubjectDocuments,
       CredentialDeficiency::Dormant,
