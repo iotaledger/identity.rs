@@ -50,8 +50,8 @@ impl CredentialDeficiencySet {
   /// Adds a value to the set.
   /// If the set did not have this value present, `true` is returned.
   /// If the set did have this value present, `false` is returned.
-  pub fn insert(&mut self, category: CredentialDeficiency) -> bool {
-    let flag = &mut self.slots[category as usize];
+  pub fn insert(&mut self, value: CredentialDeficiency) -> bool {
+    let flag = &mut self.slots[value as usize];
     let current = *flag;
     *flag = true;
     !current
@@ -93,11 +93,11 @@ impl CredentialDeficiencySet {
 
 impl Extend<CredentialDeficiency> for CredentialDeficiencySet {
   fn extend<T: IntoIterator<Item = CredentialDeficiency>>(&mut self, iter: T) {
-    for category in iter {
+    for deficiency in iter {
       if self.slots == [true; CredentialDeficiency::COUNT] {
         break;
       }
-      self.insert(category);
+      self.insert(deficiency);
     }
   }
 }
