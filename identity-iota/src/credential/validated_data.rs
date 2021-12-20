@@ -8,7 +8,6 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
 use super::deficiencies::CredentialDeficiencySet;
-use super::CredentialDeficiency;
 
 use identity_core::common::Object;
 
@@ -57,7 +56,7 @@ impl<T> CredentialValidation<T> {
 }
 
 impl CredentialValidation {
-  #[doc(hidden)] // hidden until we have decided on what to do with deactivated documents 
+  #[doc(hidden)] // hidden until we have decided on what to do with deactivated documents
   /// Gets the credential's deactivated resolved documents if such documents were in compliance with the deficiency
   /// acceptance policy set during credential validation. See [`crate::credential::Validator::validate_credential`].
   pub fn deactivated_subject_documents(&self) -> Option<&BTreeMap<String, DocumentValidation<Deactivated>>> {
