@@ -3,8 +3,8 @@
 
 use self::document_state::Active;
 use self::document_state::Deactivated;
-use serde::Serialize;
 use serde::ser::SerializeStruct;
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
@@ -39,34 +39,37 @@ where
   pub(super) _marker: PhantomData<T>,
 }
 
-// Now some workarounds for backward compatibility with the Wasm bindings until we get round to implementing the changes there too. 
+// Temporary workarounds for backward compatibility with the current Wasm implementation.
 impl Serialize for DocumentValidation<Active> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
-          S: serde::Serializer {
-      let mut state = serializer.serialize_struct("DocumentValidation", 4)?;
-      state.serialize_field("did", &self.did);
-      state.serialize_field("document", &self.document);
-      state.serialize_field("metadata", &self.metadata); 
-      state.serialize_field("verified", &true); 
-      state.end()
+    S: serde::Serializer,
+  {
+    let mut state = serializer.serialize_struct("DocumentValidation", 4)?;
+    state.serialize_field("did", &self.did)?;
+    state.serialize_field("document", &self.document)?;
+    state.serialize_field("metadata", &self.metadata)?;
+    state.serialize_field("verified", &true)?;
+    state.end()
   }
 }
 
+// this is not really necessary, but we might as well implement it
 impl Serialize for DocumentValidation<Deactivated> {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
-          S: serde::Serializer {
-      let mut state = serializer.serialize_struct("DocumentValidation", 4)?;
-      state.serialize_field("did", &self.did);
-      state.serialize_field("document", &self.document);
-      state.serialize_field("metadata", &self.metadata); 
-      state.serialize_field("verified", &false); 
-      state.end()
+    S: serde::Serializer,
+  {
+    let mut state = serializer.serialize_struct("DocumentValidation", 4)?;
+    state.serialize_field("did", &self.did)?;
+    state.serialize_field("document", &self.document)?;
+    state.serialize_field("metadata", &self.metadata)?;
+    state.serialize_field("verified", &false)?;
+    state.end()
   }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CredentialValidation<T = Object> {
   pub credential: Credential<T>,
   pub issuer: DocumentValidation<Active>,
@@ -92,11 +95,41 @@ impl CredentialValidation {
   }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+// Temporary workaround for backward compatibility with the current Wasm implementation
+impl<T: Serialize> Serialize for CredentialValidation<T> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    let mut state = serializer.serialize_struct("CredentialValidation", 4)?;
+    state.serialize_field("credential", &self.credential)?;
+    state.serialize_field("issuer", &self.issuer)?;
+    let no_subjects: BTreeMap<String, DocumentValidation<Active>> = BTreeMap::new();
+    let subjects = self.active_subject_documents.as_ref().unwrap_or(&no_subjects);
+    state.serialize_field("subjects", subjects)?;
+    state.serialize_field("verified", &self.no_deficiencies())?;
+    state.end()
+  }
+}
+#[derive(Clone, Debug, PartialEq)]
 pub struct PresentationValidation<T = Object, U = Object> {
   pub presentation: Presentation<T, U>,
   pub holder: DocumentValidation<Active>,
   pub credentials: Vec<CredentialValidation<U>>,
+}
+
+impl<T: Serialize, U: Serialize> Serialize for PresentationValidation<T, U> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    let mut state = serializer.serialize_struct("PresentationValidation", 4)?;
+    state.serialize_field("presentation", &self.presentation)?;
+    state.serialize_field("holder", &self.holder)?;
+    state.serialize_field("credentials", &self.credentials)?;
+    state.serialize_field("verified", &self.no_deficiencies())?;
+    state.end()
+  }
 }
 
 impl<T, U> PresentationValidation<T, U> {
