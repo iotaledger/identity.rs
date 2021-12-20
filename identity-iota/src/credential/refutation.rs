@@ -96,71 +96,6 @@ impl FromIterator<CredentialRefutationCategory> for CredentialRefutations {
 
 
 
-
-#[derive(Debug)]
-pub struct RefutedCredentialDismissalError {
-  pub(super) categories: CredentialRefutations,
-}
-
-impl Display for RefutedCredentialDismissalError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let first = "attempted to mark a credential as valid that was refuted for the following reasons: ".chars();
-    
-    let continued = self
-      .categories
-      .iter()
-      .flat_map(|category| (category.description().chars().chain(", ".chars())));
-       // contains ", " at the end which we don't want
-    let description :String  = first.chain(continued).collect(); 
-    let description_len = description.len();
-    write!(f, "{}", &description[..(description_len - 2)])
-  }
-}
-
-impl std::error::Error for RefutedCredentialDismissalError {}
-
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize)]
-pub enum PresentationRefutationCategory {
-  /// The presentation's signature does not match the expected value 
-  InvalidSignature,
-  /// The presentiation contains at least one refuted credential 
-  RefutedCredentials,  
-}
-
-impl PresentationRefutationCategory {
-  pub fn description(&self) -> &'static str {
-    match self {
-      &Self::InvalidSignature => "the signature does not match the expected value", 
-      &Self::RefutedCredentials => "contains refuted credentials",  
-    }
-  }
-}
-
-/*
-#[derive(Debug)]
-pub struct RefutedPresentationDismissalError {
-  pub(super) categories: IndexSet<PresentationRefutationCategory>,
-}
-
-impl Display for RefutedPresentationDismissalError {
-
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let start = "attempted to mark a presentation as valid that was refuted for the following reasons: ".chars();
-    let continued = self
-      .categories
-      .iter()
-      .map(|category| category.description())
-      .flat_map(|description| description.chars().chain(", ".chars()));
-    let description: String = start.chain(continued).collect(); // contains ", " at the end which we don't want
-    let description_len = description.len();
-    write!(f, "{}", &description[..(description_len - 2)])
-  }
-}
-
-
-impl std::error::Error for RefutedPresentationDismissalError {}
-*/ 
-
 #[cfg(test)]
 mod tests {
   use std::collections::HashSet;
@@ -170,20 +105,6 @@ use super::*;
   #[test]
   fn credential_refutation_category_count() {
     assert_eq!((0usize..100).map(|i| CredentialRefutationCategory::from_usize(i)).take_while(|value| value.is_some()).filter_map(|value| value).map(|value| value as usize + 1).max().unwrap(),CredentialRefutationCategory::COUNT);
-  }
-
-  #[test]
-  fn display_refuted_credential_dismissal_error_all_categories() {
-    let categories: CredentialRefutations = [
-      CredentialRefutationCategory::DeactivatedSubjectDocuments,
-      CredentialRefutationCategory::Expired,
-      CredentialRefutationCategory::Dormant,
-    ]
-    .into_iter()
-    .collect();
-    let error = RefutedCredentialDismissalError { categories };
-    let expected_str = "attempted to mark a credential as valid that was refuted for the following reasons: contains subjects with deactivated DID documents, the expiry date is in the past, the activation date is in the future";
-    assert_eq!(expected_str, error.to_string());
   }
 
   #[test]
@@ -241,15 +162,4 @@ fn credential_refutations_all_contains() {
     assert!(refutations.contains(&category));
   }
 }
-  /*
-  #[test]
-  fn display_refuted_presentation_dismissal_error_refuted_credentials() {
-    let categories: IndexSet<PresentationRefutationCategory> = [
-      PresentationRefutationCategory::RefutedCredentials,
-    ].into_iter().collect();
-    let error = RefutedPresentationDismissalError {categories}; 
-    let expected_str = "attempted to mark a presentation as valid that was refuted for the following reasons: contains refuted credentials";
-    assert_eq!(expected_str, error.to_string());
-  }
-  */ 
 }

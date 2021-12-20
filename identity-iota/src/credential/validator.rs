@@ -3,9 +3,8 @@
 
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
-use std::ops::ControlFlow;
 use super::refutation::CredentialRefutations;
-use super::{RefutedCredentialDismissalError, CredentialRefutationCategory, PresentationRefutationCategory};
+use super::CredentialRefutationCategory;
 
 use either::Either;
 use identity_core::common::{Timestamp, Url};
@@ -26,8 +25,7 @@ use crate::tangle::Client;
 use crate::tangle::TangleResolve;
 
 use self::document_state::Deactivated;
-use self::document_state::Sealed;
-use self::document_state::Unspecified;
+
 use self::document_state::Active;
 
 
@@ -37,13 +35,9 @@ mod document_state {
   pub struct Active;
   #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
   pub struct Deactivated;
-
-  #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-  pub struct Unspecified;
-
   impl Sealed for Active {}
   impl Sealed for Deactivated {}
-  impl Sealed for Unspecified {}
+
 }
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation<T = document_state::Active>
@@ -92,9 +86,14 @@ impl CredentialValidation {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PresentationValidation<T = Object, U = Object> {
   pub presentation: Presentation<T, U>,
-  pub holder: DocumentValidation,
+  pub holder: DocumentValidation<Active>,
   pub credentials: Vec<CredentialValidation<U>>,
-  pub verified: bool,
+}
+
+impl<T,U> PresentationValidation<T,U> {
+  pub fn full_validation(&self) -> bool {
+    self.credentials.iter().all(|credential_validation|credential_validation.full_validation())
+  }
 }
 
 
@@ -131,8 +130,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   where
     T: DeserializeOwned + Serialize,
   {
-    //self.validate_credential(Credential::from_json(data)?, options).await
-    todo!();
+    self.validate_credential(Credential::from_json(data)?, options).await
   }
 
   /// Deserializes the given JSON-encoded `Presentation` and
@@ -146,12 +144,11 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     T: Clone + DeserializeOwned + Serialize,
     U: Clone + DeserializeOwned + Serialize,
   {
-    /*
+    
     self
       .validate_presentation(Presentation::from_json(data)?, options)
       .await
-    */
-    todo!();
+
   }
 
   /// Validates the `Credential` proof and all relevant DID documents.
@@ -167,24 +164,24 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   where
     T: Serialize,
   {
-    
+    // setup refutation event handler 
     let mut encountered_refutation_categories = CredentialRefutations::empty();
     let mut deactivated_subject_documents: BTreeMap<String, DocumentValidation<Deactivated>> = BTreeMap::new();
-    let mut f = |event: CredentialRefutationEvent<'_>| -> Result<()> {
-      match event {
-        CredentialRefutationEvent::DeactivatedSubjectDocument((id, document)) => {
-          deactivated_subject_documents.insert(id.to_string(), document); Ok(())
-        }, 
-        CredentialRefutationEvent::Dormant(_) => { encountered_refutation_categories.insert(CredentialRefutationCategory::Dormant); Ok(())}, 
-        CredentialRefutationEvent::Expired(_) => {encountered_refutation_categories.insert(CredentialRefutationCategory::Expired); Ok(())}
-      }
+    let refutation_event_handler = |event: CredentialRefutationEvent<'_>| -> Result<()> {
+      let encountered_category = event.associated_category(); 
+      if let CredentialRefutationEvent::DeactivatedSubjectDocument((id, document)) =  event {
+          deactivated_subject_documents.insert(id.to_string(), document);
+        }
+      encountered_refutation_categories.insert(encountered_category); 
+      Ok(())
     }; 
+    // successful case 
     let CredentialValidation { 
       credential, 
       issuer, 
       active_subject_documents, 
-      ..} = self.validate_credential_early_exit(credential, options, f).await?; 
-
+      ..} = self.validate_credential_early_exit(credential, options, refutation_event_handler).await?; 
+      // append the tolerable refutations recorded by our event handler 
       let deactivated_subject_documents = if deactivated_subject_documents.len() > 0 {
         Some(deactivated_subject_documents)
       } else {
@@ -201,7 +198,8 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       )
   }
 
-  async fn validate_credential_early_exit<T: Serialize, F: FnMut(CredentialRefutationEvent)->Result<()>>(
+  // validates a credential and lets the supplied closure determine if a refutation event is tolerable 
+  async fn validate_credential_early_exit<T: Serialize, F: FnMut(CredentialRefutationEvent<'_>)->Result<()>>(
     &self, 
     credential: Credential<T>,
     options: VerifierOptions,
@@ -279,7 +277,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     T: Clone + Serialize,
     U: Clone + Serialize,
   {
-    /*
+    
     let holder_url: &str = presentation
       .holder
       .as_ref()
@@ -287,7 +285,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       .ok_or(Error::InvalidPresentationHolder)?;
 
     // Resolve the holder DID Document and validate the digital signature.
-    let holder_doc: DocumentValidation = self.validate_document(holder_url).await?;
+    let holder_doc =  self.validate_document(holder_url).await?.left().ok_or(identity_did::Error::InvalidSignature("method not found"))?;
 
     let mut credentials: Vec<CredentialValidation<U>> = Vec::new();
 
@@ -302,22 +300,13 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the presentation signature using the holders DID Document
-    let presentation_verified: bool = holder_doc.document.document.verify_data(&presentation, options).is_ok();
-
-    // Check if all credentials are verified
-    let credentials_verified: bool = credentials.iter().all(|credential| credential.verified);
-
-    // The presentation is truly verified if all associated documents are verified
-    let verified: bool = holder_doc.verified && presentation_verified && credentials_verified;
+    holder_doc.document.document.verify_data(&presentation, options)?;
 
     Ok(PresentationValidation {
       presentation,
       holder: holder_doc,
       credentials,
-      verified,
     })
-    */
-    todo!()
   }
 
   /// Resolves the document from the Tangle, which performs checks on all signatures etc.
