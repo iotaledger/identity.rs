@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
-use crate::credential::CredentialRefutationCategory;
+use crate::credential::CredentialDeficiency;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
@@ -52,5 +52,5 @@ pub enum Error {
   #[error("invalid message flags")]
   InvalidMessageFlags,
   #[error("{0}")]
-  IntolerableCredentialRefutation(CredentialRefutationCategory),
+  UnacceptableCredentialDeficiency(CredentialDeficiency),
 }
