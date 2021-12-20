@@ -118,7 +118,7 @@ mod tests {
   use super::*;
 
   #[test]
-  fn credential_refutation_category_count() {
+  fn credential_deficiency_count() {
     assert_eq!(
       (0usize..100)
         .map(CredentialDeficiency::from_usize)
@@ -132,7 +132,7 @@ mod tests {
   }
 
   #[test]
-  fn credential_refutations_iterator_roundtrip() {
+  fn credential_deficiencies_iterator_roundtrip() {
     let categories = [
       CredentialDeficiency::DeactivatedSubjectDocuments,
       CredentialDeficiency::Dormant,
@@ -144,17 +144,17 @@ mod tests {
   }
 
   #[test]
-  fn credential_refutations_all_count() {
+  fn credential_deficiency_set_all_count() {
     assert_eq!(CredentialDeficiencySet::all().count(), CredentialDeficiency::COUNT);
   }
 
   #[test]
-  fn credential_refutations_empty_count() {
+  fn credential_deficiency_set_empty_count() {
     assert_eq!(CredentialDeficiencySet::empty().count(), 0);
   }
 
   #[test]
-  fn credential_refutations_extend_contains() {
+  fn credential_deficiency_set_extend_contains() {
     let dormant = CredentialDeficiency::Dormant;
     let deactivated = CredentialDeficiency::DeactivatedSubjectDocuments;
     let mut refutations = CredentialDeficiencySet::empty();
@@ -172,14 +172,14 @@ mod tests {
   }
 
   #[test]
-  fn credential_refutations_insert() {
+  fn credential_deficiency_set_insert() {
     let mut refutations = CredentialDeficiencySet::empty();
     assert!(refutations.insert(CredentialDeficiency::DeactivatedSubjectDocuments));
     assert!(!refutations.insert(CredentialDeficiency::DeactivatedSubjectDocuments));
   }
 
   #[test]
-  fn credential_refutations_all_contains() {
+  fn credential_deficiency_set_all_contains() {
     let refutations = CredentialDeficiencySet::all();
     for i in 0..CredentialDeficiency::COUNT {
       let category = CredentialDeficiency::from_usize(i).unwrap();
