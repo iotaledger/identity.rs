@@ -104,9 +104,9 @@ impl Extend<CredentialDeficiency> for CredentialDeficiencySet {
 
 impl FromIterator<CredentialDeficiency> for CredentialDeficiencySet {
   fn from_iter<T: IntoIterator<Item = CredentialDeficiency>>(iter: T) -> Self {
-    let mut refutations = Self::empty();
-    refutations.extend(iter);
-    refutations
+    let mut deficiencies = Self::empty();
+    deficiencies.extend(iter);
+    deficiencies
   }
 }
 
