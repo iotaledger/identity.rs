@@ -22,10 +22,10 @@ pub enum CredentialDeficiency {
 impl CredentialDeficiency {
   /// Provides a description of the category
   pub fn description(&self) -> &'static str {
-    match self {
-      &Self::DeactivatedSubjectDocuments => "contains subjects with deactivated DID documents",
-      &Self::Expired => "the expiry date is in the past",
-      &Self::Dormant => "the activation date is in the future",
+    match *self {
+      Self::DeactivatedSubjectDocuments => "contains subjects with deactivated DID documents",
+      Self::Expired => "the expiry date is in the past",
+      Self::Dormant => "the activation date is in the future",
     }
   }
   // The number of refutation categories. We do not use strum for this as we do not want to unnecessarily pollute the
@@ -51,7 +51,7 @@ impl CredentialDeficiencySet {
   /// If the set did not have this value present, `true` is returned.
   /// If the set did have this value present, `false` is returned.
   pub fn insert(&mut self, category: CredentialDeficiency) -> bool {
-    let ref mut flag = self.slots[category as usize];
+    let flag = &mut self.slots[category as usize];
     let current = *flag;
     *flag = true;
     !current
@@ -117,9 +117,9 @@ mod tests {
   fn credential_refutation_category_count() {
     assert_eq!(
       (0usize..100)
-        .map(|i| CredentialDeficiency::from_usize(i))
+        .map(CredentialDeficiency::from_usize)
         .take_while(|value| value.is_some())
-        .filter_map(|value| value)
+        .flatten()
         .map(|value| value as usize + 1)
         .max()
         .unwrap(),

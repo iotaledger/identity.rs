@@ -31,6 +31,7 @@ use crate::tangle::Client;
 use crate::tangle::TangleResolve;
 
 // used internally during credential validation
+#[allow(clippy::large_enum_variant)] // The smaller variants occur at most once each
 enum CredentialDeficiencyEvent<'a> {
   // the Url corresponds to the url of the deactivated document
   DeactivatedSubjectDocument((&'a Url, DocumentValidation<Deactivated>)),
@@ -39,10 +40,10 @@ enum CredentialDeficiencyEvent<'a> {
 }
 impl CredentialDeficiencyEvent<'_> {
   fn associated_category(&self) -> CredentialDeficiency {
-    match self {
-      &Self::DeactivatedSubjectDocument(_) => CredentialDeficiency::DeactivatedSubjectDocuments,
-      &Self::Expired(_) => CredentialDeficiency::Expired,
-      &Self::Dormant(_) => CredentialDeficiency::Dormant,
+    match *self {
+      Self::DeactivatedSubjectDocument(_) => CredentialDeficiency::DeactivatedSubjectDocuments,
+      Self::Expired(_) => CredentialDeficiency::Expired,
+      Self::Dormant(_) => CredentialDeficiency::Dormant,
     }
   }
 }
@@ -143,7 +144,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       .validate_credential_with_deficiency_handler(credential, signature_verification_options, deficiency_event_handler)
       .await?;
     // append the acceptable deficiencies recorded by our event handler
-    let deactivated_subject_documents = if deactivated_subject_documents.len() > 0 {
+    let deactivated_subject_documents = if !deactivated_subject_documents.is_empty() {
       Some(deactivated_subject_documents)
     } else {
       None
@@ -214,7 +215,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // transform the data into the required formats and return the best case scenario from this function
-    let accepted_subject_documents = if accepted_subject_documents.len() > 0 {
+    let accepted_subject_documents = if !accepted_subject_documents.is_empty() {
       Some(accepted_subject_documents)
     } else {
       None
@@ -295,7 +296,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     // Can do this in tests for now
     #[cfg(test)]
     {
-      if document.document.methods().nth(0).is_none() {
+      if document.document.methods().next().is_none() {
         return Ok(Either::Right(DocumentValidation::<Deactivated> {
           did,
           document,
