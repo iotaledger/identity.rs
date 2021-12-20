@@ -122,7 +122,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     T: Serialize,
   {
     // setup deficiency event handler
-    let mut encountered_refutation_categories = CredentialDeficiencySet::empty();
+    let mut encountered_deficiencies = CredentialDeficiencySet::empty();
     let mut deactivated_subject_documents: BTreeMap<String, DocumentValidation<Deactivated>> = BTreeMap::new();
     let deficiency_event_handler = |event: CredentialDeficiencyEvent<'_>| -> Result<()> {
       let encountered_category = event.associated_category();
@@ -132,7 +132,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       if let CredentialDeficiencyEvent::DeactivatedSubjectDocument((id, document)) = event {
         deactivated_subject_documents.insert(id.to_string(), document);
       }
-      encountered_refutation_categories.insert(encountered_category);
+      encountered_deficiencies.insert(encountered_category);
       Ok(())
     };
     // successful case
@@ -154,7 +154,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       issuer,
       active_subject_documents,
       deactivated_subject_documents,
-      encountered_refutation_categories,
+      encountered_deficiencies,
     })
   }
 
@@ -189,10 +189,10 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       let validated_document = self.validate_document(id.as_str()).await?;
       if let Either::Left(verified_subject_document) = validated_document {
         accepted_subject_documents.insert(id.to_string(), verified_subject_document);
-      } else if let Either::Right(refuted_subject_document) = validated_document {
+      } else if let Either::Right(deactivated_subject_document) = validated_document {
         deficiency_handler(CredentialDeficiencyEvent::DeactivatedSubjectDocument((
           id,
-          refuted_subject_document,
+          deactivated_subject_document,
         )))?;
       }
     }

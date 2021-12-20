@@ -45,25 +45,25 @@ pub struct CredentialValidation<T = Object> {
   pub issuer: DocumentValidation<Active>,
   pub active_subject_documents: Option<BTreeMap<String, DocumentValidation<Active>>>,
   pub(super) deactivated_subject_documents: Option<BTreeMap<String, DocumentValidation<Deactivated>>>,
-  pub(super) encountered_refutation_categories: CredentialDeficiencySet,
+  pub(super) encountered_deficiencies: CredentialDeficiencySet,
 }
 
 impl<T> CredentialValidation<T> {
   /// Returns true if no deficiencies were detected during credential validation.
   /// See [`crate::credential::CredentialDeficiency`].
   pub fn no_deficiencies(&self) -> bool {
-    self.encountered_refutation_categories.count() == 0
+    self.encountered_deficiencies.count() == 0
   }
 
   /// An iterator over the encountered deficiencies that are in compliance with the deficiency acceptance policy used to
   /// validate the credential. See [`crate::credential::CredentialValidator::validate_credential`].
   pub fn encountered_refutation_categories(&self) -> impl Iterator<Item = CredentialDeficiency> + '_ {
-    self.encountered_refutation_categories.iter()
+    self.encountered_deficiencies.iter()
   }
 }
 
 impl CredentialValidation {
-  #[doc(hidden)]
+  #[doc(hidden)] // hidden until we have decided on what to do with deactivated documents 
   /// Gets the credential's deactivated resolved documents if such documents were in compliance with the deficiency
   /// acceptance policy set during credential validation. See [`crate::credential::Validator::validate_credential`].
   pub fn deactivated_subject_documents(&self) -> Option<&BTreeMap<String, DocumentValidation<Deactivated>>> {
