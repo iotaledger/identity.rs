@@ -204,14 +204,12 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     if let Some(expiration_date) = credential.expiration_date {
       if Timestamp::now_utc() > expiration_date {
         deficiency_handler(CredentialDeficiencyEvent::Expired(expiration_date))?;
-        // encountered_refutation_categories.insert(CredentialRefutationCategory::Expired);
       }
     }
 
     // Verify that the credential has been activated
     if Timestamp::now_utc() < credential.issuance_date {
       deficiency_handler(CredentialDeficiencyEvent::Dormant(credential.issuance_date))?;
-      // encountered_refutation_categories.insert(CredentialRefutationCategory::Dormant);
     }
 
     // transform the data into the required formats and return the best case scenario from this function

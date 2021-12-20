@@ -20,17 +20,18 @@ pub enum CredentialDeficiency {
 }
 
 impl CredentialDeficiency {
+  // The number of refutation categories. We do not use strum for this as we do not want to unnecessarily pollute the
+  // public API
+  pub(super) const COUNT: usize = 3;
+
   /// Provides a description of the category
   pub fn description(&self) -> &'static str {
     match *self {
       Self::DeactivatedSubjectDocuments => "contains subjects with deactivated DID documents",
       Self::Expired => "the expiry date is in the past",
-      Self::Dormant => "the activation date is in the future",
+      Self::Dormant => "the issuance date is in the future",
     }
   }
-  // The number of refutation categories. We do not use strum for this as we do not want to unnecessarily pollute the
-  // public API
-  pub(super) const COUNT: usize = 3;
 }
 
 impl Display for CredentialDeficiency {
@@ -42,7 +43,7 @@ impl Display for CredentialDeficiency {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 /// A set containing zero or more variants of [`CredentialDeficiency`]
 pub struct CredentialDeficiencySet {
-  // true at the i'th slot corresponds to CredentialRefutationCategory::from_usize(i).unwrap()
+  // true at the i'th slot corresponds to CredentialDeficiency::from_usize(i).unwrap()
   slots: [bool; CredentialDeficiency::COUNT],
 }
 
