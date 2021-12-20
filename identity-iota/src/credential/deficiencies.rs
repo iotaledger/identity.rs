@@ -67,24 +67,27 @@ impl CredentialDeficiencySet {
     })
   }
 
+  /// The number of elements in this set
   pub fn count(&self) -> usize {
     self.slots.iter().copied().filter(|value| *value).count()
   }
 
+  /// Constructs an empty [`CredentialDeficiencySet`]
   pub fn empty() -> Self {
     Self {
       slots: [false; CredentialDeficiency::COUNT],
     }
   }
 
+  /// Constructs a [`CredentialDeficiencySet`] containing every possible value of [`CredentialDeficiency`]
   pub fn all() -> Self {
     Self {
       slots: [true; CredentialDeficiency::COUNT],
     }
   }
-
-  pub fn contains(&self, category: &CredentialDeficiency) -> bool {
-    self.slots[*category as usize]
+  /// Checks whether the value is contained in the set
+  pub fn contains(&self, deficiency: &CredentialDeficiency) -> bool {
+    self.slots[*deficiency as usize]
   }
 }
 

@@ -43,7 +43,7 @@ pub async fn create_vc() -> Result<()> {
   // Validate the verifiable credential
   let validation: CredentialValidation = common::check_credential(&client, &credential).await?;
   println!("Credential Validation > {:#?}", validation);
-  assert!(validation.verified);
+  assert!(validation.no_deficiencies());
 
   Ok(())
 }

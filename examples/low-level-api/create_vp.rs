@@ -14,6 +14,7 @@ use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 use identity::iota::ClientMap;
+use identity::iota::CredentialDeficiencySet;
 use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidation;
 use identity::iota::Receipt;
@@ -84,10 +85,11 @@ async fn main() -> Result<()> {
     .check_presentation(
       &presentation_json,
       VerifierOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
+      CredentialDeficiencySet::all(),
     )
     .await?;
   println!("validation = {:#?}", validation);
-  assert!(validation.verified);
+  assert!(validation.no_deficiencies());
 
   println!("Presentation Validation > {:#?}", validation);
 

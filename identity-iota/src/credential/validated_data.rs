@@ -81,7 +81,7 @@ pub struct PresentationValidation<T = Object, U = Object> {
 impl<T, U> PresentationValidation<T, U> {
   /// Returns `true` if all of the presentation's credentials were validated without encountering any deficiencies.
   /// See [`crate::credential::CredentialDeficiency`].
-  pub fn no_defficiencies(&self) -> bool {
+  pub fn no_deficiencies(&self) -> bool {
     self
       .credentials
       .iter()

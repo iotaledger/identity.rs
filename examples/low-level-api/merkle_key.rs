@@ -5,6 +5,7 @@
 //!
 //! cargo run --example merkle_key
 
+use identity::iota::CredentialDeficiencySet;
 use rand::rngs::OsRng;
 use rand::Rng;
 
@@ -82,9 +83,13 @@ async fn main() -> Result<()> {
   // Check the verifiable credential is valid
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
   let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
+    .check_credential(
+      &credential_json,
+      VerifierOptions::default(),
+      CredentialDeficiencySet::all(),
+    )
     .await?;
-  assert!(validation.verified);
+  assert!(validation.no_deficiencies());
 
   println!("Credential Validation > {:#?}", validation);
 
@@ -103,9 +108,13 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential is revoked
   let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
+    .check_credential(
+      &credential_json,
+      VerifierOptions::default(),
+      CredentialDeficiencySet::all(),
+    )
     .await?;
-  assert!(!validation.verified);
+  assert!(!validation.no_deficiencies());
 
   println!("Credential Validation > {:#?}", validation);
 

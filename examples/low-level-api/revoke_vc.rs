@@ -59,8 +59,11 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential
   let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
-  println!("VC verification result (false = revoked) > {:#?}", validation.verified);
-  assert!(!validation.verified);
+  println!(
+    "VC verification result (false = revoked) > {:#?}",
+    validation.no_deficiencies()
+  );
+  assert!(!validation.no_deficiencies());
   Ok(())
 }
 

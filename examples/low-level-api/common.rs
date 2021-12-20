@@ -17,6 +17,7 @@ use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
+use identity::iota::CredentialDeficiencySet;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaVerificationMethod;
@@ -59,7 +60,11 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
 
   // Perform the validation operation.
   let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
+    .check_credential(
+      &credential_json,
+      VerifierOptions::default(),
+      CredentialDeficiencySet::all(),
+    )
     .await?;
   Ok(validation)
 }
