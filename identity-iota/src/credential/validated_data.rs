@@ -45,7 +45,7 @@ pub struct CredentialValidation<T = Object> {
   pub issuer: DocumentValidation<Active>,
   pub active_subject_documents: Option<BTreeMap<String, DocumentValidation<Active>>>,
   pub(super) deactivated_subject_documents: Option<BTreeMap<String, DocumentValidation<Deactivated>>>,
-  pub(super) encountered_deficiencies: CredentialDeficiencySet,
+  pub encountered_deficiencies: CredentialDeficiencySet,
 }
 
 impl<T> CredentialValidation<T> {
@@ -53,12 +53,6 @@ impl<T> CredentialValidation<T> {
   /// See [`crate::credential::CredentialDeficiency`].
   pub fn no_deficiencies(&self) -> bool {
     self.encountered_deficiencies.count() == 0
-  }
-
-  /// An iterator over the encountered deficiencies that are in compliance with the deficiency acceptance policy used to
-  /// validate the credential. See [`crate::credential::CredentialValidator::validate_credential`].
-  pub fn encountered_refutation_categories(&self) -> impl Iterator<Item = CredentialDeficiency> + '_ {
-    self.encountered_deficiencies.iter()
   }
 }
 
