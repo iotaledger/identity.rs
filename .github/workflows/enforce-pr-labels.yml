@@ -1,0 +1,15 @@
+name: Enforce PR labels
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, reopened, edited, synchronize]
+jobs:
+  enforce-label:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: yogevbd/enforce-label-action@a3c219da6b8fa73f6ba62b68ff09c469b3a1c024
+      with:
+        REQUIRED_LABELS_ANY: "Rust,Wasm,Documentation,No changelog"
+    - uses: yogevbd/enforce-label-action@a3c219da6b8fa73f6ba62b68ff09c469b3a1c024
+      with:
+        REQUIRED_LABELS_ANY: "Breaking change,Added,Patch,Deprecated,Removed,Documentation,No changelog"
