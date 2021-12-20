@@ -10,6 +10,7 @@ use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::iota::Client as IotaClient;
+use identity::iota::CredentialDeficiencySet;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -240,7 +241,7 @@ impl Client {
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
-        .validate_credential(data, options.0)
+        .validate_credential(data, options.0, CredentialDeficiencySet::empty())
         .await
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())
@@ -258,7 +259,7 @@ impl Client {
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
-        .validate_presentation(data, options.0)
+        .validate_presentation(data, options.0, CredentialDeficiencySet::empty())
         .await
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())
