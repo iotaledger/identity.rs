@@ -34,7 +34,7 @@ runs:
         echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
 
     - name: Run github-changelog-generator
-      uses: docker://githubchangeloggenerator/github-changelog-generator:1.16.4
+      uses: docker://githubchangeloggenerator/github-changelog-generator:latest
       with:
         args: >
           --output ${{ inputs.changelog-path }}
