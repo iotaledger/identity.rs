@@ -19,7 +19,7 @@ use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 
 pub(super) mod document_state {
-  // Used to parameterise whether a resolved document is active. 
+  // Used to parameterise whether a resolved document is active.
   pub trait Sealed {}
   #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
   pub struct Active;
@@ -50,13 +50,13 @@ pub struct CredentialValidation<T = Object> {
 
 impl<T> CredentialValidation<T> {
   /// Returns true if no deficiencies were detected during credential validation.
-  /// See [`crate::credential::CredentialDeficiency`]. 
+  /// See [`crate::credential::CredentialDeficiency`].
   pub fn no_deficiencies(&self) -> bool {
     self.encountered_refutation_categories.count() == 0
   }
 
-  /// An iterator over the encountered deficiencies that are in compliance with the deficiency acceptance policy used to validate the credential.
-  /// See [`crate::credential::CredentialValidator::validate_credential`].
+  /// An iterator over the encountered deficiencies that are in compliance with the deficiency acceptance policy used to
+  /// validate the credential. See [`crate::credential::CredentialValidator::validate_credential`].
   pub fn encountered_refutation_categories(&self) -> impl Iterator<Item = CredentialDeficiency> + '_ {
     self.encountered_refutation_categories.iter()
   }
@@ -64,8 +64,8 @@ impl<T> CredentialValidation<T> {
 
 impl CredentialValidation {
   #[doc(hidden)]
-  /// Gets the credential's deactivated resolved documents if such documents were in compliance with the deficiency acceptance policy set during credential validation. 
-  /// See [`crate::credential::Validator::validate_credential`]. 
+  /// Gets the credential's deactivated resolved documents if such documents were in compliance with the deficiency
+  /// acceptance policy set during credential validation. See [`crate::credential::Validator::validate_credential`].
   pub fn deactivated_subject_documents(&self) -> Option<&BTreeMap<String, DocumentValidation<Deactivated>>> {
     self.deactivated_subject_documents.as_ref()
   }
@@ -79,8 +79,8 @@ pub struct PresentationValidation<T = Object, U = Object> {
 }
 
 impl<T, U> PresentationValidation<T, U> {
-  /// Returns `true` if all of the presentation's credentials were validated without encountering any deficiencies. 
-  /// See [`crate::credential::CredentialDeficiency`]. 
+  /// Returns `true` if all of the presentation's credentials were validated without encountering any deficiencies.
+  /// See [`crate::credential::CredentialDeficiency`].
   pub fn no_defficiencies(&self) -> bool {
     self
       .credentials
