@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::account::UpdateError;
 use std::borrow::Cow;
 use std::sync::PoisonError;
 
@@ -116,6 +117,15 @@ impl<T> From<PoisonError<T>> for WasmError<'_> {
   fn from(error: PoisonError<T>) -> Self {
     Self {
       name: Cow::Borrowed("Mutex::PoisonError"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+impl From<UpdateError> for WasmError<'_> {
+  fn from(error: UpdateError) -> Self {
+    Self {
+      name: Cow::Borrowed("Update::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }

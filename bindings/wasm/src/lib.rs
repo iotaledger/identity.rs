@@ -14,6 +14,7 @@ mod macros;
 #[macro_use]
 pub mod error;
 
+pub mod account;
 pub mod chain;
 pub mod common;
 pub mod credential;
@@ -21,7 +22,6 @@ pub mod crypto;
 pub mod did;
 pub mod service;
 pub mod tangle;
-pub mod account;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

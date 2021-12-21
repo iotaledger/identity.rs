@@ -1,22 +1,31 @@
-use crate::did::WasmDID;
-use crate::error::{Result, WasmResult};
-use identity::account::{Account, IdentityUpdater, MethodSecret, Update};
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use crate::did::{
+  PromiseResolvedDocument, WasmDID, WasmDocument, WasmMethodScope, WasmMethodType, WasmResolvedDocument,
+};
+use crate::error::{wasm_error, Result, WasmResult};
+use crate::tangle::Client;
+use identity::account::Error::UpdateError;
+use identity::account::UpdateError::MissingRequiredField;
+use identity::account::{Account, AccountBuilder, AccountStorage, IdentityUpdater, MethodSecret, Update};
+use identity::core::OneOrMany;
+use identity::core::OneOrMany::{Many, One};
 use identity::did::{MethodScope, MethodType};
-use identity::iota::TangleRef;
+use identity::iota::{IotaDocument, TangleRef};
 use js_sys::Promise;
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Mutex;
-use identity::core::OneOrMany;
-use identity::core::OneOrMany::{Many, One};
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_name = Account)]
-pub struct WasmAccount(Rc<WasmRefCell<Account>>);
+pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
@@ -31,42 +40,89 @@ impl WasmAccount {
     WasmDID::from(x.document().id().clone())
   }
 
-  #[wasm_bindgen(js_name = createMethod)]
-  pub fn create_method(&mut self, input: &CreateMethodInput) -> Result<Promise> {
-    let elements: OneOrMany<String> = input.elements().into_serde().wasm_result()?;
-    wasm_logger::init(wasm_logger::Config::default());
-    log::info!("logging works");
+  pub fn storage(&self) {
+    unimplemented!() //ToDo
+  }
 
-    if let One(el) = elements.clone() {
-      log::info!("one");
-      log::info!("{}", el);
-    }
+  #[wasm_bindgen]
+  pub fn autopublish(&self) -> bool {
+    self.0.as_ref().borrow().autopublish()
+  }
 
+  pub fn autosave(&self) {
+    unimplemented!() //ToDo
+  }
 
-    if let Many(el) = elements.clone() {
-      log::info!("many");
-      log::info!("first {} second {}", el.get(0).unwrap(), el.get(1).unwrap());
-    }
+  #[wasm_bindgen]
+  pub fn actions(&self) -> usize {
+    self.0.as_ref().borrow().actions()
+  }
 
+  pub fn set_client(&self, client: Client) {
+    unimplemented!() //ToDo
+  }
 
+  pub fn state(&self) {
+    unimplemented!() //ToDo
+  }
 
+  pub fn document(&self) {
+    let document: &IotaDocument = self.0.as_ref().borrow().document();
+    //ToDo return a copy?
+  }
 
-    let fragment = input.fragment().unwrap();
+  #[wasm_bindgen(js_name = resolveIdentity)]
+  pub fn resolve_identity(&self) -> PromiseResolvedDocument {
     let account = self.0.clone();
 
-    let promise = future_to_promise(async move {
-      let update = Update::CreateMethod {
-        type_: MethodType::Ed25519VerificationKey2018,
-        fragment,
-        method_secret: None,
-        scope: MethodScope::VerificationMethod,
-      };
-
-      let res = account.as_ref().borrow_mut().process_update(update).await.wasm_result();
-      return Ok(JsValue::from("hello".to_owned()));
+    let promise: Promise = future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow()
+        .resolve_identity()
+        .await
+        .map(WasmResolvedDocument::from)
+        .map(Into::into)
+        .wasm_result()
     });
+    // WARNING: this does not validate the return type. Check carefully.
+    promise.unchecked_into::<PromiseResolvedDocument>()
+  }
 
-    Ok(promise)
+  #[wasm_bindgen(js_name = deleteIdentity)]
+  pub fn delete_identity(self) -> Promise {
+    let account = self.0.clone();
+    let did = account.as_ref().borrow().did().to_owned();
+    let storage = account.as_ref().borrow().storage_arc();
+    std::mem::drop(account);
+
+    let promise: Promise = future_to_promise(async move {
+      let account = AccountBuilder::new()
+        .storage(AccountStorage::Custom(storage))
+        .load_identity(did)
+        .await
+        .wasm_result();
+
+      match account {
+        Ok(a) => a.delete_identity().await.wasm_result().map(|_| JsValue::undefined()),
+        Err(e) => Err(e),
+      }
+    });
+    promise
+  }
+
+  #[wasm_bindgen]
+  pub fn publish(&mut self) -> Promise {
+    let mut account = self.0.clone();
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .publish()
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
   }
 }
 
@@ -75,23 +131,3 @@ impl From<Account> for WasmAccount {
     WasmAccount(Rc::new(WasmRefCell::new(account)))
   }
 }
-
-#[wasm_bindgen]
-extern "C" {
-  pub type CreateMethodInput;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn fragment(this: &CreateMethodInput) -> Option<String>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn elements(this: &CreateMethodInput) -> JsValue;
-
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type CreateMethodInput = {
-  "fragment": string,
-  "elements": string | string[]
-};
-"#;
