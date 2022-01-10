@@ -10,8 +10,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_name = AccountBuilder)]
-pub struct WasmAccountBuilder {
-}
+pub struct WasmAccountBuilder {}
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {

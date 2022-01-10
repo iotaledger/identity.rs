@@ -3,8 +3,8 @@
 
 use crate::account::account::WasmAccount;
 use crate::error::{wasm_error, Result, WasmResult};
+use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
-use identity::account::{Update};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;

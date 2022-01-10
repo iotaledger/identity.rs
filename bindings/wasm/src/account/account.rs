@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account_builder::WasmAutoSave;
-use crate::did::{
-  PromiseResolvedDocument, WasmDID, WasmResolvedDocument,
-};
-use crate::error::{WasmResult};
+use crate::did::{PromiseResolvedDocument, WasmDID, WasmResolvedDocument};
+use crate::error::WasmResult;
 use crate::tangle::Client;
 use identity::account::{Account, AccountBuilder, AccountStorage};
-use identity::iota::{IotaDocument};
+use identity::iota::IotaDocument;
 use js_sys::Promise;
 use std::rc::Rc;
 use wasm_bindgen::__rt::WasmRefCell;

@@ -4,8 +4,8 @@
 use crate::account::account::WasmAccount;
 use crate::did::{WasmMethodScope, WasmMethodType};
 use crate::error::{wasm_error, Result, WasmResult};
+use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
-use identity::account::{Update};
 use identity::did::{MethodScope, MethodType};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;

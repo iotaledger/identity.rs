@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account::WasmAccount;
+use crate::account::update::attach_method_relationship::WasmMethodRelationship;
 use crate::error::{wasm_error, Result, WasmResult};
 use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany::{Many, One};
 use identity::did::MethodRelationship;
 use js_sys::Promise;
-use serde_repr::{Deserialize_repr, Serialize_repr};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
+
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  #[wasm_bindgen(js_name = attachRelationships)]
-  pub fn attach_relationships(&mut self, input: &AttachMethodRelationshipOptions) -> Result<Promise> {
+  #[wasm_bindgen(js_name = detachRelationships)]
+  pub fn detach_relationships(&mut self, input: &DetachMethodRelationshipOptions) -> Result<Promise> {
     let relationships: Vec<WasmMethodRelationship> = match input.relationships().into_serde().wasm_result()? {
       One(r) => vec![r],
       Many(r) => r,
@@ -28,9 +29,8 @@ impl WasmAccount {
       Some(value) => value.clone(),
       None => return Err(wasm_error(MissingRequiredField("fragment"))),
     };
-
     let promise: Promise = future_to_promise(async move {
-      let update = Update::AttachMethodRelationship {
+      let update = Update::DetachMethodRelationship {
         fragment,
         relationships,
       };
@@ -43,49 +43,25 @@ impl WasmAccount {
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())
     });
-
     Ok(promise)
-  }
-}
-
-#[wasm_bindgen (js_name = MethodRelationship)]
-#[derive(Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum WasmMethodRelationship {
-  Authentication = 0,
-  AssertionMethod = 1,
-  KeyAgreement = 2,
-  CapabilityDelegation = 3,
-  CapabilityInvocation = 4,
-}
-
-impl From<WasmMethodRelationship> for MethodRelationship {
-  fn from(r: WasmMethodRelationship) -> Self {
-    match r {
-      WasmMethodRelationship::Authentication => MethodRelationship::Authentication,
-      WasmMethodRelationship::AssertionMethod => MethodRelationship::AssertionMethod,
-      WasmMethodRelationship::KeyAgreement => MethodRelationship::KeyAgreement,
-      WasmMethodRelationship::CapabilityDelegation => MethodRelationship::CapabilityDelegation,
-      WasmMethodRelationship::CapabilityInvocation => MethodRelationship::CapabilityInvocation,
-    }
   }
 }
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "AttachMethodRelationshipOptions")]
-  pub type AttachMethodRelationshipOptions;
+  #[wasm_bindgen(typescript_type = "DetachMethodRelationshipOptions")]
+  pub type DetachMethodRelationshipOptions;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn fragment(this: &AttachMethodRelationshipOptions) -> Option<String>;
+  pub fn fragment(this: &DetachMethodRelationshipOptions) -> Option<String>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn relationships(this: &AttachMethodRelationshipOptions) -> JsValue;
+  pub fn relationships(this: &DetachMethodRelationshipOptions) -> JsValue;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
-export type AttachMethodRelationshipOptions = {
+export type DetachMethodRelationshipOptions = {
   fragment: string,
   relationships: WasmMethodRelationship | WasmMethodRelationship[]
 };
