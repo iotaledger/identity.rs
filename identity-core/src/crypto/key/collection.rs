@@ -211,7 +211,8 @@ impl IntoIterator for KeyCollection {
   type IntoIter = Zip<IntoIter<PublicKey>, IntoIter<PrivateKey>>;
 
   // Vec conversion is necessary for Box<[T]>, see https://github.com/rust-lang/rust/issues/59878
-  #[allow(clippy::unnecessary_to_owned)]
+  // TODO: uncomment after Rust 1.58 stable release
+  // #[allow(clippy::unnecessary_to_owned)]
   fn into_iter(self) -> Self::IntoIter {
     self.public.to_vec().into_iter().zip(self.private.to_vec().into_iter())
   }
