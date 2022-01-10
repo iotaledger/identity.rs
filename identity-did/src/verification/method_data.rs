@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use identity_core::common::Object;
 use identity_core::utils::decode_b58;
@@ -55,7 +54,7 @@ impl MethodData {
 }
 
 impl Debug for MethodData {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({})", inner)),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),

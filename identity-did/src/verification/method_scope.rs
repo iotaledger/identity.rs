@@ -1,32 +1,49 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt;
+use core::fmt::Display;
 use core::str::FromStr;
+
+use identity_core::convert::FmtJson;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::verification::MethodRelationship;
 
 /// Verification method group used to refine the scope of a method query.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum MethodScope {
   VerificationMethod,
-  Authentication,
-  AssertionMethod,
-  KeyAgreement,
-  CapabilityDelegation,
-  CapabilityInvocation,
+  VerificationRelationship(MethodRelationship),
 }
 
 impl MethodScope {
-  pub const fn as_str(&self) -> &'static str {
+  pub fn as_str(&self) -> &'static str {
     match self {
       Self::VerificationMethod => "VerificationMethod",
-      Self::Authentication => "Authentication",
-      Self::AssertionMethod => "AssertionMethod",
-      Self::KeyAgreement => "KeyAgreement",
-      Self::CapabilityDelegation => "CapabilityDelegation",
-      Self::CapabilityInvocation => "CapabilityInvocation",
+      Self::VerificationRelationship(relationship) => relationship.into(),
     }
+  }
+
+  pub const fn authentication() -> Self {
+    Self::VerificationRelationship(MethodRelationship::Authentication)
+  }
+
+  pub const fn capability_delegation() -> Self {
+    Self::VerificationRelationship(MethodRelationship::CapabilityDelegation)
+  }
+
+  pub const fn capability_invocation() -> Self {
+    Self::VerificationRelationship(MethodRelationship::CapabilityInvocation)
+  }
+
+  pub const fn assertion_method() -> Self {
+    Self::VerificationRelationship(MethodRelationship::AssertionMethod)
+  }
+
+  pub const fn key_agreement() -> Self {
+    Self::VerificationRelationship(MethodRelationship::KeyAgreement)
   }
 }
 
@@ -42,12 +59,24 @@ impl FromStr for MethodScope {
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     match string {
       "VerificationMethod" => Ok(Self::VerificationMethod),
-      "Authentication" => Ok(Self::Authentication),
-      "AssertionMethod" => Ok(Self::AssertionMethod),
-      "KeyAgreement" => Ok(Self::KeyAgreement),
-      "CapabilityDelegation" => Ok(Self::CapabilityDelegation),
-      "CapabilityInvocation" => Ok(Self::CapabilityInvocation),
+      "Authentication" => Ok(Self::VerificationRelationship(MethodRelationship::Authentication)),
+      "AssertionMethod" => Ok(Self::VerificationRelationship(MethodRelationship::AssertionMethod)),
+      "KeyAgreement" => Ok(Self::VerificationRelationship(MethodRelationship::KeyAgreement)),
+      "CapabilityDelegation" => Ok(Self::VerificationRelationship(MethodRelationship::CapabilityDelegation)),
+      "CapabilityInvocation" => Ok(Self::VerificationRelationship(MethodRelationship::CapabilityInvocation)),
       _ => Err(Error::UnknownMethodScope),
     }
+  }
+}
+
+impl From<MethodRelationship> for MethodScope {
+  fn from(relationship: MethodRelationship) -> Self {
+    Self::VerificationRelationship(relationship)
+  }
+}
+
+impl Display for MethodScope {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    self.fmt_json(f)
   }
 }

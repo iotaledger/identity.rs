@@ -5,7 +5,7 @@ use core::borrow::Borrow;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::slice::Iter;
@@ -14,7 +14,7 @@ use serde::Deserialize;
 use crate::did::CoreDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::DIDKey;
+use crate::utils::KeyComparable;
 use crate::verification::MethodQuery;
 
 /// An ordered set backed by a `Vec<T>`.
@@ -22,7 +22,7 @@ use crate::verification::MethodQuery;
 /// Note: Ordering is based on insert order and **not** [`Ord`].
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-#[serde(bound(deserialize = "T: PartialEq + Deserialize<'de>"), try_from = "Vec<T>")]
+#[serde(bound(deserialize = "T: KeyComparable + Deserialize<'de>"), try_from = "Vec<T>")]
 pub struct OrderedSet<T>(Vec<T>);
 
 impl<T> OrderedSet<T> {
@@ -75,7 +75,7 @@ impl<T> OrderedSet<T> {
     self.0.last()
   }
 
-  /// Returns a mutable referece the last element in the set, or `None` if the
+  /// Returns a mutable reference the last element in the set, or `None` if the
   /// set is empty.
   #[inline]
   pub fn tail_mut(&mut self) -> Option<&mut T> {
@@ -103,19 +103,19 @@ impl<T> OrderedSet<T> {
   /// Returns `true` if the `OrderedSet` contains the given value.
   pub fn contains<U>(&self, item: &U) -> bool
   where
-    T: AsRef<U>,
-    U: PartialEq + ?Sized,
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
   {
-    self.0.iter().any(|other| other.as_ref() == item)
+    self.0.iter().any(|other| other.as_key() == item.as_key())
   }
 
   /// Adds a new value to the end of the `OrderedSet`; returns `true` if the
   /// value was successfully added.
   pub fn append(&mut self, item: T) -> bool
   where
-    T: PartialEq,
+    T: KeyComparable,
   {
-    if self.0.contains(&item) {
+    if self.contains(&item) {
       false
     } else {
       self.0.push(item);
@@ -127,9 +127,9 @@ impl<T> OrderedSet<T> {
   /// value was successfully added.
   pub fn prepend(&mut self, item: T) -> bool
   where
-    T: PartialEq,
+    T: KeyComparable,
   {
-    if self.0.contains(&item) {
+    if self.contains(&item) {
       false
     } else {
       self.0.insert(0, item);
@@ -142,10 +142,12 @@ impl<T> OrderedSet<T> {
   #[inline]
   pub fn replace<U>(&mut self, current: &U, update: T) -> bool
   where
-    T: PartialEq + Borrow<U>,
-    U: PartialEq + ?Sized,
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
   {
-    self.change(update, |item, update| item.borrow() == current || item == update)
+    self.change(update, |item, update| {
+      item.as_key() == current.as_key() || item.as_key() == update.as_key()
+    })
   }
 
   /// Updates an existing value in the `OrderedSet`; returns `true` if the value
@@ -153,19 +155,24 @@ impl<T> OrderedSet<T> {
   #[inline]
   pub fn update(&mut self, update: T) -> bool
   where
-    T: PartialEq,
+    T: KeyComparable,
   {
-    self.change(update, |item, update| item == update)
+    self.change(update, |item, update| item.as_key() == update.as_key())
   }
 
   /// Removes all matching items from the set.
   #[inline]
-  pub fn remove<U>(&mut self, item: &U)
+  pub fn remove<U>(&mut self, item: &U) -> bool
   where
-    T: PartialEq + Borrow<U>,
-    U: PartialEq + ?Sized,
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
   {
-    self.0.retain(|this| this.borrow() != item);
+    if self.contains(item) {
+      self.0.retain(|this| this.borrow().as_key() != item.as_key());
+      true
+    } else {
+      false
+    }
   }
 
   fn change<F>(&mut self, data: T, f: F) -> bool
@@ -190,7 +197,7 @@ where
   T: Debug,
 {
   #[inline]
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_set().entries(self.iter()).finish()
   }
 }
@@ -204,16 +211,16 @@ impl<T> Deref for OrderedSet<T> {
   }
 }
 
-impl<T> Default for OrderedSet<T> {
+impl<T: KeyComparable> Default for OrderedSet<T> {
   #[inline]
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl<T> FromIterator<T> for OrderedSet<T>
+impl<T: KeyComparable> FromIterator<T> for OrderedSet<T>
 where
-  T: PartialEq,
+  T: KeyComparable,
 {
   fn from_iter<I>(iter: I) -> Self
   where
@@ -234,7 +241,7 @@ where
 
 impl<T> TryFrom<Vec<T>> for OrderedSet<T>
 where
-  T: PartialEq,
+  T: KeyComparable,
 {
   type Error = Error;
 
@@ -251,21 +258,17 @@ where
   }
 }
 
-impl<T> OrderedSet<DIDKey<T>>
+impl<T> OrderedSet<T>
 where
   T: AsRef<CoreDIDUrl>,
 {
-  pub(crate) fn query<'query, Q>(&self, query: Q) -> Option<&T>
+  pub fn query<'query, Q>(&self, query: Q) -> Option<&T>
   where
     Q: Into<MethodQuery<'query>>,
   {
     let query: MethodQuery<'query> = query.into();
 
-    self
-      .0
-      .iter()
-      .find(|method| query.matches(method.as_did_url()))
-      .map(|method| &**method)
+    self.0.iter().find(|method| query.matches(method.as_ref()))
   }
 
   pub(crate) fn query_mut<'query, Q>(&mut self, query: Q) -> Option<&mut T>
@@ -274,11 +277,7 @@ where
   {
     let query: MethodQuery<'query> = query.into();
 
-    self
-      .0
-      .iter_mut()
-      .find(|method| query.matches(method.as_did_url()))
-      .map(|method| &mut **method)
+    self.0.iter_mut().find(|method| query.matches(method.as_ref()))
   }
 }
 
@@ -287,11 +286,26 @@ mod tests {
   use super::*;
 
   use crate::did::CoreDIDUrl;
-  use crate::utils::DIDKey;
   use crate::verification::MethodRef;
 
+  impl KeyComparable for &str {
+    type Key = str;
+
+    fn as_key(&self) -> &Self::Key {
+      self
+    }
+  }
+
+  impl KeyComparable for u8 {
+    type Key = u8;
+
+    fn as_key(&self) -> &Self::Key {
+      self
+    }
+  }
+
   #[test]
-  fn test_works() {
+  fn test_ordered_set_works() {
     let mut set = OrderedSet::new();
 
     set.append("a");
@@ -349,14 +363,84 @@ mod tests {
     let did1: CoreDIDUrl = CoreDIDUrl::parse("did:example:123").unwrap();
     let did2: CoreDIDUrl = CoreDIDUrl::parse("did:example:456").unwrap();
 
-    let source: Vec<DIDKey<MethodRef>> = vec![
-      DIDKey::new(MethodRef::Refer(did1.clone())),
-      DIDKey::new(MethodRef::Refer(did2.clone())),
-    ];
+    let source: Vec<MethodRef> = vec![MethodRef::Refer(did1.clone()), MethodRef::Refer(did2.clone())];
 
-    let oset: OrderedSet<DIDKey<MethodRef>> = source.into_iter().collect();
+    let oset: OrderedSet<MethodRef> = source.into_iter().collect();
 
-    assert!(oset.contains(&MethodRef::Refer(did1)));
-    assert!(oset.contains(&MethodRef::Refer(did2)));
+    assert!(oset.contains(&MethodRef::<()>::Refer(did1)));
+    assert!(oset.contains(&MethodRef::<()>::Refer(did2)));
+  }
+
+  #[derive(Clone, Copy, PartialEq, Eq)]
+  struct ComparableStruct {
+    key: u8,
+    value: i32,
+  }
+
+  impl KeyComparable for ComparableStruct {
+    type Key = u8;
+
+    fn as_key(&self) -> &Self::Key {
+      &self.key
+    }
+  }
+
+  #[test]
+  fn test_ordered_set_replace() {
+    let mut set = OrderedSet::new();
+
+    // Create two structs with the same key.
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    let cs2 = ComparableStruct { key: 0, value: 20 };
+
+    // Try replace it with the second.
+    // This should succeed because the keys are equivalent.
+    assert!(set.append(cs1));
+    assert_eq!(set.len(), 1);
+
+    assert!(set.replace(&cs1, cs2));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs2.key);
+    assert_eq!(set.head().unwrap().value, cs2.value);
+  }
+
+  #[test]
+  fn test_ordered_set_replace_all() {
+    let mut set = OrderedSet::new();
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    let cs2 = ComparableStruct { key: 1, value: 20 };
+    assert!(set.append(cs1));
+    assert!(set.append(cs2));
+    assert_eq!(set.len(), 2);
+
+    // Now replace cs1 with something that has the same key as cs2.
+    // This should replace BOTH cs1 AND cs2.
+    let cs3 = ComparableStruct { key: 1, value: 30 };
+    assert!(set.replace(&cs1, cs3));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs3.key);
+    assert_eq!(set.head().unwrap().value, cs3.value);
+  }
+
+  #[test]
+  fn test_ordered_set_update() {
+    let mut set = OrderedSet::new();
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    assert!(set.append(cs1));
+    assert_eq!(set.len(), 1);
+
+    // This should update the value of cs1 since the keys are the same.
+    let cs2 = ComparableStruct { key: 0, value: 20 };
+    assert!(set.update(cs2));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs2.key);
+    assert_eq!(set.head().unwrap().value, cs2.value);
+
+    // This should NOT update anything since the key does not match.
+    let cs3 = ComparableStruct { key: 1, value: 20 };
+    assert!(!set.update(cs3));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs2.key);
+    assert_eq!(set.head().unwrap().value, cs2.value);
   }
 }

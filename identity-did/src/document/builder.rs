@@ -8,7 +8,6 @@ use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
-use crate::utils::DIDKey;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
 
@@ -18,13 +17,13 @@ pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
   pub(crate) id: Option<CoreDID>,
   pub(crate) controller: Option<CoreDID>,
   pub(crate) also_known_as: Vec<Url>,
-  pub(crate) verification_method: Vec<DIDKey<VerificationMethod<U>>>,
-  pub(crate) authentication: Vec<DIDKey<MethodRef<U>>>,
-  pub(crate) assertion_method: Vec<DIDKey<MethodRef<U>>>,
-  pub(crate) key_agreement: Vec<DIDKey<MethodRef<U>>>,
-  pub(crate) capability_delegation: Vec<DIDKey<MethodRef<U>>>,
-  pub(crate) capability_invocation: Vec<DIDKey<MethodRef<U>>>,
-  pub(crate) service: Vec<DIDKey<Service<V>>>,
+  pub(crate) verification_method: Vec<VerificationMethod<U>>,
+  pub(crate) authentication: Vec<MethodRef<U>>,
+  pub(crate) assertion_method: Vec<MethodRef<U>>,
+  pub(crate) key_agreement: Vec<MethodRef<U>>,
+  pub(crate) capability_delegation: Vec<MethodRef<U>>,
+  pub(crate) capability_invocation: Vec<MethodRef<U>>,
+  pub(crate) service: Vec<Service<V>>,
   pub(crate) properties: T,
 }
 
@@ -70,49 +69,49 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
   /// Adds a value to the `verificationMethod` set.
   #[must_use]
   pub fn verification_method(mut self, value: VerificationMethod<U>) -> Self {
-    self.verification_method.push(DIDKey::new(value));
+    self.verification_method.push(value);
     self
   }
 
   /// Adds a value to the `authentication` set.
   #[must_use]
   pub fn authentication(mut self, value: impl Into<MethodRef<U>>) -> Self {
-    self.authentication.push(DIDKey::new(value.into()));
+    self.authentication.push(value.into());
     self
   }
 
   /// Adds a value to the `assertionMethod` set.
   #[must_use]
   pub fn assertion_method(mut self, value: impl Into<MethodRef<U>>) -> Self {
-    self.assertion_method.push(DIDKey::new(value.into()));
+    self.assertion_method.push(value.into());
     self
   }
 
   /// Adds a value to the `keyAgreement` set.
   #[must_use]
   pub fn key_agreement(mut self, value: impl Into<MethodRef<U>>) -> Self {
-    self.key_agreement.push(DIDKey::new(value.into()));
+    self.key_agreement.push(value.into());
     self
   }
 
   /// Adds a value to the `capabilityDelegation` set.
   #[must_use]
   pub fn capability_delegation(mut self, value: impl Into<MethodRef<U>>) -> Self {
-    self.capability_delegation.push(DIDKey::new(value.into()));
+    self.capability_delegation.push(value.into());
     self
   }
 
   /// Adds a value to the `capabilityInvocation` set.
   #[must_use]
   pub fn capability_invocation(mut self, value: impl Into<MethodRef<U>>) -> Self {
-    self.capability_invocation.push(DIDKey::new(value.into()));
+    self.capability_invocation.push(value.into());
     self
   }
 
   /// Adds a value to the `service` set.
   #[must_use]
   pub fn service(mut self, value: Service<V>) -> Self {
-    self.service.push(DIDKey::new(value));
+    self.service.push(value);
     self
   }
 

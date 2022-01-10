@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, VerifiableCredential} from '@iota/identity-wasm';
+import {Client, Config, Credential, SignatureOptions, VerifierOptions} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -11,7 +11,7 @@ import {manipulateIdentity} from './manipulate_did';
  The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
  This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createVC(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -34,7 +34,7 @@ async function createVC(clientConfig) {
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
-    const unsignedVc = VerifiableCredential.extend({
+    const unsignedVc = Credential.extend({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.doc.id.toString(),
@@ -46,10 +46,10 @@ async function createVC(clientConfig) {
         method: issuer.doc.id.toString() + "#newKey",
         public: issuer.newKey.public,
         private: issuer.newKey.private,
-    });
+    }, SignatureOptions.default());
 
     // Check if the credential is verifiable.
-    const result = await client.checkCredential(signedVc.toString());
+    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
 
     console.log(`VC verification result: ${result.verified}`);
 

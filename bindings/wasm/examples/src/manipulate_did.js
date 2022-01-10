@@ -1,9 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, KeyPair, KeyType, VerificationMethod, Service, Timestamp} from '@iota/identity-wasm';
+import {
+    Client,
+    Config,
+    KeyPair,
+    KeyType,
+    MethodScope,
+    Service,
+    Timestamp,
+    VerificationMethod
+} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
-import {logExplorerUrl} from "./utils";
+import {logExplorerUrl, logResolverUrl} from "./utils";
 
 /**
  This example shows how to add more to an existing DID Document.
@@ -14,7 +23,7 @@ import {logExplorerUrl} from "./utils";
  This is an important field as it links the new DID Document to the old DID Document, creating a chain.
  Without setting this value, the new DID Document won't get used during resolution of the DID!
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function manipulateIdentity(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -29,7 +38,7 @@ async function manipulateIdentity(clientConfig) {
     // Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
     const method = VerificationMethod.fromDID(doc.id, newKey, "newKey");
-    doc.insertMethod(method, "VerificationMethod");
+    doc.insertMethod(method, MethodScope.VerificationMethod());
 
     // Add a new ServiceEndpoint
     const serviceJSON = {
@@ -44,17 +53,18 @@ async function manipulateIdentity(clientConfig) {
         This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
-    doc.previousMessageId = receipt.messageId;
-    doc.updated = Timestamp.nowUTC();
+    doc.metadataPreviousMessageId = receipt.messageId;
+    doc.metadataUpdated = Timestamp.nowUTC();
 
     // Sign the DID Document with the appropriate key.
-    doc.sign(key);
+    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const updateReceipt = await client.publishDocument(doc.toJSON());
+    const updateReceipt = await client.publishDocument(doc);
 
     // Log the results.
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), updateReceipt.messageId);
+    logExplorerUrl("DID Document Update Transaction:", clientConfig.explorer, updateReceipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
     return {
         key,
         newKey,

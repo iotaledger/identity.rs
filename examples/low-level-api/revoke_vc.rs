@@ -14,14 +14,15 @@
 
 use identity::core::Timestamp;
 use identity::credential::Credential;
+use identity::crypto::SignatureOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod common;
@@ -39,14 +40,22 @@ async fn main() -> Result<()> {
   // - effectively revoking the VC as it will no longer be able to verified.
   let (mut issuer_doc, issuer_key, issuer_receipt) = issuer;
   issuer_doc.remove_method(issuer_doc.id().to_url().join("#newKey")?)?;
-  issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
-  issuer_doc.set_updated(Timestamp::now_utc());
-  issuer_doc.sign(issuer_key.private())?;
+  issuer_doc.metadata.previous_message_id = *issuer_receipt.message_id();
+  issuer_doc.metadata.updated = Timestamp::now_utc();
+  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
   // Log the resulting Identity update
-  println!("Issuer Identity Update > {}", update_receipt.message_url()?);
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
+  println!(
+    "Issuer Update Transaction > {}",
+    explorer.message_url(update_receipt.message_id())?
+  );
+  println!(
+    "Explore the Issuer DID Document > {}",
+    explorer.resolver_url(issuer_doc.id())?
+  );
 
   // Check the verifiable credential
   let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
@@ -72,7 +81,7 @@ async fn create_vc_helper(
   let (subject_doc, ..) = create_did::run().await?;
 
   // Add a new VerificationMethod to the issuer with tag #newKey
-  // NOTE: this allows us to revoke it without removing the default authentication key.
+  // NOTE: this allows us to revoke it without removing the default signing key.
   let (issuer_doc, issuer_new_key, issuer_updated_receipt) =
     common::add_new_key(client, &issuer_doc, &issuer_key, &issuer_receipt).await?;
 
@@ -80,7 +89,12 @@ async fn create_vc_helper(
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
   // Sign the Credential with the issuer's #newKey private key, so we can later revoke it
-  issuer_doc.sign_data(&mut credential, issuer_new_key.private())?;
+  issuer_doc.sign_data(
+    &mut credential,
+    issuer_new_key.private(),
+    issuer_doc.default_signing_method()?.id(),
+    SignatureOptions::default(),
+  )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);
   Ok((issuer, credential))
@@ -100,13 +114,16 @@ pub async fn add_new_key(
 
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519()?;
-  let method: IotaVerificationMethod = IotaVerificationMethod::from_did(updated_doc.did().clone(), &new_key, "newKey")?;
-  assert!(updated_doc.insert_method(MethodScope::VerificationMethod, method));
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::from_did(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
+  assert!(updated_doc
+    .insert_method(method, MethodScope::VerificationMethod)
+    .is_ok());
 
   // Prepare the update
-  updated_doc.set_previous_message_id(*receipt.message_id());
-  updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign(key.private())?;
+  updated_doc.metadata.previous_message_id = *receipt.message_id();
+  updated_doc.metadata.updated = Timestamp::now_utc();
+  updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

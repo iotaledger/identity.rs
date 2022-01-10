@@ -5,11 +5,12 @@ import {
     Client,
     Config,
     Document,
-    Service,
     KeyPair,
-    VerificationMethod,
     KeyType,
-    Timestamp, DID
+    MethodScope,
+    Service,
+    Timestamp,
+    VerificationMethod
 } from '@iota/identity-wasm';
 import {logExplorerUrl, prettyPrintJSON} from "./utils";
 import {createIdentity} from "./create_did";
@@ -18,7 +19,7 @@ import {createIdentity} from "./create_did";
  Advanced example that performs multiple diff chain and integration chain updates and
  demonstrates how to resolve the DID Document history to view these chains.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function resolveHistory(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -58,23 +59,23 @@ async function resolveHistory(clientConfig) {
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     const keys1 = new KeyPair(KeyType.Ed25519);
     const method1 = VerificationMethod.fromDID(intDoc1.id, keys1, "keys-1");
-    intDoc1.insertMethod(method1, "VerificationMethod");
+    intDoc1.insertMethod(method1, MethodScope.VerificationMethod());
 
     // Add the `messageId` of the previous message in the chain.
     // This is REQUIRED in order for the messages to form a chain.
     // Skipping / forgetting this will render the publication useless.
-    intDoc1.previousMessageId = originalReceipt.messageId;
-    intDoc1.updated = Timestamp.nowUTC();
+    intDoc1.metadataPreviousMessageId = originalReceipt.messageId;
+    intDoc1.metadataUpdated = Timestamp.nowUTC();
 
     // Sign the DID Document with the original private key.
-    intDoc1.sign(key);
+    intDoc1.signSelf(key, intDoc1.defaultSigningMethod().id.toString());
 
     // Publish the updated DID Document to the Tangle, updating the integration chain.
     // This may take a few seconds to complete proof-of-work.
-    const intReceipt1 = await client.publishDocument(intDoc1.toJSON());
+    const intReceipt1 = await client.publishDocument(intDoc1);
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (1):", clientConfig.network.toString(), intReceipt1.messageId);
+    logExplorerUrl("Int. Chain Update (1):", clientConfig.explorer, intReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 1
@@ -90,17 +91,17 @@ async function resolveHistory(clientConfig) {
         serviceEndpoint: "https://iota.org",
     };
     diffDoc1.insertService(Service.fromJSON(serviceJSON1));
-    diffDoc1.updated = Timestamp.nowUTC();
+    diffDoc1.metadataUpdated = Timestamp.nowUTC();
 
     // Create a signed diff update.
     //
     // This is the first diff so the `previousMessageId` property is
     // set to the last DID document published on the integration chain.
-    const diff1 = intDoc1.diff(diffDoc1, intReceipt1.messageId, key);
+    const diff1 = intDoc1.diff(diffDoc1, intReceipt1.messageId, key, intDoc1.defaultSigningMethod().id.toString());
 
     // Publish the diff to the Tangle, starting a diff chain.
     const diffReceipt1 = await client.publishDiff(intReceipt1.messageId, diff1);
-    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.network.toString(), diffReceipt1.messageId);
+    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.explorer, diffReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 2
@@ -113,20 +114,22 @@ async function resolveHistory(clientConfig) {
     let serviceJSON2 = {
         id: diffDoc2.id + "#linked-domain-2",
         type: "LinkedDomains",
-        serviceEndpoint: "https://example.com",
+        serviceEndpoint: {
+            "origins": ["https://iota.org/", "https://example.com/"]
+        },
     };
     diffDoc2.insertService(Service.fromJSON(serviceJSON2));
-    diffDoc2.updated = Timestamp.nowUTC();
+    diffDoc2.metadataUpdated = Timestamp.nowUTC();
 
     // This is the second diff therefore its `previousMessageId` property is
     // set to the first published diff to extend the diff chain.
-    const diff2 = diffDoc1.diff(diffDoc2, diffReceipt1.messageId, key);
+    const diff2 = diffDoc1.diff(diffDoc2, diffReceipt1.messageId, key, diffDoc1.defaultSigningMethod().id.toString());
 
     // Publish the diff to the Tangle.
     // Note that we still use the `messageId` from the last integration chain message here to link
     // the current diff chain to that point on the integration chain.
     const diffReceipt2 = await client.publishDiff(intReceipt1.messageId, diff2);
-    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.network.toString(), diffReceipt2.messageId);
+    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.explorer, diffReceipt2.messageId);
 
     // ===========================================================================
     // Diff Chain Spam
@@ -166,17 +169,17 @@ async function resolveHistory(clientConfig) {
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     const keys2 = new KeyPair(KeyType.Ed25519);
     const method2 = VerificationMethod.fromDID(intDoc2.id, keys2, "keys-2");
-    intDoc2.insertMethod(method2, "VerificationMethod");
+    intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
-    intDoc2.previousMessageId = intReceipt1.messageId;
-    intDoc2.updated = Timestamp.nowUTC();
-    intDoc2.sign(key);
-    const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
+    intDoc2.metadataPreviousMessageId = intReceipt1.messageId;
+    intDoc2.metadataUpdated = Timestamp.nowUTC();
+    intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id.toString());
+    const intReceipt2 = await client.publishDocument(intDoc2);
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intReceipt2.messageId);
+    logExplorerUrl("Int. Chain Update (2):", clientConfig.explorer, intReceipt2.messageId);
 
     // ===========================================================================
     // DID History 2

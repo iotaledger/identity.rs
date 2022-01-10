@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::str::FromStr;
 use std::hash::Hash;
 
@@ -58,6 +58,8 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
 
   /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
+  ///
+  /// See [`DIDUrl::join`].
   fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
   where
     Self: Sized;
@@ -192,13 +194,13 @@ impl TryFrom<BaseDIDUrl> for CoreDID {
 }
 
 impl Debug for CoreDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.as_str()))
   }
 }
 
 impl Display for CoreDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.as_str()))
   }
 }

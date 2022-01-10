@@ -3,7 +3,7 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use crypto::ciphers::aes::Aes128Gcm;
 use crypto::ciphers::aes::Aes192Gcm;
 use crypto::ciphers::aes::Aes256Gcm;
@@ -201,7 +201,7 @@ impl JweAlgorithm {
 }
 
 impl Display for JweAlgorithm {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_str(self.name())
   }
 }

@@ -15,7 +15,6 @@ use identity_core::diff::Result;
 use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::service::Service;
-use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
@@ -35,19 +34,19 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  verification_method: Option<DiffVec<DIDKey<VerificationMethod<U>>>>,
+  verification_method: Option<DiffVec<VerificationMethod<U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  authentication: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+  authentication: Option<DiffVec<MethodRef<U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  assertion_method: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+  assertion_method: Option<DiffVec<MethodRef<U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_agreement: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+  key_agreement: Option<DiffVec<MethodRef<U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_delegation: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+  capability_delegation: Option<DiffVec<MethodRef<U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_invocation: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+  capability_invocation: Option<DiffVec<MethodRef<U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  service: Option<DiffVec<DIDKey<Service<V>>>>,
+  service: Option<DiffVec<Service<V>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<T as Diff>::Type>,
 }
@@ -144,43 +143,43 @@ where
       .transpose()?
       .unwrap_or_else(|| self.also_known_as().to_vec());
 
-    let verification_method: OrderedSet<DIDKey<VerificationMethod<U>>> = diff
+    let verification_method: OrderedSet<VerificationMethod<U>> = diff
       .verification_method
       .map(|value| self.verification_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.verification_method().clone());
 
-    let authentication: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let authentication: OrderedSet<MethodRef<U>> = diff
       .authentication
       .map(|value| self.authentication().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.authentication().clone());
 
-    let assertion_method: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let assertion_method: OrderedSet<MethodRef<U>> = diff
       .assertion_method
       .map(|value| self.assertion_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.assertion_method().clone());
 
-    let key_agreement: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let key_agreement: OrderedSet<MethodRef<U>> = diff
       .key_agreement
       .map(|value| self.key_agreement().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.key_agreement().clone());
 
-    let capability_delegation: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let capability_delegation: OrderedSet<MethodRef<U>> = diff
       .capability_delegation
       .map(|value| self.capability_delegation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_delegation().clone());
 
-    let capability_invocation: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let capability_invocation: OrderedSet<MethodRef<U>> = diff
       .capability_invocation
       .map(|value| self.capability_invocation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_invocation().clone());
 
-    let service: OrderedSet<DIDKey<Service<V>>> = diff
+    let service: OrderedSet<Service<V>> = diff
       .service
       .map(|value| self.service().merge(value))
       .transpose()?
@@ -229,43 +228,43 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
 
-    let verification_method: OrderedSet<DIDKey<VerificationMethod<U>>> = diff
+    let verification_method: OrderedSet<VerificationMethod<U>> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.verification_method`"))?;
 
-    let authentication: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let authentication: OrderedSet<MethodRef<U>> = diff
       .authentication
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.authentication`"))?;
 
-    let assertion_method: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let assertion_method: OrderedSet<MethodRef<U>> = diff
       .assertion_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.assertion_method`"))?;
 
-    let key_agreement: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let key_agreement: OrderedSet<MethodRef<U>> = diff
       .key_agreement
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.key_agreement`"))?;
 
-    let capability_delegation: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let capability_delegation: OrderedSet<MethodRef<U>> = diff
       .capability_delegation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_delegation`"))?;
 
-    let capability_invocation: OrderedSet<DIDKey<MethodRef<U>>> = diff
+    let capability_invocation: OrderedSet<MethodRef<U>> = diff
       .capability_invocation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
 
-    let service: OrderedSet<DIDKey<Service<V>>> = diff
+    let service: OrderedSet<Service<V>> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?
@@ -318,6 +317,7 @@ mod test {
   use identity_core::common::Value;
 
   use crate::service::ServiceBuilder;
+  use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
@@ -341,7 +341,7 @@ mod test {
   fn service(did_url: CoreDIDUrl) -> Service {
     ServiceBuilder::default()
       .id(did_url)
-      .service_endpoint(Url::parse("did:service:1234").unwrap())
+      .service_endpoint(ServiceEndpoint::One(Url::parse("did:service:1234").unwrap()))
       .type_("test_service")
       .build()
       .unwrap()
@@ -419,7 +419,7 @@ mod test {
     // add new method
     assert!(new
       .verification_method_mut()
-      .append(method(&doc.clone().controller.unwrap(), "#key-diff").into()));
+      .append(method(&doc.clone().controller.unwrap(), "#key-diff")));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -435,7 +435,7 @@ mod test {
     let first = new.verification_method().first().unwrap().clone();
     new
       .verification_method_mut()
-      .replace(&first, method(&"did:diff:1234".parse().unwrap(), "#key-diff").into());
+      .replace(&first, method(&"did:diff:1234".parse().unwrap(), "#key-diff"));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -463,7 +463,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
-    assert!(new.authentication_mut().append(method_ref.into()));
+    assert!(new.authentication_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -478,7 +478,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
     let first = new.authentication().first().unwrap().clone();
-    new.authentication_mut().replace(&first, method_ref.into());
+    new.authentication_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -506,7 +506,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
-    assert!(new.assertion_method_mut().append(method_ref.into()));
+    assert!(new.assertion_method_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -521,7 +521,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
     let first = new.assertion_method().first().unwrap().clone();
-    new.assertion_method_mut().replace(&first, method_ref.into());
+    new.assertion_method_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -549,7 +549,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
-    assert!(new.key_agreement_mut().append(method_ref.into()));
+    assert!(new.key_agreement_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -564,7 +564,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
     let first = new.key_agreement().first().unwrap().clone();
-    new.key_agreement_mut().replace(&first, method_ref.into());
+    new.key_agreement_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -592,7 +592,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
-    assert!(new.capability_delegation_mut().append(method_ref.into()));
+    assert!(new.capability_delegation_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -607,7 +607,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
     let first = new.capability_delegation().first().unwrap().clone();
-    new.capability_delegation_mut().replace(&first, method_ref.into());
+    new.capability_delegation_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -635,7 +635,7 @@ mod test {
 
     // add new method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
-    assert!(new.capability_invocation_mut().append(method_ref.into()));
+    assert!(new.capability_invocation_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -650,7 +650,7 @@ mod test {
     // update method
     let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
     let first = new.capability_invocation().first().unwrap().clone();
-    new.capability_invocation_mut().replace(&first, method_ref.into());
+    new.capability_invocation_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -678,7 +678,7 @@ mod test {
 
     // Add new service
     let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
-    assert!(new.service_mut().append(service.into()));
+    assert!(new.service_mut().append(service));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -693,7 +693,7 @@ mod test {
     // add new service
     let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
     let first = new.service().first().unwrap().clone();
-    new.service_mut().replace(&first, service.into());
+    new.service_mut().replace(&first, service);
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -752,5 +752,31 @@ mod test {
     let diff = doc.clone().into_diff().unwrap();
     let new = CoreDocument::from_diff(diff).unwrap();
     assert_eq!(doc, new);
+  }
+
+  #[test]
+  fn test_rotate_key_material_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    let first: CoreDIDUrl = new.capability_invocation().first().unwrap().as_ref().clone();
+    new.capability_invocation_mut().remove(&first);
+
+    let method_ref: MethodRef = MethodBuilder::default()
+      .id(first)
+      .controller(new.controller.clone().unwrap())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::new_multibase(b"key_material"))
+      .build()
+      .unwrap()
+      .into();
+
+    assert!(new.capability_invocation_mut().append(method_ref));
+
+    assert_ne!(doc, new);
+
+    // Ensure overwriting the key material of a method with the same fragment produces a diff.
+    let diff = doc.diff(&new).unwrap();
+    assert!(diff.capability_invocation.is_some());
   }
 }

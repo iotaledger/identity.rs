@@ -17,22 +17,15 @@
   // clippy::missing_errors_doc,
 )]
 
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate log;
-
-#[macro_use]
-extern crate serde;
+pub use self::error::Error;
+pub use self::error::Result;
 
 mod resolver;
 
 pub mod chain;
 pub mod credential;
 pub mod did;
+pub mod diff;
+pub mod document;
 pub mod error;
 pub mod tangle;
-
-pub use self::error::Error;
-pub use self::error::Result;

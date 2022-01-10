@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_core::common::Url;
 
 use crate::did::CoreDIDUrl;
 use crate::error::Result;
 use crate::service::Service;
+use crate::service::ServiceEndpoint;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug, Default)]
 pub struct ServiceBuilder<T = Object> {
   pub(crate) id: Option<CoreDIDUrl>,
   pub(crate) type_: Option<String>,
-  pub(crate) service_endpoint: Option<Url>,
+  pub(crate) service_endpoint: Option<ServiceEndpoint>,
   pub(crate) properties: T,
 }
 
@@ -44,7 +44,7 @@ impl<T> ServiceBuilder<T> {
 
   /// Sets the `serviceEndpoint` value of the generated `Service`.
   #[must_use]
-  pub fn service_endpoint(mut self, value: Url) -> Self {
+  pub fn service_endpoint(mut self, value: ServiceEndpoint) -> Self {
     self.service_endpoint = Some(value);
     self
   }
@@ -57,6 +57,8 @@ impl<T> ServiceBuilder<T> {
 
 #[cfg(test)]
 mod tests {
+  use identity_core::common::Url;
+
   use super::*;
 
   #[test]
@@ -64,7 +66,7 @@ mod tests {
   fn test_missing_id() {
     let _: Service = ServiceBuilder::default()
       .type_("ServiceType")
-      .service_endpoint("https://example.com".parse().unwrap())
+      .service_endpoint(Url::parse("https://example.com").unwrap().into())
       .build()
       .unwrap();
   }
@@ -74,7 +76,7 @@ mod tests {
   fn test_missing_type_() {
     let _: Service = ServiceBuilder::default()
       .id("did:example:123".parse().unwrap())
-      .service_endpoint("https://example.com".parse().unwrap())
+      .service_endpoint(Url::parse("https://example.com").unwrap().into())
       .build()
       .unwrap();
   }

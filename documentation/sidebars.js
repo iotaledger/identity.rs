@@ -155,6 +155,7 @@ module.exports = {
         },
         'glossary',
         'contribute',
+        'workflow',
         'contact',
         'faq'
     ],

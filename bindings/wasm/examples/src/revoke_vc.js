@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, DID, Timestamp} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, VerifierOptions} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
-import {logExplorerUrl} from './utils';
+import {logExplorerUrl, logResolverUrl} from './utils';
 
 /**
  This example shows how to revoke a verifiable credential.
@@ -19,7 +19,7 @@ import {logExplorerUrl} from './utils';
  We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
  ClientConfig object. This will ensure that all the API calls use a consistent node and network.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function revokeVC(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -33,17 +33,18 @@ async function revokeVC(clientConfig) {
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
-    issuer.doc.previousMessageId = issuer.updatedMessageId;
-    issuer.doc.updated = Timestamp.nowUTC();
-    issuer.doc.sign(issuer.key);
+    issuer.doc.metadataPreviousMessageId = issuer.updatedMessageId;
+    issuer.doc.metadataUpdated = Timestamp.nowUTC();
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     // This is an integration chain update, so we publish the full document.
-    const {messageId} = await client.publishDocument(issuer.doc.toJSON());
+    const {messageId} = await client.publishDocument(issuer.doc);
 
     // Log the resulting Identity update
-    logExplorerUrl("Issuer Identity Update:", clientConfig.network.toString(), messageId);
+    logExplorerUrl("Issuer Update Transaction:", clientConfig.explorer, messageId);
+    logResolverUrl("Explore the Issuer DID Document:", clientConfig.explorer, issuer.doc.id.toString());
 
     // Check the verifiable credential
-    const result = await client.checkCredential(signedVc.toString());
+    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
     console.log(`VC verification result (false = revoked): ${result.verified}`);
 }
 

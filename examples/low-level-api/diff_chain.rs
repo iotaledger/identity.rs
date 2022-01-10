@@ -11,7 +11,8 @@ use identity::core::FromJson;
 use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ClientMap;
-use identity::iota::DocumentDiff;
+use identity::iota::DiffMessage;
+use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
@@ -40,7 +41,12 @@ async fn main() -> Result<()> {
   };
 
   // Generate a signed diff object.
-  let diff: DocumentDiff = document.diff(&updated_document, *receipt.message_id(), keypair.private())?;
+  let diff: DiffMessage = document.diff(
+    &updated_document,
+    *receipt.message_id(),
+    keypair.private(),
+    document.default_signing_method()?.id(),
+  )?;
 
   println!("Diff > {:#?}", diff);
 
@@ -50,7 +56,12 @@ async fn main() -> Result<()> {
   println!("Diff Update Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published diff message.
-  println!("Diff Transaction > {}", update_receipt.message_url()?);
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
+  println!(
+    "Diff Update Transaction > {}",
+    explorer.message_url(update_receipt.message_id())?
+  );
+  println!("Explore the DID Document > {}", explorer.resolver_url(document.id())?);
 
   Ok(())
 }

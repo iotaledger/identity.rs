@@ -6,10 +6,10 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
-use identity::account::IdentityCreate;
-use identity::account::IdentityState;
+use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::Url;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
 
 #[tokio::main]
@@ -23,21 +23,15 @@ async fn main() -> Result<()> {
   // Create a new Account with auto publishing set to false.
   // This means updates are not pushed to the tangle automatically.
   // Rather, when we publish, multiple updates are batched together.
-  let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+  let mut account: Account = Account::builder()
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
     .autopublish(false)
-    .build()
+    .create_identity(IdentitySetup::default())
     .await?;
 
-  // Create a new Identity with default settings.
-  // The identity will only be written to the local storage - not published to the tangle.
-  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
-
-  // Retrieve the DID from the newly created Identity state.
-  let iota_did: &IotaDID = identity.try_did()?;
-
+  // Add a new service to the local DID document.
   account
-    .update_identity(iota_did)
+    .update_identity()
     .create_service()
     .fragment("example-service")
     .type_("LinkedDomains")
@@ -47,11 +41,11 @@ async fn main() -> Result<()> {
 
   // Publish the newly created DID document,
   // including the new service, to the tangle.
-  account.publish_updates(iota_did).await?;
+  account.publish().await?;
 
   // Add another service.
   account
-    .update_identity(iota_did)
+    .update_identity()
     .create_service()
     .fragment("another-service")
     .type_("LinkedDomains")
@@ -61,20 +55,24 @@ async fn main() -> Result<()> {
 
   // Delete the previously added service.
   account
-    .update_identity(iota_did)
+    .update_identity()
     .delete_service()
     .fragment("example-service")
     .apply()
     .await?;
 
   // Publish the updates as one message to the tangle.
-  account.publish_updates(iota_did).await?;
+  account.publish().await?;
 
-  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  // Retrieve the DID from the newly created identity.
+  let iota_did: &IotaDID = account.did();
+
+  // Prints the Identity Resolver Explorer URL.
+  // The entire history can be observed on this page by clicking "Loading History".
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
-    "[Example] Explore the DID Document = {}{}",
-    iota_did.network()?.explorer_url().unwrap().to_string(),
-    iota_did.to_string()
+    "[Example] Explore the DID Document = {}",
+    explorer.resolver_url(iota_did)?
   );
 
   Ok(())

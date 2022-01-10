@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::TryInto;
+
+use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
 use crate::crypto::KeyRef;
@@ -9,6 +12,7 @@ use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypair;
+use crate::utils::keypair_from_ed25519_private_key;
 
 /// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -31,6 +35,26 @@ impl KeyPair {
     };
 
     Ok(Self { type_, public, private })
+  }
+
+  /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
+  ///
+  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
+  pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
+    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
+      .try_into()
+      .map_err(|_| crypto::Error::PrivateKeyError)?;
+
+    let private_key = ed25519::SecretKey::from_bytes(private_key_bytes);
+
+    let (public, private) = keypair_from_ed25519_private_key(private_key);
+
+    Ok(Self {
+      type_: KeyType::Ed25519,
+      public,
+      private,
+    })
   }
 
   /// Returns the [`type`][`KeyType`] of the `KeyPair` object.
