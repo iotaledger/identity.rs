@@ -45,6 +45,11 @@ runs:
           --future-release ${{ inputs.future-release }} 
           ${{ inputs.optional-arg }}
 
+    - name: Enrich changelog
+      shell: bash
+      run: |
+        .github/workflows/scripts/enrich-changelog.sh
+
     - name: Log ${{ inputs.changelog-path }}
       shell: bash
       run: cat ${{ inputs.changelog-path }}
