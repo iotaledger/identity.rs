@@ -41,36 +41,42 @@ impl VerifierOptions {
   }
 
   /// See [`DocumentVerifier::method_scope'].
+  #[must_use]
   pub fn method_scope(mut self, method_scope: MethodScope) -> Self {
     self.method_scope = Some(method_scope);
     self
   }
 
   /// See [`DocumentVerifier::method_type'].
+  #[must_use]
   pub fn method_type(mut self, method_type: Vec<MethodType>) -> Self {
     self.method_type = Some(method_type);
     self
   }
 
   /// See [`DocumentVerifier::challenge'].
+  #[must_use]
   pub fn challenge(mut self, challenge: String) -> Self {
     self.challenge = Some(challenge);
     self
   }
 
   /// See [`DocumentVerifier::domain'].
+  #[must_use]
   pub fn domain(mut self, domain: String) -> Self {
     self.domain = Some(domain);
     self
   }
 
   /// See [`DocumentVerifier::purpose'].
+  #[must_use]
   pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.purpose = Some(purpose);
     self
   }
 
   /// See [`DocumentVerifier::allow_expired'].
+  #[must_use]
   pub fn allow_expired(mut self, allow_expired: bool) -> Self {
     self.allow_expired = Some(allow_expired);
     self

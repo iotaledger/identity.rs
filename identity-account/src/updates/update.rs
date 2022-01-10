@@ -355,6 +355,7 @@ AttachMethodRelationship {
 });
 
 impl<'account> AttachMethodRelationshipBuilder<'account> {
+  #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
     self
@@ -373,6 +374,7 @@ DetachMethodRelationship {
 });
 
 impl<'account> DetachMethodRelationshipBuilder<'account> {
+  #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
     self
