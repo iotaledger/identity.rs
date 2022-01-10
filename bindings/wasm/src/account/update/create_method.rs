@@ -2,22 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account::WasmAccount;
-use crate::did::{WasmDID, WasmMethodScope, WasmMethodType};
+use crate::did::{WasmMethodScope, WasmMethodType};
 use crate::error::{wasm_error, Result, WasmResult};
-use identity::account::Error::UpdateError;
 use identity::account::UpdateError::MissingRequiredField;
-use identity::account::{Account, IdentityUpdater, MethodSecret, Update};
-use identity::core::OneOrMany;
-use identity::core::OneOrMany::{Many, One};
+use identity::account::{Update};
 use identity::did::{MethodScope, MethodType};
-use identity::iota::TangleRef;
 use js_sys::Promise;
-use std::borrow::Borrow;
-use std::cell::RefCell;
-use std::ops::Deref;
-use std::rc::Rc;
-use std::sync::Mutex;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 

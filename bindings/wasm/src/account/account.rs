@@ -3,23 +3,14 @@
 
 use crate::account::account_builder::WasmAutoSave;
 use crate::did::{
-  PromiseResolvedDocument, WasmDID, WasmDocument, WasmMethodScope, WasmMethodType, WasmResolvedDocument,
+  PromiseResolvedDocument, WasmDID, WasmResolvedDocument,
 };
-use crate::error::{wasm_error, Result, WasmResult};
+use crate::error::{WasmResult};
 use crate::tangle::Client;
-use identity::account::Error::UpdateError;
-use identity::account::UpdateError::MissingRequiredField;
-use identity::account::{Account, AccountBuilder, AccountStorage, IdentityUpdater, MethodSecret, Update};
-use identity::core::OneOrMany;
-use identity::core::OneOrMany::{Many, One};
-use identity::did::{MethodScope, MethodType};
-use identity::iota::{IotaDocument, TangleRef};
+use identity::account::{Account, AccountBuilder, AccountStorage};
+use identity::iota::{IotaDocument};
 use js_sys::Promise;
-use std::borrow::Borrow;
-use std::cell::RefCell;
-use std::ops::Deref;
 use std::rc::Rc;
-use std::sync::Mutex;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -60,7 +51,7 @@ impl WasmAccount {
     self.0.as_ref().borrow().actions()
   }
 
-  pub fn set_client(&self, client: Client) {
+  pub fn set_client(&self, _client: Client) {
     unimplemented!() //ToDo
   }
 
@@ -69,7 +60,7 @@ impl WasmAccount {
   }
 
   pub fn document(&self) {
-    let document: &IotaDocument = self.0.as_ref().borrow().document();
+    let _document: &IotaDocument = self.0.as_ref().borrow().document();
     //ToDo return a copy?
   }
 
@@ -115,7 +106,7 @@ impl WasmAccount {
 
   #[wasm_bindgen]
   pub fn publish(&mut self) -> Promise {
-    let mut account = self.0.clone();
+    let account = self.0.clone();
     future_to_promise(async move {
       account
         .as_ref()

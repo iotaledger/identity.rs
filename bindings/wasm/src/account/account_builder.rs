@@ -3,29 +3,18 @@ use crate::error::{Result, WasmResult};
 use crate::tangle::WasmNetwork;
 use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
-use identity::account::{Account, AccountConfig, AutoSave};
+use identity::account::{AccountConfig, AutoSave};
 use js_sys::Promise;
-use std::rc::Rc;
-use std::sync::Mutex;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_name = AccountBuilder)]
 pub struct WasmAccountBuilder {
-  account_builder: Rc<WasmRefCell<AccountBuilder>>,
 }
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
-  #[wasm_bindgen(constructor)]
-  pub fn new() -> Self {
-    Self {
-      account_builder: Rc::new(WasmRefCell::new(AccountBuilder::new())),
-    }
-  }
-
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(options: AccountOptions) -> Result<PromiseAccount> {
     let promise: Promise = future_to_promise(async move {
