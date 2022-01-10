@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::account::account_builder::WasmAutoSave;
 use crate::did::{
   PromiseResolvedDocument, WasmDID, WasmDocument, WasmMethodScope, WasmMethodType, WasmResolvedDocument,
 };
@@ -49,7 +50,8 @@ impl WasmAccount {
     self.0.as_ref().borrow().autopublish()
   }
 
-  pub fn autosave(&self) {
+  #[wasm_bindgen]
+  pub fn autosave(&self) -> WasmAutoSave {
     unimplemented!() //ToDo
   }
 

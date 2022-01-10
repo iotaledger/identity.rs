@@ -25,20 +25,6 @@ use wasm_bindgen_futures::future_to_promise;
 impl WasmAccount {
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, input: &CreateMethodInput) -> Result<Promise> {
-    // let elements: OneOrMany<String> = input.elements().into_serde().wasm_result()?;
-    // wasm_logger::init(wasm_logger::Config::default());
-    // log::info!("logging works");
-
-    // if let One(el) = elements.clone() {
-    //   log::info!("one");
-    //   log::info!("{}", el);
-    // }
-    //
-    // if let Many(el) = elements.clone() {
-    //   log::info!("many");
-    //   log::info!("first {} second {}", el.get(0).unwrap(), el.get(1).unwrap());
-    // }
-
     let account = self.0.clone();
 
     let method_type: MethodType = match input.methodType() {

@@ -1,5 +1,6 @@
 use crate::account::account::WasmAccount;
 use crate::error::{Result, WasmResult};
+use crate::tangle::WasmNetwork;
 use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::{Account, AccountConfig, AutoSave};
@@ -67,11 +68,11 @@ impl WasmAutoSave {
   }
   #[wasm_bindgen]
   pub fn every() -> WasmAutoSave {
-    Self(AutoSave::Never)
+    Self(AutoSave::Every)
   }
   #[wasm_bindgen]
   pub fn batch(number_of_actions: usize) -> WasmAutoSave {
-    Self(AutoSave::Never)
+    Self(AutoSave::Batch(number_of_actions))
   }
 }
 
@@ -95,13 +96,17 @@ extern "C" {
   #[wasm_bindgen(structural, getter, method)]
   pub fn identitySetup(this: &AccountOptions) -> WasmIdentitySetup;
 
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn client(this: &AccountOptions) -> WasmNetwork;
 }
 
+//ToDo separate identitySetup.
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type AccountOptions = {
   identitySetup: IdentitySetup,
   autopublish?: boolean,
   milestone?: number,
-  autoSave?: AutoSave };
+  autoSave?: AutoSave,
+  client?: Network };
 "#;

@@ -1,6 +1,12 @@
 ## Classes
 
 <dl>
+<dt><a href="#Account">Account</a></dt>
+<dd></dd>
+<dt><a href="#AccountBuilder">AccountBuilder</a></dt>
+<dd></dd>
+<dt><a href="#AutoSave">AutoSave</a></dt>
+<dd></dd>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#Config">Config</a></dt>
@@ -25,6 +31,8 @@
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
+<dd></dd>
+<dt><a href="#IdentitySetup">IdentitySetup</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
@@ -71,9 +79,11 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -86,6 +96,158 @@ See <code>IVerifierOptions</code>.</p>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
+
+<a name="Account"></a>
+
+## Account
+**Kind**: global class  
+
+* [Account](#Account)
+    * [.testAccount()](#Account+testAccount) ⇒ <code>string</code>
+    * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
+    * [.storage()](#Account+storage)
+    * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
+    * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * [.actions()](#Account+actions) ⇒ <code>number</code>
+    * [.set_client(client)](#Account+set_client)
+    * [.state()](#Account+state)
+    * [.document()](#Account+document)
+    * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.publish()](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.attachRelationship(input)](#Account+attachRelationship) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(input)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(input)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteMethod(input)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+
+<a name="Account+testAccount"></a>
+
+### account.testAccount() ⇒ <code>string</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+did"></a>
+
+### account.did() ⇒ [<code>DID</code>](#DID)
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+storage"></a>
+
+### account.storage()
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+autopublish"></a>
+
+### account.autopublish() ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+autosave"></a>
+
+### account.autosave() ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+actions"></a>
+
+### account.actions() ⇒ <code>number</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+set_client"></a>
+
+### account.set\_client(client)
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| client | [<code>Client</code>](#Client) | 
+
+<a name="Account+state"></a>
+
+### account.state()
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+document"></a>
+
+### account.document()
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+resolveIdentity"></a>
+
+### account.resolveIdentity() ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+deleteIdentity"></a>
+
+### account.deleteIdentity() ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+publish"></a>
+
+### account.publish() ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+attachRelationship"></a>
+
+### account.attachRelationship(input) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(input) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>CreateMethodInput</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(input) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>CreateServiceOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(input) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>any</code> | 
+
+<a name="AccountBuilder"></a>
+
+## AccountBuilder
+**Kind**: global class  
+<a name="AccountBuilder.createIdentity"></a>
+
+### AccountBuilder.createIdentity(options) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+**Kind**: static method of [<code>AccountBuilder</code>](#AccountBuilder)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AccountOptions</code> | 
+
+<a name="AutoSave"></a>
+
+## AutoSave
+**Kind**: global class  
+
+* [AutoSave](#AutoSave)
+    * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
+
+<a name="AutoSave.never"></a>
+
+### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+<a name="AutoSave.every"></a>
+
+### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+<a name="AutoSave.batch"></a>
+
+### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| number_of_actions | <code>number</code> | 
 
 <a name="Client"></a>
 
@@ -1432,6 +1594,10 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="IdentitySetup"></a>
+
+## IdentitySetup
+**Kind**: global class  
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -2291,13 +2457,17 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 
