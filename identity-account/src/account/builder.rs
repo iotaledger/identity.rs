@@ -94,7 +94,6 @@ impl AccountBuilder {
     self
   }
 
-
   /// Set whether the account is in testmode or not.
   /// In testmode, the account skips publishing to the tangle.
   #[cfg(test)]

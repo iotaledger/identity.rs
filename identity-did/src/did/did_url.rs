@@ -169,10 +169,7 @@ impl RelativeDIDUrl {
   ///
   /// E.g. `"#fragment" -> "fragment"`
   pub fn fragment(&self) -> Option<&str> {
-    self
-      .fragment
-      .as_deref()
-      .and_then(|fragment| fragment.strip_prefix('#'))
+    self.fragment.as_deref().and_then(|fragment| fragment.strip_prefix('#'))
   }
 
   /// Attempt to set the [fragment](https://www.w3.org/TR/did-core/#fragment) component.
