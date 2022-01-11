@@ -453,3 +453,9 @@ impl From<IotaDocument> for WasmDocument {
     Self(document)
   }
 }
+
+impl From<WasmDocument> for IotaDocument {
+  fn from(wasm_document: WasmDocument) -> Self {
+    wasm_document.0
+  }
+}

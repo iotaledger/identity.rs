@@ -36,3 +36,9 @@ impl WasmMethodType {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl From<WasmMethodType> for MethodType {
+  fn from(wasm_method_type: WasmMethodType) -> Self {
+    wasm_method_type.0
+  }
+}
