@@ -252,19 +252,19 @@ mod tests {
   }
 
   #[test]
-  #[should_panic = "InvalidTimestamp"]
+  #[should_panic]
   fn test_parse_empty() {
     Timestamp::parse("").unwrap();
   }
 
   #[test]
-  #[should_panic = "Invalid"]
+  #[should_panic]
   fn test_parse_invalid_date_characterisation() {
     Timestamp::parse("foo bar").unwrap();
   }
 
   #[test]
-  #[should_panic = "Invalid"]
+  #[should_panic]
   fn test_parse_invalid_fmt_characterisation() {
     Timestamp::parse("2020/01/01 03:30:16").unwrap();
   }
