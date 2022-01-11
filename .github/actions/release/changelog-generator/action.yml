@@ -48,7 +48,7 @@ runs:
     - name: Populate changelog descriptions
       shell: bash
       run: |
-        .github/workflows/scripts/populate-changelog-descriptions.sh ${{ inputs.changelog-config-path }}
+        .github/workflows/scripts/populate-changelog-descriptions.sh ${{ inputs.changelog-path }}
 
     - name: Log ${{ inputs.changelog-path }}
       shell: bash
