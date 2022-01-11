@@ -32,7 +32,7 @@ zeroize = { version = "1.4", default-features = false }
 [dependencies.iota-crypto]
 version = "0.7"
 default-features = false
-features = ["blake2b", "ed25519", "random", "sha"]
+features = ["blake2b", "ed25519", "random", "sha", "std"]
 
 [dev-dependencies]
 proptest = "1.0.0"

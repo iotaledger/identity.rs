@@ -100,10 +100,14 @@ impl WasmCredential {
 ///
 /// An escape-hatch for converting between types that represent the same JSON
 /// structure.
-fn serde_into<T, U>(obj: T) -> identity::core::Result<U>
+fn serde_into<T, U>(obj: T) -> std::result::Result<U, serde_json::Error>
 where
   T: ToJson,
   U: FromJson,
 {
-  obj.to_json_value().and_then(U::from_json_value)
+  obj
+    .to_json_value()
+    .map_err(Into::into)
+    .and_then(U::from_json_value)
+    .map_err(Into::into)
 }

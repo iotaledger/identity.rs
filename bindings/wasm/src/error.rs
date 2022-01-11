@@ -140,13 +140,13 @@ mod wasm_error_from_identity_core {
   use identity::core::errors::MissingSignatureError;
   use identity::core::errors::ProofSizeError;
   use identity::core::errors::SigningError;
-  use identity::core::errors::TimeStampParsingError;
+  use identity::core::errors::TimestampError;
   use identity::core::errors::UrlParsingError;
   use identity::core::errors::VerificationError;
 
   // Simple conversions just using the name of the struct and their display implementation
   impl_wasm_error_from_with_struct_name!(
-    TimeStampParsingError,
+    TimestampError,
     UrlParsingError,
     Base64DecodingError,
     Base58DecodingError,
