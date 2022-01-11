@@ -45,6 +45,11 @@ runs:
           --future-release ${{ inputs.future-release }} 
           ${{ inputs.optional-arg }}
 
+    - name: Populate changelog descriptions
+      shell: bash
+      run: |
+        .github/workflows/scripts/populate-changelog-description.sh ${{ inputs.changelog-config-path }}
+
     - name: Log ${{ inputs.changelog-path }}
       shell: bash
       run: cat ${{ inputs.changelog-path }}
