@@ -6,3 +6,4 @@ mod create_method;
 mod create_service;
 mod delete_method;
 mod detach_method_relationship;
+mod delete_service;
