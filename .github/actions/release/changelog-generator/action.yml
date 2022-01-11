@@ -45,7 +45,7 @@ runs:
           --future-release ${{ inputs.future-release }} 
           ${{ inputs.optional-arg }}
 
-    - name: Enrich changelog
+    - name: Populate changelog descriptions
       shell: bash
       run: |
         .github/workflows/scripts/enrich-changelog.sh ${{ inputs.changelog-config-path }}
