@@ -7,6 +7,7 @@ use thiserror::Error as DeriveError;
 use crate::crypto::key::KeyParsingError;
 
 pub use signing::MissingSignatureError;
+pub use signing::ProofPurposeParsingError;
 pub use signing::SigningError;
 pub use verifying::VerificationError;
 
@@ -23,6 +24,11 @@ mod signing {
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("signature not found")]
   pub struct MissingSignatureError;
+
+  #[derive(Debug, DeriveError)]
+  #[error("invalid proof purpose")]
+  /// Caused by attempting to parse an invalid [ProofPurpose](crate::crypto::ProofPurpose)
+  pub struct ProofPurposeParsingError;
 
   #[derive(Debug)]
   /// Caused by a failure to sign data

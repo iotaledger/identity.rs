@@ -14,6 +14,7 @@ use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
+use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -24,9 +25,11 @@ use crate::chain::DiffChainHistory;
 use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
-use crate::did::PromiseDocument;
+use crate::did::PromiseResolvedDocument;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
+use crate::did::WasmResolvedDocument;
+use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Config;
@@ -167,8 +170,9 @@ impl Client {
     Ok(promise)
   }
 
+  /// Fetch the DID document specified by the given `DID`.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: &str) -> Result<PromiseDocument> {
+  pub fn resolve(&self, did: &str) -> Result<PromiseResolvedDocument> {
     let client: Rc<IotaClient> = self.client.clone();
     let did: IotaDID = did.parse().wasm_result()?;
 
@@ -176,13 +180,13 @@ impl Client {
       client
         .resolve(&did)
         .await
-        .map(WasmDocument::from)
+        .map(WasmResolvedDocument::from)
         .map(Into::into)
         .wasm_result()
     });
 
     // WARNING: this does not validate the return type. Check carefully.
-    Ok(promise.unchecked_into::<PromiseDocument>())
+    Ok(promise.unchecked_into::<PromiseResolvedDocument>())
   }
 
   /// Returns the message history of the given DID.
@@ -210,13 +214,13 @@ impl Client {
   /// NOTE: the document must have been published to the tangle and have a valid message id and
   /// capability invocation method.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
-  pub fn resolve_diff_history(&self, document: &WasmDocument) -> Result<PromiseDiffChainHistory> {
+  pub fn resolve_diff_history(&self, document: &WasmResolvedDocument) -> Result<PromiseDiffChainHistory> {
     let client: Rc<IotaClient> = self.client.clone();
-    let iota_document: IotaDocument = document.0.clone();
+    let resolved_document: ResolvedIotaDocument = document.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .resolve_diff_history(&iota_document)
+        .resolve_diff_history(&resolved_document)
         .await
         .map(DiffChainHistory::from)
         .map(Into::into)
@@ -228,14 +232,15 @@ impl Client {
   }
 
   /// Validates a credential with the DID Document from the Tangle.
+  // TODO: move out of client to dedicated verifier
   #[wasm_bindgen(js_name = checkCredential)]
-  pub fn check_credential(&self, data: &str) -> Result<Promise> {
+  pub fn check_credential(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
     let data: Credential = Credential::from_json(&data).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
-        .validate_credential(data)
+        .validate_credential(data, options.0)
         .await
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())
@@ -245,14 +250,15 @@ impl Client {
   }
 
   /// Validates a presentation with the DID Document from the Tangle.
+  // TODO: move out of client to dedicated verifier
   #[wasm_bindgen(js_name = checkPresentation)]
-  pub fn check_presentation(&self, data: &str) -> Result<Promise> {
+  pub fn check_presentation(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
     let data: Presentation = Presentation::from_json(&data).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
-        .validate_presentation(data)
+        .validate_presentation(data, options.0)
         .await
         .wasm_result()
         .and_then(|output| JsValue::from_serde(&output).wasm_result())

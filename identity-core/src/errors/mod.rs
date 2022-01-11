@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //! Re-exports public errors from this crate
 mod fatal_error;
-pub use crate::common::TimeStampParsingError;
+pub use crate::common::TimestampError;
 pub use crate::convert::JsonDecodingError;
 pub use crate::convert::JsonEncodingError;
 pub use crate::crypto::merkle_key::MerkleDigestKeyTagError;

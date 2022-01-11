@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, VerifierOptions} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 import {logExplorerUrl, logResolverUrl} from './utils';
 
@@ -33,8 +33,8 @@ async function revokeVC(clientConfig) {
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
-    issuer.doc.previousMessageId = issuer.updatedMessageId;
-    issuer.doc.updated = Timestamp.nowUTC();
+    issuer.doc.metadataPreviousMessageId = issuer.updatedMessageId;
+    issuer.doc.metadataUpdated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     // This is an integration chain update, so we publish the full document.
     const {messageId} = await client.publishDocument(issuer.doc);
@@ -44,7 +44,7 @@ async function revokeVC(clientConfig) {
     logResolverUrl("Explore the Issuer DID Document:", clientConfig.explorer, issuer.doc.id.toString());
 
     // Check the verifiable credential
-    const result = await client.checkCredential(signedVc.toString());
+    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
     console.log(`VC verification result (false = revoked): ${result.verified}`);
 }
 

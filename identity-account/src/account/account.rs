@@ -1,24 +1,29 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+
+use serde::Serialize;
+
 use identity_core::crypto::SetSignature;
+use identity_core::crypto::SignatureOptions;
+use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
-use identity_iota::document::DiffMessage;
+use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
+use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
-use identity_iota::tangle::TangleRef;
 use identity_iota::tangle::TangleResolve;
-use serde::Serialize;
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 use crate::account::AccountBuilder;
+use crate::account::PublishOptions;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::identity::DIDLease;
@@ -47,8 +52,9 @@ pub struct Account {
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
-  _did_lease: DIDLease, /* This field is not read, but has special behaviour on drop which is why it is needed in
-                         * the Account. */
+  _did_lease: DIDLease,
+  /* This field is not read, but has special behaviour on drop which is why it is needed in
+   * the Account. */
 }
 
 impl Account {
@@ -91,7 +97,7 @@ impl Account {
 
     account.store_state().await?;
 
-    account.publish(false).await?;
+    account.publish_internal(false, PublishOptions::default()).await?;
 
     Ok(account)
   }
@@ -143,7 +149,7 @@ impl Account {
 
   /// Returns the did of the managed identity.
   pub fn did(&self) -> &IotaDID {
-    self.document().did()
+    self.document().id()
   }
 
   /// Return the latest state of the identity.
@@ -162,12 +168,23 @@ impl Account {
     self.state.document()
   }
 
+  /// Sets the [`ChainState`] for the identity this account manages, **without doing any validation**.
+  ///
+  /// # WARNING
+  ///
+  /// This method is dangerous and can easily corrupt the internal state,
+  /// potentially making the identity unusable. Only call this if you fully
+  /// understand the implications!
+  pub fn set_chain_state_unchecked(&mut self, chain_state: ChainState) {
+    self.chain_state = chain_state
+  }
+
   // ===========================================================================
   // Identity
   // ===========================================================================
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
-  pub async fn resolve_identity(&self) -> Result<IotaDocument> {
+  pub async fn resolve_identity(&self) -> Result<ResolvedIotaDocument> {
     self.client_map.resolve(self.did()).await.map_err(Into::into)
   }
 
@@ -177,6 +194,23 @@ impl Account {
   /// that modify an identity, such as creating services or methods.
   pub fn update_identity(&mut self) -> IdentityUpdater<'_> {
     IdentityUpdater::new(self)
+  }
+
+  /// Overwrites the [`IotaDocument`] this account manages, **without doing any validation**.
+  ///
+  /// # WARNING
+  ///
+  /// This method is dangerous and can easily corrupt the internal state,
+  /// potentially making the identity unusable. Only call this if you fully
+  /// understand the implications!
+  pub async fn update_document_unchecked(&mut self, document: IotaDocument) -> Result<()> {
+    *self.state.document_mut() = document;
+
+    self.increment_actions();
+
+    self.publish_internal(false, PublishOptions::default()).await?;
+
+    Ok(())
   }
 
   /// Removes the identity from the local storage entirely.
@@ -193,7 +227,7 @@ impl Account {
   }
 
   /// Signs `data` with the key specified by `fragment`.
-  pub async fn sign<U>(&self, fragment: &str, target: &mut U) -> Result<()>
+  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
@@ -206,15 +240,54 @@ impl Account {
 
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
-    state.sign_data(self.did(), self.storage(), &location, target).await?;
+    state
+      .sign_data(self.did(), self.storage(), &location, data, options)
+      .await?;
 
     Ok(())
   }
 
   /// Push all unpublished changes to the tangle in a single message.
-  pub async fn publish_updates(&mut self) -> Result<()> {
-    self.publish(true).await?;
+  pub async fn publish(&mut self) -> Result<()> {
+    self.publish_internal(true, PublishOptions::default()).await?;
 
+    Ok(())
+  }
+
+  /// Push all unpublished changes to the Tangle in a single message, optionally choosing
+  /// the signing key used or forcing an integration chain update.
+  ///
+  /// See [`PublishOptions`].
+  pub async fn publish_with_options(&mut self, options: PublishOptions) -> Result<()> {
+    self.publish_internal(true, options).await?;
+
+    Ok(())
+  }
+
+  /// Fetches the latest changes from the tangle and **overwrites** the local document.
+  ///
+  /// If a DID is managed from distributed accounts, this should be called before making changes
+  /// to the identity, to avoid publishing updates that would be ignored.
+  pub async fn fetch_state(&mut self) -> Result<()> {
+    let iota_did: &IotaDID = self.did();
+    let mut document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
+    // Checks if the local document is up to date
+    if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
+      && (document_chain.diff().is_empty()
+        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+    {
+      return Ok(());
+    }
+    // Overwrite the current state with the most recent document
+    self
+      .chain_state
+      .set_last_integration_message_id(*document_chain.integration_message_id());
+    self
+      .chain_state
+      .set_last_diff_message_id(*document_chain.diff_message_id());
+    std::mem::swap(self.state.document_mut(), &mut document_chain.current_mut().document);
+    self.increment_actions();
+    self.store_state().await?;
     Ok(())
   }
 
@@ -238,7 +311,7 @@ impl Account {
 
     self.increment_actions();
 
-    self.publish(false).await?;
+    self.publish_internal(false, PublishOptions::default()).await?;
 
     Ok(())
   }
@@ -247,54 +320,72 @@ impl Account {
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
+    signing_method_query: &Option<String>,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if self.chain_state().is_new_identity() {
-      let method: &IotaVerificationMethod = new_state.document().default_signing_method()?;
-      let location: KeyLocation = new_state.method_location(
-        method.key_type(),
-        // TODO: Should be a fatal error.
-        method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
-      )?;
-
-      // Sign the DID Document with the current capability invocation method
+    let signing_state: &IdentityState = if self.chain_state().is_new_identity() {
       new_state
-        .sign_data(self.did(), self.storage(), &location, document)
-        .await?;
     } else {
-      let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
-      let location: KeyLocation = new_state.method_location(
-        method.key_type(),
-        // TODO: Should be a fatal error.
-        method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
-      )?;
-
-      // Sign the DID Document with the previous capability invocation method
       old_state
-        .sign_data(self.did(), self.storage(), &location, document)
-        .await?;
-    }
+    };
+
+    let signing_method: &IotaVerificationMethod = match signing_method_query {
+      Some(fragment) => signing_state.document().try_resolve_signing_method(fragment)?,
+      None => signing_state.document().default_signing_method()?,
+    };
+
+    let signing_key_location: KeyLocation = new_state.method_location(
+      signing_method.key_type(),
+      // TODO: Should be a fatal error.
+      signing_method
+        .id()
+        .fragment()
+        .ok_or(Error::MethodMissingFragment)?
+        .to_owned(),
+    )?;
+
+    signing_state
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &signing_key_location,
+        document,
+        SignatureOptions::default(),
+      )
+      .await?;
 
     Ok(())
   }
 
   /// Publishes according to the autopublish configuration.
-  async fn publish(&mut self, force: bool) -> Result<()> {
+  async fn publish_internal(&mut self, force: bool, options: PublishOptions) -> Result<()> {
     if !force && !self.config.autopublish {
       return Ok(());
     }
 
     if self.chain_state().is_new_identity() {
       // New identity
-      self.publish_integration_change(None).await?;
+      self.publish_integration_change(None, &options.sign_with).await?;
     } else {
       // Existing identity
       let old_state: IdentityState = self.load_state().await?;
       let new_state: &IdentityState = self.state();
 
-      match PublishType::new(old_state.document(), new_state.document()) {
-        Some(PublishType::Integration) => self.publish_integration_change(Some(&old_state)).await?,
-        Some(PublishType::Diff) => self.publish_diff_change(&old_state).await?,
+      let publish_type: Option<PublishType> = if options.force_integration_update {
+        Some(PublishType::Integration)
+      } else {
+        PublishType::new(old_state.document(), new_state.document())
+      };
+
+      match publish_type {
+        Some(PublishType::Integration) => {
+          self
+            .publish_integration_change(Some(&old_state), &options.sign_with)
+            .await?;
+        }
+        Some(PublishType::Diff) => {
+          self.publish_diff_change(&old_state, &options.sign_with).await?;
+        }
         None => {
           // Can return early, as there is nothing new to publish or store.
           return Ok(());
@@ -318,17 +409,26 @@ impl Account {
     Ok(())
   }
 
-  async fn publish_integration_change(&mut self, old_state: Option<&IdentityState>) -> Result<()> {
-    log::debug!("[publish_integration_change] publishing {:?}", self.document().did());
+  async fn publish_integration_change(
+    &mut self,
+    old_state: Option<&IdentityState>,
+    signing_method_query: &Option<String>,
+  ) -> Result<()> {
+    log::debug!("[publish_integration_change] publishing {:?}", self.document().id());
 
     let new_state: &IdentityState = self.state();
 
     let mut new_doc: IotaDocument = new_state.document().to_owned();
 
-    new_doc.set_previous_message_id(*self.chain_state().last_integration_message_id());
+    new_doc.metadata.previous_message_id = *self.chain_state().last_integration_message_id();
 
     self
-      .sign_self(old_state.unwrap_or(new_state), new_state, &mut new_doc)
+      .sign_self(
+        old_state.unwrap_or(new_state),
+        new_state,
+        signing_method_query,
+        &mut new_doc,
+      )
       .await?;
 
     log::debug!(
@@ -348,8 +448,12 @@ impl Account {
     Ok(())
   }
 
-  async fn publish_diff_change(&mut self, old_state: &IdentityState) -> Result<()> {
-    log::debug!("[publish_diff_change] publishing {:?}", self.document().did());
+  async fn publish_diff_change(
+    &mut self,
+    old_state: &IdentityState,
+    signing_method_query: &Option<String>,
+  ) -> Result<()> {
+    log::debug!("[publish_diff_change] publishing {:?}", self.document().id());
 
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();
@@ -367,16 +471,29 @@ impl Account {
 
     let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
-    let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
+    let signing_method: &IotaVerificationMethod = match signing_method_query {
+      Some(fragment) => old_state.document().try_resolve_signing_method(fragment)?,
+      None => old_state.document().default_signing_method()?,
+    };
 
-    let location: KeyLocation = old_state.method_location(
-      method.key_type(),
+    let signing_key_location: KeyLocation = old_state.method_location(
+      signing_method.key_type(),
       // TODO: Should be a fatal error.
-      method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
+      signing_method
+        .id()
+        .fragment()
+        .ok_or(Error::MethodMissingFragment)?
+        .to_owned(),
     )?;
 
     old_state
-      .sign_data(self.did(), self.storage(), &location, &mut diff)
+      .sign_data(
+        self.did(),
+        self.storage(),
+        &signing_key_location,
+        &mut diff,
+        SignatureOptions::default(),
+      )
       .await?;
 
     log::debug!(

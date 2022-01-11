@@ -81,6 +81,9 @@ pub enum Error {
   #[error("Invalid Multibase Key Data")]
   InvalidKeyDataMultibase,
 
+  #[error("signature verification failed: {0}")]
+  InvalidSignature(&'static str),
+
   #[error("Missing Resolution DID")]
   MissingResolutionDID,
   #[error("Missing Resolution Metadata")]

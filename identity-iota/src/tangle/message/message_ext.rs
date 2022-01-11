@@ -12,14 +12,14 @@ use identity_core::convert::ToJson;
 use identity_did::did::DID;
 
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
-use crate::document::IotaDocument;
-use crate::error::Error;
+use crate::diff::DiffMessage;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
 use crate::tangle::DIDMessageEncoding;
 use crate::tangle::DIDMessageVersion;
 use crate::tangle::TangleRef;
+use crate::Error;
 
 /// Magic bytes used to mark DID messages.
 const DID_MESSAGE_MARKER: &[u8] = b"DID";
@@ -132,14 +132,14 @@ impl MessageIdExt for MessageId {
 }
 
 pub trait MessageExt {
-  fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument>;
+  fn try_extract_document(&self, did: &IotaDID) -> Option<ResolvedIotaDocument>;
 
   fn try_extract_diff(&self, did: &IotaDID) -> Option<DiffMessage>;
 }
 
 impl MessageExt for Message {
-  fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument> {
-    IotaDocument::try_from_message(self, did)
+  fn try_extract_document(&self, did: &IotaDID) -> Option<ResolvedIotaDocument> {
+    ResolvedIotaDocument::try_from_message(self, did)
   }
 
   fn try_extract_diff(&self, did: &IotaDID) -> Option<DiffMessage> {
@@ -151,7 +151,7 @@ pub trait TryFromMessage: Sized {
   fn try_from_message(message: &Message, did: &IotaDID) -> Option<Self>;
 }
 
-impl TryFromMessage for IotaDocument {
+impl TryFromMessage for ResolvedIotaDocument {
   fn try_from_message(message: &Message, did: &IotaDID) -> Option<Self> {
     parse_message(message, did)
   }
@@ -168,6 +168,7 @@ mod test {
   use identity_core::crypto::KeyPair;
 
   use crate::document::IotaDocument;
+  use crate::document::ResolvedIotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
   use crate::tangle::MessageId;
 
@@ -187,8 +188,8 @@ mod test {
       assert_eq!(&encoded[1..4], DID_MESSAGE_MARKER);
       assert_eq!(encoded[4], encoding as u8);
 
-      let decoded: IotaDocument = parse_data(MessageId::null(), &encoded).unwrap();
-      assert_eq!(decoded, document);
+      let decoded: ResolvedIotaDocument = parse_data(MessageId::null(), &encoded).unwrap();
+      assert_eq!(decoded.document, document);
     }
   }
 }

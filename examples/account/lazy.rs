@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
 
   // Publish the newly created DID document,
   // including the new service, to the tangle.
-  account.publish_updates().await?;
+  account.publish().await?;
 
   // Add another service.
   account
@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
     .await?;
 
   // Publish the updates as one message to the tangle.
-  account.publish_updates().await?;
+  account.publish().await?;
 
   // Retrieve the DID from the newly created identity.
   let iota_did: &IotaDID = account.did();

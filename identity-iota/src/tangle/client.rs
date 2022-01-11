@@ -15,8 +15,9 @@ use crate::chain::DocumentChain;
 use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DiffMessage;
+use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Error::DIDNotFound;
 use crate::error::Result;
@@ -149,7 +150,7 @@ impl Client {
   }
 
   /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].
-  pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn read_document(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
   }
 
@@ -206,9 +207,8 @@ impl Client {
   /// Returns the [`ChainHistory`] of a diff chain starting from an [`IotaDocument`] on the
   /// integration chain.
   ///
-  /// NOTE: the document must have been published to the Tangle and have a valid message id and
-  /// authentication method.
-  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DiffMessage>> {
+  /// NOTE: the document must have been published to the Tangle and have a valid message id.
+  pub async fn resolve_diff_history(&self, document: &ResolvedIotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
     Ok(ChainHistory::try_from_raw_messages(document, &diff_messages, self).await?)
@@ -261,7 +261,7 @@ impl Client {
 
 #[async_trait::async_trait(?Send)]
 impl TangleResolve for Client {
-  async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
+  async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     self.read_document(did).await
   }
 }

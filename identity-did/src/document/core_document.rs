@@ -10,6 +10,7 @@ use serde::Serialize;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::PrivateKey;
 
 use crate::did::CoreDID;
 use crate::did::CoreDIDUrl;
@@ -18,10 +19,14 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
 use crate::utils::OrderedSet;
+use crate::verifiable::DocumentSigner;
+use crate::verifiable::DocumentVerifier;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
 use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
+use crate::verification::MethodUriType;
+use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
 
 /// A DID Document.
@@ -558,6 +563,28 @@ impl<T, U, V> CoreDocument<T, U, V> {
       None => self.verification_method.query_mut(query),
     }
   }
+}
+
+// =============================================================================
+// Signature Extensions
+// =============================================================================
+
+impl<T, U, V> CoreDocument<T, U, V> {
+  /// Creates a new [`DocumentSigner`] that can be used to create digital
+  /// signatures from verification methods in this DID Document.
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, T, U, V> {
+    DocumentSigner::new(self, private)
+  }
+
+  /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
+  /// created with this DID Document.
+  pub fn verifier(&self) -> DocumentVerifier<'_, T, U, V> {
+    DocumentVerifier::new(self)
+  }
+}
+
+impl<T, U, V> TryMethod for CoreDocument<T, U, V> {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
 impl<T, U, V> Display for CoreDocument<T, U, V>

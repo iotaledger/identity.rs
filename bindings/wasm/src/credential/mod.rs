@@ -6,5 +6,5 @@
 mod credential;
 mod presentation;
 
-pub use self::credential::VerifiableCredential;
-pub use self::presentation::VerifiablePresentation;
+pub use self::credential::WasmCredential;
+pub use self::presentation::WasmPresentation;

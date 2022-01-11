@@ -119,7 +119,7 @@ impl RelativeDIDUrl {
   ///
   /// E.g. `"?query1=a&query2=b" -> "query1=a&query2=b"`
   pub fn query(&self) -> Option<&str> {
-    self.query.as_deref().map(|query| query.strip_prefix('?')).flatten()
+    self.query.as_deref().and_then(|query| query.strip_prefix('?'))
   }
 
   /// Attempt to set the [query](https://www.w3.org/TR/did-core/#query) component.
@@ -169,11 +169,7 @@ impl RelativeDIDUrl {
   ///
   /// E.g. `"#fragment" -> "fragment"`
   pub fn fragment(&self) -> Option<&str> {
-    self
-      .fragment
-      .as_deref()
-      .map(|fragment| fragment.strip_prefix('#'))
-      .flatten()
+    self.fragment.as_deref().and_then(|fragment| fragment.strip_prefix('#'))
   }
 
   /// Attempt to set the [fragment](https://www.w3.org/TR/did-core/#fragment) component.

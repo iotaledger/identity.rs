@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use hashbrown::HashMap;
-use identity_did::did::DID;
 use serde::Serialize;
 
 use identity_core::common::Fragment;
 use identity_core::crypto::SetSignature;
+use identity_core::crypto::SignatureOptions;
+use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
-use identity_iota::tangle::TangleRef;
 
 use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;
@@ -91,7 +91,8 @@ impl IdentityState {
     did: &IotaDID,
     store: &dyn Storage,
     location: &KeyLocation,
-    target: &mut U,
+    data: &mut U,
+    options: SignatureOptions,
   ) -> Result<()>
   where
     U: Serialize + SetSignature,
@@ -101,13 +102,14 @@ impl IdentityState {
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment().identifier();
-    let method_url: IotaDIDUrl = self.document.did().to_url().join(fragment)?;
+    let method_url: IotaDIDUrl = self.document.id().to_url().join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method_url.to_string(), &private)
+        RemoteEd25519::create_signature(data, method_url.to_string(), &private, options)
           .await
-          .map_err(|_| Error::CoreError)?;
+          .map_err(|_| Error::CoreError)?; // needs to return a proper error when this crate refactors its error
+                                           // handling
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")

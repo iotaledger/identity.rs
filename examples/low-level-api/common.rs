@@ -13,6 +13,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
+use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
@@ -21,7 +22,6 @@ use identity::iota::CredentialValidator;
 use identity::iota::Error;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
@@ -60,7 +60,9 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(client);
 
   // Perform the validation operation.
-  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  let validation: CredentialValidation = validator
+    .check_credential(&credential_json, VerifierOptions::default())
+    .await?;
   Ok(validation)
 }
 
@@ -79,14 +81,14 @@ pub async fn add_new_key(
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(updated_doc.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::from_did(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc
     .insert_method(method, MethodScope::VerificationMethod)
     .is_ok());
 
   // Prepare the update
-  updated_doc.set_previous_message_id(*receipt.message_id());
-  updated_doc.set_updated(Timestamp::now_utc());
+  updated_doc.metadata.previous_message_id = *receipt.message_id();
+  updated_doc.metadata.updated = Timestamp::now_utc();
   updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle

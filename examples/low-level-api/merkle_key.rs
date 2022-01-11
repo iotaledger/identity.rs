@@ -8,6 +8,7 @@
 use rand::rngs::OsRng;
 use rand::Rng;
 
+use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::crypto::merkle_key::Sha256;
@@ -15,6 +16,7 @@ use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
+use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
@@ -46,7 +48,8 @@ async fn main() -> Result<()> {
 
   // Add to the DID Document as a general-purpose verification method
   issuer_doc.insert_method(method, MethodScope::VerificationMethod)?;
-  issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
+  issuer_doc.metadata.previous_message_id = *issuer_receipt.message_id();
+  issuer_doc.metadata.updated = Timestamp::now_utc();
   issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
 
   // Publish the Identity to the IOTA Network and log the results.
@@ -79,7 +82,9 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential is valid
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
-  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  let validation: CredentialValidation = validator
+    .check_credential(&credential_json, VerifierOptions::default())
+    .await?;
   assert!(validation.verified);
 
   println!("Credential Validation > {:#?}", validation);
@@ -89,7 +94,8 @@ async fn main() -> Result<()> {
     .try_resolve_method_mut("merkle-key")
     .and_then(IotaVerificationMethod::try_from_mut)?
     .revoke_merkle_key(index)?;
-  issuer_doc.set_previous_message_id(*receipt.message_id());
+  issuer_doc.metadata.previous_message_id = *receipt.message_id();
+  issuer_doc.metadata.updated = Timestamp::now_utc();
   issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
 
   let receipt: Receipt = client.publish_document(&issuer_doc).await?;
@@ -97,7 +103,9 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Check the verifiable credential is revoked
-  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  let validation: CredentialValidation = validator
+    .check_credential(&credential_json, VerifierOptions::default())
+    .await?;
   assert!(!validation.verified);
 
   println!("Credential Validation > {:#?}", validation);

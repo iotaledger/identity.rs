@@ -20,7 +20,6 @@ use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
-use identity_iota::tangle::UPDATE_METHOD_TYPES;
 
 use crate::account::Account;
 use crate::error::Error;
@@ -43,7 +42,7 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
 
   // The method type must be able to sign document updates.
   ensure!(
-    UPDATE_METHOD_TYPES.contains(&method_type),
+    IotaDocument::is_signing_method_type(method_type),
     UpdateError::InvalidMethodType(method_type)
   );
 
@@ -180,7 +179,7 @@ impl Update {
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent deleting the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().as_document().capability_invocation();
+        let capability_invocation_set = state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &core_method_url);
@@ -217,7 +216,7 @@ impl Update {
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent detaching the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().as_document().capability_invocation();
+        let capability_invocation_set = state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &core_method_url);
@@ -271,7 +270,7 @@ impl Update {
       }
     }
 
-    state.document_mut().set_updated(Timestamp::now_utc());
+    state.document_mut().metadata.updated = Timestamp::now_utc();
 
     Ok(())
   }
@@ -357,6 +356,7 @@ AttachMethodRelationship {
 });
 
 impl<'account> AttachMethodRelationshipBuilder<'account> {
+  #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
     self
@@ -375,6 +375,7 @@ DetachMethodRelationship {
 });
 
 impl<'account> DetachMethodRelationshipBuilder<'account> {
+  #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
     self

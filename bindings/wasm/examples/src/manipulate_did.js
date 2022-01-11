@@ -1,7 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, KeyPair, KeyType, VerificationMethod, Service, Timestamp} from '@iota/identity-wasm';
+import {
+    Client,
+    Config,
+    KeyPair,
+    KeyType,
+    MethodScope,
+    Service,
+    Timestamp,
+    VerificationMethod
+} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
 import {logExplorerUrl, logResolverUrl} from "./utils";
 
@@ -29,7 +38,7 @@ async function manipulateIdentity(clientConfig) {
     // Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
     const method = VerificationMethod.fromDID(doc.id, newKey, "newKey");
-    doc.insertMethod(method, "VerificationMethod");
+    doc.insertMethod(method, MethodScope.VerificationMethod());
 
     // Add a new ServiceEndpoint
     const serviceJSON = {
@@ -44,8 +53,8 @@ async function manipulateIdentity(clientConfig) {
         This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
-    doc.previousMessageId = receipt.messageId;
-    doc.updated = Timestamp.nowUTC();
+    doc.metadataPreviousMessageId = receipt.messageId;
+    doc.metadataUpdated = Timestamp.nowUTC();
 
     // Sign the DID Document with the appropriate key.
     doc.signSelf(key, doc.defaultSigningMethod().id.toString());

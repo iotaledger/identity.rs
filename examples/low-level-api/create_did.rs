@@ -10,7 +10,6 @@ use identity::iota::ClientMap;
 use identity::iota::Error;
 use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
-use identity::iota::TangleRef;
 use identity::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
@@ -30,7 +29,6 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
 
   // Publish the DID Document to the Tangle.
   let receipt: Receipt = client.publish_document(&document).await?;
-  document.set_message_id(*receipt.message_id());
 
   println!("Publish Receipt > {:#?}", receipt);
 
@@ -40,7 +38,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
     "DID Document Transaction > {}",
     explorer.message_url(receipt.message_id())?
   );
-  println!("Explore the DID Document > {}", explorer.resolver_url(document.did())?);
+  println!("Explore the DID Document > {}", explorer.resolver_url(document.id())?);
 
   Ok((document, keypair, receipt))
 }

@@ -43,6 +43,7 @@ macro_rules! impl_update_builder {
 
       impl<'account> [<$ident Builder>]<'account> {
         $(
+          #[must_use]
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
             self.$field = Some(value.into());
             self

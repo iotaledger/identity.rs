@@ -9,6 +9,7 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::SignatureValue;
 use identity_core::crypto::SigningError;
 use identity_core::utils::encode_b58;
@@ -28,11 +29,13 @@ impl RemoteEd25519 {
     data: &mut U,
     method: impl Into<String>,
     secret: &RemoteKey<'_>,
+    options: SignatureOptions,
   ) -> Result<(), SigningError>
   where
     U: Serialize + SetSignature,
   {
-    data.set_signature(Signature::new(Self::NAME, method));
+    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    data.set_signature(signature);
 
     let value: SignatureValue = Self::sign(&data, secret).await?;
     let write: &mut Signature = data.try_signature_mut()?;
