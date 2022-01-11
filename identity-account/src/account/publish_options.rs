@@ -25,6 +25,7 @@ impl PublishOptions {
   /// for identities with many updates.
   ///
   /// See the IOTA DID method specification for more details.
+  #[must_use]
   pub fn force_integration_update(mut self, force: bool) -> Self {
     self.force_integration_update = force;
     self
@@ -36,6 +37,7 @@ impl PublishOptions {
   ///
   /// If this is not set, the method used is determined by
   /// [`IotaDocument::default_signing_method`].
+  #[must_use]
   pub fn sign_with(mut self, fragment: impl Into<String>) -> Self {
     self.sign_with = Some(fragment.into());
     self

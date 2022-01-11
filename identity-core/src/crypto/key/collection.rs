@@ -210,8 +210,13 @@ impl IntoIterator for KeyCollection {
   type Item = (PublicKey, PrivateKey);
   type IntoIter = Zip<IntoIter<PublicKey>, IntoIter<PrivateKey>>;
 
+  // Vec conversion is necessary for Box<[T]>, see https://github.com/rust-lang/rust/issues/59878
   fn into_iter(self) -> Self::IntoIter {
-    self.public.to_vec().into_iter().zip(self.private.to_vec().into_iter())
+    self
+      .public
+      .into_vec()
+      .into_iter()
+      .zip(self.private.into_vec().into_iter())
   }
 }
 

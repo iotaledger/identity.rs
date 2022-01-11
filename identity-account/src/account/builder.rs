@@ -72,6 +72,7 @@ impl AccountBuilder {
   /// Sets the account auto-save behaviour.
   ///
   /// See the config's [`autosave`][AccountConfig::autosave] documentation for details.
+  #[must_use]
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.config = self.config.autosave(value);
     self
@@ -80,26 +81,30 @@ impl AccountBuilder {
   /// Sets the account auto-publish behaviour.
   ///
   /// See the config's [`autopublish`][AccountConfig::autopublish] documentation for details.
+  #[must_use]
   pub fn autopublish(mut self, value: bool) -> Self {
     self.config = self.config.autopublish(value);
     self
   }
 
   /// Save a state snapshot every N actions.
+  #[must_use]
   pub fn milestone(mut self, value: u32) -> Self {
     self.config = self.config.milestone(value);
     self
   }
 
-  #[cfg(test)]
   /// Set whether the account is in testmode or not.
   /// In testmode, the account skips publishing to the tangle.
+  #[cfg(test)]
+  #[must_use]
   pub(crate) fn testmode(mut self, value: bool) -> Self {
     self.config = self.config.testmode(value);
     self
   }
 
   /// Sets the account storage adapter.
+  #[must_use]
   pub fn storage(mut self, value: AccountStorage) -> Self {
     self.storage_template = Some(value);
     self
@@ -136,6 +141,7 @@ impl AccountBuilder {
   }
 
   /// Apply configuration to the IOTA Tangle client for the given [`Network`].
+  #[must_use]
   pub fn client<F>(mut self, network: Network, f: F) -> Self
   where
     F: FnOnce(ClientBuilder) -> ClientBuilder,
