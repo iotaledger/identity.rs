@@ -80,10 +80,13 @@ async fn test_create_identity() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_identity_network() -> Result<()> {
-  // Create an identity with a valid network string
+  // Create an identity with a valid network string that matches the account network.
   let create_identity: IdentitySetup = IdentitySetup::new().network("dev")?.key_type(KeyType::Ed25519);
-  let account = Account::create_identity(account_setup().await, create_identity).await?;
-
+  let account = Account::create_identity(AccountSetup::new(
+    Arc::new(MemStore::new()),
+    Arc::new(ClientBuilder::new().network(Network::Devnet).node_sync_disabled().build().await.unwrap()),
+    AccountConfig::new().testmode(true),
+  ), create_identity).await?;
   assert_eq!(
     account.did().network().unwrap().name(),
     Network::try_from_name("dev").unwrap().name()
@@ -94,13 +97,19 @@ async fn test_create_identity_network() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_identity_invalid_network() -> Result<()> {
-  // Attempt to create an identity with an invalid network string
+  // INVALID: attempt to create an identity with an invalid network string.
   let result: Result<IdentitySetup> = IdentitySetup::new().network("Invalid=Network!");
-
-  // Ensure an `InvalidNetworkName` error is thrown
   assert!(matches!(
     result.unwrap_err(),
     Error::IotaError(identity_iota::Error::InvalidNetworkName),
+  ));
+
+  // INVALID: attempt to create an identity which does not match the account network.
+  let create_identity: IdentitySetup = IdentitySetup::new().network("dev")?.key_type(KeyType::Ed25519);
+  let account_result = Account::create_identity(account_setup().await, create_identity).await;
+  assert!(matches!(
+    account_result.unwrap_err(),
+    Error::InvalidIdentityNetwork(_, _),
   ));
 
   Ok(())

@@ -3,6 +3,8 @@
 
 //! Errors that may occur when working with Identity Accounts.
 
+use identity_iota::tangle::NetworkName;
+
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
@@ -74,6 +76,10 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
+  /// Caused by creating or loading an identity on an Account with a client configured for a
+  /// different network.
+  #[error("identity network {0:?} does not match client network {0:?}")]
+  InvalidIdentityNetwork(NetworkName, NetworkName),
   /// Caused by attempting to create an account for an identity that is already managed by another account.
   #[error("Identity Is In-use")]
   IdentityInUse,

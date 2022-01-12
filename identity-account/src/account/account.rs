@@ -15,7 +15,7 @@ use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::document::ResolvedIotaDocument;
-use identity_iota::tangle::Client;
+use identity_iota::tangle::{Client, Network, NetworkName};
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
@@ -88,7 +88,13 @@ impl Account {
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
-    // TODO: error if network does not match the client?
+    // Error if the DID network does not match the client on the Account.
+    // TODO: automatically use client network?
+    let identity_network: NetworkName = input.network.clone().unwrap_or_else(|| Network::Mainnet.name());
+    let account_network: NetworkName = setup.client.network().name();
+    if identity_network != account_network {
+      return Err(Error::InvalidIdentityNetwork(identity_network, account_network));
+    }
 
     let (did_lease, state): (DIDLease, IdentityState) = create_identity(input, setup.storage.as_ref()).await?;
 
@@ -103,7 +109,12 @@ impl Account {
 
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
-    // TODO: error if network does not match the client?
+    // Error if the DID network does not match the client on the Account.
+    let identity_network: NetworkName = NetworkName::try_from(did.network_str().to_owned())?;
+    let account_network: NetworkName = setup.client.network().name();
+    if identity_network != account_network {
+      return Err(Error::InvalidIdentityNetwork(identity_network, account_network));
+    }
 
     // Ensure the did exists in storage
     let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;

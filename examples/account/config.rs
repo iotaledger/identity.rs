@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
   // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082`
   let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet")?;
 
-  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265`
+  // In a locally running one-click tangle, this would usually be `http://127.0.0.1:14265`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Create a new Account with explicit configuration
@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
         // .permanode(<permanode_url>, None, None)?
     );
 
-  // Create an identity specifically on the specified private Tangle by passing `network_name`.
+  // Create an identity on the specified private Tangle by passing `network_name`.
   let identity_setup: IdentitySetup = IdentitySetup::new().network(network_name)?;
 
   let identity: Account = match builder.create_identity(identity_setup).await {
