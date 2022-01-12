@@ -1,17 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::did::IotaDID;
-use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::ClientMap;
-use identity_iota::tangle::Network;
-use identity_iota::tangle::NetworkName;
-use std::collections::HashMap;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
 use std::sync::Arc;
+
 #[cfg(feature = "stronghold")]
 use zeroize::Zeroize;
+
+use identity_iota::did::IotaDID;
+use identity_iota::tangle::{Client, ClientBuilder};
 
 use crate::account::Account;
 use crate::error::Result;
@@ -39,11 +37,8 @@ pub enum AccountStorage {
 
 /// An [`Account`] builder for easy account configuration.
 ///
-/// To reduce memory usage, accounts created from the same builder share the same [`Storage`],
-/// used to store identities, and [`ClientMap`], used to
-/// publish identities to the Tangle. This means using [`AccountBuilder::client`]
-/// to customize a client, will modify the existing client map in previously
-/// built accounts, when the next account is built.
+/// To reduce memory usage, accounts created from the same builder share the same [`Storage`]
+/// used to store identities, and the same [`Client`] used to publish identities to the Tangle.
 ///
 /// The configuration on the other hand is cloned, and therefore unique for each built account.
 /// This means a builder can be reconfigured in-between account creations, without affecting
@@ -53,8 +48,8 @@ pub struct AccountBuilder {
   config: AccountConfig,
   storage_template: Option<AccountStorage>,
   storage: Option<Arc<dyn Storage>>,
-  client_builders: Option<HashMap<NetworkName, ClientBuilder>>,
-  client_map: Arc<ClientMap>,
+  client_builder: Option<ClientBuilder>,
+  client: Option<Arc<Client>>,
 }
 
 impl AccountBuilder {
@@ -64,8 +59,8 @@ impl AccountBuilder {
       config: AccountConfig::new(),
       storage_template: Some(AccountStorage::Memory),
       storage: Some(Arc::new(MemStore::new())),
-      client_builders: None,
-      client_map: Arc::new(ClientMap::new()),
+      client_builder: None,
+      client: None,
     }
   }
 
@@ -140,36 +135,52 @@ impl AccountBuilder {
     Ok(Arc::clone(self.storage.as_ref().unwrap()))
   }
 
-  /// Apply configuration to the IOTA Tangle client for the given [`Network`].
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  ///
+  /// NOTE: this overwrites any [`ClientBuilder`] previously set by
+  ///       [`AccountBuilder::client_builder'].
   #[must_use]
-  pub fn client<F>(mut self, network: Network, f: F) -> Self
-  where
-    F: FnOnce(ClientBuilder) -> ClientBuilder,
-  {
-    self
-      .client_builders
-      .get_or_insert_with(HashMap::new)
-      .insert(network.name(), f(ClientBuilder::new().network(network)));
+  pub fn client(mut self, client: Arc<Client>) -> Self {
+    self.client = Some(client);
+    self.client_builder = None;
     self
   }
 
-  async fn build_clients(&mut self) -> Result<()> {
-    if let Some(hmap) = self.client_builders.take() {
-      for builder in hmap.into_iter() {
-        self.client_map.insert(builder.1.build().await?)
-      }
-    }
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  ///
+  /// NOTE: this overwrites any [`Client`] previously set by [`AccountBuilder::client'].
+  #[must_use]
+  pub fn client_builder(mut self, client_builder: ClientBuilder) -> Self {
+    self.client = None;
+    self.client_builder = Some(client_builder);
+    self
+  }
 
-    Ok(())
+  /// Returns a previously set ['Client'] or builds a new one based on the configuration passed
+  /// to [`AccountBuilder::client_builder`].
+  ///
+  /// If neither is set, instantiates and stores a default [`Client`].
+  async fn get_or_build_client(&mut self) -> Result<Arc<Client>> {
+    if let Some(client) = &self.client {
+      Ok(Arc::clone(client))
+    } else if let Some(client_builder) = self.client_builder.take() {
+      let client: Arc<Client> = Arc::new(client_builder.build().await?);
+      self.client = Some(Arc::clone(&client));
+      Ok(client)
+    } else {
+      let client: Arc<Client> = Arc::new(Client::new().await?);
+      self.client = Some(Arc::clone(&client));
+      Ok(client)
+    }
   }
 
   async fn build_setup(&mut self) -> Result<AccountSetup> {
-    self.build_clients().await?;
+    let client: Arc<Client> = self.get_or_build_client().await?;
 
-    Ok(AccountSetup::new_with_options(
+    Ok(AccountSetup::new(
       self.get_storage().await?,
-      Some(self.config.clone()),
-      Some(Arc::clone(&self.client_map)),
+      client,
+      self.config.clone(),
     ))
   }
 

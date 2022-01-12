@@ -40,7 +40,7 @@ pub async fn main() -> Result<()> {
   let client = ClientBuilder::new()
     .network(network.clone())
     .encoding(encoding)
-    .node(private_node_url)?
+    .primary_node(private_node_url, None, None)?
     .build()
     .await?;
 

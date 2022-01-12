@@ -5,20 +5,6 @@ use std::sync::Arc;
 
 use futures::Future;
 
-use crate::account::Account;
-use crate::account::AccountBuilder;
-use crate::account::AccountConfig;
-use crate::account::AccountSetup;
-use crate::account::AccountStorage;
-use crate::account::AutoSave;
-use crate::account::PublishOptions;
-use crate::identity::ChainState;
-use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
-use crate::storage::MemStore;
-use crate::Error;
-use crate::Result;
-
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
@@ -27,10 +13,24 @@ use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
-use identity_iota::tangle::Client;
+use identity_iota::tangle::{Client, ClientBuilder};
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::Network;
+
+use crate::account::Account;
+use crate::account::AccountBuilder;
+use crate::account::AccountConfig;
+use crate::account::AccountSetup;
+use crate::account::AccountStorage;
+use crate::account::AutoSave;
+use crate::account::PublishOptions;
+use crate::Error;
+use crate::identity::ChainState;
+use crate::identity::IdentitySetup;
+use crate::identity::IdentityState;
+use crate::Result;
+use crate::storage::MemStore;
 
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
@@ -133,9 +133,10 @@ async fn test_account_autopublish() -> Result<()> {
   // ===========================================================================
 
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
 
   account
     .update_identity()
@@ -257,7 +258,8 @@ async fn test_account_autopublish() -> Result<()> {
 #[tokio::test]
 async fn test_account_publish_options_sign_with() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_config = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
   let auth_method = "auth-method";
   let signing_method = "singing-method-2";
@@ -310,8 +312,9 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
 #[tokio::test]
 async fn test_account_publish_options_force_integration() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
 
   account.publish().await.unwrap();
 
@@ -372,7 +375,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
       Ok(())
     })
   })
-  .await?;
+    .await?;
   Ok(())
 }
 
@@ -415,7 +418,7 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       Ok(())
     })
   })
-  .await?;
+    .await?;
   Ok(())
 }
 
@@ -437,7 +440,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
         &new_doc,
         *account.chain_state().last_integration_message_id(),
       )
-      .unwrap();
+        .unwrap();
       account
         .sign(
           IotaDocument::DEFAULT_METHOD_FRAGMENT,
@@ -467,7 +470,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       Ok(())
     })
   })
-  .await?;
+    .await?;
   Ok(())
 }
 
@@ -480,7 +483,7 @@ async fn create_account(network: Network) -> Account {
     ))
     .autopublish(false)
     .autosave(AutoSave::Every)
-    .client(network.clone(), |builder| builder.network(network.clone()))
+    .client_builder(ClientBuilder::new().network(network.clone()))
     .create_identity(IdentitySetup::new().network(network.name()).unwrap())
     .await
     .unwrap()
@@ -491,7 +494,7 @@ async fn create_account(network: Network) -> Account {
 // Other errors end the test immediately.
 async fn network_resilient_test(
   test_runs: u32,
-  f: impl Fn(u32) -> Pin<Box<dyn Future<Output = Result<()>>>>,
+  f: impl Fn(u32) -> Pin<Box<dyn Future<Output=Result<()>>>>,
 ) -> Result<()> {
   for test_run in 0..test_runs {
     let test_attempt = f(test_run).await;

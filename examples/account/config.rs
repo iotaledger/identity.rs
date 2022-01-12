@@ -9,7 +9,7 @@ use identity::account::AccountStorage;
 use identity::account::AutoSave;
 use identity::account::IdentitySetup;
 use identity::account::Result;
-use identity::iota::ExplorerUrl;
+use identity::iota::{ClientBuilder, ExplorerUrl};
 use identity::iota::IotaDID;
 use identity::iota::Network;
 
@@ -41,25 +41,16 @@ async fn main() -> Result<()> {
     .autopublish(true) // publish to the tangle automatically on every update
     .milestone(4) // save a snapshot every 4 actions
     .storage(AccountStorage::Memory) // use the default in-memory storage
-    // configure a mainnet Tangle client with node and permanode
-    .client(Network::Mainnet, |builder| {
-      builder
-        // Manipulate this in order to manually appoint nodes
-        .node("https://chrysalis-nodes.iota.org")
-        .unwrap() // unwrap is safe, we provided a valid node URL
-        // Set a permanode from the same network (Important)
-        .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None)
-        .unwrap() // unwrap is safe, we provided a valid permanode URL
-    })
-    // Configure a client for the private network, here `dev`
-    // Also set the URL that points to the REST API of the node
-    .client(network.clone(), |builder| {
-      // unwrap is safe, we provided a valid node URL
-      builder.node(private_node_url).unwrap()
-    });
+    .client_builder(
+      // Configure a client for the private network
+      ClientBuilder::new()
+        .network(network.clone())
+        .primary_node(private_node_url, None, None)?
+        // Set a permanode from the same network (important for real-world deployments)
+        // .permanode(<permanode_url>, None, None)?
+    );
 
-  // Create an identity specifically on the devnet by passing `network_name`
-  // The same applies if we wanted to create an identity on a private tangle
+  // Create an identity specifically on the specified private Tangle by passing `network_name`.
   let identity_setup: IdentitySetup = IdentitySetup::new().network(network_name)?;
 
   let identity: Account = match builder.create_identity(identity_setup).await {

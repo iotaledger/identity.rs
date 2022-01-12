@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 use serde::Serialize;
 
@@ -16,29 +16,27 @@ use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
-use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
-use identity_iota::tangle::TangleResolve;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::error::Result;
+use crate::Error;
 use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
+use crate::Result;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 use crate::updates::create_identity;
 use crate::updates::Update;
-use crate::Error;
 
+use super::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
-use super::AccountConfig;
 
 /// An account manages one identity.
 ///
@@ -48,13 +46,12 @@ use super::AccountConfig;
 pub struct Account {
   config: AccountConfig,
   storage: Arc<dyn Storage>,
-  client_map: Arc<ClientMap>,
+  client: Arc<Client>,
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
+  // The lease is not read, but releases the DID storage lease when the Account is dropped.
   _did_lease: DIDLease,
-  /* This field is not read, but has special behaviour on drop which is why it is needed in
-   * the Account. */
 }
 
 impl Account {
@@ -77,7 +74,7 @@ impl Account {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
-      client_map: setup.client_map,
+      client: setup.client,
       actions: AtomicUsize::new(0),
       chain_state,
       state,
@@ -87,10 +84,12 @@ impl Account {
 
   /// Creates a new identity and returns an [`Account`] instance to manage it.
   /// The identity is stored locally in the [`Storage`] given in [`AccountSetup`], and published
-  /// using the [`ClientMap`].
+  /// using the [`Client`].
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
+    // TODO: error if network does not match the client?
+
     let (did_lease, state): (DIDLease, IdentityState) = create_identity(input, setup.storage.as_ref()).await?;
 
     let mut account = Self::with_setup(setup, ChainState::new(), state, did_lease).await?;
@@ -104,6 +103,8 @@ impl Account {
 
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+    // TODO: error if network does not match the client?
+
     // Ensure the did exists in storage
     let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
     let chain_state = setup.storage.chain_state(&did).await?.ok_or(Error::IdentityNotFound)?;
@@ -140,11 +141,6 @@ impl Account {
   /// Increments the total number of actions executed by this instance.
   fn increment_actions(&self) {
     self.actions.fetch_add(1, Ordering::SeqCst);
-  }
-
-  /// Adds a pre-configured `Client` for Tangle interactions.
-  pub fn set_client(&self, client: Client) {
-    self.client_map.insert(client);
   }
 
   /// Returns the did of the managed identity.
@@ -185,7 +181,7 @@ impl Account {
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
   pub async fn resolve_identity(&self) -> Result<ResolvedIotaDocument> {
-    self.client_map.resolve(self.did()).await.map_err(Into::into)
+    self.client.read_document(self.did()).await.map_err(Into::into)
   }
 
   /// Returns the [`IdentityUpdater`] for this identity.
@@ -228,8 +224,8 @@ impl Account {
 
   /// Signs `data` with the key specified by `fragment`.
   pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
-  where
-    U: Serialize + SetSignature,
+    where
+      U: Serialize + SetSignature,
   {
     let state: &IdentityState = self.state();
 
@@ -270,11 +266,11 @@ impl Account {
   /// to the identity, to avoid publishing updates that would be ignored.
   pub async fn fetch_state(&mut self) -> Result<()> {
     let iota_did: &IotaDID = self.did();
-    let mut document_chain: DocumentChain = self.client_map.read_document_chain(iota_did).await?;
+    let mut document_chain: DocumentChain = self.client.read_document_chain(iota_did).await?;
     // Checks if the local document is up to date
     if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
       && (document_chain.diff().is_empty()
-        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+      || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
     {
       return Ok(());
     }
@@ -440,7 +436,7 @@ impl Account {
       // Fake publishing by returning a random message id.
       MessageId::new(unsafe { crypto::utils::rand::gen::<[u8; 32]>().unwrap() })
     } else {
-      self.client_map.publish_document(&new_doc).await?.into()
+      self.client.publish_document(&new_doc).await?.into()
     };
 
     self.chain_state.set_last_integration_message_id(message_id);
@@ -506,7 +502,7 @@ impl Account {
       MessageId::new(unsafe { crypto::utils::rand::gen::<[u8; 32]>().unwrap() })
     } else {
       self
-        .client_map
+        .client
         .publish_diff(self.chain_state().last_integration_message_id(), &diff)
         .await?
         .into()
