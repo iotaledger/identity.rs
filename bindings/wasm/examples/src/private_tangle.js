@@ -33,7 +33,7 @@ async function privateTangle(restURL, networkName) {
     config.setNetwork(network);
 
     // This URL points to the REST API of the locally running hornet node.
-    config.setNode(restURL || "http://127.0.0.1:14265/");
+    config.setPrimaryNode(restURL || "http://127.0.0.1:14265/");
 
     // Use DIDMessageEncoding.Json instead to publish plaintext messages to the Tangle for debugging.
     config.setEncoding(DIDMessageEncoding.JsonBrotli);

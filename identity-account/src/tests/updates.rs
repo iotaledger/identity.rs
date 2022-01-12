@@ -15,7 +15,8 @@ use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
-use identity_iota::tangle::{ClientBuilder, Network};
+use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -82,11 +83,22 @@ async fn test_create_identity() -> Result<()> {
 async fn test_create_identity_network() -> Result<()> {
   // Create an identity with a valid network string that matches the account network.
   let create_identity: IdentitySetup = IdentitySetup::new().network("dev")?.key_type(KeyType::Ed25519);
-  let account = Account::create_identity(AccountSetup::new(
-    Arc::new(MemStore::new()),
-    Arc::new(ClientBuilder::new().network(Network::Devnet).node_sync_disabled().build().await.unwrap()),
-    AccountConfig::new().testmode(true),
-  ), create_identity).await?;
+  let account = Account::create_identity(
+    AccountSetup::new(
+      Arc::new(MemStore::new()),
+      Arc::new(
+        ClientBuilder::new()
+          .network(Network::Devnet)
+          .node_sync_disabled()
+          .build()
+          .await
+          .unwrap(),
+      ),
+      AccountConfig::new().testmode(true),
+    ),
+    create_identity,
+  )
+  .await?;
   assert_eq!(
     account.did().network().unwrap().name(),
     Network::try_from_name("dev").unwrap().name()
@@ -150,7 +162,9 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
     .key_type(KeyType::Ed25519)
     .method_secret(MethodSecret::Ed25519(private_key));
 
-  let err = Account::create_identity(account_setup().await, id_create).await.unwrap_err();
+  let err = Account::create_identity(account_setup().await, id_create)
+    .await
+    .unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 

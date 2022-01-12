@@ -9,7 +9,8 @@ use std::sync::Arc;
 use zeroize::Zeroize;
 
 use identity_iota::did::IotaDID;
-use identity_iota::tangle::{Client, ClientBuilder};
+use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientBuilder;
 
 use crate::account::Account;
 use crate::error::Result;

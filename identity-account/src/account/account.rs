@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 
 use serde::Serialize;
 
@@ -15,28 +15,30 @@ use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::document::ResolvedIotaDocument;
-use identity_iota::tangle::{Client, Network, NetworkName};
+use identity_iota::tangle::Client;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
+use identity_iota::tangle::Network;
+use identity_iota::tangle::NetworkName;
 use identity_iota::tangle::PublishType;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::Error;
 use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
-use crate::Result;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 use crate::updates::create_identity;
 use crate::updates::Update;
+use crate::Error;
+use crate::Result;
 
-use super::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
+use super::AccountConfig;
 
 /// An account manages one identity.
 ///
@@ -235,8 +237,8 @@ impl Account {
 
   /// Signs `data` with the key specified by `fragment`.
   pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
-    where
-      U: Serialize + SetSignature,
+  where
+    U: Serialize + SetSignature,
   {
     let state: &IdentityState = self.state();
 
@@ -281,7 +283,7 @@ impl Account {
     // Checks if the local document is up to date
     if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
       && (document_chain.diff().is_empty()
-      || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
     {
       return Ok(());
     }

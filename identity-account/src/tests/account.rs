@@ -13,7 +13,8 @@ use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
-use identity_iota::tangle::{Client, ClientBuilder};
+use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::Network;
@@ -25,12 +26,12 @@ use crate::account::AccountSetup;
 use crate::account::AccountStorage;
 use crate::account::AutoSave;
 use crate::account::PublishOptions;
-use crate::Error;
 use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
-use crate::Result;
 use crate::storage::MemStore;
+use crate::Error;
+use crate::Result;
 
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
@@ -375,7 +376,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
       Ok(())
     })
   })
-    .await?;
+  .await?;
   Ok(())
 }
 
@@ -418,7 +419,7 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       Ok(())
     })
   })
-    .await?;
+  .await?;
   Ok(())
 }
 
@@ -440,7 +441,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
         &new_doc,
         *account.chain_state().last_integration_message_id(),
       )
-        .unwrap();
+      .unwrap();
       account
         .sign(
           IotaDocument::DEFAULT_METHOD_FRAGMENT,
@@ -470,7 +471,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       Ok(())
     })
   })
-    .await?;
+  .await?;
   Ok(())
 }
 
@@ -494,7 +495,7 @@ async fn create_account(network: Network) -> Account {
 // Other errors end the test immediately.
 async fn network_resilient_test(
   test_runs: u32,
-  f: impl Fn(u32) -> Pin<Box<dyn Future<Output=Result<()>>>>,
+  f: impl Fn(u32) -> Pin<Box<dyn Future<Output = Result<()>>>>,
 ) -> Result<()> {
   for test_run in 0..test_runs {
     let test_attempt = f(test_run).await;

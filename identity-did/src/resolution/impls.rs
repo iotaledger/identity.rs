@@ -120,7 +120,6 @@ where
   // 3. If the original input DID URL contained a fragment, execute the
   //    algorithm for Dereferencing the Secondary Resource.
   if let Some(fragment) = did_url.fragment() {
-    //
     // Dereferencing the Secondary Resource
     //
     match primary {

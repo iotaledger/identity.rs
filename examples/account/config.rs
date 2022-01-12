@@ -9,7 +9,8 @@ use identity::account::AccountStorage;
 use identity::account::AutoSave;
 use identity::account::IdentitySetup;
 use identity::account::Result;
-use identity::iota::{ClientBuilder, ExplorerUrl};
+use identity::iota::ClientBuilder;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
 use identity::iota::Network;
 
@@ -46,8 +47,7 @@ async fn main() -> Result<()> {
       ClientBuilder::new()
         .network(network.clone())
         .primary_node(private_node_url, None, None)?
-        // Set a permanode from the same network (important for real-world deployments)
-        // .permanode(<permanode_url>, None, None)?
+        // .permanode(<permanode_url>, None, None)? // set a permanode for the same network
     );
 
   // Create an identity on the specified private Tangle by passing `network_name`.
