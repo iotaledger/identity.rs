@@ -27,6 +27,7 @@ thiserror = { version = "1.0", default-features = false }
 [dependencies.iota-client]
 version = "1.1.0"
 default-features = false
+features = ["pow-fallback"]
 
 [dependencies.iota-crypto]
 version = "0.7"
