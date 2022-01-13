@@ -80,7 +80,7 @@ jobs:
           temp_array=()
           for value in ${ALL_TAGS[@]}
           do
-              if ! [[ $value == $TAG_PREFIX$TAG_BASE$TAG_POSTFIX* || $value =~ ${{ inputs.main-tag-regex }} ]]; then
+              if ! [[ ( $value == $TAG_PREFIX$TAG_BASE$TAG_POSTFIX* || $value =~ ${{ inputs.main-tag-regex }} ) && $(git branch -a --contains $value | grep -E 'remotes/origin/dev|remotes/origin/main) ]]; then
                 temp_array+=($value)
               fi
           done
