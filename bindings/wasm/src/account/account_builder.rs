@@ -1,3 +1,7 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::rc::Rc;
 use crate::account::account::WasmAccount;
 use crate::error::{Result, WasmResult};
 use crate::tangle::WasmNetwork;
@@ -5,24 +9,59 @@ use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::{AccountConfig, AutoSave};
 use js_sys::Promise;
+use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
+use crate::did::WasmDID;
 
 #[wasm_bindgen(js_name = AccountBuilder)]
-pub struct WasmAccountBuilder {}
+pub struct WasmAccountBuilder  (Rc<WasmRefCell<AccountBuilder>>);
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
-  #[wasm_bindgen(js_name = createIdentity)]
-  pub fn create_identity(options: AccountOptions) -> Result<PromiseAccount> {
-    let promise: Promise = future_to_promise(async move {
-      let default_config: AccountConfig = AccountConfig::default();
 
-      AccountBuilder::new()
+  #[wasm_bindgen(constructor)]
+  pub fn new(options: AccountBuilderOptions) -> Self {
+    let default_config: AccountConfig = AccountConfig::default();
+    Self{
+      0: Rc::new(WasmRefCell::new(AccountBuilder::new()
         .autopublish(options.autopublish().unwrap_or(default_config.autopublish))
         .milestone(options.milestone().unwrap_or(default_config.milestone))
-        .create_identity(options.identitySetup().0)
+        // .autosave(options.autoSave().unwrap_or(default_config.autosave).0)
+        //ToDo Client
+      ))
+
+    }
+  }
+
+  #[wasm_bindgen(js_name = loadIdentity)]
+  pub fn load_identity(&mut self, did: WasmDID) -> Result<PromiseAccount> {
+    //ToDo
+    panic!("Not implemented yet, storage implementation required!");
+    // let builder = self.0.clone();
+    // let promise: Promise = future_to_promise(async move {
+    //
+    //   builder
+    //     .as_ref()
+    //     .borrow_mut()
+    //     .load_identity(did.0)
+    //     .await
+    //     .map(WasmAccount::from)
+    //     .map(Into::into)
+    //     .wasm_result()
+    // });
+    // Ok(promise.unchecked_into::<PromiseAccount>())
+  }
+
+  #[wasm_bindgen(js_name = createIdentity)]
+  pub fn create_identity(&mut self, identity_setup: WasmIdentitySetup) -> Result<PromiseAccount> {
+    let builder = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+      builder
+        .as_ref()
+        .borrow_mut()
+        .create_identity(identity_setup.0)
         .await
         .map(WasmAccount::from)
         .map(Into::into)
@@ -69,30 +108,26 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Account>")]
   pub type PromiseAccount;
 
-  #[wasm_bindgen(typescript_type = "AccountOptions")]
-  pub type AccountOptions;
+  #[wasm_bindgen(typescript_type = "AccountBuilderOptions")]
+  pub type AccountBuilderOptions;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn autopublish(this: &AccountOptions) -> Option<bool>;
+  pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn milestone(this: &AccountOptions) -> Option<u32>;
+  pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn autoSave(this: &AccountOptions) -> Option<WasmAutoSave>;
+  pub fn autoSave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn identitySetup(this: &AccountOptions) -> WasmIdentitySetup;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn client(this: &AccountOptions) -> WasmNetwork;
+  pub fn client(this: &AccountBuilderOptions) -> WasmNetwork;
 }
 
 //ToDo separate identitySetup.
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
-export type AccountOptions = {
-  identitySetup: IdentitySetup,
+export type AccountBuilderOptions = {
   autopublish?: boolean,
   milestone?: number,
   autoSave?: AutoSave,
