@@ -10,7 +10,15 @@ lintBigInt(entryFileNode);
 
 let changedFileNode = entryFileNode.replace(
     "let imports = {};",
-    "const fetch = require(\'node-fetch\')\r\nglobal.Headers = fetch.Headers\r\nglobal.Request = fetch.Request\r\nglobal.Response = fetch.Response\r\nglobal.fetch = fetch\r\n\r\nlet imports = {};"
+    `if (!global.is_fetch_polyfilled) {
+        const fetch = require('node-fetch')
+        global.Headers = fetch.Headers
+        global.Request = fetch.Request
+        global.Response = fetch.Response
+        global.fetch = fetch
+        global.is_fetch_polyfilled=true
+    }
+    let imports = {};`
 )
 fs.writeFileSync(
     entryFilePathNode,
