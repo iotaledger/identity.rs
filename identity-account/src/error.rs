@@ -78,8 +78,8 @@ pub enum Error {
   InvalidPrivateKey(String),
   /// Caused by creating or loading an identity on an Account with a client configured for a
   /// different network.
-  #[error("identity network {0:?} does not match client network {0:?}")]
-  InvalidIdentityNetwork(NetworkName, NetworkName),
+  #[error("DID network {0:?} does not match client network {0:?}")]
+  IncompatibleNetwork(NetworkName, NetworkName),
   /// Caused by attempting to create an account for an identity that is already managed by another account.
   #[error("Identity Is In-use")]
   IdentityInUse,

@@ -119,10 +119,7 @@ async fn test_create_identity_invalid_network() -> Result<()> {
   // INVALID: attempt to create an identity which does not match the account network.
   let create_identity: IdentitySetup = IdentitySetup::new().network("dev")?.key_type(KeyType::Ed25519);
   let account_result = Account::create_identity(account_setup().await, create_identity).await;
-  assert!(matches!(
-    account_result.unwrap_err(),
-    Error::InvalidIdentityNetwork(_, _),
-  ));
+  assert!(matches!(account_result.unwrap_err(), Error::IncompatibleNetwork(_, _),));
 
   Ok(())
 }

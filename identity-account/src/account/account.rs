@@ -89,18 +89,22 @@ impl Account {
   /// using the [`Client`].
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
-  pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
+  pub(crate) async fn create_identity(account_setup: AccountSetup, identity_setup: IdentitySetup) -> Result<Self> {
     // Error if the DID network does not match the client on the Account.
     // TODO: automatically use client network?
-    let identity_network: NetworkName = input.network.clone().unwrap_or_else(|| Network::Mainnet.name());
-    let account_network: NetworkName = setup.client.network().name();
+    let identity_network: NetworkName = identity_setup
+      .network
+      .clone()
+      .unwrap_or_else(|| Network::Mainnet.name());
+    let account_network: NetworkName = account_setup.client.network().name();
     if identity_network != account_network {
-      return Err(Error::InvalidIdentityNetwork(identity_network, account_network));
+      return Err(Error::IncompatibleNetwork(identity_network, account_network));
     }
 
-    let (did_lease, state): (DIDLease, IdentityState) = create_identity(input, setup.storage.as_ref()).await?;
+    let (did_lease, state): (DIDLease, IdentityState) =
+      create_identity(identity_setup, account_setup.storage.as_ref()).await?;
 
-    let mut account = Self::with_setup(setup, ChainState::new(), state, did_lease).await?;
+    let mut account = Self::with_setup(account_setup, ChainState::new(), state, did_lease).await?;
 
     account.store_state().await?;
 
@@ -115,7 +119,7 @@ impl Account {
     let identity_network: NetworkName = NetworkName::try_from(did.network_str().to_owned())?;
     let account_network: NetworkName = setup.client.network().name();
     if identity_network != account_network {
-      return Err(Error::InvalidIdentityNetwork(identity_network, account_network));
+      return Err(Error::IncompatibleNetwork(identity_network, account_network));
     }
 
     // Ensure the did exists in storage
