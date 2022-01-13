@@ -14,20 +14,20 @@ use wasm_bindgen_futures::future_to_promise;
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   #[wasm_bindgen(js_name = createService)]
-  pub fn create_service(&mut self, input: &CreateServiceOptions) -> Result<Promise> {
+  pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
     let account = self.0.clone();
 
-    let service_type: String = match input.serviceType() {
+    let service_type: String = match options.serviceType() {
       Some(value) => value,
       None => return Err(wasm_error(MissingRequiredField("serviceType"))),
     };
 
-    let fragment = match input.fragment() {
+    let fragment = match options.fragment() {
       Some(value) => value.clone(),
       None => return Err(wasm_error(MissingRequiredField("fragment"))),
     };
 
-    let endpoint = match input.endpoint() {
+    let endpoint = match options.endpoint() {
       Some(v) => v,
       None => return Err(wasm_error(MissingRequiredField("endpoint"))),
     };

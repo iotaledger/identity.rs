@@ -14,13 +14,8 @@ use wasm_bindgen_futures::future_to_promise;
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   #[wasm_bindgen(js_name = deleteService)]
-  pub fn delete_service(&mut self, input: &DeleteServiceOptions) -> Result<Promise> {
+  pub fn delete_service(&mut self, fragment: String) -> Result<Promise> {
     let account = self.0.clone();
-
-    let fragment = match input.fragment() {
-      Some(value) => value.clone(),
-      None => return Err(wasm_error(MissingRequiredField("fragment"))),
-    };
 
     let update = Update::DeleteService {
       fragment,
@@ -39,19 +34,3 @@ impl WasmAccount {
     Ok(promise)
   }
 }
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "DeleteServiceOptions")]
-  pub type DeleteServiceOptions;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn fragment(this: &DeleteServiceOptions) -> Option<String>;
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type DeleteServiceOptions = {
-  fragment: string,
-};
-"#;

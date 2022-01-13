@@ -115,12 +115,12 @@ See <code>IVerifierOptions</code>.</p>
     * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.publish()](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteService(input)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createService(input)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+testAccount"></a>
 
@@ -175,15 +175,6 @@ See <code>IVerifierOptions</code>.</p>
 
 ### account.publish() ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteService"></a>
-
-### account.deleteService(input) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>DeleteServiceOptions</code> | 
-
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -195,12 +186,12 @@ See <code>IVerifierOptions</code>.</p>
 
 <a name="Account+createService"></a>
 
-### account.createService(input) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| input | <code>CreateServiceOptions</code> | 
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -223,6 +214,15 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
