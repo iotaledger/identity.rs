@@ -18,8 +18,6 @@ use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
-use identity_iota::tangle::Network;
-use identity_iota::tangle::NetworkName;
 use identity_iota::tangle::PublishType;
 
 use crate::account::AccountBuilder;
@@ -90,17 +88,6 @@ impl Account {
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(account_setup: AccountSetup, identity_setup: IdentitySetup) -> Result<Self> {
-    // Error if the DID network does not match the client on the Account.
-    // TODO: automatically use client network?
-    let identity_network: NetworkName = identity_setup
-      .network
-      .clone()
-      .unwrap_or_else(|| Network::Mainnet.name());
-    let account_network: NetworkName = account_setup.client.network().name();
-    if identity_network != account_network {
-      return Err(Error::IncompatibleNetwork(identity_network, account_network));
-    }
-
     let (did_lease, state): (DIDLease, IdentityState) =
       create_identity(identity_setup, account_setup.storage.as_ref()).await?;
 
@@ -115,11 +102,13 @@ impl Account {
 
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
-    // Error if the DID network does not match the client on the Account.
-    let identity_network: NetworkName = NetworkName::try_from(did.network_str().to_owned())?;
-    let account_network: NetworkName = setup.client.network().name();
-    if identity_network != account_network {
-      return Err(Error::IncompatibleNetwork(identity_network, account_network));
+    // Ensure the DID matches the client network.
+    if did.network_str() != setup.client.network().name_str() {
+      return Err(Error::IotaError(identity_iota::Error::IncompatibleNetwork(format!(
+        "DID network {} does not match account network {}",
+        did.network_str(),
+        setup.client.network().name_str()
+      ))));
     }
 
     // Ensure the did exists in storage

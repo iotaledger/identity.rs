@@ -19,7 +19,6 @@ use crate::diff::DiffMessage;
 use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
-use crate::error::Error::DIDNotFound;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::DIDMessageEncoding;
@@ -84,6 +83,14 @@ impl Client {
   /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
   /// the probability that the message will be referenced by a milestone.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
+    if document.id().network_str() != self.network.name_str() {
+      return Err(Error::IncompatibleNetwork(format!(
+        "DID network '{}' does not match client network '{}'",
+        document.id().network_str(),
+        self.network.name_str()
+      )));
+    }
+
     self
       .publish_json_with_retry(document.integration_index(), document, None, None)
       .await
@@ -91,9 +98,18 @@ impl Client {
 
   /// Publishes a [`DiffMessage`] to the Tangle to form part of the diff chain for the integration.
   /// chain message specified by the given [`MessageId`].
-  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
-  /// the probability that the message will be referenced by a milestone.
+  ///
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts`
+  /// values for increasing the probability that the message will be referenced by a milestone.
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DiffMessage) -> Result<Receipt> {
+    if diff.id().network_str() != self.network.name_str() {
+      return Err(Error::IncompatibleNetwork(format!(
+        "DID network '{}' does not match client network '{}'",
+        diff.id().network_str(),
+        self.network.name_str()
+      )));
+    }
+
     self
       .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
       .await
@@ -157,8 +173,8 @@ impl Client {
   /// Fetches a [`DocumentChain`] given an [`IotaDID`].
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
     log::trace!("Read Document Chain: {}", did);
-    if self.network != did.network()? {
-      return Err(DIDNotFound(format!(
+    if did.network_str() != self.network.name_str() {
+      return Err(Error::DIDNotFound(format!(
         "DID network '{}' does not match client network '{}'",
         did.network_str(),
         self.network.name_str()
