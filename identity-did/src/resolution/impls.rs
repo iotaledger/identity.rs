@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::time::Instant;
@@ -120,7 +120,6 @@ where
   // 3. If the original input DID URL contained a fragment, execute the
   //    algorithm for Dereferencing the Secondary Resource.
   if let Some(fragment) = did_url.fragment() {
-    //
     // Dereferencing the Secondary Resource
     //
     match primary {
