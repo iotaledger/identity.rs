@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account::WasmAccount;
@@ -14,20 +14,20 @@ use wasm_bindgen_futures::future_to_promise;
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   #[wasm_bindgen(js_name = createMethod)]
-  pub fn create_method(&mut self, input: &CreateMethodInput) -> Result<Promise> {
+  pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
     let account = self.0.clone();
 
-    let method_type: MethodType = match input.methodType() {
+    let method_type: MethodType = match options.methodType() {
       Some(value) => value.0.clone(),
       None => MethodType::Ed25519VerificationKey2018,
     };
 
-    let fragment = match input.fragment() {
+    let fragment = match options.fragment() {
       Some(value) => value.clone(),
       None => return Err(wasm_error(MissingRequiredField("fragment"))),
     };
 
-    let method_scope: MethodScope = match input.methodScope() {
+    let method_scope: MethodScope = match options.methodScope() {
       Some(value) => value.0.clone(),
       None => MethodScope::default(),
     };
@@ -55,24 +55,24 @@ impl WasmAccount {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "CreateMethodInput")]
-  pub type CreateMethodInput;
+  #[wasm_bindgen(typescript_type = "CreateMethodOptions")]
+  pub type CreateMethodOptions;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn fragment(this: &CreateMethodInput) -> Option<String>;
+  pub fn fragment(this: &CreateMethodOptions) -> Option<String>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn methodScope(this: &CreateMethodInput) -> Option<WasmMethodScope>;
+  pub fn methodScope(this: &CreateMethodOptions) -> Option<WasmMethodScope>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn methodType(this: &CreateMethodInput) -> Option<WasmMethodType>;
+  pub fn methodType(this: &CreateMethodOptions) -> Option<WasmMethodType>;
 
   //ToDo methodSecret!
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
-export type CreateMethodInput = {
+export type CreateMethodOptions = {
   fragment: string,
   methodScope?: MethodScope,
   methodType?: MethodType,

@@ -116,11 +116,11 @@ See <code>IVerifierOptions</code>.</p>
     * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.publish()](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteService(input)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.attachRelationships(input)](#Account+attachRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(input)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createMethod(input)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteMethod(input)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.detachRelationships(input)](#Account+detachRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+testAccount"></a>
 
@@ -184,9 +184,9 @@ See <code>IVerifierOptions</code>.</p>
 | --- | --- |
 | input | <code>DeleteServiceOptions</code> | 
 
-<a name="Account+attachRelationships"></a>
+<a name="Account+attachMethodRelationships"></a>
 
-### account.attachRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -204,30 +204,30 @@ See <code>IVerifierOptions</code>.</p>
 
 <a name="Account+createMethod"></a>
 
-### account.createMethod(input) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| input | <code>CreateMethodInput</code> | 
+| options | <code>CreateMethodOptions</code> | 
 
-<a name="Account+deleteMethod"></a>
+<a name="Account+detachMethodRelationships"></a>
 
-### account.deleteMethod(input) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>any</code> | 
-
-<a name="Account+detachRelationships"></a>
-
-### account.detachRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.detachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | input | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
 
 <a name="AccountBuilder"></a>
 

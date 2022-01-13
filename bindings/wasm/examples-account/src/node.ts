@@ -1,4 +1,5 @@
 import { createIdentity } from "./create_did";
+import { manipulateIdentity } from "./manipulate_did";
 
 async function main() {
     //Check if an example is mentioned
@@ -11,6 +12,8 @@ async function main() {
     switch (argument) {
         case "create_did":
             return await createIdentity();
+        case "manipulate_did":
+            return await manipulateIdentity();
         default:
             throw "Unknown example name";
     }
