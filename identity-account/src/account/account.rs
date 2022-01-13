@@ -83,13 +83,18 @@ impl Account {
   }
 
   /// Creates a new identity and returns an [`Account`] instance to manage it.
-  /// The identity is stored locally in the [`Storage`] given in [`AccountSetup`], and published
-  /// using the [`Client`].
+  ///
+  /// The identity is stored locally in the [`Storage`] given in [`AccountSetup`]. The DID network
+  /// is automatically determined by the [`Client`] used to publish it.
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(account_setup: AccountSetup, identity_setup: IdentitySetup) -> Result<Self> {
-    let (did_lease, state): (DIDLease, IdentityState) =
-      create_identity(identity_setup, account_setup.storage.as_ref()).await?;
+    let (did_lease, state): (DIDLease, IdentityState) = create_identity(
+      identity_setup,
+      account_setup.client.network().name(),
+      account_setup.storage.as_ref(),
+    )
+    .await?;
 
     let mut account = Self::with_setup(account_setup, ChainState::new(), state, did_lease).await?;
 

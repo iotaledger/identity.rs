@@ -486,7 +486,7 @@ async fn create_account(network: Network) -> Account {
     .autopublish(false)
     .autosave(AutoSave::Every)
     .client_builder(ClientBuilder::new().network(network.clone()))
-    .create_identity(IdentitySetup::new().network(network.name()).unwrap())
+    .create_identity(IdentitySetup::default())
     .await
     .unwrap()
 }

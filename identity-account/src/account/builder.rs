@@ -189,7 +189,9 @@ impl AccountBuilder {
 
   /// Creates a new identity based on the builder configuration and returns
   /// an [`Account`] instance to manage it.
-  /// The identity is stored locally in the [`Storage`].
+  ///
+  /// The identity is stored locally in the [`Storage`]. The DID network is automatically determined
+  /// by the [`Client`] used to publish it.
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account> {

@@ -50,10 +50,9 @@ async fn main() -> Result<()> {
         // .permanode(<permanode_url>, None, None)? // set a permanode for the same network
     );
 
-  // Create an identity on the specified private Tangle by passing `network_name`.
-  let identity_setup: IdentitySetup = IdentitySetup::new().network(network_name)?;
-
-  let identity: Account = match builder.create_identity(identity_setup).await {
+  // Create an identity and publish it.
+  // The created DID will use the network name configured for the client.
+  let identity: Account = match builder.create_identity(IdentitySetup::default()).await {
     Ok(identity) => identity,
     Err(err) => {
       eprintln!("[Example] Error: {:?}", err);
