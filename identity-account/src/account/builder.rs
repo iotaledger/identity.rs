@@ -24,10 +24,10 @@ use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
 
-/// The storage adapter used by an [Account].
+/// The storage adapter used by an [`Account`].
 ///
-/// Note that [AccountStorage::Stronghold] is only available if the `stronghold` feature is activated, which it is by
-/// default.
+/// Note that [`AccountStorage::Stronghold`] is only available if the `stronghold` feature is
+/// activated, which it is by default.
 #[derive(Debug)]
 pub enum AccountStorage {
   Memory,
@@ -137,9 +137,10 @@ impl AccountBuilder {
   }
 
   /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
   /// NOTE: this overwrites any [`ClientBuilder`] previously set by
-  ///       [`AccountBuilder::client_builder'].
+  /// [`AccountBuilder::client_builder`].
   #[must_use]
   pub fn client(mut self, client: Arc<Client>) -> Self {
     self.client = Some(client);
@@ -148,8 +149,9 @@ impl AccountBuilder {
   }
 
   /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
-  /// NOTE: this overwrites any [`Client`] previously set by [`AccountBuilder::client'].
+  /// NOTE: this overwrites any [`Client`] previously set by [`AccountBuilder::client`].
   #[must_use]
   pub fn client_builder(mut self, client_builder: ClientBuilder) -> Self {
     self.client = None;
@@ -157,7 +159,7 @@ impl AccountBuilder {
     self
   }
 
-  /// Returns a previously set ['Client'] or builds a new one based on the configuration passed
+  /// Returns a previously set [`Client`] or builds a new one based on the configuration passed
   /// to [`AccountBuilder::client_builder`].
   ///
   /// If neither is set, instantiates and stores a default [`Client`].
