@@ -13,3 +13,9 @@ impl WasmEncryptionKey {
     WasmEncryptionKey(derive_encryption_key_(password))
   }
 }
+
+impl From<EncryptionKey_> for WasmEncryptionKey {
+  fn from(encryption_key: EncryptionKey_) -> WasmEncryptionKey {
+    WasmEncryptionKey(encryption_key)
+  }
+}

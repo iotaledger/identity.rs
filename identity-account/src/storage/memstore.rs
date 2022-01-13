@@ -74,7 +74,7 @@ impl MemStore {
   }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl Storage for MemStore {
   async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
     Ok(())

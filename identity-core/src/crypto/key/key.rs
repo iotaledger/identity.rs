@@ -22,11 +22,11 @@ mod private {
 }
 
 // A marker type for the `Public` components of an asymmetric cryptographic key.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
 pub enum Public {}
 
 // A marker type for the `Private` components of an asymmetric cryptographic key.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
 pub enum Private {}
 
 impl private::Sealed for Public {}
@@ -37,7 +37,7 @@ impl private::Sealed for Private {}
 // =============================================================================
 
 /// A cryptographic key.
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct Key<V: private::Sealed> {
   key: Box<[u8]>,
   vis: PhantomData<V>,

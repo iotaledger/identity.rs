@@ -83,7 +83,7 @@ impl Stronghold {
   }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
     self.snapshot.set_password(password).await

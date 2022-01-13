@@ -5,6 +5,9 @@ use std::borrow::Cow;
 
 use wasm_bindgen::JsValue;
 
+use identity::account::Error as AccountError;
+use identity::account::Result as AccountResult_;
+
 /// Convenience wrapper for `Result<T, JsValue>`.
 ///
 /// All exported errors must be converted to [`JsValue`] when using wasm_bindgen.
@@ -109,5 +112,21 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
       name: Cow::Borrowed("bee_message::Error"),
       message: Cow::Owned(error.to_string()),
     }
+  }
+}
+
+/// Convenience trait to simplify `result.map_err(js_value)` to `result.account_result()`
+pub(crate) trait AccountResult<T> {
+  fn account_result(self) -> AccountResult_<T>;
+}
+
+impl<T> AccountResult<T> for Result<T> {
+  fn account_result(self) -> AccountResult_<T> {
+    self.map_err(|e| {
+      AccountError::WasmException(
+        e.as_string()
+          .unwrap_or_else(|| "JS exception is not a valid Rust String".into()),
+      )
+    })
   }
 }

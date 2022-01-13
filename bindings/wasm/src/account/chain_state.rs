@@ -20,7 +20,7 @@ impl WasmChainState {
   /// Note: [`MessageId`] has a built-in `null` variant that needs to be checked for.
   #[wasm_bindgen]
   pub fn last_integration_message_id(&self) -> WasmMessageId {
-    self.0.last_integration_message_id().clone().into()
+    (*self.0.last_integration_message_id()).into()
   }
 
   /// Returns the diff message id of the last published update.
@@ -28,7 +28,7 @@ impl WasmChainState {
   /// Note: [`MessageId`] has a built-in `null` variant that needs to be checked for.
   #[wasm_bindgen]
   pub fn last_diff_message_id(&self) -> WasmMessageId {
-    self.0.last_diff_message_id().clone().into()
+    (*self.0.last_diff_message_id()).into()
   }
 
   /// Sets the last integration message id and resets the
@@ -48,5 +48,17 @@ impl WasmChainState {
   #[wasm_bindgen]
   pub fn is_new_identity(&self) -> bool {
     self.0.is_new_identity()
+  }
+}
+
+impl Default for WasmChainState {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
+impl From<ChainState_> for WasmChainState {
+  fn from(chain_state: ChainState_) -> Self {
+    WasmChainState(chain_state)
   }
 }

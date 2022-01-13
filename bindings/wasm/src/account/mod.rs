@@ -9,4 +9,4 @@ mod crypto;
 mod generation;
 mod identity_state;
 mod key_location;
-mod storage_trait;
+mod traits;

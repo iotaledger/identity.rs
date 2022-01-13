@@ -22,3 +22,9 @@ impl From<WasmKeyLocation> for KeyLocation_ {
     wasm_key_location.0
   }
 }
+
+impl From<KeyLocation_> for WasmKeyLocation {
+  fn from(wasm_key_location: KeyLocation_) -> Self {
+    WasmKeyLocation(wasm_key_location)
+  }
+}

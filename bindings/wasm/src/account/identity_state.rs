@@ -15,3 +15,9 @@ impl WasmIdentityState {
     WasmIdentityState(IdentityState_::new(document.into()))
   }
 }
+
+impl From<IdentityState_> for WasmIdentityState {
+  fn from(identity_state: IdentityState_) -> Self {
+    WasmIdentityState(identity_state)
+  }
+}

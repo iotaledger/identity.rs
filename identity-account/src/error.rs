@@ -79,6 +79,8 @@ pub enum Error {
   IdentityInUse,
   #[error("method missing fragment")]
   MethodMissingFragment,
+  #[error("Exception Thrown: {0}")]
+  WasmException(String),
 }
 
 #[doc(hidden)]
