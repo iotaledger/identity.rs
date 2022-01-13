@@ -100,7 +100,19 @@ async fn test_create_identity_network() -> Result<()> {
 
   // Private Tangle
   let account = Account::create_identity(
-    account_setup(Network::try_from_name("custom")?).await,
+    AccountSetup::new(
+      Arc::new(MemStore::new()),
+      Arc::new(
+        ClientBuilder::new()
+          .network(Network::try_from_name("custom")?)
+          .node("http://127.0.0.1:8082")?
+          .node_sync_disabled()
+          .build()
+          .await
+          .unwrap(),
+      ),
+      AccountConfig::new().testmode(true),
+    ),
     IdentitySetup::default(),
   )
   .await?;
