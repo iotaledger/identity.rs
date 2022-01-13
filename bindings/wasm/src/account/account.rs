@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account_builder::WasmAutoSave;
-use crate::did::{PromiseResolvedDocument, WasmDID, WasmResolvedDocument};
+use crate::did::{PromiseResolvedDocument, WasmDID, WasmDocument, WasmResolvedDocument};
 use crate::error::WasmResult;
 use crate::tangle::Client;
 use identity::account::{Account, AccountBuilder, AccountStorage};
@@ -57,9 +57,10 @@ impl WasmAccount {
     unimplemented!() //ToDo
   }
 
-  pub fn document(&self) {
-    let _document: &IotaDocument = self.0.as_ref().borrow().document();
-    //ToDo return a copy?
+  #[wasm_bindgen]
+  pub fn document(&self) -> WasmDocument {
+    let document: IotaDocument = self.0.as_ref().borrow().document().clone();
+    WasmDocument::from(document)
   }
 
   #[wasm_bindgen(js_name = resolveIdentity)]

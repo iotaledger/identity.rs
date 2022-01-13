@@ -111,15 +111,16 @@ See <code>IVerifierOptions</code>.</p>
     * [.actions()](#Account+actions) ⇒ <code>number</code>
     * [.set_client(_client)](#Account+set_client)
     * [.state()](#Account+state)
-    * [.document()](#Account+document)
+    * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
     * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.publish()](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteService(input)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachRelationships(input)](#Account+attachRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(input)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.detachRelationships(input)](#Account+detachRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(input)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteMethod(input)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.detachRelationships(input)](#Account+detachRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+testAccount"></a>
 
@@ -160,7 +161,7 @@ See <code>IVerifierOptions</code>.</p>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+document"></a>
 
-### account.document()
+### account.document() ⇒ [<code>Document</code>](#Document)
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+resolveIdentity"></a>
 
@@ -174,6 +175,15 @@ See <code>IVerifierOptions</code>.</p>
 
 ### account.publish() ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+deleteService"></a>
+
+### account.deleteService(input) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>DeleteServiceOptions</code> | 
+
 <a name="Account+attachRelationships"></a>
 
 ### account.attachRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -191,15 +201,6 @@ See <code>IVerifierOptions</code>.</p>
 | Param | Type |
 | --- | --- |
 | input | <code>CreateServiceOptions</code> | 
-
-<a name="Account+detachRelationships"></a>
-
-### account.detachRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -219,18 +220,50 @@ See <code>IVerifierOptions</code>.</p>
 | --- | --- |
 | input | <code>any</code> | 
 
+<a name="Account+detachRelationships"></a>
+
+### account.detachRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>DetachMethodRelationshipOptions</code> | 
+
 <a name="AccountBuilder"></a>
 
 ## AccountBuilder
 **Kind**: global class  
-<a name="AccountBuilder.createIdentity"></a>
 
-### AccountBuilder.createIdentity(options) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-**Kind**: static method of [<code>AccountBuilder</code>](#AccountBuilder)  
+* [AccountBuilder](#AccountBuilder)
+    * [new AccountBuilder(options)](#new_AccountBuilder_new)
+    * [.loadIdentity(did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+    * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+
+<a name="new_AccountBuilder_new"></a>
+
+### new AccountBuilder(options)
 
 | Param | Type |
 | --- | --- |
-| options | <code>AccountOptions</code> | 
+| options | <code>AccountBuilderOptions</code> | 
+
+<a name="AccountBuilder+loadIdentity"></a>
+
+### accountBuilder.loadIdentity(did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+
+<a name="AccountBuilder+createIdentity"></a>
+
+### accountBuilder.createIdentity(identity_setup) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
+
+| Param | Type |
+| --- | --- |
+| identity_setup | [<code>IdentitySetup</code>](#IdentitySetup) | 
 
 <a name="AutoSave"></a>
 
