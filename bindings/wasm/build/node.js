@@ -10,13 +10,12 @@ lintBigInt(entryFileNode);
 
 let changedFileNode = entryFileNode.replace(
     "let imports = {};",
-    `if (!global.is_fetch_polyfilled) {
+    `if (!globalThis.fetch) {
         const fetch = require('node-fetch')
-        global.Headers = fetch.Headers
-        global.Request = fetch.Request
-        global.Response = fetch.Response
-        global.fetch = fetch
-        global.is_fetch_polyfilled=true
+        globalThis.Headers = fetch.Headers
+        globalThis.Request = fetch.Request
+        globalThis.Response = fetch.Response
+        globalThis.fetch = fetch
     }
     let imports = {};`
 )
