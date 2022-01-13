@@ -63,6 +63,6 @@ extern "C" {
 const TS_APPEND_CONTENT: &'static str = r#"
 export type DetachMethodRelationshipOptions = {
   fragment: string,
-  relationships: WasmMethodRelationship | WasmMethodRelationship[]
+  relationships: MethodRelationship | MethodRelationship[]
 };
 "#;
