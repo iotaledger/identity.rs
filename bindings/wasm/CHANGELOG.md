@@ -1,5 +1,13 @@
 # Changelog
 
+## [wasm-v0.4.2](https://github.com/iotaledger/identity.rs/tree/wasm-v0.4.2) (2022-01-14)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.1...wasm-v0.4.2)
+
+Patch
+
+- Properly fix node-fetch conflict when multiple versions are included [\#588](https://github.com/iotaledger/identity.rs/pull/588)
+
 ## [wasm-v0.4.1](https://github.com/iotaledger/identity.rs/tree/wasm-v0.4.1) (2022-01-12)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.0...wasm-v0.4.1)
