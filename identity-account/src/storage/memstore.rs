@@ -4,6 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use async_trait::async_trait;
 use crypto::signatures::ed25519;
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
@@ -74,7 +75,8 @@ impl MemStore {
   }
 }
 
-#[async_trait::async_trait(?Send)]
+#[cfg_attr(feature = "wasm", async_trait(?Send))]
+#[cfg_attr(not(feature = "wasm"), async_trait)]
 impl Storage for MemStore {
   async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
     Ok(())

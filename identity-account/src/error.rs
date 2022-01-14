@@ -79,8 +79,9 @@ pub enum Error {
   IdentityInUse,
   #[error("method missing fragment")]
   MethodMissingFragment,
-  #[error("Exception Thrown: {0}")]
-  WasmException(String),
+  #[cfg(feature = "wasm")]
+  #[error("Invalid JsValue: {0}")]
+  InvalidJsValue(String),
 }
 
 #[doc(hidden)]

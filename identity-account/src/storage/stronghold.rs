@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use async_trait::async_trait;
 use crypto::keys::slip10::Chain;
 use futures::executor;
 
@@ -83,7 +84,8 @@ impl Stronghold {
   }
 }
 
-#[async_trait::async_trait(?Send)]
+#[cfg_attr(feature = "wasm", async_trait(?Send))]
+#[cfg_attr(not(feature = "wasm"), async_trait)]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
     self.snapshot.set_password(password).await
