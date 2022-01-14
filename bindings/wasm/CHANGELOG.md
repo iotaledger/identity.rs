@@ -1,8 +1,24 @@
 # Changelog
 
+## [wasm-v0.5.0-dev.2](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.2) (2022-01-14)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.1...wasm-v0.5.0-dev.2)
+
+Changed
+
+- Rename Wasm `VerifiableCredential`, `VerifiablePresentation`  [\#551](https://github.com/iotaledger/identity.rs/pull/551)
+- Add signature `created`, `expires`, `challenge`, `domain`, `purpose` [\#548](https://github.com/iotaledger/identity.rs/pull/548)
+
+Patch
+
+- Fix node-fetch conflict when multiple versions are included [\#587](https://github.com/iotaledger/identity.rs/pull/587)
+- Enable local proof-of-work fallback [\#579](https://github.com/iotaledger/identity.rs/pull/579)
+
 ## [wasm-v0.5.0-dev.1](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.1) (2021-12-15)
 
-[Full Changelog](https://github.com/iotaledger/identity.rs/compare/360bf5ce64a7f418249cdeadccb22b9aea7daeb6...wasm-v0.5.0-dev.1)
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.0...wasm-v0.5.0-dev.1)
+ 
+This release introduces multiple breaking changes to the structure of IOTA DID Documents and their Tangle messages, rendering any identity created with a prior version incompatible and unresolvable. A versioning system has been introduced so any new identities should hopefully be forward compatible with any future breaking changes to the message structure.
 
 Changed
 
@@ -27,6 +43,10 @@ Patch
 - Fix `Timestamp` in the Wasm bindings [\#541](https://github.com/iotaledger/identity.rs/pull/541)
 - Improve client error messages [\#512](https://github.com/iotaledger/identity.rs/pull/512)
 - Fix credential validation failing for documents with diff updates [\#490](https://github.com/iotaledger/identity.rs/pull/490)
+
+## [wasm-v0.4.0](https://github.com/iotaledger/identity.rs/tree/wasm-v0.4.0) (2021-11-01)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/360bf5ce64a7f418249cdeadccb22b9aea7daeb6...wasm-v0.4.0)
 
 
 
