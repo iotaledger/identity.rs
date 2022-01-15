@@ -19,6 +19,7 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dev-dependencies]
+proptest = "1.0.0"
 serde_json = { version = "1.0" }
 
 [package.metadata.docs.rs]
