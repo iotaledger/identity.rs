@@ -175,7 +175,7 @@ impl<T> Credential<T> {
     }
   }
 
-  /// Checks whether the issuance date of this Credential is before the given `Timestamp`
+  /// Checks whether the issuance date of this Credential is before the given `Timestamp`.
   pub fn issued_before(&self, timestamp: Timestamp) -> bool {
     self.issuance_date < timestamp // todo: would <= be better than < ?
   }
