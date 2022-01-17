@@ -349,4 +349,25 @@ mod tests {
       assert!(credential.issued_before(later_than_issuance_date));
     }
   }
+
+  #[test]
+  fn matching_types() {
+    let credential = deserialize_credential(JSON2); 
+    assert!(!credential.matches_types(&["VerifiableCredential"]));
+    assert!(credential.matches_types(&["VerifiableCredential", "UniversityDegreeCredential"]));
+    // the order does not matter
+    assert!(credential.matches_types(&["UniversityDegreeCredential", "VerifiableCredential"]));
+  }
+
+  #[test]
+  fn types_difference_left() {
+    let credential = deserialize_credential(JSON1);
+    assert_eq!(credential.types_difference_left(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]).unwrap().as_slice(),&["AlumniCredential"]);
+  }
+
+  #[test]
+  fn types_difference_right() {
+    let credential = deserialize_credential(JSON1);
+    assert_eq!(credential.types_difference_right(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]).unwrap().as_slice(),&["UniversityDegreeCredential", "PrescriptionCredential"]);
+  }
 }
