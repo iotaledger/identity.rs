@@ -180,7 +180,7 @@ impl<T> Credential<T> {
     self.issuance_date < timestamp // todo: would <= be better than < ?
   }
 
-  /// Checks whether the Credential's types match the input 
+  /// Checks whether this Credential's types match the input 
   pub fn matches_types(&self, other: &[&str]) -> bool {
     if self.types.len() == other.len() {
       self.types.iter().all(|value| other.contains(&value.as_str())) 
@@ -189,18 +189,23 @@ impl<T> Credential<T> {
     }
   }
 
-  /// Returns the `types` of this credential that are not in `input_types`. 
+  /// Returns the `types` of this Credential that are not in `input_types`. 
   /// None is returned whenever `input_types` contains all the types of this credential. 
   pub fn types_difference_left(&self, input_types: &[&str]) -> Option<OneOrMany<&String>> {
     Some(self.types.iter().filter(|value| !input_types.contains(&value.as_str())).collect())
     .filter(|value: &OneOrMany<&String>| !value.is_empty())
   }
 
-  /// Returns the `types` that are in `input_types`, but not in this credential. 
+  /// Returns the `types` that are in `input_types`, but not in this Credential. 
   /// None is returned whenever all the types in `input_types` are present.
   pub fn types_difference_right<'a>(&self, input_types: &'a [&str]) -> Option<OneOrMany<&'a str>> {
     Some(input_types.iter().map(|value|*value).filter(|value| !self.types.iter().any(|other| value == other)).collect())
     .filter(|value: &OneOrMany<&str>| !value.is_empty())
+  }
+
+  /// Checks whether this Credential was issued by `issuer`. 
+  pub fn issued_by(&self, issuer: Issuer) -> bool {
+    self.issuer == issuer
   }
 }
 
