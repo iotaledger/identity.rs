@@ -1,8 +1,12 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod validator;
+mod resolved_credential; 
+mod validation_options;
 
+pub use self::resolved_credential::ResolvedCredential; 
+pub use self::validation_options::CredentialValidationOptions; 
 pub use self::validator::CredentialValidation;
 pub use self::validator::CredentialValidator;
 pub use self::validator::DocumentValidation;

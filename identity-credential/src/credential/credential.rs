@@ -166,7 +166,7 @@ impl<T> Credential<T> {
   }
 
   /// Checks whether this Credential expires after the given `Timestamp`.
-  /// If the Credential does not have an expiration date (expiresAfter/expires_after) then true will be returned.
+  /// True is returned in the case of no expiration date. 
   pub fn expires_after(&self, timestamp: Timestamp) -> bool {
     if let Some(expiration_date) = self.expiration_date {
       expiration_date > timestamp
@@ -197,11 +197,6 @@ impl<T> Credential<T> {
   /// Returns an iterator of `types` that are in `input_types`, but not in this Credential. 
   pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item= &str> + 'a {
     input_types.iter().map(|value|*value).filter(|value| !self.types.iter().any(|other| value == other))
-  }
-
-  /// Checks whether this Credential was issued by `issuer`. 
-  pub fn issued_by(&self, issuer: &Issuer) -> bool {
-    &self.issuer == issuer
   }
 }
 
