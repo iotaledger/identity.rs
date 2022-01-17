@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
@@ -315,12 +315,12 @@ impl WasmDocument {
   /// Generate a `DiffMessage` between two DID Documents and sign it using the specified
   /// `key` and `method`.
   #[wasm_bindgen]
-  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDiffMessage> {
+  pub fn diff(&self, other: &WasmDocument, message_id: &str, key: &KeyPair, method: &str) -> Result<WasmDiffMessage> {
     self
       .0
       .diff(
         &other.0,
-        MessageId::from_str(message).wasm_result()?,
+        MessageId::from_str(message_id).wasm_result()?,
         key.0.private(),
         method,
       )
