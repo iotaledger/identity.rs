@@ -20,6 +20,9 @@ use crate::utils::EncryptionKey;
 
 macro_rules! storage_trait {
   ($( $x:ident ),*) => {
+    /// An interface for Identity Account storage implementations.
+    ///
+    /// See [MemStore][crate::storage::MemStore] for a test/example implementation.
     #[cfg_attr(not(feature = "wasm"), async_trait)]
     #[cfg_attr(feature = "wasm", async_trait(?Send))]
     pub trait Storage: $($x + )* Debug + 'static {
