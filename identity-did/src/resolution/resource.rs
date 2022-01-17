@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
@@ -36,7 +36,7 @@ impl From<SecondaryResource> for Resource {
 ///
 /// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-url-dereferencing
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[allow(clippy::large_enum_variant)] //temporary fix until the resolver gets refactored
+#[allow(clippy::large_enum_variant)] // temporary fix until the resolver gets refactored
 #[serde(untagged)]
 pub enum PrimaryResource {
   /// A dereferenced DID Document.

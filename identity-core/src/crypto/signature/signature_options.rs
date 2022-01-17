@@ -41,6 +41,7 @@ impl SignatureOptions {
   }
 
   /// Sets the [`Signature::created`](crate::crypto::Signature::created) field.
+  #[must_use]
   pub fn created(mut self, created: Timestamp) -> Self {
     self.created = Some(created);
     self
@@ -48,24 +49,28 @@ impl SignatureOptions {
 
   /// Sets the [`Signature::expires`](crate::crypto::Signature::expires) field.
   /// The signature will fail validation after the specified datetime.
+  #[must_use]
   pub fn expires(mut self, expires: Timestamp) -> Self {
     self.expires = Some(expires);
     self
   }
 
   /// Sets the [`Signature::challenge`](crate::crypto::Signature::challenge) field.
+  #[must_use]
   pub fn challenge(mut self, challenge: String) -> Self {
     self.challenge = Some(challenge);
     self
   }
 
   /// Sets the [`Signature::domain`](crate::crypto::Signature::domain) field.
+  #[must_use]
   pub fn domain(mut self, domain: String) -> Self {
     self.domain = Some(domain);
     self
   }
 
   /// Sets the [`Signature::purpose`](crate::crypto::Signature::purpose) field.
+  #[must_use]
   pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.purpose = Some(purpose);
     self

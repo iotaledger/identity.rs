@@ -20,8 +20,8 @@ use crate::utils::EncryptionKey;
 
 macro_rules! storage_trait {
   ($( $x:ident ),*) => {
-    #[cfg_attr(feature = "wasm", async_trait(?Send))]
     #[cfg_attr(not(feature = "wasm"), async_trait)]
+    #[cfg_attr(feature = "wasm", async_trait(?Send))]
     pub trait Storage: $($x + )* Debug + 'static {
       /// Sets the account password.
       async fn set_password(&self, password: EncryptionKey) -> Result<()>;

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! cargo run --example account_config
@@ -9,6 +9,7 @@ use identity::account::AccountStorage;
 use identity::account::AutoSave;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::iota::ClientBuilder;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
 use identity::iota::Network;
@@ -30,7 +31,7 @@ async fn main() -> Result<()> {
   // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082`
   let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet")?;
 
-  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265`
+  // In a locally running one-click tangle, this would usually be `http://127.0.0.1:14265`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Create a new Account with explicit configuration
@@ -41,28 +42,17 @@ async fn main() -> Result<()> {
     .autopublish(true) // publish to the tangle automatically on every update
     .milestone(4) // save a snapshot every 4 actions
     .storage(AccountStorage::Memory) // use the default in-memory storage
-    // configure a mainnet Tangle client with node and permanode
-    .client(Network::Mainnet, |builder| {
-      builder
-        // Manipulate this in order to manually appoint nodes
-        .node("https://chrysalis-nodes.iota.org")
-        .unwrap() // unwrap is safe, we provided a valid node URL
-        // Set a permanode from the same network (Important)
-        .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None)
-        .unwrap() // unwrap is safe, we provided a valid permanode URL
-    })
-    // Configure a client for the private network, here `dev`
-    // Also set the URL that points to the REST API of the node
-    .client(network.clone(), |builder| {
-      // unwrap is safe, we provided a valid node URL
-      builder.node(private_node_url).unwrap()
-    });
+    .client_builder(
+      // Configure a client for the private network
+      ClientBuilder::new()
+        .network(network.clone())
+        .primary_node(private_node_url, None, None)?
+        // .permanode(<permanode_url>, None, None)? // set a permanode for the same network
+    );
 
-  // Create an identity specifically on the devnet by passing `network_name`
-  // The same applies if we wanted to create an identity on a private tangle
-  let identity_setup: IdentitySetup = IdentitySetup::new().network(network_name)?;
-
-  let identity: Account = match builder.create_identity(identity_setup).await {
+  // Create an identity and publish it.
+  // The created DID will use the network name configured for the client.
+  let identity: Account = match builder.create_identity(IdentitySetup::default()).await {
     Ok(identity) => identity,
     Err(err) => {
       eprintln!("[Example] Error: {:?}", err);

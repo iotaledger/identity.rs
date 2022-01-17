@@ -275,8 +275,7 @@ impl IotaDocument {
       .core_document()
       .capability_invocation()
       .head()
-      .map(|method_ref| self.core_document().resolve_method_ref(method_ref))
-      .flatten()
+      .and_then(|method_ref| self.core_document().resolve_method_ref(method_ref))
       .map(|method: &VerificationMethod<_>|
         // SAFETY: validity of methods checked in `IotaVerificationMethod::check_validity`.
         unsafe { IotaVerificationMethod::new_unchecked_ref(method) })

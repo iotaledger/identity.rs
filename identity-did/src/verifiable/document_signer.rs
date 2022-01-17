@@ -60,12 +60,14 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
   }
 
   /// Overwrites the [`SignatureOptions`].
+  #[must_use]
   pub fn options(mut self, options: SignatureOptions) -> Self {
     self.options = options;
     self
   }
 
   /// Sets the [`Signature::created`](identity_core::crypto::Signature::created) field.
+  #[must_use]
   pub fn created(mut self, created: Timestamp) -> Self {
     self.options = self.options.created(created);
     self
@@ -73,24 +75,28 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
 
   /// Sets the [`Signature::expires`](identity_core::crypto::Signature::expires) field.
   /// The signature will fail validation after the specified datetime.
+  #[must_use]
   pub fn expires(mut self, expires: Timestamp) -> Self {
     self.options = self.options.expires(expires);
     self
   }
 
   /// Sets the [`Signature::challenge`](identity_core::crypto::Signature::challenge) field.
+  #[must_use]
   pub fn challenge(mut self, challenge: String) -> Self {
     self.options = self.options.challenge(challenge);
     self
   }
 
   /// Sets the [`Signature::domain`](identity_core::crypto::Signature::domain) field.
+  #[must_use]
   pub fn domain(mut self, domain: String) -> Self {
     self.options = self.options.domain(domain);
     self
   }
 
   /// Sets the [`Signature::purpose`](identity_core::crypto::Signature::purpose) field.
+  #[must_use]
   pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.options = self.options.purpose(purpose);
     self
@@ -98,6 +104,7 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
 }
 
 impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
+  #[must_use]
   pub fn method<Q>(mut self, value: Q) -> Self
   where
     Q: Into<MethodQuery<'query>>,
@@ -108,6 +115,7 @@ impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
 }
 
 impl<'proof, T, U, V> DocumentSigner<'_, '_, 'proof, T, U, V> {
+  #[must_use]
   pub fn merkle_key<D>(mut self, proof: (&'proof PublicKey, &'proof Proof<D>)) -> Self
   where
     D: MerkleDigest,

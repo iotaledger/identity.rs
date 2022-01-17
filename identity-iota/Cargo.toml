@@ -1,6 +1,6 @@
 [package]
 name = "identity-iota"
-version = "0.5.0-dev.1"
+version = "0.5.0-dev.2"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -17,9 +17,9 @@ brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity-core = { version = "=0.5.0-dev.1", path = "../identity-core" }
-identity-credential = { version = "=0.5.0-dev.1", path = "../identity-credential" }
-identity-did = { version = "=0.5.0-dev.1", path = "../identity-did" }
+identity-core = { version = "=0.5.0-dev.2", path = "../identity-core" }
+identity-credential = { version = "=0.5.0-dev.2", path = "../identity-credential" }
+identity-did = { version = "=0.5.0-dev.2", path = "../identity-did" }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -33,6 +33,7 @@ thiserror = { version = "1.0", default-features = false }
 git = "https://github.com/iotaledger/iota.rs"
 rev = "c7d1cc4bae4ef00f16314239463ce115f8c6b35a"
 default-features = false
+features = ["pow-fallback"]
 
 [dependencies.iota-crypto]
 version = "0.7"

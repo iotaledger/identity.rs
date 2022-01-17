@@ -1,9 +1,24 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 use std::pin::Pin;
 use std::sync::Arc;
 
 use futures::Future;
+
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::crypto::SignatureOptions;
+use identity_did::verification::MethodScope;
+use identity_iota::chain::DocumentChain;
+use identity_iota::did::IotaDID;
+use identity_iota::diff::DiffMessage;
+use identity_iota::document::IotaDocument;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::MessageId;
+use identity_iota::tangle::MessageIdExt;
+use identity_iota::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
@@ -18,19 +33,6 @@ use crate::identity::IdentityState;
 use crate::storage::MemStore;
 use crate::Error;
 use crate::Result;
-
-use identity_core::common::Timestamp;
-use identity_core::common::Url;
-use identity_core::crypto::SignatureOptions;
-use identity_did::verification::MethodScope;
-use identity_iota::chain::DocumentChain;
-use identity_iota::did::IotaDID;
-use identity_iota::diff::DiffMessage;
-use identity_iota::document::IotaDocument;
-use identity_iota::tangle::Client;
-use identity_iota::tangle::MessageId;
-use identity_iota::tangle::MessageIdExt;
-use identity_iota::tangle::Network;
 
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
@@ -133,9 +135,10 @@ async fn test_account_autopublish() -> Result<()> {
   // ===========================================================================
 
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
 
   account
     .update_identity()
@@ -257,7 +260,8 @@ async fn test_account_autopublish() -> Result<()> {
 #[tokio::test]
 async fn test_account_publish_options_sign_with() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_config = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
   let auth_method = "auth-method";
   let signing_method = "singing-method-2";
@@ -310,8 +314,9 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
 #[tokio::test]
 async fn test_account_publish_options_force_integration() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
 
   account.publish().await.unwrap();
 
@@ -480,8 +485,8 @@ async fn create_account(network: Network) -> Account {
     ))
     .autopublish(false)
     .autosave(AutoSave::Every)
-    .client(network.clone(), |builder| builder.network(network.clone()))
-    .create_identity(IdentitySetup::new().network(network.name()).unwrap())
+    .client_builder(ClientBuilder::new().network(network.clone()))
+    .create_identity(IdentitySetup::default())
     .await
     .unwrap()
 }

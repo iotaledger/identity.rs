@@ -123,7 +123,7 @@ pub(crate) trait AccountResult<T> {
 impl<T> AccountResult<T> for Result<T> {
   fn account_result(self) -> AccountResult_<T> {
     self.map_err(|e| {
-      AccountError::WasmException(
+      AccountError::InvalidJsValue(
         e.as_string()
           .unwrap_or_else(|| "JS exception is not a valid Rust String".into()),
       )

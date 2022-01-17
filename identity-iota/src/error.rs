@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
@@ -32,6 +32,8 @@ pub enum Error {
   InvalidRootDocument,
   #[error("Invalid Network Name")]
   InvalidNetworkName,
+  #[error("{0}")]
+  IncompatibleNetwork(String),
   #[error("Invalid Presentation Holder")]
   InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
