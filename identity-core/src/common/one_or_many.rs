@@ -162,6 +162,12 @@ impl<T> From<Vec<T>> for OneOrMany<T> {
   }
 }
 
+impl<T> FromIterator<T> for OneOrMany<T> {
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+      iter.into_iter().collect::<Vec<T>>().into()
+  }
+}
+
 impl<T> From<OneOrMany<T>> for Vec<T> {
   fn from(other: OneOrMany<T>) -> Self {
     other.into_vec()
