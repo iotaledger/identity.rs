@@ -204,8 +204,8 @@ impl<T> Credential<T> {
   }
 
   /// Checks whether this Credential was issued by `issuer`. 
-  pub fn issued_by(&self, issuer: Issuer) -> bool {
-    self.issuer == issuer
+  pub fn issued_by(&self, issuer: &Issuer) -> bool {
+    &self.issuer == issuer
   }
 }
 
