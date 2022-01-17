@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use wasm_bindgen::prelude::*;
 
 use identity::account::ChainState as ChainState_;

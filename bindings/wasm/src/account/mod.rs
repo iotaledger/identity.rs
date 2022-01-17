@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 pub use self::chain_state::WasmChainState;
 pub use self::crypto::WasmEncryptionKey;
 pub use self::generation::WasmGeneration;
