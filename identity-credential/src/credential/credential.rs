@@ -189,18 +189,14 @@ impl<T> Credential<T> {
     }
   }
 
-  /// Returns the `types` of this Credential that are not in `input_types`. 
-  /// None is returned whenever `input_types` contains all the types of this credential. 
-  pub fn types_difference_left(&self, input_types: &[&str]) -> Option<OneOrMany<&String>> {
-    Some(self.types.iter().filter(|value| !input_types.contains(&value.as_str())).collect())
-    .filter(|value: &OneOrMany<&String>| !value.is_empty())
+  /// Returns an iterator of the `types` of this Credential that are not in `input_types`. 
+  pub fn types_difference_left<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &String> + 'a {
+        self.types.iter().filter(|value| !input_types.contains(&value.as_str()))
   }
 
-  /// Returns the `types` that are in `input_types`, but not in this Credential. 
-  /// None is returned whenever all the types in `input_types` are present.
-  pub fn types_difference_right<'a>(&self, input_types: &'a [&str]) -> Option<OneOrMany<&'a str>> {
-    Some(input_types.iter().map(|value|*value).filter(|value| !self.types.iter().any(|other| value == other)).collect())
-    .filter(|value: &OneOrMany<&str>| !value.is_empty())
+  /// Returns an iterator of `types` that are in `input_types`, but not in this Credential. 
+  pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item= &str> + 'a {
+    input_types.iter().map(|value|*value).filter(|value| !self.types.iter().any(|other| value == other))
   }
 
   /// Checks whether this Credential was issued by `issuer`. 
@@ -367,12 +363,16 @@ mod tests {
   #[test]
   fn types_difference_left() {
     let credential = deserialize_credential(JSON1);
-    assert_eq!(credential.types_difference_left(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]).unwrap().as_slice(),&["AlumniCredential"]);
+    let mut iter = credential.types_difference_left(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]);
+    assert_eq!(iter.next().map(|value| value.as_str()), Some("AlumniCredential"));
+    assert_eq!(iter.next(), None);
   }
 
   #[test]
   fn types_difference_right() {
     let credential = deserialize_credential(JSON1);
-    assert_eq!(credential.types_difference_right(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]).unwrap().as_slice(),&["UniversityDegreeCredential", "PrescriptionCredential"]);
+    let mut iter = credential.types_difference_right(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]); 
+    assert_eq!(iter.next(), Some("UniversityDegreeCredential"));
+    assert_eq!(iter.next(), Some("PrescriptionCredential"));
   }
 }
