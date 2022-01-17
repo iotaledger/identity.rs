@@ -34,7 +34,7 @@ use crate::error::JsValueResult;
 extern "C" {
   pub type WasmStorage;
   #[wasm_bindgen(typescript_type = "Promise<()>")]
-  pub type PromiseOk;
+  pub type PromiseUnit;
   #[wasm_bindgen(typescript_type = "Promise<DIDLease>")]
   pub type PromiseDIDLease;
   #[wasm_bindgen(typescript_type = "Promise<PublicKey>")]
@@ -51,9 +51,9 @@ extern "C" {
   pub type PromiseOptionIdentityState;
 
   #[wasm_bindgen(method)]
-  pub fn set_password(this: &WasmStorage, password: WasmEncryptionKey) -> PromiseOk;
+  pub fn set_password(this: &WasmStorage, password: WasmEncryptionKey) -> PromiseUnit;
   #[wasm_bindgen(method)]
-  pub fn flush_changes(this: &WasmStorage) -> PromiseOk;
+  pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseDIDLease;
   #[wasm_bindgen(method)]
@@ -68,7 +68,7 @@ extern "C" {
   #[wasm_bindgen(method)]
   pub fn key_get(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method)]
-  pub fn key_del(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseOk;
+  pub fn key_del(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method)]
@@ -76,17 +76,17 @@ extern "C" {
   #[wasm_bindgen(method)]
   pub fn published_generation(this: &WasmStorage, did: WasmDID) -> PromiseOptionGeneration;
   #[wasm_bindgen(method)]
-  pub fn set_published_generation(this: &WasmStorage, did: WasmDID, index: WasmGeneration) -> PromiseOk;
+  pub fn set_published_generation(this: &WasmStorage, did: WasmDID, index: WasmGeneration) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn chain_state(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
   #[wasm_bindgen(method)]
-  pub fn set_chain_state(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseOk;
+  pub fn set_chain_state(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn state(this: &WasmStorage, did: WasmDID) -> PromiseOptionIdentityState;
   #[wasm_bindgen(method)]
-  pub fn set_state(this: &WasmStorage, did: WasmDID, state: WasmIdentityState) -> PromiseOk;
+  pub fn set_state(this: &WasmStorage, did: WasmDID, state: WasmIdentityState) -> PromiseUnit;
   #[wasm_bindgen(method)]
-  pub fn purge(this: &WasmStorage, did: WasmDID) -> PromiseOk;
+  pub fn purge(this: &WasmStorage, did: WasmDID) -> PromiseUnit;
 }
 
 impl Debug for WasmStorage {
