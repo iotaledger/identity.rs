@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use wasm_bindgen::JsValue;
 
 use identity::account::Error as AccountError;
-use identity::account::Result as AccountResult_;
+use identity::account::Result as AccountResult;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
 ///
@@ -115,18 +115,52 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
   }
 }
 
-/// Convenience trait to simplify `result.map_err(js_value)` to `result.account_result()`
-pub(crate) trait AccountResult<T> {
-  fn account_result(self) -> AccountResult_<T>;
+/// Convenience struct to convert Result<JsValue, JsValue> to an AccountResult<_, AccountError>
+pub struct JsValueResult(pub(crate) Result<JsValue>);
+
+impl From<Result<JsValue>> for JsValueResult {
+  fn from(result: Result<JsValue>) -> Self {
+    JsValueResult(result)
+  }
 }
 
-impl<T> AccountResult<T> for Result<T> {
-  fn account_result(self) -> AccountResult_<T> {
-    self.map_err(|e| {
-      AccountError::InvalidJsValue(
-        e.as_string()
-          .unwrap_or_else(|| "JS exception is not a valid Rust String".into()),
-      )
-    })
+/// Implement From<JsValueResult> to AccountResult<_, AccountError> for each type
+macro_rules! impl_from_js_value {
+  ( $($t:ty),* ) => {
+    $(impl From<JsValueResult> for AccountResult<$t> {
+      fn from(result: JsValueResult) -> Self {
+        result
+          .0
+          .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
+          .and_then(|js_value| {
+            js_value
+              .into_serde()
+              .map_err(|e| AccountError::InvalidJsValue(e.to_string()))
+          })
+      }
+    })*
+  };
+}
+
+impl_from_js_value!(
+  identity::account::DIDLease,
+  identity::crypto::PublicKey,
+  identity::account::Signature,
+  Option<identity::account::Generation>,
+  Option<identity::account::ChainState>,
+  Option<identity::account::IdentityState>,
+  bool
+);
+
+impl From<JsValueResult> for AccountResult<()> {
+  fn from(result: JsValueResult) -> Self {
+    result
+      .0
+      .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
+      .and_then(|js_value| {
+        js_value
+          .into_serde()
+          .map_err(|e| AccountError::InvalidJsValue(e.to_string()))
+      })
   }
 }

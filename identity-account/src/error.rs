@@ -82,6 +82,9 @@ pub enum Error {
   #[cfg(feature = "wasm")]
   #[error("Invalid JsValue: {0}")]
   InvalidJsValue(String),
+  #[cfg(feature = "wasm")]
+  #[error("Js function threw an exception: {0}")]
+  PromiseError(String),
 }
 
 #[doc(hidden)]
