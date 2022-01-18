@@ -237,7 +237,7 @@ mod tests {
   }
 
   #[test]
-  fn from_iterator_identity() {
+  fn from_iterator_iter() {
     let none = OneOrMany::Many(Vec::<u32>::new());
     assert_eq!(OneOrMany::from_iter(none.iter()), OneOrMany::Many(Vec::<&u32>::new()));
 
