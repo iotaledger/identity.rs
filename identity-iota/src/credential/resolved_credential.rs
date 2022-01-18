@@ -3,12 +3,11 @@
 
 use std::collections::BTreeMap;
 
-use identity_core::common::Timestamp;
+use identity_core::common::{Timestamp, OneOrMany};
 use identity_credential::credential::Credential;
-use identity_did::verifiable::VerifierOptions;
-use iota_client::common::time;
+use identity_did::{verifiable::VerifierOptions, did::DID};
 
-use crate::{document::ResolvedIotaDocument, did::IotaDIDUrl};
+use crate::{document::ResolvedIotaDocument, did::IotaDIDUrl, tangle::TangleRef};
 
 use delegate::delegate;
 
@@ -21,8 +20,9 @@ pub struct ResolvedCredential {
 
 impl ResolvedCredential {
     /// Verify the signature using the issuer's DID document.
-    pub fn verify_signature(&self, options: VerifierOptions) -> Result<(), impl std::error::Error> { // Todo: Return a specific error type here
-        self.issuer.document.verify_data(&self.credential, options)
+    pub fn verify_signature(&self, options: VerifierOptions) -> Result<(), ValidationUnitError> { 
+        self.issuer.document.verify_data(&self.credential, options).map_err(|err| 
+            ValidationUnitError::InvalidProof {source: Box::new(err)})
     }
 
     /// Returns an iterator over the resolved documents that have been deactivated
@@ -58,9 +58,28 @@ impl ResolvedCredential {
         self.issued_before(timestamp).then(||()).ok_or(ValidationUnitError::InvalidIssuanceDate)
     }
 
+    pub fn try_without_deactivated_subject_documents(&self, fail_fast: bool) -> Result<(), OneOrMany<ValidationUnitError>> {
+        let mut iter = self.deactivated_subject_documents().peekable(); 
+
+        if iter.peek().is_none() {
+            Ok(())
+        } else if fail_fast {
+            let error: OneOrMany<ValidationUnitError> = iter.take(1)
+            .map(|deactivated_doc| deactivated_doc.did().to_url())
+            .map(|url| ValidationUnitError::Deactivated{did_url: url}).collect(); 
+            Err(error)
+        } else {
+            let errors: OneOrMany<ValidationUnitError> = iter
+            .map(|deactivated_doc| deactivated_doc.did().to_url())
+            .map(|url| ValidationUnitError::Deactivated{did_url: url}).collect(); 
+            Err(errors)
+        }
+    }
+
 }
 
 #[non_exhaustive]
+#[derive(Debug)]
 pub enum ValidationUnitError {
     /// Indicates that the expiration date of the credential is not considered valid.
     InvalidExpirationDate,
@@ -68,11 +87,11 @@ pub enum ValidationUnitError {
     InvalidIssuanceDate,
     /// The DID document corresponding to `did` has been deactivated.
     Deactivated {
-        did: IotaDIDUrl, 
+        did_url: IotaDIDUrl, 
     },
     /// The proof verification failed. 
     InvalidProof {
-        source: Box<dyn std::error::Error>, // Todo: Put an actual error type here 
+        source: Box<dyn std::error::Error> // Todo: Put an actual error type here 
     }
 }
 
