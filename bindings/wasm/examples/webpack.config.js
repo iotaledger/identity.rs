@@ -1,5 +1,27 @@
 const path = require('path');
 const CopyWebPlugin = require('copy-webpack-plugin');
+
+const explorerExampleConfig = {
+    target: 'node',
+    entry: './examples/src/explorer-did.js',
+    devtool: "source-map",
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'explorer-did.js',
+    },
+    externals: [
+        function ({ context, request }, callback) {
+            if (/^@iota\/identity-wasm$/.test(request)) {
+                // Externalize to a commonjs module
+                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
+            }
+
+            // Continue without externalizing the import
+            callback();
+        },
+    ],
+};
+
 const serverConfig = {
     target: 'node',
     entry: './examples/src/node.js',
@@ -80,4 +102,4 @@ const clientConfig = {
     ],
 };
 
-module.exports = [serverConfig, serverTestConfig, clientConfig];
+module.exports = [serverConfig, serverTestConfig, clientConfig, explorerExampleConfig];
