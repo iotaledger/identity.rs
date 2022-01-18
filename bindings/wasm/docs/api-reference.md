@@ -775,7 +775,7 @@ Returns the DID of the associated DID Document.
 <a name="DiffMessage+diff"></a>
 
 ### diffMessage.diff ⇒ <code>string</code>
-Returns the raw contents of the DID Document diff.
+Returns the raw contents of the DID Document diff as a JSON string.
 
 NOTE: clones the data.
 
@@ -869,7 +869,7 @@ with the given Document.
         * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+        * [.diff(other, message_id, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge_diff(diff)](#Document+merge_diff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
@@ -1127,7 +1127,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+### document.diff(other, message_id, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 Generate a `DiffMessage` between two DID Documents and sign it using the specified
 `key` and `method`.
 
@@ -1136,7 +1136,7 @@ Generate a `DiffMessage` between two DID Documents and sign it using the specifi
 | Param | Type |
 | --- | --- |
 | other | [<code>Document</code>](#Document) | 
-| message | <code>string</code> | 
+| message_id | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
 | method | <code>string</code> | 
 
