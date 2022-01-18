@@ -6,8 +6,9 @@ use std::collections::BTreeMap;
 use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
 use identity_did::verifiable::VerifierOptions;
+use iota_client::common::time;
 
-use crate::document::ResolvedIotaDocument;
+use crate::{document::ResolvedIotaDocument, did::IotaDIDUrl};
 
 use delegate::delegate;
 
@@ -48,5 +49,31 @@ impl ResolvedCredential {
             pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item= &str> + 'a;
         }
     }
+
+    pub fn try_expires_after(&self, timestamp: Timestamp) -> Result<(), ValidationUnitError> {
+        self.expires_after(timestamp).then(||()).ok_or(ValidationUnitError::InvalidExpirationDate)
+    }
+
+    pub fn try_issued_before(&self, timestamp: Timestamp) -> Result<(), ValidationUnitError> {
+        self.issued_before(timestamp).then(||()).ok_or(ValidationUnitError::InvalidIssuanceDate)
+    }
+
 }
 
+#[non_exhaustive]
+pub enum ValidationUnitError {
+    /// Indicates that the expiration date of the credential is not considered valid.
+    InvalidExpirationDate,
+    /// Indicates that the issuance date of the credential is not considered valid.
+    InvalidIssuanceDate,
+    /// The DID document corresponding to `did` has been deactivated.
+    Deactivated {
+        did: IotaDIDUrl, 
+    },
+    /// The proof verification failed. 
+    InvalidProof {
+        source: Box<dyn std::error::Error>, // Todo: Put an actual error type here 
+    }
+}
+
+// Todo: Create tests for verify_signature and deactivated_subject_documents

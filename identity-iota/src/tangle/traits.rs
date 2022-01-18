@@ -23,3 +23,4 @@ pub trait TangleRef {
 pub trait TangleResolve {
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
 }
+

@@ -5,8 +5,10 @@ mod validator;
 mod resolved_credential; 
 mod validation_options;
 
-pub use self::resolved_credential::ResolvedCredential; 
+pub use self::resolved_credential::ResolvedCredential;
+pub use self::resolved_credential::ValidationUnitError;  
 pub use self::validation_options::CredentialValidationOptions; 
+pub use self::validation_options::PresentationValidationOptions;
 pub use self::validator::CredentialValidation;
 pub use self::validator::CredentialValidator;
 pub use self::validator::DocumentValidation;
