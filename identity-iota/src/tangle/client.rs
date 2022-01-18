@@ -215,7 +215,7 @@ impl Client {
     DocumentChain::new_with_diff_chain(integration_chain, diff_chain)
   }
 
-  /// Returns the [`MessageHistory`] of the given [`IotaDID`].
+  /// Returns the [`DocumentHistory`] of the given [`IotaDID`].
   pub async fn resolve_history(&self, did: &IotaDID) -> Result<DocumentHistory> {
     DocumentHistory::read(self, did).await
   }
