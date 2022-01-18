@@ -1963,7 +1963,7 @@ merged with one or more `DiffMessages`.
         * [.document](#ResolvedDocument+document) ⇒ [<code>Document</code>](#Document)
         * [.diffMessageId](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>
         * [.diffMessageId](#ResolvedDocument+diffMessageId)
-        * [.metadataPreviousMessageId](#ResolvedDocument+metadataPreviousMessageId) ⇒ <code>string</code>
+        * [.integrationMessageId](#ResolvedDocument+integrationMessageId) ⇒ <code>string</code>
         * [.integrationMessageId](#ResolvedDocument+integrationMessageId)
         * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
         * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
@@ -1996,9 +1996,9 @@ Sets the diff chain message id.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="ResolvedDocument+metadataPreviousMessageId"></a>
+<a name="ResolvedDocument+integrationMessageId"></a>
 
-### resolvedDocument.metadataPreviousMessageId ⇒ <code>string</code>
+### resolvedDocument.integrationMessageId ⇒ <code>string</code>
 Returns the integration chain message id.
 
 **Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  

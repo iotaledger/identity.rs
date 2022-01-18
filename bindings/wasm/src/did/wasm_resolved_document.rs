@@ -78,7 +78,7 @@ impl WasmResolvedDocument {
   }
 
   /// Returns the integration chain message id.
-  #[wasm_bindgen(getter = metadataPreviousMessageId)]
+  #[wasm_bindgen(getter = integrationMessageId)]
   pub fn integration_message_id(&self) -> String {
     self.0.integration_message_id.to_string()
   }
