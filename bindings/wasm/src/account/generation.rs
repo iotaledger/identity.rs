@@ -8,26 +8,26 @@ use identity::account::Generation as Generation_;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = Generation, inspectable)]
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct WasmGeneration(pub(crate) Generation_);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Generation)]
 impl WasmGeneration {
   /// Creates a new `WasmGeneration`.
-  #[wasm_bindgen]
+  #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
     WasmGeneration(Generation_::new())
   }
 
   /// Creates a new `WasmGeneration` from a 32-bit integer.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = fromUnsignedInteger)]
   pub fn from_u32(value: u32) -> Self {
     WasmGeneration(Generation_::from_u32(value))
   }
 
   /// Returns the `WasmGeneration` as a 32-bit integer.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = toUnsignedInteger)]
   pub fn to_u32(self) -> u32 {
     self.0.to_u32()
   }
@@ -37,7 +37,7 @@ impl WasmGeneration {
   /// # Errors
   ///
   /// Fails in case of overflows.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = tryIncrement)]
   pub fn try_increment(self) -> Result<WasmGeneration> {
     self.0.try_increment().map(|x| x.into()).wasm_result()
   }
@@ -47,7 +47,7 @@ impl WasmGeneration {
   /// # Errors
   ///
   /// Fails in case of underflow.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = tryDecrement)]
   pub fn try_decrement(self) -> Result<WasmGeneration> {
     self.0.try_decrement().map(|x| x.into()).wasm_result()
   }

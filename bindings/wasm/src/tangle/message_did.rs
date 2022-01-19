@@ -10,13 +10,13 @@ use identity::iota::MessageId as MessageId_;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = MessageId, inspectable)]
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct WasmMessageId(pub(crate) MessageId_);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = MessageId)]
 impl WasmMessageId {
-  #[wasm_bindgen]
+  #[wasm_bindgen(constructor)]
   pub fn new(bytes: &str) -> Result<WasmMessageId> {
     MessageId_::from_str(bytes).map(|x| x.into()).wasm_result()
   }

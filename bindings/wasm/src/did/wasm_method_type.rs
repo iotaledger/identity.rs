@@ -42,3 +42,9 @@ impl From<WasmMethodType> for MethodType {
     wasm_method_type.0
   }
 }
+
+impl From<MethodType> for WasmMethodType {
+  fn from(method_type: MethodType) -> Self {
+    WasmMethodType(method_type)
+  }
+}

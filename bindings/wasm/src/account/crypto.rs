@@ -6,10 +6,10 @@ use wasm_bindgen::prelude::*;
 use identity::account::derive_encryption_key as derive_encryption_key_;
 use identity::account::EncryptionKey as EncryptionKey_;
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = EncryptionKey, inspectable)]
 pub struct WasmEncryptionKey(EncryptionKey_);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = EncryptionKey)]
 impl WasmEncryptionKey {
   #[wasm_bindgen(js_name = deriveEncryptionKey)]
   pub fn derive_encryption_key(password: &str) -> WasmEncryptionKey {

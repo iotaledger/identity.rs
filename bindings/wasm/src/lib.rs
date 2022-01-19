@@ -17,6 +17,7 @@ pub mod error;
 pub mod account;
 pub mod chain;
 pub mod common;
+pub mod core;
 pub mod credential;
 pub mod crypto;
 pub mod did;
