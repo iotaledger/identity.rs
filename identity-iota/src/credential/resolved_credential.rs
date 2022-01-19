@@ -28,7 +28,7 @@ impl ResolvedCredential {
     /// Returns an iterator over the resolved documents that have been deactivated
     pub fn deactivated_subject_documents(&self) -> impl Iterator<Item= &ResolvedIotaDocument> + '_ {
         self.subjects.iter().map(|(_, doc)| doc)
-        .filter(|resolved_doc| resolved_doc.document.methods().next().is_none())
+        .filter(|resolved_doc| !resolved_doc.document.active())
     } 
     delegate! {
         to self.credential {
@@ -58,7 +58,12 @@ impl ResolvedCredential {
         self.issued_before(timestamp).then(||()).ok_or(ValidationUnitError::InvalidIssuanceDate)
     }
 
-    pub fn try_without_deactivated_subject_documents(&self, fail_fast: bool) -> Result<(), OneOrMany<ValidationUnitError>> {
+    /// Checks that all the contained resolved subject documents are active. 
+    /// 
+    /// # Errors   
+    /// If the `fail_fast` parameter is set then at most one [`ValidationUnitError`] can be returned in the error case, 
+    /// otherwise the `OneOrMany::Many` variant is used and there will be an entry for every deactivated subject document. 
+    pub fn try_only_active_subject_documents(&self, fail_fast: bool) -> Result<(), OneOrMany<ValidationUnitError>> {
         let mut iter = self.deactivated_subject_documents().peekable(); 
 
         if iter.peek().is_none() {

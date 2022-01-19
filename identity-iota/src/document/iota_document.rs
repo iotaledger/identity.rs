@@ -328,6 +328,15 @@ impl IotaDocument {
       unsafe { IotaVerificationMethod::new_unchecked_ref(m) })
   }
 
+  /// Returns true whenever the DID Document has [`IotaVerificationMethods`][IotaVerificationMethod].
+  /// 
+  /// # Terminology 
+  /// A DID Document is defined to be *deactivated* if this method returns false, i.e. when there are no 
+  /// [`IotaVerificationMethods`][IotaVerificationMethod]. 
+  pub fn active(&self) -> bool {
+    !self.methods().next().is_none()
+  }
+
   /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
   ///
   /// # Errors
