@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // Re-export bee_message::Error to use it directly in bindings
@@ -24,6 +24,7 @@ pub use self::network::Network;
 pub use self::network::NetworkName;
 pub use self::publish::PublishType;
 pub use self::receipt::Receipt;
+pub use self::traits::CredentialResolutionError;
 pub use self::traits::TangleRef;
 pub use self::traits::TangleResolve;
 

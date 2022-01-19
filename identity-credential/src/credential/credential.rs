@@ -166,7 +166,7 @@ impl<T> Credential<T> {
   }
 
   /// Checks whether this Credential expires after the given `Timestamp`.
-  /// True is returned in the case of no expiration date. 
+  /// True is returned in the case of no expiration date.
   pub fn expires_after(&self, timestamp: Timestamp) -> bool {
     if let Some(expiration_date) = self.expiration_date {
       expiration_date > timestamp
@@ -180,23 +180,26 @@ impl<T> Credential<T> {
     self.issuance_date < timestamp // todo: would <= be better than < ?
   }
 
-  /// Checks whether this Credential's types match the input 
+  /// Checks whether this Credential's types match the input
   pub fn matches_types(&self, other: &[&str]) -> bool {
     if self.types.len() == other.len() {
-      self.types.iter().all(|value| other.contains(&value.as_str())) 
+      self.types.iter().all(|value| other.contains(&value.as_str()))
     } else {
-      false 
+      false
     }
   }
 
-  /// Returns an iterator of the `types` of this Credential that are not in `input_types`. 
+  /// Returns an iterator of the `types` of this Credential that are not in `input_types`.
   pub fn types_difference_left<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &String> + 'a {
-        self.types.iter().filter(|value| !input_types.contains(&value.as_str()))
+    self.types.iter().filter(|value| !input_types.contains(&value.as_str()))
   }
 
-  /// Returns an iterator of `types` that are in `input_types`, but not in this Credential. 
-  pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item= &str> + 'a {
-    input_types.iter().map(|value|*value).filter(|value| !self.types.iter().any(|other| value == other))
+  /// Returns an iterator of `types` that are in `input_types`, but not in this Credential.
+  pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &str> + 'a {
+    input_types
+      .iter()
+      .map(|value| *value)
+      .filter(|value| !self.types.iter().any(|other| value == other))
   }
 }
 
@@ -348,7 +351,7 @@ mod tests {
 
   #[test]
   fn matching_types() {
-    let credential = deserialize_credential(JSON2); 
+    let credential = deserialize_credential(JSON2);
     assert!(!credential.matches_types(&["VerifiableCredential"]));
     assert!(credential.matches_types(&["VerifiableCredential", "UniversityDegreeCredential"]));
     // the order does not matter
@@ -358,7 +361,11 @@ mod tests {
   #[test]
   fn types_difference_left() {
     let credential = deserialize_credential(JSON1);
-    let mut iter = credential.types_difference_left(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]);
+    let mut iter = credential.types_difference_left(&[
+      "VerifiableCredential",
+      "UniversityDegreeCredential",
+      "PrescriptionCredential",
+    ]);
     assert_eq!(iter.next().map(|value| value.as_str()), Some("AlumniCredential"));
     assert_eq!(iter.next(), None);
   }
@@ -366,7 +373,11 @@ mod tests {
   #[test]
   fn types_difference_right() {
     let credential = deserialize_credential(JSON1);
-    let mut iter = credential.types_difference_right(&["VerifiableCredential", "UniversityDegreeCredential", "PrescriptionCredential"]); 
+    let mut iter = credential.types_difference_right(&[
+      "VerifiableCredential",
+      "UniversityDegreeCredential",
+      "PrescriptionCredential",
+    ]);
     assert_eq!(iter.next(), Some("UniversityDegreeCredential"));
     assert_eq!(iter.next(), Some("PrescriptionCredential"));
   }

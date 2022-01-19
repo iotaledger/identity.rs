@@ -329,10 +329,10 @@ impl IotaDocument {
   }
 
   /// Returns true whenever the DID Document has at least one [`IotaVerificationMethods`][IotaVerificationMethod].
-  /// 
-  /// # Terminology 
-  /// A DID Document is defined to be *deactivated* if this method returns false, i.e. when there are no 
-  /// [`IotaVerificationMethods`][IotaVerificationMethod]. 
+  ///
+  /// # Terminology
+  /// A DID Document is defined to be *deactivated* if this method returns false, i.e. when there are no
+  /// [`IotaVerificationMethods`][IotaVerificationMethod].
   pub fn active(&self) -> bool {
     !self.methods().next().is_none()
   }
