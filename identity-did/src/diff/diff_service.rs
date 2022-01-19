@@ -1,12 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
-use identity_core::convert::FromJson;
-use identity_core::convert::ToJson;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
@@ -26,7 +24,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   type_: Option<DiffString>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  service_endpoint: Option<DiffString>,
+  service_endpoint: Option<<ServiceEndpoint as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<T as Diff>::Type>,
 }
@@ -128,36 +126,37 @@ where
     Ok(DiffService {
       id: Some(self.id().to_string().into_diff()?),
       type_: Some(self.type_().to_string().into_diff()?),
-      service_endpoint: Some(self.service_endpoint().to_string().into_diff()?),
-      properties: Some(self.properties().clone().into_diff()?),
+      service_endpoint: Some(self.service_endpoint.into_diff()?),
+      properties: Some(self.properties.into_diff()?),
     })
   }
 }
 
 impl Diff for ServiceEndpoint {
-  type Type = DiffString;
+  type Type = ServiceEndpoint;
 
   fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
-    self
-      .to_json()
-      .map_err(identity_core::diff::Error::diff)?
-      .diff(&other.to_string())
+    if self != other {
+      Ok(other.clone())
+    } else {
+      Ok(self.clone())
+    }
   }
 
   fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
-    self
-      .to_json()
-      .map_err(identity_core::diff::Error::diff)?
-      .merge(diff)
-      .and_then(|this| Self::from_json(&this).map_err(identity_core::diff::Error::merge))
+    if self != &diff {
+      Ok(diff)
+    } else {
+      Ok(self.clone())
+    }
   }
 
   fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::from_json(&this).map_err(identity_core::diff::Error::convert))
+    Ok(diff)
   }
 
   fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
-    self.to_json().map_err(identity_core::diff::Error::diff)?.into_diff()
+    Ok(self)
   }
 }
 
@@ -220,17 +219,14 @@ mod test {
   fn test_service_endpoint_one() {
     let service = service();
     let mut new = service.clone();
-    let new_url = "did:test:1234#service".to_string();
-    *new.service_endpoint_mut() = Url::parse(new_url).unwrap().into();
+    let new_url = Url::parse("did:test:1234#service").unwrap();
+    *new.service_endpoint_mut() = ServiceEndpoint::One(new_url.clone());
 
     let diff = service.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.properties.is_none());
     assert!(diff.type_.is_none());
-    assert_eq!(
-      diff.service_endpoint,
-      Some(DiffString(Some("\"did:test:1234#service\"".to_owned())))
-    );
+    assert_eq!(diff.service_endpoint, Some(ServiceEndpoint::One(new_url)),);
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
@@ -244,7 +240,7 @@ mod test {
       Url::parse("https://example.com/").unwrap(),
       Url::parse("did:test:1234#service").unwrap(),
     ];
-    *new.service_endpoint_mut() = ServiceEndpoint::Set(new_url_set.try_into().unwrap());
+    *new.service_endpoint_mut() = ServiceEndpoint::Set(new_url_set.clone().try_into().unwrap());
 
     let diff = service.diff(&new).unwrap();
     assert!(diff.id.is_none());
@@ -252,9 +248,7 @@ mod test {
     assert!(diff.type_.is_none());
     assert_eq!(
       diff.service_endpoint,
-      Some(DiffString(Some(
-        r#"["https://example.com/","did:test:1234#service"]"#.to_owned()
-      )))
+      Some(ServiceEndpoint::Set(new_url_set.try_into().unwrap())),
     );
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -275,18 +269,13 @@ mod test {
       .try_into()
       .unwrap(),
     );
-    *new.service_endpoint_mut() = ServiceEndpoint::Map(new_url_map);
+    *new.service_endpoint_mut() = ServiceEndpoint::Map(new_url_map.clone());
 
     let diff = service.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.properties.is_none());
     assert!(diff.type_.is_none());
-    assert_eq!(
-      diff.service_endpoint,
-      Some(DiffString(Some(
-        r#"{"origins":["https://example.com/","did:test:1234#service"]}"#.to_owned()
-      )))
-    );
+    assert_eq!(diff.service_endpoint, Some(ServiceEndpoint::Map(new_url_map)),);
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }

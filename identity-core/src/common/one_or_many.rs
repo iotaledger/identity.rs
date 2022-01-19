@@ -74,7 +74,11 @@ impl<T> OneOrMany<T> {
         Self::Many(_) => unreachable!(),
       },
       Self::Many(ref mut inner) => {
-        inner.push(value);
+        if inner.is_empty() {
+          *self = Self::One(value);
+        } else {
+          inner.push(value);
+        }
       }
     }
   }
@@ -162,28 +166,27 @@ impl<T> From<Vec<T>> for OneOrMany<T> {
   }
 }
 
-impl<T> FromIterator<T> for OneOrMany<T> {
-  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-    let mut iter = iter.into_iter(); 
-    // if the iterator contains one element or less and a correct size hint is provided we can save an allocation
-    let size_hint = iter.size_hint(); 
-    if size_hint.1.is_some() && (1, Some(1)) >= size_hint {
-      let mut this = iter.next().map(Self::One).unwrap_or(Self::Many(Vec::new()));
-      // if the hinted upper bound was incorrect we need to correct for it
-      while let Some(next) = iter.next() {
-        this.push(next);
-      }
-      this
-    }
-    else {
-      iter.into_iter().collect::<Vec<T>>().into()
-    }
-  }
-}
-
 impl<T> From<OneOrMany<T>> for Vec<T> {
   fn from(other: OneOrMany<T>) -> Self {
     other.into_vec()
+  }
+}
+
+impl<T> FromIterator<T> for OneOrMany<T> {
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    let mut iter = iter.into_iter();
+    // if the iterator contains one element or less and a correct size hint is provided we can save an allocation
+    let size_hint = iter.size_hint();
+    if size_hint.1.is_some() && (1, Some(1)) >= size_hint {
+      let mut this = iter.next().map(Self::One).unwrap_or_else(|| Self::Many(Vec::new()));
+      // if the hinted upper bound was incorrect we need to correct for it
+      for next in iter.by_ref() {
+        this.push(next);
+      }
+      this
+    } else {
+      iter.into_iter().collect::<Vec<T>>().into()
+    }
   }
 }
 
@@ -217,7 +220,7 @@ mod tests {
 
   #[test]
   fn from_iterator_empty() {
-    let empty_vec = Vec::<u32>::new(); 
+    let empty_vec = Vec::<u32>::new();
     assert_eq!(OneOrMany::from_iter(empty_vec.clone()), OneOrMany::Many(empty_vec));
   }
 
@@ -229,19 +232,41 @@ mod tests {
 
   #[test]
   fn from_iterator_many() {
-    let letters = ["a", "b", "c" , "d"]; 
+    let letters = ["a", "b", "c", "d"];
     assert_eq!(OneOrMany::from_iter(letters), OneOrMany::Many(vec!["a", "b", "c", "d"]));
   }
 
   #[test]
-  fn from_iterator_identity() {
-    let none = OneOrMany::Many(Vec::<u32>::new()); 
-    assert_eq!(OneOrMany::from_iter(none.iter()), OneOrMany::Many(Vec::<&u32>::new())); 
+  fn from_iterator_iter() {
+    let none = OneOrMany::Many(Vec::<u32>::new());
+    assert_eq!(OneOrMany::from_iter(none.iter()), OneOrMany::Many(Vec::<&u32>::new()));
 
     let one = OneOrMany::One(42);
     assert_eq!(OneOrMany::from_iter(one.iter()), OneOrMany::One(&42));
-    
-    let two = OneOrMany::Many(vec![0,1]); 
-    assert_eq!(OneOrMany::from_iter(two.iter()), OneOrMany::Many(vec![&0, &1])); 
+
+    let two = OneOrMany::Many(vec![0, 1]);
+    assert_eq!(OneOrMany::from_iter(two.iter()), OneOrMany::Many(vec![&0, &1]));
+  }
+
+  #[test]
+  fn push_from_zero_elements() {
+    let mut collection = OneOrMany::Many(Vec::<u32>::new());
+    collection.push(42);
+    assert_eq!(collection, OneOrMany::One(42));
+  }
+
+  #[test]
+  fn push_one_element() {
+    let mut collection = OneOrMany::One(42);
+    collection.push(42);
+    assert_eq!(collection, OneOrMany::Many(vec![42, 42]));
+  }
+
+  #[test]
+  fn push_many_elements() {
+    let v: Vec<i32> = (0..42).collect();
+    let mut collection = OneOrMany::Many(v);
+    collection.push(42);
+    assert_eq!(collection, OneOrMany::Many((0..=42).collect()));
   }
 }
