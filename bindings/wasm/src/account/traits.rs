@@ -3,6 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
+use std::sync::atomic::AtomicBool;
 
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -35,8 +36,6 @@ extern "C" {
   pub type WasmStorage;
   #[wasm_bindgen(typescript_type = "Promise<()>")]
   pub type PromiseUnit;
-  #[wasm_bindgen(typescript_type = "Promise<DIDLease>")]
-  pub type PromiseDIDLease;
   #[wasm_bindgen(typescript_type = "Promise<PublicKey>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
@@ -55,7 +54,7 @@ extern "C" {
   #[wasm_bindgen(method)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
   #[wasm_bindgen(method)]
-  pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseDIDLease;
+  pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseBool;
   #[wasm_bindgen(method)]
   pub fn key_new(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method)]
@@ -117,7 +116,9 @@ impl Storage for WasmStorage {
   async fn lease_did(&self, did: &IotaDID) -> AccountResult<DIDLease> {
     let promise: Promise = Promise::resolve(&self.lease_did(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    // workaround due to problems deserializing `DIDLease`, even with serde "rc" feature
+    let account_result: AccountResult<bool> = result.into();
+    account_result.map(|value| DIDLease::from(AtomicBool::from(value)))
   }
 
   /// Creates a new keypair at the specified `location`

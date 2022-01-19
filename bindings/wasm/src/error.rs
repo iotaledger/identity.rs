@@ -143,7 +143,6 @@ macro_rules! impl_from_js_value {
 }
 
 impl_from_js_value!(
-  identity::account::DIDLease,
   identity::crypto::PublicKey,
   identity::account::Signature,
   Option<identity::account::Generation>,
