@@ -71,12 +71,12 @@ impl ResolvedCredential {
         } else if fail_fast {
             let error: OneOrMany<ValidationUnitError> = iter.take(1)
             .map(|deactivated_doc| deactivated_doc.did().to_url())
-            .map(|url| ValidationUnitError::Deactivated{did_url: url}).collect(); 
+            .map(|url| ValidationUnitError::DeactivatedSubjectDocument{did_url: url}).collect(); 
             Err(error)
         } else {
             let errors: OneOrMany<ValidationUnitError> = iter
             .map(|deactivated_doc| deactivated_doc.did().to_url())
-            .map(|url| ValidationUnitError::Deactivated{did_url: url}).collect(); 
+            .map(|url| ValidationUnitError::DeactivatedSubjectDocument{did_url: url}).collect(); 
             Err(errors)
         }
     }
@@ -84,20 +84,24 @@ impl ResolvedCredential {
 }
 
 #[non_exhaustive]
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ValidationUnitError {
     /// Indicates that the expiration date of the credential is not considered valid.
+    #[error("credential validation failed: the expiration date does not satisfy the validation criterea")]
     InvalidExpirationDate,
     /// Indicates that the issuance date of the credential is not considered valid.
+    #[error("credential validation failed: the issuance date does not satisfy the validation criterea")]
     InvalidIssuanceDate,
     /// The DID document corresponding to `did` has been deactivated.
-    Deactivated {
+    #[error("credential validation failed: encountered deactivated subject document")] //Todo: Should the did_url be included in the error message? 
+    DeactivatedSubjectDocument {
         did_url: IotaDIDUrl, 
     },
     /// The proof verification failed. 
+    #[error("credential validation failed: could not verify the issuer's signature: {source}")]
     InvalidProof {
         source: Box<dyn std::error::Error> // Todo: Put an actual error type here 
-    }
+    },
 }
 
 // Todo: Create tests for verify_signature and deactivated_subject_documents
