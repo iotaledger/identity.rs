@@ -161,7 +161,18 @@ impl Actor {
       let response_tx = receive_request.response_tx;
       let endpoint = request.endpoint;
 
-      match self.get_handler(&endpoint) {
+      // If the handler is not found, check if a catch all handler exists and use it.
+      // If not, return the original error so the other side gets
+      // `endpoint ab/cd not found` rather than `endpoint ab/* not found`
+      let handler_object_tuple: StdResult<_, RemoteSendError> = match self.get_handler(&endpoint) {
+        Ok(handler_tuple) => Ok(handler_tuple),
+        Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
+          Ok(tuple) => Ok(tuple),
+          Err(_) => Err(error),
+        },
+      };
+
+      match handler_object_tuple {
         Ok((handler, object)) => {
           Self::send_ack(response_tx);
           let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
@@ -175,31 +186,15 @@ impl Actor {
             }
           }
         }
-        Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
-          Ok((handler, object)) => {
-            Self::send_ack(response_tx);
-            let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
-            let input = handler.value().1.deserialize_request(request.data).unwrap();
-
-            match handler.value().1.invoke(self.clone(), request_context, object, input) {
-              Ok(invocation) => {
-                invocation.await;
-              }
-              Err(err) => {
-                log::error!("{}", err);
-              }
-            }
+        Err(error) => {
+          // TODO: This might be a problem if we still want a request-response actor,
+          // one that doesn't just acknowledge - depends on serde_json's serialization.
+          let err_response: StdResult<(), RemoteSendError> = Err(error);
+          let response = serde_json::to_vec(&err_response).unwrap();
+          if response_tx.send(response).is_err() {
+            log::error!("could not respond to `{}` request", endpoint);
           }
-          Err(_) => {
-            // TODO: This might be a problem if we still want a request-response actor,
-            // one that doesn't just acknowledge - depends on serde_json's serialization.
-            let err_response: StdResult<(), RemoteSendError> = Err(error);
-            let response = serde_json::to_vec(&err_response).unwrap();
-            if response_tx.send(response).is_err() {
-              log::error!("could not respond to `{}` request", endpoint);
-            }
-          }
-        },
+        }
       }
 
       Ok(())

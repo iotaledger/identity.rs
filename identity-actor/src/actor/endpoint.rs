@@ -56,6 +56,8 @@ impl Endpoint {
     self.is_hook
   }
 
+  // TODO: Since this is called on every didcomm endpoint, it'd be nice to
+  // get rid of the allocation and use a static string instead.
   pub fn to_catch_all(self) -> Self {
     Self {
       handler: "*".to_owned(),
