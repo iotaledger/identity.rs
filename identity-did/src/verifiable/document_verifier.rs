@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
 use serde::Serialize;
 
 use identity_core::common::BitSet;
@@ -36,54 +38,87 @@ use crate::Result;
 // Document Verifier - Simplifying Digital Signature Verification Since 2021
 // =============================================================================
 
-pub struct DocumentVerifier<'base, T = Object, U = Object, V = Object> {
+pub struct DocumentVerifier<'base, 'options, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
-  options: VerifierOptions,
+  options: Cow<'options, VerifierOptions>,
 }
 
-impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
+impl<'base, T, U, V> DocumentVerifier<'base, 'static, T, U, V> {
   pub fn new(document: &'base CoreDocument<T, U, V>) -> Self {
     Self {
       document,
-      options: VerifierOptions::default(),
+      options: Cow::Owned(VerifierOptions::default()),
     }
   }
+}
 
+impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// Overwrites the [`VerifierOptions`].
   #[must_use]
-  pub fn options(mut self, options: VerifierOptions) -> Self {
+  pub fn options<'new_options>(
+    self,
+    options: &'new_options VerifierOptions,
+  ) -> DocumentVerifier<'base, 'new_options, T, U, V> {
+    /*
     self.options = options;
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Borrowed(options),
+    }
   }
 
   /// Verify the signing verification method relationship matches this.
   ///
   /// NOTE: `purpose` overrides the `method_scope` option.
   #[must_use]
-  pub fn method_scope(mut self, method_scope: MethodScope) -> Self {
-    self.options = self.options.method_scope(method_scope);
+  pub fn method_scope(self, method_scope: MethodScope) -> DocumentVerifier<'base, 'static, T, U, V> {
+    /*self.options = self.options.method_scope(method_scope);
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Owned(self.options.into_owned().method_scope(method_scope)),
+    }
   }
 
   /// Verify the signing verification method type matches one specified.
   #[must_use]
-  pub fn method_type(mut self, method_type: Vec<MethodType>) -> Self {
+  pub fn method_type(self, method_type: Vec<MethodType>) -> DocumentVerifier<'base, 'static, T, U, V> {
+    /*
     self.options = self.options.method_type(method_type);
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Owned(self.options.into_owned().method_type(method_type)),
+    }
   }
 
   /// Verify the [`Signature::challenge`] field matches this.
   #[must_use]
-  pub fn challenge(mut self, challenge: String) -> Self {
-    self.options = self.options.challenge(challenge);
+  pub fn challenge(self, challenge: String) -> DocumentVerifier<'base, 'static, T, U, V> {
+    /*self.options = self.options.challenge(challenge);
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Owned(self.options.into_owned().challenge(challenge)),
+    }
   }
 
   /// Verify the [`Signature::domain`] field matches this.
   #[must_use]
-  pub fn domain(mut self, domain: String) -> Self {
+  pub fn domain(self, domain: String) -> DocumentVerifier<'base, 'static, T, U, V> {
+    /*
     self.options = self.options.domain(domain);
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Owned(self.options.into_owned().domain(domain)),
+    }
   }
 
   /// Verify the [`Signature::purpose`] field matches this. Also verifies that the signing
@@ -94,22 +129,34 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   ///
   /// NOTE: `purpose` overrides the `method_scope` option.
   #[must_use]
-  pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
+  pub fn purpose(self, purpose: ProofPurpose) -> DocumentVerifier<'base, 'static, T, U, V> {
+    /*
     self.options = self.options.purpose(purpose);
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Owned(self.options.into_owned().purpose(purpose)),
+    }
   }
 
   /// Determines whether to error if the current time exceeds the [`Signature::expires`] field.
   ///
   /// Default: false (reject expired signatures).
   #[must_use]
-  pub fn allow_expired(mut self, allow_expired: bool) -> Self {
+  pub fn allow_expired(self, allow_expired: bool) -> DocumentVerifier<'base, 'static, T, U, V> {
+    /*
     self.options = self.options.allow_expired(allow_expired);
     self
+    */
+    DocumentVerifier {
+      document: self.document,
+      options: Cow::Owned(self.options.into_owned().allow_expired(allow_expired)),
+    }
   }
 }
 
-impl<T, U, V> DocumentVerifier<'_, T, U, V>
+impl<T, U, V> DocumentVerifier<'_, '_, T, U, V>
 where
   U: Revocation,
 {

@@ -578,7 +578,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
   /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
   /// created with this DID Document.
-  pub fn verifier(&self) -> DocumentVerifier<'_, T, U, V> {
+  pub fn verifier(&self) -> DocumentVerifier<'_, 'static, T, U, V> {
     DocumentVerifier::new(self)
   }
 }

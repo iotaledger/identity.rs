@@ -520,7 +520,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentVerifier`] that can be used to verify digital signatures
   /// created with this DID Document.
-  pub fn verifier(&self) -> DocumentVerifier<'_> {
+  pub fn verifier(&self) -> DocumentVerifier<'_, 'static> {
     self.document.verifier()
   }
 
@@ -532,7 +532,7 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
-  pub fn verify_data<X>(&self, data: &X, options: VerifierOptions) -> Result<()>
+  pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
@@ -1236,7 +1236,7 @@ mod tests {
       );
       if scope == MethodScope::capability_invocation() {
         let diff = diff_result.unwrap();
-        assert!(doc1.verify_data(&diff, VerifierOptions::default()).is_ok());
+        assert!(doc1.verify_data(&diff, &VerifierOptions::default()).is_ok());
         assert!(doc1.verify_diff(&diff).is_ok());
       } else {
         assert!(diff_result.is_err());
@@ -1287,7 +1287,7 @@ mod tests {
         )
         .unwrap();
       // Signature should still be valid for every scope.
-      assert!(document.verify_data(&data, VerifierOptions::default()).is_ok());
+      assert!(document.verify_data(&data, &VerifierOptions::default()).is_ok());
 
       // Ensure only the correct scope is valid.
       for scope_check in [
@@ -1298,7 +1298,7 @@ mod tests {
         MethodScope::key_agreement(),
         MethodScope::VerificationMethod,
       ] {
-        let result = document.verify_data(&data, VerifierOptions::new().method_scope(scope_check));
+        let result = document.verify_data(&data, &VerifierOptions::new().method_scope(scope_check));
         // Any other scope should fail validation.
         if scope_check == scope {
           assert!(result.is_ok());
