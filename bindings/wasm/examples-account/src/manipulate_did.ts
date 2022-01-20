@@ -35,8 +35,8 @@ async function manipulateIdentity() {
     // Add a new service to the identity.
     await account.createService({
         fragment: "my-service-1",
-        endpoint: "https://example.com",
-        serviceType: "MyCustomService"
+        serviceType: "MyCustomService",
+        endpoint: "https://example.com"
     })
 
     // Remove the Ed25519 verification method

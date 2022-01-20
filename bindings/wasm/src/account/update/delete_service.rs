@@ -17,9 +17,7 @@ impl WasmAccount {
   pub fn delete_service(&mut self, fragment: String) -> Result<Promise> {
     let account = self.0.clone();
 
-    let update = Update::DeleteService {
-      fragment,
-    };
+    let update = Update::DeleteService { fragment };
 
     let promise: Promise = future_to_promise(async move {
       account

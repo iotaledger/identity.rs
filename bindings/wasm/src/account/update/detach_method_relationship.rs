@@ -12,7 +12,6 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   #[wasm_bindgen(js_name = detachMethodRelationships)]

@@ -1,13 +1,23 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account_builder::WasmAutoSave;
+use crate::common::WasmTimestamp;
+use crate::credential::{WasmCredential, WasmPresentation};
+use crate::crypto::WasmProofPurpose;
 use crate::did::{PromiseResolvedDocument, WasmDID, WasmDocument, WasmResolvedDocument};
-use crate::error::WasmResult;
+use crate::error::{Result, WasmResult};
 use crate::tangle::Client;
 use identity::account::{Account, AccountBuilder, AccountStorage};
+use identity::core::{Timestamp, ToJson};
+use identity::credential::{Credential, Presentation};
+use identity::crypto::{ProofPurpose, SetSignature, Signature, SignatureOptions, TrySignature, TrySignatureMut};
+use identity::did::verifiable::VerifiableProperties;
 use identity::iota::IotaDocument;
 use js_sys::Promise;
+use serde::ser::Error;
+use serde::{Serialize, Serializer};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::rc::Rc;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
@@ -19,6 +29,7 @@ pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  //ToDo remove test method
   #[wasm_bindgen(js_name = testAccount)]
   pub fn test_account(&self) -> String {
     return String::from("test success");
@@ -28,10 +39,6 @@ impl WasmAccount {
   pub fn did(&self) -> WasmDID {
     let x = self.0.as_ref().borrow();
     WasmDID::from(x.document().id().clone())
-  }
-
-  pub fn storage(&self) {
-    unimplemented!() //ToDo
   }
 
   #[wasm_bindgen]
@@ -50,7 +57,7 @@ impl WasmAccount {
   }
 
   pub fn set_client(&self, _client: Client) {
-    unimplemented!() //ToDo
+    todo!();
   }
 
   pub fn state(&self) {
@@ -77,7 +84,6 @@ impl WasmAccount {
         .map(Into::into)
         .wasm_result()
     });
-    // WARNING: this does not validate the return type. Check carefully.
     promise.unchecked_into::<PromiseResolvedDocument>()
   }
 
@@ -116,6 +122,105 @@ impl WasmAccount {
         .wasm_result()
     })
   }
+
+  #[wasm_bindgen(js_name = createSignedCredential)]
+  pub fn create_signed_credential(
+    &self,
+    fragment: String,
+    credential: &WasmCredential,
+    signature_options: &WasmSignatureOptions,
+  ) -> PromiseCredential {
+    let account = self.0.clone();
+    let mut cred: Credential = credential.0.clone();
+    let options: SignatureOptions = SignatureOptions::from(signature_options);
+
+    let promise: Promise = future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut cred, options)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()?;
+      JsValue::from_serde(&cred).wasm_result()
+    });
+    promise.unchecked_into::<PromiseCredential>()
+  }
+
+  #[wasm_bindgen(js_name = createSignedDocument)]
+  pub fn create_signed_document(
+    &self,
+    fragment: String,
+    document: &WasmDocument,
+    signature_options: &WasmSignatureOptions,
+  ) -> PromiseDocument {
+    let account = self.0.clone();
+    let mut doc: IotaDocument = document.0.clone();
+    let options: SignatureOptions = SignatureOptions::from(signature_options);
+
+    let promise: Promise = future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut doc, options)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()?;
+      JsValue::from_serde(&doc).wasm_result()
+    });
+    promise.unchecked_into::<PromiseDocument>()
+  }
+
+  #[wasm_bindgen(js_name = createSignedPresentation)]
+  pub fn create_signed_presentation(
+    &self,
+    fragment: String,
+    presentation: &WasmPresentation,
+    signature_options: &WasmSignatureOptions,
+  ) -> PromisePresentation {
+    let account = self.0.clone();
+    let mut pres: Presentation = presentation.0.clone();
+    let options: SignatureOptions = SignatureOptions::from(signature_options);
+
+    wasm_logger::init(wasm_logger::Config::default());
+    log::info!("{:?}", options);
+
+    let promise: Promise = future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut pres, options)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()?;
+      JsValue::from_serde(&pres).wasm_result()
+    });
+    promise.unchecked_into::<PromisePresentation>()
+  }
+
+  #[wasm_bindgen(js_name = createSignedData)]
+  pub fn create_signed_data(
+    &self,
+    fragment: String,
+    data: &JsValue,
+    signature_options: &WasmSignatureOptions,
+  ) -> Result<Promise> {
+    let account = self.0.clone();
+    let mut verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
+    let options: SignatureOptions = SignatureOptions::from(signature_options);
+
+    let promise = future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut verifiable_properties, options)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()?;
+      JsValue::from_serde(&verifiable_properties).wasm_result()
+    });
+    Ok(promise)
+  }
 }
 
 impl From<Account> for WasmAccount {
@@ -123,3 +228,65 @@ impl From<Account> for WasmAccount {
     WasmAccount(Rc::new(WasmRefCell::new(account)))
   }
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Credential>")]
+  pub type PromiseCredential;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Presentation>")]
+  pub type PromisePresentation;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Document>")]
+  pub type PromiseDocument;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "SignatureOptions")]
+  pub type WasmSignatureOptions;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn created(this: &WasmSignatureOptions) -> Option<WasmTimestamp>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn expires(this: &WasmSignatureOptions) -> Option<WasmTimestamp>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn challenge(this: &WasmSignatureOptions) -> Option<String>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn domain(this: &WasmSignatureOptions) -> Option<String>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn purpose(this: &WasmSignatureOptions) -> Option<WasmProofPurpose>;
+}
+
+impl From<&WasmSignatureOptions> for SignatureOptions {
+  fn from(options: &WasmSignatureOptions) -> Self {
+    SignatureOptions {
+      created: options.created().and_then(|r| Some(r.0)),
+      expires: options.expires().and_then(|r| Some(r.0)),
+      challenge: options.challenge(),
+      domain: options.domain(),
+      purpose: options.purpose().and_then(|r| Some(r.0)),
+    }
+  }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type SignatureOptions = {
+  created?: Timestamp,
+  expires?: Timestamp,
+  challenge?: string,
+  domain?: string,
+  purpose?: ProofPurpose
+};
+"#;

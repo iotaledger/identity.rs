@@ -18,7 +18,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Credential, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct WasmCredential(pub(crate) Credential);
 
 #[wasm_bindgen(js_class = Credential)]
