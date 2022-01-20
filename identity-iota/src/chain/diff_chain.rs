@@ -183,7 +183,7 @@ impl DiffChain {
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
     if document.document.id() != &diff.id {
-      return Err(Error::ChainError { error: "Invalid DID" });
+      return Err(Error::ChainError { error: "invalid DID" });
     }
 
     if diff.message_id().is_null() {
