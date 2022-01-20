@@ -1,6 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::RefCell;
+use std::ops::Deref;
+use std::rc::Rc;
 use std::str::FromStr;
 
 use identity::core::decode_b58;
@@ -39,7 +42,7 @@ use crate::service::Service;
 
 #[wasm_bindgen(js_name = Document, inspectable)]
 #[derive(Clone, Debug)]
-pub struct WasmDocument(pub(crate) IotaDocument);
+pub struct WasmDocument(pub(crate) Rc<RefCell<IotaDocument>>);
 
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
@@ -62,7 +65,7 @@ impl WasmDocument {
   pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
     let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
     IotaDocument::new_with_options(&keypair.0, network_name, fragment.as_deref())
-      .map(Self)
+      .map(WasmDocument::from)
       .wasm_result()
   }
 
@@ -72,7 +75,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = fromVerificationMethod)]
   pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmDocument> {
     IotaDocument::from_verification_method(method.0.clone())
-      .map(Self)
+      .map(WasmDocument::from)
       .wasm_result()
   }
 
@@ -83,7 +86,7 @@ impl WasmDocument {
   /// Returns the DID Document `id`.
   #[wasm_bindgen(getter)]
   pub fn id(&self) -> WasmDID {
-    WasmDID(self.0.id().clone())
+    WasmDID(self.0.borrow().id().clone())
   }
 
   // ===========================================================================
@@ -93,13 +96,13 @@ impl WasmDocument {
   /// Add a new `Service` to the document.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &Service) -> Result<bool> {
-    Ok(self.0.insert_service(service.0.clone()))
+    Ok(self.0.borrow_mut().insert_service(service.0.clone()))
   }
 
   /// Remove a `Service` identified by the given `DIDUrl` from the document.
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: WasmDIDUrl) -> Result<()> {
-    self.0.remove_service(did.0).wasm_result()
+    self.0.borrow_mut().remove_service(did.0).wasm_result()
   }
 
   // ===========================================================================
@@ -109,14 +112,18 @@ impl WasmDocument {
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: WasmMethodScope) -> Result<()> {
-    self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
+    self
+      .0
+      .borrow_mut()
+      .insert_method(method.0.clone(), scope.0)
+      .wasm_result()?;
     Ok(())
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
   pub fn remove_method(&mut self, did: WasmDIDUrl) -> Result<()> {
-    self.0.remove_method(did.0).wasm_result()
+    self.0.borrow_mut().remove_method(did.0).wasm_result()
   }
 
   /// Returns the first `VerificationMethod` with a capability invocation relationship
@@ -127,6 +134,7 @@ impl WasmDocument {
   pub fn default_signing_method(&self) -> Result<WasmVerificationMethod> {
     self
       .0
+      .borrow()
       .default_signing_method()
       .map(Clone::clone)
       .map(WasmVerificationMethod::from)
@@ -138,21 +146,22 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&mut self, query: &str) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(&self, query: &str) -> Result<WasmVerificationMethod> {
     Ok(WasmVerificationMethod(
-      self.0.try_resolve_method(query).wasm_result()?.clone(),
+      self.0.borrow().try_resolve_method(query).wasm_result()?.clone(),
     ))
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
   pub fn revoke_merkle_key(&mut self, query: &str, index: usize) -> Result<bool> {
-    let method: &mut IotaVerificationMethod = self
+    self
       .0
+      .borrow_mut()
       .try_resolve_method_mut(query)
       .and_then(IotaVerificationMethod::try_from_mut)
-      .wasm_result()?;
-
-    method.revoke_merkle_key(index).wasm_result()
+      .wasm_result()?
+      .revoke_merkle_key(index)
+      .wasm_result()
   }
 
   // ===========================================================================
@@ -167,7 +176,11 @@ impl WasmDocument {
   /// verification method. See `Document::verifySelfSigned`.
   #[wasm_bindgen(js_name = signSelf)]
   pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
-    self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
+    self
+      .0
+      .borrow_mut()
+      .sign_self(key_pair.0.private(), &method_query)
+      .wasm_result()
   }
 
   #[wasm_bindgen(js_name = signCredential)]
@@ -231,6 +244,7 @@ impl WasmDocument {
       } => {
         let merkle_key: Vec<u8> = self
           .0
+          .borrow()
           .try_resolve_method(&*method)
           .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
           .wasm_result()?;
@@ -245,6 +259,7 @@ impl WasmDocument {
           MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
             Some(proof) => self
               .0
+              .borrow()
               .signer(&private)
               .method(&method)
               .options(options.0)
@@ -261,6 +276,7 @@ impl WasmDocument {
 
         self
           .0
+          .borrow()
           .signer(&private)
           .method(&method)
           .options(options.0)
@@ -280,7 +296,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue, options: WasmVerifierOptions) -> Result<bool> {
     let data: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.0.verify_data(&data, options.0).is_ok())
+    Ok(self.0.borrow().verify_data(&data, options.0).is_ok())
   }
 
   /// Verifies that the signature on the DID document `signed` was generated by a valid method from
@@ -295,7 +311,7 @@ impl WasmDocument {
   /// - The signature verification operation fails.
   #[wasm_bindgen(js_name = verifyDocument)]
   pub fn verify_document(signed: &WasmDocument, signer: &WasmDocument) -> Result<()> {
-    IotaDocument::verify_document(&signed.0, &signer.0).wasm_result()
+    IotaDocument::verify_document(&signed.0.borrow(), &signer.0.borrow()).wasm_result()
   }
 
   /// Verifies whether `document` is a valid root DID document according to the IOTA DID method
@@ -305,7 +321,7 @@ impl WasmDocument {
   /// the DID tag.
   #[wasm_bindgen(js_name = verifyRootDocument)]
   pub fn verify_root_document(document: &WasmDocument) -> Result<()> {
-    IotaDocument::verify_root_document(&document.0).wasm_result()
+    IotaDocument::verify_root_document(&document.0.borrow()).wasm_result()
   }
 
   // ===========================================================================
@@ -318,8 +334,9 @@ impl WasmDocument {
   pub fn diff(&self, other: &WasmDocument, message_id: &str, key: &KeyPair, method: &str) -> Result<WasmDiffMessage> {
     self
       .0
+      .borrow()
       .diff(
-        &other.0,
+        &other.0.borrow(),
         MessageId::from_str(message_id).wasm_result()?,
         key.0.private(),
         method,
@@ -336,13 +353,13 @@ impl WasmDocument {
   /// Fails if an unsupported verification method is used or the verification operation fails.
   #[wasm_bindgen(js_name = verifyDiff)]
   pub fn verify_diff(&self, diff: &WasmDiffMessage) -> Result<()> {
-    self.0.verify_diff(&diff.0).wasm_result()
+    self.0.borrow().verify_diff(&diff.0).wasm_result()
   }
 
   /// Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
   #[wasm_bindgen(js_name = mergeDiff)]
   pub fn merge_diff(&mut self, diff: &WasmDiffMessage) -> Result<()> {
-    self.0.merge_diff(&diff.0).wasm_result()
+    self.0.borrow_mut().merge_diff(&diff.0).wasm_result()
   }
 
   // ===========================================================================
@@ -357,7 +374,7 @@ impl WasmDocument {
   /// `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
   #[wasm_bindgen(js_name = integrationIndex)]
   pub fn integration_index(&self) -> String {
-    self.0.integration_index().to_owned()
+    self.0.borrow().integration_index().to_owned()
   }
 
   /// Returns the Tangle index of the DID diff chain. This should only be called on documents
@@ -380,44 +397,44 @@ impl WasmDocument {
   /// `metadataPreviousMessageId`, `metadataProof` properties instead.
   #[wasm_bindgen(getter)]
   pub fn metadata(&self) -> WasmDocumentMetadata {
-    WasmDocumentMetadata::from(self.0.metadata.clone())
+    WasmDocumentMetadata::from(self.0.borrow().metadata.clone())
   }
 
   /// Returns the timestamp of when the DID document was created.
   #[wasm_bindgen(getter = metadataCreated)]
   pub fn metadata_created(&self) -> WasmTimestamp {
-    WasmTimestamp::from(self.0.metadata.created)
+    WasmTimestamp::from(self.0.borrow().metadata.created)
   }
 
   /// Sets the timestamp of when the DID document was created.
   #[wasm_bindgen(setter = metadataCreated)]
   pub fn set_metadata_created(&mut self, timestamp: WasmTimestamp) {
-    self.0.metadata.created = timestamp.0;
+    self.0.borrow_mut().metadata.created = timestamp.0;
   }
 
   /// Returns the timestamp of the last DID document update.
   #[wasm_bindgen(getter = metadataUpdated)]
   pub fn metadata_updated(&self) -> WasmTimestamp {
-    WasmTimestamp::from(self.0.metadata.updated)
+    WasmTimestamp::from(self.0.borrow().metadata.updated)
   }
 
   /// Sets the timestamp of the last DID document update.
   #[wasm_bindgen(setter = metadataUpdated)]
   pub fn set_metadata_updated(&mut self, timestamp: WasmTimestamp) {
-    self.0.metadata.updated = timestamp.0;
+    self.0.borrow_mut().metadata.updated = timestamp.0;
   }
 
   /// Returns the previous integration chain message id.
   #[wasm_bindgen(getter = metadataPreviousMessageId)]
   pub fn metadata_previous_message_id(&self) -> String {
-    self.0.metadata.previous_message_id.to_string()
+    self.0.borrow().metadata.previous_message_id.to_string()
   }
 
   /// Sets the previous integration chain message id.
   #[wasm_bindgen(setter = metadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
-    self.0.metadata.previous_message_id = message_id;
+    self.0.borrow_mut().metadata.previous_message_id = message_id;
     Ok(())
   }
 
@@ -425,7 +442,7 @@ impl WasmDocument {
   #[wasm_bindgen(getter = metadataProof)]
   pub fn metadata_proof(&self) -> Result<JsValue> {
     // TODO: implement proper bindings for the proof
-    match &self.0.metadata.proof {
+    match &self.0.borrow().metadata.proof {
       Some(proof) => JsValue::from_serde(proof).wasm_result(),
       None => Ok(JsValue::NULL),
     }
@@ -438,18 +455,18 @@ impl WasmDocument {
   /// Serializes a `Document` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
+    JsValue::from_serde(&self.0.borrow().deref()).wasm_result()
   }
 
   /// Deserializes a `Document` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmDocument> {
-    json.into_serde().map(Self).wasm_result()
+    json.into_serde::<IotaDocument>().map(WasmDocument::from).wasm_result()
   }
 }
 
 impl From<IotaDocument> for WasmDocument {
   fn from(document: IotaDocument) -> Self {
-    Self(document)
+    Self(Rc::new(RefCell::new(document)))
   }
 }

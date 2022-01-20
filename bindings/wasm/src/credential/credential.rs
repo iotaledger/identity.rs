@@ -65,7 +65,7 @@ impl WasmCredential {
     credential_id: Option<String>,
   ) -> Result<WasmCredential> {
     let subjects: OneOrMany<Subject> = subject_data.into_serde().wasm_result()?;
-    let issuer_url: Url = Url::parse(issuer_doc.0.id().as_str()).wasm_result()?;
+    let issuer_url: Url = Url::parse(issuer_doc.0.borrow().id().as_str()).wasm_result()?;
     let mut builder: CredentialBuilder = CredentialBuilder::default().issuer(issuer_url);
 
     for subject in subjects.into_vec() {

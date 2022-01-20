@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str::FromStr;
+use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -84,12 +85,12 @@ impl Client {
   /// Publishes an `IotaDocument` to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
   pub fn publish_document(&self, document: &WasmDocument) -> Result<PromiseReceipt> {
-    let document: IotaDocument = document.0.clone();
+    let document: Rc<RefCell<IotaDocument>> = document.0.clone();
     let client: Rc<IotaClient> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_document(&document)
+        .publish_document(&document.deref().borrow())
         .await
         .map(WasmReceipt)
         .map(Into::into)

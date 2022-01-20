@@ -27,7 +27,7 @@ impl WasmPresentation {
     presentation_id: Option<String>,
   ) -> Result<WasmPresentation> {
     let credentials: OneOrMany<Credential> = credential_data.into_serde().wasm_result()?;
-    let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).wasm_result()?;
+    let holder_url: Url = Url::parse(holder_doc.0.borrow().id().as_str()).wasm_result()?;
 
     let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
 

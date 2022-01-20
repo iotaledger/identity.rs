@@ -84,7 +84,7 @@ impl WasmDiffMessage {
   /// Returns a new DID Document which is the result of merging `self`
   /// with the given Document.
   pub fn merge(&self, document: &WasmDocument) -> Result<WasmDocument> {
-    self.0.merge(&document.0).map(WasmDocument).wasm_result()
+    self.0.merge(&document.0.borrow()).map(WasmDocument::from).wasm_result()
   }
 }
 
