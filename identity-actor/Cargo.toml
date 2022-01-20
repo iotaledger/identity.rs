@@ -1,6 +1,6 @@
 [package]
 name = "identity-actor"
-version = "0.1.0"
+version = "0.5.0-dev.2"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 homepage = "https://www.iota.org"

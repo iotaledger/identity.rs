@@ -7,9 +7,11 @@ use crate::Actor;
 use crate::IdentityList;
 use crate::RequestContext;
 use identity_account::account::Account;
-use identity_account::identity::IdentityCreate;
+use identity_account::account::AccountBuilder;
+use identity_account::identity::IdentitySetup;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
+use identity_iota::document::IotaDocument;
+use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::Network;
@@ -35,11 +37,11 @@ impl StorageHandler {
   pub async fn create(
     self,
     _actor: Actor,
-    request: RequestContext<IdentityCreate>,
+    request: RequestContext<IdentitySetup>,
   ) -> Result<IotaDocument, StorageError> {
-    let acc = Account::builder().build().await.unwrap();
-    let snapshot = acc.create_identity(request.input).await?;
-    let doc = snapshot.to_document()?;
+    let mut account_builder: AccountBuilder = AccountBuilder::new();
+    let account: Account = account_builder.create_identity(request.input).await?;
+    let doc = account.document().to_owned();
     Ok(doc)
   }
 
@@ -51,7 +53,7 @@ impl StorageHandler {
     self,
     _actor: Actor,
     request: RequestContext<IdentityResolve>,
-  ) -> Result<IotaDocument, StorageError> {
+  ) -> Result<ResolvedIotaDocument, StorageError> {
     log::info!("Resolving {:?}", request.input.did);
 
     let res = self.client.resolve(&request.input.did).await?;

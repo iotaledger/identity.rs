@@ -3,9 +3,9 @@
 
 use std::borrow::Cow;
 
-use identity_account::identity::IdentityCreate;
+use identity_account::identity::IdentitySetup;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
+use identity_iota::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -13,7 +13,7 @@ use crate::ActorRequest;
 
 use super::StorageError;
 
-impl ActorRequest for IdentityCreate {
+impl ActorRequest for IdentitySetup {
   type Response = Result<IotaDocument, StorageError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
