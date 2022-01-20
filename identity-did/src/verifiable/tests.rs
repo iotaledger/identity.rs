@@ -300,14 +300,8 @@ fn test_sign_verify_verifier_options_mutation_in_place() {
     challenge_string.push_str("other-challenge");
   }
 
-  //INVALID: verifying with the wrong challenge fails 
-  assert!(
-    document
-    .verifier()
-    .options(&verifier_options)
-    .verify(&data)
-    .is_err()
-  );
+  //INVALID: verifying with the wrong challenge fails
+  assert!(document.verifier().options(&verifier_options).verify(&data).is_err());
 
   // now let us use `options` again to verify some other data
 
@@ -316,17 +310,16 @@ fn test_sign_verify_verifier_options_mutation_in_place() {
   other_document
     .signer(other_key.private())
     .method("#key-1")
-    .challenge("other-challenge".to_string()) // same as in `verifier_options` after the mutation. 
+    .challenge("other-challenge".to_string()) // same as in `verifier_options` after the mutation.
     .sign(&mut other_data)
     .unwrap();
-  
-  //VALID: verifying with the correct challenge succeeds 
+
+  //VALID: verifying with the correct challenge succeeds
   assert!(other_document
     .verifier()
     .options(&verifier_options)
     .verify(&other_data)
     .is_ok());
-  
 }
 
 #[test]
@@ -370,21 +363,21 @@ fn test_sign_verify_domain_verifier_options_mutation_in_place() {
     .unwrap();
   assert_eq!(data.proof.clone().unwrap().domain.unwrap(), "some.domain");
 
-  let mut verifier_options = VerifierOptions::default(); 
+  let mut verifier_options = VerifierOptions::default();
 
   // VALID: verifying without checking the domain succeeds.
   document.verifier().options(&verifier_options).verify(&data).unwrap();
-  
-  // now mutate the `verifier_options` and set domain to be a wrong domain 
-  verifier_options.domain = Some("invalid".to_string()); 
 
-  // INVALID: verifying with the wrong domain fails 
+  // now mutate the `verifier_options` and set domain to be a wrong domain
+  verifier_options.domain = Some("invalid".to_string());
+
+  // INVALID: verifying with the wrong domain fails
   assert!(document.verifier().options(&verifier_options).verify(&data).is_err());
 
-  // now mutate the `verifier_options`and set domain to be the correct domain 
-  verifier_options.domain = Some("some.domain".to_string()); 
-  
-  // VALID: verifying with the correct domain succeeds 
+  // now mutate the `verifier_options`and set domain to be the correct domain
+  verifier_options.domain = Some("some.domain".to_string());
+
+  // VALID: verifying with the correct domain succeeds
   assert!(document.verifier().options(&verifier_options).verify(&data).is_ok());
 }
 
