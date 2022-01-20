@@ -20,6 +20,7 @@ use identity_core::crypto::TrySignatureMut;
 use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
+use crate::verifiable::VerifierOptions;
 use crate::verification::MethodData;
 use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
@@ -275,6 +276,60 @@ fn test_sign_verify_challenge() {
 }
 
 #[test]
+fn test_sign_verify_verifier_options_mutation_in_place() {
+  let (key, document) = setup();
+  let mut data: MockObject = MockObject::new(123);
+  assert!(document.verifier().verify(&data).is_err());
+
+  // Sign with a challenge.
+  document
+    .signer(key.private())
+    .method("#key-1")
+    .challenge("some-challenge".to_string())
+    .sign(&mut data)
+    .unwrap();
+  assert_eq!(data.proof.clone().unwrap().challenge.unwrap(), "some-challenge");
+
+  let mut verifier_options = VerifierOptions::default().challenge("some-challenge".into());
+  //VALID: verifying with the correct challenge succeeds
+  assert!(document.verifier().options(&verifier_options).verify(&data).is_ok());
+
+  // set a different challenge in `verifier_options`
+  if let Some(ref mut challenge_string) = verifier_options.challenge {
+    challenge_string.clear();
+    challenge_string.push_str("other-challenge");
+  }
+
+  //INVALID: verifying with the wrong challenge fails 
+  assert!(
+    document
+    .verifier()
+    .options(&verifier_options)
+    .verify(&data)
+    .is_err()
+  );
+
+  // now let us use `options` again to verify some other data
+
+  let (other_key, other_document) = setup();
+  let mut other_data = MockObject::new(321);
+  other_document
+    .signer(other_key.private())
+    .method("#key-1")
+    .challenge("other-challenge".to_string()) // same as in `verifier_options` after the mutation. 
+    .sign(&mut other_data)
+    .unwrap();
+  
+  //VALID: verifying with the correct challenge succeeds 
+  assert!(other_document
+    .verifier()
+    .options(&verifier_options)
+    .verify(&other_data)
+    .is_ok());
+  
+}
+
+#[test]
 fn test_sign_verify_domain() {
   let (key, document) = setup();
   let mut data: MockObject = MockObject::new(123);
@@ -298,6 +353,39 @@ fn test_sign_verify_domain() {
   assert!(document.verifier().domain("invalid".into()).verify(&data).is_err());
   assert!(document.verifier().domain(" ".into()).verify(&data).is_err());
   assert!(document.verifier().domain("".into()).verify(&data).is_err());
+}
+
+#[test]
+fn test_sign_verify_domain_verifier_options_mutation_in_place() {
+  let (key, document) = setup();
+  let mut data: MockObject = MockObject::new(123);
+  assert!(document.verifier().verify(&data).is_err());
+
+  // Sign with a domain.
+  document
+    .signer(key.private())
+    .method("#key-1")
+    .domain("some.domain".to_string())
+    .sign(&mut data)
+    .unwrap();
+  assert_eq!(data.proof.clone().unwrap().domain.unwrap(), "some.domain");
+
+  let mut verifier_options = VerifierOptions::default(); 
+
+  // VALID: verifying without checking the domain succeeds.
+  document.verifier().options(&verifier_options).verify(&data).unwrap();
+  
+  // now mutate the `verifier_options` and set domain to be a wrong domain 
+  verifier_options.domain = Some("invalid".to_string()); 
+
+  // INVALID: verifying with the wrong domain fails 
+  assert!(document.verifier().options(&verifier_options).verify(&data).is_err());
+
+  // now mutate the `verifier_options`and set domain to be the correct domain 
+  verifier_options.domain = Some("some.domain".to_string()); 
+  
+  // VALID: verifying with the correct domain succeeds 
+  assert!(document.verifier().options(&verifier_options).verify(&data).is_ok());
 }
 
 #[test]
