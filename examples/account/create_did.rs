@@ -36,11 +36,7 @@ async fn main() -> Result<()> {
   let iota_did: &IotaDID = account.did();
 
   // Print the local state of the DID Document
-  println!(
-    "[Example] Local Document from {} = {:#?}",
-    iota_did,
-    account.state().document()
-  );
+  println!("[Example] Local Document from {} = {:#?}", iota_did, account.document());
 
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
