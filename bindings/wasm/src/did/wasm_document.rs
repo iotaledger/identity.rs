@@ -340,7 +340,7 @@ impl WasmDocument {
   }
 
   /// Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = mergeDiff)]
   pub fn merge_diff(&mut self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.merge_diff(&diff.0).wasm_result()
   }
