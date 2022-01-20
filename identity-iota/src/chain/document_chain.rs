@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -139,18 +139,11 @@ impl DocumentChain {
   ///
   /// Fails if the diff is invalid.
   pub fn try_push_diff(&mut self, diff: DiffMessage) -> Result<()> {
-    // Use the last integration chain document to validate the signature on the diff.
-    let integration_document: &ResolvedIotaDocument = self.chain_i.current();
-    let expected_prev_message_id: &MessageId = self.diff_message_id();
-    DiffChain::check_valid_addition(&diff, integration_document, expected_prev_message_id)?;
-
-    // Merge the diff into the latest state.
-    let mut document: ResolvedIotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
-    document.merge_diff_message(&diff)?;
+    // Use the latest document state to validate the diff.
+    let integration_document: &ResolvedIotaDocument = self.document.as_ref().unwrap_or_else(|| self.chain_i.current());
 
     // Extend the diff chain and store the merged result.
-    self.chain_d.try_push(diff, &self.chain_i)?;
-    self.document = Some(document);
+    self.document = Some(self.chain_d.try_push_and_merge(diff, integration_document)?);
 
     Ok(())
   }

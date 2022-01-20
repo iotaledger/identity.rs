@@ -311,6 +311,7 @@ impl IotaDocument {
   }
 
   /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
+  // TODO: return an error or bool if no service was removed?
   pub fn remove_service(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.service_mut().remove(&core_did_url);

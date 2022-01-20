@@ -40,6 +40,9 @@ version = "0.7"
 default-features = false
 features = ["blake2b"]
 
+[dev-dependencies]
+tokio = { version = "1.15", default-features = false, features = ["macros"] }
+
 [features]
 default = ["async"]
 
