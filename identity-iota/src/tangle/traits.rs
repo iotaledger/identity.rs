@@ -1,8 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::OneOrMany;
 use identity_credential::credential::Credential;
 
+use crate::credential::CredentialResolutionError;
+use crate::credential::CredentialValidationOptions;
 use crate::credential::ResolvedCredential;
 use crate::credential::ValidationUnitError;
 use crate::did::IotaDID;
@@ -25,26 +28,29 @@ pub trait TangleRef {
 // TODO: remove TangleResolve with ClientMap refactor?
 #[async_trait::async_trait(?Send)]
 pub trait TangleResolve {
+  /// Resolves a DID on the Tangle
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
-}
 
-// Todo: Move this error to a more appropriate module.
-#[derive(Debug, thiserror::Error)]
-pub enum CredentialResolutionError {
-  /// Caused by a failure to resolve a DID Document.
-  #[error("credential resolution failed: could not resolve DID document from the tangle: {source}")]
-  DIDDocumentResolution {
-    source: Box<dyn std::error::Error>, //Todo: specify an actual error type here
-  },
-  /// Caused by attempting to resolve a [`Credential`] that does not meet the specified validation critera.
-  #[error("credential resolution failed: {source}")]
-  Validation {
-    #[from]
-    source: ValidationUnitError,
-  },
+  async fn resolve_credential(
+    &self,
+    credential: Credential,
+    validation_options: &CredentialValidationOptions,
+    fail_fast: bool,
+  ) -> std::result::Result<ResolvedCredential, OneOrMany<CredentialResolutionError>> {
+    // first we validate what we can before resolving any DID Documents
+    credential
+      .expires_after(validation_options.expires_after)
+      .then(|| ())
+      .ok_or(ValidationUnitError::InvalidExpirationDate)
+      .map_err(OneOrMany::One);
+
+    todo!()
+  }
 }
 
 mod credential_resolution_internals {
+  use identity_core::common::OneOrMany;
+
   use super::Credential;
   use super::CredentialResolutionError;
   use super::IotaDID;
@@ -83,7 +89,7 @@ mod credential_resolution_internals {
     let issuer_url: &str = credential.issuer.url().as_str();
     let resolved_issuer_doc = resolve_document(resolver, issuer_url)
       .await
-      .map_err(|err| CredentialResolutionError::DIDDocumentResolution { source: Box::from(err) })?;
+      .map_err(|err| CredentialResolutionError::DIDResolution { source: Box::from(err) })?;
     // now validate
     let event = ResolvedIssuerEvent {
       credential: &credential,
@@ -101,7 +107,7 @@ mod credential_resolution_internals {
     {
       let subject_document = resolve_document(resolver, id.as_str())
         .await
-        .map_err(|err| CredentialResolutionError::DIDDocumentResolution { source: Box::from(err) })?;
+        .map_err(|err| CredentialResolutionError::DIDResolution { source: Box::from(err) })?;
       subject_event_validator(&ResolvedSubjectEvent {
         subject_doc: &subject_document,
       })?;

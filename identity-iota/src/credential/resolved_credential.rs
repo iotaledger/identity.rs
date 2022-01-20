@@ -121,4 +121,55 @@ pub enum ValidationUnitError {
   },
 }
 
+#[derive(Debug)]
+pub enum CredentialResolutionError {
+  /// Caused by a failure to resolve a DID Document.
+  DIDResolution {
+    source: Box<dyn std::error::Error>, //Todo: specify an actual error type here
+  },
+  /// Caused by attempting to resolve a [`Credential`] that does not meet one or more specified validation rules.
+  Validation {
+    validation_errors: OneOrMany<ValidationUnitError>,
+  },
+}
+
+impl std::fmt::Display for CredentialResolutionError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::DIDResolution { source } => {
+        write!(
+          f,
+          "credential resolution failed: could not resolve DID document: {}",
+          source
+        )
+      }
+      Self::Validation { validation_errors } => {
+        // Todo: Refactor the following imperative code once https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.intersperse
+        // becomes stable.
+        let mut combined_validation_errors_string = String::new();
+        let separator = ",";
+        let separator_len = separator.len();
+        for validation_error in validation_errors.iter() {
+          let error_string = validation_error.to_string();
+          combined_validation_errors_string.reserve(error_string.len() + separator_len);
+          combined_validation_errors_string.push_str(&error_string);
+          combined_validation_errors_string.push_str(separator);
+        }
+        write!(
+          f,
+          "credential resolution failed: The following validation errors were encountered: {}",
+          combined_validation_errors_string
+        )
+      }
+    }
+  }
+}
+impl From<ValidationUnitError> for CredentialResolutionError {
+  fn from(error: ValidationUnitError) -> Self {
+    Self::Validation {
+      validation_errors: OneOrMany::One(error),
+    }
+  }
+}
+
 // Todo: Create tests for verify_signature and deactivated_subject_documents
