@@ -6,8 +6,7 @@ import {
 } from './../../node/identity_wasm.js';
 
 /**
- * This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle
- * using the Account.
+ * This example shows is an introduction about how to sign data using the account.
  */
 async function signing() {
 
