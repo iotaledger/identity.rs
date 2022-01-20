@@ -59,10 +59,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
     self,
     options: &'new_options VerifierOptions,
   ) -> DocumentVerifier<'base, 'new_options, T, U, V> {
-    /*
-    self.options = options;
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Borrowed(options),
@@ -74,9 +70,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// NOTE: `purpose` overrides the `method_scope` option.
   #[must_use]
   pub fn method_scope(self, method_scope: MethodScope) -> DocumentVerifier<'base, 'static, T, U, V> {
-    /*self.options = self.options.method_scope(method_scope);
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Owned(self.options.into_owned().method_scope(method_scope)),
@@ -86,10 +79,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// Verify the signing verification method type matches one specified.
   #[must_use]
   pub fn method_type(self, method_type: Vec<MethodType>) -> DocumentVerifier<'base, 'static, T, U, V> {
-    /*
-    self.options = self.options.method_type(method_type);
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Owned(self.options.into_owned().method_type(method_type)),
@@ -99,9 +88,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// Verify the [`Signature::challenge`] field matches this.
   #[must_use]
   pub fn challenge(self, challenge: String) -> DocumentVerifier<'base, 'static, T, U, V> {
-    /*self.options = self.options.challenge(challenge);
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Owned(self.options.into_owned().challenge(challenge)),
@@ -111,10 +97,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// Verify the [`Signature::domain`] field matches this.
   #[must_use]
   pub fn domain(self, domain: String) -> DocumentVerifier<'base, 'static, T, U, V> {
-    /*
-    self.options = self.options.domain(domain);
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Owned(self.options.into_owned().domain(domain)),
@@ -130,10 +112,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// NOTE: `purpose` overrides the `method_scope` option.
   #[must_use]
   pub fn purpose(self, purpose: ProofPurpose) -> DocumentVerifier<'base, 'static, T, U, V> {
-    /*
-    self.options = self.options.purpose(purpose);
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Owned(self.options.into_owned().purpose(purpose)),
@@ -145,10 +123,6 @@ impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
   /// Default: false (reject expired signatures).
   #[must_use]
   pub fn allow_expired(self, allow_expired: bool) -> DocumentVerifier<'base, 'static, T, U, V> {
-    /*
-    self.options = self.options.allow_expired(allow_expired);
-    self
-    */
     DocumentVerifier {
       document: self.document,
       options: Cow::Owned(self.options.into_owned().allow_expired(allow_expired)),
