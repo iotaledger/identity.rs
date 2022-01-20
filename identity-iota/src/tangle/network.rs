@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
@@ -6,6 +6,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::ops::Deref;
 use std::borrow::Cow;
+use std::fmt::Debug;
 
 use serde;
 use serde::Deserialize;
@@ -112,7 +113,7 @@ impl Default for Network {
 
 /// Network name compliant with the IOTA DID method specification:
 /// https://github.com/iotaledger/identity.rs/blob/dev/documentation/docs/specs/iota_did_method_spec.md
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct NetworkName(Cow<'static, str>);
 
@@ -180,6 +181,12 @@ impl TryFrom<String> for NetworkName {
 
   fn try_from(name: String) -> Result<Self, Self::Error> {
     Self::try_from(Cow::Owned(name))
+  }
+}
+
+impl Debug for NetworkName {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_str(self.as_ref())
   }
 }
 

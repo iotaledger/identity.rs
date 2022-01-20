@@ -50,6 +50,7 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   }
 
   /// Overwrites the [`VerifierOptions`].
+  #[must_use]
   pub fn options(mut self, options: VerifierOptions) -> Self {
     self.options = options;
     self
@@ -58,24 +59,28 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   /// Verify the signing verification method relationship matches this.
   ///
   /// NOTE: `purpose` overrides the `method_scope` option.
+  #[must_use]
   pub fn method_scope(mut self, method_scope: MethodScope) -> Self {
     self.options = self.options.method_scope(method_scope);
     self
   }
 
   /// Verify the signing verification method type matches one specified.
+  #[must_use]
   pub fn method_type(mut self, method_type: Vec<MethodType>) -> Self {
     self.options = self.options.method_type(method_type);
     self
   }
 
   /// Verify the [`Signature::challenge`] field matches this.
+  #[must_use]
   pub fn challenge(mut self, challenge: String) -> Self {
     self.options = self.options.challenge(challenge);
     self
   }
 
   /// Verify the [`Signature::domain`] field matches this.
+  #[must_use]
   pub fn domain(mut self, domain: String) -> Self {
     self.options = self.options.domain(domain);
     self
@@ -88,6 +93,7 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   /// with [`MethodRelationship::Authentication`].
   ///
   /// NOTE: `purpose` overrides the `method_scope` option.
+  #[must_use]
   pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.options = self.options.purpose(purpose);
     self
@@ -96,6 +102,7 @@ impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   /// Determines whether to error if the current time exceeds the [`Signature::expires`] field.
   ///
   /// Default: false (reject expired signatures).
+  #[must_use]
   pub fn allow_expired(mut self, allow_expired: bool) -> Self {
     self.options = self.options.allow_expired(allow_expired);
     self

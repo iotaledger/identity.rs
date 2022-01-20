@@ -34,7 +34,7 @@ runs:
         echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
 
     - name: Run github-changelog-generator
-      uses: docker://githubchangeloggenerator/github-changelog-generator:1.16.2
+      uses: docker://eiha/github-changelog-generator:latest
       with:
         args: >
           --output ${{ inputs.changelog-path }}
@@ -44,6 +44,11 @@ runs:
           --token ${{ inputs.github-token }} 
           --future-release ${{ inputs.future-release }} 
           ${{ inputs.optional-arg }}
+
+    - name: Populate changelog descriptions
+      shell: bash
+      run: |
+        .github/workflows/scripts/populate-changelog-descriptions.sh ${{ inputs.changelog-path }}
 
     - name: Log ${{ inputs.changelog-path }}
       shell: bash

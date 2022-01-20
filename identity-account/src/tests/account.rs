@@ -1,22 +1,38 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+use std::pin::Pin;
 use std::sync::Arc;
+
+use futures::Future;
+
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::crypto::SignatureOptions;
+use identity_did::verification::MethodScope;
+use identity_iota::chain::DocumentChain;
+use identity_iota::did::IotaDID;
+use identity_iota::diff::DiffMessage;
+use identity_iota::document::IotaDocument;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::MessageId;
+use identity_iota::tangle::MessageIdExt;
+use identity_iota::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
+use crate::account::AccountStorage;
+use crate::account::AutoSave;
 use crate::account::PublishOptions;
+use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
+use crate::identity::IdentityState;
 use crate::storage::MemStore;
 use crate::Error;
 use crate::Result;
-
-use identity_core::common::Url;
-use identity_did::verification::MethodScope;
-use identity_iota::did::IotaDID;
-use identity_iota::tangle::MessageId;
-use identity_iota::tangle::MessageIdExt;
 
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
@@ -119,9 +135,10 @@ async fn test_account_autopublish() -> Result<()> {
   // ===========================================================================
 
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
 
   account
     .update_identity()
@@ -243,7 +260,8 @@ async fn test_account_autopublish() -> Result<()> {
 #[tokio::test]
 async fn test_account_publish_options_sign_with() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_config = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
   let auth_method = "auth-method";
   let signing_method = "singing-method-2";
@@ -296,8 +314,9 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
 #[tokio::test]
 async fn test_account_publish_options_force_integration() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
 
   account.publish().await.unwrap();
 
@@ -320,5 +339,178 @@ async fn test_account_publish_options_force_integration() -> Result<()> {
   assert_ne!(account.chain_state().last_integration_message_id(), &last_int_id);
   assert_eq!(account.chain_state().last_diff_message_id(), &MessageId::null());
 
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_sync_no_changes() -> Result<()> {
+  network_resilient_test(2, |n| {
+    Box::pin(async move {
+      let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
+      let mut account = create_account(network).await;
+
+      // Case 0: Since nothing has been published to the tangle, read_document must return DID not found
+      assert!(account.fetch_state().await.is_err());
+
+      // Case 1: Tangle and account are synched
+      account.publish().await.unwrap();
+      let old_state: IdentityState = account.state().clone();
+      let old_chain_state: ChainState = account.chain_state().clone();
+      account.fetch_state().await.unwrap();
+      assert_eq!(old_state.document(), account.state().document());
+      assert_eq!(&old_chain_state, account.chain_state());
+
+      // Case 2: Local state is ahead of the tangle
+      account
+        .update_identity()
+        .create_service()
+        .fragment("my-other-service")
+        .type_("LinkedDomains")
+        .endpoint(Url::parse("https://example.org").unwrap())
+        .apply()
+        .await?;
+      let old_state: IdentityState = account.state().clone();
+      let old_chain_state: ChainState = account.chain_state().clone();
+      account.fetch_state().await.unwrap();
+      assert_eq!(old_state.document(), account.state().document());
+      assert_eq!(&old_chain_state, account.chain_state());
+      Ok(())
+    })
+  })
+  .await?;
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_sync_integration_msg_update() -> Result<()> {
+  network_resilient_test(2, |n| {
+    Box::pin(async move {
+      let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
+      let mut account = create_account(network.clone()).await;
+      account.publish().await.unwrap();
+
+      let client: Client = Client::from_network(network).await.unwrap();
+      let mut new_doc: IotaDocument = account.document().clone();
+      new_doc.properties_mut().insert("foo".into(), 123.into());
+      new_doc.properties_mut().insert("bar".into(), 456.into());
+      new_doc.metadata.previous_message_id = *account.chain_state().last_integration_message_id();
+      new_doc.metadata.updated = Timestamp::now_utc();
+      account
+        .sign(
+          IotaDocument::DEFAULT_METHOD_FRAGMENT,
+          &mut new_doc,
+          SignatureOptions::default(),
+        )
+        .await
+        .unwrap();
+      client.publish_document(&new_doc).await.unwrap();
+      let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
+
+      account.fetch_state().await.unwrap();
+      assert!(account.state().document().properties().contains_key("foo"));
+      assert!(account.state().document().properties().contains_key("bar"));
+      assert_eq!(
+        account.chain_state().last_integration_message_id(),
+        chain.integration_message_id()
+      );
+      assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
+      // Ensure state was written into storage.
+      let storage_state: IdentityState = account.load_state().await?;
+      assert_eq!(&storage_state, account.state());
+      Ok(())
+    })
+  })
+  .await?;
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_sync_diff_msg_update() -> Result<()> {
+  network_resilient_test(2, |n| {
+    Box::pin(async move {
+      let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
+      let mut account = create_account(network.clone()).await;
+      account.publish().await.unwrap();
+
+      let client: Client = Client::from_network(network).await.unwrap();
+      let mut new_doc: IotaDocument = account.document().clone();
+      new_doc.properties_mut().insert("foo".into(), 123.into());
+      new_doc.properties_mut().insert("bar".into(), 456.into());
+      new_doc.metadata.updated = Timestamp::now_utc();
+      let mut diff_msg: DiffMessage = DiffMessage::new(
+        account.document(),
+        &new_doc,
+        *account.chain_state().last_integration_message_id(),
+      )
+      .unwrap();
+      account
+        .sign(
+          IotaDocument::DEFAULT_METHOD_FRAGMENT,
+          &mut diff_msg,
+          SignatureOptions::default(),
+        )
+        .await
+        .unwrap();
+      client
+        .publish_diff(&*account.chain_state().last_integration_message_id(), &diff_msg)
+        .await
+        .unwrap();
+      let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
+
+      let old_chain_state: ChainState = account.chain_state().clone();
+      account.fetch_state().await.unwrap();
+      assert!(account.state().document().properties().contains_key("foo"));
+      assert!(account.state().document().properties().contains_key("bar"));
+      assert_eq!(
+        old_chain_state.last_integration_message_id(),
+        account.chain_state().last_integration_message_id()
+      );
+      assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
+      // Ensure state was written into storage.
+      let storage_state: IdentityState = account.load_state().await?;
+      assert_eq!(&storage_state, account.state());
+      Ok(())
+    })
+  })
+  .await?;
+  Ok(())
+}
+
+async fn create_account(network: Network) -> Account {
+  Account::builder()
+    .storage(AccountStorage::Stronghold(
+      "./example-strong.hodl".into(),
+      Some("my-password".into()),
+      None,
+    ))
+    .autopublish(false)
+    .autosave(AutoSave::Every)
+    .client_builder(ClientBuilder::new().network(network.clone()))
+    .create_identity(IdentitySetup::default())
+    .await
+    .unwrap()
+}
+
+// Repeats the test in the closure `test_runs` number of times.
+// Network problems, i.e. a ClientError trigger a re-run.
+// Other errors end the test immediately.
+async fn network_resilient_test(
+  test_runs: u32,
+  f: impl Fn(u32) -> Pin<Box<dyn Future<Output = Result<()>>>>,
+) -> Result<()> {
+  for test_run in 0..test_runs {
+    let test_attempt = f(test_run).await;
+
+    match test_attempt {
+      error @ Err(Error::IotaError(identity_iota::Error::ClientError(_))) => {
+        eprintln!("test run {} errored with {:?}", test_run, error);
+
+        if test_run == test_runs - 1 {
+          return error;
+        }
+      }
+      other => return other,
+    }
+  }
   Ok(())
 }

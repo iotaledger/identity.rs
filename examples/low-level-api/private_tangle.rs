@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! A basic example that generates and publishes a DID Document
@@ -31,7 +31,7 @@ pub async fn main() -> Result<()> {
   // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082`
   let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet")?;
 
-  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265`
+  // In a locally running one-click tangle, this would usually be `http://127.0.0.1:14265`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Use DIDMessageEncoding::Json instead to publish plaintext messages to the Tangle for debugging.
@@ -40,7 +40,7 @@ pub async fn main() -> Result<()> {
   let client = ClientBuilder::new()
     .network(network.clone())
     .encoding(encoding)
-    .node(private_node_url)?
+    .primary_node(private_node_url, None, None)?
     .build()
     .await?;
 

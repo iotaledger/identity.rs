@@ -1,17 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::did::IotaDID;
-use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::ClientMap;
-use identity_iota::tangle::Network;
-use identity_iota::tangle::NetworkName;
-use std::collections::HashMap;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
 use std::sync::Arc;
+
 #[cfg(feature = "stronghold")]
 use zeroize::Zeroize;
+
+use identity_iota::did::IotaDID;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientBuilder;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -25,10 +24,10 @@ use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
 
-/// The storage adapter used by an [Account].
+/// The storage adapter used by an [`Account`].
 ///
-/// Note that [AccountStorage::Stronghold] is only available if the `stronghold` feature is activated, which it is by
-/// default.
+/// Note that [`AccountStorage::Stronghold`] is only available if the `stronghold` feature is
+/// activated, which it is by default.
 #[derive(Debug)]
 pub enum AccountStorage {
   Memory,
@@ -39,11 +38,8 @@ pub enum AccountStorage {
 
 /// An [`Account`] builder for easy account configuration.
 ///
-/// To reduce memory usage, accounts created from the same builder share the same [`Storage`],
-/// used to store identities, and [`ClientMap`], used to
-/// publish identities to the Tangle. This means using [`AccountBuilder::client`]
-/// to customize a client, will modify the existing client map in previously
-/// built accounts, when the next account is built.
+/// To reduce memory usage, accounts created from the same builder share the same [`Storage`]
+/// used to store identities, and the same [`Client`] used to publish identities to the Tangle.
 ///
 /// The configuration on the other hand is cloned, and therefore unique for each built account.
 /// This means a builder can be reconfigured in-between account creations, without affecting
@@ -53,8 +49,8 @@ pub struct AccountBuilder {
   config: AccountConfig,
   storage_template: Option<AccountStorage>,
   storage: Option<Arc<dyn Storage>>,
-  client_builders: Option<HashMap<NetworkName, ClientBuilder>>,
-  client_map: Arc<ClientMap>,
+  client_builder: Option<ClientBuilder>,
+  client: Option<Arc<Client>>,
 }
 
 impl AccountBuilder {
@@ -64,14 +60,15 @@ impl AccountBuilder {
       config: AccountConfig::new(),
       storage_template: Some(AccountStorage::Memory),
       storage: Some(Arc::new(MemStore::new())),
-      client_builders: None,
-      client_map: Arc::new(ClientMap::new()),
+      client_builder: None,
+      client: None,
     }
   }
 
   /// Sets the account auto-save behaviour.
   ///
   /// See the config's [`autosave`][AccountConfig::autosave] documentation for details.
+  #[must_use]
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.config = self.config.autosave(value);
     self
@@ -80,26 +77,30 @@ impl AccountBuilder {
   /// Sets the account auto-publish behaviour.
   ///
   /// See the config's [`autopublish`][AccountConfig::autopublish] documentation for details.
+  #[must_use]
   pub fn autopublish(mut self, value: bool) -> Self {
     self.config = self.config.autopublish(value);
     self
   }
 
   /// Save a state snapshot every N actions.
+  #[must_use]
   pub fn milestone(mut self, value: u32) -> Self {
     self.config = self.config.milestone(value);
     self
   }
 
-  #[cfg(test)]
   /// Set whether the account is in testmode or not.
   /// In testmode, the account skips publishing to the tangle.
+  #[cfg(test)]
+  #[must_use]
   pub(crate) fn testmode(mut self, value: bool) -> Self {
     self.config = self.config.testmode(value);
     self
   }
 
   /// Sets the account storage adapter.
+  #[must_use]
   pub fn storage(mut self, value: AccountStorage) -> Self {
     self.storage_template = Some(value);
     self
@@ -135,41 +136,62 @@ impl AccountBuilder {
     Ok(Arc::clone(self.storage.as_ref().unwrap()))
   }
 
-  /// Apply configuration to the IOTA Tangle client for the given [`Network`].
-  pub fn client<F>(mut self, network: Network, f: F) -> Self
-  where
-    F: FnOnce(ClientBuilder) -> ClientBuilder,
-  {
-    self
-      .client_builders
-      .get_or_insert_with(HashMap::new)
-      .insert(network.name(), f(ClientBuilder::new().network(network)));
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
+  ///
+  /// NOTE: this overwrites any [`ClientBuilder`] previously set by
+  /// [`AccountBuilder::client_builder`].
+  #[must_use]
+  pub fn client(mut self, client: Arc<Client>) -> Self {
+    self.client = Some(client);
+    self.client_builder = None;
     self
   }
 
-  async fn build_clients(&mut self) -> Result<()> {
-    if let Some(hmap) = self.client_builders.take() {
-      for builder in hmap.into_iter() {
-        self.client_map.insert(builder.1.build().await?)
-      }
-    }
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
+  ///
+  /// NOTE: this overwrites any [`Client`] previously set by [`AccountBuilder::client`].
+  #[must_use]
+  pub fn client_builder(mut self, client_builder: ClientBuilder) -> Self {
+    self.client = None;
+    self.client_builder = Some(client_builder);
+    self
+  }
 
-    Ok(())
+  /// Returns a previously set [`Client`] or builds a new one based on the configuration passed
+  /// to [`AccountBuilder::client_builder`].
+  ///
+  /// If neither is set, instantiates and stores a default [`Client`].
+  async fn get_or_build_client(&mut self) -> Result<Arc<Client>> {
+    if let Some(client) = &self.client {
+      Ok(Arc::clone(client))
+    } else if let Some(client_builder) = self.client_builder.take() {
+      let client: Arc<Client> = Arc::new(client_builder.build().await?);
+      self.client = Some(Arc::clone(&client));
+      Ok(client)
+    } else {
+      let client: Arc<Client> = Arc::new(Client::new().await?);
+      self.client = Some(Arc::clone(&client));
+      Ok(client)
+    }
   }
 
   async fn build_setup(&mut self) -> Result<AccountSetup> {
-    self.build_clients().await?;
+    let client: Arc<Client> = self.get_or_build_client().await?;
 
-    Ok(AccountSetup::new_with_options(
+    Ok(AccountSetup::new(
       self.get_storage().await?,
-      Some(self.config.clone()),
-      Some(Arc::clone(&self.client_map)),
+      client,
+      self.config.clone(),
     ))
   }
 
   /// Creates a new identity based on the builder configuration and returns
   /// an [`Account`] instance to manage it.
-  /// The identity is stored locally in the [`Storage`].
+  ///
+  /// The identity is stored locally in the [`Storage`]. The DID network is automatically determined
+  /// by the [`Client`] used to publish it.
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account> {

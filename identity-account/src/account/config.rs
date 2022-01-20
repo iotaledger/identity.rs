@@ -1,64 +1,35 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::Arc;
 
-use identity_iota::tangle::ClientMap;
+use identity_iota::tangle::Client;
 
-use crate::storage::MemStore;
 use crate::storage::Storage;
 
 /// A wrapper that holds configuration for an [`Account`] instantiation.
 ///
 /// The setup implements `Clone` so multiple [`Account`]s can be created
-/// from the same setup. [`Storage`] and [`ClientMap`] are shared among
+/// from the same setup. [`Storage`] and [`Client`] are shared among
 /// those accounts, while the [`Config`] is unique to each account.
 ///
 /// [`Account`]([crate::account::Account])
 #[derive(Clone, Debug)]
 pub(crate) struct AccountSetup {
-  pub(crate) config: AccountConfig,
   pub(crate) storage: Arc<dyn Storage>,
-  pub(crate) client_map: Arc<ClientMap>,
-}
-
-impl Default for AccountSetup {
-  fn default() -> Self {
-    Self::new(Arc::new(MemStore::new()))
-  }
+  pub(crate) client: Arc<Client>,
+  pub(crate) config: AccountConfig,
 }
 
 impl AccountSetup {
   /// Create a new setup from the given [`Storage`] implementation
-  /// and with defaults for [`Config`] and [`ClientMap`].
-  pub(crate) fn new(storage: Arc<dyn Storage>) -> Self {
+  /// and with defaults for [`Config`] and [`Client`].
+  pub(crate) fn new(storage: Arc<dyn Storage>, client: Arc<Client>, config: AccountConfig) -> Self {
     Self {
-      config: AccountConfig::new(),
       storage,
-      client_map: Arc::new(ClientMap::new()),
+      client,
+      config,
     }
-  }
-
-  /// Create a new setup from the given [`Storage`] implementation,
-  /// as well as optional [`Config`] and [`ClientMap`].
-  /// If `None` is passed, the defaults will be used.
-  pub(crate) fn new_with_options(
-    storage: Arc<dyn Storage>,
-    config: Option<AccountConfig>,
-    client_map: Option<Arc<ClientMap>>,
-  ) -> Self {
-    Self {
-      config: config.unwrap_or_default(),
-      storage,
-      client_map: client_map.unwrap_or_else(|| Arc::new(ClientMap::new())),
-    }
-  }
-
-  #[cfg(test)]
-  /// Set the [`Config`] for this setup.
-  pub(crate) fn config(mut self, value: AccountConfig) -> Self {
-    self.config = value;
-    self
   }
 }
 
@@ -111,9 +82,9 @@ impl AccountConfig {
     self
   }
 
-  #[cfg(test)]
   /// Set whether the account is in testmode or not.
   /// In testmode, the account skips publishing to the tangle.
+  #[cfg(test)]
   pub(crate) fn testmode(mut self, value: bool) -> Self {
     self.testmode = value;
     self

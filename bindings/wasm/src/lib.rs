@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::unused_unit)]
 
 #[macro_use]
 extern crate serde;

@@ -1,12 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::convert::FromJson;
-use identity_core::convert::ToJson;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
@@ -27,7 +25,7 @@ use crate::tangle::TangleRef;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffMessage {
   pub(crate) id: IotaDID,
-  pub(crate) diff: String,
+  pub(crate) diff: DiffIotaDocument,
   #[serde(
     rename = "previousMessageId",
     default = "MessageId::null",
@@ -46,7 +44,7 @@ impl DiffMessage {
   /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
   /// set a proof, use the `set_signature()` method.
   pub fn new(current: &IotaDocument, updated: &IotaDocument, previous_message_id: MessageId) -> Result<Self> {
-    let diff: String = <IotaDocument as Diff>::diff(current, updated)?.to_json()?;
+    let diff: DiffIotaDocument = <IotaDocument as Diff>::diff(current, updated)?;
 
     Ok(Self {
       id: current.id().clone(),
@@ -63,8 +61,8 @@ impl DiffMessage {
   }
 
   /// Returns the raw contents of the DID Document diff.
-  pub fn diff(&self) -> &str {
-    &*self.diff
+  pub fn diff(&self) -> &DiffIotaDocument {
+    &self.diff
   }
 
   /// Returns the Tangle message id of the previous DID Document diff.
@@ -80,8 +78,7 @@ impl DiffMessage {
   /// Returns a new DID Document which is the result of merging `self`
   /// with the given Document.
   pub fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {
-    let diff: DiffIotaDocument = DiffIotaDocument::from_json(&self.diff)?;
-    let merged: IotaDocument = Diff::merge(document, diff)?;
+    let merged: IotaDocument = Diff::merge(document, self.diff.clone())?;
     Ok(merged)
   }
 }
