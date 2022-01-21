@@ -42,9 +42,9 @@ impl Diff for ObjectSrc {
 
 #[cfg(test)]
 mod tests {
-  use serde_json::json;
-  use crate::hashmap::InnerValue;
   use super::*;
+  use crate::hashmap::InnerValue;
+  use serde_json::json;
 
   #[test]
   fn test_diff_empty() {

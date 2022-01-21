@@ -124,8 +124,8 @@ where
 
   fn into_diff(self) -> Result<Self::Type> {
     Ok(DiffService {
-      id: Some(self.id().to_string().into_diff()?),
-      type_: Some(self.type_().to_string().into_diff()?),
+      id: Some(self.id.into_diff()?),
+      type_: Some(self.type_.into_diff()?),
       service_endpoint: Some(self.service_endpoint.into_diff()?),
       properties: if self.properties != T::default() {
         Some(self.properties.into_diff()?)
@@ -168,11 +168,12 @@ impl Diff for ServiceEndpoint {
 mod test {
   use indexmap::IndexMap;
 
+  use crate::utils::OrderedSet;
   use identity_core::common::Object;
   use identity_core::common::Url;
-  use identity_core::convert::{FromJson, ToJson};
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
   use identity_core::diff::DiffVec;
-  use crate::utils::OrderedSet;
 
   use super::*;
 
@@ -328,6 +329,8 @@ mod test {
     let ser: String = diff.to_json().unwrap();
     let de: DiffService = DiffService::from_json(&ser).unwrap();
     assert_eq!(diff, de);
+    let from: Service = Service::from_diff(de).unwrap();
+    assert_eq!(from, service);
   }
 
   #[test]

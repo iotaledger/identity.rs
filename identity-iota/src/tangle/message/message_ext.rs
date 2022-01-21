@@ -163,13 +163,15 @@ impl TryFromMessage for DiffMessage {
 #[cfg(test)]
 mod test {
   use identity_core::common::Url;
-  use identity_core::crypto::{KeyPair, KeyType};
+  use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_did::did::CoreDIDUrl;
-  use identity_did::service::{ServiceBuilder, ServiceEndpoint};
+  use identity_did::service::ServiceBuilder;
+  use identity_did::service::ServiceEndpoint;
   use identity_did::verification::MethodScope;
 
-
-  use crate::document::{IotaDocument, IotaVerificationMethod};
+  use crate::document::IotaDocument;
+  use crate::document::IotaVerificationMethod;
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
   use crate::tangle::MessageId;
@@ -209,10 +211,23 @@ mod test {
         .id(CoreDIDUrl::from(doc1.id().to_url().join("#linked-domain").unwrap()))
         .service_endpoint(ServiceEndpoint::One(Url::parse("https://example.com/").unwrap()))
         .type_("LinkedDomains")
-        .build().unwrap())
-    );
-    doc2.insert_method(IotaVerificationMethod::from_did(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(), MethodScope::authentication()).unwrap();
-    let diff: DiffMessage = doc1.diff(&doc2, MessageId::new([1; 32]), keypair.private(), doc1.default_signing_method().unwrap().id()).unwrap();
+        .build()
+        .unwrap()
+    ));
+    doc2
+      .insert_method(
+        IotaVerificationMethod::from_did(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(),
+        MethodScope::authentication(),
+      )
+      .unwrap();
+    let diff: DiffMessage = doc1
+      .diff(
+        &doc2,
+        MessageId::new([1; 32]),
+        keypair.private(),
+        doc1.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
 
     for encoding in [DIDMessageEncoding::Json, DIDMessageEncoding::JsonBrotli] {
       let encoded: Vec<u8> = pack_did_message(&diff, encoding).unwrap();

@@ -125,11 +125,7 @@ impl Diff for IotaDocumentMetadata {
       .map_err(identity_core::diff::Error::merge)?
       .ok_or_else(|| Error::convert("Missing field `metadata.previous_message_id`"))?;
 
-    let properties: Object = diff
-      .properties
-      .map(Object::from_diff)
-      .transpose()?
-      .unwrap_or_default();
+    let properties: Object = diff.properties.map(Object::from_diff).transpose()?.unwrap_or_default();
 
     Ok(IotaDocumentMetadata {
       created,
@@ -159,7 +155,8 @@ mod test {
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
-  use identity_core::convert::{FromJson, ToJson};
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   use super::*;
 
@@ -255,8 +252,8 @@ mod test {
     let ser: String = diff.to_json().unwrap();
     let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
     assert_eq!(diff, de);
-    let merge: IotaDocumentMetadata = Diff::merge(&original, de).unwrap();
-    assert_eq!(merge, original);
+    let from: IotaDocumentMetadata = IotaDocumentMetadata::from_diff(de).unwrap();
+    assert_eq!(from, original);
   }
 
   #[test]

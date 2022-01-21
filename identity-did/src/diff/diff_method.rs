@@ -165,7 +165,8 @@ mod test {
   use super::*;
   use identity_core::common::Object;
   use identity_core::common::Value;
-  use identity_core::convert::{FromJson, ToJson};
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   fn test_method() -> VerificationMethod {
     VerificationMethod::builder(Default::default())
@@ -393,7 +394,7 @@ mod test {
     let ser: String = diff.to_json().unwrap();
     let de: DiffMethod = DiffMethod::from_json(&ser).unwrap();
     assert_eq!(de, diff);
-    let merge: VerificationMethod = Diff::merge(&method, de).unwrap();
-    assert_eq!(method, merge);
+    let from: VerificationMethod = VerificationMethod::from_diff(de).unwrap();
+    assert_eq!(method, from);
   }
 }
