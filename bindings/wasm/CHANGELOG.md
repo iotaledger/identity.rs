@@ -1,5 +1,13 @@
 # Changelog
 
+## [wasm-v0.4.3](https://github.com/iotaledger/identity.rs/tree/wasm-v0.4.3) (2022-01-21)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.2...wasm-v0.4.3)
+
+Patch
+
+- Fix `Window` undefined error [\#612](https://github.com/iotaledger/identity.rs/pull/612)
+
 ## [wasm-v0.4.2](https://github.com/iotaledger/identity.rs/tree/wasm-v0.4.2) (2022-01-14)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.1...wasm-v0.4.2)
