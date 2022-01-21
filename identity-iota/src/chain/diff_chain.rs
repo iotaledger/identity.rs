@@ -107,7 +107,8 @@ impl DiffChain {
       {
         // Update the document for the next diff to allow updating sections added by previous diffs.
         current_document = merged_document;
-        this.push_unchecked(diff); // checked by check_valid_addition and try_merge above
+        // Checked by check_valid_addition and try_merge above.
+        this.push_unchecked(diff);
       }
       // If no diff is appended, the chain ends.
     }
