@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Cow;
-
 use serde::Serialize;
 
 use identity_core::common::BitSet;
@@ -38,99 +36,17 @@ use crate::Result;
 // Document Verifier - Simplifying Digital Signature Verification Since 2021
 // =============================================================================
 
-pub struct DocumentVerifier<'base, 'options, T = Object, U = Object, V = Object> {
+pub struct DocumentVerifier<'base, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
-  options: Cow<'options, VerifierOptions>,
 }
 
-impl<'base, T, U, V> DocumentVerifier<'base, 'static, T, U, V> {
+impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   pub fn new(document: &'base CoreDocument<T, U, V>) -> Self {
-    Self {
-      document,
-      options: Cow::Owned(VerifierOptions::default()),
-    }
+    Self { document }
   }
 }
 
-impl<'base, 'options, T, U, V> DocumentVerifier<'base, 'options, T, U, V> {
-  /// Overwrites the [`VerifierOptions`].
-  #[must_use]
-  pub fn options<'new_options>(
-    self,
-    options: &'new_options VerifierOptions,
-  ) -> DocumentVerifier<'base, 'new_options, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Borrowed(options),
-    }
-  }
-
-  /// Verify the signing verification method relationship matches this.
-  ///
-  /// NOTE: `purpose` overrides the `method_scope` option.
-  #[must_use]
-  pub fn method_scope(self, method_scope: MethodScope) -> DocumentVerifier<'base, 'static, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Owned(self.options.into_owned().method_scope(method_scope)),
-    }
-  }
-
-  /// Verify the signing verification method type matches one specified.
-  #[must_use]
-  pub fn method_type(self, method_type: Vec<MethodType>) -> DocumentVerifier<'base, 'static, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Owned(self.options.into_owned().method_type(method_type)),
-    }
-  }
-
-  /// Verify the [`Signature::challenge`] field matches this.
-  #[must_use]
-  pub fn challenge(self, challenge: String) -> DocumentVerifier<'base, 'static, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Owned(self.options.into_owned().challenge(challenge)),
-    }
-  }
-
-  /// Verify the [`Signature::domain`] field matches this.
-  #[must_use]
-  pub fn domain(self, domain: String) -> DocumentVerifier<'base, 'static, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Owned(self.options.into_owned().domain(domain)),
-    }
-  }
-
-  /// Verify the [`Signature::purpose`] field matches this. Also verifies that the signing
-  /// method has the corresponding verification method relationship.
-  ///
-  /// E.g. [`ProofPurpose::Authentication`] must be signed using a method
-  /// with [`MethodRelationship::Authentication`].
-  ///
-  /// NOTE: `purpose` overrides the `method_scope` option.
-  #[must_use]
-  pub fn purpose(self, purpose: ProofPurpose) -> DocumentVerifier<'base, 'static, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Owned(self.options.into_owned().purpose(purpose)),
-    }
-  }
-
-  /// Determines whether to error if the current time exceeds the [`Signature::expires`] field.
-  ///
-  /// Default: false (reject expired signatures).
-  #[must_use]
-  pub fn allow_expired(self, allow_expired: bool) -> DocumentVerifier<'base, 'static, T, U, V> {
-    DocumentVerifier {
-      document: self.document,
-      options: Cow::Owned(self.options.into_owned().allow_expired(allow_expired)),
-    }
-  }
-}
-
-impl<T, U, V> DocumentVerifier<'_, '_, T, U, V>
+impl<T, U, V> DocumentVerifier<'_, T, U, V>
 where
   U: Revocation,
 {
@@ -140,7 +56,7 @@ where
   ///
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
-  pub fn verify<X>(&self, data: &X) -> Result<()>
+  pub fn verify<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
@@ -150,11 +66,11 @@ where
 
     // Retrieve the method used to create the signature and check it has the required verification
     // method relationship (purpose takes precedence over method_scope).
-    let purpose_scope = self.options.purpose.map(|purpose| match purpose {
+    let purpose_scope = options.purpose.map(|purpose| match purpose {
       ProofPurpose::AssertionMethod => MethodScope::assertion_method(),
       ProofPurpose::Authentication => MethodScope::authentication(),
     });
-    let method: &VerificationMethod<U> = match (purpose_scope, self.options.method_scope) {
+    let method: &VerificationMethod<U> = match (purpose_scope, options.method_scope) {
       (Some(purpose_scope), _) => self
         .document
         .try_resolve_method_with_scope(signature, purpose_scope)
@@ -170,30 +86,30 @@ where
     };
 
     // Check method type.
-    if let Some(method_types) = &self.options.method_type {
+    if let Some(ref method_types) = options.method_type {
       if !method_types.is_empty() && !method_types.contains(&method.key_type) {
         return Err(Error::InvalidSignature("invalid method type"));
       }
     }
 
     // Check challenge.
-    if self.options.challenge.is_some() && self.options.challenge != signature.challenge {
+    if options.challenge.is_some() && options.challenge != signature.challenge {
       return Err(Error::InvalidSignature("invalid challenge"));
     }
 
     // Check domain.
-    if self.options.domain.is_some() && self.options.domain != signature.domain {
+    if options.domain.is_some() && options.domain != signature.domain {
       return Err(Error::InvalidSignature("invalid domain"));
     }
 
     // Check purpose.
-    if self.options.purpose.is_some() && self.options.purpose != signature.purpose {
+    if options.purpose.is_some() && options.purpose != signature.purpose {
       return Err(Error::InvalidSignature("invalid purpose"));
     }
 
     // Check expired.
     if let Some(expires) = signature.expires {
-      if !self.options.allow_expired.unwrap_or(false) && Timestamp::now_utc() > expires {
+      if !options.allow_expired.unwrap_or(false) && Timestamp::now_utc() > expires {
         return Err(Error::InvalidSignature("expired"));
       }
     }
