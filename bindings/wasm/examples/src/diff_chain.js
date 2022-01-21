@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, Service} from '@iota/identity-wasm';
+import {Client, Config, Document, Service, Timestamp} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
 import {logExplorerUrl, logResolverUrl} from "./utils";
 
@@ -29,11 +29,12 @@ async function createDiff(clientConfig) {
 
     // Add a Service
     let serviceJSON = {
-        id: doc.id + "#new-linked-domain",
+        id: doc.id + "#linked-domain-1",
         type: "LinkedDomains",
         serviceEndpoint: "https://identity.iota.org",
     };
     updatedDoc.insertService(Service.fromJSON(serviceJSON));
+    updatedDoc.metadataUpdated = Timestamp.nowUTC();
     console.log(updatedDoc);
 
     // Create diff
