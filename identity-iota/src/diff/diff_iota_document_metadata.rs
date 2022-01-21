@@ -129,7 +129,7 @@ impl Diff for IotaDocumentMetadata {
       .properties
       .map(Object::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `metadata.properties`"))?;
+      .unwrap_or_default();
 
     Ok(IotaDocumentMetadata {
       created,
@@ -145,7 +145,11 @@ impl Diff for IotaDocumentMetadata {
       created: Some(self.created.into_diff()?),
       updated: Some(self.updated.into_diff()?),
       previous_message_id: Some(self.previous_message_id.to_string().into_diff()?),
-      properties: Some(self.properties.into_diff()?),
+      properties: if self.properties == Default::default() {
+        None
+      } else {
+        Some(self.properties.into_diff()?)
+      },
     })
   }
 }
