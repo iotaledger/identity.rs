@@ -155,6 +155,7 @@ mod test {
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
+  use identity_core::convert::{FromJson, ToJson};
 
   use super::*;
 
@@ -238,5 +239,35 @@ mod test {
     let diff: DiffIotaDocumentMetadata = original.diff(&updated).unwrap();
     let merged: IotaDocumentMetadata = original.merge(diff).unwrap();
     assert_eq!(merged, updated);
+  }
+
+  #[test]
+  fn test_from_into_diff() {
+    let original: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    let diff: DiffIotaDocumentMetadata = original.clone().into_diff().unwrap();
+    let from: IotaDocumentMetadata = IotaDocumentMetadata::from_diff(diff.clone()).unwrap();
+    assert_eq!(from, original);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+    let merge: IotaDocumentMetadata = Diff::merge(&original, de).unwrap();
+    assert_eq!(merge, original);
+  }
+
+  #[test]
+  fn test_serde() {
+    let original: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    let mut updated: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    updated.previous_message_id = MessageId::new([1; 32]);
+    updated.created = Timestamp::from_unix(1).unwrap();
+    updated.updated = Timestamp::from_unix(100000).unwrap();
+    let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+    let merge: IotaDocumentMetadata = Diff::merge(&original, de).unwrap();
+    assert_eq!(merge, updated);
   }
 }

@@ -127,7 +127,11 @@ where
       id: Some(self.id().to_string().into_diff()?),
       type_: Some(self.type_().to_string().into_diff()?),
       service_endpoint: Some(self.service_endpoint.into_diff()?),
-      properties: Some(self.properties.into_diff()?),
+      properties: if self.properties != T::default() {
+        Some(self.properties.into_diff()?)
+      } else {
+        None
+      },
     })
   }
 }
@@ -166,6 +170,9 @@ mod test {
 
   use identity_core::common::Object;
   use identity_core::common::Url;
+  use identity_core::convert::{FromJson, ToJson};
+  use identity_core::diff::DiffVec;
+  use crate::utils::OrderedSet;
 
   use super::*;
 
@@ -175,9 +182,7 @@ mod test {
 
   fn service() -> Service {
     let controller = controller();
-    let mut properties: Object = Object::default();
-    properties.insert("key1".to_string(), "value1".into());
-    Service::builder(properties)
+    Service::builder(Object::default())
       .id(controller)
       .service_endpoint(Url::parse("did:service:1234").unwrap().into())
       .type_("test_service")
@@ -282,10 +287,11 @@ mod test {
 
   #[test]
   fn test_replace_properties() {
-    let service = service();
+    let mut service = service();
+    service.properties.insert("key1".to_string(), "value1".into());
     let mut new = service.clone();
 
-    // update properties
+    // Replace properties.
     *new.properties_mut() = Object::default();
 
     assert_ne!(service, new);
@@ -299,7 +305,7 @@ mod test {
     let service = service();
     let mut new = service.clone();
 
-    // update properties
+    // Update properties.
     assert!(new
       .properties_mut()
       .insert("key2".to_string(), "value2".into())
@@ -312,11 +318,57 @@ mod test {
   }
 
   #[test]
-  fn test_from_into_roundtrip() {
+  fn test_from_into_diff() {
+    let service: Service = service();
+
+    let diff: DiffService = service.clone().into_diff().unwrap();
+    let new: Service = Service::from_diff(diff.clone()).unwrap();
+    assert_eq!(new, service);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffService = DiffService::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+  }
+
+  #[test]
+  fn test_serde() {
     let service = service();
 
-    let diff = service.clone().into_diff().unwrap();
-    let new = Service::from_diff(diff).unwrap();
-    assert_eq!(service, new);
+    // Empty diff.
+    {
+      let diff: DiffService = service.clone().into_diff().unwrap();
+      let ser: String = diff.to_json().unwrap();
+      let de: DiffService = DiffService::from_json(&ser).unwrap();
+      assert_eq!(diff, de);
+    }
+
+    // Updated fields.
+    {
+      let mut updated: Service = service.clone();
+      updated.id = CoreDIDUrl::parse("did:test:serde").unwrap();
+      updated.type_ = "TestSerde".into();
+      updated.service_endpoint = ServiceEndpoint::One(Url::parse("https://test.serde/").unwrap());
+      updated.properties.insert("a".into(), 42.into());
+      let diff: DiffService = Diff::diff(&service, &updated).unwrap();
+      let ser: String = diff.to_json().unwrap();
+      let de: DiffService = DiffService::from_json(&ser).unwrap();
+      assert_eq!(diff, de);
+    }
+  }
+
+  #[test]
+  fn test_ordered_set_service_diff_serde() {
+    let mut service = service();
+    service.type_ = "".to_string();
+    let set0: OrderedSet<Service> = OrderedSet::new();
+    let set1: OrderedSet<Service> = OrderedSet::try_from(vec![service]).unwrap();
+
+    let diff: DiffVec<Service> = Diff::diff(&set0, &set1).unwrap();
+    let merge: OrderedSet<Service> = set0.merge(diff.clone()).unwrap();
+    assert_eq!(merge, set1);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffVec<Service> = DiffVec::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
   }
 }
