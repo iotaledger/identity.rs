@@ -133,6 +133,7 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type AccountBuilderOptions = {
+  autoSave?: AutoSave
   autopublish?: boolean,
   milestone?: number,
   client?: Client

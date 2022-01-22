@@ -4,7 +4,7 @@
 use crate::account::account_builder::WasmAutoSave;
 use crate::common::WasmTimestamp;
 use crate::credential::{WasmCredential, WasmPresentation};
-use crate::crypto::WasmProofPurpose;
+use crate::crypto::{WasmProofPurpose, WasmSignatureOptions};
 use crate::did::{PromiseResolvedDocument, WasmDID, WasmDocument, WasmResolvedDocument};
 use crate::error::{Result, WasmResult};
 use crate::tangle::Client;
@@ -128,7 +128,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     credential: &WasmCredential,
-    signature_options: &WasmSignatureOptions,
+    signature_options: WasmSignatureOptions,
   ) -> PromiseCredential {
     let account = self.0.clone();
     let mut cred: Credential = credential.0.clone();
@@ -152,7 +152,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     document: &WasmDocument,
-    signature_options: &WasmSignatureOptions,
+    signature_options: WasmSignatureOptions,
   ) -> PromiseDocument {
     let account = self.0.clone();
     let mut doc: IotaDocument = document.0.clone();
@@ -176,7 +176,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     presentation: &WasmPresentation,
-    signature_options: &WasmSignatureOptions,
+    signature_options: WasmSignatureOptions,
   ) -> PromisePresentation {
     let account = self.0.clone();
     let mut pres: Presentation = presentation.0.clone();
@@ -203,7 +203,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     data: &JsValue,
-    signature_options: &WasmSignatureOptions,
+    signature_options: WasmSignatureOptions,
   ) -> Result<Promise> {
     let account = self.0.clone();
     let mut verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
@@ -246,47 +246,3 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Document>")]
   pub type PromiseDocument;
 }
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "SignatureOptions")]
-  pub type WasmSignatureOptions;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn created(this: &WasmSignatureOptions) -> Option<WasmTimestamp>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn expires(this: &WasmSignatureOptions) -> Option<WasmTimestamp>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn challenge(this: &WasmSignatureOptions) -> Option<String>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn domain(this: &WasmSignatureOptions) -> Option<String>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn purpose(this: &WasmSignatureOptions) -> Option<WasmProofPurpose>;
-}
-
-impl From<&WasmSignatureOptions> for SignatureOptions {
-  fn from(options: &WasmSignatureOptions) -> Self {
-    SignatureOptions {
-      created: options.created().and_then(|r| Some(r.0)),
-      expires: options.expires().and_then(|r| Some(r.0)),
-      challenge: options.challenge(),
-      domain: options.domain(),
-      purpose: options.purpose().and_then(|r| Some(r.0)),
-    }
-  }
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type SignatureOptions = {
-  created?: Timestamp,
-  expires?: Timestamp,
-  challenge?: string,
-  domain?: string,
-  purpose?: ProofPurpose
-};
-"#;

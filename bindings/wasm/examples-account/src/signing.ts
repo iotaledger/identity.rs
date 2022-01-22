@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    IdentitySetup, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions
+    IdentitySetup, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions
 } from './../../node/identity_wasm.js';
 
 /**
@@ -52,7 +52,7 @@ async function signing() {
     // ...and sign the Credential with the previously created Verification Method
     // Note: Different methods are available for different data types
     // use the Method `createSignedData` to sign arbitrary data.
-    let signedVc = await account.createSignedCredential("key_1", unsignedVc, {});
+    let signedVc = await account.createSignedCredential("key_1", unsignedVc, SignatureOptions.default());
 
     console.log("[Example] Local Credential", signedVc);
 
