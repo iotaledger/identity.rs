@@ -4,12 +4,15 @@
 use crate::account::account::WasmAccount;
 use crate::did::WasmDID;
 use crate::error::{Result, WasmResult};
+use crate::tangle::Client as WasmClient;
 use crate::tangle::WasmNetwork;
 use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::{AccountConfig, AutoSave};
+use identity::iota::Client;
 use js_sys::Promise;
 use std::rc::Rc;
+use std::sync::Arc;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -21,18 +24,21 @@ pub struct WasmAccountBuilder(Rc<WasmRefCell<AccountBuilder>>);
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
   #[wasm_bindgen(constructor)]
-  pub fn new(options: AccountBuilderOptions) -> Self {
+  pub fn new(options: Option<AccountBuilderOptions>) -> Self {
     let default_config: AccountConfig = AccountConfig::default();
-    Self {
-      0: Rc::new(WasmRefCell::new(
-        AccountBuilder::new()
-          .autopublish(options.autopublish().unwrap_or(default_config.autopublish))
-          .milestone(options.milestone().unwrap_or(default_config.milestone)),
-        // .autosave(options.autoSave().unwrap_or(default_config.autosave).0)
-        // ToDo Client
-        // ToDo autosave
-      )),
+    let mut builder = AccountBuilder::new();
+    if let Some(o) = options {
+      builder = builder
+        .autopublish(o.autopublish().unwrap_or(default_config.autopublish))
+        .milestone(o.milestone().unwrap_or(default_config.milestone));
+        //todo autosave
+        //todo storage
+      if let Some(c) = o.client() {
+        builder = builder.client(Arc::new(c.client.as_ref().clone()));
+      };
     }
+
+    Self(Rc::new(WasmRefCell::new(builder)))
   }
 
   #[wasm_bindgen(js_name = loadIdentity)]
@@ -114,13 +120,13 @@ extern "C" {
   pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
   #[wasm_bindgen(structural, getter, method)]
+  pub fn client(this: &AccountBuilderOptions) -> Option<WasmClient>;
+
+  #[wasm_bindgen(structural, getter, method)]
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn autoSave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn client(this: &AccountBuilderOptions) -> WasmNetwork;
 }
 
 //ToDo separate identitySetup.
@@ -129,6 +135,6 @@ const TS_APPEND_CONTENT: &'static str = r#"
 export type AccountBuilderOptions = {
   autopublish?: boolean,
   milestone?: number,
-  autoSave?: AutoSave,
-  client?: Network };
+  client?: Client
+};
 "#;

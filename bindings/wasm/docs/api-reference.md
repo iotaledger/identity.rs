@@ -121,8 +121,8 @@ See <code>IVerifierOptions</code>.</p>
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+deleteMethod"></a>
@@ -245,15 +245,6 @@ See <code>IVerifierOptions</code>.</p>
 | --- | --- |
 | input | <code>AttachMethodRelationshipOptions</code> | 
 
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -262,6 +253,15 @@ See <code>IVerifierOptions</code>.</p>
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -288,7 +288,7 @@ See <code>IVerifierOptions</code>.</p>
 
 | Param | Type |
 | --- | --- |
-| options | <code>AccountBuilderOptions</code> | 
+| options | <code>AccountBuilderOptions</code> \| <code>undefined</code> | 
 
 <a name="AccountBuilder+loadIdentity"></a>
 

@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+import { config } from "./config";
 import { createIdentity } from "./create_did";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
@@ -23,6 +24,8 @@ async function main() {
             return await lazy();
         case "signing":
             return await signing();
+        case "config":
+            return await config();
         default:
             throw "Unknown example name";
     }
