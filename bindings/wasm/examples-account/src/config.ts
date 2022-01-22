@@ -52,6 +52,9 @@ async function config() {
     try {
         let account = await builder.createIdentity(new IdentitySetup());
         let did = account.did();
+        
+        // Prints the Identity Resolver Explorer URL.
+        // The entire history can be observed on this page by clicking "Loading History".
         console.log(`[Example] Explore the DID Document = ${explorer.resolverUrl(did.toString())}`);
 
     } catch (e: any) {
