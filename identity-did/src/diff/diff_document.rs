@@ -53,7 +53,7 @@ where
 
 impl<T, U, V> Diff for CoreDocument<T, U, V>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
@@ -270,11 +270,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.service`"))?;
 
-    let properties: T = diff
-      .properties
-      .map(T::from_diff)
-      .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.properties`"))?;
+    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
     Ok(CoreDocument {
       id,
@@ -293,17 +289,21 @@ where
 
   fn into_diff(self) -> Result<Self::Type> {
     Ok(DiffDocument {
-      id: Some(self.id().clone().into_diff()?),
-      controller: Some(self.controller().cloned().map(|value| value.into_diff()).transpose()?),
-      also_known_as: Some(self.also_known_as().to_vec().into_diff()?),
-      verification_method: Some(self.verification_method().to_vec().into_diff()?),
-      authentication: Some(self.authentication().to_vec().into_diff()?),
-      assertion_method: Some(self.assertion_method().to_vec().into_diff()?),
-      key_agreement: Some(self.key_agreement().to_vec().into_diff()?),
-      capability_delegation: Some(self.capability_delegation().to_vec().into_diff()?),
-      capability_invocation: Some(self.capability_invocation().to_vec().into_diff()?),
-      service: Some(self.service().to_vec().into_diff()?),
-      properties: Some(self.properties().clone().into_diff()?),
+      id: Some(self.id.into_diff()?),
+      controller: Some(self.controller.map(|value| value.into_diff()).transpose()?),
+      also_known_as: Some(self.also_known_as.into_diff()?),
+      verification_method: Some(self.verification_method.into_diff()?),
+      authentication: Some(self.authentication.into_diff()?),
+      assertion_method: Some(self.assertion_method.into_diff()?),
+      key_agreement: Some(self.key_agreement.into_diff()?),
+      capability_delegation: Some(self.capability_delegation.into_diff()?),
+      capability_invocation: Some(self.capability_invocation.into_diff()?),
+      service: Some(self.service.into_diff()?),
+      properties: if self.properties == Default::default() {
+        None
+      } else {
+        Some(self.properties.into_diff()?)
+      },
     })
   }
 }
@@ -315,6 +315,8 @@ mod test {
   use crate::did::CoreDIDUrl;
   use crate::did::DID;
   use identity_core::common::Value;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
@@ -746,12 +748,18 @@ mod test {
   }
 
   #[test]
-  fn test_from_into_roundtrip() {
-    let doc = document();
+  fn test_from_into_diff() {
+    let doc: CoreDocument = document();
 
-    let diff = doc.clone().into_diff().unwrap();
-    let new = CoreDocument::from_diff(diff).unwrap();
+    let diff: DiffDocument = doc.clone().into_diff().unwrap();
+    let new: CoreDocument = CoreDocument::from_diff(diff.clone()).unwrap();
     assert_eq!(doc, new);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffDocument = DiffDocument::from_json(&ser).unwrap();
+    assert_eq!(de, diff);
+    let from: CoreDocument = CoreDocument::from_diff(de).unwrap();
+    assert_eq!(doc, from);
   }
 
   #[test]
