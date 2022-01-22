@@ -217,7 +217,7 @@ impl Client {
   #[wasm_bindgen(js_name = resolveDiffHistory)]
   pub fn resolve_diff_history(&self, document: &WasmResolvedDocument) -> Result<PromiseDiffChainHistory> {
     let client: Rc<IotaClient> = self.client.clone();
-    let resolved_document: ResolvedIotaDocument = document.0.clone();
+    let resolved_document: ResolvedIotaDocument = ResolvedIotaDocument::from(document.clone());
 
     let promise: Promise = future_to_promise(async move {
       client

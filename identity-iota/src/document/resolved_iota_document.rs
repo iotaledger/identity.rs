@@ -57,6 +57,7 @@ impl ResolvedIotaDocument {
   ///
   /// Fails if the merge operation or signature verification on the diff fails.
   pub fn merge_diff_message(&mut self, diff_message: &DiffMessage) -> Result<()> {
+    // N.B. update WasmResolvedDocument if this function is changed.
     self.document.merge_diff(diff_message)?;
     self.diff_message_id = diff_message.message_id;
 

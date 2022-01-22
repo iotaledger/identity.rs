@@ -455,7 +455,7 @@ impl WasmDocument {
   /// Serializes a `Document` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0.borrow().deref()).wasm_result()
+    JsValue::from_serde(self.0.borrow().deref()).wasm_result()
   }
 
   /// Deserializes a `Document` object from a JSON object.
@@ -468,5 +468,11 @@ impl WasmDocument {
 impl From<IotaDocument> for WasmDocument {
   fn from(document: IotaDocument) -> Self {
     Self(Rc::new(RefCell::new(document)))
+  }
+}
+
+impl From<WasmDocument> for IotaDocument {
+  fn from(wasm_document: WasmDocument) -> Self {
+    wasm_document.0.borrow().deref().clone()
   }
 }

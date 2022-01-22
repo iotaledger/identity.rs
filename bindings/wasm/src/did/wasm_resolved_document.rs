@@ -1,21 +1,29 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
+use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
-use std::str::FromStr;
+use identity::iota::TangleRef;
+use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use wasm_bindgen::prelude::*;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more `DiffMessages`.
 #[wasm_bindgen(js_name = ResolvedDocument, inspectable)]
 #[derive(Clone, Debug)]
-pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
+pub struct WasmResolvedDocument {
+  // Redefines fields manually to avoid having to clone the document.
+  document: WasmDocument,
+  integration_message_id: MessageId,
+  diff_message_id: MessageId,
+}
 
 // Workaround for Typescript type annotations on async function returns.
 #[wasm_bindgen]
@@ -39,7 +47,8 @@ impl WasmResolvedDocument {
   /// Fails if the merge operation or signature verification on the diff fails.
   #[wasm_bindgen(js_name = "mergeDiffMessage")]
   pub fn merge_diff_message(&mut self, diff_message: &WasmDiffMessage) -> Result<()> {
-    self.0.merge_diff_message(&diff_message.0).wasm_result()?;
+    self.document.merge_diff(diff_message)?;
+    self.diff_message_id = *diff_message.0.message_id();
     Ok(())
   }
 
@@ -48,46 +57,36 @@ impl WasmResolvedDocument {
   // ===========================================================================
 
   /// Returns the inner DID document.
-  ///
-  /// NOTE: clones the data. Use `intoDocument()` for efficiency.
   #[wasm_bindgen(getter)]
   pub fn document(&self) -> WasmDocument {
-    WasmDocument::from(self.0.document.clone())
-  }
-
-  /// Consumes this object and returns the inner DID document.
-  ///
-  /// NOTE: trying to use the `ResolvedDocument` after calling this will throw an error.
-  #[wasm_bindgen(js_name = intoDocument)]
-  pub fn into_document(self) -> WasmDocument {
-    WasmDocument::from(self.0.document)
+    self.document.clone()
   }
 
   /// Returns the diff chain message id.
   #[wasm_bindgen(getter = diffMessageId)]
   pub fn diff_message_id(&self) -> String {
-    self.0.diff_message_id.to_string()
+    self.diff_message_id.to_string()
   }
 
   /// Sets the diff chain message id.
   #[wasm_bindgen(setter = diffMessageId)]
   pub fn set_diff_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
-    self.0.diff_message_id = message_id;
+    self.diff_message_id = message_id;
     Ok(())
   }
 
   /// Returns the integration chain message id.
   #[wasm_bindgen(getter = integrationMessageId)]
   pub fn integration_message_id(&self) -> String {
-    self.0.integration_message_id.to_string()
+    self.integration_message_id.to_string()
   }
 
   /// Sets the integration chain message id.
   #[wasm_bindgen(setter = integrationMessageId)]
   pub fn set_integration_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
-    self.0.integration_message_id = message_id;
+    self.integration_message_id = message_id;
     Ok(())
   }
 
@@ -98,24 +97,47 @@ impl WasmResolvedDocument {
   /// Serializes a `Document` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
+    JsValue::from_serde(&ResolvedIotaDocument::from(self.clone())).wasm_result()
   }
 
   /// Deserializes a `Document` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmResolvedDocument> {
-    json.into_serde().map(Self).wasm_result()
+    json
+      .into_serde::<ResolvedIotaDocument>()
+      .map(WasmResolvedDocument::from)
+      .wasm_result()
   }
 }
 
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {
-  fn from(document: ResolvedIotaDocument) -> Self {
-    Self(document)
+  fn from(
+    ResolvedIotaDocument {
+      document,
+      integration_message_id,
+      diff_message_id,
+    }: ResolvedIotaDocument,
+  ) -> Self {
+    Self {
+      document: WasmDocument::from(document),
+      integration_message_id,
+      diff_message_id,
+    }
   }
 }
 
 impl From<WasmResolvedDocument> for ResolvedIotaDocument {
-  fn from(wasm_document: WasmResolvedDocument) -> Self {
-    wasm_document.0
+  fn from(
+    WasmResolvedDocument {
+      document,
+      diff_message_id,
+      integration_message_id,
+    }: WasmResolvedDocument,
+  ) -> Self {
+    Self {
+      document: IotaDocument::from(document),
+      integration_message_id,
+      diff_message_id,
+    }
   }
 }
