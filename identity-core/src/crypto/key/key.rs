@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -22,11 +22,11 @@ mod private {
 }
 
 // A marker type for the `Public` components of an asymmetric cryptographic key.
-#[derive(Clone, Copy, Debug, Deserialize)]
+#[derive(Clone, Copy, Debug)]
 pub enum Public {}
 
 // A marker type for the `Private` components of an asymmetric cryptographic key.
-#[derive(Clone, Copy, Debug, Deserialize)]
+#[derive(Clone, Copy, Debug)]
 pub enum Private {}
 
 impl private::Sealed for Public {}

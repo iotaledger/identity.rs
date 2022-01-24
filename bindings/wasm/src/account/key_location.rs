@@ -1,23 +1,22 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
 use wasm_bindgen::prelude::*;
 
-use identity::account::KeyLocation as KeyLocation_;
+use identity::account::KeyLocation;
 
 use crate::account::WasmGeneration;
 use crate::core::WasmFragment;
 use crate::did::WasmMethodType;
 
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
-#[derive(Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
-pub struct WasmKeyLocation(pub(crate) KeyLocation_);
+pub struct WasmKeyLocation(pub(crate) KeyLocation);
 
 #[wasm_bindgen(js_class = KeyLocation)]
 impl WasmKeyLocation {
   #[wasm_bindgen(constructor)]
   pub fn new(method: WasmMethodType, fragment: String, generation: WasmGeneration) -> WasmKeyLocation {
-    WasmKeyLocation(KeyLocation_::new(method.into(), fragment, generation.into()))
+    WasmKeyLocation(KeyLocation::new(method.into(), fragment, generation.into()))
   }
 
   /// Returns the method type of the key location.
@@ -45,14 +44,14 @@ impl WasmKeyLocation {
   }
 }
 
-impl From<WasmKeyLocation> for KeyLocation_ {
+impl From<WasmKeyLocation> for KeyLocation {
   fn from(wasm_key_location: WasmKeyLocation) -> Self {
     wasm_key_location.0
   }
 }
 
-impl From<KeyLocation_> for WasmKeyLocation {
-  fn from(wasm_key_location: KeyLocation_) -> Self {
+impl From<KeyLocation> for WasmKeyLocation {
+  fn from(wasm_key_location: KeyLocation) -> Self {
     WasmKeyLocation(wasm_key_location)
   }
 }

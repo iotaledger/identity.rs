@@ -1,7 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::unused_unit)]
 
 #[macro_use]
 extern crate serde;

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -33,8 +33,7 @@ use crate::error::JsValueResult;
 
 #[wasm_bindgen]
 extern "C" {
-  pub type WasmStorage;
-  #[wasm_bindgen(typescript_type = "Promise<()>")]
+  #[wasm_bindgen(typescript_type = "Promise<undefined>")]
   pub type PromiseUnit;
   #[wasm_bindgen(typescript_type = "Promise<PublicKey>")]
   pub type PromisePublicKey;
@@ -48,6 +47,11 @@ extern "C" {
   pub type PromiseOptionChainState;
   #[wasm_bindgen(typescript_type = "Promise<Option<IdentityState>>")]
   pub type PromiseOptionIdentityState;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  pub type WasmStorage;
 
   #[wasm_bindgen(method)]
   pub fn set_password(this: &WasmStorage, password: WasmEncryptionKey) -> PromiseUnit;

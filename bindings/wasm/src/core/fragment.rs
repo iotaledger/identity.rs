@@ -1,19 +1,18 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use wasm_bindgen::prelude::*;
 
-use identity::core::Fragment as Fragment_;
+use identity::core::Fragment;
 
 #[wasm_bindgen(js_name = Fragment, inspectable)]
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub struct WasmFragment(pub(crate) Fragment_);
+pub struct WasmFragment(pub(crate) Fragment);
 
 #[wasm_bindgen(js_class = Fragment)]
 impl WasmFragment {
   #[wasm_bindgen(constructor)]
   pub fn new(value: String) -> WasmFragment {
-    WasmFragment(Fragment_::new(value))
+    WasmFragment(Fragment::new(value))
   }
 
   /// Returns the complete fragment identifier.
@@ -29,13 +28,13 @@ impl WasmFragment {
   }
 }
 
-impl From<Fragment_> for WasmFragment {
-  fn from(fragment: Fragment_) -> Self {
+impl From<Fragment> for WasmFragment {
+  fn from(fragment: Fragment) -> Self {
     WasmFragment(fragment)
   }
 }
 
-impl From<WasmFragment> for Fragment_ {
+impl From<WasmFragment> for Fragment {
   fn from(wasm_fragment: WasmFragment) -> Self {
     wasm_fragment.0
   }

@@ -1,9 +1,9 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
 use wasm_bindgen::prelude::*;
 
-use identity::account::IdentityState as IdentityState_;
+use identity::account::IdentityState;
 
 use crate::account::WasmGeneration;
 use crate::account::WasmKeyLocation;
@@ -14,14 +14,13 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = IdentityState, inspectable)]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct WasmIdentityState(pub(crate) IdentityState_);
+pub struct WasmIdentityState(pub(crate) IdentityState);
 
 #[wasm_bindgen(js_class = IdentityState)]
 impl WasmIdentityState {
   #[wasm_bindgen(constructor)]
   pub fn new(document: WasmDocument) -> WasmIdentityState {
-    WasmIdentityState(IdentityState_::new(document.into()))
+    WasmIdentityState(IdentityState::new(document.into()))
   }
 
   // ===========================================================================
@@ -76,8 +75,8 @@ impl WasmIdentityState {
   }
 }
 
-impl From<IdentityState_> for WasmIdentityState {
-  fn from(identity_state: IdentityState_) -> Self {
+impl From<IdentityState> for WasmIdentityState {
+  fn from(identity_state: IdentityState) -> Self {
     WasmIdentityState(identity_state)
   }
 }

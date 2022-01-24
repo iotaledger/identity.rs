@@ -1,29 +1,28 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
 use wasm_bindgen::prelude::*;
 
-use identity::account::Generation as Generation_;
+use identity::account::Generation;
 
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen(js_name = Generation, inspectable)]
-#[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub struct WasmGeneration(pub(crate) Generation_);
+#[wasm_bindgen(js_name = Generation)]
+pub struct WasmGeneration(pub(crate) Generation);
 
 #[wasm_bindgen(js_class = Generation)]
 impl WasmGeneration {
   /// Creates a new `WasmGeneration`.
   #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
-    WasmGeneration(Generation_::new())
+    WasmGeneration(Generation::new())
   }
 
   /// Creates a new `WasmGeneration` from a 32-bit integer.
   #[wasm_bindgen(js_name = fromUnsignedInteger)]
   pub fn from_u32(value: u32) -> Self {
-    WasmGeneration(Generation_::from_u32(value))
+    WasmGeneration(Generation::from_u32(value))
   }
 
   /// Returns the `WasmGeneration` as a 32-bit integer.
@@ -55,24 +54,30 @@ impl WasmGeneration {
   /// Returns a `WasmGeneration` of minimum value.
   #[wasm_bindgen]
   pub fn min() -> WasmGeneration {
-    WasmGeneration(Generation_::MIN)
+    WasmGeneration(Generation::MIN)
   }
 
   /// Returns a `WasmGeneration` of maximum value.
   #[wasm_bindgen]
   pub fn max() -> WasmGeneration {
-    WasmGeneration(Generation_::MAX)
+    WasmGeneration(Generation::MAX)
   }
 }
 
-impl From<Generation_> for WasmGeneration {
-  fn from(generation: Generation_) -> Self {
+impl From<Generation> for WasmGeneration {
+  fn from(generation: Generation) -> Self {
     Self(generation)
   }
 }
 
-impl From<WasmGeneration> for Generation_ {
+impl From<WasmGeneration> for Generation {
   fn from(wasm_generation: WasmGeneration) -> Self {
     wasm_generation.0
+  }
+}
+
+impl Default for WasmGeneration {
+  fn default() -> Self {
+    Self::new()
   }
 }

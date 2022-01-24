@@ -1,21 +1,20 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
 use wasm_bindgen::prelude::*;
 
-use identity::account::ChainState as ChainState_;
+use identity::account::ChainState;
 
 use crate::tangle::WasmMessageId;
 
 #[wasm_bindgen(js_name = ChainState, inspectable)]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct WasmChainState(pub(crate) ChainState_);
+pub struct WasmChainState(pub(crate) ChainState);
 
 #[wasm_bindgen(js_class = ChainState)]
 impl WasmChainState {
   #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
-    WasmChainState(ChainState_::new())
+    WasmChainState(ChainState::new())
   }
 
   /// Returns the integration message id of the last published update.
@@ -60,8 +59,8 @@ impl Default for WasmChainState {
   }
 }
 
-impl From<ChainState_> for WasmChainState {
-  fn from(chain_state: ChainState_) -> Self {
+impl From<ChainState> for WasmChainState {
+  fn from(chain_state: ChainState) -> Self {
     WasmChainState(chain_state)
   }
 }
