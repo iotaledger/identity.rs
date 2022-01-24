@@ -871,7 +871,7 @@ with the given Document.
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.diff(other, message_id, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
-        * [.merge_diff(diff)](#Document+merge_diff)
+        * [.mergeDiff(diff)](#Document+mergeDiff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1156,9 +1156,9 @@ Fails if an unsupported verification method is used or the verification operatio
 | --- | --- |
 | diff | [<code>DiffMessage</code>](#DiffMessage) | 
 
-<a name="Document+merge_diff"></a>
+<a name="Document+mergeDiff"></a>
 
-### document.merge\_diff(diff)
+### document.mergeDiff(diff)
 Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1963,7 +1963,7 @@ merged with one or more `DiffMessages`.
         * [.document](#ResolvedDocument+document) ⇒ [<code>Document</code>](#Document)
         * [.diffMessageId](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>
         * [.diffMessageId](#ResolvedDocument+diffMessageId)
-        * [.metadataPreviousMessageId](#ResolvedDocument+metadataPreviousMessageId) ⇒ <code>string</code>
+        * [.integrationMessageId](#ResolvedDocument+integrationMessageId) ⇒ <code>string</code>
         * [.integrationMessageId](#ResolvedDocument+integrationMessageId)
         * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
         * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
@@ -1996,9 +1996,9 @@ Sets the diff chain message id.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="ResolvedDocument+metadataPreviousMessageId"></a>
+<a name="ResolvedDocument+integrationMessageId"></a>
 
-### resolvedDocument.metadataPreviousMessageId ⇒ <code>string</code>
+### resolvedDocument.integrationMessageId ⇒ <code>string</code>
 Returns the integration chain message id.
 
 **Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  

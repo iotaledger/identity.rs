@@ -121,23 +121,23 @@ Example of an Integration DID Message:
 ```json
 {
   "doc": {
-    "id": "did:iota:DqmknfA6pF6LpaGeHs3qcLjCPicWNgaG9AvinvpTKCGD",
+    "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
     "capabilityInvocation": [
       {
-        "id": "did:iota:DqmknfA6pF6LpaGeHs3qcLjCPicWNgaG9AvinvpTKCGD#sign-0",
-        "controller": "did:iota:DqmknfA6pF6LpaGeHs3qcLjCPicWNgaG9AvinvpTKCGD",
+        "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#sign-0",
+        "controller": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "z9wLQANgLeBLaKzejMuxa61gswLx6eYCsgK1tP3aW5SQA"
+        "publicKeyMultibase": "zCqNmbG7e4GMohTndkStNXUQGHFD5YusnwWpFdpyWFWH3"
       }
     ]
   },
   "meta": {
-    "created": "2022-01-17T19:13:17Z",
-    "updated": "2022-01-17T19:13:17Z",
+    "created": "2022-01-21T09:50:09Z",
+    "updated": "2022-01-21T09:50:09Z",
     "proof": {
       "type": "JcsEd25519Signature2020",
       "verificationMethod": "#sign-0",
-      "signatureValue": "4JouG4VVZircUnWZGLexW5nnV2EWHvNinySF7YJauhNRdQCC94w33jhFF4v1tgxcRQrxA2Mye78Np52HR5FZ3va5"
+      "signatureValue": "4pzMWzn19oqibHXqEdLr4EEHygs7QF2mMdvEhSMPiCVejEZGL4Vi5BGnmrJjMqKyNr6c6sSd3EXKoYxAuC2YiZNF"
     }
   }
 }
@@ -158,27 +158,26 @@ A Differentiation (Diff) DID message does not contain a valid DID Document. Inst
 Example of a Diff DID message:
 ```json
 {
-  "id": "did:iota:DqmknfA6pF6LpaGeHs3qcLjCPicWNgaG9AvinvpTKCGD",
+  "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
   "diff": {
     "doc": {
       "service": [
         {
-          "id": "did:iota:DqmknfA6pF6LpaGeHs3qcLjCPicWNgaG9AvinvpTKCGD#linked-domain-1",
+          "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#linked-domain-1",
           "type_": "LinkedDomains",
-          "service_endpoint": "https://example.com/",
-          "properties": null
+          "service_endpoint": "https://example.com/"
         }
       ]
     },
     "meta": {
-      "updated": "2022-01-17T19:13:35Z"
+      "updated": "2022-01-21T09:50:28Z"
     }
   },
-  "previousMessageId": "c8a6213cf87e3917ef20936ab215ba1825b02e2f235f258d1f4eaddb799bac65",
+  "previousMessageId": "5dfff82c34c75b3436e7e03370e220e4693d39026fee315e6db7b7815305df4a",
   "proof": {
     "type": "JcsEd25519Signature2020",
     "verificationMethod": "#sign-0",
-    "signatureValue": "3jGSsgWbaDv1mtkbA8sqBA62nm9omUtTVHonTGdafv3ftbQqvYLffe6AdoRKPQHrXUnZnXTB6TDtD66a8zXMQdRp"
+    "signatureValue": "3TG8LiXbWPcH3ecg4is5mswENVuQBakhv8R5TMXopHgPg578oLoczySvZMsEdjRHYgJGihK2VHEqyCHPjQyXW61m"
   }
 }
 ```
@@ -224,15 +223,14 @@ Example `diff` of adding a new service entry to the document and changing the `u
     "doc": {
       "service": [
         {
-          "id": "did:iota:DqmknfA6pF6LpaGeHs3qcLjCPicWNgaG9AvinvpTKCGD#linked-domain-1",
+          "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#linked-domain-1",
           "type_": "LinkedDomains",
-          "service_endpoint": "https://example.com/",
-          "properties": null
+          "service_endpoint": "https://example.com/"
         }
       ]
     },
     "meta": {
-      "updated": "2022-01-17T19:13:35Z"
+      "updated": "2022-01-21T09:50:28Z"
     }
   }
 }
