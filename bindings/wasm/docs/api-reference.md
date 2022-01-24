@@ -180,7 +180,7 @@ Fetch the DID document specified by the given `DID`.
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> | 
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
 
 <a name="Client+resolveHistory"></a>
 
@@ -191,7 +191,7 @@ Returns the message history of the given DID.
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> | 
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
 
 <a name="Client+resolveDiffHistory"></a>
 
@@ -489,13 +489,14 @@ Deserializes a `Credential` object from a JSON object.
 * [DID](#DID)
     * [new DID(key, network)](#new_DID_new)
     * _instance_
-        * [.network](#DID+network) ⇒ [<code>Network</code>](#Network)
         * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
+        * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
         * [.join(segment)](#DID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toUrl()](#DID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DID+toString) ⇒ <code>string</code>
+        * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
@@ -511,12 +512,6 @@ Creates a new `DID` from a `KeyPair` object.
 | key | [<code>KeyPair</code>](#KeyPair) | 
 | network | <code>string</code> \| <code>undefined</code> | 
 
-<a name="DID+network"></a>
-
-### did.network ⇒ [<code>Network</code>](#Network)
-Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+networkName"></a>
 
 ### did.networkName ⇒ <code>string</code>
@@ -529,6 +524,12 @@ Returns the IOTA tangle network of the `DID`.
 Returns the unique tag of the `DID`.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
+<a name="DID+network"></a>
+
+### did.network() ⇒ [<code>Network</code>](#Network)
+Returns the IOTA tangle network of the `DID`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+join"></a>
 
 ### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
@@ -556,6 +557,12 @@ Converts the `DID` into a `DIDUrl`.
 
 ### did.toString() ⇒ <code>string</code>
 Returns the `DID` as a string.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+toJSON"></a>
+
+### did.toJSON() ⇒ <code>any</code>
+Serializes a `DID` as a JSON object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
@@ -598,6 +605,7 @@ Parses a `DID` from the input string.
         * [.query](#DIDUrl+query)
         * [.join(segment)](#DIDUrl+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DIDUrl+toString) ⇒ <code>string</code>
+        * [.toJSON()](#DIDUrl+toJSON) ⇒ <code>any</code>
     * _static_
         * [.parse(input)](#DIDUrl.parse) ⇒ [<code>DIDUrl</code>](#DIDUrl)
 
@@ -689,6 +697,12 @@ I.e.
 
 ### didUrl.toString() ⇒ <code>string</code>
 Returns the `DIDUrl` as a string.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+toJSON"></a>
+
+### didUrl.toJSON() ⇒ <code>any</code>
+Serializes a `DIDUrl` as a JSON object.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl.parse"></a>
@@ -869,7 +883,7 @@ with the given Document.
         * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.diff(other, message_id, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+        * [.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.mergeDiff(diff)](#Document+mergeDiff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
@@ -1027,7 +1041,7 @@ Removes all references to the specified Verification Method.
 <a name="Document+defaultSigningMethod"></a>
 
 ### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the first `VerificationMethod` with a capability invocation relationship
+Returns a copy of the first `VerificationMethod` with a capability invocation relationship
 capable of signing this DID document.
 
 Throws an error if no signing method is present.
@@ -1036,7 +1050,7 @@ Throws an error if no signing method is present.
 <a name="Document+resolveMethod"></a>
 
 ### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the first `VerificationMethod` with an `id` property
+Returns a copy of the first `VerificationMethod` with an `id` property
 matching the provided `query`.
 
 Throws an error if the method is not found.
@@ -1045,7 +1059,7 @@ Throws an error if the method is not found.
 
 | Param | Type |
 | --- | --- |
-| query | <code>string</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+revokeMerkleKey"></a>
 
@@ -1054,7 +1068,7 @@ Throws an error if the method is not found.
 
 | Param | Type |
 | --- | --- |
-| query | <code>string</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | index | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
@@ -1072,7 +1086,7 @@ verification method. See `Document::verifySelfSigned`.
 | Param | Type |
 | --- | --- |
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | <code>string</code> | 
+| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+signCredential"></a>
 
@@ -1127,7 +1141,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message_id, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+### document.diff(other, message_id, key, method_query) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 Generate a `DiffMessage` between two DID Documents and sign it using the specified
 `key` and `method`.
 
@@ -1138,7 +1152,7 @@ Generate a `DiffMessage` between two DID Documents and sign it using the specifi
 | other | [<code>Document</code>](#Document) | 
 | message_id | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| method | <code>string</code> | 
+| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+verifyDiff"></a>
 
@@ -1770,6 +1784,7 @@ Deserializes a `MethodType` object from a JSON object.
 
 * [Network](#Network)
     * _instance_
+        * [.name](#Network+name) ⇒ <code>string</code>
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
@@ -1777,6 +1792,10 @@ Deserializes a `MethodType` object from a JSON object.
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
 
+<a name="Network+name"></a>
+
+### network.name ⇒ <code>string</code>
+**Kind**: instance property of [<code>Network</code>](#Network)  
 <a name="Network+defaultNodeURL"></a>
 
 ### network.defaultNodeURL ⇒ <code>string</code> \| <code>undefined</code>

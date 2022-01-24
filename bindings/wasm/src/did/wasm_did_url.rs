@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::IotaDIDUrl;
@@ -90,6 +90,12 @@ impl WasmDIDUrl {
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.0.to_string()
+  }
+
+  /// Serializes a `DIDUrl` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 }
 
