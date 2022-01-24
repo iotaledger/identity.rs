@@ -11,12 +11,12 @@ import {
     Service,
     Timestamp,
     VerificationMethod,
-    Network, ExplorerUrl
+    Network,
 } from '@iota/identity-wasm';
 
 /**
- * This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle
- * using the Account.
+ * This script generates an example DID with multiple updates to be used in the Identity Resolver in the IOTA Explorer
+ * 
  */
 (async function () {
     // Use the Mainnet Tangle network.
