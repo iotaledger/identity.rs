@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {
@@ -148,7 +148,7 @@ async function resolveHistory(clientConfig) {
     // ===========================================================================
 
     // Retrieve the message history of the DID.
-    const history1 = await client.resolveHistory(doc.id.toString());
+    const history1 = await client.resolveHistory(doc.id);
 
     // The history shows two documents in the integration chain, and two diffs in the diff chain.
     prettyPrintJSON(history1, "History (1):");
@@ -186,7 +186,7 @@ async function resolveHistory(clientConfig) {
     // ===========================================================================
 
     // Retrieve the updated message history of the DID.
-    const history2 = await client.resolveHistory(doc.id.toString());
+    const history2 = await client.resolveHistory(doc.id);
 
     // The history now shows three documents in the integration chain, and no diffs in the diff chain.
     // This is because each integration chain document has its own diff chain but only the last one

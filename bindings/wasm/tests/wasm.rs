@@ -1,6 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
+use identity::iota::IotaDID;
+use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::*;
 
 use identity_wasm::crypto::Digest;
@@ -11,7 +15,6 @@ use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
 use identity_wasm::error::WasmError;
-use std::borrow::Cow;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -132,4 +135,25 @@ fn test_document_network() {
   let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
   assert_eq!(document.id().network_name(), "dev");
+}
+
+#[wasm_bindgen_test]
+fn test_did_serde() {
+  // Ensure JSON deserialization of DID and strings match (for UWasmDID duck-typed parameters).
+  let expected_str: &str = "did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  let expected: IotaDID = IotaDID::parse(expected_str).unwrap();
+
+  // Check WasmDID deserialization.
+  {
+    let wasm_did: WasmDID = WasmDID::from(expected.clone());
+    let de: IotaDID = wasm_did.to_json().into_serde().unwrap();
+    assert_eq!(de, expected);
+  }
+
+  // Check String JsValue deserialization.
+  {
+    let js_string: JsValue = JsValue::from_str(expected_str);
+    let de: IotaDID = js_string.into_serde().unwrap();
+    assert_eq!(de, expected);
+  }
 }

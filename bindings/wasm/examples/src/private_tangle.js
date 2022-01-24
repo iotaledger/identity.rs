@@ -55,7 +55,7 @@ async function privateTangle(restURL, networkName) {
     const receipt = await client.publishDocument(doc);
 
     // Make sure the DID can be resolved on the private tangle
-    const resolved = await client.resolve(doc.id.toString());
+    const resolved = await client.resolve(doc.id);
 
     console.log(`Published the DID document to the private tangle:`);
     console.log(resolved);

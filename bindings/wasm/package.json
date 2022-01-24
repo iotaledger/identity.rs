@@ -26,6 +26,7 @@
     "test:node": "mocha ./examples/dist/test.js --exit",
     "test:browser": "cypress run --headless",
     "test:readme": "txm README.md",
+    "test:unit": "wasm-pack test --node",
     "cypress": "cypress open"
   },
   "contributors": [
