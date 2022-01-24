@@ -24,7 +24,7 @@ pub struct ResolvedCredential {
 
 impl ResolvedCredential {
   /// Verify the signature using the issuer's DID document.
-  pub fn verify_signature(&self, options: VerifierOptions) -> Result<(), ValidationUnitError> {
+  pub fn verify_signature(&self, options: &VerifierOptions) -> Result<(), ValidationUnitError> {
     self
       .issuer
       .document
