@@ -108,7 +108,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the credential signature using the issuers DID Document
-    let credential_verified: bool = issuer_doc.document.document.verify_data(&credential, options).is_ok();
+    let credential_verified: bool = issuer_doc.document.document.verify_data(&credential, &options).is_ok();
 
     // Check if all subjects have valid signatures
     let subjects_verified: bool = subjects.values().all(|subject| subject.verified);
@@ -161,7 +161,11 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     }
 
     // Verify the presentation signature using the holders DID Document
-    let presentation_verified: bool = holder_doc.document.document.verify_data(&presentation, options).is_ok();
+    let presentation_verified: bool = holder_doc
+      .document
+      .document
+      .verify_data(&presentation, &options)
+      .is_ok();
 
     // Check if all credentials are verified
     let credentials_verified: bool = credentials.iter().all(|credential| credential.verified);

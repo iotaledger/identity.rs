@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
   // Ensure the resolved DID Document can verify the credential signature
   let verified: bool = resolved
     .document
-    .verify_data(&credential, VerifierOptions::default())
+    .verify_data(&credential, &VerifierOptions::default())
     .is_ok();
 
   println!("[Example] Credential Verified = {}", verified);
