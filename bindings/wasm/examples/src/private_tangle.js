@@ -46,7 +46,7 @@ async function privateTangle(restURL, networkName) {
 
     // Create a DID with the network set explicitly.
     // This will result in a DID prefixed by `did:iota:tangle`.
-    const doc = new Document(key, network.toString());
+    const doc = new Document(key, network.name);
 
     // Sign the DID Document with the generated key.
     doc.signSelf(key, doc.defaultSigningMethod().id.toString());

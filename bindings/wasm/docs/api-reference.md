@@ -562,7 +562,7 @@ Returns the `DID` as a string.
 <a name="DID+toJSON"></a>
 
 ### did.toJSON() ⇒ <code>any</code>
-Serializes a `DID` object as a JSON object.
+Serializes a `DID` as a JSON object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
@@ -702,7 +702,7 @@ Returns the `DIDUrl` as a string.
 <a name="DIDUrl+toJSON"></a>
 
 ### didUrl.toJSON() ⇒ <code>any</code>
-Serializes a `DIDUrl` object as a JSON object.
+Serializes a `DIDUrl` as a JSON object.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl.parse"></a>
