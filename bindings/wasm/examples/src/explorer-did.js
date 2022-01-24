@@ -188,9 +188,7 @@ import {
     let serviceJSON3 = {
         id: diffDoc3.id + "#linked-domain-3",
         type: "LinkedDomains",
-        serviceEndpoint: {
-            "origins": ["https://iota.org/", "https://example.com/"]
-        },
+        serviceEndpoint: ["https://iota.org/", "https://example.com/"],
     };
     diffDoc3.insertService(Service.fromJSON(serviceJSON3));
     diffDoc3.metadataUpdated = Timestamp.nowUTC();
@@ -221,10 +219,10 @@ import {
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
-    intDoc2.metadataPreviousMessageId = intReceipt2.messageId;
-    intDoc2.metadataUpdated = Timestamp.nowUTC();
-    intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id.toString());
-    const intReceipt3 = await client.publishDocument(intDoc2);
+    intDoc3.metadataPreviousMessageId = intReceipt2.messageId;
+    intDoc3.metadataUpdated = Timestamp.nowUTC();
+    intDoc3.signSelf(key, intDoc3.defaultSigningMethod().id.toString());
+    const intReceipt3 = await client.publishDocument(intDoc3);
 
     console.log("done!");
 
