@@ -883,7 +883,7 @@ with the given Document.
         * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.diff(other, message_id, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+        * [.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.mergeDiff(diff)](#Document+mergeDiff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
@@ -1041,7 +1041,7 @@ Removes all references to the specified Verification Method.
 <a name="Document+defaultSigningMethod"></a>
 
 ### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the first `VerificationMethod` with a capability invocation relationship
+Returns a copy of the first `VerificationMethod` with a capability invocation relationship
 capable of signing this DID document.
 
 Throws an error if no signing method is present.
@@ -1050,7 +1050,7 @@ Throws an error if no signing method is present.
 <a name="Document+resolveMethod"></a>
 
 ### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the first `VerificationMethod` with an `id` property
+Returns a copy of the first `VerificationMethod` with an `id` property
 matching the provided `query`.
 
 Throws an error if the method is not found.
@@ -1059,7 +1059,7 @@ Throws an error if the method is not found.
 
 | Param | Type |
 | --- | --- |
-| query | <code>string</code> | 
+| query | <code>UMethodQuery</code> | 
 
 <a name="Document+revokeMerkleKey"></a>
 
@@ -1068,7 +1068,7 @@ Throws an error if the method is not found.
 
 | Param | Type |
 | --- | --- |
-| query | <code>string</code> | 
+| query | <code>UMethodQuery</code> | 
 | index | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
@@ -1086,7 +1086,7 @@ verification method. See `Document::verifySelfSigned`.
 | Param | Type |
 | --- | --- |
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | <code>string</code> | 
+| method_query | <code>UMethodQuery</code> | 
 
 <a name="Document+signCredential"></a>
 
@@ -1141,7 +1141,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message_id, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+### document.diff(other, message_id, key, method_query) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 Generate a `DiffMessage` between two DID Documents and sign it using the specified
 `key` and `method`.
 
@@ -1152,7 +1152,7 @@ Generate a `DiffMessage` between two DID Documents and sign it using the specifi
 | other | [<code>Document</code>](#Document) | 
 | message_id | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| method | <code>string</code> | 
+| method_query | <code>UMethodQuery</code> | 
 
 <a name="Document+verifyDiff"></a>
 

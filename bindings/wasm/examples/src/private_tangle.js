@@ -49,7 +49,7 @@ async function privateTangle(restURL, networkName) {
     const doc = new Document(key, network.name);
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+    doc.signSelf(key, doc.defaultSigningMethod().id);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc);

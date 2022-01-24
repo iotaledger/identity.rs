@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {Client, Config, Document, Service, Timestamp} from '@iota/identity-wasm';
@@ -38,7 +38,7 @@ async function createDiff(clientConfig) {
     console.log(updatedDoc);
 
     // Create diff
-    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id.toString());
+    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id);
     console.log(diff);
 
     // Publish diff to the Tangle

@@ -173,7 +173,7 @@ impl Client {
 
   /// Fetch the DID document specified by the given `DID`.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
+  pub fn resolve(&self, did: &UWasmDID) -> Result<PromiseResolvedDocument> {
     let client: Rc<IotaClient> = self.client.clone();
     let did: IotaDID = did.into_serde().wasm_result()?;
 
@@ -192,7 +192,7 @@ impl Client {
 
   /// Returns the message history of the given DID.
   #[wasm_bindgen(js_name = resolveHistory)]
-  pub fn resolve_history(&self, did: UWasmDID) -> Result<PromiseDocumentHistory> {
+  pub fn resolve_history(&self, did: &UWasmDID) -> Result<PromiseDocumentHistory> {
     let did: IotaDID = did.into_serde().wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
 
