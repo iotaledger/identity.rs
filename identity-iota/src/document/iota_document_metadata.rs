@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -30,6 +30,7 @@ pub struct IotaDocumentMetadata {
   pub previous_message_id: MessageId,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub proof: Option<Signature>,
+  #[serde(flatten)]
   pub properties: Object,
 }
 
