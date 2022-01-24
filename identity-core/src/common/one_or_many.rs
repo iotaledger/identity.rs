@@ -29,7 +29,7 @@ impl<T> OneOrMany<T> {
     }
   }
 
-  /// Constructs an empty collection 
+  /// Constructs an empty collection
   pub fn empty() -> Self {
     Self::Many(Vec::<T>::new())
   }

@@ -1,8 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::ControlFlow;
+
 use identity_core::common::OneOrMany;
 use identity_credential::credential::Credential;
+use identity_did::verifiable::VerifierOptions;
+use serde::Serialize;
 
 use crate::credential::CredentialResolutionError;
 use crate::credential::CredentialValidationOptions;
@@ -11,12 +15,13 @@ use crate::credential::ValidationUnitError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
-use crate::tangle::MessageId;
+use crate::tangle::traits::credential_resolution_internals::InitialisationEvent;
 use crate::tangle::traits::credential_resolution_internals::ValidationUnitErrors;
+use crate::tangle::MessageId;
 
+use self::credential_resolution_internals::resolve_credential_episodic;
 use self::credential_resolution_internals::ResolvedIssuerEvent;
 use self::credential_resolution_internals::ResolvedSubjectEvent;
-use self::credential_resolution_internals::resolve_credential_episodic;
 use identity_did::did::DID;
 
 pub trait TangleRef {
@@ -37,96 +42,169 @@ pub trait TangleResolve {
   /// Resolves a DID on the Tangle
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
 
-  async fn resolve_credential(
+  /// Resolves and validates a `Credential` in accordance with the given `validation_options`. 
+  async fn resolve_credential<T: Serialize>(
     &self,
-    credential: Credential,
+    credential: Credential<T>,
     validation_options: &CredentialValidationOptions,
     fail_fast: bool,
-  ) -> std::result::Result<ResolvedCredential, CredentialResolutionError> {
-    // In the case of a validation error we either want to immediately return it (`fail_fast = true`), or store it in a container. 
-    // We introduce a closure to avoid some code duplication. 
-    let handle_validation_unit_result = 
-    |store: &mut OneOrMany<ValidationUnitError>, result: Result<(), ValidationUnitError>| -> Result<(), ValidationUnitError> {
-      if fail_fast {
-        result
-      } else if let Err(validation_error) = result {
-        store.push(validation_error);
-        Ok(())
-      } else {
-        Ok(())
-      }
-    }; 
+  ) -> std::result::Result<ResolvedCredential<T>, CredentialResolutionError> {
+    // simple converter
+    let bool_to_result =
+      |value: bool, error: ValidationUnitError| -> Result<(), ValidationUnitError> { value.then(|| ()).ok_or(error) };
 
-    // Now we validate what we can directly from the credential before we resolve anything. 
-    let mut basic_validation_errors = ValidationUnitErrors::empty(); 
-    
-    // simple converter 
-    let bool_to_result = |value: bool, error: ValidationUnitError| -> Result<(), ValidationUnitError> {
-      value.then(||()).ok_or(error)
-    }; 
+    let initial_validator =
+      |initial_event: InitialisationEvent<'_, T>, errors: &mut ValidationUnitErrors| -> ControlFlow<()> {
+        // validate the issuance date
 
-    // validate the issuance date 
-    let issued_before_result = bool_to_result(
-      credential.issued_before(validation_options.issued_before), 
-      ValidationUnitError::InvalidIssuanceDate
-    ); 
-    handle_validation_unit_result(&mut basic_validation_errors, issued_before_result)?; 
-
-
-    // validate the expiration date 
-    let expires_after_result = bool_to_result(
-      credential.expires_after(validation_options.expires_after), 
-      ValidationUnitError::InvalidExpirationDate); 
-    handle_validation_unit_result(&mut basic_validation_errors, expires_after_result)?; 
-
-    // Now we start resolving DID documents  
-    // We setup an event handler that verifies the credential signature using the issuers DID Document 
-    // once this document gets resolved from the Tangle. 
-    let mut issuer_validation_error = ValidationUnitErrors::empty(); 
-    let mut issuer_event_validator = |resolved_issuer_event: ResolvedIssuerEvent<'_>| -> Result<(), ValidationUnitError> {
-      let resolved_issuer_doc = resolved_issuer_event.resolved_issuer_doc; 
-      //issuer.document.document.verify_data(&credential, 
-        handle_validation_unit_result(
-          &mut issuer_validation_error, 
-          resolved_issuer_doc.document
-          .verify_data(resolved_issuer_event.credential, &validation_options.verifier_options)
-          .map_err(|error|ValidationUnitError::InvalidProof {
-            source: Box::new(error)
-          })
-        )
-      };
-      // And we also want an even handler for newly resolved subject documents 
-    let mut subject_document_validation_errors = ValidationUnitErrors::empty(); 
-    let mut subject_event_validator = |resolved_subject_document_event: ResolvedSubjectEvent<'_>| -> Result<(), ValidationUnitError> {
-      if validation_options.allow_deactivated_subject_documents {
-        Ok(())
-      } else {
-      let subject_doc = resolved_subject_document_event.subject_doc; 
-      if !subject_doc.document.active() {
-        // Todo: would be nice to avoid the clone generated by to_url, but it is not clear how to do that 
-        // even with an owned ResolvedIotaDocument 
-        let err = ValidationUnitError::DeactivatedSubjectDocument {did_url: subject_doc.document.id().to_url()}; 
-        if fail_fast {
-          Err(err)
-        } else {
-          subject_document_validation_errors.push(err);
-          Ok(())
+        if let Err(error) = bool_to_result(
+          initial_event.credential.issued_before(validation_options.issued_before),
+          ValidationUnitError::InvalidIssuanceDate,
+        ) {
+          errors.push(error);
+          if fail_fast {
+            return ControlFlow::Break(());
+          }
         }
-      } else {
-        Ok(())
-      }
-    }
-      
-    };
-    let resolved_credential =
-     resolve_credential_episodic(credential, self, issuer_event_validator, subject_event_validator).await?;
 
-      todo!()
+        // validate the expiration date
+        if let Err(error) = bool_to_result(
+          initial_event.credential.expires_after(validation_options.expires_after),
+          ValidationUnitError::InvalidExpirationDate,
+        ) {
+          errors.push(error);
+          if fail_fast {
+            return ControlFlow::Break(());
+          }
+        }
+        ControlFlow::Continue(())
+      };
+
+    // Now we start resolving DID documents
+    // We setup an event handler that verifies the credential signature using the issuers DID Document
+    // once this document gets resolved from the Tangle.
+    let issuer_event_validator =
+      |resolved_issuer_event: ResolvedIssuerEvent<'_, T>, errors: &mut ValidationUnitErrors| -> ControlFlow<()> {
+        let resolved_issuer_doc = resolved_issuer_event.resolved_issuer_doc;
+        if let Err(verification_error) = resolved_issuer_doc
+          .document
+          .verify_data(resolved_issuer_event.credential, &validation_options.verifier_options)
+          .map_err(|error| ValidationUnitError::InvalidProof {
+            source: Box::new(error),
+          })
+        {
+          errors.push(verification_error);
+          if fail_fast {
+            return ControlFlow::Break(());
+          }
+        };
+        ControlFlow::Continue(())
+      };
+    // And we also want an even handler for newly resolved subject documents
+    let subject_event_validator = |resolved_subject_document_event: ResolvedSubjectEvent<'_>,
+                                   errors: &mut ValidationUnitErrors|
+     -> ControlFlow<()> {
+      if validation_options.allow_deactivated_subject_documents {
+        ControlFlow::Continue(())
+      } else {
+        let subject_doc = resolved_subject_document_event.subject_doc;
+        if !subject_doc.document.active() {
+          // Todo: would be nice to avoid the clone generated by to_url, but it is not clear how to do that
+          // even with an owned ResolvedIotaDocument
+          let err = ValidationUnitError::DeactivatedSubjectDocument {
+            did_url: subject_doc.document.id().to_url(),
+          };
+          errors.push(err);
+          if fail_fast {
+            return ControlFlow::Break(());
+          }
+        }
+        ControlFlow::Continue(())
+      }
+    };
+
+    resolve_credential_episodic(
+      self,
+      credential,
+      initial_validator,
+      issuer_event_validator,
+      subject_event_validator,
+    )
+    .await
+  }
+
+  /// Resolves the `Credential` and verifies its signature using the issuers DID Document.  
+  async fn resolve_credential_unvalidated<T: Serialize>(&self, 
+    credential: Credential<T>,
+    verifier_options: &VerifierOptions) -> std::result::Result<ResolvedCredential<T>, CredentialResolutionError>  {
+    // We setup an event handler that verifies the credential signature using the issuers DID Document
+    // once this document gets resolved from the Tangle.
+    let issuer_event_validator =
+      |resolved_issuer_event: ResolvedIssuerEvent<'_, T>, errors: &mut ValidationUnitErrors| -> ControlFlow<()> {
+        let resolved_issuer_doc = resolved_issuer_event.resolved_issuer_doc;
+        if let Err(verification_error) = resolved_issuer_doc
+          .document
+          .verify_data(resolved_issuer_event.credential, verifier_options)
+          .map_err(|error| ValidationUnitError::InvalidProof {
+            source: Box::new(error),
+          }) {
+          errors.push(verification_error);
+            ControlFlow::Break(())
+          } else {
+        ControlFlow::Continue(())
+          }
+      };
+    
+    
+    // We only care about verifying the signature using the issuer's DID Document
+    let initial_validator = |_: InitialisationEvent<'_, T>, _: &mut ValidationUnitErrors|{
+      ControlFlow::Continue(())
+    };
+    let subject_event_validator = |_: ResolvedSubjectEvent<'_>,
+    _: &mut ValidationUnitErrors| {
+      ControlFlow::Continue(())
+    };
+    resolve_credential_episodic(
+      self,
+      credential,
+      initial_validator,
+      issuer_event_validator,
+      subject_event_validator,
+    )
+    .await
+  }
+
+  /// Resolves a `Credential` without applying any checks 
+  async fn resolve_credential_unchecked<T: Serialize> (&self, credential: Credential<T>) -> 
+  std::result::Result<ResolvedCredential<T>, CredentialResolutionError> {
+    // We apply trivial validators     
+    let initial_validator = |_: InitialisationEvent<'_, T>, _: &mut ValidationUnitErrors|{
+      ControlFlow::Continue(())
+    };
+
+    let issuer_event_validator =
+    |_: ResolvedIssuerEvent<'_, T>, _: &mut ValidationUnitErrors| -> ControlFlow<()> {
+      ControlFlow::Continue(())
+    };
+
+    let subject_event_validator = |_: ResolvedSubjectEvent<'_>,
+    _: &mut ValidationUnitErrors| {
+      ControlFlow::Continue(())
+    };
+    resolve_credential_episodic(
+      self,
+      credential,
+      initial_validator,
+      issuer_event_validator,
+      subject_event_validator,
+    )
+    .await
   }
 }
 
 mod credential_resolution_internals {
   use identity_core::common::OneOrMany;
+use serde::Serialize;
 
   use super::Credential;
   use super::CredentialResolutionError;
@@ -137,10 +215,15 @@ mod credential_resolution_internals {
   use super::TangleResolve;
   use super::ValidationUnitError;
   use std::collections::BTreeMap;
+  use std::ops::ControlFlow;
 
   pub(super) type ValidationUnitErrors = OneOrMany<ValidationUnitError>;
-  pub(super) struct ResolvedIssuerEvent<'a> {
-    pub(super) credential: &'a Credential,
+
+  pub(super) struct InitialisationEvent<'a, T> {
+    pub(super) credential: &'a Credential<T>,
+  }
+  pub(super) struct ResolvedIssuerEvent<'a, T> {
+    pub(super) credential: &'a Credential<T>,
     pub(super) resolved_issuer_doc: &'a ResolvedIotaDocument,
   }
   pub(super) struct ResolvedSubjectEvent<'a> {
@@ -151,28 +234,56 @@ mod credential_resolution_internals {
   // Each episode contains an "event" that gets valuated by an event validator that determines whether the process may
   // continue. The `issuer_event_validator` is called at most once, while `subject_event_validator` may be called
   // multiple times.
-  pub(super) async fn resolve_credential_episodic<R, F, G>(
-    credential: Credential,
+  pub(super) async fn resolve_credential_episodic<R, F, G, H, T>(
     resolver: &R,
-    mut issuer_event_validator: F,
-    mut subject_event_validator: G,
-  ) -> std::result::Result<ResolvedCredential, CredentialResolutionError>
+    credential: Credential<T>,
+    initial_event_validator: F,
+    issuer_event_validator: G,
+    subject_event_validator: H,
+  ) -> std::result::Result<ResolvedCredential<T>, CredentialResolutionError>
   where
-    R:  ?Sized + TangleResolve,
-    F: FnMut(ResolvedIssuerEvent<'_>) -> std::result::Result<(), ValidationUnitError>,
-    G: FnMut(ResolvedSubjectEvent<'_>) -> std::result::Result<(), ValidationUnitError>,
+    R: ?Sized + TangleResolve,
+    F: Fn(InitialisationEvent<'_, T>, &mut ValidationUnitErrors) -> ControlFlow<()>,
+    G: Fn(ResolvedIssuerEvent<'_, T>, &mut ValidationUnitErrors) -> ControlFlow<()>,
+    H: Fn(ResolvedSubjectEvent<'_>, &mut ValidationUnitErrors) -> ControlFlow<()>,
+    T: Serialize
   {
+    let mut validation_errors = ValidationUnitErrors::empty();
+    // We need this until: https://doc.rust-lang.org/stable/std/ops/enum.ControlFlow.html#method.is_break becomes stable
+    let is_break = |outcome: ControlFlow<()>| -> bool {
+      if let ControlFlow::Break(_) = outcome {
+        true
+      } else {
+        false
+      }
+    };
+
     // We start with some validation checks we can do directly on the Credential
-    // Resolve the issuer DID Document and validate the digital signature.
+    if is_break(initial_event_validator(
+      InitialisationEvent {
+        credential: &credential,
+      },
+      &mut validation_errors,
+    )) {
+      return Err(validation_errors.into());
+    }
+
+    // Resolve the issuer DID Document.
     let issuer_url: &str = credential.issuer.url().as_str();
     let resolved_issuer_doc = resolve_document(resolver, issuer_url)
       .await
       .map_err(|err| CredentialResolutionError::DIDResolution { source: Box::from(err) })?;
-    // now validate
-    issuer_event_validator(ResolvedIssuerEvent {
-      credential: &credential,
-      resolved_issuer_doc: &resolved_issuer_doc,
-    })?;
+    // Now validations on the credential requiring a resolved issuer document can take place
+    if is_break(issuer_event_validator(
+      ResolvedIssuerEvent {
+        credential: &credential,
+        resolved_issuer_doc: &resolved_issuer_doc,
+      },
+      &mut validation_errors,
+    )) {
+      return Err(validation_errors.into());
+    }
+
     // Resolve all credential subjects with `id`s - we assume all ids are DIDs.
     let mut subject_documents: BTreeMap<String, ResolvedIotaDocument> = BTreeMap::new();
 
@@ -184,20 +295,37 @@ mod credential_resolution_internals {
       let subject_document = resolve_document(resolver, id.as_str())
         .await
         .map_err(|err| CredentialResolutionError::DIDResolution { source: Box::from(err) })?;
-      subject_event_validator(ResolvedSubjectEvent {
-        subject_doc: &subject_document,
-      })?;
-      subject_documents.insert(id.to_string(), subject_document);
+      // Now run any potential validations on this resolved subject document
+      if is_break(subject_event_validator(
+        ResolvedSubjectEvent {
+          subject_doc: &subject_document,
+        },
+        &mut validation_errors,
+      )) {
+        return Err(validation_errors.into());
+      }
+      if validation_errors.is_empty() {
+        // only insert if there are no validation errors
+        subject_documents.insert(id.to_string(), subject_document);
+      }
     }
-    let resolved_credential = ResolvedCredential {
-      credential,
-      issuer: resolved_issuer_doc,
-      subjects: subject_documents,
-    };
-    Ok(resolved_credential)
+    if !validation_errors.is_empty() {
+      // return all reported errors during credential resolution
+      Err(validation_errors.into())
+    } else {
+      let resolved_credential = ResolvedCredential {
+        credential,
+        issuer: resolved_issuer_doc,
+        subjects: subject_documents,
+      };
+      Ok(resolved_credential)
+    }
   }
 
-  async fn resolve_document<R: ?Sized + TangleResolve>(resolver: &R, did: impl AsRef<str>) -> Result<ResolvedIotaDocument> {
+  async fn resolve_document<R: ?Sized + TangleResolve>(
+    resolver: &R,
+    did: impl AsRef<str>,
+  ) -> Result<ResolvedIotaDocument> {
     let did: IotaDID = did.as_ref().parse()?;
     resolver.resolve(&did).await
   }

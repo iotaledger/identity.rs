@@ -8,6 +8,7 @@ use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
 use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
+use serde::Serialize;
 
 use crate::did::IotaDIDUrl;
 use crate::document::ResolvedIotaDocument;
@@ -16,13 +17,13 @@ use crate::tangle::TangleRef;
 use delegate::delegate;
 
 /// A verifiable credential whose associated DID documents have been resolved from the Tangle.
-pub struct ResolvedCredential {
-  pub credential: Credential,
+pub struct ResolvedCredential<T> {
+  pub credential: Credential<T>,
   pub issuer: ResolvedIotaDocument,
   pub subjects: BTreeMap<String, ResolvedIotaDocument>,
 }
 
-impl ResolvedCredential {
+impl<T: Serialize> ResolvedCredential<T> {
   /// Verify the signature using the issuer's DID document.
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<(), ValidationUnitError> {
     self
@@ -169,6 +170,12 @@ impl From<ValidationUnitError> for CredentialResolutionError {
     Self::Validation {
       validation_errors: OneOrMany::One(error),
     }
+  }
+}
+
+impl From<OneOrMany<ValidationUnitError>> for CredentialResolutionError {
+  fn from(validation_errors: OneOrMany<ValidationUnitError>) -> Self {
+    Self::Validation { validation_errors }
   }
 }
 
