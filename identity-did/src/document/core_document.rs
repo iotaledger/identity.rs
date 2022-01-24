@@ -659,7 +659,7 @@ impl<T, U: Revocation, V> CoreDocument<T, U, V> {
   ///
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
-  pub fn do_verify<X>(method: &VerificationMethod<U>, data: &X) -> Result<()>
+  fn do_verify<X>(method: &VerificationMethod<U>, data: &X) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
