@@ -19,18 +19,11 @@ import {
  * using the Account.
  */
 (async function () {
-    const MAINNET = Network.mainnet();
-    const EXPLORER_MAINNET = ExplorerUrl.mainnet();
+    // Use the Mainnet Tangle network.
+    const network = Network.mainnet();
 
-    /* @type {{network: Network, explorer: ExplorerUrl}} */
-    const CLIENT_CONFIG = {
-        network: MAINNET,
-        explorer: EXPLORER_MAINNET,
-    }
-
-
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(CLIENT_CONFIG.network);
+    // Create a default client configuration for the network.
+    const config = Config.fromNetwork(network);
 
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
@@ -39,7 +32,7 @@ import {
     const key = new KeyPair(KeyType.Ed25519);
 
     // Create a DID Document (an identity) from the generated key pair.
-    const doc = new Document(key, CLIENT_CONFIG.network.toString());
+    const doc = new Document(key, network.toString());
 
     // Sign the DID Document with the generated key.
     doc.signSelf(key, doc.defaultSigningMethod().id.toString());
