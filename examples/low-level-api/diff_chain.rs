@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! An example that demonstrates how to publish changes to the integration chain to update a
@@ -8,6 +8,8 @@
 
 use identity::core::json;
 use identity::core::FromJson;
+use identity::core::Timestamp;
+use identity::core::ToJson;
 use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ClientMap;
@@ -32,11 +34,12 @@ async fn main() -> Result<()> {
 
     // Add a Service
     let service: Service = Service::from_json_value(json!({
-      "id": doc.id().to_url().join("#linked-domain")?,
+      "id": doc.id().to_url().join("#linked-domain-1")?,
       "type": "LinkedDomains",
-      "serviceEndpoint": "https://iota.org"
+      "serviceEndpoint": "https://example.com/"
     }))?;
     assert!(doc.insert_service(service));
+    doc.metadata.updated = Timestamp::now_utc();
     doc
   };
 
@@ -48,7 +51,7 @@ async fn main() -> Result<()> {
     document.default_signing_method()?.id(),
   )?;
 
-  println!("Diff > {:#?}", diff);
+  println!("Diff > {}", diff.to_json_pretty().unwrap());
 
   // Publish the diff object to the Tangle, starting a diff chain.
   let update_receipt: Receipt = client.publish_diff(receipt.message_id(), &diff).await?;

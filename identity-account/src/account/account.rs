@@ -160,7 +160,7 @@ impl Account {
   }
 
   /// Return the latest state of the identity.
-  pub fn state(&self) -> &IdentityState {
+  pub(crate) fn state(&self) -> &IdentityState {
     &self.state
   }
 

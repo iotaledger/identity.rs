@@ -775,7 +775,7 @@ Returns the DID of the associated DID Document.
 <a name="DiffMessage+diff"></a>
 
 ### diffMessage.diff ⇒ <code>string</code>
-Returns the raw contents of the DID Document diff.
+Returns the raw contents of the DID Document diff as a JSON string.
 
 NOTE: clones the data.
 
@@ -869,9 +869,9 @@ with the given Document.
         * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+        * [.diff(other, message_id, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
-        * [.merge_diff(diff)](#Document+merge_diff)
+        * [.mergeDiff(diff)](#Document+mergeDiff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1127,7 +1127,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+### document.diff(other, message_id, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 Generate a `DiffMessage` between two DID Documents and sign it using the specified
 `key` and `method`.
 
@@ -1136,7 +1136,7 @@ Generate a `DiffMessage` between two DID Documents and sign it using the specifi
 | Param | Type |
 | --- | --- |
 | other | [<code>Document</code>](#Document) | 
-| message | <code>string</code> | 
+| message_id | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
 | method | <code>string</code> | 
 
@@ -1156,9 +1156,9 @@ Fails if an unsupported verification method is used or the verification operatio
 | --- | --- |
 | diff | [<code>DiffMessage</code>](#DiffMessage) | 
 
-<a name="Document+merge_diff"></a>
+<a name="Document+mergeDiff"></a>
 
-### document.merge\_diff(diff)
+### document.mergeDiff(diff)
 Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1963,7 +1963,7 @@ merged with one or more `DiffMessages`.
         * [.document](#ResolvedDocument+document) ⇒ [<code>Document</code>](#Document)
         * [.diffMessageId](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>
         * [.diffMessageId](#ResolvedDocument+diffMessageId)
-        * [.metadataPreviousMessageId](#ResolvedDocument+metadataPreviousMessageId) ⇒ <code>string</code>
+        * [.integrationMessageId](#ResolvedDocument+integrationMessageId) ⇒ <code>string</code>
         * [.integrationMessageId](#ResolvedDocument+integrationMessageId)
         * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
         * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
@@ -1996,9 +1996,9 @@ Sets the diff chain message id.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="ResolvedDocument+metadataPreviousMessageId"></a>
+<a name="ResolvedDocument+integrationMessageId"></a>
 
-### resolvedDocument.metadataPreviousMessageId ⇒ <code>string</code>
+### resolvedDocument.integrationMessageId ⇒ <code>string</code>
 Returns the integration chain message id.
 
 **Kind**: instance property of [<code>ResolvedDocument</code>](#ResolvedDocument)  

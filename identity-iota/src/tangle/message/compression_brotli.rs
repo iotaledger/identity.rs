@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::io::Read;
@@ -40,12 +40,12 @@ mod test {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .sign_self(keypair.private(), document.default_signing_method().unwrap().id())
       .unwrap();
 
-    let data = document.to_json().unwrap();
-    let compressed = compress_brotli(data.as_str()).unwrap();
-    let decompressed = decompress_brotli(&compressed).unwrap();
+    let data: String = document.to_json().unwrap();
+    let compressed: Vec<u8> = compress_brotli(data.as_str()).unwrap();
+    let decompressed: Vec<u8> = decompress_brotli(&compressed).unwrap();
 
     assert_eq!(decompressed, data.as_bytes());
   }

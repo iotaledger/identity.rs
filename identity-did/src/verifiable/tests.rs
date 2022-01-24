@@ -20,6 +20,7 @@ use identity_core::crypto::TrySignatureMut;
 use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
+use crate::verifiable::VerifierOptions;
 use crate::verification::MethodData;
 use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
@@ -89,11 +90,11 @@ fn test_sign_verify_data_ed25519() {
 
     let mut data: MockObject = MockObject::new(123);
 
-    assert!(document.verifier().verify(&data).is_err());
+    assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
     document.signer(key.private()).method("#key-1").sign(&mut data).unwrap();
 
-    assert!(document.verifier().verify(&data).is_ok());
+    assert!(document.verify_data(&data, &VerifierOptions::default()).is_ok());
   }
 }
 
@@ -129,7 +130,7 @@ fn test_sign_verify_data_merkle_key_ed25519_sha256() {
 
     let mut data: MockObject = MockObject::new(123);
 
-    assert!(document.verifier().verify(&data).is_err());
+    assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
     document
       .signer(private)
@@ -138,7 +139,7 @@ fn test_sign_verify_data_merkle_key_ed25519_sha256() {
       .sign(&mut data)
       .unwrap();
 
-    assert!(document.verifier().verify(&data).is_ok());
+    assert!(document.verify_data(&data, &VerifierOptions::default()).is_ok());
   }
 }
 
@@ -172,42 +173,48 @@ fn setup() -> (KeyPair, CoreDocument) {
 fn test_sign_verify_method_type() {
   let (key, document) = setup();
   let mut data: MockObject = MockObject::new(123);
-  assert!(document.verifier().verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
   // Sign.
   document.signer(key.private()).method("#key-1").sign(&mut data).unwrap();
 
   // VALID: verifying without checking the method type succeeds.
-  document.verifier().verify(&data).unwrap();
-  document.verifier().method_type(vec![]).verify(&data).unwrap();
+  document.verify_data(&data, &VerifierOptions::default()).unwrap();
+  document
+    .verify_data(&data, &VerifierOptions::default().method_type(vec![]))
+    .unwrap();
   // VALID: verifying with the correct method type succeeds.
   document
-    .verifier()
-    .method_type(vec![MethodType::Ed25519VerificationKey2018])
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default().method_type(vec![MethodType::Ed25519VerificationKey2018]),
+    )
     .unwrap();
   document
-    .verifier()
-    .method_type(vec![
-      MethodType::Ed25519VerificationKey2018,
-      MethodType::MerkleKeyCollection2021,
-    ])
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default().method_type(vec![
+        MethodType::Ed25519VerificationKey2018,
+        MethodType::MerkleKeyCollection2021,
+      ]),
+    )
     .unwrap();
   document
-    .verifier()
-    .method_type(vec![
-      MethodType::MerkleKeyCollection2021,
-      MethodType::Ed25519VerificationKey2018,
-    ])
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default().method_type(vec![
+        MethodType::MerkleKeyCollection2021,
+        MethodType::Ed25519VerificationKey2018,
+      ]),
+    )
     .unwrap();
 
   // INVALID: verifying with the wrong method type fails.
   assert!(document
-    .verifier()
-    .method_type(vec![MethodType::MerkleKeyCollection2021])
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default().method_type(vec![MethodType::MerkleKeyCollection2021])
+    )
     .is_err());
 }
 
@@ -215,17 +222,18 @@ fn test_sign_verify_method_type() {
 fn test_sign_verify_method_scope() {
   let (key, document) = setup();
   let mut data: MockObject = MockObject::new(123);
-  assert!(document.verifier().verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
   // Sign.
   document.signer(key.private()).method("#key-1").sign(&mut data).unwrap();
   // VALID: verifying without checking the method scope succeeds.
-  document.verifier().verify(&data).unwrap();
+  document.verify_data(&data, &VerifierOptions::default()).unwrap();
   // VALID: verifying with the correct method scope succeeds.
   document
-    .verifier()
-    .method_scope(MethodScope::VerificationMethod)
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default().method_scope(MethodScope::VerificationMethod),
+    )
     .unwrap();
 
   // INVALID: verifying with the wrong method scope fails.
@@ -237,9 +245,10 @@ fn test_sign_verify_method_scope() {
     MethodRelationship::Authentication,
   ] {
     assert!(document
-      .verifier()
-      .method_scope(MethodScope::VerificationRelationship(relationship))
-      .verify(&data)
+      .verify_data(
+        &data,
+        &VerifierOptions::default().method_scope(MethodScope::VerificationRelationship(relationship))
+      )
       .is_err());
   }
 }
@@ -248,7 +257,7 @@ fn test_sign_verify_method_scope() {
 fn test_sign_verify_challenge() {
   let (key, document) = setup();
   let mut data: MockObject = MockObject::new(123);
-  assert!(document.verifier().verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
   // Sign with a challenge.
   document
@@ -260,25 +269,29 @@ fn test_sign_verify_challenge() {
   assert_eq!(data.proof.clone().unwrap().challenge.unwrap(), "some-challenge");
 
   // VALID: verifying without checking the challenge succeeds.
-  document.verifier().verify(&data).unwrap();
+  document.verify_data(&data, &VerifierOptions::default()).unwrap();
   // VALID: verifying with the correct challenge succeeds.
   document
-    .verifier()
-    .challenge("some-challenge".into())
-    .verify(&data)
+    .verify_data(&data, &VerifierOptions::default().challenge("some-challenge".into()))
     .unwrap();
 
   // INVALID: verifying with the wrong challenge fails.
-  assert!(document.verifier().challenge("invalid".into()).verify(&data).is_err());
-  assert!(document.verifier().challenge(" ".into()).verify(&data).is_err());
-  assert!(document.verifier().challenge("".into()).verify(&data).is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().challenge("invalid".into()))
+    .is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().challenge(" ".into()))
+    .is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().challenge("".into()))
+    .is_err());
 }
 
 #[test]
 fn test_sign_verify_domain() {
   let (key, document) = setup();
   let mut data: MockObject = MockObject::new(123);
-  assert!(document.verifier().verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
   // Sign with a domain.
   document
@@ -290,21 +303,29 @@ fn test_sign_verify_domain() {
   assert_eq!(data.proof.clone().unwrap().domain.unwrap(), "some.domain");
 
   // VALID: verifying without checking the domain succeeds.
-  document.verifier().verify(&data).unwrap();
+  document.verify_data(&data, &VerifierOptions::default()).unwrap();
   // VALID: verifying with the correct domain succeeds.
-  document.verifier().domain("some.domain".into()).verify(&data).unwrap();
+  document
+    .verify_data(&data, &VerifierOptions::default().domain("some.domain".into()))
+    .unwrap();
 
   // INVALID: verifying with the wrong domain fails.
-  assert!(document.verifier().domain("invalid".into()).verify(&data).is_err());
-  assert!(document.verifier().domain(" ".into()).verify(&data).is_err());
-  assert!(document.verifier().domain("".into()).verify(&data).is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().domain("invalid".into()))
+    .is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().domain(" ".into()))
+    .is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().domain("".into()))
+    .is_err());
 }
 
 #[test]
 fn test_sign_verify_purpose() {
   let (key, mut document) = setup();
   let mut data: MockObject = MockObject::new(123);
-  assert!(document.verifier().verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
   document
     .attach_method_relationship("#key-1", MethodRelationship::Authentication)
     .unwrap();
@@ -322,34 +343,37 @@ fn test_sign_verify_purpose() {
   );
 
   // VALID: verifying without checking the purpose succeeds.
-  document.verifier().verify(&data).unwrap();
+  document.verify_data(&data, &VerifierOptions::default()).unwrap();
   // VALID: verifying with the correct purpose succeeds.
   document
-    .verifier()
-    .purpose(ProofPurpose::Authentication)
-    .verify(&data)
+    .verify_data(&data, &VerifierOptions::default().purpose(ProofPurpose::Authentication))
     .unwrap();
 
   // INVALID: verifying with the wrong purpose fails.
   assert!(document
-    .verifier()
-    .purpose(ProofPurpose::AssertionMethod)
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default().purpose(ProofPurpose::AssertionMethod)
+    )
     .is_err());
 
   // VALID: purpose overrides the method scope.
   document
-    .verifier()
-    .method_scope(MethodScope::capability_delegation())
-    .purpose(ProofPurpose::Authentication)
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default()
+        .method_scope(MethodScope::capability_delegation())
+        .purpose(ProofPurpose::Authentication),
+    )
     .unwrap();
   // INVALID: purpose overrides the otherwise correct method scope.
   assert!(document
-    .verifier()
-    .method_scope(MethodScope::authentication())
-    .purpose(ProofPurpose::AssertionMethod)
-    .verify(&data)
+    .verify_data(
+      &data,
+      &VerifierOptions::default()
+        .method_scope(MethodScope::authentication())
+        .purpose(ProofPurpose::AssertionMethod)
+    )
     .is_err());
 }
 
@@ -357,7 +381,7 @@ fn test_sign_verify_purpose() {
 fn test_sign_verify_expires() {
   let (key, document) = setup();
   let mut data: MockObject = MockObject::new(123);
-  assert!(document.verifier().verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
 
   // Sign with an expiration in the FUTURE.
   let expires_future: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() + 60).unwrap();
@@ -370,9 +394,13 @@ fn test_sign_verify_expires() {
   assert_eq!(data.proof.clone().unwrap().expires.unwrap(), expires_future);
 
   // VALID: verifying before expiration succeeds.
-  document.verifier().verify(&data).unwrap();
-  document.verifier().allow_expired(false).verify(&data).unwrap();
-  document.verifier().allow_expired(true).verify(&data).unwrap();
+  document.verify_data(&data, &VerifierOptions::default()).unwrap();
+  document
+    .verify_data(&data, &VerifierOptions::default().allow_expired(false))
+    .unwrap();
+  document
+    .verify_data(&data, &VerifierOptions::default().allow_expired(true))
+    .unwrap();
 
   // Sign with an expiration in the PAST.
   let expires_past: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() - 60).unwrap();
@@ -385,8 +413,12 @@ fn test_sign_verify_expires() {
   assert_eq!(data.proof.clone().unwrap().expires.unwrap(), expires_past);
 
   // VALID: verifying without checking expiration succeeds.
-  document.verifier().allow_expired(true).verify(&data).unwrap();
+  document
+    .verify_data(&data, &VerifierOptions::default().allow_expired(true))
+    .unwrap();
   // INVALID: verifying after expiration fails.
-  assert!(document.verifier().verify(&data).is_err());
-  assert!(document.verifier().allow_expired(false).verify(&data).is_err());
+  assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
+  assert!(document
+    .verify_data(&data, &VerifierOptions::default().allow_expired(false))
+    .is_err());
 }
