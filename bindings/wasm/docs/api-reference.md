@@ -180,7 +180,7 @@ Fetch the DID document specified by the given `DID`.
 
 | Param | Type |
 | --- | --- |
-| did | <code>UDID</code> | 
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
 
 <a name="Client+resolveHistory"></a>
 
@@ -191,7 +191,7 @@ Returns the message history of the given DID.
 
 | Param | Type |
 | --- | --- |
-| did | <code>UDID</code> | 
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
 
 <a name="Client+resolveDiffHistory"></a>
 
@@ -1059,7 +1059,7 @@ Throws an error if the method is not found.
 
 | Param | Type |
 | --- | --- |
-| query | <code>UMethodQuery</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+revokeMerkleKey"></a>
 
@@ -1068,7 +1068,7 @@ Throws an error if the method is not found.
 
 | Param | Type |
 | --- | --- |
-| query | <code>UMethodQuery</code> | 
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | index | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
@@ -1086,7 +1086,7 @@ verification method. See `Document::verifySelfSigned`.
 | Param | Type |
 | --- | --- |
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | <code>UMethodQuery</code> | 
+| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+signCredential"></a>
 
@@ -1152,7 +1152,7 @@ Generate a `DiffMessage` between two DID Documents and sign it using the specifi
 | other | [<code>Document</code>](#Document) | 
 | message_id | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| method_query | <code>UMethodQuery</code> | 
+| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+verifyDiff"></a>
 

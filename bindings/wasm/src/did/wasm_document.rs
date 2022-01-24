@@ -467,11 +467,6 @@ impl From<IotaDocument> for WasmDocument {
 /// Duck-typed union to pass either a string or WasmDIDUrl as a parameter.
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "UMethodQuery")]
+  #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UWasmMethodQuery;
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const U_METHOD_QUERY: &'static str = r#"
-export type UMethodQuery = DIDUrl | string;
-"#;

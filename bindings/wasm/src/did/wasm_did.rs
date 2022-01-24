@@ -109,11 +109,6 @@ impl From<IotaDID> for WasmDID {
 /// Duck-typed union to pass either a string or WasmDID as a parameter.
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "UDID")]
+  #[wasm_bindgen(typescript_type = "DID | string")]
   pub type UWasmDID;
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const U_DID: &'static str = r#"
-export type UDID = DID | string;
-"#;
