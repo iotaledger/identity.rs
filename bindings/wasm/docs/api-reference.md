@@ -32,8 +32,6 @@
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
-<dt><a href="#IdentitySetup">IdentitySetup</a></dt>
-<dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
@@ -43,6 +41,8 @@
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
+<dt><a href="#MethodSecret">MethodSecret</a></dt>
+<dd></dd>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -121,8 +121,8 @@ See <code>IVerifierOptions</code>.</p>
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+deleteMethod"></a>
@@ -245,15 +245,6 @@ See <code>IVerifierOptions</code>.</p>
 | --- | --- |
 | input | <code>AttachMethodRelationshipOptions</code> | 
 
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
-
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -262,6 +253,15 @@ See <code>IVerifierOptions</code>.</p>
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -302,11 +302,18 @@ See <code>IVerifierOptions</code>.</p>
 <a name="AccountBuilder+createIdentity"></a>
 
 ### accountBuilder.createIdentity(identity_setup) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+Creates a new identity based on the builder configuration and returns
+an [Account](#Account) object to manage it.
+
+The identity is stored locally in the `Storage`. The DID network is automatically determined
+by the [Client](#Client) used to publish it.
+
 **Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
+**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
 
 | Param | Type |
 | --- | --- |
-| identity_setup | [<code>IdentitySetup</code>](#IdentitySetup) | 
+| identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
 
 <a name="AutoSave"></a>
 
@@ -1680,10 +1687,6 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="IdentitySetup"></a>
-
-## IdentitySetup
-**Kind**: global class  
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -1974,6 +1977,33 @@ Deserializes a `MethodScope` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="MethodSecret"></a>
+
+## MethodSecret
+**Kind**: global class  
+
+* [MethodSecret](#MethodSecret)
+    * [.ed25519(private_key)](#MethodSecret.ed25519) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * [.merkelKeyCollection(collection)](#MethodSecret.merkelKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+
+<a name="MethodSecret.ed25519"></a>
+
+### MethodSecret.ed25519(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| private_key | <code>string</code> | 
+
+<a name="MethodSecret.merkelKeyCollection"></a>
+
+### MethodSecret.merkelKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| collection | [<code>KeyCollection</code>](#KeyCollection) | 
 
 <a name="MethodType"></a>
 

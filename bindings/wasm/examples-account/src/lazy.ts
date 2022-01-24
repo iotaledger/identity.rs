@@ -11,7 +11,7 @@ async function lazy() {
     let builder = new AccountBuilder({
         autopublish: false
     });
-    let account = await builder.createIdentity(new IdentitySetup());
+    let account = await builder.createIdentity();
 
     // Add a new service to the local DID document.
     await account.createService({

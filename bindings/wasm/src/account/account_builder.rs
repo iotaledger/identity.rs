@@ -6,8 +6,7 @@ use crate::did::WasmDID;
 use crate::error::{Result, WasmResult};
 use crate::tangle::Client as WasmClient;
 use crate::tangle::WasmNetwork;
-use identity::account::AccountBuilder;
-use identity::account::IdentitySetup;
+use identity::account::{AccountBuilder, IdentitySetup};
 use identity::account::{AccountConfig, AutoSave};
 use identity::iota::Client;
 use js_sys::Promise;
@@ -17,6 +16,8 @@ use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
+use crate::account::method_secret::WasmMethodSecret;
+use crate::crypto::KeyType;
 
 #[wasm_bindgen(js_name = AccountBuilder)]
 pub struct WasmAccountBuilder(Rc<WasmRefCell<AccountBuilder>>);
@@ -59,33 +60,39 @@ impl WasmAccountBuilder {
     // Ok(promise.unchecked_into::<PromiseAccount>())
   }
 
+  /// Creates a new identity based on the builder configuration and returns
+  /// an {@link Account} object to manage it.
+  ///
+  /// The identity is stored locally in the `Storage`. The DID network is automatically determined
+  /// by the {@link Client} used to publish it.
+  ///
+  /// @See {@link IdentitySetup} to customize the identity creation.
   #[wasm_bindgen(js_name = createIdentity)]
-  pub fn create_identity(&mut self, identity_setup: WasmIdentitySetup) -> Result<PromiseAccount> {
+  pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
+    // Create IdentitySetup
+    let mut setup = IdentitySetup::new();
+    if let Some(identity_setup) = identity_setup {
+      if let Some(key_type) = identity_setup.keyType() {
+        setup = setup.key_type(key_type.into());
+      }
+      if let Some(method_secret) = identity_setup.methodSecret() {
+        setup = setup.method_secret(method_secret.0);
+      }
+    }
+
+    // Call the builder.
     let builder = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
         .borrow_mut()
-        .create_identity(identity_setup.0)
+        .create_identity(setup)
         .await
         .map(WasmAccount::from)
         .map(Into::into)
         .wasm_result()
     });
     Ok(promise.unchecked_into::<PromiseAccount>())
-  }
-}
-
-#[wasm_bindgen(js_name = IdentitySetup)]
-pub struct WasmIdentitySetup(pub(crate) IdentitySetup);
-
-#[wasm_bindgen(js_class = IdentitySetup)]
-impl WasmIdentitySetup {
-  #[wasm_bindgen(constructor)]
-  pub fn new() -> Self {
-    Self {
-      0: IdentitySetup::new(),
-    }
   }
 }
 
@@ -129,13 +136,49 @@ extern "C" {
   pub fn autoSave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
 }
 
-//ToDo separate identitySetup.
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type AccountBuilderOptions = {
-  autoSave?: AutoSave
-  autopublish?: boolean,
-  milestone?: number,
-  client?: Client
+
+    /**
+     * When the account will store its state to the storage.
+     */
+    autoSave?: AutoSave
+
+    /**
+     * `autopublish == true` the account will publish messages to the tangle on each update.
+     * `autopublish == false` the account will combine and publish message when .publish() is called.
+     */
+    autopublish?: boolean,
+
+    /**
+     * Number of actions required to save a snapshot.
+     */
+    milestone?: number,
+
+    /**
+     * Client for tangle requests.
+     */
+    client?: Client
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "IdentitySetup")]
+  pub type WasmIdentitySetup;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn keyType(this: &WasmIdentitySetup) -> Option<KeyType>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn methodSecret(this: &WasmIdentitySetup) -> Option<WasmMethodSecret>;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT_2: &'static str = r#"
+export type IdentitySetup = {
+    keyType?: KeyType,
+    methodSecret?: MethodSecret
 };
 "#;

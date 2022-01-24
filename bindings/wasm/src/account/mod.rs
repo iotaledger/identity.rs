@@ -4,3 +4,4 @@
 mod account;
 mod account_builder;
 mod update;
+mod method_secret;
