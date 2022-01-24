@@ -219,11 +219,6 @@ import {
     // Remove the #linked-domain-1 Service
     intDoc3.removeService(intDoc3.id.toUrl().join("#linked-domain-1"));
 
-    // Add a VerificationMethod with a new KeyPair, called "keys-2"
-    // const keys3 = new KeyPair(KeyType.Ed25519);
-    // const method3 = VerificationMethod.fromDID(intDoc2.id, keys2, "keys-2");
-    // intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
-
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
     intDoc2.metadataPreviousMessageId = intReceipt2.messageId;
