@@ -10,14 +10,56 @@ use core::mem::replace;
 use core::ops::Deref;
 use core::slice::from_ref;
 
+use serde::de::Deserializer;
+use serde::Deserialize;
+use serde::Serialize;
+use serde::Serializer;
+
 /// A generic container that stores exactly one or many (0+) values of a given type.
+///
+/// # Serialization
+/// An attempt to serialize an empty `OneOrMany` collection will fail. Similarly one cannot construct an empty
+/// collection by means of deserialization.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum OneOrMany<T> {
   /// A single instance of `T`.
   One(T),
   /// Multiple (zero or more) instances of `T`.
-  Many(Vec<T>),
+  Many(
+    #[serde(deserialize_with = "non_empty_vec_deserializer")]
+    #[serde(serialize_with = "non_empty_vec_serializer")]
+    Vec<T>,
+  ),
+}
+
+fn non_empty_vec_deserializer<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+  D: Deserializer<'de>,
+  T: Deserialize<'de>,
+{
+  let v = Vec::<T>::deserialize(deserializer)?;
+  if v.is_empty() {
+    Err(serde::de::Error::custom(
+      "deserialization failed: an empty OneOrMany collection cannot be deserialized",
+    ))
+  } else {
+    Ok(v)
+  }
+}
+
+fn non_empty_vec_serializer<T, S>(v: &[T], serializer: S) -> std::result::Result<S::Ok, S::Error>
+where
+  S: Serializer,
+  T: Serialize,
+{
+  if v.is_empty() {
+    Err(serde::ser::Error::custom(
+      "serialization failed: an empty OneOrMany collection cannot be serialized",
+    ))
+  } else {
+    v.serialize(serializer)
+  }
 }
 
 impl<T> OneOrMany<T> {
@@ -216,6 +258,8 @@ impl<'a, T> Iterator for OneOrManyIter<'a, T> {
 
 #[cfg(test)]
 mod tests {
+  use crate::convert::ToJson;
+
   use super::*;
 
   #[test]
@@ -268,5 +312,30 @@ mod tests {
     let mut collection = OneOrMany::Many(v);
     collection.push(42);
     assert_eq!(collection, OneOrMany::Many((0..=42).collect()));
+  }
+
+  #[test]
+  fn serialize_empty_collection_fails() {
+    let empty_collection = OneOrMany::Many(Vec::<u32>::new());
+    assert!(empty_collection.to_json().is_err());
+  }
+
+  #[test]
+  fn deserialize_empty_collection_fails() {
+    let value_str = "[]";
+    let deserialized: Result<OneOrMany<u32>, serde_json::Error> = serde_json::from_str(value_str);
+    assert!(deserialized.is_err());
+  }
+
+  #[test]
+  fn valid_serialize_deserialize_roundtrips() {
+    let one = OneOrMany::One(1);
+    let many = OneOrMany::Many(vec![1, 2, 3]);
+    let one_serialized = one.to_json().unwrap();
+    let many_serialized = many.to_json().unwrap();
+    let one_deserialized: OneOrMany<i32> = serde_json::from_str(&one_serialized).unwrap();
+    let many_deserialized: OneOrMany<i32> = serde_json::from_str(&many_serialized).unwrap();
+    assert_eq!(one, one_deserialized);
+    assert_eq!(many, many_deserialized);
   }
 }
