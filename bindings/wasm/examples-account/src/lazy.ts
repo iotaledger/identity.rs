@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IdentitySetup, AccountBuilder } from './../../node/identity_wasm.js';
+import { AccountBuilder, ExplorerUrl } from './../../node/identity_wasm.js';
 
 async function lazy() {
 
@@ -38,13 +38,16 @@ async function lazy() {
     await account.publish();
 
     // Retrieve the did of the newly created identity.
-    let iotaDid = account.did();
+    let iotaDid = account.did().toString();
 
     // Print the DID of the created Identity.
-    console.log(iotaDid.toString())
+    console.log(iotaDid)
 
     // Print the local state of the DID Document
     console.log(account.document());
+
+    // Print the Explorer URL for the DID.
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
 }
 
 export { lazy };

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    IdentitySetup, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions
+    ExplorerUrl, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions
 } from './../../node/identity_wasm.js';
 
 /**
@@ -62,9 +62,12 @@ async function signing() {
     let resolved = await account.resolveIdentity();
 
     // Retrieve the DID from the newly created identity.
-    let did = account.did();
+    let did = account.did().toString();
 
-    console.log("[Example] DID = ", did.toString());
+    console.log("[Example] DID = ", did);
+
+    // Print the Explorer URL for the DID.
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 
     // Ensure the resolved DID Document can verify the credential signature
     let verified = resolved.intoDocument().verifyData(signedVc, VerifierOptions.default());
