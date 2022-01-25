@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account::WasmAccount;
+use crate::account::method_secret::WasmMethodSecret;
 use crate::did::{WasmMethodScope, WasmMethodType};
 use crate::error::{wasm_error, Result, WasmResult};
-use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
+use identity::account::{MethodSecret, Update};
 use identity::did::{MethodScope, MethodType};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -32,11 +33,16 @@ impl WasmAccount {
       None => MethodScope::default(),
     };
 
+    let method_secret: Option<MethodSecret> = match options.methodSecret() {
+      Some(value) => Some(value.0.clone()),
+      None => None,
+    };
+
     let promise: Promise = future_to_promise(async move {
       let update = Update::CreateMethod {
         type_: method_type,
         fragment,
-        method_secret: None, //ToDo
+        method_secret,
         scope: method_scope,
       };
 
@@ -67,7 +73,8 @@ extern "C" {
   #[wasm_bindgen(structural, getter, method)]
   pub fn methodType(this: &CreateMethodOptions) -> Option<WasmMethodType>;
 
-  //ToDo methodSecret!
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn methodSecret(this: &CreateMethodOptions) -> Option<WasmMethodSecret>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -76,5 +83,6 @@ export type CreateMethodOptions = {
   fragment: string,
   methodScope?: MethodScope,
   methodType?: MethodType,
+  methodSecret?: MethodSecret
 };
 "#;
