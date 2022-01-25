@@ -13,6 +13,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  /// Adds a new Service to the DID Document.
   #[wasm_bindgen(js_name = createService)]
   pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
     let account = self.0.clone();

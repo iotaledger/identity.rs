@@ -14,6 +14,10 @@ use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  /// Attaches a single or multiple relationships to the given method, if the method exists.
+  ///
+  /// Note: The method needs to be in the set of verification methods,
+  /// so it cannot be an embedded one.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
   pub fn attach_relationships(&mut self, input: &AttachMethodRelationshipOptions) -> Result<Promise> {
     let relationships: Vec<WasmMethodRelationship> = match input.relationships().into_serde().wasm_result()? {

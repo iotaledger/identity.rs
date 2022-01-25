@@ -14,6 +14,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
     let account = self.0.clone();

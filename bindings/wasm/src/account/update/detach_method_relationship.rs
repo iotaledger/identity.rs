@@ -14,6 +14,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  /// Detaches the given relationship from the given method, if the method exists.
   #[wasm_bindgen(js_name = detachMethodRelationships)]
   pub fn detach_relationships(&mut self, input: &DetachMethodRelationshipOptions) -> Result<Promise> {
     let relationships: Vec<WasmMethodRelationship> = match input.relationships().into_serde().wasm_result()? {

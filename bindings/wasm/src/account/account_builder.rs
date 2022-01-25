@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account::WasmAccount;
+use crate::account::method_secret::WasmMethodSecret;
+use crate::crypto::KeyType;
 use crate::did::WasmDID;
 use crate::error::{Result, WasmResult};
 use crate::tangle::Client as WasmClient;
@@ -16,8 +18,6 @@ use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-use crate::account::method_secret::WasmMethodSecret;
-use crate::crypto::KeyType;
 
 #[wasm_bindgen(js_name = AccountBuilder)]
 pub struct WasmAccountBuilder(Rc<WasmRefCell<AccountBuilder>>);
@@ -28,12 +28,18 @@ impl WasmAccountBuilder {
   pub fn new(options: Option<AccountBuilderOptions>) -> Self {
     let default_config: AccountConfig = AccountConfig::default();
     let mut builder = AccountBuilder::new();
+
     if let Some(o) = options {
+      let auto_save: AutoSave = match o.autoSave() {
+        Some(save) => save.0,
+        None => default_config.autosave,
+      };
+
       builder = builder
         .autopublish(o.autopublish().unwrap_or(default_config.autopublish))
-        .milestone(o.milestone().unwrap_or(default_config.milestone));
-        //todo autosave
-        //todo storage
+        .milestone(o.milestone().unwrap_or(default_config.milestone))
+        .autosave(auto_save);
+      //todo storage
       if let Some(c) = o.client() {
         builder = builder.client(Arc::new(c.client.as_ref().clone()));
       };
@@ -177,6 +183,9 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT_2: &'static str = r#"
+/**
+ * Overrides the default creation of private and public keys.
+/**
 export type IdentitySetup = {
     keyType?: KeyType,
     methodSecret?: MethodSecret

@@ -231,6 +231,8 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new verification method to the DID document.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -240,6 +242,11 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+Attaches a single or multiple relationships to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -249,6 +256,8 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new Service to the DID Document.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -258,6 +267,8 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+detachMethodRelationships"></a>
 
 ### account.detachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -267,6 +278,8 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a verification method if the method exists.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -276,6 +289,8 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a Service if it exists.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
