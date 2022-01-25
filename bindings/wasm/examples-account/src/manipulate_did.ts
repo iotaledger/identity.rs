@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IdentitySetup, AccountBuilder, MethodRelationship, } from './../../node/identity_wasm.js';
+import { IdentitySetup, AccountBuilder, MethodRelationship, KeyType, MethodSecret, } from './../../node/identity_wasm.js';
 
 
 async function manipulateIdentity() {
@@ -12,7 +12,7 @@ async function manipulateIdentity() {
 
     // Create a new Account with the default configuration
     let builder = new AccountBuilder();
-    let account = await builder.createIdentity(new IdentitySetup());
+    let account = await builder.createIdentity();
 
     // ===========================================================================
     // Identity Manipulation

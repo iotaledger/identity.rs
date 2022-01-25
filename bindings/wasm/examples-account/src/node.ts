@@ -6,6 +6,7 @@ import { createIdentity } from "./create_did";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
 import { signing } from "./signing";
+import { unchecked } from "./unchecked";
 
 async function main() {
     //Check if an example is mentioned
@@ -26,6 +27,8 @@ async function main() {
             return await signing();
         case "config":
             return await config();
+        case "unchecked":
+            return await unchecked();
         default:
             throw "Unknown example name";
     }

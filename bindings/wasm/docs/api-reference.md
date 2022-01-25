@@ -79,13 +79,13 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 </dl>
 
@@ -103,8 +103,6 @@ See <code>IVerifierOptions</code>.</p>
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.testAccount()](#Account+testAccount) ⇒ <code>string</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
@@ -120,28 +118,13 @@ See <code>IVerifierOptions</code>.</p>
     * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked)
     * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
+    * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+testAccount"></a>
 
@@ -236,6 +219,15 @@ See <code>IVerifierOptions</code>.</p>
 | data | <code>any</code> | 
 | signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
+<a name="Account+updateDocumentUnchecked"></a>
+
+### account.updateDocumentUnchecked(document)
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -271,6 +263,24 @@ See <code>IVerifierOptions</code>.</p>
 | Param | Type |
 | --- | --- |
 | input | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -1984,12 +1994,14 @@ Deserializes a `MethodScope` object from a JSON object.
 **Kind**: global class  
 
 * [MethodSecret](#MethodSecret)
-    * [.ed25519(private_key)](#MethodSecret.ed25519) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * [.ed25519_base58(private_key)](#MethodSecret.ed25519_base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
     * [.merkelKeyCollection(collection)](#MethodSecret.merkelKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 
-<a name="MethodSecret.ed25519"></a>
+<a name="MethodSecret.ed25519_base58"></a>
 
-### MethodSecret.ed25519(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+### MethodSecret.ed25519\_base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 private key.
+
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
 | Param | Type |
@@ -1999,6 +2011,8 @@ Deserializes a `MethodScope` object from a JSON object.
 <a name="MethodSecret.merkelKeyCollection"></a>
 
 ### MethodSecret.merkelKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollection).
+
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
 | Param | Type |
@@ -2573,10 +2587,6 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
@@ -2588,6 +2598,10 @@ Creates a new `VerifierOptions` with default options.
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="start"></a>
 

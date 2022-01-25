@@ -21,6 +21,7 @@ impl WasmMethodSecret {
     Ok(Self(MethodSecret::Ed25519(private)))
   }
 
+  /// Creates a {@link MethodSecret} object from {@link KeyCollection}.
   #[wasm_bindgen(js_name = merkelKeyCollection)]
   pub fn merkel_key_collection(collection: KeyCollection) -> WasmMethodSecret{
     Self(MethodSecret::MerkleKeyCollection(collection.0))

@@ -17,7 +17,7 @@ async function signing() {
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder();
-    let account = await builder.createIdentity(new IdentitySetup());
+    let account = await builder.createIdentity();
 
     // ===========================================================================
     // Signing Example

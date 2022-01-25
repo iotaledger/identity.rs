@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { IdentitySetup, AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
+import {AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
 
 /**
  * This example shows some configurations that can be used for the account.
@@ -50,9 +50,9 @@ async function config() {
     });
 
     try {
-        let account = await builder.createIdentity(new IdentitySetup());
+        let account = await builder.createIdentity();
         let did = account.did();
-        
+
         // Prints the Identity Resolver Explorer URL.
         // The entire history can be observed on this page by clicking "Loading History".
         console.log(`[Example] Explore the DID Document = ${explorer.resolverUrl(did.toString())}`);
