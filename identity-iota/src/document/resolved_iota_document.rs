@@ -6,7 +6,6 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
-use identity_credential::credential::Credential;
 use serde::Deserialize;
 use serde::Serialize;
 
