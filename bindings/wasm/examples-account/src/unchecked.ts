@@ -25,7 +25,7 @@ async function unchecked() {
     let document = account.document();
 
     // Print the local state of the DID Document
-    console.log(`Document before update \n ${document}`);
+    console.log(`Document before update`, document);
 
     // Override the updated field timestamp to 01.01.1990 00:00:00.
     // because we can. This is usually set automatically by Account::update_identity.
@@ -38,7 +38,7 @@ async function unchecked() {
     account.updateDocumentUnchecked(document);
 
     // Print the local state of the DID Document after the update.
-    console.log(`Document before update \n ${account.document()}`);
+    console.log(`Document before update`, account.document());
 }
 
 export { unchecked }
