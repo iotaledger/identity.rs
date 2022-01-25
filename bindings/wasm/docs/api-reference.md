@@ -1,6 +1,8 @@
 ## Classes
 
 <dl>
+<dt><a href="#ChainState">ChainState</a></dt>
+<dd></dd>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#Config">Config</a></dt>
@@ -24,13 +26,25 @@
 <dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#EncryptionKey">EncryptionKey</a></dt>
+<dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
+<dd></dd>
+<dt><a href="#Fragment">Fragment</a></dt>
+<dd></dd>
+<dt><a href="#Generation">Generation</a></dt>
+<dd></dd>
+<dt><a href="#IdentityState">IdentityState</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
 <dd></dd>
+<dt><a href="#KeyLocation">KeyLocation</a></dt>
+<dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
+<dd></dd>
+<dt><a href="#MessageId">MessageId</a></dt>
 <dd></dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
@@ -87,6 +101,63 @@ See <code>IVerifierOptions</code>.</p>
 </dd>
 </dl>
 
+<a name="ChainState"></a>
+
+## ChainState
+**Kind**: global class  
+
+* [ChainState](#ChainState)
+    * [.lastIntegrationMessageId()](#ChainState+lastIntegrationMessageId) ⇒ [<code>MessageId</code>](#MessageId)
+    * [.lastDiffMessageId()](#ChainState+lastDiffMessageId) ⇒ [<code>MessageId</code>](#MessageId)
+    * [.setLastIntegrationMessageId(message)](#ChainState+setLastIntegrationMessageId)
+    * [.setLastDiffMessageId(message)](#ChainState+setLastDiffMessageId)
+    * [.isNewIdentity()](#ChainState+isNewIdentity) ⇒ <code>boolean</code>
+
+<a name="ChainState+lastIntegrationMessageId"></a>
+
+### chainState.lastIntegrationMessageId() ⇒ [<code>MessageId</code>](#MessageId)
+Returns the integration message id of the last published update.
+
+Note: [`MessageId`] has a built-in `null` variant that needs to be checked for.
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+<a name="ChainState+lastDiffMessageId"></a>
+
+### chainState.lastDiffMessageId() ⇒ [<code>MessageId</code>](#MessageId)
+Returns the diff message id of the last published update.
+
+Note: [`MessageId`] has a built-in `null` variant that needs to be checked for.
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+<a name="ChainState+setLastIntegrationMessageId"></a>
+
+### chainState.setLastIntegrationMessageId(message)
+Sets the last integration message id and resets the
+last diff message id to [`MessageId::null()`].
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+
+| Param | Type |
+| --- | --- |
+| message | [<code>MessageId</code>](#MessageId) | 
+
+<a name="ChainState+setLastDiffMessageId"></a>
+
+### chainState.setLastDiffMessageId(message)
+Sets the last diff message id.
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+
+| Param | Type |
+| --- | --- |
+| message | [<code>MessageId</code>](#MessageId) | 
+
+<a name="ChainState+isNewIdentity"></a>
+
+### chainState.isNewIdentity() ⇒ <code>boolean</code>
+Returns whether the identity has been published before.
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
 <a name="Client"></a>
 
 ## Client
@@ -1361,6 +1432,19 @@ Returns the timestamp of the last DID document update.
 Returns a reference to the `proof`.
 
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="EncryptionKey"></a>
+
+## EncryptionKey
+**Kind**: global class  
+<a name="EncryptionKey.deriveEncryptionKey"></a>
+
+### EncryptionKey.deriveEncryptionKey(password) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
+
+| Param | Type |
+| --- | --- |
+| password | <code>string</code> | 
+
 <a name="ExplorerUrl"></a>
 
 ## ExplorerUrl
@@ -1432,6 +1516,179 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="Fragment"></a>
+
+## Fragment
+**Kind**: global class  
+
+* [Fragment](#Fragment)
+    * [new Fragment(value)](#new_Fragment_new)
+    * [.identifier](#Fragment+identifier) ⇒ <code>string</code>
+    * [.name](#Fragment+name) ⇒ <code>string</code>
+
+<a name="new_Fragment_new"></a>
+
+### new Fragment(value)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> | 
+
+<a name="Fragment+identifier"></a>
+
+### fragment.identifier ⇒ <code>string</code>
+Returns the complete fragment identifier.
+
+**Kind**: instance property of [<code>Fragment</code>](#Fragment)  
+<a name="Fragment+name"></a>
+
+### fragment.name ⇒ <code>string</code>
+Returns the fragment name.
+
+**Kind**: instance property of [<code>Fragment</code>](#Fragment)  
+<a name="Generation"></a>
+
+## Generation
+**Kind**: global class  
+
+* [Generation](#Generation)
+    * [new Generation()](#new_Generation_new)
+    * _instance_
+        * [.toUnsignedInteger()](#Generation+toUnsignedInteger) ⇒ <code>number</code>
+        * [.tryIncrement()](#Generation+tryIncrement) ⇒ [<code>Generation</code>](#Generation)
+        * [.tryDecrement()](#Generation+tryDecrement) ⇒ [<code>Generation</code>](#Generation)
+    * _static_
+        * [.fromUnsignedInteger(value)](#Generation.fromUnsignedInteger) ⇒ [<code>Generation</code>](#Generation)
+        * [.min()](#Generation.min) ⇒ [<code>Generation</code>](#Generation)
+        * [.max()](#Generation.max) ⇒ [<code>Generation</code>](#Generation)
+
+<a name="new_Generation_new"></a>
+
+### new Generation()
+Creates a new `WasmGeneration`.
+
+<a name="Generation+toUnsignedInteger"></a>
+
+### generation.toUnsignedInteger() ⇒ <code>number</code>
+Returns the `WasmGeneration` as a 32-bit integer.
+
+**Kind**: instance method of [<code>Generation</code>](#Generation)  
+<a name="Generation+tryIncrement"></a>
+
+### generation.tryIncrement() ⇒ [<code>Generation</code>](#Generation)
+Increments the `WasmGeneration`.
+
+# Errors
+
+Fails in case of overflows.
+
+**Kind**: instance method of [<code>Generation</code>](#Generation)  
+<a name="Generation+tryDecrement"></a>
+
+### generation.tryDecrement() ⇒ [<code>Generation</code>](#Generation)
+Decrements the `WasmGeneration`.
+
+# Errors
+
+Fails in case of underflow.
+
+**Kind**: instance method of [<code>Generation</code>](#Generation)  
+<a name="Generation.fromUnsignedInteger"></a>
+
+### Generation.fromUnsignedInteger(value) ⇒ [<code>Generation</code>](#Generation)
+Creates a new `WasmGeneration` from a 32-bit integer.
+
+**Kind**: static method of [<code>Generation</code>](#Generation)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> | 
+
+<a name="Generation.min"></a>
+
+### Generation.min() ⇒ [<code>Generation</code>](#Generation)
+Returns a `WasmGeneration` of minimum value.
+
+**Kind**: static method of [<code>Generation</code>](#Generation)  
+<a name="Generation.max"></a>
+
+### Generation.max() ⇒ [<code>Generation</code>](#Generation)
+Returns a `WasmGeneration` of maximum value.
+
+**Kind**: static method of [<code>Generation</code>](#Generation)  
+<a name="IdentityState"></a>
+
+## IdentityState
+**Kind**: global class  
+
+* [IdentityState](#IdentityState)
+    * [new IdentityState(document)](#new_IdentityState_new)
+    * [.generation](#IdentityState+generation) ⇒ [<code>Generation</code>](#Generation)
+    * [.document](#IdentityState+document) ⇒ [<code>Document</code>](#Document)
+    * [.incrementGeneration()](#IdentityState+incrementGeneration)
+    * [.storeMethodGenerations(fragment)](#IdentityState+storeMethodGenerations)
+    * [.methodLocation(method_type, fragment)](#IdentityState+methodLocation) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+    * [.keyLocation(method, fragment)](#IdentityState+keyLocation) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+
+<a name="new_IdentityState_new"></a>
+
+### new IdentityState(document)
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
+<a name="IdentityState+generation"></a>
+
+### identityState.generation ⇒ [<code>Generation</code>](#Generation)
+Returns the current generation of the identity integration chain.
+
+**Kind**: instance property of [<code>IdentityState</code>](#IdentityState)  
+<a name="IdentityState+document"></a>
+
+### identityState.document ⇒ [<code>Document</code>](#Document)
+**Kind**: instance property of [<code>IdentityState</code>](#IdentityState)  
+<a name="IdentityState+incrementGeneration"></a>
+
+### identityState.incrementGeneration()
+Increments the generation of the identity diff chain.
+
+**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
+<a name="IdentityState+storeMethodGenerations"></a>
+
+### identityState.storeMethodGenerations(fragment)
+Stores the generations at which the method was inserted.
+
+**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
+
+| Param | Type |
+| --- | --- |
+| fragment | [<code>Fragment</code>](#Fragment) | 
+
+<a name="IdentityState+methodLocation"></a>
+
+### identityState.methodLocation(method_type, fragment) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+Return the `KeyLocation` of the given method.
+
+**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
+
+| Param | Type |
+| --- | --- |
+| method_type | [<code>MethodType</code>](#MethodType) | 
+| fragment | <code>string</code> | 
+
+<a name="IdentityState+keyLocation"></a>
+
+### identityState.keyLocation(method, fragment) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+Returns a key location suitable for the specified `fragment`.
+
+**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
+
+| Param | Type |
+| --- | --- |
+| method | [<code>MethodType</code>](#MethodType) | 
+| fragment | <code>string</code> | 
+
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -1589,6 +1846,52 @@ Deserializes a `KeyCollection` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="KeyLocation"></a>
+
+## KeyLocation
+**Kind**: global class  
+
+* [KeyLocation](#KeyLocation)
+    * [new KeyLocation(method, fragment, generation)](#new_KeyLocation_new)
+    * [.method](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
+    * [.fragment](#KeyLocation+fragment) ⇒ [<code>Fragment</code>](#Fragment)
+    * [.fragmentName](#KeyLocation+fragmentName) ⇒ <code>string</code>
+    * [.generation](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
+
+<a name="new_KeyLocation_new"></a>
+
+### new KeyLocation(method, fragment, generation)
+
+| Param | Type |
+| --- | --- |
+| method | [<code>MethodType</code>](#MethodType) | 
+| fragment | <code>string</code> | 
+| generation | [<code>Generation</code>](#Generation) | 
+
+<a name="KeyLocation+method"></a>
+
+### keyLocation.method ⇒ [<code>MethodType</code>](#MethodType)
+Returns the method type of the key location.
+
+**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+fragment"></a>
+
+### keyLocation.fragment ⇒ [<code>Fragment</code>](#Fragment)
+Returns the fragment name of the key location.
+
+**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+fragmentName"></a>
+
+### keyLocation.fragmentName ⇒ <code>string</code>
+Returns the fragment name of the key location.
+
+**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+generation"></a>
+
+### keyLocation.generation ⇒ [<code>Generation</code>](#Generation)
+Returns the integration generation when this key was created.
+
+**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -1656,6 +1959,29 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="MessageId"></a>
+
+## MessageId
+**Kind**: global class  
+
+* [MessageId](#MessageId)
+    * [new MessageId(bytes)](#new_MessageId_new)
+    * [.null()](#MessageId.null) ⇒ [<code>MessageId</code>](#MessageId)
+
+<a name="new_MessageId_new"></a>
+
+### new MessageId(bytes)
+
+| Param | Type |
+| --- | --- |
+| bytes | <code>string</code> | 
+
+<a name="MessageId.null"></a>
+
+### MessageId.null() ⇒ [<code>MessageId</code>](#MessageId)
+Create a null `MessageId`.
+
+**Kind**: static method of [<code>MessageId</code>](#MessageId)  
 <a name="MethodScope"></a>
 
 ## MethodScope

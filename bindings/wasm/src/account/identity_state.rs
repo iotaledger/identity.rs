@@ -46,7 +46,7 @@ impl WasmIdentityState {
   }
 
   /// Return the `KeyLocation` of the given method.
-  #[wasm_bindgen(getter = methodLocation)]
+  #[wasm_bindgen(js_name = methodLocation)]
   pub fn method_location(&self, method_type: WasmMethodType, fragment: String) -> Result<WasmKeyLocation> {
     self
       .0
