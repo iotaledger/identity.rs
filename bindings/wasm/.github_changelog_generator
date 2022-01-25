@@ -1,11 +1,11 @@
 issues=false
 pr-wo-labels=false
 author=false
-breaking-label=Changed
+breaking-label=**Changed:**
 breaking-labels=Breaking change
-enhancement-label=Added
+enhancement-label=**Added:**
 enhancement-labels=Added
-bugs-label=Patch
+bugs-label=**Patch:**
 bug-labels=Patch
 deprecated-labels=Deprecated
 removed-labels=Removed
