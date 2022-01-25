@@ -182,44 +182,116 @@ mod tests {
     let did_path: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example/path").unwrap();
     let did_query: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example?query").unwrap();
     let did_fragment: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example#fragment").unwrap();
+    let did_different_fragment: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example#differentfragment").unwrap();
     let did_url: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example/path?query#fragment").unwrap();
     let did_url_complex: CoreDIDUrl = CoreDIDUrl::parse("did:iota:example/path?query&relativeRef=/#fragment").unwrap();
 
-    // Invalid: empty query should not match anything.
-    let empty_query: MethodQuery = MethodQuery::from("");
-    assert!(empty_query.matches(&did_base).not());
-    assert!(empty_query.matches(&did_path).not());
-    assert!(empty_query.matches(&did_query).not());
-    assert!(empty_query.matches(&did_fragment).not());
-    assert!(empty_query.matches(&did_url).not());
-    assert!(empty_query.matches(&did_url_complex).not());
+    // INVALID: empty query should not match anything.
+    {
+      let query_empty = MethodQuery::from("");
+      assert!(query_empty.matches(&did_base).not());
+      assert!(query_empty.matches(&did_path).not());
+      assert!(query_empty.matches(&did_query).not());
+      assert!(query_empty.matches(&did_fragment).not());
+      assert!(query_empty.matches(&did_different_fragment).not());
+      assert!(query_empty.matches(&did_url).not());
+      assert!(query_empty.matches(&did_url_complex).not());
+    }
 
-    // Invalid: query with DID and no fragment should not match anything.
-    let empty_query: MethodQuery = MethodQuery::from("");
-    assert!(empty_query.matches(&did_base).not());
-    assert!(empty_query.matches(&did_path).not());
-    assert!(empty_query.matches(&did_query).not());
-    assert!(empty_query.matches(&did_fragment).not());
-    assert!(empty_query.matches(&did_url).not());
-    assert!(empty_query.matches(&did_url_complex).not());
+    // VALID: query with only a fragment should match the same fragment.
+    {
+      let query_fragment_only = MethodQuery::from("fragment");
+      assert!(query_fragment_only.matches(&did_base).not());
+      assert!(query_fragment_only.matches(&did_path).not());
+      assert!(query_fragment_only.matches(&did_query).not());
+      assert!(query_fragment_only.matches(&did_fragment));
+      assert!(query_fragment_only.matches(&did_different_fragment).not());
+      assert!(query_fragment_only.matches(&did_url));
+      assert!(query_fragment_only.matches(&did_url_complex));
+    }
 
-    assert_eq!(MethodQuery::from("fragment").fragment(), Some("fragment"));
-    assert_eq!(MethodQuery::from("#fragment").fragment(), Some("fragment"));
-    assert_eq!(MethodQuery::from("/path?query#fragment").fragment(), Some("fragment"));
-    assert!(MethodQuery::from("did:iota:example").fragment().is_none());
-    assert_eq!(
-      MethodQuery::from("did:iota:example#fragment").fragment(),
-      Some("fragment")
-    );
-    assert!(MethodQuery::from("did:iota:example?query").fragment().is_none());
-    assert!(MethodQuery::from("did:iota:example/path").fragment().is_none());
-    assert_eq!(
-      MethodQuery::from("did:iota:example/path?query#fragment").fragment(),
-      Some("fragment")
-    );
-    assert_eq!(
-      MethodQuery::from("did:iota:example/path?query&relativeRef=/#fragment").fragment(),
-      Some("fragment")
-    );
+    // VALID: query with differentfragment should only match the same fragment.
+    {
+      let query_different_fragment = MethodQuery::from("differentfragment");
+      assert!(query_different_fragment.matches(&did_base).not());
+      assert!(query_different_fragment.matches(&did_path).not());
+      assert!(query_different_fragment.matches(&did_query).not());
+      assert!(query_different_fragment.matches(&did_fragment).not());
+      assert!(query_different_fragment.matches(&did_different_fragment));
+      assert!(query_different_fragment.matches(&did_url).not());
+      assert!(query_different_fragment.matches(&did_url_complex).not());
+    }
+
+    // VALID: query with a #fragment should match the same fragment.
+    {
+      let query_fragment_delimiter = MethodQuery::from("#fragment");
+      assert!(query_fragment_delimiter.matches(&did_base).not());
+      assert!(query_fragment_delimiter.matches(&did_path).not());
+      assert!(query_fragment_delimiter.matches(&did_query).not());
+      assert!(query_fragment_delimiter.matches(&did_fragment));
+      assert!(query_fragment_delimiter.matches(&did_different_fragment).not());
+      assert!(query_fragment_delimiter.matches(&did_url));
+      assert!(query_fragment_delimiter.matches(&did_url_complex));
+    }
+
+    // VALID: query with a relative DID Url should match the same fragment.
+    {
+      let query_relative_did_url = MethodQuery::from("/path?query#fragment");
+      assert!(query_relative_did_url.matches(&did_base).not());
+      assert!(query_relative_did_url.matches(&did_path).not());
+      assert!(query_relative_did_url.matches(&did_query).not());
+      assert!(query_relative_did_url.matches(&did_fragment));
+      assert!(query_relative_did_url.matches(&did_different_fragment).not());
+      assert!(query_relative_did_url.matches(&did_url));
+      assert!(query_relative_did_url.matches(&did_url_complex));
+    }
+
+    // INVALID: query with DID and no fragment should not match anything.
+    {
+      let query_did = MethodQuery::from("did:iota:example");
+      assert!(query_did.matches(&did_base).not());
+      assert!(query_did.matches(&did_path).not());
+      assert!(query_did.matches(&did_query).not());
+      assert!(query_did.matches(&did_fragment).not());
+      assert!(query_did.matches(&did_different_fragment).not());
+      assert!(query_did.matches(&did_url).not());
+      assert!(query_did.matches(&did_url_complex).not());
+    }
+
+    // VALID: query with a DID fragment should match the same fragment.
+    {
+      let query_did_fragment = MethodQuery::from("did:iota:example#fragment");
+      assert!(query_did_fragment.matches(&did_base).not());
+      assert!(query_did_fragment.matches(&did_path).not());
+      assert!(query_did_fragment.matches(&did_query).not());
+      assert!(query_did_fragment.matches(&did_fragment));
+      assert!(query_did_fragment.matches(&did_different_fragment).not());
+      assert!(query_did_fragment.matches(&did_url));
+      assert!(query_did_fragment.matches(&did_url_complex));
+    }
+
+    // VALID: query with a DID Url with a fragment should match the same fragment.
+    {
+      let query_did_fragment = MethodQuery::from("did:iota:example/path?query#fragment");
+      assert!(query_did_fragment.matches(&did_base).not());
+      assert!(query_did_fragment.matches(&did_path).not());
+      assert!(query_did_fragment.matches(&did_query).not());
+      assert!(query_did_fragment.matches(&did_fragment));
+      assert!(query_did_fragment.matches(&did_different_fragment).not());
+      assert!(query_did_fragment.matches(&did_url));
+      assert!(query_did_fragment.matches(&did_url_complex));
+    }
+
+    // VALID: query with a complex DID Url with a fragment should match the same fragment.
+    {
+      let query_did_fragment = MethodQuery::from("did:iota:example/path?query&relativeRef=/#fragment");
+      assert!(query_did_fragment.matches(&did_base).not());
+      assert!(query_did_fragment.matches(&did_path).not());
+      assert!(query_did_fragment.matches(&did_query).not());
+      assert!(query_did_fragment.matches(&did_fragment));
+      assert!(query_did_fragment.matches(&did_different_fragment).not());
+      assert!(query_did_fragment.matches(&did_url));
+      assert!(query_did_fragment.matches(&did_url_complex));
+    }
   }
 }
