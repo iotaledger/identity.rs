@@ -35,47 +35,42 @@ pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  //ToDo remove test method
-  #[wasm_bindgen(js_name = testAccount)]
-  pub fn test_account(&self) -> String {
-    String::from("test success")
-  }
-
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
     let x = self.0.as_ref().borrow();
     WasmDID::from(x.document().id().clone())
   }
 
+  /// Returns whether auto-publish is enabled.
   #[wasm_bindgen]
   pub fn autopublish(&self) -> bool {
     self.0.as_ref().borrow().autopublish()
   }
 
+  /// Returns the auto-save configuration value.
   #[wasm_bindgen]
   pub fn autosave(&self) -> WasmAutoSave {
-    unimplemented!() //ToDo
+    WasmAutoSave(self.0.as_ref().borrow().autosave())
   }
 
+  /// Returns the total number of actions executed by this instance.
   #[wasm_bindgen]
   pub fn actions(&self) -> usize {
     self.0.as_ref().borrow().actions()
-  }
-
-  pub fn set_client(&self, _client: Client) {
-    todo!();
   }
 
   pub fn state(&self) {
     unimplemented!() //ToDo
   }
 
+  /// Returns a copy of the document managed by the `Account`.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
     let document: IotaDocument = self.0.as_ref().borrow().document().clone();
     WasmDocument::from(document)
   }
 
+  /// Resolves the DID Document associated with this `Account` from the Tangle.
   #[wasm_bindgen(js_name = resolveIdentity)]
   pub fn resolve_identity(&self) -> PromiseResolvedDocument {
     let account = self.0.clone();
@@ -93,6 +88,9 @@ impl WasmAccount {
     promise.unchecked_into::<PromiseResolvedDocument>()
   }
 
+  /// Removes the identity from the local storage entirely.
+  ///
+  /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
     let account = self.0;
@@ -115,6 +113,7 @@ impl WasmAccount {
     promise
   }
 
+  /// Push all unpublished changes to the tangle in a single message.
   #[wasm_bindgen]
   pub fn publish(&mut self) -> Promise {
     let account = self.0.clone();
@@ -129,6 +128,7 @@ impl WasmAccount {
     })
   }
 
+  /// Signs a {@link Credential} with the key specified by `fragment`.
   #[wasm_bindgen(js_name = createSignedCredential)]
   pub fn create_signed_credential(
     &self,
@@ -153,6 +153,7 @@ impl WasmAccount {
     promise.unchecked_into::<PromiseCredential>()
   }
 
+  /// Signs a {@link Document} with the key specified by `fragment`.
   #[wasm_bindgen(js_name = createSignedDocument)]
   pub fn create_signed_document(
     &self,
@@ -177,6 +178,7 @@ impl WasmAccount {
     promise.unchecked_into::<PromiseDocument>()
   }
 
+  /// Signs a {@link Presentation} the key specified by `fragment`.
   #[wasm_bindgen(js_name = createSignedPresentation)]
   pub fn create_signed_presentation(
     &self,
@@ -204,6 +206,7 @@ impl WasmAccount {
     promise.unchecked_into::<PromisePresentation>()
   }
 
+  /// Signs arbitrary `data` with the key specified by `fragment`.
   #[wasm_bindgen(js_name = createSignedData)]
   pub fn create_signed_data(
     &self,
@@ -228,6 +231,13 @@ impl WasmAccount {
     Ok(promise)
   }
 
+  /// Overwrites the {@link Document} this account manages, **without doing any validation**.
+  ///
+  /// # WARNING
+  ///
+  /// This method is dangerous and can easily corrupt the internal state,
+  /// potentially making the identity unusable. Only call this if you fully
+  /// understand the implications!
   #[wasm_bindgen(js_name = updateDocumentUnchecked)]
   pub fn update_document_unchecked(&mut self, document: WasmDocument) -> Promise {
     let account = self.0.clone();
@@ -236,6 +246,24 @@ impl WasmAccount {
         .as_ref()
         .borrow_mut()
         .update_document_unchecked(document.0)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
+  }
+
+  /// Fetches the latest changes from the tangle and **overwrites** the local document.
+  ///
+  /// If a DID is managed from distributed accounts, this should be called before making changes
+  /// to the identity, to avoid publishing updates that would be ignored.
+  #[wasm_bindgen(js_name = fetchState)]
+  pub fn fetch_state(&mut self) -> Promise {
+    let account = self.0.clone();
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .fetch_state()
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
