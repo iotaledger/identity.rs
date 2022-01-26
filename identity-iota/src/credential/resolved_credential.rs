@@ -80,7 +80,10 @@ impl<T: Serialize> ResolvedCredential<T> {
   /// # Errors   
   /// If the `fail_fast` parameter is set then at most one [`ValidationUnitError`] can be returned in the error case,
   /// otherwise the `OneOrMany::Many` variant is used and there will be an entry for every deactivated subject document.
-  pub fn try_only_active_subject_documents(&self, fail_fast: bool) -> Result<(), OneOrMany<CredentialValidationUnitError>> {
+  pub fn try_only_active_subject_documents(
+    &self,
+    fail_fast: bool,
+  ) -> Result<(), OneOrMany<CredentialValidationUnitError>> {
     let mut iter = self.deactivated_subject_documents().peekable();
 
     if iter.peek().is_none() {
@@ -120,10 +123,10 @@ pub enum CredentialValidationUnitError {
   InvalidProof {
     source: Box<dyn std::error::Error>, // Todo: Put an actual error type here
   },
-  /// Indicates that the structure of the `Credential` is not spec compliant 
+  /// Indicates that the structure of the `Credential` is not spec compliant
   #[error("credential validation failed: the credentials structure does not comply with the spec: {source}")]
   InvalidStructure {
-    source: Box<dyn std::error::Error>, // Todo: Put an actual error type here 
+    source: Box<dyn std::error::Error>, // Todo: Put an actual error type here
   },
 }
 
@@ -171,7 +174,7 @@ impl std::fmt::Display for CredentialResolutionError {
   }
 }
 
-impl std::error::Error for CredentialResolutionError {} 
+impl std::error::Error for CredentialResolutionError {}
 
 impl From<CredentialValidationUnitError> for CredentialResolutionError {
   fn from(error: CredentialValidationUnitError) -> Self {

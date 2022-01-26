@@ -11,10 +11,10 @@ use serde::Serialize;
 
 use crate::credential::CredentialResolutionError;
 use crate::credential::CredentialValidationOptions;
+use crate::credential::CredentialValidationUnitError;
 use crate::credential::PresentationResolutionError;
 use crate::credential::PresentationValidationOptions;
 use crate::credential::ResolvedCredential;
-use crate::credential::CredentialValidationUnitError;
 use crate::credential::ResolvedPresentation;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -54,8 +54,9 @@ pub trait TangleResolve {
     fail_fast: bool,
   ) -> std::result::Result<ResolvedCredential<T>, CredentialResolutionError> {
     // simple converter
-    let bool_to_result =
-      |value: bool, error: CredentialValidationUnitError| -> Result<(), CredentialValidationUnitError> { value.then(|| ()).ok_or(error) };
+    let bool_to_result = |value: bool,
+                          error: CredentialValidationUnitError|
+     -> Result<(), CredentialValidationUnitError> { value.then(|| ()).ok_or(error) };
 
     let initial_validator =
       |initial_event: InitialisationEvent<'_, T>, errors: &mut ValidationUnitErrors| -> ControlFlow<()> {
@@ -198,10 +199,15 @@ pub trait TangleResolve {
   }
 
   /// Resolves and validates a `Presentation` in accordance with the given `validation_options`
-  async fn resolve_presentation<T, U> (&self, presentation: Presentation<T,U>, validation_options: PresentationValidationOptions) -> std::result::Result<ResolvedPresentation<T,U>, PresentationResolutionError> 
+  async fn resolve_presentation<T, U>(
+    &self,
+    presentation: Presentation<T, U>,
+    validation_options: &PresentationValidationOptions,
+    fail_fast: bool,
+  ) -> std::result::Result<ResolvedPresentation<T, U>, PresentationResolutionError>
   where
-  T: Serialize + Clone, 
-  U: Serialize + Clone, 
+    T: Serialize + Clone,
+    U: Serialize + Clone,
   {
     todo!()
   }
@@ -213,12 +219,12 @@ mod credential_resolution_internals {
 
   use super::Credential;
   use super::CredentialResolutionError;
+  use super::CredentialValidationUnitError;
   use super::IotaDID;
   use super::ResolvedCredential;
   use super::ResolvedIotaDocument;
   use super::Result;
   use super::TangleResolve;
-  use super::CredentialValidationUnitError;
   use std::collections::BTreeMap;
   use std::ops::ControlFlow;
 

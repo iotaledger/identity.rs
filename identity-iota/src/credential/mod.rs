@@ -7,11 +7,11 @@ mod validation_options;
 mod validator;
 
 pub use self::resolved_credential::CredentialResolutionError;
-pub use self::resolved_credential::ResolvedCredential;
 pub use self::resolved_credential::CredentialValidationUnitError;
-pub use self::resolved_presentation::ResolvedPresentation;
+pub use self::resolved_credential::ResolvedCredential;
+pub use self::resolved_presentation::PresentationResolutionError;
 pub use self::resolved_presentation::PresentationValidationUnitError;
-pub use self::resolved_presentation::PresentationResolutionError; 
+pub use self::resolved_presentation::ResolvedPresentation;
 pub use self::validation_options::CredentialValidationOptions;
 pub use self::validation_options::PresentationValidationOptions;
 pub use self::validator::CredentialValidation;
