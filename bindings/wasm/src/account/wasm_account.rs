@@ -12,9 +12,9 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::account::{Account, PublishOptions};
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
+use identity::account::{Account, PublishOptions};
 
 use identity::credential::Credential;
 use identity::credential::Presentation;
@@ -135,11 +135,11 @@ impl WasmAccount {
   pub fn publish_with_options(&mut self, publish_options: WasmPublishOptions) -> Promise {
     let mut options: PublishOptions = PublishOptions::new();
 
-    if let Some(force_integration) = publish_options.forceIntegrationUpdate(){
+    if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
       options = options.force_integration_update(force_integration);
     }
 
-    if let Some(sign_with) = publish_options.signWith(){
+    if let Some(sign_with) = publish_options.signWith() {
       let s: String = sign_with;
       options = options.sign_with(s);
     }
