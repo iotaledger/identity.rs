@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account::WasmAccount;
-use crate::error::{wasm_error, Result, WasmResult};
+use crate::error::{Result, WasmResult};
 use identity::account::Update;
-use identity::account::UpdateError::MissingRequiredField;
-use identity::core::Url;
-use identity::did::ServiceEndpoint;
+
+
+
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;

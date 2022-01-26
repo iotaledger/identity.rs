@@ -7,10 +7,10 @@ use crate::crypto::KeyType;
 use crate::did::WasmDID;
 use crate::error::{Result, WasmResult};
 use crate::tangle::Client as WasmClient;
-use crate::tangle::WasmNetwork;
+
 use identity::account::{AccountBuilder, IdentitySetup};
 use identity::account::{AccountConfig, AutoSave};
-use identity::iota::Client;
+
 use js_sys::Promise;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -49,7 +49,7 @@ impl WasmAccountBuilder {
   }
 
   #[wasm_bindgen(js_name = loadIdentity)]
-  pub fn load_identity(&mut self, did: WasmDID) -> Result<PromiseAccount> {
+  pub fn load_identity(&mut self, _did: WasmDID) -> Result<PromiseAccount> {
     todo!()
     // let builder = self.0.clone();
     // let promise: Promise = future_to_promise(async move {

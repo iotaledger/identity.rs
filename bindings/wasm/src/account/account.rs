@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account::account_builder::WasmAutoSave;
-use crate::common::WasmTimestamp;
+
 use crate::credential::{WasmCredential, WasmPresentation};
-use crate::crypto::{WasmProofPurpose, WasmSignatureOptions};
+use crate::crypto::{WasmSignatureOptions};
 use crate::did::{PromiseResolvedDocument, WasmDID, WasmDocument, WasmResolvedDocument};
 use crate::error::{Result, WasmResult};
 use crate::tangle::Client;
 use identity::account::{Account, AccountBuilder, AccountStorage};
-use identity::core::{Timestamp, ToJson};
+
 use identity::credential::{Credential, Presentation};
-use identity::crypto::{ProofPurpose, SetSignature, Signature, SignatureOptions, TrySignature, TrySignatureMut};
+use identity::crypto::{SignatureOptions};
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::IotaDocument;
 use js_sys::Promise;
-use serde::ser::Error;
-use serde::{Serialize, Serializer};
-use serde_repr::{Deserialize_repr, Serialize_repr};
+
+
+
 use std::rc::Rc;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
