@@ -125,19 +125,19 @@ impl<T, U> Presentation<T, U> {
     self.proof.as_mut()
   }
 
-  /// An iterator over the credentials that have the `nonTransferable` property set, but 
+  /// An iterator over the credentials that have the `nonTransferable` property set, but
   /// the credential subject id does not correspond to URL of the presentation's holder
   pub fn non_transferable_violations(&self) -> impl Iterator<Item = &Credential<U>> + '_ {
     self.verifiable_credential.iter().filter(|credential| {
-      if credential.non_transferable.filter(|value|*value).is_some() {
+      if credential.non_transferable.filter(|value| *value).is_some() {
         if let OneOrMany::One(ref credential_subject) = credential.credential_subject {
           credential_subject.id != self.holder
         } else {
           // if the nonTransferable property is set the credential must have exactly one credentialSubject
-          true 
+          true
         }
       } else {
-        false 
+        false
       }
     })
   }

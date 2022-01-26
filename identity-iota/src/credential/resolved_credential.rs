@@ -25,12 +25,12 @@ pub struct ResolvedCredential<T> {
 
 impl<T: Serialize> ResolvedCredential<T> {
   /// Verify the signature using the issuer's DID document.
-  pub fn verify_signature(&self, options: &VerifierOptions) -> Result<(), ValidationUnitError> {
+  pub fn verify_signature(&self, options: &VerifierOptions) -> Result<(), CredentialValidationUnitError> {
     self
       .issuer
       .document
       .verify_data(&self.credential, options)
-      .map_err(|err| ValidationUnitError::InvalidProof { source: Box::new(err) })
+      .map_err(|err| CredentialValidationUnitError::InvalidProof { source: Box::new(err) })
   }
 
   /// Returns an iterator over the resolved documents that have been deactivated
@@ -61,18 +61,18 @@ impl<T: Serialize> ResolvedCredential<T> {
       }
   }
 
-  pub fn try_expires_after(&self, timestamp: Timestamp) -> Result<(), ValidationUnitError> {
+  pub fn try_expires_after(&self, timestamp: Timestamp) -> Result<(), CredentialValidationUnitError> {
     self
       .expires_after(timestamp)
       .then(|| ())
-      .ok_or(ValidationUnitError::InvalidExpirationDate)
+      .ok_or(CredentialValidationUnitError::InvalidExpirationDate)
   }
 
-  pub fn try_issued_before(&self, timestamp: Timestamp) -> Result<(), ValidationUnitError> {
+  pub fn try_issued_before(&self, timestamp: Timestamp) -> Result<(), CredentialValidationUnitError> {
     self
       .issued_before(timestamp)
       .then(|| ())
-      .ok_or(ValidationUnitError::InvalidIssuanceDate)
+      .ok_or(CredentialValidationUnitError::InvalidIssuanceDate)
   }
 
   /// Checks that all the contained resolved subject documents are active.
@@ -80,22 +80,22 @@ impl<T: Serialize> ResolvedCredential<T> {
   /// # Errors   
   /// If the `fail_fast` parameter is set then at most one [`ValidationUnitError`] can be returned in the error case,
   /// otherwise the `OneOrMany::Many` variant is used and there will be an entry for every deactivated subject document.
-  pub fn try_only_active_subject_documents(&self, fail_fast: bool) -> Result<(), OneOrMany<ValidationUnitError>> {
+  pub fn try_only_active_subject_documents(&self, fail_fast: bool) -> Result<(), OneOrMany<CredentialValidationUnitError>> {
     let mut iter = self.deactivated_subject_documents().peekable();
 
     if iter.peek().is_none() {
       Ok(())
     } else if fail_fast {
-      let error: OneOrMany<ValidationUnitError> = iter
+      let error: OneOrMany<CredentialValidationUnitError> = iter
         .take(1)
         .map(|deactivated_doc| deactivated_doc.did().to_url())
-        .map(|url| ValidationUnitError::DeactivatedSubjectDocument { did_url: url })
+        .map(|url| CredentialValidationUnitError::DeactivatedSubjectDocument { did_url: url })
         .collect();
       Err(error)
     } else {
-      let errors: OneOrMany<ValidationUnitError> = iter
+      let errors: OneOrMany<CredentialValidationUnitError> = iter
         .map(|deactivated_doc| deactivated_doc.did().to_url())
-        .map(|url| ValidationUnitError::DeactivatedSubjectDocument { did_url: url })
+        .map(|url| CredentialValidationUnitError::DeactivatedSubjectDocument { did_url: url })
         .collect();
       Err(errors)
     }
@@ -104,7 +104,7 @@ impl<T: Serialize> ResolvedCredential<T> {
 
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error)]
-pub enum ValidationUnitError {
+pub enum CredentialValidationUnitError {
   /// Indicates that the expiration date of the credential is not considered valid.
   #[error("credential validation failed: the expiration date does not satisfy the validation criterea")]
   InvalidExpirationDate,
@@ -120,6 +120,11 @@ pub enum ValidationUnitError {
   InvalidProof {
     source: Box<dyn std::error::Error>, // Todo: Put an actual error type here
   },
+  /// Indicates that the structure of the `Credential` is not spec compliant 
+  #[error("credential validation failed: the credentials structure does not comply with the spec: {source}")]
+  InvalidStructure {
+    source: Box<dyn std::error::Error>, // Todo: Put an actual error type here 
+  },
 }
 
 #[derive(Debug)]
@@ -130,7 +135,7 @@ pub enum CredentialResolutionError {
   },
   /// Caused by attempting to resolve a [`Credential`] that does not meet one or more specified validation rules.
   Validation {
-    validation_errors: OneOrMany<ValidationUnitError>,
+    validation_errors: OneOrMany<CredentialValidationUnitError>,
   },
 }
 
@@ -165,16 +170,19 @@ impl std::fmt::Display for CredentialResolutionError {
     }
   }
 }
-impl From<ValidationUnitError> for CredentialResolutionError {
-  fn from(error: ValidationUnitError) -> Self {
+
+impl std::error::Error for CredentialResolutionError {} 
+
+impl From<CredentialValidationUnitError> for CredentialResolutionError {
+  fn from(error: CredentialValidationUnitError) -> Self {
     Self::Validation {
       validation_errors: OneOrMany::One(error),
     }
   }
 }
 
-impl From<OneOrMany<ValidationUnitError>> for CredentialResolutionError {
-  fn from(validation_errors: OneOrMany<ValidationUnitError>) -> Self {
+impl From<OneOrMany<CredentialValidationUnitError>> for CredentialResolutionError {
+  fn from(validation_errors: OneOrMany<CredentialValidationUnitError>) -> Self {
     Self::Validation { validation_errors }
   }
 }
