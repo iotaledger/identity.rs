@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::crypto::merkle_key::Blake2b256;
@@ -22,8 +22,8 @@ pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 impl WasmVerificationMethod {
   /// Creates a new `VerificationMethod` object from the given `key`.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &KeyPair, fragment: String) -> Result<WasmVerificationMethod, JsValue> {
-    IotaVerificationMethod::from_keypair(&key.0, &fragment)
+  pub fn new(key: &KeyPair, fragment: &str) -> Result<WasmVerificationMethod, JsValue> {
+    IotaVerificationMethod::from_keypair(&key.0, fragment)
       .map_err(wasm_error)
       .map(Self)
   }

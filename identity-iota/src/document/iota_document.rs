@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt;
@@ -310,6 +310,7 @@ impl IotaDocument {
   }
 
   /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
+  // TODO: return an error or bool if no service was removed?
   pub fn remove_service(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.service_mut().remove(&core_did_url);
@@ -735,6 +736,7 @@ mod tests {
 
   use identity_core::common::Object;
   use identity_core::common::Timestamp;
+  use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_core::crypto::merkle_key::Sha256;
@@ -1189,7 +1191,7 @@ mod tests {
   }
 
   #[test]
-  fn test_diff() {
+  fn test_diff_signing_methods() {
     // Ensure only capability invocation methods are allowed to sign a diff.
     for scope in [
       MethodScope::assertion_method(),
@@ -1238,6 +1240,126 @@ mod tests {
       } else {
         assert!(diff_result.is_err());
       }
+    }
+  }
+
+  #[test]
+  fn test_diff_properties() {
+    // Ensure custom fields added to properties are retained by diffs.
+    let key1: KeyPair = generate_testkey();
+    let doc1: IotaDocument = IotaDocument::new(&key1).unwrap();
+    let message_id: MessageId = MessageId::new([3_u8; 32]);
+
+    // Add a new property on the document.
+    let doc2 = {
+      let mut doc2: IotaDocument = doc1.clone();
+      doc2.properties_mut().insert("foo".into(), 123.into());
+      let diff2: DiffMessage = doc1
+        .diff(
+          &doc2,
+          message_id,
+          key1.private(),
+          doc1.default_signing_method().unwrap().id(),
+        )
+        .unwrap();
+      assert!(doc1.verify_diff(&diff2).is_ok());
+      assert_eq!(
+        diff2.merge(&doc1).unwrap().properties().get("foo").unwrap(),
+        &Value::from(123)
+      );
+      doc2
+    };
+
+    // Mutate a property on the document.
+    let doc3 = {
+      let mut doc3: IotaDocument = doc2.clone();
+      *doc3.properties_mut().get_mut("foo").unwrap() = 456.into();
+      let diff3: DiffMessage = doc2
+        .diff(
+          &doc3,
+          message_id,
+          key1.private(),
+          doc2.default_signing_method().unwrap().id(),
+        )
+        .unwrap();
+      assert!(doc2.verify_diff(&diff3).is_ok());
+      assert_eq!(
+        diff3.merge(&doc2).unwrap().properties().get("foo").unwrap(),
+        &Value::from(456)
+      );
+      doc3
+    };
+
+    // Remove a property on the document.
+    {
+      let mut doc4: IotaDocument = doc3.clone();
+      assert_eq!(doc4.properties_mut().remove("foo").unwrap(), Value::from(456));
+      let diff4: DiffMessage = doc3
+        .diff(
+          &doc4,
+          message_id,
+          key1.private(),
+          doc3.default_signing_method().unwrap().id(),
+        )
+        .unwrap();
+      assert!(doc3.verify_diff(&diff4).is_ok());
+      assert!(diff4.merge(&doc3).unwrap().properties().get("foo").is_none());
+    }
+
+    // Add a new property on the metadata.
+    let doc5 = {
+      let mut doc5: IotaDocument = doc1.clone();
+      doc5.metadata.properties.insert("bar".into(), 789.into());
+      let diff5: DiffMessage = doc1
+        .diff(
+          &doc5,
+          message_id,
+          key1.private(),
+          doc1.default_signing_method().unwrap().id(),
+        )
+        .unwrap();
+      assert!(doc1.verify_diff(&diff5).is_ok());
+      assert_eq!(
+        diff5.merge(&doc1).unwrap().metadata.properties.get("bar").unwrap(),
+        &Value::from(789)
+      );
+      doc5
+    };
+
+    // Mutate a property on the metadata.
+    let doc6 = {
+      let mut doc6: IotaDocument = doc5.clone();
+      *doc6.metadata.properties.get_mut("bar").unwrap() = "abc".into();
+      let diff6: DiffMessage = doc5
+        .diff(
+          &doc6,
+          message_id,
+          key1.private(),
+          doc5.default_signing_method().unwrap().id(),
+        )
+        .unwrap();
+      assert!(doc5.verify_diff(&diff6).is_ok());
+      assert_eq!(
+        diff6.merge(&doc5).unwrap().metadata.properties.get("bar").unwrap(),
+        &Value::from("abc")
+      );
+      doc6
+    };
+
+    // Remove a property on the metadata.
+    {
+      let mut doc7: IotaDocument = doc6.clone();
+      assert_eq!(doc7.metadata.properties.remove("bar").unwrap(), Value::from("abc"));
+      let diff7: DiffMessage = doc6
+        .diff(
+          &doc7,
+          message_id,
+          key1.private(),
+          doc6.default_signing_method().unwrap().id(),
+        )
+        .unwrap();
+      assert!(doc6.verify_diff(&diff7).is_ok());
+      assert!(diff7.merge(&doc6).unwrap().metadata.properties.get("bar").is_none());
     }
   }
 

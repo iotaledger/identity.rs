@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {
@@ -45,7 +45,7 @@ async function merkleKey(clientConfig) {
     issuer.doc.insertMethod(method, MethodScope.VerificationMethod());
     issuer.doc.metadataPreviousMessageId = issuer.receipt.messageId;
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
 
     // Publish the Identity to the IOTA Network and log the results.
     // This may take a few seconds to complete proof-of-work.
@@ -86,7 +86,7 @@ async function merkleKey(clientConfig) {
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
     issuer.doc.metadataPreviousMessageId = receipt.messageId;
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
     const nextReceipt = await client.publishDocument(issuer.doc);
     logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);
 
