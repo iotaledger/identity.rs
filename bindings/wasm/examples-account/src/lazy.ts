@@ -35,6 +35,7 @@ async function lazy() {
     await account.deleteService("example-service");
 
     // Publish the updates as one message to the tangle.
+    // Also see: account.publishWithOptions(..)
     await account.publish();
 
     // Retrieve the did of the newly created identity.

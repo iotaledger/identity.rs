@@ -13,7 +13,7 @@ use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Client;
-use identity::account::Account;
+use identity::account::{Account, PublishOptions};
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 
@@ -122,6 +122,35 @@ impl WasmAccount {
         .as_ref()
         .borrow_mut()
         .publish()
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
+  }
+
+  /// Push all unpublished changes to the Tangle in a single message, optionally choosing
+  /// the signing key used or forcing an integration chain update.
+  ///
+  /// @see {@link PublishOptions}
+  #[wasm_bindgen (js_name = publishWithOptions)]
+  pub fn publish_with_options(&mut self, publish_options: WasmPublishOptions) -> Promise {
+    let mut options: PublishOptions = PublishOptions::new();
+
+    if let Some(force_integration) = publish_options.forceIntegrationUpdate(){
+      options = options.force_integration_update(force_integration.into());
+    }
+
+    if let Some(sign_with) = publish_options.signWith(){
+      let s: String = sign_with.into();
+      options = options.sign_with(s);
+    }
+
+    let account = self.0.clone();
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .publish_with_options(options)
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -294,3 +323,44 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Document>")]
   pub type PromiseDocument;
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "PublishOptions")]
+  pub type WasmPublishOptions;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn forceIntegrationUpdate(this: &WasmPublishOptions) -> Option<bool>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn signWith(this: &WasmPublishOptions) -> Option<String>;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT_2: &'static str = r#"
+/**
+ * Options to customize how identities are published to the Tangle.
+**/
+export type PublishOptions = {
+    /**
+     * Whether to force the publication to be an integration update.
+     * If this option is not set, the account automatically determines whether
+     * an update needs to be published as an integration or a diff update.
+     * Publishing as an integration update is always valid, but not recommended
+     * for identities with many updates.
+     *
+     * See the IOTA DID method specification for more details.
+     */
+     forceIntegrationUpdate?: boolean,
+
+
+    /**
+     *
+     *
+     * Set the fragment of a verification method with which to sign the update.
+     * This must point to an Ed25519 method with a capability invocation
+     * verification relationship.
+     */
+     signWith?: string
+ }
+"#;
