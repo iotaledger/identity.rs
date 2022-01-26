@@ -118,7 +118,7 @@ See <code>IVerifierOptions</code>.</p>
     * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked)
+    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -221,7 +221,7 @@ See <code>IVerifierOptions</code>.</p>
 
 <a name="Account+updateDocumentUnchecked"></a>
 
-### account.updateDocumentUnchecked(document)
+### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
@@ -304,7 +304,7 @@ Deletes a Service if it exists.
 
 * [AccountBuilder](#AccountBuilder)
     * [new AccountBuilder(options)](#new_AccountBuilder_new)
-    * [.loadIdentity(did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+    * [.loadIdentity(_did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
     * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
 
 <a name="new_AccountBuilder_new"></a>
@@ -317,12 +317,12 @@ Deletes a Service if it exists.
 
 <a name="AccountBuilder+loadIdentity"></a>
 
-### accountBuilder.loadIdentity(did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+### accountBuilder.loadIdentity(_did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
 **Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) | 
+| _did | [<code>DID</code>](#DID) | 
 
 <a name="AccountBuilder+createIdentity"></a>
 

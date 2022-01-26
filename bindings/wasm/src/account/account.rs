@@ -223,7 +223,7 @@ impl WasmAccount {
   }
 
   #[wasm_bindgen(js_name = updateDocumentUnchecked)]
-  pub fn update_document_unchecked(&mut self, document: WasmDocument) {
+  pub fn update_document_unchecked(&mut self, document: WasmDocument) -> Promise {
     let account = self.0.clone();
     future_to_promise(async move {
       account
@@ -233,7 +233,7 @@ impl WasmAccount {
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
-    });
+    })
   }
 }
 

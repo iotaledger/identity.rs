@@ -10,7 +10,7 @@ async function unchecked() {
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
-    let builder = new AccountBuilder({autopublish: false});
+    let builder = new AccountBuilder();
     let account = await builder.createIdentity();
 
     // Retrieve the did of the newly created identity.
@@ -34,7 +34,7 @@ async function unchecked() {
     // (depending on the account's autopublish setting).
     // The responsibility is on the caller to provide a valid document which the account
     // can continue to use. Failing to do so can corrupt the identity; use with caution!
-    account.updateDocumentUnchecked(document);
+    await account.updateDocumentUnchecked(document);
 
     // Print the local state of the DID Document after the update.
     console.log(`Document after update`, account.document());
