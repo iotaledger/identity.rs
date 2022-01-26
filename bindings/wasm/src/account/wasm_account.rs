@@ -12,7 +12,6 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Client;
 use identity::account::{Account, PublishOptions};
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
@@ -137,11 +136,11 @@ impl WasmAccount {
     let mut options: PublishOptions = PublishOptions::new();
 
     if let Some(force_integration) = publish_options.forceIntegrationUpdate(){
-      options = options.force_integration_update(force_integration.into());
+      options = options.force_integration_update(force_integration);
     }
 
     if let Some(sign_with) = publish_options.signWith(){
-      let s: String = sign_with.into();
+      let s: String = sign_with;
       options = options.sign_with(s);
     }
 
