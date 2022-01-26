@@ -3,20 +3,26 @@
 
 use crate::account::account_builder::WasmAutoSave;
 
-use crate::credential::{WasmCredential, WasmPresentation};
-use crate::crypto::{WasmSignatureOptions};
-use crate::did::{PromiseResolvedDocument, WasmDID, WasmDocument, WasmResolvedDocument};
-use crate::error::{Result, WasmResult};
+use crate::credential::WasmCredential;
+use crate::credential::WasmPresentation;
+use crate::crypto::WasmSignatureOptions;
+use crate::did::PromiseResolvedDocument;
+use crate::did::WasmDID;
+use crate::did::WasmDocument;
+use crate::did::WasmResolvedDocument;
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::tangle::Client;
-use identity::account::{Account, AccountBuilder, AccountStorage};
+use identity::account::Account;
+use identity::account::AccountBuilder;
+use identity::account::AccountStorage;
 
-use identity::credential::{Credential, Presentation};
-use identity::crypto::{SignatureOptions};
+use identity::credential::Credential;
+use identity::credential::Presentation;
+use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::IotaDocument;
 use js_sys::Promise;
-
-
 
 use std::rc::Rc;
 use wasm_bindgen::__rt::WasmRefCell;
@@ -32,7 +38,7 @@ impl WasmAccount {
   //ToDo remove test method
   #[wasm_bindgen(js_name = testAccount)]
   pub fn test_account(&self) -> String {
-    return String::from("test success");
+    String::from("test success")
   }
 
   #[wasm_bindgen(js_name = did)]
@@ -89,7 +95,7 @@ impl WasmAccount {
 
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
-    let account = self.0.clone();
+    let account = self.0;
     let did = account.as_ref().borrow().did().to_owned();
     let storage = account.as_ref().borrow().storage_arc();
     std::mem::drop(account);

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use iota_client::bee_message::payload::transaction::Essence;
@@ -162,9 +162,16 @@ impl TryFromMessage for DiffMessage {
 
 #[cfg(test)]
 mod test {
+  use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
+  use identity_did::did::CoreDIDUrl;
+  use identity_did::service::ServiceBuilder;
+  use identity_did::service::ServiceEndpoint;
+  use identity_did::verification::MethodScope;
 
   use crate::document::IotaDocument;
+  use crate::document::IotaVerificationMethod;
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
   use crate::tangle::MessageId;
@@ -172,7 +179,7 @@ mod test {
   use super::*;
 
   #[test]
-  fn test_pack_did_message_round_trip() {
+  fn test_pack_did_message() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
@@ -187,6 +194,49 @@ mod test {
 
       let decoded: ResolvedIotaDocument = parse_data(MessageId::null(), &encoded).unwrap();
       assert_eq!(decoded.document, document);
+    }
+  }
+
+  #[test]
+  fn test_pack_did_message_diff() {
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let mut doc1: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    doc1
+      .sign_self(keypair.private(), &doc1.default_signing_method().unwrap().id())
+      .unwrap();
+
+    let mut doc2: IotaDocument = doc1.clone();
+    assert!(doc2.insert_service(
+      ServiceBuilder::default()
+        .id(CoreDIDUrl::from(doc1.id().to_url().join("#linked-domain").unwrap()))
+        .service_endpoint(ServiceEndpoint::One(Url::parse("https://example.com/").unwrap()))
+        .type_("LinkedDomains")
+        .build()
+        .unwrap()
+    ));
+    doc2
+      .insert_method(
+        IotaVerificationMethod::from_did(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(),
+        MethodScope::authentication(),
+      )
+      .unwrap();
+    let diff: DiffMessage = doc1
+      .diff(
+        &doc2,
+        MessageId::new([1; 32]),
+        keypair.private(),
+        doc1.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
+
+    for encoding in [DIDMessageEncoding::Json, DIDMessageEncoding::JsonBrotli] {
+      let encoded: Vec<u8> = pack_did_message(&diff, encoding).unwrap();
+      assert_eq!(encoded[0], DIDMessageVersion::CURRENT as u8);
+      assert_eq!(&encoded[1..4], DID_MESSAGE_MARKER);
+      assert_eq!(encoded[4], encoding as u8);
+
+      let decoded: DiffMessage = parse_data(MessageId::null(), &encoded).unwrap();
+      assert_eq!(decoded, diff);
     }
   }
 }

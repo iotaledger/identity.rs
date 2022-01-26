@@ -1,16 +1,23 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::account::WasmAccount;
-use crate::account::method_secret::WasmMethodSecret;
-use crate::did::{WasmMethodScope, WasmMethodType};
-use crate::error::{wasm_error, Result, WasmResult};
-use identity::account::UpdateError::MissingRequiredField;
-use identity::account::{MethodSecret, Update};
-use identity::did::{MethodScope, MethodType};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
+
+use identity::account::MethodSecret;
+use identity::account::Update;
+use identity::account::UpdateError::MissingRequiredField;
+use identity::did::MethodScope;
+use identity::did::MethodType;
+
+use crate::account::method_secret::WasmMethodSecret;
+use crate::account::wasm_account::WasmAccount;
+use crate::did::WasmMethodScope;
+use crate::did::WasmMethodType;
+use crate::error::wasm_error;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
@@ -20,22 +27,22 @@ impl WasmAccount {
     let account = self.0.clone();
 
     let method_type: MethodType = match options.methodType() {
-      Some(value) => value.0.clone(),
+      Some(value) => value.0,
       None => MethodType::Ed25519VerificationKey2018,
     };
 
     let fragment = match options.fragment() {
-      Some(value) => value.clone(),
+      Some(value) => value,
       None => return Err(wasm_error(MissingRequiredField("fragment"))),
     };
 
     let method_scope: MethodScope = match options.methodScope() {
-      Some(value) => value.0.clone(),
+      Some(value) => value.0,
       None => MethodScope::default(),
     };
 
     let method_secret: Option<MethodSecret> = match options.methodSecret() {
-      Some(value) => Some(value.0.clone()),
+      Some(value) => Some(value.0),
       None => None,
     };
 

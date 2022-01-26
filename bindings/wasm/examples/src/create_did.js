@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {Client, Config, Document, KeyPair, KeyType} from '@iota/identity-wasm';
@@ -17,10 +17,10 @@ async function createIdentity(clientConfig) {
     const key = new KeyPair(KeyType.Ed25519);
 
     // Create a DID Document (an identity) from the generated key pair.
-    const doc = new Document(key, clientConfig.network.toString());
+    const doc = new Document(key, clientConfig.network.name);
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+    doc.signSelf(key, doc.defaultSigningMethod().id);
 
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

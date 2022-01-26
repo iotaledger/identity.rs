@@ -1,15 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::account::WasmAccount;
-use crate::error::{Result, WasmResult};
-use identity::account::Update;
-
-
-
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
+
+use identity::account::Update;
+
+use crate::account::wasm_account::WasmAccount;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {

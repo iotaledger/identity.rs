@@ -1,7 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, Service} from '@iota/identity-wasm';
+import {Client, Config, Document, Service, Timestamp} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
 import {logExplorerUrl, logResolverUrl} from "./utils";
 
@@ -29,15 +29,16 @@ async function createDiff(clientConfig) {
 
     // Add a Service
     let serviceJSON = {
-        id: doc.id + "#new-linked-domain",
+        id: doc.id + "#linked-domain-1",
         type: "LinkedDomains",
-        serviceEndpoint: "https://identity.iota.org",
+        serviceEndpoint: "https://example.com/",
     };
     updatedDoc.insertService(Service.fromJSON(serviceJSON));
+    updatedDoc.metadataUpdated = Timestamp.nowUTC();
     console.log(updatedDoc);
 
     // Create diff
-    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id.toString());
+    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id);
     console.log(diff);
 
     // Publish diff to the Tangle

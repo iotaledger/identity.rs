@@ -1,15 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::account::WasmAccount;
 use crate::account::method_secret::WasmMethodSecret;
+use crate::account::wasm_account::WasmAccount;
 use crate::crypto::KeyType;
 use crate::did::WasmDID;
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::tangle::Client as WasmClient;
 
-use identity::account::{AccountBuilder, IdentitySetup};
-use identity::account::{AccountConfig, AutoSave};
+use identity::account::AccountBuilder;
+use identity::account::AccountConfig;
+use identity::account::AutoSave;
+use identity::account::IdentitySetup;
 
 use js_sys::Promise;
 use std::rc::Rc;

@@ -1,15 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::account::WasmAccount;
-use crate::error::{wasm_error, Result, WasmResult};
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::future_to_promise;
+
 use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Url;
 use identity::did::ServiceEndpoint;
-use js_sys::Promise;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::future_to_promise;
+
+use crate::account::wasm_account::WasmAccount;
+use crate::error::wasm_error;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
@@ -24,7 +28,7 @@ impl WasmAccount {
     };
 
     let fragment = match options.fragment() {
-      Some(value) => value.clone(),
+      Some(value) => value,
       None => return Err(wasm_error(MissingRequiredField("fragment"))),
     };
 

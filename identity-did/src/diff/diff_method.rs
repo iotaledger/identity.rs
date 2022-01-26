@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
@@ -147,11 +147,15 @@ where
 
   fn into_diff(self) -> Result<Self::Type> {
     Ok(DiffMethod {
-      id: Some(self.id().to_string().into_diff()?),
-      controller: Some(self.controller().to_string().into_diff()?),
-      key_type: Some(self.key_type().into_diff()?),
-      key_data: Some(self.key_data().clone().into_diff()?),
-      properties: Some(self.properties().clone().into_diff()?),
+      id: Some(self.id.into_diff()?),
+      controller: Some(self.controller.into_diff()?),
+      key_type: Some(self.key_type.into_diff()?),
+      key_data: Some(self.key_data.into_diff()?),
+      properties: if self.properties == Default::default() {
+        None
+      } else {
+        Some(self.properties.into_diff()?)
+      },
     })
   }
 }
@@ -161,6 +165,8 @@ mod test {
   use super::*;
   use identity_core::common::Object;
   use identity_core::common::Value;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   fn test_method() -> VerificationMethod {
     VerificationMethod::builder(Default::default())
@@ -375,5 +381,20 @@ mod test {
     assert_eq!(merge, new);
 
     assert_eq!(new.into_diff().unwrap(), diff);
+  }
+
+  #[test]
+  fn test_from_into_diff() {
+    let method: VerificationMethod = test_method();
+
+    let diff: DiffMethod = method.clone().into_diff().unwrap();
+    let new: VerificationMethod = VerificationMethod::from_diff(diff.clone()).unwrap();
+    assert_eq!(method, new);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffMethod = DiffMethod::from_json(&ser).unwrap();
+    assert_eq!(de, diff);
+    let from: VerificationMethod = VerificationMethod::from_diff(de).unwrap();
+    assert_eq!(method, from);
   }
 }
