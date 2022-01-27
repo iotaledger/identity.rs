@@ -27,7 +27,7 @@ async function unchecked() {
     console.log(`Document before update`, document);
 
     // Override the updated field timestamp to 01.01.1990 00:00:00.
-    // because we can. This is usually set automatically by Account::update_identity.
+    // because we can. This is usually set automatically when updating via the `Account`.
     document.metadataUpdated = Timestamp.parse("1900-01-01T00:00:00Z")
 
     // Update the identity without validation and publish the result to the Tangle

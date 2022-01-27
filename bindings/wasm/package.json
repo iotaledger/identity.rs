@@ -63,7 +63,8 @@
     "webpack-dev-server": "^4.7.3"
   },
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "ts-node": "^10.4.0"
   },
   "engines": {
     "node": ">=16"
