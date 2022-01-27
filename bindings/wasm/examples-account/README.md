@@ -31,7 +31,7 @@ npm run example:account -- <example-name>
 For instance, to run the `create_did` example use:
 
 ```bash
-npm run example:node -- create_did
+npm run example:account -- create_did
 ```
 
 | # | Name | Details |
@@ -42,7 +42,7 @@ npm run example:node -- create_did
 |4| [signing](src/signing.ts) | Creates a DID with a verification method, signs a verifiable credential, verifies the signature.|
 |5| [config](src/config.ts) | Applies different account configurations|
 |6| [unchecked](src/unchecked.ts) | Updates an Identity without validation and publishes it to the tangle.|
-
+|7| [multiple_identities](src/multiple_identities.ts) | Managing multiple identities with the Account.|
 ## Browser
 
 Although the examples should work in browser environment, we don't provide a browser project as for now.
