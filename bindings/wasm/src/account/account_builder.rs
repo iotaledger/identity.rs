@@ -117,13 +117,14 @@ impl WasmAccountBuilder {
   }
 }
 
-
-
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Account>")]
   pub type PromiseAccount;
+}
 
+#[wasm_bindgen]
+extern "C" {
   #[wasm_bindgen(typescript_type = "AccountBuilderOptions")]
   pub type AccountBuilderOptions;
 
