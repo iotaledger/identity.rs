@@ -4,7 +4,13 @@
 <dt><a href="#Account">Account</a></dt>
 <dd></dd>
 <dt><a href="#AccountBuilder">AccountBuilder</a></dt>
-<dd></dd>
+<dd><p>An [<code>Account</code>] builder for easy account configuration.</p>
+<p>To reduce memory usage, accounts created from the same builder share the same <code>Storage</code>
+used to store identities, and the same <a href="#Client">Client</a> used to publish identities to the Tangle.</p>
+<p>The configuration on the other hand is cloned, and therefore unique for each built account.
+This means a builder can be reconfigured in-between account creations, without affecting
+the configuration of previously built accounts.</p>
+</dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
@@ -79,9 +85,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -103,7 +109,6 @@ See <code>IVerifierOptions</code>.</p>
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
@@ -125,17 +130,7 @@ See <code>IVerifierOptions</code>.</p>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
+    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+deleteMethod"></a>
 
@@ -338,9 +333,29 @@ so it cannot be an embedded one.
 | --- | --- |
 | input | <code>AttachMethodRelationshipOptions</code> | 
 
+<a name="Account+deleteService"></a>
+
+### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+
 <a name="AccountBuilder"></a>
 
 ## AccountBuilder
+An [`Account`] builder for easy account configuration.
+
+To reduce memory usage, accounts created from the same builder share the same `Storage`
+used to store identities, and the same [Client](#Client) used to publish identities to the Tangle.
+
+The configuration on the other hand is cloned, and therefore unique for each built account.
+This means a builder can be reconfigured in-between account creations, without affecting
+the configuration of previously built accounts.
+
 **Kind**: global class  
 
 * [AccountBuilder](#AccountBuilder)
@@ -351,6 +366,8 @@ so it cannot be an embedded one.
 <a name="new_AccountBuilder_new"></a>
 
 ### new AccountBuilder(options)
+Creates a new `AccountBuilder`.
+
 
 | Param | Type |
 | --- | --- |
@@ -359,6 +376,9 @@ so it cannot be an embedded one.
 <a name="AccountBuilder+loadIdentity"></a>
 
 ### accountBuilder.loadIdentity(_did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+Loads an existing identity with the specified `did` using the current builder configuration.
+The identity must exist in the configured `Storage`.
+
 **Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
 
 | Param | Type |
@@ -394,14 +414,20 @@ by the [Client](#Client) used to publish it.
 <a name="AutoSave.never"></a>
 
 ### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
+Never save
+
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.every"></a>
 
 ### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
+Save after every action
+
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.batch"></a>
 
 ### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
+Save after every N actions
+
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 
 | Param | Type |
@@ -2662,13 +2688,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 

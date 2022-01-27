@@ -47,7 +47,7 @@ impl WasmAccountBuilder {
         .autopublish(o.autopublish().unwrap_or(default_config.autopublish))
         .milestone(o.milestone().unwrap_or(default_config.milestone))
         .autosave(
-          o.autoSave()
+          o.autosave()
             .map(|auto_save| auto_save.0)
             .unwrap_or(default_config.autosave),
         );
@@ -138,17 +138,17 @@ extern "C" {
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn autoSave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
+  pub fn autosave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
+const TS_ACCOUNT_BUILDER_OPTIONS: &'static str = r#"
 export type AccountBuilderOptions = {
 
     /**
      * When the account will store its state to the storage.
      */
-    autoSave?: AutoSave
+    autosave?: AutoSave
 
     /**
      * `autopublish == true` the account will publish messages to the tangle on each update.
