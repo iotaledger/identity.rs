@@ -15,12 +15,11 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Deletes a verification method if the method exists.
   #[wasm_bindgen(js_name = deleteMethod)]
-  pub fn delete_method(&mut self, fragment: String) -> Result<Promise> {
+  pub fn delete_method(&mut self, options: DeleteMethodOptions) -> Result<Promise> {
     let account = self.0.clone();
-
+    let fragment = options.fragment();
     let promise: Promise = future_to_promise(async move {
       let update = Update::DeleteMethod { fragment };
-
       account
         .as_ref()
         .borrow_mut()
@@ -33,3 +32,19 @@ impl WasmAccount {
     Ok(promise)
   }
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "DeleteMethodOptions")]
+  pub type DeleteMethodOptions;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn fragment(this: &DeleteMethodOptions) -> String;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type DeleteMethodOptions = {
+  fragment: string,
+};
+"#;

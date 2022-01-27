@@ -40,7 +40,7 @@ async function manipulateIdentity() {
     })
 
     // Remove the Ed25519 verification method
-    await account.deleteMethod("my-next-key")
+    await account.deleteMethod({ fragment: "my-next-key" })
 
     // Retrieve the did of the newly created identity.
     let iotaDid = account.did().toString();
