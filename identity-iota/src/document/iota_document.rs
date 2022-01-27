@@ -1040,11 +1040,7 @@ mod tests {
     // Ed25519 signature.
     let expected = IotaVerificationMethod::try_from_core(
       VerificationMethod::builder(Default::default())
-        .id(
-          "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#sign-0"
-            .parse()
-            .unwrap(),
-        )
+        .id(DID_METHOD_ID.parse().unwrap())
         .controller(valid_did())
         .key_type(MethodType::Ed25519VerificationKey2018)
         .key_data(MethodData::PublicKeyMultibase(
@@ -1112,6 +1108,51 @@ mod tests {
 
     // VALID - Sign with the new capability invocation method private key
     document.sign_self(new_keypair.private(), "#new_signer").unwrap();
+    assert!(IotaDocument::verify_document(&document, &document).is_ok());
+  }
+
+  #[test]
+  fn test_sign_self_embedded_controller_method_with_same_fragment() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    assert!(IotaDocument::verify_document(&document, &document).is_err());
+
+    // Add a new signing method from a controller DID Document with the SAME FRAGMENT
+    // as the default signing method.
+    let controller_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let controller_method: IotaVerificationMethod =
+      IotaVerificationMethod::from_keypair(&controller_keypair, IotaDocument::DEFAULT_METHOD_FRAGMENT).unwrap();
+    document
+      .insert_method(controller_method.clone(), MethodScope::capability_invocation())
+      .unwrap();
+
+    // VALID - resolving the fragment alone should return the first matching method in the list.
+    let default_signing_method: &IotaVerificationMethod = document.default_signing_method().unwrap();
+    assert_eq!(
+      document.resolve_method(IotaDocument::DEFAULT_METHOD_FRAGMENT).unwrap(),
+      default_signing_method
+    );
+    // VALID - resolving the entire id should return the exact method.
+    assert_eq!(
+      document.resolve_method(default_signing_method.id()).unwrap(),
+      default_signing_method
+    );
+    assert_eq!(
+      document.resolve_method(controller_method.id()).unwrap(),
+      &controller_method
+    );
+
+    // INVALID - sign with the controller's private key referencing only the fragment.
+    // Fails since both sign_self and verify_document resolve the wrong method.
+    document
+      .sign_self(controller_keypair.private(), IotaDocument::DEFAULT_METHOD_FRAGMENT)
+      .unwrap();
+    assert!(IotaDocument::verify_document(&document, &document).is_err());
+
+    // VALID - sign with the controller's private key referencing the full DID-Url of the method.
+    document
+      .sign_self(controller_keypair.private(), controller_method.id())
+      .unwrap();
     assert!(IotaDocument::verify_document(&document, &document).is_ok());
   }
 

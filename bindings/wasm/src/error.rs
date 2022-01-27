@@ -24,7 +24,7 @@ where
 }
 
 /// Convenience trait to simplify `result.map_err(wasm_error)` to `result.wasm_result()`
-pub(crate) trait WasmResult<T> {
+pub trait WasmResult<T> {
   fn wasm_result(self) -> Result<T>;
 }
 

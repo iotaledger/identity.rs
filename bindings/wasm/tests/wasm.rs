@@ -1,6 +1,11 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
+use identity::iota::IotaDID;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
 
 use identity_wasm::crypto::Digest;
@@ -10,8 +15,9 @@ use identity_wasm::crypto::KeyType;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
+use identity_wasm::did::WasmMethodScope;
+use identity_wasm::did::WasmVerificationMethod;
 use identity_wasm::error::WasmError;
-use std::borrow::Cow;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -117,13 +123,104 @@ fn test_did_url() {
 #[wasm_bindgen_test]
 fn test_document_new() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
+  let document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
+  assert_eq!(document.id().network_name(), "main");
+  assert!(document.default_signing_method().is_ok());
+}
 
+#[wasm_bindgen_test]
+fn test_document_sign_self() {
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+
+  // Sign with DIDUrl method query.
+  {
+    let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
+    document
+      .sign_self(
+        &keypair,
+        &JsValue::from(document.default_signing_method().unwrap().id()).unchecked_into(),
+      )
+      .unwrap();
+    assert!(WasmDocument::verify_document(&document, &document).is_ok());
+  }
+
+  // Sign with string method query.
+  {
+    let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
+    document
+      .sign_self(
+        &keypair,
+        &JsValue::from_str(&document.default_signing_method().unwrap().id().to_string()).unchecked_into(),
+      )
+      .unwrap();
+    assert!(WasmDocument::verify_document(&document, &document).is_ok());
+  }
+}
+
+#[wasm_bindgen_test]
+fn test_document_resolve_method() {
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
+  let default_method: WasmVerificationMethod = document.default_signing_method().unwrap();
+  let new_method: WasmVerificationMethod =
+    WasmVerificationMethod::new(&KeyPair::new(KeyType::Ed25519).unwrap(), "new-key").unwrap();
   document
-    .sign_self(&keypair, document.default_signing_method().unwrap().id().to_string())
+    .insert_method(&new_method, WasmMethodScope::authentication())
     .unwrap();
 
-  assert!(WasmDocument::verify_document(&document, &document).is_ok());
+  // Resolve with DIDUrl method query.
+  assert_eq!(
+    document
+      .resolve_method(&JsValue::from(default_method.id()).unchecked_into())
+      .unwrap()
+      .id()
+      .to_string(),
+    default_method.id().to_string()
+  );
+  assert_eq!(
+    document
+      .resolve_method(&JsValue::from(new_method.id()).unchecked_into())
+      .unwrap()
+      .id()
+      .to_string(),
+    new_method.id().to_string()
+  );
+
+  // Resolve with string method query.
+  assert_eq!(
+    document
+      .resolve_method(&JsValue::from_str(&default_method.id().to_string()).unchecked_into())
+      .unwrap()
+      .id()
+      .to_string(),
+    default_method.id().to_string()
+  );
+  assert_eq!(
+    document
+      .resolve_method(&JsValue::from_str(&new_method.id().to_string()).unchecked_into())
+      .unwrap()
+      .id()
+      .to_string(),
+    new_method.id().to_string()
+  );
+
+  // Resolve with string fragment method query.
+  assert_eq!(
+    document
+      .resolve_method(&JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into())
+      .unwrap()
+      .id()
+      .to_string(),
+    default_method.id().to_string()
+  );
+  assert_eq!(
+    document
+      .resolve_method(&JsValue::from_str(&new_method.id().fragment().unwrap()).unchecked_into())
+      .unwrap()
+      .id()
+      .to_string(),
+    new_method.id().to_string()
+  );
 }
 
 #[wasm_bindgen_test]
@@ -132,4 +229,25 @@ fn test_document_network() {
   let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
   assert_eq!(document.id().network_name(), "dev");
+}
+
+#[wasm_bindgen_test]
+fn test_did_serde() {
+  // Ensure JSON deserialization of DID and strings match (for UWasmDID duck-typed parameters).
+  let expected_str: &str = "did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  let expected: IotaDID = IotaDID::parse(expected_str).unwrap();
+
+  // Check WasmDID deserialization.
+  {
+    let wasm_did: WasmDID = WasmDID::from(expected.clone());
+    let de: IotaDID = wasm_did.to_json().into_serde().unwrap();
+    assert_eq!(de, expected);
+  }
+
+  // Check String JsValue deserialization.
+  {
+    let js_string: JsValue = JsValue::from_str(expected_str);
+    let de: IotaDID = js_string.into_serde().unwrap();
+    assert_eq!(de, expected);
+  }
 }
