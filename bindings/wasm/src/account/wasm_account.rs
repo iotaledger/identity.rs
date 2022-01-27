@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::account_builder::WasmAutoSave;
-
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmSignatureOptions;
@@ -28,6 +26,7 @@ use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
+use crate::account::auto_save::WasmAutoSave;
 
 #[wasm_bindgen(js_name = Account)]
 pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
