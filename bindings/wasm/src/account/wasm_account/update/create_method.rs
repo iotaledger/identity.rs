@@ -11,7 +11,7 @@ use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
 use identity::did::MethodType;
 
-use crate::account::method_secret::WasmMethodSecret;
+use crate::account::types::WasmMethodSecret;
 use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;

@@ -90,10 +90,6 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-<<<<<<< HEAD
-  // identity::comm::Error,
-=======
->>>>>>> feat/wasm-bindings-account
   identity::account::Error,
   identity::core::Error,
   identity::credential::Error,
@@ -184,4 +180,5 @@ impl From<JsValueResult> for AccountResult<()> {
           .into_serde()
           .map_err(|e| AccountError::InvalidJsValue(e.to_string()))
       })
+  }
 }

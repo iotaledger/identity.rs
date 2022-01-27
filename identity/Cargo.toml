@@ -28,9 +28,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async", "stronghold"]
-
-stronghold = ["identity-account/stronghold"]
+default = ["async"]
 
 # Enables async runtime support (Tokio)
 async = ["identity-iota/async"]
@@ -39,7 +37,7 @@ async = ["identity-iota/async"]
 wasm = ["identity-iota/wasm", "identity-comm/wasm", "identity-core/wasm", "identity-account/wasm"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account", "wasm"]
+account = ["identity-account"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]

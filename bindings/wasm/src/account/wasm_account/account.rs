@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::account_builder::WasmAutoSave;
+use crate::account::wasm_account::account_builder::WasmAutoSave;
 
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -12,9 +12,10 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
+use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
-use identity::account::{Account, PublishOptions};
+use identity::account::PublishOptions;
 
 use identity::credential::Credential;
 use identity::credential::Presentation;

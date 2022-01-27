@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
@@ -13,14 +13,14 @@ use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  /// Deletes a verification method if the method exists.
-  #[wasm_bindgen(js_name = deleteMethod)]
-  pub fn delete_method(&mut self, fragment: String) -> Result<Promise> {
+  /// Deletes a Service if it exists.
+  #[wasm_bindgen(js_name = deleteService)]
+  pub fn delete_service(&mut self, fragment: String) -> Result<Promise> {
     let account = self.0.clone();
 
-    let promise: Promise = future_to_promise(async move {
-      let update = Update::DeleteMethod { fragment };
+    let update = Update::DeleteService { fragment };
 
+    let promise: Promise = future_to_promise(async move {
       account
         .as_ref()
         .borrow_mut()

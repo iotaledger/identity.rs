@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
@@ -11,7 +11,7 @@ use identity::core::OneOrMany::Many;
 use identity::core::OneOrMany::One;
 use identity::did::MethodRelationship;
 
-use crate::account::update::attach_method_relationship::WasmMethodRelationship;
+use crate::account::types::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
 use crate::error::wasm_error;
 use crate::error::Result;

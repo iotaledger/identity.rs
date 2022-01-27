@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use identity::account::KeyLocation;
 
-use crate::account::WasmGeneration;
+use crate::account::types::WasmGeneration;
 use crate::core::WasmFragment;
 use crate::did::WasmMethodType;
 

@@ -1,9 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
-use serde_repr::Deserialize_repr;
-use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
@@ -13,6 +11,7 @@ use identity::core::OneOrMany::Many;
 use identity::core::OneOrMany::One;
 use identity::did::MethodRelationship;
 
+use crate::account::types::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
 use crate::error::wasm_error;
 use crate::error::Result;
@@ -55,29 +54,6 @@ impl WasmAccount {
     });
 
     Ok(promise)
-  }
-}
-
-#[wasm_bindgen (js_name = MethodRelationship)]
-#[derive(Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum WasmMethodRelationship {
-  Authentication = 0,
-  AssertionMethod = 1,
-  KeyAgreement = 2,
-  CapabilityDelegation = 3,
-  CapabilityInvocation = 4,
-}
-
-impl From<WasmMethodRelationship> for MethodRelationship {
-  fn from(r: WasmMethodRelationship) -> Self {
-    match r {
-      WasmMethodRelationship::Authentication => MethodRelationship::Authentication,
-      WasmMethodRelationship::AssertionMethod => MethodRelationship::AssertionMethod,
-      WasmMethodRelationship::KeyAgreement => MethodRelationship::KeyAgreement,
-      WasmMethodRelationship::CapabilityDelegation => MethodRelationship::CapabilityDelegation,
-      WasmMethodRelationship::CapabilityInvocation => MethodRelationship::CapabilityInvocation,
-    }
   }
 }
 

@@ -23,11 +23,11 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota::IotaDID;
 
-use crate::account::WasmChainState;
-use crate::account::WasmEncryptionKey;
-use crate::account::WasmGeneration;
-use crate::account::WasmIdentityState;
-use crate::account::WasmKeyLocation;
+use crate::account::identity::WasmChainState;
+use crate::account::identity::WasmIdentityState;
+use crate::account::types::WasmEncryptionKey;
+use crate::account::types::WasmGeneration;
+use crate::account::types::WasmKeyLocation;
 use crate::did::WasmDID;
 use crate::error::JsValueResult;
 
