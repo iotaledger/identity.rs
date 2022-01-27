@@ -35,11 +35,11 @@ impl AccountSetup {
 
 /// Configuration for [`Account`][crate::account::Account]s.
 #[derive(Clone, Debug)]
-pub(crate) struct AccountConfig {
-  pub(crate) autosave: AutoSave,
-  pub(crate) autopublish: bool,
-  pub(crate) testmode: bool,
-  pub(crate) milestone: u32,
+pub struct AccountConfig {
+  pub autosave: AutoSave,
+  pub autopublish: bool,
+  pub testmode: bool,
+  pub milestone: u32,
 }
 
 impl AccountConfig {

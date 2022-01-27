@@ -1,6 +1,12 @@
 ## Classes
 
 <dl>
+<dt><a href="#Account">Account</a></dt>
+<dd></dd>
+<dt><a href="#AccountBuilder">AccountBuilder</a></dt>
+<dd></dd>
+<dt><a href="#AutoSave">AutoSave</a></dt>
+<dd></dd>
 <dt><a href="#ChainState">ChainState</a></dt>
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
@@ -49,6 +55,8 @@
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
+<dt><a href="#MethodSecret">MethodSecret</a></dt>
+<dd></dd>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -85,11 +93,13 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -100,6 +110,317 @@ See <code>IVerifierOptions</code>.</p>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
+
+<a name="Account"></a>
+
+## Account
+**Kind**: global class  
+
+* [Account](#Account)
+    * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
+    * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
+    * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * [.actions()](#Account+actions) ⇒ <code>number</code>
+    * [.state()](#Account+state)
+    * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
+    * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.publish()](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.publishWithOptions(publish_options)](#Account+publishWithOptions) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createSignedCredential(fragment, credential, signature_options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
+    * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+    * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
+    * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+
+<a name="Account+did"></a>
+
+### account.did() ⇒ [<code>DID</code>](#DID)
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+autopublish"></a>
+
+### account.autopublish() ⇒ <code>boolean</code>
+Returns whether auto-publish is enabled.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+autosave"></a>
+
+### account.autosave() ⇒ [<code>AutoSave</code>](#AutoSave)
+Returns the auto-save configuration value.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+actions"></a>
+
+### account.actions() ⇒ <code>number</code>
+Returns the total number of actions executed by this instance.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+state"></a>
+
+### account.state()
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+document"></a>
+
+### account.document() ⇒ [<code>Document</code>](#Document)
+Returns a copy of the document managed by the `Account`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+resolveIdentity"></a>
+
+### account.resolveIdentity() ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Resolves the DID Document associated with this `Account` from the Tangle.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+deleteIdentity"></a>
+
+### account.deleteIdentity() ⇒ <code>Promise.&lt;any&gt;</code>
+Removes the identity from the local storage entirely.
+
+Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+publish"></a>
+
+### account.publish() ⇒ <code>Promise.&lt;any&gt;</code>
+Push all unpublished changes to the tangle in a single message.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+publishWithOptions"></a>
+
+### account.publishWithOptions(publish_options) ⇒ <code>Promise.&lt;any&gt;</code>
+Push all unpublished changes to the Tangle in a single message, optionally choosing
+the signing key used or forcing an integration chain update.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+**See**: [PublishOptions](PublishOptions)  
+
+| Param | Type |
+| --- | --- |
+| publish_options | <code>PublishOptions</code> | 
+
+<a name="Account+createSignedCredential"></a>
+
+### account.createSignedCredential(fragment, credential, signature_options) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
+Signs a [Credential](#Credential) with the key specified by `fragment`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
+| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+
+<a name="Account+createSignedDocument"></a>
+
+### account.createSignedDocument(fragment, document, signature_options) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+Signs a [Document](#Document) with the key specified by `fragment`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| document | [<code>Document</code>](#Document) | 
+| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+
+<a name="Account+createSignedPresentation"></a>
+
+### account.createSignedPresentation(fragment, presentation, signature_options) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
+Signs a [Presentation](#Presentation) the key specified by `fragment`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+
+<a name="Account+createSignedData"></a>
+
+### account.createSignedData(fragment, data, signature_options) ⇒ <code>Promise.&lt;any&gt;</code>
+Signs arbitrary `data` with the key specified by `fragment`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| data | <code>any</code> | 
+| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+
+<a name="Account+updateDocumentUnchecked"></a>
+
+### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;any&gt;</code>
+Overwrites the [Document](#Document) this account manages, **without doing any validation**.
+
+# WARNING
+
+This method is dangerous and can easily corrupt the internal state,
+potentially making the identity unusable. Only call this if you fully
+understand the implications!
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
+<a name="Account+fetchState"></a>
+
+### account.fetchState() ⇒ <code>Promise.&lt;any&gt;</code>
+Fetches the latest changes from the tangle and **overwrites** the local document.
+
+If a DID is managed from distributed accounts, this should be called before making changes
+to the identity, to avoid publishing updates that would be ignored.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+Attaches a single or multiple relationships to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="AccountBuilder"></a>
+
+## AccountBuilder
+**Kind**: global class  
+
+* [AccountBuilder](#AccountBuilder)
+    * [new AccountBuilder(options)](#new_AccountBuilder_new)
+    * [.loadIdentity(_did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+    * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+
+<a name="new_AccountBuilder_new"></a>
+
+### new AccountBuilder(options)
+
+| Param | Type |
+| --- | --- |
+| options | <code>AccountBuilderOptions</code> \| <code>undefined</code> | 
+
+<a name="AccountBuilder+loadIdentity"></a>
+
+### accountBuilder.loadIdentity(_did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
+
+| Param | Type |
+| --- | --- |
+| _did | [<code>DID</code>](#DID) | 
+
+<a name="AccountBuilder+createIdentity"></a>
+
+### accountBuilder.createIdentity(identity_setup) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+Creates a new identity based on the builder configuration and returns
+an [Account](#Account) object to manage it.
+
+The identity is stored locally in the `Storage`. The DID network is automatically determined
+by the [Client](#Client) used to publish it.
+
+**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
+**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
+
+| Param | Type |
+| --- | --- |
+| identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
+
+<a name="AutoSave"></a>
+
+## AutoSave
+**Kind**: global class  
+
+* [AutoSave](#AutoSave)
+    * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
+
+<a name="AutoSave.never"></a>
+
+### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+<a name="AutoSave.every"></a>
+
+### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+<a name="AutoSave.batch"></a>
+
+### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| number_of_actions | <code>number</code> | 
 
 <a name="ChainState"></a>
 
@@ -157,7 +478,8 @@ Sets the last diff message id.
 ### chainState.isNewIdentity() ⇒ <code>boolean</code>
 Returns whether the identity has been published before.
 
-**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)
+
 <a name="Client"></a>
 
 ## Client
@@ -2063,6 +2385,37 @@ Deserializes a `MethodScope` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="MethodSecret"></a>
+
+## MethodSecret
+**Kind**: global class  
+
+* [MethodSecret](#MethodSecret)
+    * [.ed25519_base58(private_key)](#MethodSecret.ed25519_base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * [.merkelKeyCollection(collection)](#MethodSecret.merkelKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+
+<a name="MethodSecret.ed25519_base58"></a>
+
+### MethodSecret.ed25519\_base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 private key.
+
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| private_key | <code>string</code> | 
+
+<a name="MethodSecret.merkelKeyCollection"></a>
+
+### MethodSecret.merkelKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollection).
+
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| collection | [<code>KeyCollection</code>](#KeyCollection) | 
+
 <a name="MethodType"></a>
 
 ## MethodType
@@ -2636,17 +2989,21 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
+<a name="Digest"></a>
 
-## DIDMessageEncoding
+## Digest
 **Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
 **Kind**: global variable  
-<a name="Digest"></a>
+<a name="MethodRelationship"></a>
 
-## Digest
+## MethodRelationship
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

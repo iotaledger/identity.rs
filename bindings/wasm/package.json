@@ -23,6 +23,7 @@
     "serve": "webpack serve",
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
+    "example:account": "ts-node ./examples-account/src/node.ts",
     "test:node": "mocha ./examples/dist/test.js --exit",
     "test:browser": "cypress run --headless",
     "test:readme": "txm README.md",

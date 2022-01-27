@@ -134,6 +134,10 @@ impl Account {
     self.storage.as_ref()
   }
 
+  pub fn storage_arc(&self) -> Arc<dyn Storage> {
+    Arc::clone(&self.storage)
+  }
+
   /// Returns whether auto-publish is enabled.
   pub fn autopublish(&self) -> bool {
     self.config.autopublish
@@ -310,7 +314,7 @@ impl Account {
     self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
-  pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
+  pub async fn process_update(&mut self, update: Update) -> Result<()> {
     let did = self.did().to_owned();
     let storage = Arc::clone(&self.storage);
 

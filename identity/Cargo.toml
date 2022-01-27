@@ -21,14 +21,16 @@ identity-iota = { version = "=0.5.0-dev.3", path = "../identity-iota", default-f
 
 [dev-dependencies]
 criterion = { version = "0.3" }
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.14", features = ["full"] }
 
 [[bench]]
 name = "benchmark"
 harness = false
 
 [features]
-default = ["async"]
+default = ["async", "stronghold"]
+
+stronghold = ["identity-account/stronghold"]
 
 # Enables async runtime support (Tokio)
 async = ["identity-iota/async"]
@@ -37,7 +39,7 @@ async = ["identity-iota/async"]
 wasm = ["identity-iota/wasm", "identity-comm/wasm", "identity-core/wasm", "identity-account/wasm"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account"]
+account = ["identity-account", "wasm"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]
