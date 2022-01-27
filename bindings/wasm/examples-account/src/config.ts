@@ -37,10 +37,10 @@ async function config() {
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder({
-        // never auto-save. rely on the drop save.
-        // use `AutoSave.every()` to save immediately after every action,
-        // and `AutoSave.batch(10)` to save after every 10 actions.
-        autoSave: AutoSave.never(),
+        // `AutoSave.never()` never auto-saves, relies on the storage drop save.
+        // `AutoSave.every()` saves immediately after every action,
+        // `AutoSave.batch(10)` saves after every 10 actions.
+        autoSave: AutoSave.never(), // never auto-save
         autopublish: true, // publish to the tangle automatically on every update
         milestone: 4, // save a snapshot every 4 actions
         client: client // set client to the previously defined client.
