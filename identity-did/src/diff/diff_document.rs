@@ -137,11 +137,11 @@ where
       .transpose()?
       .or_else(|| self.controller().cloned());
 
-    let also_known_as: Vec<Url> = diff
+    let also_known_as: OrderedSet<Url> = diff
       .also_known_as
-      .map(|value| self.also_known_as().to_vec().merge(value))
+      .map(|value| self.also_known_as().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.also_known_as().to_vec());
+      .unwrap_or_else(|| self.also_known_as().clone());
 
     let verification_method: OrderedSet<VerificationMethod<U>> = diff
       .verification_method
@@ -222,7 +222,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.controller`"))?;
 
-    let also_known_as: Vec<Url> = diff
+    let also_known_as: OrderedSet<Url> = diff
       .also_known_as
       .map(Diff::from_diff)
       .transpose()?
@@ -406,7 +406,7 @@ mod test {
   fn test_also_known_as() {
     let doc = document();
     let mut new = doc.clone();
-    new.also_known_as_mut().push("diff:diff:1234".parse().unwrap());
+    new.also_known_as_mut().append("diff:diff:1234".parse().unwrap());
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();

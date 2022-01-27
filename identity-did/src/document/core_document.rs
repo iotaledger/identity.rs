@@ -59,8 +59,8 @@ pub struct CoreDocument<T = Object, U = Object, V = Object> {
   pub(crate) id: CoreDID,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) controller: Option<CoreDID>,
-  #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "Vec::is_empty")]
-  pub(crate) also_known_as: Vec<Url>,
+  #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "OrderedSet::is_empty")]
+  pub(crate) also_known_as: OrderedSet<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) verification_method: OrderedSet<VerificationMethod<U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
@@ -92,7 +92,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     Ok(Self {
       id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
       controller: builder.controller,
-      also_known_as: builder.also_known_as,
+      also_known_as: builder.also_known_as.try_into()?,
       verification_method: builder.verification_method.try_into()?,
       authentication: builder.authentication.try_into()?,
       assertion_method: builder.assertion_method.try_into()?,
@@ -125,12 +125,12 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Returns a reference to the `CoreDocument` alsoKnownAs set.
-  pub fn also_known_as(&self) -> &[Url] {
+  pub fn also_known_as(&self) -> &OrderedSet<Url> {
     &self.also_known_as
   }
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
-  pub fn also_known_as_mut(&mut self) -> &mut Vec<Url> {
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
     &mut self.also_known_as
   }
 
