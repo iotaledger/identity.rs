@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
+import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
 
 /**
  * This example shows some configurations that can be used for the account.
@@ -51,8 +51,10 @@ async function config() {
         // The entire history can be observed on this page by clicking "Loading History".
         console.log(`[Example] Explore the DID Document = ${explorer.resolverUrl(did.toString())}`);
 
-    } catch (e: any) {
-        console.log(`[Example] Error: ${e.message}`);
+    } catch (e) {
+        if (e instanceof Error) {
+            console.log(`[Example] Error: ${e.message}`);
+        }
         console.log(`[Example] Is your Tangle node listening on ${private_node_url}?`);
     }
 }
