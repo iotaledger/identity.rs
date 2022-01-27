@@ -256,15 +256,20 @@ impl IotaDocument {
     unsafe { IotaDID::new_unchecked_ref(self.document.id()) }
   }
 
-  /// Returns a reference to the `IotaDocument` controller.
+  /// Returns a reference to the [`IotaDocument`] controller.
   pub fn controller(&self) -> Option<&IotaDID> {
     // SAFETY: Validity of controller checked in DID Document constructors.
     unsafe { self.document.controller().map(|did| IotaDID::new_unchecked_ref(did)) }
   }
 
-  /// Returns a reference to the [`CoreDocument`] alsoKnownAs set.
-  pub fn also_known_as(&self) -> &[Url] {
+  /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
+  pub fn also_known_as(&self) -> &OrderedSet<Url> {
     self.document.also_known_as()
+  }
+
+  /// Returns a mutable reference to the [`IotaDocument`] alsoKnownAs set.
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+    self.document.also_known_as_mut()
   }
 
   /// Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
