@@ -31,9 +31,6 @@ async function config() {
     // This URL points to the REST API of the locally running hornet node.
     config.setPrimaryNode(private_node_url);
 
-    // Use DIDMessageEncoding.Json instead to publish plaintext messages to the Tangle for debugging.
-    config.setEncoding(DIDMessageEncoding.JsonBrotli);
-
     const client = Client.fromConfig(config);
 
 
