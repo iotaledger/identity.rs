@@ -31,9 +31,6 @@ async function config() {
     // This URL points to the REST API of the locally running hornet node.
     config.setPrimaryNode(private_node_url);
 
-    const client = Client.fromConfig(config);
-
-
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder({
@@ -43,7 +40,7 @@ async function config() {
         autoSave: AutoSave.never(), // never auto-save
         autopublish: true, // publish to the tangle automatically on every update
         milestone: 4, // save a snapshot every 4 actions
-        client: client // set client to the previously defined client.
+        clientConfig: config // set client to the previously defined client.
     });
 
     try {

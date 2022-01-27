@@ -79,13 +79,13 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#Digest">Digest</a></dt>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -103,8 +103,7 @@ See <code>IVerifierOptions</code>.</p>
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -121,32 +120,22 @@ See <code>IVerifierOptions</code>.</p>
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.attachMethodRelationships(input)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteMethod(fragment)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
 
-<a name="Account+deleteMethod"></a>
+<a name="Account+createMethod"></a>
 
-### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
-Deletes a Service if it exists.
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new verification method to the DID document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -291,31 +280,6 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
-Attaches a single or multiple relationships to the given method, if the method exists.
-
-Note: The method needs to be in the set of verification methods,
-so it cannot be an embedded one.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>AttachMethodRelationshipOptions</code> | 
-
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -337,6 +301,42 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | input | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
+Attaches a single or multiple relationships to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -2662,21 +2662,21 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="Digest"></a>
+<a name="DIDMessageEncoding"></a>
 
-## Digest
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
 **Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

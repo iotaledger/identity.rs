@@ -7,7 +7,7 @@ use crate::crypto::KeyType;
 use crate::did::WasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Client as WasmClient;
+use crate::tangle::{Client as WasmClient, Config};
 
 use identity::account::AccountBuilder;
 use identity::account::AccountConfig;
@@ -28,7 +28,7 @@ pub struct WasmAccountBuilder(Rc<WasmRefCell<AccountBuilder>>);
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
   #[wasm_bindgen(constructor)]
-  pub fn new(options: Option<AccountBuilderOptions>) -> Self {
+  pub fn new(options: Option<AccountBuilderOptions>) -> Result<WasmAccountBuilder> {
     let default_config: AccountConfig = AccountConfig::default();
     let mut builder = AccountBuilder::new();
 
@@ -43,12 +43,13 @@ impl WasmAccountBuilder {
         .milestone(o.milestone().unwrap_or(default_config.milestone))
         .autosave(auto_save);
       //todo storage
-      if let Some(c) = o.client() {
-        builder = builder.client(Arc::new(c.client.as_ref().clone()));
+      if let Some(mut config) = o.clientConfig() {
+        let client: WasmClient = WasmClient::from_config(&mut config)?;
+        builder = builder.client(Arc::new(client.client.as_ref().clone()));
       };
     }
 
-    Self(Rc::new(WasmRefCell::new(builder)))
+    Ok(Self(Rc::new(WasmRefCell::new(builder))))
   }
 
   #[wasm_bindgen(js_name = loadIdentity)]
@@ -136,7 +137,7 @@ extern "C" {
   pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn client(this: &AccountBuilderOptions) -> Option<WasmClient>;
+  pub fn clientConfig(this: &AccountBuilderOptions) -> Option<Config>;
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
@@ -168,7 +169,7 @@ export type AccountBuilderOptions = {
     /**
      * Client for tangle requests.
      */
-    client?: Client
+    clientConfig?: Config
 };
 "#;
 
