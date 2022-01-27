@@ -22,6 +22,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 use crate::account::auto_save::WasmAutoSave;
+use crate::account::wasm_identity_setup::WasmIdentitySetup;
 
 /// An [`Account`] builder for easy account configuration.
 ///
@@ -165,28 +166,5 @@ export type AccountBuilderOptions = {
      * Client for tangle requests.
      */
     clientConfig?: Config
-};
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "IdentitySetup")]
-  pub type WasmIdentitySetup;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn keyType(this: &WasmIdentitySetup) -> Option<KeyType>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn methodSecret(this: &WasmIdentitySetup) -> Option<WasmMethodSecret>;
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT_2: &'static str = r#"
-/**
- * Overrides the default creation of private and public keys.
- */
-export type IdentitySetup = {
-    keyType?: KeyType,
-    methodSecret?: MethodSecret
 };
 "#;
