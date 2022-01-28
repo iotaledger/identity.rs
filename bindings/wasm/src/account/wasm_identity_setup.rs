@@ -20,6 +20,7 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_IDENTITY_SETUP: &'static str = r#"
 /**
+ * Configuration used to create a new Identity.
  * Overrides the default creation of private and public keys.
  */
 export type IdentitySetup = {

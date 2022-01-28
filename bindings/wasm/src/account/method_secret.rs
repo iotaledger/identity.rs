@@ -15,15 +15,15 @@ pub struct WasmMethodSecret(pub(crate) MethodSecret);
 #[wasm_bindgen(js_class = MethodSecret)]
 impl WasmMethodSecret {
   /// Creates a {@link MethodSecret} object from base58-encoded Ed25519 private key.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = ed25519Base58)]
   pub fn ed25519_base58(private_key: &str) -> Result<WasmMethodSecret> {
     let private: PrivateKey = decode_b58(private_key).map_err(wasm_error)?.into();
     Ok(Self(MethodSecret::Ed25519(private)))
   }
 
   /// Creates a {@link MethodSecret} object from {@link KeyCollection}.
-  #[wasm_bindgen(js_name = merkelKeyCollection)]
-  pub fn merkel_key_collection(collection: KeyCollection) -> WasmMethodSecret {
+  #[wasm_bindgen(js_name = merkleKeyCollection)]
+  pub fn merkle_key_collection(collection: KeyCollection) -> WasmMethodSecret {
     Self(MethodSecret::MerkleKeyCollection(collection.0))
   }
 }
