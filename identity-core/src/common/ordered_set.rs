@@ -350,9 +350,9 @@ mod tests {
   #[test]
   fn test_from_vec_valid() {
     let source: Vec<u8> = vec![3, 1, 2, 0];
-    let oset: OrderedSet<u8> = OrderedSet::try_from(source).unwrap();
+    let set: OrderedSet<u8> = OrderedSet::try_from(source).unwrap();
 
-    assert_eq!(&*oset, &[3, 1, 2, 0]);
+    assert_eq!(&*set, &[3, 1, 2, 0]);
   }
 
   #[test]
@@ -374,12 +374,16 @@ mod tests {
   fn test_contains() {
     let cs1 = ComparableStruct { key: 0, value: 10 };
     let cs2 = ComparableStruct { key: 1, value: 20 };
+    let cs3 = ComparableStruct { key: 2, value: 10 };
+    let cs4 = ComparableStruct { key: 3, value: 20 };
 
     let source: Vec<ComparableStruct> = vec![cs1, cs2];
     let set: OrderedSet<ComparableStruct> = source.into_iter().collect();
 
     assert!(set.contains(&cs1));
     assert!(set.contains(&cs2));
+    assert!(!set.contains(&cs3));
+    assert!(!set.contains(&cs4));
   }
 
   #[derive(Clone, Copy, PartialEq, Eq)]
