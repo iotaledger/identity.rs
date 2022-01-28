@@ -11,8 +11,8 @@ use identity::core::OneOrMany::Many;
 use identity::core::OneOrMany::One;
 use identity::did::MethodRelationship;
 
-use crate::account::update::attach_method_relationship::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
+use crate::account::wasm_method_relationship::WasmMethodRelationship;
 use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;

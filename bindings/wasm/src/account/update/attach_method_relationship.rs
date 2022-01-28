@@ -1,20 +1,23 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::rc::Rc;
 use js_sys::Promise;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::Update;
+use identity::account::{Account, Update};
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 use identity::core::OneOrMany::Many;
 use identity::core::OneOrMany::One;
 use identity::did::MethodRelationship;
+use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
+use crate::account::wasm_method_relationship::WasmMethodRelationship;
 use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -36,11 +39,13 @@ impl WasmAccount {
       .map(Into::into)
       .collect();
 
-    let account = self.0.clone();
-    let fragment = match input.fragment() {
-      Some(value) => value,
-      None => return Err(wasm_error(MissingRequiredField("fragment"))),
-    };
+    if relationships.is_empty() {
+      return Err(wasm_error(MissingRequiredField("relationships is missing or empty")));
+    }
+
+    let account: Rc<WasmRefCell<Account>> = self.0.clone();
+    let fragment : String =  input.fragment();
+
 
     let promise: Promise = future_to_promise(async move {
       let update = Update::AttachMethodRelationship {
@@ -54,33 +59,10 @@ impl WasmAccount {
         .process_update(update)
         .await
         .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
+        .map(|_| JsValue::undefined())
     });
 
     Ok(promise)
-  }
-}
-
-#[wasm_bindgen (js_name = MethodRelationship)]
-#[derive(Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum WasmMethodRelationship {
-  Authentication = 0,
-  AssertionMethod = 1,
-  KeyAgreement = 2,
-  CapabilityDelegation = 3,
-  CapabilityInvocation = 4,
-}
-
-impl From<WasmMethodRelationship> for MethodRelationship {
-  fn from(r: WasmMethodRelationship) -> Self {
-    match r {
-      WasmMethodRelationship::Authentication => MethodRelationship::Authentication,
-      WasmMethodRelationship::AssertionMethod => MethodRelationship::AssertionMethod,
-      WasmMethodRelationship::KeyAgreement => MethodRelationship::KeyAgreement,
-      WasmMethodRelationship::CapabilityDelegation => MethodRelationship::CapabilityDelegation,
-      WasmMethodRelationship::CapabilityInvocation => MethodRelationship::CapabilityInvocation,
-    }
   }
 }
 
@@ -90,16 +72,23 @@ extern "C" {
   pub type AttachMethodRelationshipOptions;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn fragment(this: &AttachMethodRelationshipOptions) -> Option<String>;
+  pub fn fragment(this: &AttachMethodRelationshipOptions) -> String;
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn relationships(this: &AttachMethodRelationshipOptions) -> JsValue;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
+const TS_ATTACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
 export type AttachMethodRelationshipOptions = {
-  fragment: string,
-  relationships: MethodRelationship | MethodRelationship[]
+    /**
+     * Fragment of Verification Method.
+     */
+    fragment: string,
+
+    /**
+     * Set one or more method relationships.
+     */
+    relationships: MethodRelationship | MethodRelationship[]
 };
 "#;

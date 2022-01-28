@@ -7,3 +7,4 @@ mod update;
 mod wasm_account;
 mod auto_save;
 mod wasm_identity_setup;
+mod wasm_method_relationship;
