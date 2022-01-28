@@ -12,8 +12,8 @@ use std::hash::Hash;
 use std::hash::Hasher;
 
 use did_url::DID as BaseDIDUrl;
-use identity_core::common::KeyComparable;
 
+use identity_core::common::KeyComparable;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 

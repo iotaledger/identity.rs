@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Errors that may occur when Self-sovereign Identity goes wrong.
@@ -48,7 +48,7 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] time::error::Error),
-  /// Caused by attempting to convert a collection with duplicate keys into an OrderedSet
+  /// Caused by attempting to convert a collection with duplicate keys into an OrderedSet.
   #[error("duplicate key in OrderedSet")]
   OrderedSetDuplicate,
   /// Caused by attempting to parse an invalid `ProofPurpose`.
