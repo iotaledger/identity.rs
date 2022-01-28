@@ -35,7 +35,7 @@ async function manipulateIdentity() {
     // Add a new service to the identity.
     await account.createService({
         fragment: "my-service-1",
-        serviceType: "MyCustomService",
+        type: "MyCustomService",
         endpoint: "https://example.com"
     })
 

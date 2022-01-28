@@ -16,7 +16,7 @@ async function lazy() {
     // Add a new service to the local DID document.
     await account.createService({
         fragment: "example-service",
-        serviceType: "LinkedDomains",
+        type: "LinkedDomains",
         endpoint: "https://example.org"
     })
 
@@ -27,7 +27,7 @@ async function lazy() {
     // Add another service.
     await account.createService({
         fragment: "another-service",
-        serviceType: "LinkedDomains",
+        type: "LinkedDomains",
         endpoint: "https://example.org"
     });
 
@@ -44,7 +44,7 @@ async function lazy() {
     // Print the DID of the created Identity.
     console.log(iotaDid)
 
-    // Print the local state of the DID Document
+    // Print the local state of the DID Document.
     console.log(account.document());
 
     // Print the Explorer URL for the DID.

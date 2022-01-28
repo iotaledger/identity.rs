@@ -23,23 +23,12 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = createService)]
   pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
-    //
-    // let service_type: String = match options.serviceType() {
-    //   Some(value) => value,
-    //   None => return Err(wasm_error(MissingRequiredField("serviceType"))),
-    // };
 
     let service_type: String = options
-      .serviceType()
-      .ok_or(wasm_error(MissingRequiredField("serviceType")))?;
+      .type_()
+      .ok_or(wasm_error(MissingRequiredField("type")))?;
 
     let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
-
-    //
-    // let endpoint = match options.endpoint() {
-    //   Some(v) => v,
-    //   None => return Err(wasm_error(MissingRequiredField("endpoint"))),
-    // };
 
     let endpoint: String = options.endpoint().ok_or(wasm_error(MissingRequiredField("endpoint")))?;
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
@@ -58,7 +47,7 @@ impl WasmAccount {
         .process_update(update)
         .await
         .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
+        .map(|_| JsValue::undefined())
     });
 
     Ok(promise)
@@ -73,8 +62,8 @@ extern "C" {
   #[wasm_bindgen(structural, getter, method)]
   pub fn fragment(this: &CreateServiceOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn serviceType(this: &CreateServiceOptions) -> Option<String>;
+  #[wasm_bindgen(structural, getter, method, js_name= type)]
+  pub fn type_(this: &CreateServiceOptions) -> Option<String>;
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn endpoint(this: &CreateServiceOptions) -> Option<String>;
@@ -82,10 +71,10 @@ extern "C" {
 
 //ToDo add `properties`
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
+const TS_CREATE_SERVICE_OPTIONS: &'static str = r#"
 export type CreateServiceOptions = {
   fragment: string,
-  serviceType: string,
+  type: string,
   endpoint: string,
 };
 "#;
