@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
@@ -9,6 +9,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
+use identity::core::OneOrMany;
 use identity::core::OneOrMany::Many;
 use identity::core::OneOrMany::One;
 use identity::did::MethodRelationship;
@@ -20,16 +21,17 @@ use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  /// Attaches a single or multiple relationships to the given method, if the method exists.
+  /// Attach one or more verification relationships to a method.
   ///
-  /// Note: The method needs to be in the set of verification methods,
-  /// so it cannot be an embedded one.
+  /// Note: the method must exist and be in the set of verification methods;
+  /// it cannot be an embedded method.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
   pub fn attach_relationships(&mut self, input: &AttachMethodRelationshipOptions) -> Result<Promise> {
-    let relationships: Vec<WasmMethodRelationship> = match input.relationships().into_serde().wasm_result()? {
-      One(r) => vec![r],
-      Many(r) => r,
-    };
+    let relationships: Vec<WasmMethodRelationship> = input
+      .relationships()
+      .into_serde::<OneOrMany<WasmMethodRelationship>>()
+      .wasm_result()?
+      .into();
 
     let relationships: Vec<MethodRelationship> = relationships.into_iter().map(Into::into).collect();
 

@@ -322,10 +322,10 @@ Detaches the given relationship from the given method, if the method exists.
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
-Attaches a single or multiple relationships to the given method, if the method exists.
+Attach one or more verification relationships to a method.
 
-Note: The method needs to be in the set of verification methods,
-so it cannot be an embedded one.
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
@@ -2090,12 +2090,12 @@ Deserializes a `MethodScope` object from a JSON object.
 **Kind**: global class  
 
 * [MethodSecret](#MethodSecret)
-    * [.ed25519_base58(private_key)](#MethodSecret.ed25519_base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-    * [.merkelKeyCollection(collection)](#MethodSecret.merkelKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 
-<a name="MethodSecret.ed25519_base58"></a>
+<a name="MethodSecret.ed25519Base58"></a>
 
-### MethodSecret.ed25519\_base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 private key.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
@@ -2104,9 +2104,9 @@ Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 priva
 | --- | --- |
 | private_key | <code>string</code> | 
 
-<a name="MethodSecret.merkelKeyCollection"></a>
+<a name="MethodSecret.merkleKeyCollection"></a>
 
-### MethodSecret.merkelKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+### MethodSecret.merkleKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollection).
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
