@@ -27,13 +27,14 @@ impl WasmAccount {
   /// it cannot be an embedded method.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
   pub fn attach_relationships(&mut self, input: &AttachMethodRelationshipOptions) -> Result<Promise> {
-    let relationships: Vec<WasmMethodRelationship> = input
+    let relationships: Vec<MethodRelationship> = input
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
+      .map(OneOrMany::into_vec)
       .wasm_result()?
-      .into();
-
-    let relationships: Vec<MethodRelationship> = relationships.into_iter().map(Into::into).collect();
+      .into_iter()
+      .map(Into::into)
+      .collect();
 
     let account = self.0.clone();
     let fragment = match input.fragment() {
