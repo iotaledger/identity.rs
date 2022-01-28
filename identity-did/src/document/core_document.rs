@@ -1,12 +1,18 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::Serialize;
+
 use identity_core::common::BitSet;
+use identity_core::common::Object;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::convert::FmtJson;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleDigestTag;
@@ -18,18 +24,12 @@ use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_key::VerificationKey;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
-
-use serde::Serialize;
-
-use identity_core::common::Object;
-use identity_core::common::Url;
-use identity_core::convert::FmtJson;
-use identity_core::crypto::PrivateKey;
 
 use crate::did::CoreDID;
 use crate::did::CoreDIDUrl;
@@ -37,11 +37,11 @@ use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
-use crate::utils::OrderedSet;
+use crate::utils::DIDUrlQuery;
+use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
 use crate::verifiable::Revocation;
 use crate::verifiable::VerifierOptions;
-use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
 use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
@@ -327,9 +327,9 @@ impl<T, U, V> CoreDocument<T, U, V> {
     relationship: MethodRelationship,
   ) -> Result<bool>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
-    let method_query: MethodQuery<'query> = method_query.into();
+    let method_query: DIDUrlQuery<'query> = method_query.into();
 
     match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
       None => match self.resolve_method(method_query) {
@@ -364,9 +364,9 @@ impl<T, U, V> CoreDocument<T, U, V> {
     relationship: MethodRelationship,
   ) -> Result<bool>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
-    let method_query: MethodQuery<'query> = method_query.into();
+    let method_query: DIDUrlQuery<'query> = method_query.into();
     match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
       None => match self.resolve_method(method_query) {
         Some(_) => Err(Error::InvalidMethodEmbedded),
@@ -425,7 +425,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
   pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_inner(query.into())
   }
@@ -437,7 +437,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Fails if no matching method is found.
   pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_inner(query.into()).ok_or(Error::MethodNotFound)
   }
@@ -450,7 +450,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     scope: MethodScope,
   ) -> Option<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     let resolve_ref_helper = |method_ref: &'me MethodRef<U>| self.resolve_method_ref(method_ref);
 
@@ -488,7 +488,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     scope: MethodScope,
   ) -> Result<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .resolve_method_with_scope(query, scope)
@@ -499,7 +499,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// matching the provided `query`.
   pub fn resolve_method_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_mut_inner(query.into())
   }
@@ -512,7 +512,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Fails if no matching [`VerificationMethod`] is found.
   pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_mut_inner(query.into()).ok_or(Error::MethodNotFound)
   }
@@ -525,7 +525,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  fn resolve_method_inner(&self, query: MethodQuery<'_>) -> Option<&VerificationMethod<U>> {
+  fn resolve_method_inner(&self, query: DIDUrlQuery<'_>) -> Option<&VerificationMethod<U>> {
     let mut method: Option<&MethodRef<U>> = None;
 
     if method.is_none() {
@@ -555,7 +555,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  fn resolve_method_mut_inner(&mut self, query: MethodQuery<'_>) -> Option<&mut VerificationMethod<U>> {
+  fn resolve_method_mut_inner(&mut self, query: DIDUrlQuery<'_>) -> Option<&mut VerificationMethod<U>> {
     let mut method: Option<&mut MethodRef<U>> = None;
 
     if method.is_none() {
@@ -737,6 +737,7 @@ mod tests {
   use crate::did::CoreDID;
   use crate::did::DID;
   use crate::document::CoreDocument;
+  use crate::utils::Queryable;
   use crate::verification::MethodData;
   use crate::verification::MethodRelationship;
   use crate::verification::MethodScope;

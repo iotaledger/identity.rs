@@ -48,6 +48,9 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] time::error::Error),
+  /// Caused by attempting to convert a collection with duplicate keys into an OrderedSet
+  #[error("duplicate key in OrderedSet")]
+  OrderedSetDuplicate,
   /// Caused by attempting to parse an invalid `ProofPurpose`.
   #[error("Invalid ProofPurpose")]
   InvalidProofPurpose,

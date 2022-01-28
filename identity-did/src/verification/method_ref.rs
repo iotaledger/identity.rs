@@ -1,9 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 
 use crate::did::CoreDID;
@@ -107,6 +108,15 @@ impl<T> From<CoreDIDUrl> for MethodRef<T> {
 impl<T> AsRef<CoreDIDUrl> for MethodRef<T> {
   #[inline]
   fn as_ref(&self) -> &CoreDIDUrl {
+    self.id()
+  }
+}
+
+impl<T> KeyComparable for MethodRef<T> {
+  type Key = CoreDIDUrl;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
     self.id()
   }
 }

@@ -11,6 +11,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
@@ -27,10 +28,9 @@ use identity_core::crypto::TrySignatureMut;
 use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
-use identity_did::utils::OrderedSet;
+use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::VerifierOptions;
-use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
@@ -371,7 +371,7 @@ impl IotaDocument {
   /// matching the provided `query`.
   pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
@@ -390,7 +390,7 @@ impl IotaDocument {
   /// Fails if no matching verification [`IotaVerificationMethod`] is found.
   pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
@@ -405,7 +405,7 @@ impl IotaDocument {
   #[doc(hidden)]
   pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.try_resolve_method_mut(query).map_err(Into::into)
   }
@@ -414,7 +414,7 @@ impl IotaDocument {
   /// and the verification relationship specified by `scope`.
   pub fn resolve_method_with_scope<'query, Q>(&self, query: Q, scope: MethodScope) -> Option<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     self
@@ -426,7 +426,7 @@ impl IotaDocument {
   /// Attempts to resolve the given method query into a method capable of signing a document update.
   pub fn try_resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .resolve_method_with_scope(query, MethodScope::capability_invocation())
@@ -469,7 +469,7 @@ impl IotaDocument {
   ) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .signer(private_key)
@@ -492,7 +492,7 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used or the signature operation fails.
   pub fn sign_self<'query, Q>(&mut self, private_key: &PrivateKey, method_query: Q) -> Result<()>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // Ensure method is permitted to sign document updates.
     let method: &VerificationMethod<_> = self.try_resolve_signing_method(method_query.into())?;
@@ -600,12 +600,12 @@ impl IotaDocument {
     method_query: Q,
   ) -> Result<DiffMessage>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     let mut diff: DiffMessage = DiffMessage::new(self, other, message_id)?;
 
     // Ensure the method is allowed to sign document updates.
-    let method_query: MethodQuery<'_> = method_query.into();
+    let method_query: DIDUrlQuery<'_> = method_query.into();
     let _ = self.try_resolve_signing_method(method_query.clone())?;
 
     self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;

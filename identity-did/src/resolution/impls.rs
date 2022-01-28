@@ -3,6 +3,8 @@
 
 use std::time::Instant;
 
+use identity_core::common::KeyComparable;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 
 use crate::did::CoreDID;
@@ -21,7 +23,6 @@ use crate::resolution::ResolverMethod;
 use crate::resolution::Resource;
 use crate::resolution::SecondaryResource;
 use crate::service::ServiceEndpoint;
-use crate::utils::OrderedSet;
 
 /// Resolves a DID into a DID Document by using the "Read" operation of the DID method.
 ///
@@ -257,7 +258,7 @@ fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option
     resources: &OrderedSet<T>,
   ) -> Result<Option<SecondaryResource>>
   where
-    T: Clone + AsRef<CoreDIDUrl> + Into<SecondaryResource>,
+    T: Clone + AsRef<CoreDIDUrl> + KeyComparable + Into<SecondaryResource>,
   {
     for resource in resources.iter() {
       let resource_url: &CoreDIDUrl = resource.as_ref();
@@ -385,6 +386,7 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 mod test {
   use crate::did::DID;
   use crate::service::Service;
+  use crate::utils::Queryable;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
   use crate::verification::VerificationMethod;
@@ -419,7 +421,7 @@ mod test {
     .is_ok());
     assert!(service_endpoint_ctor(
       did_url,
-      &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
+      &Url::parse("https://my-service.endpoint.net?query=this").unwrap(),
     )
     .is_ok());
   }
@@ -442,7 +444,7 @@ mod test {
     .is_ok());
     assert!(service_endpoint_ctor(
       did_url,
-      &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
+      &Url::parse("https://my-service.endpoint.net#fragment").unwrap(),
     )
     .is_ok());
   }

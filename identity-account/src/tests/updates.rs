@@ -11,6 +11,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_did::did::DID;
 use identity_did::service::ServiceEndpoint;
+use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;

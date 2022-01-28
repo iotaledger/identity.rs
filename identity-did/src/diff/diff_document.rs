@@ -5,6 +5,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
@@ -15,7 +16,6 @@ use identity_core::diff::Result;
 use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::service::Service;
-use crate::utils::OrderedSet;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
 
@@ -312,12 +312,12 @@ where
 mod test {
   use std::collections::BTreeMap;
 
-  use crate::did::CoreDIDUrl;
-  use crate::did::DID;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
 
+  use crate::did::CoreDIDUrl;
+  use crate::did::DID;
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
