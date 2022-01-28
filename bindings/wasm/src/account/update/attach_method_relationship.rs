@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
-use serde_repr::Deserialize_repr;
-use serde_repr::Serialize_repr;
+
+
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -11,8 +11,8 @@ use wasm_bindgen_futures::future_to_promise;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::account::{Account, Update};
 use identity::core::OneOrMany;
-use identity::core::OneOrMany::Many;
-use identity::core::OneOrMany::One;
+
+
 use identity::did::MethodRelationship;
 use wasm_bindgen::__rt::WasmRefCell;
 
