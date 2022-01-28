@@ -395,6 +395,7 @@ mod tests {
   impl KeyComparable for ComparableStruct {
     type Key = u8;
 
+    #[inline]
     fn key(&self) -> &Self::Key {
       &self.key
     }

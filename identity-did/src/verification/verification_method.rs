@@ -136,6 +136,7 @@ impl<T> AsRef<CoreDIDUrl> for VerificationMethod<T> {
 impl<T> KeyComparable for VerificationMethod<T> {
   type Key = CoreDIDUrl;
 
+  #[inline]
   fn key(&self) -> &Self::Key {
     self.id()
   }

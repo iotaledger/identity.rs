@@ -579,6 +579,7 @@ where
 impl KeyComparable for CoreDIDUrl {
   type Key = CoreDIDUrl;
 
+  #[inline]
   fn key(&self) -> &Self::Key {
     self
   }

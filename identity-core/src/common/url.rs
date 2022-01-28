@@ -113,6 +113,7 @@ impl Diff for Url {
 impl KeyComparable for Url {
   type Key = Url;
 
+  #[inline]
   fn key(&self) -> &Self::Key {
     self
   }

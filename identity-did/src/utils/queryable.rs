@@ -7,8 +7,14 @@ use identity_core::common::OrderedSet;
 use crate::did::CoreDIDUrl;
 use crate::utils::DIDUrlQuery;
 
+/// Allows retrieving an entry from a collection using a custom query type.
+///
+/// Used for querying verification methods in a DID Document by either its full DID Url identifier
+/// or only its fragment. See [`DIDUrlQuery`].
 pub trait Queryable<T, Q> {
+  /// Returns a reference to an entry matching the query if one exists.
   fn query(&self, query: Q) -> Option<&T>;
+  /// Returns a mutable reference to an entry matching the query if one exists.
   fn query_mut(&mut self, query: Q) -> Option<&mut T>;
 }
 

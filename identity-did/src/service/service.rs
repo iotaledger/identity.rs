@@ -107,6 +107,7 @@ where
 impl<T> KeyComparable for Service<T> {
   type Key = CoreDIDUrl;
 
+  #[inline]
   fn key(&self) -> &Self::Key {
     self.as_ref()
   }
