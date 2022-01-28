@@ -6,6 +6,10 @@ use std::ops::Deref;
 use std::result::Result as StdResult;
 use std::sync::Arc;
 
+use crate::p2p::behaviour::DidCommResponse;
+use crate::p2p::event_loop::InboundRequest;
+use crate::p2p::event_loop::NetCommander;
+use crate::p2p::event_loop::SwarmCommand;
 use crate::ActorRequest;
 use crate::AsyncFn;
 use crate::Endpoint;
@@ -13,7 +17,6 @@ use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
 use crate::RequestMessage;
-use crate::ResponseMessage;
 use crate::Result;
 
 use dashmap::DashMap;
@@ -23,9 +26,9 @@ use futures::Future;
 use futures::StreamExt;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use p2p::ListenErr;
-use p2p::ReceiveRequest;
-use p2p::StrongholdP2p;
+
+use libp2p::request_response::OutboundFailure;
+use libp2p::request_response::ResponseChannel;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tokio::task::{self};
@@ -66,7 +69,7 @@ impl HandlerBuilder {
 
 #[derive(Clone)]
 pub struct Actor {
-  comm: StrongholdP2p<RequestMessage, ResponseMessage>,
+  commander: NetCommander,
   handlers: Arc<HandlerMap>,
   objects: Arc<ObjectMap>,
   listener_handle: Arc<Mutex<Option<JoinHandle<Result<()>>>>>,
@@ -74,8 +77,8 @@ pub struct Actor {
 
 impl Actor {
   pub(crate) async fn from_builder(
-    receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
-    comm: StrongholdP2p<RequestMessage, ResponseMessage>,
+    receiver: mpsc::Receiver<InboundRequest>,
+    commander: NetCommander,
     handlers: HandlerMap,
     objects: ObjectMap,
     listening_addresses: Vec<Multiaddr>,
@@ -84,7 +87,7 @@ impl Actor {
     let objects = Arc::new(objects);
 
     let mut actor = Self {
-      comm,
+      commander,
       handlers: Arc::clone(&handlers),
       objects: Arc::clone(&objects),
       listener_handle: Arc::new(Mutex::new(None)),
@@ -98,7 +101,7 @@ impl Actor {
     // };
 
     for addr in listening_addresses {
-      actor.comm.start_listening(addr).await?;
+      actor.commander.start_listening(addr).await?;
     }
 
     Ok(actor)
@@ -120,34 +123,34 @@ impl Actor {
     self.handlers.as_ref()
   }
 
-  pub async fn start_listening(&mut self, address: Multiaddr) -> std::result::Result<Multiaddr, ListenErr> {
-    self.comm.start_listening(address).await
+  pub async fn start_listening(&mut self, address: Multiaddr) -> std::result::Result<Multiaddr, OutboundFailure> {
+    self.commander.start_listening(address).await
   }
 
   pub fn peer_id(&self) -> PeerId {
-    self.comm.get_peer_id()
+    // self.commander.peer_id()
+    todo!()
   }
 
   pub async fn stop_listening(&mut self) {
-    self.comm.stop_listening().await;
+    // self.commander.stop_listening().await;
+    todo!()
   }
 
   pub async fn addrs(&mut self) -> Vec<Multiaddr> {
-    let listeners = self.comm.get_listeners().await;
-    listeners.into_iter().map(|l| l.addrs).flatten().collect()
+    // let listeners = self.commander.get_listeners().await;
+    // listeners.into_iter().map(|l| l.addrs).flatten().collect()
+    todo!()
   }
 
   /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
-  fn spawn_listener(
-    self,
-    mut receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
-  ) -> JoinHandle<Result<()>> {
+  fn spawn_listener(self, mut receiver: mpsc::Receiver<InboundRequest>) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       loop {
-        if let Some(receive_request) = receiver.next().await {
-          self.clone().spawn_handler(receive_request);
+        if let Some(request) = receiver.next().await {
+          self.clone().spawn_handler(request);
         } else {
           return Ok(());
         }
@@ -155,11 +158,12 @@ impl Actor {
     })
   }
 
-  fn spawn_handler(self, receive_request: ReceiveRequest<RequestMessage, ResponseMessage>) -> JoinHandle<Result<()>> {
+  fn spawn_handler(mut self, inbound_request: InboundRequest) -> JoinHandle<Result<()>> {
     task::spawn(async move {
-      let request = receive_request.request;
-      let response_tx = receive_request.response_tx;
-      let endpoint = request.endpoint;
+      let request: RequestMessage<Vec<u8>> = inbound_request.request_message;
+      let endpoint: Endpoint = request.endpoint;
+      let peer_id: PeerId = inbound_request.peer_id;
+      let response_channel: ResponseChannel<_> = inbound_request.response_channel;
 
       // If the handler is not found, check if a catch all handler exists and use it.
       // If not, return the original error so the other side gets
@@ -172,12 +176,16 @@ impl Actor {
         },
       };
 
+      let mut actor = self.clone();
+
       match handler_object_tuple {
         Ok((handler, object)) => {
-          Self::send_ack(response_tx);
-          let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
+          // Send actor-level acknowledgment that the message was received and a handler exists.
+          Self::send_response(&mut actor.commander, Ok(()), response_channel).await;
+
+          let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
           let input = handler.value().1.deserialize_request(request.data).unwrap();
-          match handler.value().1.invoke(self.clone(), request_context, object, input) {
+          match handler.value().1.invoke(actor, request_context, object, input) {
             Ok(invocation) => {
               invocation.await;
             }
@@ -187,13 +195,11 @@ impl Actor {
           }
         }
         Err(error) => {
-          // TODO: This might be a problem if we still want a request-response actor,
-          // one that doesn't just acknowledge - depends on serde_json's serialization.
           let err_response: StdResult<(), RemoteSendError> = Err(error);
-          let response = serde_json::to_vec(&err_response).unwrap();
-          if response_tx.send(response).is_err() {
-            log::error!("could not respond to `{}` request", endpoint);
-          }
+          Self::send_response(&mut actor.commander, err_response, response_channel).await;
+
+          // TODO: If the response could not be sent, log the error.
+          // log::error!("could not respond to `{}` request", endpoint);
         }
       }
 
@@ -220,20 +226,29 @@ impl Actor {
     }
   }
 
-  fn send_ack(response_tx: Sender<Vec<u8>>) {
-    // TODO: can return an error when
-    // - connection times out, when
-    // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
-    // - error on the transport layer
-    // - potentially others...
-    let ack: StdResult<(), RemoteSendError> = Ok(());
-    let response = serde_json::to_vec(&ack).unwrap();
-    let response_result = response_tx.send(response);
-
-    if response_result.is_err() {
-      log::error!("could not respond to request");
-    }
+  async fn send_response(
+    commander: &mut NetCommander,
+    response: StdResult<(), RemoteSendError>,
+    channel: ResponseChannel<DidCommResponse>,
+  ) {
+    let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
+    commander.send_response(response, channel).await;
   }
+
+  // fn send_ack(response_tx: Sender<Vec<u8>>) {
+  //   // TODO: can return an error when
+  //   // - connection times out, when
+  //   // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
+  //   // - error on the transport layer
+  //   // - potentially others...
+  //   let ack: StdResult<(), RemoteSendError> = Ok(());
+  //   let response = serde_json::to_vec(&ack).unwrap();
+  //   let response_result = response_tx.send(response);
+
+  //   if response_result.is_err() {
+  //     log::error!("could not respond to request");
+  //   }
+  // }
 
   pub async fn stop_handling_requests(self) -> Result<()> {
     // TODO: aborting means that even requests that have been received and are being processed are cancelled
@@ -246,7 +261,8 @@ impl Actor {
   }
 
   pub async fn add_peer(&mut self, peer: PeerId, addr: Multiaddr) {
-    self.comm.add_address(peer, addr).await;
+    // self.commander.add_address(peer, addr).await;
+    todo!()
   }
 
   pub async fn send_request<Request: ActorRequest>(
@@ -254,7 +270,8 @@ impl Actor {
     peer: PeerId,
     command: Request,
   ) -> Result<Request::Response> {
-    self.send_named_request(peer, &*command.request_name(), command).await
+    todo!()
+    // self.send_named_request(peer, &*command.request_name(), command).await
   }
 
   pub async fn send_named_request<Request: ActorRequest>(
@@ -263,20 +280,36 @@ impl Actor {
     name: &str,
     command: Request,
   ) -> Result<Request::Response> {
-    let request = RequestMessage::new(name, serde_json::to_vec(&command).unwrap())?;
+    todo!()
+    // let request = serde_json::to_vec(&RequestMessage::new(name, command)?).unwrap();
 
-    log::debug!("Sending `{}` request", request.endpoint);
+    // // log::debug!("Sending `{}` request", request.endpoint);
 
-    let response = self.comm.send_request(peer, request).await?;
+    // let response = self.commander.send_request(peer, request).await?;
 
-    let request_response: serde_json::Result<StdResult<Request::Response, RemoteSendError>> =
-      serde_json::from_slice(&response);
+    // let request_response: serde_json::Result<StdResult<Request::Response, RemoteSendError>> =
+    //   serde_json::from_slice(&response);
 
-    match request_response {
-      Ok(Ok(res)) => Ok(res),
-      Ok(Err(err)) => Err(err.into()),
-      Err(err) => Err(crate::Error::DeserializationFailure(err.to_string())),
-    }
+    // match request_response {
+    //   Ok(Ok(res)) => Ok(res),
+    //   Ok(Err(err)) => Err(err.into()),
+    //   Err(err) => Err(crate::Error::DeserializationFailure(err.to_string())),
+    // }
+  }
+
+  pub async fn send_named_message<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    name: &str,
+    command: Request,
+  ) -> Result<()> {
+    let request = serde_json::to_vec(&RequestMessage::new(name, command)?).unwrap();
+
+    log::debug!("Sending `{}` message", name);
+
+    self.commander.send_request(peer, request).await?;
+
+    Ok(())
   }
 
   /// Call the hook identified by the given `endpoint`.

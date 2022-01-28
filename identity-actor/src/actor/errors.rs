@@ -1,9 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
-use p2p::ListenErr;
-use p2p::TransportErr;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -23,7 +22,7 @@ pub enum Error {
   #[error("invalid endpoint")]
   InvalidEndpoint,
   #[error("{0}")]
-  OutboundFailure(#[from] p2p::OutboundFailure),
+  OutboundFailure(#[from] OutboundFailure),
   /// No handler was set on the receiver and thus we cannot process this request.
   #[error("unkown request: `{0}`")]
   UnknownRequest(String),
@@ -35,15 +34,15 @@ pub enum Error {
   DeserializationFailure(String),
 }
 
-impl From<ListenErr> for Error {
-  fn from(err: ListenErr) -> Self {
-    match err {
-      ListenErr::Shutdown => Error::Shutdown,
-      ListenErr::Transport(TransportErr::Io(io_err)) => Error::IoError(io_err),
-      ListenErr::Transport(TransportErr::MultiaddrNotSupported(addr)) => Error::MultiaddrNotSupported(addr),
-    }
-  }
-}
+// impl From<ListenErr> for Error {
+//   fn from(err: ListenErr) -> Self {
+//     match err {
+//       ListenErr::Shutdown => Error::Shutdown,
+//       ListenErr::Transport(TransportErr::Io(io_err)) => Error::IoError(io_err),
+//       ListenErr::Transport(TransportErr::MultiaddrNotSupported(addr)) => Error::MultiaddrNotSupported(addr),
+//     }
+//   }
+// }
 
 /// Errors that can occur on the remote actor during [Actor::send_request] calls.
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]

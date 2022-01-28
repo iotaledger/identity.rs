@@ -6,6 +6,7 @@ mod tests;
 
 pub mod actor;
 pub mod didcomm;
+pub mod p2p;
 pub mod storage;
 
 pub use actor::*;
@@ -16,5 +17,3 @@ pub use libp2p::PeerId;
 pub use storage::handler::StorageHandler;
 pub use storage::requests::IdentityList;
 pub use storage::requests::IdentityResolve;
-
-pub use p2p::InitKeypair;
