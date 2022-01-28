@@ -14,6 +14,8 @@ use identity::account::AccountConfig;
 use identity::account::AutoSave;
 use identity::account::IdentitySetup;
 
+use crate::account::auto_save::WasmAutoSave;
+use crate::account::wasm_identity_setup::WasmIdentitySetup;
 use js_sys::Promise;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -21,8 +23,6 @@ use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
-use crate::account::auto_save::WasmAutoSave;
-use crate::account::wasm_identity_setup::WasmIdentitySetup;
 
 /// An [`Account`] builder for easy account configuration.
 ///

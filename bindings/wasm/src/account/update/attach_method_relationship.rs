@@ -1,15 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::rc::Rc;
 use js_sys::Promise;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::{Account, Update};
 use identity::account::UpdateError::MissingRequiredField;
+use identity::account::{Account, Update};
 use identity::core::OneOrMany;
 use identity::core::OneOrMany::Many;
 use identity::core::OneOrMany::One;
@@ -29,8 +29,8 @@ impl WasmAccount {
   /// Note: the method must exist and be in the set of verification methods;
   /// it cannot be an embedded method.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
-  pub fn attach_relationships(&mut self, input: &AttachMethodRelationshipOptions) -> Result<Promise> {
-    let relationships: Vec<MethodRelationship> = input
+  pub fn attach_relationships(&mut self, options: &AttachMethodRelationshipOptions) -> Result<Promise> {
+    let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
       .map(OneOrMany::into_vec)
@@ -44,8 +44,8 @@ impl WasmAccount {
     }
 
     let account: Rc<WasmRefCell<Account>> = self.0.clone();
-    let fragment : String =  input.fragment();
 
+    let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
 
     let promise: Promise = future_to_promise(async move {
       let update = Update::AttachMethodRelationship {
@@ -72,7 +72,7 @@ extern "C" {
   pub type AttachMethodRelationshipOptions;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn fragment(this: &AttachMethodRelationshipOptions) -> String;
+  pub fn fragment(this: &AttachMethodRelationshipOptions) -> Option<String>;
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn relationships(this: &AttachMethodRelationshipOptions) -> JsValue;

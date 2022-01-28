@@ -1,14 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
+use identity::account::{Account, Update};
 use identity::core::Url;
 use identity::did::ServiceEndpoint;
+use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
 use crate::error::wasm_error;
@@ -20,24 +22,27 @@ impl WasmAccount {
   /// Adds a new Service to the DID Document.
   #[wasm_bindgen(js_name = createService)]
   pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
-    let account = self.0.clone();
+    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
+    //
+    // let service_type: String = match options.serviceType() {
+    //   Some(value) => value,
+    //   None => return Err(wasm_error(MissingRequiredField("serviceType"))),
+    // };
 
-    let service_type: String = match options.serviceType() {
-      Some(value) => value,
-      None => return Err(wasm_error(MissingRequiredField("serviceType"))),
-    };
+    let service_type: String = options
+      .serviceType()
+      .ok_or(wasm_error(MissingRequiredField("serviceType")))?;
 
-    let fragment = match options.fragment() {
-      Some(value) => value,
-      None => return Err(wasm_error(MissingRequiredField("fragment"))),
-    };
+    let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
 
-    let endpoint = match options.endpoint() {
-      Some(v) => v,
-      None => return Err(wasm_error(MissingRequiredField("endpoint"))),
-    };
+    //
+    // let endpoint = match options.endpoint() {
+    //   Some(v) => v,
+    //   None => return Err(wasm_error(MissingRequiredField("endpoint"))),
+    // };
 
-    let endpoint = Url::parse(endpoint.as_str()).wasm_result()?;
+    let endpoint: String = options.endpoint().ok_or(wasm_error(MissingRequiredField("endpoint")))?;
+    let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
 
     let update = Update::CreateService {
       fragment,

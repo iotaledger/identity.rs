@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::MethodSecret;
 use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
+use identity::account::{Account, MethodSecret};
 use identity::did::MethodScope;
 use identity::did::MethodType;
+use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::method_secret::WasmMethodSecret;
 use crate::account::wasm_account::WasmAccount;
@@ -24,27 +26,18 @@ impl WasmAccount {
   /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
-    let account = self.0.clone();
+    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
 
-    let method_type: MethodType = match options.methodType() {
-      Some(value) => value.0,
-      None => MethodType::Ed25519VerificationKey2018,
-    };
+    let method_type: MethodType = options
+      .methodType()
+      .map(|m| m.0)
+      .unwrap_or(MethodType::Ed25519VerificationKey2018);
 
-    let fragment = match options.fragment() {
-      Some(value) => value,
-      None => return Err(wasm_error(MissingRequiredField("fragment"))),
-    };
+    let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
 
-    let method_scope: MethodScope = match options.methodScope() {
-      Some(value) => value.0,
-      None => MethodScope::default(),
-    };
+    let method_scope: MethodScope = options.methodScope().map(|ms| ms.0).unwrap_or_default();
 
-    let method_secret: Option<MethodSecret> = match options.methodSecret() {
-      Some(value) => Some(value.0),
-      None => None,
-    };
+    let method_secret: Option<MethodSecret> = options.methodSecret().map(|ms| ms.0);
 
     let promise: Promise = future_to_promise(async move {
       let update = Update::CreateMethod {
@@ -60,7 +53,7 @@ impl WasmAccount {
         .process_update(update)
         .await
         .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
+        .map(|_| JsValue::undefined())
     });
 
     Ok(promise)
@@ -86,7 +79,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
+const TS_CREATE_METHOD_OPTIONS: &'static str = r#"
 export type CreateMethodOptions = {
   fragment: string,
   methodScope?: MethodScope,
