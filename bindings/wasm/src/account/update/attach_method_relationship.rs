@@ -43,7 +43,7 @@ impl WasmAccount {
       return Err(wasm_error(MissingRequiredField("relationships is missing or empty")));
     }
 
-    let account: Rc<WasmRefCell<Account>> = self.0.clone();
+    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
 
     let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
 

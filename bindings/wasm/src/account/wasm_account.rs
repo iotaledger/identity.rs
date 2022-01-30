@@ -10,7 +10,7 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::account::AccountBuilder;
+use identity::account::{AccountBuilder, Storage};
 use identity::account::AccountStorage;
 use identity::account::{Account, PublishOptions};
 
@@ -18,16 +18,21 @@ use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
-use identity::iota::IotaDocument;
+use identity::iota::{IotaDID, IotaDocument};
 use js_sys::Promise;
 
 use crate::account::auto_save::WasmAutoSave;
 use std::rc::Rc;
+use std::sync::Arc;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
+/// An account manages one identity.
+///
+/// It handles private keys, writing to storage and
+/// publishing to the Tangle.
 #[wasm_bindgen(js_name = Account)]
 pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 
@@ -55,10 +60,6 @@ impl WasmAccount {
   #[wasm_bindgen]
   pub fn actions(&self) -> usize {
     self.0.as_ref().borrow().actions()
-  }
-
-  pub fn state(&self) {
-    unimplemented!() //ToDo
   }
 
   /// Returns a copy of the document managed by the `Account`.
@@ -91,13 +92,14 @@ impl WasmAccount {
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
-    let account = self.0;
-    let did = account.as_ref().borrow().did().to_owned();
-    let storage = account.as_ref().borrow().storage_arc();
+    // Get IotaDID and storage from the account.
+    let account: Rc<WasmRefCell<Account>> = self.0;
+    let did: IotaDID = account.as_ref().borrow().did().to_owned();
+    let storage: Arc<dyn Storage> = account.as_ref().borrow().storage_arc();
     std::mem::drop(account);
 
-    let promise: Promise = future_to_promise(async move {
-      let account = AccountBuilder::new()
+    future_to_promise(async move {
+      let account: Result<Account> = AccountBuilder::new()
         .storage(AccountStorage::Custom(storage))
         .load_identity(did)
         .await
@@ -107,8 +109,7 @@ impl WasmAccount {
         Ok(a) => a.delete_identity().await.wasm_result().map(|_| JsValue::undefined()),
         Err(e) => Err(e),
       }
-    });
-    promise
+    })
   }
 
   /// Push all unpublished changes to the tangle in a single message.
@@ -161,7 +162,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     credential: &WasmCredential,
-    signature_options: WasmSignatureOptions,
+    signature_options: &WasmSignatureOptions,
   ) -> PromiseCredential {
     let account = self.0.clone();
     let mut cred: Credential = credential.0.clone();
@@ -186,7 +187,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     document: &WasmDocument,
-    signature_options: WasmSignatureOptions,
+    signature_options: &WasmSignatureOptions,
   ) -> PromiseDocument {
     let account = self.0.clone();
     let mut doc: IotaDocument = document.0.clone();
@@ -211,7 +212,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     presentation: &WasmPresentation,
-    signature_options: WasmSignatureOptions,
+    signature_options: &WasmSignatureOptions,
   ) -> PromisePresentation {
     let account = self.0.clone();
     let mut pres: Presentation = presentation.0.clone();
@@ -239,7 +240,7 @@ impl WasmAccount {
     &self,
     fragment: String,
     data: &JsValue,
-    signature_options: WasmSignatureOptions,
+    signature_options: &WasmSignatureOptions,
   ) -> Result<Promise> {
     let account = self.0.clone();
     let mut verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
@@ -266,13 +267,14 @@ impl WasmAccount {
   /// potentially making the identity unusable. Only call this if you fully
   /// understand the implications!
   #[wasm_bindgen(js_name = updateDocumentUnchecked)]
-  pub fn update_document_unchecked(&mut self, document: WasmDocument) -> Promise {
+  pub fn update_document_unchecked(&mut self, document: &WasmDocument) -> Promise {
     let account = self.0.clone();
+    let document_copy: IotaDocument = document.0.clone();
     future_to_promise(async move {
       account
         .as_ref()
         .borrow_mut()
-        .update_document_unchecked(document.0)
+        .update_document_unchecked(document_copy)
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -308,16 +310,10 @@ impl From<Account> for WasmAccount {
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Credential>")]
   pub type PromiseCredential;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Presentation>")]
   pub type PromisePresentation;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Document>")]
   pub type PromiseDocument;
 }
@@ -335,7 +331,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT_2: &'static str = r#"
+const TS_PUBLISH_OPTIONS: &'static str = r#"
 /**
  * Options to customize how identities are published to the Tangle.
 **/
