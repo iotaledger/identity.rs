@@ -13,7 +13,7 @@ use identity::did::MethodScope;
 use identity::did::MethodType;
 use wasm_bindgen::__rt::WasmRefCell;
 
-use crate::account::method_secret::WasmMethodSecret;
+use crate::account::wasm_method_secret::WasmMethodSecret;
 use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;

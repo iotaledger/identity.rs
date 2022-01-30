@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod account_builder;
-mod auto_save;
-mod method_secret;
+mod wasm_auto_save;
+mod wasm_method_secret;
 mod update;
 mod wasm_account;
 mod wasm_identity_setup;

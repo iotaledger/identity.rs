@@ -14,7 +14,7 @@ use identity::account::AccountConfig;
 
 use identity::account::IdentitySetup;
 
-use crate::account::auto_save::WasmAutoSave;
+use crate::account::wasm_auto_save::WasmAutoSave;
 use crate::account::wasm_identity_setup::WasmIdentitySetup;
 use js_sys::Promise;
 use std::rc::Rc;

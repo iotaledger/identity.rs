@@ -21,7 +21,7 @@ use identity::did::verifiable::VerifiableProperties;
 use identity::iota::{IotaDID, IotaDocument};
 use js_sys::Promise;
 
-use crate::account::auto_save::WasmAutoSave;
+use crate::account::wasm_auto_save::WasmAutoSave;
 use std::rc::Rc;
 use std::sync::Arc;
 use wasm_bindgen::__rt::WasmRefCell;
