@@ -15,7 +15,7 @@ use crate::error::WasmResult;
 #[wasm_bindgen(js_name = Ed25519, inspectable)]
 pub struct WasmEd25519(pub(crate) Ed25519);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Ed25519)]
 impl WasmEd25519 {
   #[wasm_bindgen]
   pub fn sign(message: &[u8], key: &str) -> Result<Vec<u8>> {

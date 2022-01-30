@@ -25,7 +25,6 @@ use identity::iota::IotaDID;
 
 use crate::account::identity::WasmChainState;
 use crate::account::identity::WasmIdentityState;
-use crate::account::types::WasmEncryptionKey;
 use crate::account::types::WasmGeneration;
 use crate::account::types::WasmKeyLocation;
 use crate::did::WasmDID;
@@ -33,19 +32,21 @@ use crate::error::JsValueResult;
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<undefined>")]
+  #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseUnit;
-  #[wasm_bindgen(typescript_type = "Promise<PublicKey>")]
+  #[wasm_bindgen(typescript_type = "Promise<DIDLease>")]
+  pub type PromiseDIDLease;
+  #[wasm_bindgen(typescript_type = "Promise<string>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
   pub type PromiseSignature;
-  #[wasm_bindgen(typescript_type = "Promise<bool>")]
+  #[wasm_bindgen(typescript_type = "Promise<boolean>")]
   pub type PromiseBool;
-  #[wasm_bindgen(typescript_type = "Promise<Option<Generation>>")]
+  #[wasm_bindgen(typescript_type = "Promise<Generation>")]
   pub type PromiseOptionGeneration;
-  #[wasm_bindgen(typescript_type = "Promise<Option<ChainState>>")]
+  #[wasm_bindgen(typescript_type = "Promise<ChainState>")]
   pub type PromiseOptionChainState;
-  #[wasm_bindgen(typescript_type = "Promise<Option<IdentityState>>")]
+  #[wasm_bindgen(typescript_type = "Promise<IdentityState>")]
   pub type PromiseOptionIdentityState;
 }
 
@@ -54,11 +55,11 @@ extern "C" {
   pub type WasmStorage;
 
   #[wasm_bindgen(method)]
-  pub fn set_password(this: &WasmStorage, password: WasmEncryptionKey) -> PromiseUnit;
+  pub fn set_password(this: &WasmStorage, password: Vec<u8>) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
   #[wasm_bindgen(method)]
-  pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseBool;
+  pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseDIDLease;
   #[wasm_bindgen(method)]
   pub fn key_new(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method)]
@@ -102,7 +103,7 @@ impl Debug for WasmStorage {
 impl Storage for WasmStorage {
   /// Sets the account password.
   async fn set_password(&self, password: EncryptionKey) -> AccountResult<()> {
-    let promise: Promise = Promise::resolve(&self.set_password(password.into()));
+    let promise: Promise = Promise::resolve(&self.set_password(password.to_vec()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }

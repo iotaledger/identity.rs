@@ -14,7 +14,7 @@ use crate::error::Result;
 #[wasm_bindgen(js_name = Signature, inspectable)]
 pub struct WasmSignature(pub(crate) Signature);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Signature)]
 impl WasmSignature {
   #[wasm_bindgen(constructor)]
   /// Creates a new `Signature`.

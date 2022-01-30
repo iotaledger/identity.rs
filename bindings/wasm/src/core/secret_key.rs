@@ -17,7 +17,7 @@ use crate::error::WasmResult;
 #[wasm_bindgen(js_name = SecretKey, inspectable)]
 pub struct WasmSecretKey(pub(crate) ed25519::SecretKey);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = SecretKey)]
 impl WasmSecretKey {
   #[wasm_bindgen(js_name = "fromPrivateKey")]
   pub fn from_private_key(private_key: &str) -> Result<WasmSecretKey> {
