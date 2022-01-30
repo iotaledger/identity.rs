@@ -42,9 +42,7 @@ impl WasmAccount {
     if relationships.is_empty() {
       return Err(wasm_error(MissingRequiredField("relationships is missing or empty")));
     }
-
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
-
     let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
 
     let promise: Promise = future_to_promise(async move {
