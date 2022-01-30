@@ -32,10 +32,11 @@ async function lazy() {
     });
 
     // Delete the previously added service.
-    await account.deleteService("example-service");
+    await account.deleteService({ 
+        fragment: "example-service"
+     });
 
     // Publish the updates as one message to the tangle.
-    // Also see: account.publishWithOptions(..)
     await account.publish();
 
     // Retrieve the did of the newly created identity.

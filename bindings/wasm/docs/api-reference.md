@@ -2,7 +2,10 @@
 
 <dl>
 <dt><a href="#Account">Account</a></dt>
-<dd></dd>
+<dd><p>An account manages one identity.</p>
+<p>It handles private keys, writing to storage and
+publishing to the Tangle.</p>
+</dd>
 <dt><a href="#AccountBuilder">AccountBuilder</a></dt>
 <dd><p>An [<code>Account</code>] builder for easy account configuration.</p>
 <p>To reduce memory usage, accounts created from the same builder share the same <code>Storage</code>
@@ -106,20 +109,24 @@ See <code>IVerifierOptions</code>.</p>
 <a name="Account"></a>
 
 ## Account
+An account manages one identity.
+
+It handles private keys, writing to storage and
+publishing to the Tangle.
+
 **Kind**: global class  
 
 * [Account](#Account)
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
     * [.actions()](#Account+actions) ⇒ <code>number</code>
-    * [.state()](#Account+state)
     * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
     * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.publish()](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.publishWithOptions(publish_options)](#Account+publishWithOptions) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.publish(publish_options)](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createSignedCredential(fragment, credential, signature_options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
     * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
@@ -128,9 +135,8 @@ See <code>IVerifierOptions</code>.</p>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.detachMethodRelationships(input)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteService(fragment)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+deleteMethod"></a>
 
@@ -142,6 +148,17 @@ Deletes a verification method if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -165,10 +182,6 @@ Returns the auto-save configuration value.
 Returns the total number of actions executed by this instance.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+state"></a>
-
-### account.state()
-**Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+document"></a>
 
 ### account.document() ⇒ [<code>Document</code>](#Document)
@@ -191,22 +204,14 @@ Note: This will remove all associated document updates and key material - recove
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+publish"></a>
 
-### account.publish() ⇒ <code>Promise.&lt;any&gt;</code>
+### account.publish(publish_options) ⇒ <code>Promise.&lt;any&gt;</code>
 Push all unpublished changes to the tangle in a single message.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+publishWithOptions"></a>
-
-### account.publishWithOptions(publish_options) ⇒ <code>Promise.&lt;any&gt;</code>
-Push all unpublished changes to the Tangle in a single message, optionally choosing
-the signing key used or forcing an integration chain update.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-**See**: [PublishOptions](PublishOptions)  
 
 | Param | Type |
 | --- | --- |
-| publish_options | <code>PublishOptions</code> | 
+| publish_options | <code>PublishOptions</code> \| <code>undefined</code> | 
 
 <a name="Account+createSignedCredential"></a>
 
@@ -308,17 +313,6 @@ Adds a new Service to the DID Document.
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
 
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(input) ⇒ <code>Promise.&lt;any&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>DetachMethodRelationshipOptions</code> | 
-
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -333,16 +327,16 @@ it cannot be an embedded method.
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
 
-<a name="Account+deleteService"></a>
+<a name="Account+detachMethodRelationships"></a>
 
-### account.deleteService(fragment) ⇒ <code>Promise.&lt;any&gt;</code>
-Deletes a Service if it exists.
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 

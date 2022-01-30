@@ -41,6 +41,7 @@ async function config() {
         autopublish: true, // publish to the tangle automatically on every update
         milestone: 4, // save a snapshot every 4 actions
         clientConfig: config // set client to the previously defined client.
+        //TODO configure storage.
     });
 
     try {

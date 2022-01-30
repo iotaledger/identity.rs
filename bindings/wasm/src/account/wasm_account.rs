@@ -10,9 +10,9 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::account::{AccountBuilder, Storage};
 use identity::account::AccountStorage;
 use identity::account::{Account, PublishOptions};
+use identity::account::{AccountBuilder, Storage};
 
 use identity::credential::Credential;
 use identity::credential::Presentation;
@@ -114,46 +114,39 @@ impl WasmAccount {
 
   /// Push all unpublished changes to the tangle in a single message.
   #[wasm_bindgen]
-  pub fn publish(&mut self) -> Promise {
+  pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> Promise {
     let account = self.0.clone();
-    future_to_promise(async move {
-      account
-        .as_ref()
-        .borrow_mut()
-        .publish()
-        .await
-        .map(|_| JsValue::undefined())
-        .wasm_result()
-    })
-  }
+    if let Some(publish_options) = publish_options {
+      let mut options: PublishOptions = PublishOptions::new();
 
-  /// Push all unpublished changes to the Tangle in a single message, optionally choosing
-  /// the signing key used or forcing an integration chain update.
-  ///
-  /// @see {@link PublishOptions}
-  #[wasm_bindgen (js_name = publishWithOptions)]
-  pub fn publish_with_options(&mut self, publish_options: WasmPublishOptions) -> Promise {
-    let mut options: PublishOptions = PublishOptions::new();
+      if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
+        options = options.force_integration_update(force_integration);
+      }
 
-    if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
-      options = options.force_integration_update(force_integration);
+      if let Some(sign_with) = publish_options.signWith() {
+        let s: String = sign_with;
+        options = options.sign_with(s);
+      };
+      future_to_promise(async move {
+        account
+          .as_ref()
+          .borrow_mut()
+          .publish_with_options(options)
+          .await
+          .map(|_| JsValue::undefined())
+          .wasm_result()
+      })
+    } else {
+      future_to_promise(async move {
+        account
+          .as_ref()
+          .borrow_mut()
+          .publish()
+          .await
+          .map(|_| JsValue::undefined())
+          .wasm_result()
+      })
     }
-
-    if let Some(sign_with) = publish_options.signWith() {
-      let s: String = sign_with;
-      options = options.sign_with(s);
-    }
-
-    let account = self.0.clone();
-    future_to_promise(async move {
-      account
-        .as_ref()
-        .borrow_mut()
-        .publish_with_options(options)
-        .await
-        .map(|_| JsValue::undefined())
-        .wasm_result()
-    })
   }
 
   /// Signs a {@link Credential} with the key specified by `fragment`.
