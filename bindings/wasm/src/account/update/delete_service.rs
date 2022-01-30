@@ -18,7 +18,7 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = deleteService)]
   pub fn delete_service(&mut self, options: DeleteServiceOptions) -> Result<Promise> {
     let account = self.0.clone();
-    let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
+    let fragment: String = options.fragment().ok_or_else(|| wasm_error(MissingRequiredField("fragment")))?;
     let update = Update::DeleteService { fragment };
 
     let promise: Promise = future_to_promise(async move {

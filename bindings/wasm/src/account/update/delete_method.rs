@@ -18,7 +18,7 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = deleteMethod)]
   pub fn delete_method(&mut self, options: DeleteMethodOptions) -> Result<Promise> {
     let account = self.0.clone();
-    let fragment: String = options.fragment().ok_or(wasm_error(MissingRequiredField("fragment")))?;
+    let fragment: String = options.fragment().ok_or_else(|| wasm_error(MissingRequiredField("fragment")))?;
     let promise: Promise = future_to_promise(async move {
       let update = Update::DeleteMethod { fragment };
       account
