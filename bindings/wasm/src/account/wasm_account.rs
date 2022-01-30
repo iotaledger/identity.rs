@@ -211,9 +211,6 @@ impl WasmAccount {
     let mut pres: Presentation = presentation.0.clone();
     let options: SignatureOptions = SignatureOptions::from(signature_options);
 
-    wasm_logger::init(wasm_logger::Config::default());
-    log::info!("{:?}", options);
-
     let promise: Promise = future_to_promise(async move {
       account
         .as_ref()
