@@ -1,4 +1,4 @@
-// Copyright 2020-2022 IOTA Stiftun
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::account::derive_encryption_key as derive_encryption_key_;

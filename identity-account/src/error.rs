@@ -80,8 +80,8 @@ pub enum Error {
   #[error("method missing fragment")]
   MethodMissingFragment,
   #[cfg(feature = "wasm")]
-  #[error("Invalid JsValue: {0}")]
-  InvalidJsValue(String),
+  #[error("Serialization error when deserializing a JsValue: {0}")]
+  SerializationError(String),
   #[cfg(feature = "wasm")]
   #[error("Js function threw an exception: {0}")]
   PromiseError(String),

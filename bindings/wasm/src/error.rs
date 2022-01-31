@@ -153,7 +153,7 @@ macro_rules! impl_from_js_value {
           .and_then(|js_value| {
             js_value
               .into_serde()
-              .map_err(|e| AccountError::InvalidJsValue(e.to_string()))
+              .map_err(|e| AccountError::SerializationError(e.to_string()))
           })
       }
     })*
@@ -177,7 +177,7 @@ impl From<JsValueResult> for AccountResult<()> {
       .and_then(|js_value| {
         js_value
           .into_serde()
-          .map_err(|e| AccountError::InvalidJsValue(e.to_string()))
+          .map_err(|e| AccountError::SerializationError(e.to_string()))
       })
   }
 }
