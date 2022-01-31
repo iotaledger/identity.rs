@@ -23,6 +23,8 @@ use crate::error::Result;
 /// An ordered set backed by a `Vec<T>`.
 ///
 /// Note: Ordering is based on insert order and **not** [`Ord`].
+///
+/// See: https://infra.spec.whatwg.org/#ordered-set
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(bound(deserialize = "T: KeyComparable + Deserialize<'de>"), try_from = "Vec<T>")]
@@ -242,6 +244,7 @@ where
 
     let mut this: Self = Self::with_capacity(size);
 
+    // Ignore duplicates.
     for item in iter {
       this.append(item);
     }

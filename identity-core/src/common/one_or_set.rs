@@ -1,0 +1,430 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::hash::Hash;
+use core::iter;
+use core::mem::replace;
+use core::ops::Deref;
+use core::slice::from_ref;
+use serde::de;
+use serde::Deserialize;
+
+use crate::common::KeyComparable;
+use crate::common::OrderedSet;
+use crate::error::Error;
+use crate::error::Result;
+
+/// A generic container that stores exactly one or more unique instances of a given type.
+///
+/// Similar to [`OneOrMany`](crate::common::OneOrMany) except instances are guaranteed to be unique,
+/// and only immutable references are allowed.
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct OneOrSet<T>(OneOrSetInner<T>)
+where
+  T: KeyComparable;
+
+// Private to prevent creations of empty `Set` variants.
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[serde(untagged)]
+enum OneOrSetInner<T>
+where
+  T: KeyComparable,
+{
+  /// A single instance of `T`.
+  One(T),
+  /// Multiple (one or more) unique instances of `T`.
+  #[serde(deserialize_with = "deserialize_non_empty_set")]
+  Set(OrderedSet<T>),
+}
+
+/// Deserializes an [`OrderedSet`] while enforcing that it is non-empty.
+fn deserialize_non_empty_set<'de, D, T: serde::Deserialize<'de> + KeyComparable>(
+  deserializer: D,
+) -> Result<OrderedSet<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+{
+  let set: OrderedSet<T> = OrderedSet::deserialize(deserializer)?;
+  if set.is_empty() {
+    return Err(de::Error::custom(Error::OneOrSetEmpty));
+  }
+
+  Ok(set)
+}
+
+impl<T> OneOrSet<T>
+where
+  T: KeyComparable,
+{
+  /// Constructs a new instance with a single item.
+  pub fn new_one(item: T) -> Self {
+    Self(OneOrSetInner::One(item))
+  }
+
+  /// Constructs a new instance from a set of unique items.
+  ///
+  /// Errors if the given set is empty.
+  pub fn new_set(set: OrderedSet<T>) -> Result<Self> {
+    if set.is_empty() {
+      return Err(Error::OneOrSetEmpty);
+    }
+    if set.len() == 1 {
+      Ok(Self::new_one(
+        set.into_vec().pop().expect("infallible OneOrSet new_set"),
+      ))
+    } else {
+      Ok(Self(OneOrSetInner::Set(set)))
+    }
+  }
+
+  /// Returns the number of elements in the collection.
+  #[allow(clippy::len_without_is_empty)]
+  pub fn len(&self) -> usize {
+    match &self.0 {
+      OneOrSetInner::One(_) => 1,
+      OneOrSetInner::Set(inner) => inner.len(),
+    }
+  }
+
+  /// Returns a reference to the element at the given index.
+  pub fn get(&self, index: usize) -> Option<&T> {
+    match &self.0 {
+      OneOrSetInner::One(inner) if index == 0 => Some(inner),
+      OneOrSetInner::One(_) => None,
+      OneOrSetInner::Set(inner) => inner.get(index),
+    }
+  }
+
+  /// Returns `true` if the collection contains the given item's key.
+  pub fn contains<U>(&self, item: &U) -> bool
+  where
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
+  {
+    match &self.0 {
+      OneOrSetInner::One(inner) => inner.key() == item.key(),
+      OneOrSetInner::Set(inner) => inner.contains(item),
+    }
+  }
+
+  /// Appends a new item to the end of the collection if its key is not present already.
+  ///
+  /// Returns whether or not the value was successfully inserted.
+  pub fn append(&mut self, item: T) -> bool
+  where
+    T: KeyComparable,
+  {
+    match &mut self.0 {
+      OneOrSetInner::One(inner) if inner.key() == item.key() => false,
+      OneOrSetInner::One(_) => match replace(&mut self.0, OneOrSetInner::Set(OrderedSet::new())) {
+        OneOrSetInner::One(inner) => {
+          self.0 = OneOrSetInner::Set(OrderedSet::from_iter([inner, item].into_iter()));
+          true
+        }
+        OneOrSetInner::Set(_) => unreachable!(),
+      },
+      OneOrSetInner::Set(inner) => inner.append(item),
+    }
+  }
+
+  /// Returns an `Iterator` that yields items from the collection.
+  pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+    OneOrSetIter::new(self)
+  }
+
+  /// Returns a reference to the contents as a slice.
+  pub fn as_slice(&self) -> &[T] {
+    &*self
+  }
+
+  /// Consumes the [`OneOrSet`] and returns the contents as a [`Vec`].
+  pub fn into_vec(self) -> Vec<T> {
+    match self.0 {
+      OneOrSetInner::One(inner) => vec![inner],
+      OneOrSetInner::Set(inner) => inner.into_vec(),
+    }
+  }
+}
+
+impl<T> Debug for OneOrSet<T>
+where
+  T: Debug + KeyComparable,
+{
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    match &self.0 {
+      OneOrSetInner::One(inner) => Debug::fmt(inner, f),
+      OneOrSetInner::Set(inner) => Debug::fmt(inner, f),
+    }
+  }
+}
+
+impl<T> Deref for OneOrSet<T>
+where
+  T: KeyComparable,
+{
+  type Target = [T];
+
+  fn deref(&self) -> &Self::Target {
+    match &self.0 {
+      OneOrSetInner::One(inner) => from_ref(inner),
+      OneOrSetInner::Set(inner) => inner.as_slice(),
+    }
+  }
+}
+
+impl<T> AsRef<[T]> for OneOrSet<T>
+where
+  T: KeyComparable,
+{
+  fn as_ref(&self) -> &[T] {
+    self.as_slice()
+  }
+}
+
+impl<T> From<T> for OneOrSet<T>
+where
+  T: KeyComparable,
+{
+  fn from(other: T) -> Self {
+    OneOrSet::new_one(other)
+  }
+}
+
+impl<T> TryFrom<Vec<T>> for OneOrSet<T>
+where
+  T: KeyComparable,
+{
+  type Error = Error;
+
+  fn try_from(other: Vec<T>) -> std::result::Result<Self, Self::Error> {
+    let set: OrderedSet<T> = OrderedSet::try_from(other)?;
+    OneOrSet::new_set(set)
+  }
+}
+
+impl<T> TryFrom<OrderedSet<T>> for OneOrSet<T>
+where
+  T: KeyComparable,
+{
+  type Error = Error;
+
+  fn try_from(other: OrderedSet<T>) -> std::result::Result<Self, Self::Error> {
+    OneOrSet::new_set(other)
+  }
+}
+
+impl<T> From<OneOrSet<T>> for Vec<T>
+where
+  T: KeyComparable,
+{
+  fn from(other: OneOrSet<T>) -> Self {
+    other.into_vec()
+  }
+}
+
+impl<T> From<OneOrSet<T>> for OrderedSet<T>
+where
+  T: KeyComparable,
+{
+  fn from(other: OneOrSet<T>) -> Self {
+    match other.0 {
+      OneOrSetInner::One(item) => OrderedSet::from_iter(iter::once(item)),
+      OneOrSetInner::Set(set) => set,
+    }
+  }
+}
+
+// =============================================================================
+// Iterator
+// =============================================================================
+
+struct OneOrSetIter<'a, T>
+where
+  T: KeyComparable,
+{
+  inner: &'a OneOrSet<T>,
+  index: usize,
+}
+
+impl<'a, T> OneOrSetIter<'a, T>
+where
+  T: KeyComparable,
+{
+  fn new(inner: &'a OneOrSet<T>) -> Self {
+    Self { inner, index: 0 }
+  }
+}
+
+impl<'a, T> Iterator for OneOrSetIter<'a, T>
+where
+  T: KeyComparable,
+{
+  type Item = &'a T;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self.index += 1;
+    self.inner.get(self.index - 1)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::convert::FromJson;
+  use crate::convert::ToJson;
+
+  #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+  struct MockKey(u8);
+
+  impl KeyComparable for MockKey {
+    type Key = u8;
+
+    fn key(&self) -> &Self::Key {
+      &self.0
+    }
+  }
+
+  #[test]
+  fn test_new_set() {
+    // VALID: non-empty set.
+    let ordered_set: OrderedSet<MockKey> = OrderedSet::from_iter([1, 2, 3].map(MockKey).into_iter());
+    let new_set: OneOrSet<MockKey> = OneOrSet::new_set(ordered_set.clone()).unwrap();
+    let try_from_set: OneOrSet<MockKey> = OneOrSet::try_from(ordered_set.clone()).unwrap();
+    assert_eq!(new_set, try_from_set);
+    assert_eq!(OrderedSet::from(new_set), ordered_set);
+
+    // INVALID: empty set.
+    let empty: OrderedSet<MockKey> = OrderedSet::new();
+    assert!(matches!(OneOrSet::new_set(empty.clone()), Err(Error::OneOrSetEmpty)));
+    assert!(matches!(OneOrSet::try_from(empty), Err(Error::OneOrSetEmpty)));
+  }
+
+  #[test]
+  fn test_append_from_one() {
+    let mut collection: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(42));
+    assert_eq!(collection.len(), 1);
+
+    // Ignores duplicates.
+    collection.append(MockKey(42));
+    assert_eq!(collection, OneOrSet::new_one(MockKey(42)));
+    assert_eq!(collection.len(), 1);
+
+    // Becomes Set.
+    collection.append(MockKey(128));
+    assert_eq!(
+      collection,
+      OneOrSet::new_set(OrderedSet::from_iter([42, 128].map(MockKey).into_iter())).unwrap()
+    );
+    assert_eq!(collection.len(), 2);
+
+    collection.append(MockKey(200));
+    assert_eq!(
+      collection,
+      OneOrSet::new_set(OrderedSet::from_iter([42, 128, 200].map(MockKey).into_iter())).unwrap()
+    );
+    assert_eq!(collection.len(), 3);
+  }
+
+  #[test]
+  fn test_append_from_set() {
+    let mut collection: OneOrSet<MockKey> = OneOrSet::new_set((0..42).map(MockKey).collect()).unwrap();
+    assert_eq!(collection.len(), 42);
+
+    // Appends to end.
+    collection.append(MockKey(42));
+    let expected: OneOrSet<MockKey> = OneOrSet::new_set((0..=42).map(MockKey).collect()).unwrap();
+    assert_eq!(collection, expected);
+    assert_eq!(collection.len(), 43);
+
+    // Ignores duplicates.
+    for i in 0..=42 {
+      collection.append(MockKey(i));
+      assert_eq!(collection, expected);
+      assert_eq!(collection.len(), 43);
+    }
+  }
+
+  #[test]
+  fn test_contains() {
+    // One.
+    let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+    assert!(one.contains(&1));
+    assert!(!one.contains(&2));
+    assert!(!one.contains(&3));
+
+    // Set.
+    let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+    assert!(set.contains(&1));
+    assert!(set.contains(&2));
+    assert!(set.contains(&3));
+    assert!(!set.contains(&4));
+  }
+
+  #[test]
+  fn test_get() {
+    // One.
+    let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+    assert_eq!(one.get(0), Some(&MockKey(1)));
+    assert_eq!(one.get(1), None);
+    assert_eq!(one.get(2), None);
+
+    // Set.
+    let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+    assert_eq!(set.get(0), Some(&MockKey(1)));
+    assert_eq!(set.get(1), Some(&MockKey(2)));
+    assert_eq!(set.get(2), Some(&MockKey(3)));
+    assert_eq!(set.get(3), None);
+  }
+
+  #[test]
+  fn test_iter() {
+    // One.
+    let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+    let mut one_iter = one.iter();
+    assert_eq!(one_iter.next(), Some(&MockKey(1)));
+    assert_eq!(one_iter.next(), None);
+    assert_eq!(one_iter.next(), None);
+
+    // Set.
+    let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+    let mut set_iter = set.iter();
+    assert_eq!(set_iter.next(), Some(&MockKey(1)));
+    assert_eq!(set_iter.next(), Some(&MockKey(2)));
+    assert_eq!(set_iter.next(), Some(&MockKey(3)));
+    assert_eq!(set_iter.next(), None);
+  }
+
+  #[test]
+  fn test_serde() {
+    // VALID: one.
+    {
+      let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+      let ser: String = one.to_json().unwrap();
+      let de: OneOrSet<MockKey> = OneOrSet::from_json(&ser).unwrap();
+      assert_eq!(ser, "1");
+      assert_eq!(de, one);
+    }
+
+    // VALID: set.
+    {
+      let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+      let ser: String = set.to_json().unwrap();
+      let de: OneOrSet<MockKey> = OneOrSet::from_json(&ser).unwrap();
+      assert_eq!(ser, "[1,2,3]");
+      assert_eq!(de, set);
+    }
+
+    // INVALID: empty.
+    {
+      let empty: Result<OneOrSet<MockKey>> = OneOrSet::from_json("");
+      assert!(empty.is_err());
+      let empty_set: Result<OneOrSet<MockKey>> = OneOrSet::from_json("[]");
+      assert!(empty_set.is_err());
+      let empty_space: Result<OneOrSet<MockKey>> = OneOrSet::from_json("[ ]");
+      assert!(empty_space.is_err());
+    }
+  }
+}
