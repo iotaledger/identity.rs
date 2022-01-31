@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
@@ -29,7 +29,7 @@ use identity_core::crypto::Signer;
 use identity_core::Error as CoreError;
 
 use crate::document::CoreDocument;
-use crate::verification::MethodQuery;
+use crate::utils::DIDUrlQuery;
 use crate::verification::MethodType;
 use crate::verification::TryMethod;
 use crate::verification::VerificationMethod;
@@ -43,7 +43,7 @@ use crate::Result;
 pub struct DocumentSigner<'base, 'query, 'proof, T = Object, U = Object, V = Object> {
   document: &'base CoreDocument<T, U, V>,
   private: &'base PrivateKey,
-  method: Option<MethodQuery<'query>>,
+  method: Option<DIDUrlQuery<'query>>,
   merkle_key: Option<(&'proof PublicKey, &'proof dyn Any)>,
   options: SignatureOptions,
 }
@@ -107,7 +107,7 @@ impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
   #[must_use]
   pub fn method<Q>(mut self, value: Q) -> Self
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.method = Some(value.into());
     self
@@ -136,7 +136,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   where
     X: Serialize + SetSignature + TryMethod,
   {
-    let query: MethodQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
+    let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method(query)?;
     let method_uri: String = X::try_method(method)?;
 

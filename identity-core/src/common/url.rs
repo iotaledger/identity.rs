@@ -1,14 +1,14 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-
 use core::ops::Deref;
 use core::ops::DerefMut;
 use core::str::FromStr;
 
+use crate::common::KeyComparable;
 use crate::diff;
 use crate::diff::Diff;
 use crate::diff::DiffString;
@@ -107,5 +107,14 @@ impl Diff for Url {
 
   fn into_diff(self) -> diff::Result<Self::Type> {
     self.to_string().into_diff()
+  }
+}
+
+impl KeyComparable for Url {
+  type Key = Url;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self
   }
 }

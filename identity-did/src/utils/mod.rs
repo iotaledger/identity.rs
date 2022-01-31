@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod key_comparable;
-mod ordered_set;
+pub use did_url_query::DIDUrlQuery;
+pub use queryable::Queryable;
 
-pub use self::key_comparable::KeyComparable;
-pub use self::ordered_set::OrderedSet;
+mod did_url_query;
+mod queryable;

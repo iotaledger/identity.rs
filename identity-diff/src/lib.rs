@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
@@ -21,6 +21,16 @@
 #[doc(hidden)]
 pub use identity_diff_derive::Diff;
 
+pub use self::error::Error;
+pub use self::error::Result;
+pub use self::hashmap::DiffHashMap;
+pub use self::hashset::DiffHashSet;
+pub use self::object::DiffObject;
+pub use self::option::DiffOption;
+pub use self::string::DiffString;
+pub use self::traits::Diff;
+pub use self::vec::DiffVec;
+
 mod error;
 mod hashmap;
 mod hashset;
@@ -31,13 +41,3 @@ mod string;
 mod traits;
 mod value;
 mod vec;
-
-pub use self::error::Error;
-pub use self::error::Result;
-pub use self::hashmap::DiffHashMap;
-pub use self::hashset::DiffHashSet;
-pub use self::object::DiffObject;
-pub use self::option::DiffOption;
-pub use self::string::DiffString;
-pub use self::traits::Diff;
-pub use self::vec::DiffVec;
