@@ -8,8 +8,13 @@ use core::iter;
 use core::mem::replace;
 use core::ops::Deref;
 use core::slice::from_ref;
+
 use serde::de;
 use serde::Deserialize;
+use serde::Serialize;
+
+use identity_diff::Diff;
+use identity_diff::DiffVec;
 
 use crate::common::KeyComparable;
 use crate::common::OrderedSet;
@@ -78,6 +83,27 @@ where
     } else {
       Ok(Self(OneOrSetInner::Set(set)))
     }
+  }
+
+  /// Construct a [`OneOrSet<T>`] from a [`OneOrSet<U>`] where `U` can be converted to `T`.
+  ///
+  /// Workaround for lack of specialisation preventing a generic `From` implementation.
+  pub fn from<U>(other: OneOrSet<U>) -> Self
+  where
+    U: KeyComparable + Into<T>,
+  {
+    Self(match other.0 {
+      OneOrSetInner::One(item) => OneOrSetInner::One(item.into()),
+      OneOrSetInner::Set(set_u) => {
+        let set_t: OrderedSet<T> = set_u.into_vec().into_iter().map(Into::into).collect();
+        // Key equivalence could differ between U and T.
+        if set_t.len() == 1 {
+          OneOrSetInner::One(set_t.into_vec().pop().expect("OneOrSet::from infallible"))
+        } else {
+          OneOrSetInner::Set(set_t)
+        }
+      }
+    })
   }
 
   /// Returns the number of elements in the collection.
@@ -237,6 +263,33 @@ where
   }
 }
 
+impl<T> Diff for OneOrSet<T>
+where
+  T: Diff + KeyComparable + Serialize + for<'de> Deserialize<'de>,
+{
+  type Type = DiffVec<T>;
+
+  fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
+    self.clone().into_vec().diff(&other.clone().into_vec())
+  }
+
+  fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
+    self
+      .clone()
+      .into_vec()
+      .merge(diff)
+      .and_then(|this| Self::try_from(this).map_err(identity_diff::Error::merge))
+  }
+
+  fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
+    Vec::from_diff(diff).and_then(|this| Self::try_from(this).map_err(identity_diff::Error::convert))
+  }
+
+  fn into_diff(self) -> identity_diff::Result<Self::Type> {
+    self.into_vec().into_diff()
+  }
+}
+
 // =============================================================================
 // Iterator
 // =============================================================================
@@ -272,9 +325,10 @@ where
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
+
+  use super::*;
 
   #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
   struct MockKey(u8);
