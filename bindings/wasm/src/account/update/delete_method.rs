@@ -9,7 +9,7 @@ use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 
 use crate::account::wasm_account::WasmAccount;
-use crate::error::{Result};
+use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]
@@ -18,7 +18,10 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = deleteMethod)]
   pub fn delete_method(&mut self, options: DeleteMethodOptions) -> Result<Promise> {
     let account = self.0.clone();
-    let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
+    let fragment: String = options
+      .fragment()
+      .ok_or(MissingRequiredField("fragment"))
+      .wasm_result()?;
     let promise: Promise = future_to_promise(async move {
       let update = Update::DeleteMethod { fragment };
       account

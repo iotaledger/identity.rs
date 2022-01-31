@@ -13,8 +13,8 @@ use identity::did::MethodScope;
 use identity::did::MethodType;
 use wasm_bindgen::__rt::WasmRefCell;
 
-use crate::account::wasm_method_secret::WasmMethodSecret;
 use crate::account::wasm_account::WasmAccount;
+use crate::account::wasm_method_secret::WasmMethodSecret;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 
@@ -33,7 +33,10 @@ impl WasmAccount {
       .map(|m| m.0)
       .unwrap_or(MethodType::Ed25519VerificationKey2018);
 
-    let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
+    let fragment: String = options
+      .fragment()
+      .ok_or(MissingRequiredField("fragment"))
+      .wasm_result()?;
 
     let method_scope: MethodScope = options.methodScope().map(|ms| ms.0).unwrap_or_default();
 

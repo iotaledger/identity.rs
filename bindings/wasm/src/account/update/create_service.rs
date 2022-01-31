@@ -28,8 +28,14 @@ impl WasmAccount {
       .type_()
       .ok_or_else(|| wasm_error(MissingRequiredField("type")))?;
 
-    let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
-    let endpoint: String = options.endpoint().ok_or(MissingRequiredField("endpoint")).wasm_result()?;
+    let fragment: String = options
+      .fragment()
+      .ok_or(MissingRequiredField("fragment"))
+      .wasm_result()?;
+    let endpoint: String = options
+      .endpoint()
+      .ok_or(MissingRequiredField("endpoint"))
+      .wasm_result()?;
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
     let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
     let update = Update::CreateService {

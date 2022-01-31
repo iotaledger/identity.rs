@@ -3,7 +3,6 @@
 
 use js_sys::Promise;
 
-
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -11,7 +10,6 @@ use wasm_bindgen_futures::future_to_promise;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::account::{Account, Update};
 use identity::core::OneOrMany;
-
 
 use identity::did::MethodRelationship;
 use wasm_bindgen::__rt::WasmRefCell;
@@ -43,7 +41,10 @@ impl WasmAccount {
       return Err(wasm_error(MissingRequiredField("relationships is missing or empty")));
     }
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
-    let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
+    let fragment: String = options
+      .fragment()
+      .ok_or(MissingRequiredField("fragment"))
+      .wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       let update = Update::AttachMethodRelationship {
