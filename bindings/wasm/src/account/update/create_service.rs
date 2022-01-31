@@ -29,14 +29,14 @@ impl WasmAccount {
       .ok_or_else(|| wasm_error(MissingRequiredField("type")))?;
 
     let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
-
     let endpoint: String = options.endpoint().ok_or(MissingRequiredField("endpoint")).wasm_result()?;
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
+    let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
     let update = Update::CreateService {
       fragment,
       type_: service_type,
       endpoint: ServiceEndpoint::from(endpoint),
-      properties: None, //ToDo
+      properties,
     };
 
     let promise: Promise = future_to_promise(async move {
@@ -66,14 +66,17 @@ extern "C" {
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn endpoint(this: &CreateServiceOptions) -> Option<String>;
+
+  #[wasm_bindgen(structural, getter, method)]
+  pub fn properties(this: &CreateServiceOptions) -> JsValue;
 }
 
-//ToDo add `properties`
 #[wasm_bindgen(typescript_custom_section)]
 const TS_CREATE_SERVICE_OPTIONS: &'static str = r#"
 export type CreateServiceOptions = {
   fragment: string,
   type: string,
   endpoint: string,
+  properties?: any,
 };
 "#;

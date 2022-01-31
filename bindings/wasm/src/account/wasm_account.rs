@@ -92,13 +92,19 @@ impl WasmAccount {
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
+    //ToDo: test once `load_identity(..)` is implemented.
+
     // Get IotaDID and storage from the account.
     let account: Rc<WasmRefCell<Account>> = self.0;
     let did: IotaDID = account.as_ref().borrow().did().to_owned();
     let storage: Arc<dyn Storage> = account.as_ref().borrow().storage_arc();
+
+    // Drop account should release the DIDLease because we cannot take ownership of the Rc.
+    // Note that this will still fail if anyone else has a reference to the Account.
     std::mem::drop(account);
 
     future_to_promise(async move {
+      // Create a new account since `delete_identity` consumes it.
       let account: Result<Account> = AccountBuilder::new()
         .storage(AccountStorage::Custom(storage))
         .load_identity(did)

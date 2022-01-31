@@ -9,7 +9,7 @@ use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 
 use crate::account::wasm_account::WasmAccount;
-use crate::error::{Result, wasm_error};
+use crate::error::{Result};
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_class = Account)]

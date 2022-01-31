@@ -17,7 +17,7 @@ use crate::account::wasm_method_secret::WasmMethodSecret;
 use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
-use crate::error::wasm_error;
+
 use crate::error::Result;
 use crate::error::WasmResult;
 
