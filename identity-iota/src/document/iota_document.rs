@@ -193,7 +193,7 @@ impl IotaDocument {
 
     // Validate that the document controllers (if any) conform to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::controller()` method
-    // which creates an `IotaDID::new_unchecked_ref()` from the underlying controller
+    // which casts `&[CoreDID]` to `&[IotaDID]` from the underlying document.
     document
       .controller()
       .map_or(Ok(()), |set| set.iter().try_for_each(IotaDID::check_validity))?;
