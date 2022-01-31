@@ -269,7 +269,7 @@ impl IotaDocument {
       })
   }
 
-  /// Returns a reference to the [`IotaDocument`] controllers.
+  /// Sets the [`IotaDocument`] controllers.
   ///
   /// NOTE: controllers are not currently used for delegating or authenticating update permissions.
   pub fn set_controller(&mut self, controllers: Option<OneOrSet<IotaDID>>) {
