@@ -134,7 +134,10 @@ where
     let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
       .map(|value| match value {
-        Some(diff_value) => self.controller().map(|controller| controller.merge(diff_value)).transpose(),
+        Some(diff_value) => self
+          .controller()
+          .map(|controller| controller.merge(diff_value))
+          .transpose(),
         None => Ok(None),
       })
       .transpose()?
