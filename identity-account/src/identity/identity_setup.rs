@@ -4,8 +4,8 @@
 use identity_core::crypto::KeyType;
 
 use crate::types::MethodSecret;
-
 /// Configuration used to create a new Identity.
+/// Overrides the default creation of private and public keys.
 #[derive(Clone, Debug)]
 pub struct IdentitySetup {
   pub(crate) key_type: KeyType,

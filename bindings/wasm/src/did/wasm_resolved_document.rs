@@ -1,15 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
-use std::str::FromStr;
+use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use wasm_bindgen::prelude::*;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more `DiffMessages`.

@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
-use wasm_bindgen::prelude::*;
-
 use identity::account::DIDLease;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = DIDLease, inspectable)]
 pub struct WasmDIDLease(pub(crate) DIDLease);

@@ -1,56 +1,67 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::types::WasmMethodSecret;
-use crate::account::wasm_account::WasmAccount;
-use crate::crypto::KeyType;
-use crate::did::WasmDID;
-use crate::error::Result;
-use crate::error::WasmResult;
-use crate::tangle::Client as WasmClient;
+use std::rc::Rc;
+use std::sync::Arc;
 
 use identity::account::AccountBuilder;
 use identity::account::AccountConfig;
-use identity::account::AutoSave;
 use identity::account::IdentitySetup;
-
 use js_sys::Promise;
-use std::rc::Rc;
-use std::sync::Arc;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
+use crate::account::types::WasmAutoSave;
+use crate::account::types::WasmIdentitySetup;
+use crate::account::wasm_account::WasmAccount;
+use crate::did::WasmDID;
+use crate::error::Result;
+use crate::error::WasmResult;
+use crate::tangle::Client as WasmClient;
+use crate::tangle::Config;
+
+/// An [`Account`] builder for easy account configuration.
+///
+/// To reduce memory usage, accounts created from the same builder share the same `Storage`
+/// used to store identities, and the same {@link Client} used to publish identities to the Tangle.
+///
+/// The configuration on the other hand is cloned, and therefore unique for each built account.
+/// This means a builder can be reconfigured in-between account creations, without affecting
+/// the configuration of previously built accounts.
 #[wasm_bindgen(js_name = AccountBuilder)]
 pub struct WasmAccountBuilder(Rc<WasmRefCell<AccountBuilder>>);
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
+  /// Creates a new `AccountBuilder`.
   #[wasm_bindgen(constructor)]
-  pub fn new(options: Option<AccountBuilderOptions>) -> Self {
+  pub fn new(options: Option<AccountBuilderOptions>) -> Result<WasmAccountBuilder> {
     let default_config: AccountConfig = AccountConfig::default();
     let mut builder = AccountBuilder::new();
 
     if let Some(o) = options {
-      let auto_save: AutoSave = match o.autoSave() {
-        Some(save) => save.0,
-        None => default_config.autosave,
-      };
-
       builder = builder
         .autopublish(o.autopublish().unwrap_or(default_config.autopublish))
         .milestone(o.milestone().unwrap_or(default_config.milestone))
-        .autosave(auto_save);
+        .autosave(
+          o.autosave()
+            .map(|auto_save| auto_save.0)
+            .unwrap_or(default_config.autosave),
+        );
       //todo storage
-      if let Some(c) = o.client() {
-        builder = builder.client(Arc::new(c.client.as_ref().clone()));
+      if let Some(mut config) = o.clientConfig() {
+        let client: WasmClient = WasmClient::from_config(&mut config)?;
+        builder = builder.client(Arc::new(client.client.as_ref().clone()));
       };
     }
 
-    Self(Rc::new(WasmRefCell::new(builder)))
+    Ok(Self(Rc::new(WasmRefCell::new(builder))))
   }
 
+  /// Loads an existing identity with the specified `did` using the current builder configuration.
+  /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
   pub fn load_identity(&mut self, _did: WasmDID) -> Result<PromiseAccount> {
     todo!()
@@ -90,7 +101,7 @@ impl WasmAccountBuilder {
     }
 
     // Call the builder.
-    let builder = self.0.clone();
+    let builder: Rc<WasmRefCell<AccountBuilder>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
@@ -105,30 +116,14 @@ impl WasmAccountBuilder {
   }
 }
 
-#[wasm_bindgen(js_name = AutoSave)]
-pub struct WasmAutoSave(pub(crate) AutoSave);
-
-#[wasm_bindgen(js_class = AutoSave)]
-impl WasmAutoSave {
-  #[wasm_bindgen]
-  pub fn never() -> WasmAutoSave {
-    Self(AutoSave::Never)
-  }
-  #[wasm_bindgen]
-  pub fn every() -> WasmAutoSave {
-    Self(AutoSave::Every)
-  }
-  #[wasm_bindgen]
-  pub fn batch(number_of_actions: usize) -> WasmAutoSave {
-    Self(AutoSave::Batch(number_of_actions))
-  }
-}
-
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Account>")]
   pub type PromiseAccount;
+}
 
+#[wasm_bindgen]
+extern "C" {
   #[wasm_bindgen(typescript_type = "AccountBuilderOptions")]
   pub type AccountBuilderOptions;
 
@@ -136,23 +131,23 @@ extern "C" {
   pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn client(this: &AccountBuilderOptions) -> Option<WasmClient>;
+  pub fn clientConfig(this: &AccountBuilderOptions) -> Option<Config>;
 
   #[wasm_bindgen(structural, getter, method)]
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
   #[wasm_bindgen(structural, getter, method)]
-  pub fn autoSave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
+  pub fn autosave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
+const TS_ACCOUNT_BUILDER_OPTIONS: &'static str = r#"
 export type AccountBuilderOptions = {
 
     /**
      * When the account will store its state to the storage.
      */
-    autoSave?: AutoSave
+    autosave?: AutoSave
 
     /**
      * `autopublish == true` the account will publish messages to the tangle on each update.
@@ -168,29 +163,6 @@ export type AccountBuilderOptions = {
     /**
      * Client for tangle requests.
      */
-    client?: Client
-};
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "IdentitySetup")]
-  pub type WasmIdentitySetup;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn keyType(this: &WasmIdentitySetup) -> Option<KeyType>;
-
-  #[wasm_bindgen(structural, getter, method)]
-  pub fn methodSecret(this: &WasmIdentitySetup) -> Option<WasmMethodSecret>;
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT_2: &'static str = r#"
-/**
- * Overrides the default creation of private and public keys.
- */
-export type IdentitySetup = {
-    keyType?: KeyType,
-    methodSecret?: MethodSecret
+    clientConfig?: Config
 };
 "#;

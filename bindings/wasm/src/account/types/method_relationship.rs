@@ -1,11 +1,10 @@
-// Copyright 2020-2022 IOTA Stiftun
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::did::MethodRelationship;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
-
-use identity::did::MethodRelationship;
 
 #[wasm_bindgen (js_name = MethodRelationship)]
 #[derive(Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Debug)]

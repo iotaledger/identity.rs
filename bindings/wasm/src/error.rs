@@ -1,14 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::UpdateError;
 use std::borrow::Cow;
 use std::sync::PoisonError;
 
-use wasm_bindgen::JsValue;
-
 use identity::account::Error as AccountError;
 use identity::account::Result as AccountResult;
+use identity::account::UpdateError;
+use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
 ///

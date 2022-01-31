@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
-use wasm_bindgen::prelude::*;
-
 use identity::account::Error as AccountError;
 use identity::core::decode_b58;
 use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
+use wasm_bindgen::prelude::*;
 
 use crate::error::wasm_error;
 use crate::error::Result;

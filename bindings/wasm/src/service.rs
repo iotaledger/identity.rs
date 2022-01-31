@@ -1,9 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::wasm_error;
 use identity::did::Service as IotaService;
 use wasm_bindgen::prelude::*;
+
+use crate::error::wasm_error;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]

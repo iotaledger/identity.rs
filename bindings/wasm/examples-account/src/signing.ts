@@ -23,7 +23,7 @@ async function signing() {
     // Signing Example
     // ===========================================================================
 
-    // Add a new Ed25519 Verification Method to the identity
+    // Add a new Ed25519 Verification Method to the identity.
     await account.createMethod({
         fragment: "key_1"
     })
@@ -32,7 +32,7 @@ async function signing() {
     let keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
     let subjectDid = new DID(keyPair);
 
-    // Prepare a credential subject indicating the degree earned by Alice
+    // Prepare a credential subject indicating the degree earned by Alice.
     let credentialSubject = {
         id: subjectDid.toString(),
         name: "Alice",
@@ -49,14 +49,14 @@ async function signing() {
         credentialSubject,
     });
 
-    // ...and sign the Credential with the previously created Verification Method
-    // Note: Different methods are available for different data types
+    // ...and sign the Credential with the previously created Verification Method.
+    // Note: Different methods are available for different data types,
     // use the Method `createSignedData` to sign arbitrary data.
     let signedVc = await account.createSignedCredential("key_1", unsignedVc, SignatureOptions.default());
 
     console.log("[Example] Local Credential", signedVc);
 
-    // Fetch the DID Document from the Tangle
+    // Fetch the DID Document from the Tangle.
     //
     // This is an optional step to ensure DID Document consistency.
     let resolved = await account.resolveIdentity();
@@ -69,7 +69,7 @@ async function signing() {
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 
-    // Ensure the resolved DID Document can verify the credential signature
+    // Ensure the resolved DID Document can verify the credential signature.
     let verified = resolved.intoDocument().verifyData(signedVc, VerifierOptions.default());
 
     console.log("[Example] Credential Verified = ", verified);

@@ -10,7 +10,7 @@ async function manipulateIdentity() {
     // Create Identity - Similar to create_did example
     // ===========================================================================
 
-    // Create a new Account with the default configuration
+    // Create a new Account with the default configuration.
     let builder = new AccountBuilder();
     let account = await builder.createIdentity();
 
@@ -18,12 +18,12 @@ async function manipulateIdentity() {
     // Identity Manipulation
     // ===========================================================================
 
-    // Add another Ed25519 verification method to the identity
+    // Add another Ed25519 verification method to the identity.
     await account.createMethod({
         fragment: "my-next-key"
     })
 
-    // Associate the newly created method with additional verification relationships
+    // Associate the newly created method with additional verification relationships.
     await account.attachMethodRelationships({
         fragment: "my-next-key",
         relationships: [
@@ -35,12 +35,12 @@ async function manipulateIdentity() {
     // Add a new service to the identity.
     await account.createService({
         fragment: "my-service-1",
-        serviceType: "MyCustomService",
+        type: "MyCustomService",
         endpoint: "https://example.com"
     })
 
-    // Remove the Ed25519 verification method
-    await account.deleteMethod("my-next-key")
+    // Remove the Ed25519 verification method.
+    await account.deleteMethod({ fragment: "my-next-key" })
 
     // Retrieve the did of the newly created identity.
     let iotaDid = account.did().toString();
@@ -48,7 +48,7 @@ async function manipulateIdentity() {
     // Print the DID of the created Identity.
     console.log(iotaDid)
 
-    // Print the local state of the DID Document
+    // Print the local state of the DID Document.
     console.log(account.document());
 
     // Print the Explorer URL for the DID.

@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use wasm_bindgen::prelude::*;
-
 use identity::core::Fragment;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = Fragment, inspectable)]
 pub struct WasmFragment(pub(crate) Fragment);

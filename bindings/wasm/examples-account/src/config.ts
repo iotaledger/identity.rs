@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
+import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
 
 /**
  * This example shows some configurations that can be used for the account.
@@ -31,22 +31,17 @@ async function config() {
     // This URL points to the REST API of the locally running hornet node.
     config.setPrimaryNode(private_node_url);
 
-    // Use DIDMessageEncoding.Json instead to publish plaintext messages to the Tangle for debugging.
-    config.setEncoding(DIDMessageEncoding.JsonBrotli);
-
-    const client = Client.fromConfig(config);
-
-
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder({
-        // never auto-save. rely on the drop save.
-        // use `AutoSave.every()` to save immediately after every action,
-        // and `AutoSave.batch(10)` to save after every 10 actions.
-        autoSave: AutoSave.never(),
+        // `AutoSave.never()` never auto-saves, relies on the storage drop save.
+        // `AutoSave.every()` saves immediately after every action,
+        // `AutoSave.batch(10)` saves after every 10 actions.
+        autosave: AutoSave.never(), // never auto-save
         autopublish: true, // publish to the tangle automatically on every update
         milestone: 4, // save a snapshot every 4 actions
-        client: client // set client to the previously defined client.
+        clientConfig: config // set client to the previously defined client.
+        //TODO configure storage.
     });
 
     try {
@@ -57,8 +52,10 @@ async function config() {
         // The entire history can be observed on this page by clicking "Loading History".
         console.log(`[Example] Explore the DID Document = ${explorer.resolverUrl(did.toString())}`);
 
-    } catch (e: any) {
-        console.log(`[Example] Error: ${e.message}`);
+    } catch (e) {
+        if (e instanceof Error) {
+            console.log(`[Example] Error: ${e.message}`);
+        }
         console.log(`[Example] Is your Tangle node listening on ${private_node_url}?`);
     }
 }

@@ -3,9 +3,8 @@
 
 use std::str::FromStr;
 
-use wasm_bindgen::prelude::*;
-
 use identity::iota::MessageId;
+use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
 use crate::error::WasmResult;

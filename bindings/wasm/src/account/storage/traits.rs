@@ -5,10 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use std::sync::atomic::AtomicBool;
 
-use js_sys::Promise;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::JsFuture;
-
 use identity::account::ChainState;
 use identity::account::DIDLease;
 use identity::account::EncryptionKey;
@@ -22,6 +18,9 @@ use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota::IotaDID;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::identity::WasmIdentityState;

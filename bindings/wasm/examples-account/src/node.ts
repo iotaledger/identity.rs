@@ -5,6 +5,7 @@ import { config } from "./config";
 import { createIdentity } from "./create_did";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
+import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
 import { unchecked } from "./unchecked";
 
@@ -29,6 +30,8 @@ async function main() {
             return await config();
         case "unchecked":
             return await unchecked();
+        case "multiple_identities":
+            return await multipleIdentities();
         default:
             throw "Unknown example name";
     }

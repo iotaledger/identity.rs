@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
-use wasm_bindgen::prelude::*;
-
 use identity::account::IdentityState;
+use wasm_bindgen::prelude::*;
 
 use crate::account::types::WasmGeneration;
 use crate::account::types::WasmKeyLocation;

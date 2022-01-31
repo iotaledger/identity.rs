@@ -1,10 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftun
 // SPDX-License-Identifier: Apache-2.0
 
-use wasm_bindgen::prelude::*;
-
 use identity::account::derive_encryption_key as derive_encryption_key_;
 use identity::account::EncryptionKey;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = EncryptionKey, inspectable)]
 pub struct WasmEncryptionKey(EncryptionKey);

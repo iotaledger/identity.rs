@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {AccountBuilder, Timestamp, ExplorerUrl } from './../../node/identity_wasm.js';
+import { AccountBuilder, Timestamp, ExplorerUrl, Document } from './../../node/identity_wasm.js';
 
 /**
  * Updates an Identity without validation and publishes it to the tangle.
@@ -27,8 +27,13 @@ async function unchecked() {
     console.log(`Document before update`, document);
 
     // Override the updated field timestamp to 01.01.1990 00:00:00.
-    // because we can. This is usually set automatically by Account::update_identity.
+    // because we can. This is usually set automatically when updating via the `Account`.
     document.metadataUpdated = Timestamp.parse("1900-01-01T00:00:00Z")
+
+    // Add a custom property to the document.
+    const documentJSON = document.toJSON();
+    documentJSON["doc"]["myCustomPropertyKey"] = "value";
+    document = Document.fromJSON(documentJSON);
 
     // Update the identity without validation and publish the result to the Tangle
     // (depending on the account's autopublish setting).
@@ -41,7 +46,7 @@ async function unchecked() {
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
-     
+
 }
 
 export { unchecked }
