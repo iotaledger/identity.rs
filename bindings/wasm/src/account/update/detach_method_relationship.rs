@@ -38,7 +38,7 @@ impl WasmAccount {
       return Err(wasm_error(MissingRequiredField("relationships is missing or empty")));
     }
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
-    let fragment: String = options.fragment().ok_or_else(|| wasm_error(MissingRequiredField("fragment")))?;
+    let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       let update = Update::DetachMethodRelationship {

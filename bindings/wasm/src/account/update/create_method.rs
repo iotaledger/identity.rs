@@ -33,7 +33,7 @@ impl WasmAccount {
       .map(|m| m.0)
       .unwrap_or(MethodType::Ed25519VerificationKey2018);
 
-    let fragment: String = options.fragment().ok_or_else(|| wasm_error(MissingRequiredField("fragment")))?;
+    let fragment: String = options.fragment().ok_or(MissingRequiredField("fragment")).wasm_result()?;
 
     let method_scope: MethodScope = options.methodScope().map(|ms| ms.0).unwrap_or_default();
 
