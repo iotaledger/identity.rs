@@ -32,7 +32,7 @@ where
   T: KeyComparable;
 
 // Private to prevent creations of empty `Set` variants.
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
 enum OneOrSetInner<T>
 where
@@ -330,10 +330,21 @@ mod tests {
   use super::*;
 
   #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-  struct MockKey(u8);
+  struct MockKeyU8(u8);
 
-  impl KeyComparable for MockKey {
+  #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+  struct MockKeyBool(bool);
+
+  impl KeyComparable for MockKeyU8 {
     type Key = u8;
+
+    fn key(&self) -> &Self::Key {
+      &self.0
+    }
+  }
+
+  impl KeyComparable for MockKeyBool {
+    type Key = bool;
 
     fn key(&self) -> &Self::Key {
       &self.0
@@ -343,58 +354,58 @@ mod tests {
   #[test]
   fn test_new_set() {
     // VALID: non-empty set.
-    let ordered_set: OrderedSet<MockKey> = OrderedSet::from_iter([1, 2, 3].map(MockKey).into_iter());
-    let new_set: OneOrSet<MockKey> = OneOrSet::new_set(ordered_set.clone()).unwrap();
-    let try_from_set: OneOrSet<MockKey> = OneOrSet::try_from(ordered_set.clone()).unwrap();
+    let ordered_set: OrderedSet<MockKeyU8> = OrderedSet::from_iter([1, 2, 3].map(MockKeyU8).into_iter());
+    let new_set: OneOrSet<MockKeyU8> = OneOrSet::new_set(ordered_set.clone()).unwrap();
+    let try_from_set: OneOrSet<MockKeyU8> = OneOrSet::try_from(ordered_set.clone()).unwrap();
     assert_eq!(new_set, try_from_set);
     assert_eq!(OrderedSet::from(new_set), ordered_set);
 
     // INVALID: empty set.
-    let empty: OrderedSet<MockKey> = OrderedSet::new();
+    let empty: OrderedSet<MockKeyU8> = OrderedSet::new();
     assert!(matches!(OneOrSet::new_set(empty.clone()), Err(Error::OneOrSetEmpty)));
     assert!(matches!(OneOrSet::try_from(empty), Err(Error::OneOrSetEmpty)));
   }
 
   #[test]
   fn test_append_from_one() {
-    let mut collection: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(42));
+    let mut collection: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(42));
     assert_eq!(collection.len(), 1);
 
     // Ignores duplicates.
-    collection.append(MockKey(42));
-    assert_eq!(collection, OneOrSet::new_one(MockKey(42)));
+    collection.append(MockKeyU8(42));
+    assert_eq!(collection, OneOrSet::new_one(MockKeyU8(42)));
     assert_eq!(collection.len(), 1);
 
     // Becomes Set.
-    collection.append(MockKey(128));
+    collection.append(MockKeyU8(128));
     assert_eq!(
       collection,
-      OneOrSet::new_set(OrderedSet::from_iter([42, 128].map(MockKey).into_iter())).unwrap()
+      OneOrSet::new_set(OrderedSet::from_iter([42, 128].map(MockKeyU8).into_iter())).unwrap()
     );
     assert_eq!(collection.len(), 2);
 
-    collection.append(MockKey(200));
+    collection.append(MockKeyU8(200));
     assert_eq!(
       collection,
-      OneOrSet::new_set(OrderedSet::from_iter([42, 128, 200].map(MockKey).into_iter())).unwrap()
+      OneOrSet::new_set(OrderedSet::from_iter([42, 128, 200].map(MockKeyU8).into_iter())).unwrap()
     );
     assert_eq!(collection.len(), 3);
   }
 
   #[test]
   fn test_append_from_set() {
-    let mut collection: OneOrSet<MockKey> = OneOrSet::new_set((0..42).map(MockKey).collect()).unwrap();
+    let mut collection: OneOrSet<MockKeyU8> = OneOrSet::new_set((0..42).map(MockKeyU8).collect()).unwrap();
     assert_eq!(collection.len(), 42);
 
     // Appends to end.
-    collection.append(MockKey(42));
-    let expected: OneOrSet<MockKey> = OneOrSet::new_set((0..=42).map(MockKey).collect()).unwrap();
+    collection.append(MockKeyU8(42));
+    let expected: OneOrSet<MockKeyU8> = OneOrSet::new_set((0..=42).map(MockKeyU8).collect()).unwrap();
     assert_eq!(collection, expected);
     assert_eq!(collection.len(), 43);
 
     // Ignores duplicates.
     for i in 0..=42 {
-      collection.append(MockKey(i));
+      collection.append(MockKeyU8(i));
       assert_eq!(collection, expected);
       assert_eq!(collection.len(), 43);
     }
@@ -403,13 +414,13 @@ mod tests {
   #[test]
   fn test_contains() {
     // One.
-    let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+    let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
     assert!(one.contains(&1));
     assert!(!one.contains(&2));
     assert!(!one.contains(&3));
 
     // Set.
-    let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+    let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
     assert!(set.contains(&1));
     assert!(set.contains(&2));
     assert!(set.contains(&3));
@@ -419,34 +430,55 @@ mod tests {
   #[test]
   fn test_get() {
     // One.
-    let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
-    assert_eq!(one.get(0), Some(&MockKey(1)));
+    let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
+    assert_eq!(one.get(0), Some(&MockKeyU8(1)));
     assert_eq!(one.get(1), None);
     assert_eq!(one.get(2), None);
 
     // Set.
-    let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
-    assert_eq!(set.get(0), Some(&MockKey(1)));
-    assert_eq!(set.get(1), Some(&MockKey(2)));
-    assert_eq!(set.get(2), Some(&MockKey(3)));
+    let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
+    assert_eq!(set.get(0), Some(&MockKeyU8(1)));
+    assert_eq!(set.get(1), Some(&MockKeyU8(2)));
+    assert_eq!(set.get(2), Some(&MockKeyU8(3)));
     assert_eq!(set.get(3), None);
+  }
+
+  #[test]
+  fn test_map() {
+    // One.
+    let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
+    let one_add: OneOrSet<MockKeyU8> = one.map(|item| MockKeyU8(item.0 + 1));
+    assert_eq!(one_add, OneOrSet::new_one(MockKeyU8(2)));
+
+    // Set.
+    let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
+    let set_add: OneOrSet<MockKeyU8> = set.map(|item| MockKeyU8(item.0 + 10));
+    assert_eq!(set_add, OneOrSet::new_set((11..=13).map(MockKeyU8).collect()).unwrap());
+
+    // Set reduced to one.
+    let set_many: OneOrSet<MockKeyU8> = OneOrSet::new_set([2, 4, 6, 8].into_iter().map(MockKeyU8).collect()).unwrap();
+    assert_eq!(set_many.len(), 4);
+    let set_bool: OneOrSet<MockKeyBool> = set_many.map(|item| MockKeyBool(item.0 % 2 == 0));
+    assert_eq!(set_bool, OneOrSet::new_one(MockKeyBool(true)));
+    assert_eq!(set_bool.0, OneOrSetInner::One(MockKeyBool(true)));
+    assert_eq!(set_bool.len(), 1);
   }
 
   #[test]
   fn test_iter() {
     // One.
-    let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+    let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
     let mut one_iter = one.iter();
-    assert_eq!(one_iter.next(), Some(&MockKey(1)));
+    assert_eq!(one_iter.next(), Some(&MockKeyU8(1)));
     assert_eq!(one_iter.next(), None);
     assert_eq!(one_iter.next(), None);
 
     // Set.
-    let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+    let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
     let mut set_iter = set.iter();
-    assert_eq!(set_iter.next(), Some(&MockKey(1)));
-    assert_eq!(set_iter.next(), Some(&MockKey(2)));
-    assert_eq!(set_iter.next(), Some(&MockKey(3)));
+    assert_eq!(set_iter.next(), Some(&MockKeyU8(1)));
+    assert_eq!(set_iter.next(), Some(&MockKeyU8(2)));
+    assert_eq!(set_iter.next(), Some(&MockKeyU8(3)));
     assert_eq!(set_iter.next(), None);
   }
 
@@ -454,29 +486,29 @@ mod tests {
   fn test_serde() {
     // VALID: one.
     {
-      let one: OneOrSet<MockKey> = OneOrSet::new_one(MockKey(1));
+      let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
       let ser: String = one.to_json().unwrap();
-      let de: OneOrSet<MockKey> = OneOrSet::from_json(&ser).unwrap();
+      let de: OneOrSet<MockKeyU8> = OneOrSet::from_json(&ser).unwrap();
       assert_eq!(ser, "1");
       assert_eq!(de, one);
     }
 
     // VALID: set.
     {
-      let set: OneOrSet<MockKey> = OneOrSet::new_set((1..=3).map(MockKey).collect()).unwrap();
+      let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
       let ser: String = set.to_json().unwrap();
-      let de: OneOrSet<MockKey> = OneOrSet::from_json(&ser).unwrap();
+      let de: OneOrSet<MockKeyU8> = OneOrSet::from_json(&ser).unwrap();
       assert_eq!(ser, "[1,2,3]");
       assert_eq!(de, set);
     }
 
     // INVALID: empty.
     {
-      let empty: Result<OneOrSet<MockKey>> = OneOrSet::from_json("");
+      let empty: Result<OneOrSet<MockKeyU8>> = OneOrSet::from_json("");
       assert!(empty.is_err());
-      let empty_set: Result<OneOrSet<MockKey>> = OneOrSet::from_json("[]");
+      let empty_set: Result<OneOrSet<MockKeyU8>> = OneOrSet::from_json("[]");
       assert!(empty_set.is_err());
-      let empty_space: Result<OneOrSet<MockKey>> = OneOrSet::from_json("[ ]");
+      let empty_space: Result<OneOrSet<MockKeyU8>> = OneOrSet::from_json("[ ]");
       assert!(empty_space.is_err());
     }
   }
