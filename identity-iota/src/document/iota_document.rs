@@ -11,6 +11,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
@@ -25,6 +26,7 @@ use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
@@ -190,10 +192,12 @@ impl IotaDocument {
     // creates an `IotaDID::new_unchecked_ref()` from the underlying DID.
     let _ = IotaDID::try_from_borrowed(document.id())?;
 
-    // Validate that the document controller (if any) conforms to the IotaDID specification.
+    // Validate that the document controllers (if any) conform to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::controller()` method
-    // which creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
-    document.controller().map_or(Ok(()), IotaDID::check_validity)?;
+    // which casts `&[CoreDID]` to `&[IotaDID]` from the underlying document.
+    document
+      .controller()
+      .map_or(Ok(()), |set| set.iter().try_for_each(IotaDID::check_validity))?;
 
     // Validate that the verification methods conform to the IotaDID specification.
     // This check is required to ensure the correctness of the
@@ -256,10 +260,21 @@ impl IotaDocument {
     unsafe { IotaDID::new_unchecked_ref(self.document.id()) }
   }
 
-  /// Returns a reference to the [`IotaDocument`] controller.
-  pub fn controller(&self) -> Option<&IotaDID> {
-    // SAFETY: Validity of controller checked in DID Document constructors.
-    unsafe { self.document.controller().map(|did| IotaDID::new_unchecked_ref(did)) }
+  /// Returns a reference to the [`IotaDocument`] controllers.
+  pub fn controller(&self) -> Option<&[IotaDID]> {
+    self.document.controller().map(|set|
+      // SAFETY: transmuting slices of types with transparent layouts is valid and the
+      // validity of the controller DID entries is checked in the DID Document constructors.
+      unsafe {
+        core::slice::from_raw_parts(set.as_slice().as_ptr() as *const IotaDID, set.as_slice().len())
+      })
+  }
+
+  /// Sets the [`IotaDocument`] controllers.
+  ///
+  /// NOTE: controllers are not currently used for delegating or authenticating update permissions.
+  pub fn set_controller(&mut self, controllers: Option<OneOrSet<IotaDID>>) {
+    *self.document.controller_mut() = controllers.map(|set| set.map(CoreDID::from));
   }
 
   /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
@@ -731,6 +746,7 @@ mod tests {
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
+  use identity_core::common::OneOrSet;
   use identity_core::common::Timestamp;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
@@ -787,13 +803,13 @@ mod tests {
     IotaDocument::try_from_core(
       CoreDocument::builder(Object::default())
         .id(controller.clone())
+        .controller(controller.clone())
         .verification_method(core_verification_method(controller, "#key-1"))
         .verification_method(core_verification_method(controller, "#key-2"))
         .verification_method(core_verification_method(controller, "#key-3"))
         .authentication(core_verification_method(controller, "#auth-key"))
         .authentication(controller.to_url().join("#key-3").unwrap())
         .key_agreement(controller.to_url().join("#key-4").unwrap())
-        .controller(controller.clone())
         .build()
         .unwrap(),
       metadata,
@@ -1030,10 +1046,34 @@ mod tests {
 
   #[test]
   fn test_controller_from_core() {
-    let controller: CoreDID = valid_did();
-    let document: IotaDocument = iota_document_from_core(&controller);
-    let expected_controller: Option<IotaDID> = Some(IotaDID::try_from_owned(controller).unwrap());
-    assert_eq!(document.controller(), expected_controller.as_ref());
+    // One controller.
+    {
+      let controller: CoreDID = valid_did();
+      let mut document: IotaDocument = iota_document_from_core(&controller);
+      let expected: IotaDID = IotaDID::new(&[0; 32]).unwrap();
+      document.set_controller(Some(OneOrSet::new_one(expected.clone())));
+      assert_eq!(document.controller().unwrap(), &[expected]);
+      // Unset.
+      document.set_controller(None);
+      assert!(document.controller().is_none());
+    }
+
+    // Many controllers.
+    {
+      let controller: CoreDID = valid_did();
+      let mut document: IotaDocument = iota_document_from_core(&controller);
+      let expected_controllers: Vec<IotaDID> = vec![
+        IotaDID::try_from_owned(controller).unwrap(),
+        IotaDID::new(&[0; 32]).unwrap(),
+        IotaDID::new(&[1; 32]).unwrap(),
+        IotaDID::new(&[2; 32]).unwrap(),
+      ];
+      document.set_controller(Some(expected_controllers.clone().try_into().unwrap()));
+      assert_eq!(document.controller().unwrap(), &expected_controllers);
+      // Unset.
+      document.set_controller(None);
+      assert!(document.controller().is_none());
+    }
   }
 
   #[test]

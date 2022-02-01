@@ -9,6 +9,7 @@ use serde::Serialize;
 
 use identity_core::common::BitSet;
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -58,7 +59,7 @@ use crate::verification::VerificationMethod;
 pub struct CoreDocument<T = Object, U = Object, V = Object> {
   pub(crate) id: CoreDID,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) controller: Option<CoreDID>,
+  pub(crate) controller: Option<OneOrSet<CoreDID>>,
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) also_known_as: OrderedSet<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
@@ -91,7 +92,10 @@ impl<T, U, V> CoreDocument<T, U, V> {
   pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
-      controller: builder.controller,
+      controller: Some(builder.controller)
+        .filter(|controllers| !controllers.is_empty())
+        .map(TryFrom::try_from)
+        .transpose()?,
       also_known_as: builder.also_known_as.try_into()?,
       verification_method: builder.verification_method.try_into()?,
       authentication: builder.authentication.try_into()?,
@@ -115,13 +119,13 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Returns a reference to the `CoreDocument` controller.
-  pub fn controller(&self) -> Option<&CoreDID> {
+  pub fn controller(&self) -> Option<&OneOrSet<CoreDID>> {
     self.controller.as_ref()
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  pub fn controller_mut(&mut self) -> Option<&mut CoreDID> {
-    self.controller.as_mut()
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<CoreDID>> {
+    &mut self.controller
   }
 
   /// Returns a reference to the `CoreDocument` alsoKnownAs set.

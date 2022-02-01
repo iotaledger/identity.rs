@@ -48,6 +48,10 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] time::error::Error),
+
+  /// Caused by attempting to create an empty `OneOrSet` instance or remove all its elements.
+  #[error("OneOrSet cannot be empty")]
+  OneOrSetEmpty,
   /// Caused by attempting to convert a collection with duplicate keys into an OrderedSet.
   #[error("duplicate key in OrderedSet")]
   OrderedSetDuplicate,
