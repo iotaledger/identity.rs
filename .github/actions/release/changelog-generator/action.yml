@@ -62,7 +62,7 @@ runs:
       run: |
         ESCAPED_CURRENT_VERSION=${${{ inputs.previous-release }}//./\\.}
         ESCAPED_PREVIOUS_VERSION=${${{ inputs.previous-release }}//./\\.}
-        sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)(## \[$ESCAPED_PREVIOUS_VERSION.*)/\1/p" -i CHANGELOG.md
+        sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)(## \[$ESCAPED_PREVIOUS_VERSION.*)/\1/p" -i ${{ inputs.changelog-config-path }}
 
     - name: Log ${{ inputs.changelog-path }}
       shell: bash
