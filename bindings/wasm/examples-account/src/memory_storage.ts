@@ -1,26 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {ChainState, DID, DIDLease, Ed25519, Generation, IdentityState, KeyLocation, KeyPair, KeyType, MethodType, SecretKey, Signature} from './../../node/identity_wasm.js';
-
-interface Storage {
-    setPassword: (encryptionKey: Uint8Array) => Promise<void>;
-    flushChanges: () => Promise<void>;
-    leaseDid: (did: DID) => Promise<DIDLease>;
-    keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;
-    keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: string) => Promise<string>;
-    keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
-    keyGet: (did: DID, keyLocation: KeyLocation) => Promise<string>;
-    keyDel: (did: DID, keyLocation: KeyLocation) => Promise<void>;
-    keySign: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
-    chainState: (did: DID) => Promise<ChainState>;
-    setChainState: (did: DID, chainState: ChainState) => Promise<void>;
-    state: (did: DID) => Promise<IdentityState>;
-    setState: (did: DID, identityState: IdentityState) => Promise<void>;
-    purge: (did: DID) => Promise<void>;
-    publishedGeneration: (did: DID) => Promise<Generation>;
-    setPublishedGeneration: (did: DID, generation: Generation) => Promise<void>;
-}
+import {ChainState, DID, DIDLease, Ed25519, Generation, IdentityState, KeyLocation, KeyPair, KeyType, MethodType, SecretKey, Signature, Storage} from './../../node/identity_wasm.js';
 
 class MemStore implements Storage {
     private _expand: boolean;
