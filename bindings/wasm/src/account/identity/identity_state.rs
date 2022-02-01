@@ -58,7 +58,7 @@ impl WasmIdentityState {
   // Document State
   // ===========================================================================
 
-  /// Returns a copy of the document managed by the `Account`.
+  /// Returns a copy of the document.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
     self.0.document().clone().into()
