@@ -47,7 +47,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
     DidCommHandler::presentation_verifier_actor_handler,
   )?;
 
-  holder_actor.add_peer(peer_id, addr.clone()).await;
+  holder_actor.add_address(peer_id, addr.clone()).await;
 
   let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
 
@@ -79,7 +79,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
     DidCommHandler::presentation_holder_actor_handler,
   )?;
 
-  verifier_actor.add_peer(peer_id, addr.clone()).await;
+  verifier_actor.add_address(peer_id, addr.clone()).await;
 
   let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
 
@@ -127,7 +127,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> R
     .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
     .unwrap();
 
-  verifier_actor.add_peer(peer_id, addr.clone()).await;
+  verifier_actor.add_address(peer_id, addr.clone()).await;
 
   let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
 
@@ -177,7 +177,7 @@ async fn test_didcomm_presentation_holder_initiates_with_implicit_hooks() -> Res
     .add_hook("didcomm/presentation/hook", receive_presentation_hook)
     .unwrap();
 
-  holder_actor.add_peer(peer_id, addr.clone()).await;
+  holder_actor.add_address(peer_id, addr.clone()).await;
 
   let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
 
@@ -216,7 +216,7 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
     .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
     .unwrap();
 
-  let peer_id = verifier_actor.peer_id();
+  let peer_id = verifier_actor.peer_id().await;
   let mut verifier_didcomm_actor = DidCommActor::new(verifier_actor);
 
   let result = verifier_didcomm_actor
@@ -256,10 +256,10 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
     .add_hook("didcomm/presentation_offer/hook", presentation_request_hook)
     .unwrap();
 
-  let verifier_peer_id = verifier_actor.peer_id();
-  let holder_peer_id = holder_actor.peer_id();
+  let verifier_peer_id = verifier_actor.peer_id().await;
+  let holder_peer_id = holder_actor.peer_id().await;
 
-  holder_actor.add_peer(verifier_peer_id, addr.clone()).await;
+  holder_actor.add_address(verifier_peer_id, addr.clone()).await;
 
   let task = tokio::spawn(async move {
     let message: crate::Result<PresentationOffer> = verifier_didcomm_actor.await_message(holder_peer_id).await;

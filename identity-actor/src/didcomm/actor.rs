@@ -134,7 +134,7 @@ impl DidCommActor {
   }
 
   pub async fn add_peer(&mut self, peer: PeerId, addr: Multiaddr) {
-    self.actor.add_peer(peer, addr).await
+    self.actor.add_address(peer, addr).await
   }
 }
 

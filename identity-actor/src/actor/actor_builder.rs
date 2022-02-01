@@ -3,18 +3,16 @@
 
 use std::iter;
 
-use crate::p2p::behaviour::DidCommBehaviour;
 use crate::p2p::behaviour::DidCommCodec;
 use crate::p2p::behaviour::DidCommProtocol;
 use crate::p2p::event_loop::EventLoop;
-use crate::p2p::event_loop::NetCommander;
+use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
 use crate::Result;
 use dashmap::DashMap;
 use futures::channel::mpsc;
 use futures::AsyncRead;
 use futures::AsyncWrite;
-use futures::Future;
 use futures::FutureExt;
 use libp2p::core::transport::upgrade;
 use libp2p::core::Executor;
@@ -131,7 +129,7 @@ impl ActorBuilder {
     .await
   }
 
-  pub fn keys(mut self, keys: Keypair) -> Self {
+  pub fn keypair(mut self, keys: Keypair) -> Self {
     self.keypair = Some(keys);
     self
   }

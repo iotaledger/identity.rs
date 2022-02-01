@@ -1,8 +1,10 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use std::collections::HashMap;
 
 use futures::channel::mpsc;
 use futures::channel::oneshot;
-use futures::future::poll_fn;
 use futures::FutureExt;
 use futures::SinkExt;
 use futures::StreamExt;
@@ -13,15 +15,16 @@ use libp2p::request_response::RequestResponseEvent;
 use libp2p::request_response::RequestResponseMessage;
 use libp2p::request_response::ResponseChannel;
 use libp2p::swarm::SwarmEvent;
-use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::Swarm;
 
+use crate::Endpoint;
 use crate::RequestMessage;
 
 use super::behaviour::DidCommCodec;
 use super::behaviour::DidCommRequest;
 use super::behaviour::DidCommResponse;
+use super::net_commander::SwarmCommand;
 
 pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
@@ -74,9 +77,10 @@ impl EventLoop {
       SwarmEvent::Behaviour(RequestResponseEvent::Message { message, peer }) => match message {
         RequestResponseMessage::Request { channel, request, .. } => {
           // In the general case, we would decrypt the message and deserialize to RequestMessage.
-          let request_message: RequestMessage<Vec<u8>> = match serde_json::from_slice(request.0.as_ref()) {
+          let request_message: RequestMessage = match serde_json::from_slice(request.0.as_ref()) {
             Ok(request_message) => request_message,
-            Err(_) => {
+            Err(err) => {
+              log::error!("could not deserialize to `RequestMessage`: {err:?}");
               // TODO: Handle _somehow_?
               let _ = self
                 .swarm
@@ -90,7 +94,8 @@ impl EventLoop {
             .event_channel
             .send(InboundRequest {
               peer_id: peer,
-              request_message: request_message,
+              endpoint: request_message.endpoint,
+              input: request_message.data,
               response_channel: channel,
             })
             .await
@@ -138,77 +143,33 @@ impl EventLoop {
           .behaviour_mut()
           .send_response(response_channel, DidCommResponse(response));
       }
-      _ => (),
+      SwarmCommand::StartListening {
+        address,
+        response_channel,
+      } => {
+        let result: Result<(), _> = self.swarm.listen_on(address).map(|_| ());
+        response_channel.send(result).expect("sender was dropped");
+      }
+      SwarmCommand::AddAddress { peer, address } => {
+        self.swarm.behaviour_mut().add_address(&peer, address);
+      }
+      SwarmCommand::GetAddresses { response_channel } => {
+        response_channel
+          .send(self.swarm.listeners().map(|addr| addr.to_owned()).collect())
+          .expect("sender was dropped");
+      }
+      SwarmCommand::GetPeerId { response_channel } => {
+        response_channel
+          .send(self.swarm.local_peer_id().clone())
+          .expect("sender was dropped");
+      }
     }
   }
 }
 
 pub struct InboundRequest {
   pub peer_id: PeerId,
-  pub request_message: RequestMessage<Vec<u8>>,
+  pub endpoint: Endpoint,
+  pub input: Vec<u8>,
   pub response_channel: ResponseChannel<DidCommResponse>,
-}
-
-#[derive(Clone)]
-pub struct NetCommander {
-  command_sender: mpsc::Sender<SwarmCommand>,
-}
-
-impl NetCommander {
-  pub fn new(command_sender: mpsc::Sender<SwarmCommand>) -> Self {
-    NetCommander { command_sender }
-  }
-
-  pub async fn send_request(&mut self, peer: PeerId, request: Vec<u8>) -> Result<(), OutboundFailure> {
-    let (sender, receiver) = oneshot::channel();
-    let command = SwarmCommand::SendRequest {
-      peer,
-      request,
-      response_channel: sender,
-    };
-    self.send_command(command).await;
-    receiver.await.unwrap()
-  }
-
-  pub async fn send_response(&mut self, data: Vec<u8>, channel: ResponseChannel<DidCommResponse>) {
-    let (sender, _receiver) = oneshot::channel();
-    let command = SwarmCommand::SendResponse {
-      response: data,
-      cmd_response_channel: sender,
-      response_channel: channel,
-    };
-    self.send_command(command).await;
-  }
-
-  pub async fn start_listening(&mut self, address: Multiaddr) -> Result<Multiaddr, OutboundFailure> {
-    let (sender, receiver) = oneshot::channel();
-    let command = SwarmCommand::StartListening {
-      address,
-      response_channel: sender,
-    };
-    self.send_command(command).await;
-    receiver.await.unwrap()
-  }
-
-  async fn send_command(&mut self, command: SwarmCommand) {
-    let _ = poll_fn(|cx| self.command_sender.poll_ready(cx)).await;
-    let _ = self.command_sender.start_send(command);
-  }
-}
-
-pub enum SwarmCommand {
-  SendRequest {
-    peer: PeerId,
-    request: Vec<u8>,
-    response_channel: oneshot::Sender<Result<(), OutboundFailure>>,
-  },
-  SendResponse {
-    response: Vec<u8>,
-    cmd_response_channel: oneshot::Sender<Result<(), OutboundFailure>>,
-    response_channel: ResponseChannel<DidCommResponse>,
-  },
-  StartListening {
-    address: Multiaddr,
-    response_channel: oneshot::Sender<Result<Multiaddr, OutboundFailure>>,
-  },
 }

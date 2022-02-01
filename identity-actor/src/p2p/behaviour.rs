@@ -1,3 +1,6 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use futures::AsyncRead;
 use futures::AsyncWrite;
 use futures::AsyncWriteExt;
@@ -37,7 +40,6 @@ impl RequestResponseCodec for DidCommCodec {
   where
     T: AsyncRead + Unpin + Send,
   {
-    println!("read_request");
     let vec = upgrade::read_length_prefixed(io, 1_000_000).await?;
     Ok(DidCommRequest(vec))
   }
@@ -46,8 +48,6 @@ impl RequestResponseCodec for DidCommCodec {
   where
     T: AsyncRead + Unpin + Send,
   {
-    println!("read_response");
-
     let vec = upgrade::read_length_prefixed(io, 1_000_000).await?;
 
     Ok(DidCommResponse(vec))
@@ -62,8 +62,6 @@ impl RequestResponseCodec for DidCommCodec {
   where
     T: AsyncWrite + Unpin + Send,
   {
-    println!("write_request");
-
     upgrade::write_length_prefixed(io, data).await?;
     io.close().await
   }
@@ -77,8 +75,6 @@ impl RequestResponseCodec for DidCommCodec {
   where
     T: AsyncWrite + Unpin + Send,
   {
-    println!("write_response");
-
     upgrade::write_length_prefixed(io, data).await?;
     io.close().await
   }

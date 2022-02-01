@@ -10,19 +10,19 @@ use serde::Serialize;
 use std::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RequestMessage<T>
+pub struct RequestMessage
 // where
 //   T: Serialize + for<'deser> Deserialize<'deser>,
 {
   pub endpoint: Endpoint,
-  pub data: T,
+  pub data: Vec<u8>,
 }
 
-impl<T> RequestMessage<T>
-where
-  T: Serialize + for<'deser> Deserialize<'deser>,
+impl RequestMessage
+// where
+//   T: Serialize + for<'deser> Deserialize<'deser>,
 {
-  pub fn new(name: impl AsRef<str>, data: T) -> Result<Self> {
+  pub fn new(name: impl AsRef<str>, data: Vec<u8>) -> Result<Self> {
     Ok(Self {
       endpoint: Endpoint::new(name)?,
       data,

@@ -4,40 +4,32 @@
 mod actor;
 mod didcomm;
 
-use libp2p::tcp::TcpConfig;
+use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use p2p::InitKeypair;
-use p2p::Keypair;
 
 use crate::Actor;
 use crate::ActorBuilder;
 
 async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
   let id_keys = Keypair::generate_ed25519();
-  let transport = TcpConfig::new().nodelay(true);
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
 
   let mut listening_actor = ActorBuilder::new()
-    .keys(InitKeypair::IdKeys(id_keys))
+    .keypair(id_keys)
     .listen_on(addr.clone())
-    .build_with_transport(transport)
+    .build()
     .await
     .unwrap();
 
-  let addr = listening_actor.addrs().await.pop().unwrap();
-  let peer_id = listening_actor.peer_id();
+  let addr = listening_actor.addresses().await.pop().unwrap();
+  let peer_id = listening_actor.peer_id().await;
 
   (listening_actor, addr, peer_id)
 }
 
 async fn default_sending_actor() -> Actor {
-  let id_keys = Keypair::generate_ed25519();
-
-  ActorBuilder::new()
-    .keys(InitKeypair::IdKeys(id_keys))
-    .build()
-    .await
-    .unwrap()
+  let keypair = Keypair::generate_ed25519();
+  ActorBuilder::new().keypair(keypair).build().await.unwrap()
 }

@@ -8,8 +8,7 @@ use std::sync::Arc;
 
 use crate::p2p::behaviour::DidCommResponse;
 use crate::p2p::event_loop::InboundRequest;
-use crate::p2p::event_loop::NetCommander;
-use crate::p2p::event_loop::SwarmCommand;
+use crate::p2p::net_commander::NetCommander;
 use crate::ActorRequest;
 use crate::AsyncFn;
 use crate::Endpoint;
@@ -21,14 +20,13 @@ use crate::Result;
 
 use dashmap::DashMap;
 use futures::channel::mpsc::{self};
-use futures::channel::oneshot::Sender;
 use futures::Future;
 use futures::StreamExt;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
-use libp2p::request_response::OutboundFailure;
 use libp2p::request_response::ResponseChannel;
+use libp2p::TransportError;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tokio::task::{self};
@@ -101,7 +99,7 @@ impl Actor {
     // };
 
     for addr in listening_addresses {
-      actor.commander.start_listening(addr).await?;
+      actor.commander.start_listening(addr).await.expect("TODO");
     }
 
     Ok(actor)
@@ -123,13 +121,15 @@ impl Actor {
     self.handlers.as_ref()
   }
 
-  pub async fn start_listening(&mut self, address: Multiaddr) -> std::result::Result<Multiaddr, OutboundFailure> {
+  pub async fn start_listening(
+    &mut self,
+    address: Multiaddr,
+  ) -> std::result::Result<(), TransportError<std::io::Error>> {
     self.commander.start_listening(address).await
   }
 
-  pub fn peer_id(&self) -> PeerId {
-    // self.commander.peer_id()
-    todo!()
+  pub async fn peer_id(&mut self) -> PeerId {
+    self.commander.peer_id().await
   }
 
   pub async fn stop_listening(&mut self) {
@@ -137,10 +137,8 @@ impl Actor {
     todo!()
   }
 
-  pub async fn addrs(&mut self) -> Vec<Multiaddr> {
-    // let listeners = self.commander.get_listeners().await;
-    // listeners.into_iter().map(|l| l.addrs).flatten().collect()
-    todo!()
+  pub async fn addresses(&mut self) -> Vec<Multiaddr> {
+    self.commander.get_addresses().await
   }
 
   /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
@@ -158,10 +156,10 @@ impl Actor {
     })
   }
 
-  fn spawn_handler(mut self, inbound_request: InboundRequest) -> JoinHandle<Result<()>> {
+  fn spawn_handler(self, inbound_request: InboundRequest) -> JoinHandle<Result<()>> {
     task::spawn(async move {
-      let request: RequestMessage<Vec<u8>> = inbound_request.request_message;
-      let endpoint: Endpoint = request.endpoint;
+      let input: Vec<u8> = inbound_request.input;
+      let endpoint: Endpoint = inbound_request.endpoint;
       let peer_id: PeerId = inbound_request.peer_id;
       let response_channel: ResponseChannel<_> = inbound_request.response_channel;
 
@@ -184,7 +182,7 @@ impl Actor {
           Self::send_response(&mut actor.commander, Ok(()), response_channel).await;
 
           let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
-          let input = handler.value().1.deserialize_request(request.data).unwrap();
+          let input = handler.value().1.deserialize_request(input).unwrap();
           match handler.value().1.invoke(actor, request_context, object, input) {
             Ok(invocation) => {
               invocation.await;
@@ -232,6 +230,7 @@ impl Actor {
     channel: ResponseChannel<DidCommResponse>,
   ) {
     let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
+    // TODO: This could produce an InboundFailure but we ignore it. Should we handle it?
     commander.send_response(response, channel).await;
   }
 
@@ -260,15 +259,14 @@ impl Actor {
     Ok(())
   }
 
-  pub async fn add_peer(&mut self, peer: PeerId, addr: Multiaddr) {
-    // self.commander.add_address(peer, addr).await;
-    todo!()
+  pub async fn add_address(&mut self, peer: PeerId, addr: Multiaddr) {
+    self.commander.add_address(peer, addr).await;
   }
 
   pub async fn send_request<Request: ActorRequest>(
     &mut self,
-    peer: PeerId,
-    command: Request,
+    _peer: PeerId,
+    _command: Request,
   ) -> Result<Request::Response> {
     todo!()
     // self.send_named_request(peer, &*command.request_name(), command).await
@@ -276,9 +274,9 @@ impl Actor {
 
   pub async fn send_named_request<Request: ActorRequest>(
     &mut self,
-    peer: PeerId,
-    name: &str,
-    command: Request,
+    _peer: PeerId,
+    _name: &str,
+    _command: Request,
   ) -> Result<Request::Response> {
     todo!()
     // let request = serde_json::to_vec(&RequestMessage::new(name, command)?).unwrap();
@@ -297,13 +295,10 @@ impl Actor {
     // }
   }
 
-  pub async fn send_named_message<Request: ActorRequest>(
-    &mut self,
-    peer: PeerId,
-    name: &str,
-    command: Request,
-  ) -> Result<()> {
-    let request = serde_json::to_vec(&RequestMessage::new(name, command)?).unwrap();
+  pub async fn send_message<Request: ActorRequest>(&mut self, peer: PeerId, command: Request) -> Result<()> {
+    let name = &command.request_name();
+    let command_vec = serde_json::to_vec(&command).expect("TODO");
+    let request = serde_json::to_vec(&RequestMessage::new(name, command_vec)?).unwrap();
 
     log::debug!("Sending `{}` message", name);
 
