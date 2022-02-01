@@ -83,7 +83,7 @@ jobs:
           fi
 
           if [[ $PREVIOUS_VERSION ]]; then
-            SINCE_ARG="--since-tag $PREVIOUS_VERSION"
+            OUTPUT_ONLY_CURRENT_VERSION=true
           fi
 
           echo IS_DEV_RELEASE=$IS_DEV_RELEASE
@@ -95,8 +95,8 @@ jobs:
           echo PREVIOUS_VERSION=$PREVIOUS_VERSION
           echo PREVIOUS_VERSION=$PREVIOUS_VERSION >> $GITHUB_ENV
           echo "::set-output name=previous-version::$PREVIOUS_VERSION"
-          echo SINCE_ARG=$SINCE_ARG
-          echo SINCE_ARG=$SINCE_ARG >> $GITHUB_ENV
+          echo OUTPUT_ONLY_CURRENT_VERSION=$OUTPUT_ONLY_CURRENT_VERSION
+          echo OUTPUT_ONLY_CURRENT_VERSION=$OUTPUT_ONLY_CURRENT_VERSION >> $GITHUB_ENV
 
       - name: Import GPG key
         if: ${{env.IS_RELEASE}}
@@ -124,8 +124,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-path: RELEASE_CHANGELOG.md
           changelog-config-path: ${{ inputs.changelog-config-path }}
-          future-release: ${{ env.CURRENT_VERSION }} 
-          optional-arg: ${{ env.SINCE_ARG }}
+          future-release: ${{ env.CURRENT_VERSION }}
+          output-only-current-release: ${{ env.OUTPUT_ONLY_CURRENT_VERSION }}
+          previous-release: ${{ env.PREVIOUS_VERSION }}
 
       - name: Create GitHub release
         if: ${{env.IS_RELEASE && inputs.create-github-release}}
