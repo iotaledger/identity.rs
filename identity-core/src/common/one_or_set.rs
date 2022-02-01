@@ -85,22 +85,21 @@ where
     }
   }
 
-  /// Construct a [`OneOrSet<T>`] from a [`OneOrSet<U>`] where `U` can be converted to `T`.
-  ///
-  /// Workaround for lack of specialisation preventing a generic `From` implementation.
-  pub fn from<U>(other: OneOrSet<U>) -> Self
+  /// Apply a map function to convert this into a new `OneOrSet<S>`.
+  pub fn map<S, F>(self, mut f: F) -> OneOrSet<S>
   where
-    U: KeyComparable + Into<T>,
+    S: KeyComparable,
+    F: FnMut(T) -> S,
   {
-    Self(match other.0 {
-      OneOrSetInner::One(item) => OneOrSetInner::One(item.into()),
-      OneOrSetInner::Set(set_u) => {
-        let set_t: OrderedSet<T> = set_u.into_vec().into_iter().map(Into::into).collect();
-        // Key equivalence could differ between U and T.
-        if set_t.len() == 1 {
-          OneOrSetInner::One(set_t.into_vec().pop().expect("OneOrSet::from infallible"))
+    OneOrSet(match self.0 {
+      OneOrSetInner::One(item) => OneOrSetInner::One(f(item)),
+      OneOrSetInner::Set(set_t) => {
+        let set_s: OrderedSet<S> = set_t.into_vec().into_iter().map(f).collect();
+        // Key equivalence could differ between T and S.
+        if set_s.len() == 1 {
+          OneOrSetInner::One(set_s.into_vec().pop().expect("OneOrSet::map infallible"))
         } else {
-          OneOrSetInner::Set(set_t)
+          OneOrSetInner::Set(set_s)
         }
       }
     })

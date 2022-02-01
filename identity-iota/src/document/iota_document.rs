@@ -26,6 +26,7 @@ use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
@@ -273,7 +274,7 @@ impl IotaDocument {
   ///
   /// NOTE: controllers are not currently used for delegating or authenticating update permissions.
   pub fn set_controller(&mut self, controllers: Option<OneOrSet<IotaDID>>) {
-    *self.document.controller_mut() = controllers.map(OneOrSet::from);
+    *self.document.controller_mut() = controllers.map(|set| set.map(CoreDID::from));
   }
 
   /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
