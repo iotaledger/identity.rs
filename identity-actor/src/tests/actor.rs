@@ -26,7 +26,7 @@ async fn test_unknown_request() -> anyhow::Result<()> {
   let request_name = "unknown/request";
 
   let result = sending_actor
-    .send_named_request(
+    .send_named_message(
       peer_id,
       request_name,
       IdentityResolve::new("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),

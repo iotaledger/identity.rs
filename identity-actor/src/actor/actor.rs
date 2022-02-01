@@ -163,6 +163,8 @@ impl Actor {
       let peer_id: PeerId = inbound_request.peer_id;
       let response_channel: ResponseChannel<_> = inbound_request.response_channel;
 
+      log::debug!("request for endpoint {endpoint}");
+
       // If the handler is not found, check if a catch all handler exists and use it.
       // If not, return the original error so the other side gets
       // `endpoint ab/cd not found` rather than `endpoint ab/* not found`
@@ -193,6 +195,8 @@ impl Actor {
           }
         }
         Err(error) => {
+          log::debug!("handler error: {error:?}");
+
           let err_response: StdResult<(), RemoteSendError> = Err(error);
           Self::send_response(&mut actor.commander, err_response, response_channel).await;
 
@@ -296,13 +300,23 @@ impl Actor {
   }
 
   pub async fn send_message<Request: ActorRequest>(&mut self, peer: PeerId, command: Request) -> Result<()> {
-    let name = &command.request_name();
+    self.send_named_message(peer, &command.request_name(), command).await
+  }
+
+  pub async fn send_named_message<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    name: &str,
+    command: Request,
+  ) -> Result<()> {
     let command_vec = serde_json::to_vec(&command).expect("TODO");
     let request = serde_json::to_vec(&RequestMessage::new(name, command_vec)?).unwrap();
 
     log::debug!("Sending `{}` message", name);
 
-    self.commander.send_request(peer, request).await?;
+    let response = self.commander.send_request(peer, request).await?;
+
+    serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).expect("TODO")?;
 
     Ok(())
   }

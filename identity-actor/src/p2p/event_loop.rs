@@ -30,7 +30,7 @@ pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
   event_channel: mpsc::Sender<InboundRequest>,
-  await_response: HashMap<RequestId, oneshot::Sender<Result<(), OutboundFailure>>>,
+  await_response: HashMap<RequestId, oneshot::Sender<Result<DidCommResponse, OutboundFailure>>>,
 }
 
 impl EventLoop {
@@ -101,20 +101,17 @@ impl EventLoop {
             .await
             .expect("event receiver was dropped")
         }
-        RequestResponseMessage::Response {
-          request_id,
-          response: _,
-        } => {
+        RequestResponseMessage::Response { request_id, response } => {
           // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
-          if let Some(result_tx) = self.await_response.remove(&request_id) {
-            let _ = result_tx.send(Ok(()));
+          if let Some(response_channel) = self.await_response.remove(&request_id) {
+            let _ = response_channel.send(Ok(response));
           }
           return;
         }
       },
       SwarmEvent::Behaviour(RequestResponseEvent::OutboundFailure { request_id, error, .. }) => {
-        if let Some(result_tx) = self.await_response.remove(&request_id) {
-          let _ = result_tx.send(Err(error));
+        if let Some(response_channel) = self.await_response.remove(&request_id) {
+          let _ = response_channel.send(Err(error));
         }
         return;
       }

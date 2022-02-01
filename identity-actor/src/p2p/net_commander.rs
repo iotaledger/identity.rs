@@ -23,7 +23,7 @@ impl NetCommander {
     NetCommander { command_sender }
   }
 
-  pub async fn send_request(&mut self, peer: PeerId, request: Vec<u8>) -> Result<(), OutboundFailure> {
+  pub async fn send_request(&mut self, peer: PeerId, request: Vec<u8>) -> Result<DidCommResponse, OutboundFailure> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
       peer,
@@ -90,7 +90,7 @@ pub enum SwarmCommand {
   SendRequest {
     peer: PeerId,
     request: Vec<u8>,
-    response_channel: oneshot::Sender<Result<(), OutboundFailure>>,
+    response_channel: oneshot::Sender<Result<DidCommResponse, OutboundFailure>>,
   },
   SendResponse {
     response: Vec<u8>,
