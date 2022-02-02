@@ -9,7 +9,7 @@ use std::sync::Arc;
 ///
 /// Holds an `AtomicBool` that is set to `false` on drop, signifying
 /// the release of the lease.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DIDLease(Arc<AtomicBool>);
 
 impl DIDLease {

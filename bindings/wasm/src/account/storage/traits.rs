@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use std::sync::atomic::AtomicBool;
 
 use identity::account::ChainState;
 use identity::account::DIDLease;
@@ -23,6 +22,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
+use crate::account::identity::WasmDIDLease;
 use crate::account::identity::WasmIdentityState;
 use crate::account::types::WasmGeneration;
 use crate::account::types::WasmKeyLocation;
@@ -120,9 +120,8 @@ impl Storage for WasmStorage {
   async fn lease_did(&self, did: &IotaDID) -> AccountResult<DIDLease> {
     let promise: Promise = Promise::resolve(&self.lease_did(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    // workaround due to problems deserializing `DIDLease`, even with serde "rc" feature
-    let account_result: AccountResult<bool> = result.into();
-    account_result.map(|value| DIDLease::from(AtomicBool::from(value)))
+    let account_result: AccountResult<WasmDIDLease> = result.into();
+    account_result.map(|value| value.into())
   }
 
   /// Creates a new keypair at the specified `location`
