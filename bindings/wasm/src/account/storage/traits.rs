@@ -7,6 +7,7 @@ use core::fmt::Formatter;
 use identity::account::ChainState;
 use identity::account::DIDLease;
 use identity::account::EncryptionKey;
+use identity::account::Error as AccountError;
 use identity::account::Generation;
 use identity::account::IdentityState;
 use identity::account::KeyLocation;
@@ -17,7 +18,10 @@ use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota::IotaDID;
+use js_sys::Object;
 use js_sys::Promise;
+use js_sys::Reflect;
+use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
@@ -119,12 +123,14 @@ impl Storage for WasmStorage {
   /// Returns an [`IdentityInUse`][crate::Error::IdentityInUse] error if already leased.
   async fn lease_did(&self, did: &IotaDID) -> AccountResult<DIDLease> {
     let promise: Promise = Promise::resolve(&self.lease_did(did.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let account_result: AccountResult<WasmDIDLease> = result.into();
-    account_result.map(|value| value.into())
+    let result: Result<JsValue, JsValue> = JsFuture::from(promise).await;
+    let js_value: JsValue =
+      result.map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))?;
+    let did_lease: WasmDIDLease = downcast_js_value(js_value, "WasmDIDLease")?;
+    Ok(did_lease.into())
   }
 
-  /// Creates a new keypair at the specified `location`
+  /// Creates a new keypair at the specified `location`.
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -229,20 +235,73 @@ impl Storage for WasmStorage {
 const STORAGE: &'static str = r#"
 /** All methods an object must implement to be used as an account storage. */
 interface Storage {
+  /** Sets the account password.*/
   setPassword: (encryptionKey: Uint8Array) => Promise<void>;
+
+  /** Write any unsaved changes to disk.*/
   flushChanges: () => Promise<void>;
+
+  /** 
+   * Attempt to obtain the exclusive permission to modify the given `did`.
+   * The caller is expected to make no more modifications after the lease has been dropped.
+   * Returns an error if already leased.
+  */
   leaseDid: (did: DID) => Promise<DIDLease>;
+
+  /** Creates a new keypair at the specified `location`.*/
   keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;
+
+  /** Inserts a private key at the specified `location`.*/
   keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: string) => Promise<string>;
+
+  /** Returns `true` if a keypair exists at the specified `location`.*/
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+
+  /** Retrieves the public key at the specified `location`.*/
   keyGet: (did: DID, keyLocation: KeyLocation) => Promise<string>;
+
+  /** Deletes the keypair specified by `location`.*/
   keyDel: (did: DID, keyLocation: KeyLocation) => Promise<void>;
+
+  /** Signs `data` with the private key at the specified `location`.*/
   keySign: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
+
+  /** Returns the chain state of the identity specified by `did`.*/
   chainState: (did: DID) => Promise<ChainState>;
+
+  /** Set the chain state of the identity specified by `did`.*/
   setChainState: (did: DID, chainState: ChainState) => Promise<void>;
+
+  /** Returns the state of the identity specified by `did`.*/
   state: (did: DID) => Promise<IdentityState>;
+
+  /** Sets a new state for the identity specified by `did`.*/
   setState: (did: DID, identityState: IdentityState) => Promise<void>;
+
+  /** Removes the keys and any state for the identity specified by `did`.*/
   purge: (did: DID) => Promise<void>;
+
+  /** Returns the last generation that has been published to the tangle for the given `did`.*/
   publishedGeneration: (did: DID) => Promise<Generation>;
+
+  /** Sets the last generation that has been published to the tangle for the given `did`.*/
   setPublishedGeneration: (did: DID, generation: Generation) => Promise<void>;
 }"#;
+
+pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(js_value: JsValue, classname: &str) -> Result<T, AccountError> {
+  let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
+  if constructor_name == classname {
+    let ptr: JsValue = Reflect::get(&js_value, &JsValue::from_str("ptr"))
+      .map_err(|e| AccountError::PromiseError(format!("Invalid value: {:?} - Get ptr error: {:?}", js_value, e)))?;
+    let ptr_u32: u32 = ptr
+      .as_f64()
+      .ok_or_else(|| AccountError::PromiseError(format!("Invalid value: {:?} - Casting error", js_value)))?
+      as u32;
+    unsafe { Ok(T::from_abi(ptr_u32)) }
+  } else {
+    Err(AccountError::PromiseError(format!(
+      "Expected: {} - Found: {}",
+      classname, constructor_name
+    )))
+  }
+}

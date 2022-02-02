@@ -161,7 +161,6 @@ macro_rules! impl_from_js_value {
 }
 
 impl_from_js_value!(
-  crate::account::identity::WasmDIDLease,
   identity::crypto::PublicKey,
   identity::account::Signature,
   Option<identity::account::Generation>,

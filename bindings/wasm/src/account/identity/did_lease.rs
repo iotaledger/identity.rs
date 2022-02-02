@@ -5,7 +5,6 @@ use identity::account::DIDLease;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = DIDLease, inspectable)]
-#[derive(Deserialize)]
 pub struct WasmDIDLease(pub(crate) DIDLease);
 
 #[wasm_bindgen(js_class = DIDLease)]
