@@ -77,12 +77,8 @@ runs:
         # cut everything before the current release changes
         sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)/\1/p" -i ${{ inputs.changelog-path }}
         
-        PREVIOUS_VERSION=${{ inputs.previous-release }}
-        if [[ PREVIOUS_VERSION != '' ]]; then
-          ESCAPED_PREVIOUS_VERSION=${PREVIOUS_VERSION//./\\.}
-          # cut everything after the current release changes based on the previous version entry
-          sed -n -z -E "s/(.*)(## \[$ESCAPED_PREVIOUS_VERSION.*)/\1/p" -i ${{ inputs.changelog-path }}
-        fi
+        # cut everything after the current release changes based on the footer text
+        sed -n -z -E 's/(.*)(\\\* \*This.*)/\1/p' -i ${{ inputs.changelog-path }}
 
     - name: Log ${{ inputs.changelog-path }}
       shell: bash
