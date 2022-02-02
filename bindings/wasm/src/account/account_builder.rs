@@ -6,11 +6,11 @@ use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::{Client as WasmClient, Config};
+use crate::tangle::Client as WasmClient;
+use crate::tangle::Config;
 
 use identity::account::AccountBuilder;
 use identity::account::AccountConfig;
-
 use identity::account::IdentitySetup;
 
 use crate::account::wasm_auto_save::WasmAutoSave;

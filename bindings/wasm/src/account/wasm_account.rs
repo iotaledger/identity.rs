@@ -10,15 +10,19 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
+use identity::account::Account;
 use identity::account::AccountStorage;
-use identity::account::{Account, PublishOptions};
-use identity::account::{AccountBuilder, Storage};
+use identity::account::PublishOptions;
+use identity::account::AccountBuilder;
+use identity::account::Storageo;
 
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
-use identity::iota::{IotaDID, IotaDocument};
+use identity::iota::IotaDID;
+use identity::iota::IotaDocument;
+
 use js_sys::Promise;
 
 use crate::account::wasm_auto_save::WasmAutoSave;

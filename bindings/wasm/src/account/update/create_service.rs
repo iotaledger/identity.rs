@@ -7,7 +7,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::UpdateError::MissingRequiredField;
-use identity::account::{Account, Update};
+use identity::account::Account;
+use identity::account::Upda;
 use identity::core::{Object, Url};
 use identity::did::ServiceEndpoint;
 use wasm_bindgen::__rt::WasmRefCell;
