@@ -71,7 +71,7 @@ runs:
       if: ${{ inputs.output-only-current-release }}
       shell: bash
       run: |
-        ESCAPED_CURRENT_VERSION=${${{ inputs.previous-release }}//./\\.}
+        ESCAPED_CURRENT_VERSION=${${{ inputs.future-release }}//./\\.}
         # cut everything before the current release changes
         sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)/\1/p" -i ${{ inputs.changelog-config-path }}
         
