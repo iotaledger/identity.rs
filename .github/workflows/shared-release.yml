@@ -94,10 +94,12 @@ jobs:
           UNRELATED_TAGS=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
           unset temp_array
           echo UNRELATED_TAGS=$UNRELATED_TAGS
-          FIRST="--exclude-tags "
-          SECOND=$UNRELATED_TAGS
-          EXCLUDE_ARG=$FIRST$SECOND
-
+          if [[ $UNRELATED_TAGS != '' ]]; then
+            FIRST="--exclude-tags "
+            SECOND=$UNRELATED_TAGS
+            EXCLUDE_ARG=$FIRST$SECOND
+          fi
+          
           echo IS_DEV_RELEASE=$IS_DEV_RELEASE
           echo IS_DEV_RELEASE=$IS_DEV_RELEASE >> $GITHUB_ENV
           echo "::set-output name=is-dev-release::$IS_DEV_RELEASE"
