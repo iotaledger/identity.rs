@@ -45,7 +45,6 @@ comm = ["identity-comm"]
 # Enables support for stronghold storage.
 stronghold = ["identity-account/stronghold"]
 
-
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
