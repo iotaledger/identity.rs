@@ -12,7 +12,7 @@ inputs:
     description: "release name (e.g. `v1.2.3-dev.1`)"
     required: true
   previous-release:
-    description: "release name of previous release (e.g. `v1.2.3-dev.1`)"
+    description: "release name of previous release (e.g. `v1.2.3-dev.1`), if set will only generate the changelog up to and including this version"
     required: false
   output-only-current-release:
     description: "cut output to only show changes from future release (this requires previous-release to be set)"
@@ -27,6 +27,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+
+    - name: Determine since arg
+      shell: bash
+      run: |
+        if [[ ${{ inputs.previous-release }} ]]; then
+          SINCE_ARG="--since-tag ${{ inputs.previous-release }}"
+        fi
+        echo SINCE_ARG=$SINCE_ARG
+        echo SINCE_ARG=$SINCE_ARG >> $GITHUB_ENV
+    
     - name: Prepare Repository For Changelog Generator
       shell: bash
       run: |
@@ -49,6 +59,7 @@ runs:
           --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
           --token ${{ inputs.github-token }} 
           --future-release ${{ inputs.future-release }} 
+          ${{ env.SINCE_ARG }}
           ${{ inputs.optional-arg }}
 
     - name: Populate changelog descriptions
@@ -57,12 +68,18 @@ runs:
         .github/workflows/scripts/populate-changelog-descriptions.sh ${{ inputs.changelog-path }}
 
     - name: Cut other releases
-      if: ${{ inputs.previous-release && inputs.output-only-current-release }}
+      if: ${{ inputs.output-only-current-release }}
       shell: bash
       run: |
         ESCAPED_CURRENT_VERSION=${${{ inputs.previous-release }}//./\\.}
-        ESCAPED_PREVIOUS_VERSION=${${{ inputs.previous-release }}//./\\.}
-        sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)(## \[$ESCAPED_PREVIOUS_VERSION.*)/\1/p" -i ${{ inputs.changelog-config-path }}
+        # cut everything before the current release changes
+        sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)/\1/p" -i ${{ inputs.changelog-config-path }}
+        
+        if [[ ${{ inputs.previous-release }} ]]; then
+          ESCAPED_PREVIOUS_VERSION=${${{ inputs.previous-release }}//./\\.}
+          # cut everything after the current release changes based on the previous version entry
+          sed -n -z -E "s/(.*)(## \[$ESCAPED_PREVIOUS_VERSION.*)/\1/p" -i ${{ inputs.changelog-config-path }}
+        fi
 
     - name: Log ${{ inputs.changelog-path }}
       shell: bash
