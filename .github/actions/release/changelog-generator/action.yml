@@ -31,8 +31,9 @@ runs:
     - name: Determine since arg
       shell: bash
       run: |
-        if [[ ${{ inputs.previous-release }} ]]; then
-          SINCE_ARG="--since-tag ${{ inputs.previous-release }}"
+        PREVIOUS_RELEASE=${{ inputs.previous-release }}
+        if [[ $PREVIOUS_RELEASE != '' ]]; then
+          SINCE_ARG="--since-tag $PREVIOUS_RELEASE"
         fi
         echo SINCE_ARG=$SINCE_ARG
         echo SINCE_ARG=$SINCE_ARG >> $GITHUB_ENV
@@ -71,12 +72,14 @@ runs:
       if: ${{ inputs.output-only-current-release }}
       shell: bash
       run: |
-        ESCAPED_CURRENT_VERSION=${${{ inputs.future-release }}//./\\.}
+        CURRENT_VERSION=${{ inputs.future-release }}
+        ESCAPED_CURRENT_VERSION=${CURRENT_VERSION//./\\.}
         # cut everything before the current release changes
         sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)/\1/p" -i ${{ inputs.changelog-path }}
         
-        if [[ ${{ inputs.previous-release }} ]]; then
-          ESCAPED_PREVIOUS_VERSION=${${{ inputs.previous-release }}//./\\.}
+        PREVIOUS_VERSION=${{ inputs.previous-release }}
+        if [[ PREVIOUS_VERSION != '' ]]; then
+          ESCAPED_PREVIOUS_VERSION=${PREVIOUS_VERSION//./\\.}
           # cut everything after the current release changes based on the previous version entry
           sed -n -z -E "s/(.*)(## \[$ESCAPED_PREVIOUS_VERSION.*)/\1/p" -i ${{ inputs.changelog-path }}
         fi
