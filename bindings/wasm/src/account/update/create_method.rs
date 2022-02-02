@@ -6,10 +6,10 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::Update;
-use identity::account::UpdateError::MissingRequiredField;
 use identity::account::Account;
 use identity::account::MethodSecret;
+use identity::account::Update;
+use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
 use identity::did::MethodType;
 use wasm_bindgen::__rt::WasmRefCell;

@@ -11,10 +11,10 @@ use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity::account::Account;
+use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::PublishOptions;
-use identity::account::AccountBuilder;
-use identity::account::Storageo;
+use identity::account::Storage;
 
 use identity::credential::Credential;
 use identity::credential::Presentation;
