@@ -128,16 +128,16 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "AccountBuilderOptions")]
   pub type AccountBuilderOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn clientConfig(this: &AccountBuilderOptions) -> Option<Config>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn autosave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
 }
 

@@ -71,10 +71,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "AttachMethodRelationshipOptions")]
   pub type AttachMethodRelationshipOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &AttachMethodRelationshipOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn relationships(this: &AttachMethodRelationshipOptions) -> JsValue;
 }
 

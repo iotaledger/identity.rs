@@ -66,16 +66,16 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "CreateServiceOptions")]
   pub type CreateServiceOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &CreateServiceOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method, js_name= type)]
+  #[wasm_bindgen(getter, method, js_name= type)]
   pub fn type_(this: &CreateServiceOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn endpoint(this: &CreateServiceOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn properties(this: &CreateServiceOptions) -> JsValue;
 }
 

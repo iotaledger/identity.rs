@@ -323,10 +323,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "PublishOptions")]
   pub type WasmPublishOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn forceIntegrationUpdate(this: &WasmPublishOptions) -> Option<bool>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn signWith(this: &WasmPublishOptions) -> Option<String>;
 }
 

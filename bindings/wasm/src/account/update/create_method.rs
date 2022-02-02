@@ -69,16 +69,16 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "CreateMethodOptions")]
   pub type CreateMethodOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &CreateMethodOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodScope(this: &CreateMethodOptions) -> Option<WasmMethodScope>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodType(this: &CreateMethodOptions) -> Option<WasmMethodType>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodSecret(this: &CreateMethodOptions) -> Option<WasmMethodSecret>;
 }
 

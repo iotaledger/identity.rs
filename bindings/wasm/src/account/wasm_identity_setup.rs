@@ -10,10 +10,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "IdentitySetup")]
   pub type WasmIdentitySetup;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn keyType(this: &WasmIdentitySetup) -> Option<KeyType>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodSecret(this: &WasmIdentitySetup) -> Option<WasmMethodSecret>;
 }
 

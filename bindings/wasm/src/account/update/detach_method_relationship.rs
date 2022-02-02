@@ -66,10 +66,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DetachMethodRelationshipOptions")]
   pub type DetachMethodRelationshipOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &DetachMethodRelationshipOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn relationships(this: &DetachMethodRelationshipOptions) -> JsValue;
 }
 

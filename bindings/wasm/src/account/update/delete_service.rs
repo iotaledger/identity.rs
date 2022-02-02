@@ -43,7 +43,7 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DeleteServiceOptions")]
   pub type DeleteServiceOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &DeleteServiceOptions) -> Option<String>;
 }
 
