@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::account::IdentitySetup;
 use crate::account::wasm_method_secret::WasmMethodSecret;
 use crate::crypto::KeyType;
 use wasm_bindgen::prelude::*;
@@ -28,3 +29,16 @@ export type IdentitySetup = {
     methodSecret?: MethodSecret
 };
 "#;
+
+impl From<WasmIdentitySetup> for IdentitySetup {
+  fn from(wasm_identity_setup: WasmIdentitySetup) -> Self {
+    let mut setup = IdentitySetup::new();
+    if let Some(key_type) = wasm_identity_setup.keyType() {
+      setup = setup.key_type(key_type.into());
+    }
+    if let Some(method_secret) = wasm_identity_setup.methodSecret() {
+      setup = setup.method_secret(method_secret.0);
+    };
+    setup
+  }
+}

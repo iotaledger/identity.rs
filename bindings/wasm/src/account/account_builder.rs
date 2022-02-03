@@ -92,12 +92,7 @@ impl WasmAccountBuilder {
     // Create IdentitySetup
     let mut setup = IdentitySetup::new();
     if let Some(identity_setup) = identity_setup {
-      if let Some(key_type) = identity_setup.keyType() {
-        setup = setup.key_type(key_type.into());
-      }
-      if let Some(method_secret) = identity_setup.methodSecret() {
-        setup = setup.method_secret(method_secret.0);
-      }
+      setup = IdentitySetup::from(identity_setup)
     }
 
     // Call the builder.

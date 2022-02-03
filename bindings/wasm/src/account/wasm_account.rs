@@ -126,16 +126,7 @@ impl WasmAccount {
   pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> Promise {
     let account = self.0.clone();
     if let Some(publish_options) = publish_options {
-      let mut options: PublishOptions = PublishOptions::new();
-
-      if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
-        options = options.force_integration_update(force_integration);
-      }
-
-      if let Some(sign_with) = publish_options.signWith() {
-        let s: String = sign_with;
-        options = options.sign_with(s);
-      };
+      let options = PublishOptions::from(publish_options);
       future_to_promise(async move {
         account
           .as_ref()
@@ -357,3 +348,19 @@ export type PublishOptions = {
      signWith?: string
  }
 "#;
+
+impl From<WasmPublishOptions> for PublishOptions {
+  fn from(publish_options: WasmPublishOptions) -> Self {
+    let mut options: PublishOptions = PublishOptions::new();
+
+    if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
+      options = options.force_integration_update(force_integration);
+    }
+
+    if let Some(sign_with) = publish_options.signWith() {
+      let s: String = sign_with;
+      options = options.sign_with(s);
+    };
+    options
+  }
+}
