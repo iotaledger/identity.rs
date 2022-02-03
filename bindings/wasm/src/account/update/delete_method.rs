@@ -5,7 +5,6 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 
 use crate::account::wasm_account::WasmAccount;
@@ -23,11 +22,13 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
     let promise: Promise = future_to_promise(async move {
-      let update = Update::DeleteMethod { fragment };
       account
         .as_ref()
         .borrow_mut()
-        .process_update(update)
+        .update_identity()
+        .delete_method()
+        .fragment(fragment)
+        .apply()
         .await
         .wasm_result()
         .map(|_| JsValue::undefined())

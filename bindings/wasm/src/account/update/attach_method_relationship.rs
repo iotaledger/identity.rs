@@ -7,13 +7,13 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::Account;
-use identity::account::Update;
+use identity::account::{Account, IdentityUpdater};
+use identity::account::AttachMethodRelationshipBuilder;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 
 use identity::did::MethodRelationship;
-use wasm_bindgen::__rt::WasmRefCell;
+use wasm_bindgen::__rt::{RefMut, WasmRefCell};
 
 use crate::account::wasm_account::WasmAccount;
 use crate::account::wasm_method_relationship::WasmMethodRelationship;
@@ -48,15 +48,16 @@ impl WasmAccount {
       .wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
-      let update = Update::AttachMethodRelationship {
-        fragment,
-        relationships,
-      };
+      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut updater: IdentityUpdater<'_> = account.update_identity();
+      let mut attach_relationship: AttachMethodRelationshipBuilder<'_> = updater.attach_method_relationship().fragment(fragment);
 
-      account
-        .as_ref()
-        .borrow_mut()
-        .process_update(update)
+      for relationship in relationships {
+        attach_relationship = attach_relationship.relationship(relationship);
+      }
+
+      attach_relationship
+        .apply()
         .await
         .wasm_result()
         .map(|_| JsValue::undefined())

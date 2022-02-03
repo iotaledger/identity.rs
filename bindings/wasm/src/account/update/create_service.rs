@@ -7,11 +7,12 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::Account;
-use identity::account::Update;
+use identity::account::IdentityUpdater;
+use identity::account::CreateServiceBuilder;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Object;
 use identity::core::Url;
-use identity::did::ServiceEndpoint;
+use wasm_bindgen::__rt::RefMut;
 use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
@@ -40,18 +41,22 @@ impl WasmAccount {
       .wasm_result()?;
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
     let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
-    let update = Update::CreateService {
-      fragment,
-      type_: service_type,
-      endpoint: ServiceEndpoint::from(endpoint),
-      properties,
-    };
 
     let promise: Promise = future_to_promise(async move {
-      account
-        .as_ref()
-        .borrow_mut()
-        .process_update(update)
+      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut updater: IdentityUpdater<'_> = account.update_identity();
+      let mut create_service: CreateServiceBuilder<'_> = updater
+        .create_service()
+        .fragment(fragment)
+        .type_(service_type)
+        .endpoint(endpoint);
+
+      if let Some(properties) = properties {
+        create_service = create_service.properties(properties)
+      }
+
+      create_service
+        .apply()
         .await
         .wasm_result()
         .map(|_| JsValue::undefined())

@@ -314,7 +314,7 @@ impl Account {
     self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
-  pub async fn process_update(&mut self, update: Update) -> Result<()> {
+  pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
     let did = self.did().to_owned();
     let storage = Arc::clone(&self.storage);
 
