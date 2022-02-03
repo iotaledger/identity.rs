@@ -5,6 +5,7 @@ mod resolved_credential;
 mod resolved_presentation;
 mod validation_options;
 mod validator;
+pub mod errors; 
 
 pub use self::resolved_credential::CredentialResolutionError;
 pub use self::resolved_credential::CredentialValidationUnitError;

@@ -52,4 +52,10 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
+  #[error("{0}")]
+  /// Caused by a single validation unit failing 
+  CredentialValidation(#[from] crate::credential::errors::Error), 
+  /// Caused by a failure to resolve one (or more) credential(s)  
+  #[error("{}",.0.description)]
+  CredentialResolution(# [from] crate::credential::errors::AccumulatedError)
 }
