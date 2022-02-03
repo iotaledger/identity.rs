@@ -98,7 +98,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     if let Some(deactivated_doc) = self.deactivated_subject_documents().next() {
       Err(
         // Todo: Should this method document that it allocates on failure since it is considered part of the
-        // lower-level validation API?
+        // low-level validation API?
         super::errors::ValidationError::DeactivatedSubjectDocument {
           did_url: deactivated_doc.did().to_url(),
         }
