@@ -7,9 +7,9 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::Account;
+use identity::account::CreateMethodBuilder;
 use identity::account::IdentityUpdater;
 use identity::account::MethodSecret;
-use identity::account::CreateMethodBuilder;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
 use identity::did::MethodType;
@@ -31,37 +31,35 @@ impl WasmAccount {
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
 
-    let method_type: MethodType = options
-      .methodType()
-      .map(|m| m.0)
-      .unwrap_or(MethodType::Ed25519VerificationKey2018);
+    let method_type: Option<MethodType> = options.methodType().map(|m| m.0);
 
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
-    let method_scope: MethodScope = options.methodScope().map(|ms| ms.0).unwrap_or_default();
+    let method_scope: Option<MethodScope> = options.methodScope().map(|ms| ms.0);
 
     let method_secret: Option<MethodSecret> = options.methodSecret().map(|ms| ms.0);
 
     let promise: Promise = future_to_promise(async move {
       let mut account: RefMut<Account> = account.as_ref().borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
-      let mut create_method: CreateMethodBuilder<'_> = updater
-        .create_method()
-        .fragment(fragment)
-        .scope(method_scope)
-        .type_(method_type);
+      let mut create_method: CreateMethodBuilder<'_> = updater.create_method().fragment(fragment);
+
+      if let Some(type_) = method_type {
+        create_method = create_method.type_(type_);
+      };
+
+      if let Some(scope) = method_scope {
+        create_method = create_method.scope(scope);
+      };
 
       if let Some(method_secret) = method_secret {
         create_method = create_method.method_secret(method_secret);
-      }
-        create_method
-        .apply()
-        .await
-        .wasm_result()
-        .map(|_| JsValue::undefined())
+      };
+
+      create_method.apply().await.wasm_result().map(|_| JsValue::undefined())
     });
 
     Ok(promise)
