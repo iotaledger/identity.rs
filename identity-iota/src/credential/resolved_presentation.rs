@@ -7,6 +7,7 @@ use identity_credential::presentation::Presentation;
 
 use super::ResolvedCredential;
 use crate::document::ResolvedIotaDocument;
+use crate::Result;
 
 /// A verifiable presentation whose associated DID documents have been resolved from the Tangle.
 pub struct ResolvedPresentation<T = Object, U = Object> {
@@ -18,12 +19,39 @@ pub struct ResolvedPresentation<T = Object, U = Object> {
 impl<T, U> ResolvedPresentation<T, U> {
   delegate::delegate! {
       to self.presentation {
-          /// An iterator over the credentials that have the `nonTransferable` property set, but
-          /// the credential subject id does not correspond to URL of the presentation's holder
-          pub fn non_transferable_violations(&self) -> impl Iterator<Item = &Credential<U>> + '_ ;
+        /// An iterator over the credentials (with their corresponding position in the presentation) that have the
+  /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
+  /// holder
+          pub fn non_transferable_violations(&self) -> impl Iterator<Item = (usize, &Credential<U>)> + '_ ;
 
-          /// Validates the semantic structure of the `Presentation`.
-          pub fn check_structure(&self) -> Result<(), identity_credential::Error>;
       }
+  }
+
+  /// Validates the semantic structure of the `Presentation`.
+  pub fn check_structure(&self) -> Result<()> {
+    self
+      .presentation
+      .check_structure()
+      .map_err(super::errors::ValidationError::PresentationStructure)
+      .map_err(Into::into)
+  }
+
+  /// Validates that the nonTransferable property is met. 
+  /// 
+  /// # Errors 
+  /// Returns at the first credential requiring a nonTransferable property that is not met. 
+  /// 
+  /// If one needs to find *all* the nonTransferable violations of this presentation, then see [Self::non_transferable_violations] . 
+  /// 
+  /// # Terminology 
+  /// 
+  /// This is a *validation unit* 
+  pub fn check_non_transferable(&self) -> Result<()> {
+    if let Some((position, _)) = self.non_transferable_violations().next() {
+      let err = super::errors::ValidationError::NonTransferableViolation {credential_position: position}; 
+      Err(err.into())
+    } else {
+      Ok(())
+    }
   }
 }

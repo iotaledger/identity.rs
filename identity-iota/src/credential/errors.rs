@@ -39,7 +39,7 @@ pub enum ValidationError {
   CredentialStructure { source: identity_credential::Error },
   /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not spec compliant
   #[error("presentation validation failed: the presentation's structure is not spec compliant")]
-  PresentationStructure { source: identity_credential::Error },
+  PresentationStructure(#[source] identity_credential::Error),
   /// Indicates that the issuer's DID document could not be resolved,
   #[error("credential validation failed: The issuer's DID Document could not be resolved")]
   IssuerDocumentResolution {
@@ -58,6 +58,9 @@ pub enum ValidationError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: would it be better to use a specific type
                                                                  * here? */
   },
+  /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials
+  #[error("presentation validation failed: The nonTransferable property of the credential at position {credential_position} is not met")]
+  NonTransferableViolation { credential_position: usize },
 }
 
 // Todo: Should the DocumentResolution variants in Error be moved to their own enum?
