@@ -9,16 +9,17 @@ The examples are written in Typescript and can be run independently with Node.js
 
 ### Node.js
 
-In order to run the examples in Node.js make sure to build the bindings:
-
-```bash
-npm run build
-```
-
-And install the dependencies:
+In order to run the examples in Node.js make sure to install the dependencies:
 
 ```bash
 npm install
+```
+
+
+And build the bindings:
+
+```bash
+npm run build
 ```
 
 Then run the example using:

@@ -64,21 +64,20 @@ impl WasmAccountBuilder {
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
-  pub fn load_identity(&mut self, _did: WasmDID) -> Result<PromiseAccount> {
-    todo!()
-    // let builder = self.0.clone();
-    // let promise: Promise = future_to_promise(async move {
-    //
-    //   builder
-    //     .as_ref()
-    //     .borrow_mut()
-    //     .load_identity(did.0)
-    //     .await
-    //     .map(WasmAccount::from)
-    //     .map(Into::into)
-    //     .wasm_result()
-    // });
-    // Ok(promise.unchecked_into::<PromiseAccount>())
+  pub fn load_identity(&mut self, did: WasmDID) -> Result<PromiseAccount> {
+    let builder = self.0.clone();
+    let promise: Promise = future_to_promise(async move {
+
+      builder
+        .as_ref()
+        .borrow_mut()
+        .load_identity(did.0)
+        .await
+        .map(WasmAccount::from)
+        .map(Into::into)
+        .wasm_result()
+    });
+    Ok(promise.unchecked_into::<PromiseAccount>())
   }
 
   /// Creates a new identity based on the builder configuration and returns

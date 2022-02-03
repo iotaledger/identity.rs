@@ -96,7 +96,6 @@ impl WasmAccount {
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
-    //ToDo: test once `load_identity(..)` is implemented.
 
     // Get IotaDID and storage from the account.
     let account: Rc<WasmRefCell<Account>> = self.0;

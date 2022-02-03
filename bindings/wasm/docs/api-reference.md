@@ -135,8 +135,8 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
 
 <a name="Account+deleteMethod"></a>
 
@@ -313,6 +313,17 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
+
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -326,17 +337,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -354,7 +354,7 @@ the configuration of previously built accounts.
 
 * [AccountBuilder](#AccountBuilder)
     * [new AccountBuilder(options)](#new_AccountBuilder_new)
-    * [.loadIdentity(_did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+    * [.loadIdentity(did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
     * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
 
 <a name="new_AccountBuilder_new"></a>
@@ -369,7 +369,7 @@ Creates a new `AccountBuilder`.
 
 <a name="AccountBuilder+loadIdentity"></a>
 
-### accountBuilder.loadIdentity(_did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+### accountBuilder.loadIdentity(did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
 Loads an existing identity with the specified `did` using the current builder configuration.
 The identity must exist in the configured `Storage`.
 
@@ -377,7 +377,7 @@ The identity must exist in the configured `Storage`.
 
 | Param | Type |
 | --- | --- |
-| _did | [<code>DID</code>](#DID) | 
+| did | [<code>DID</code>](#DID) | 
 
 <a name="AccountBuilder+createIdentity"></a>
 
