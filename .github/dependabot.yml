@@ -1,0 +1,68 @@
+version: 2
+updates:
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for npm
+  - package-ecosystem: "npm"
+    directory: "/bindings/wasm"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/bindings/wasm"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-account"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-comm"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-core"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-credential"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-did"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-diff"
+    schedule:
+      interval: "daily"
+
+  # Maintain dependencies for Cargo
+  - package-ecosystem: "cargo"
+    directory: "/identity-iota"
+    schedule:
+      interval: "daily"
