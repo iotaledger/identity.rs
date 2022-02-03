@@ -3,17 +3,14 @@
 
 use std::collections::BTreeMap;
 
-use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
 use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
-use crate::did::IotaDIDUrl;
 use crate::document::ResolvedIotaDocument;
 use crate::tangle::TangleRef;
-use crate::Error;
 use crate::Result;
 use delegate::delegate;
 
@@ -96,7 +93,7 @@ impl<T: Serialize> ResolvedCredential<T> {
   ///  Returns an error on the first deactivated subject document encountered.
   ///
   /// # Terminology
-  /// This is a *validation unit*
+  /// This is a *validation unit*.
   pub fn try_only_active_subject_documents(&self) -> Result<()> {
     if let Some(deactivated_doc) = self.deactivated_subject_documents().next() {
       Err(
@@ -110,6 +107,16 @@ impl<T: Serialize> ResolvedCredential<T> {
     } else {
       Ok(())
     }
+  }
+
+  /// Validates the semantic structure of the `Credential`.
+  /// 
+  /// # Terminology 
+  /// This is a *validation unit* 
+  pub fn check_structure(&self) -> Result<()> {
+    self.credential.check_structure()
+    .map_err(super::errors::ValidationError::CredentialStructure)
+    .map_err(Into::into)
   }
 }
 

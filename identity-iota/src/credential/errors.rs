@@ -36,7 +36,7 @@ pub enum ValidationError {
   },
   /// Indicates that the structure of the [identity_credential::credential::Credential] is not spec compliant
   #[error("credential validation failed: the credential's structure is not spec compliant")]
-  CredentialStructure { source: identity_credential::Error },
+  CredentialStructure(#[source] identity_credential::Error),
   /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not spec compliant
   #[error("presentation validation failed: the presentation's structure is not spec compliant")]
   PresentationStructure(#[source] identity_credential::Error),

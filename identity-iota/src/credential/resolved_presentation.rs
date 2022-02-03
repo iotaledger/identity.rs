@@ -28,6 +28,9 @@ impl<T, U> ResolvedPresentation<T, U> {
   }
 
   /// Validates the semantic structure of the `Presentation`.
+  /// 
+  /// # Terminology 
+  /// This is a *validation unit*. 
   pub fn check_structure(&self) -> Result<()> {
     self
       .presentation
