@@ -1,32 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::ControlFlow;
-
-use identity_core::common::OneOrMany;
-use identity_credential::credential::Credential;
-use identity_credential::presentation::Presentation;
-use identity_did::verifiable::VerifierOptions;
-use serde::Serialize;
-
-use crate::credential::CredentialResolutionError;
-use crate::credential::CredentialValidationOptions;
-use crate::credential::CredentialValidationUnitError;
-use crate::credential::PresentationResolutionError;
-use crate::credential::PresentationValidationOptions;
-use crate::credential::ResolvedCredential;
-use crate::credential::ResolvedPresentation;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
-use crate::tangle::traits::credential_resolution_internals::InitialisationEvent;
-use crate::tangle::traits::credential_resolution_internals::ValidationUnitErrors;
-use crate::tangle::MessageId;
 
-use self::credential_resolution_internals::resolve_credential_episodic;
-use self::credential_resolution_internals::ResolvedIssuerEvent;
-use self::credential_resolution_internals::ResolvedSubjectEvent;
-use identity_did::did::DID;
+use crate::tangle::MessageId;
 
 pub trait TangleRef {
   fn did(&self) -> &IotaDID;
@@ -46,6 +25,7 @@ pub trait TangleResolve {
   /// Resolves a DID on the Tangle
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
 
+  /*
   /// Resolves and validates a `Credential` in accordance with the given `validation_options`.
   async fn resolve_credential<T: Serialize>(
     &self,
@@ -138,7 +118,7 @@ pub trait TangleResolve {
     .await
   }
 
-  /// Resolves the `Credential` and verifies its signature using the issuers DID Document.  
+  /// Resolves the `Credential` and verifies its signature using the issuers DID Document.
   async fn resolve_credential_unvalidated<T: Serialize>(
     &self,
     credential: Credential<T>,
@@ -211,8 +191,10 @@ pub trait TangleResolve {
   {
     todo!()
   }
+  */
 }
 
+/*
 mod credential_resolution_internals {
   use identity_core::common::OneOrMany;
   use serde::Serialize;
@@ -341,3 +323,4 @@ mod credential_resolution_internals {
     resolver.resolve(&did).await
   }
 }
+*/
