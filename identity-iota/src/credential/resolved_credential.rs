@@ -110,13 +110,15 @@ impl<T: Serialize> ResolvedCredential<T> {
   }
 
   /// Validates the semantic structure of the `Credential`.
-  /// 
-  /// # Terminology 
-  /// This is a *validation unit* 
+  ///
+  /// # Terminology
+  /// This is a *validation unit*
   pub fn check_structure(&self) -> Result<()> {
-    self.credential.check_structure()
-    .map_err(super::errors::ValidationError::CredentialStructure)
-    .map_err(Into::into)
+    self
+      .credential
+      .check_structure()
+      .map_err(super::errors::ValidationError::CredentialStructure)
+      .map_err(Into::into)
   }
 }
 

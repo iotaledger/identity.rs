@@ -28,9 +28,9 @@ impl<T, U> ResolvedPresentation<T, U> {
   }
 
   /// Validates the semantic structure of the `Presentation`.
-  /// 
-  /// # Terminology 
-  /// This is a *validation unit*. 
+  ///
+  /// # Terminology
+  /// This is a *validation unit*.
   pub fn check_structure(&self) -> Result<()> {
     self
       .presentation
@@ -39,19 +39,22 @@ impl<T, U> ResolvedPresentation<T, U> {
       .map_err(Into::into)
   }
 
-  /// Validates that the nonTransferable property is met. 
-  /// 
-  /// # Errors 
-  /// Returns at the first credential requiring a nonTransferable property that is not met. 
-  /// 
-  /// If one needs to find *all* the nonTransferable violations of this presentation, then see [Self::non_transferable_violations] . 
-  /// 
-  /// # Terminology 
-  /// 
-  /// This is a *validation unit* 
+  /// Validates that the nonTransferable property is met.
+  ///
+  /// # Errors
+  /// Returns at the first credential requiring a nonTransferable property that is not met.
+  ///
+  /// If one needs to find *all* the nonTransferable violations of this presentation, then see
+  /// [Self::non_transferable_violations] .
+  ///
+  /// # Terminology
+  ///
+  /// This is a *validation unit*
   pub fn check_non_transferable(&self) -> Result<()> {
     if let Some((position, _)) = self.non_transferable_violations().next() {
-      let err = super::errors::ValidationError::NonTransferableViolation {credential_position: position}; 
+      let err = super::errors::ValidationError::NonTransferableViolation {
+        credential_position: position,
+      };
       Err(err.into())
     } else {
       Ok(())

@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::fmt::Display;
 
 use identity_core::common::OneOrMany;
+use identity_core::common::Url;
 
 use crate::did::IotaDIDUrl;
 
@@ -53,8 +54,8 @@ pub enum ValidationError {
   },
   #[error("credential validation failed: Could not resolve a subject's DID Document")]
   SubjectDocumentResolution {
-    did_url: IotaDIDUrl, /* Todo: Should did_url be included in the error message? Would it be better to include
-                          * additional information in a String? */
+    did_url: Url, /* Todo: Should did_url be included in the error message? Would it be better to include
+                   * additional information in a String? */
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: would it be better to use a specific type
                                                                  * here? */
   },
@@ -69,14 +70,14 @@ pub enum ValidationError {
 #[derive(Debug)]
 /// An error caused by a failure to resolve a Credential.  
 pub struct CredentialResolutionError {
-  pub encountered_errors: OneOrMany<ValidationError>,
+  pub validation_errors: OneOrMany<ValidationError>,
 }
 
 impl Display for CredentialResolutionError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     // intersperse might become available in the standard library soon: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.intersperse
     let detailed_information: String = itertools::intersperse(
-      self.encountered_errors.iter().map(|err| err.to_string()),
+      self.validation_errors.iter().map(|err| err.to_string()),
       ", ".to_string(),
     )
     .collect();
