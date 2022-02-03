@@ -129,12 +129,8 @@ impl Account {
   // Getters & Setters
   // ===========================================================================
 
-  /// Returns a reference to the [Storage] implementation.
-  pub fn storage(&self) -> &dyn Storage {
-    self.storage.as_ref()
-  }
-
-  pub fn storage_arc(&self) -> Arc<dyn Storage> {
+  /// Returns a reference counter to the [Storage] implementation.
+  pub fn storage(&self) -> Arc<dyn Storage> {
     Arc::clone(&self.storage)
   }
 
@@ -229,7 +225,7 @@ impl Account {
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().purge(self.did()).await?;
+    self.storage().as_ref().purge(self.did()).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -252,7 +248,7 @@ impl Account {
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
     state
-      .sign_data(self.did(), self.storage(), &location, data, options)
+      .sign_data(self.did(), self.storage().as_ref(), &location, data, options)
       .await?;
 
     Ok(())
@@ -311,7 +307,7 @@ impl Account {
     // TODO: An account always holds a valid identity,
     // so if None is returned, that's a broken invariant.
     // This should be mapped to a fatal error in the future.
-    self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
+    self.storage().as_ref().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
   pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
@@ -358,7 +354,7 @@ impl Account {
     signing_state
       .sign_data(
         self.did(),
-        self.storage(),
+        self.storage().as_ref(),
         &signing_key_location,
         document,
         SignatureOptions::default(),
@@ -500,7 +496,7 @@ impl Account {
     old_state
       .sign_data(
         self.did(),
-        self.storage(),
+        self.storage().as_ref(),
         &signing_key_location,
         &mut diff,
         SignatureOptions::default(),
@@ -531,10 +527,10 @@ impl Account {
   async fn save(&self, force: bool) -> Result<()> {
     match self.config.autosave {
       AutoSave::Every => {
-        self.storage().flush_changes().await?;
+        self.storage().as_ref().flush_changes().await?;
       }
       AutoSave::Batch(step) if force || (step != 0 && self.actions() % step == 0) => {
-        self.storage().flush_changes().await?;
+        self.storage().as_ref().flush_changes().await?;
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
     }

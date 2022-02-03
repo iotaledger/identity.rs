@@ -100,7 +100,7 @@ impl WasmAccount {
     // Get IotaDID and storage from the account.
     let account: Rc<WasmRefCell<Account>> = self.0;
     let did: IotaDID = account.as_ref().borrow().did().to_owned();
-    let storage: Arc<dyn Storage> = account.as_ref().borrow().storage_arc();
+    let storage: Arc<dyn Storage> = account.as_ref().borrow().storage();
 
     // Drop account should release the DIDLease because we cannot take ownership of the Rc.
     // Note that this will still fail if anyone else has a reference to the Account.
