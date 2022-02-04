@@ -39,7 +39,7 @@ impl WasmAccount {
       .collect();
 
     if relationships.is_empty() {
-      return Err(wasm_error(MissingRequiredField("relationships is missing or empty")));
+      return Err(wasm_error(MissingRequiredField("relationships is empty")));
     }
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
     let fragment: String = options
@@ -81,14 +81,17 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_ATTACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
+/**
+ * Options for attaching one or more verification relationships to a method on an identity.
+ */
 export type AttachMethodRelationshipOptions = {
     /**
-     * Fragment of Verification Method.
+     * The identifier of the method in the document.
      */
     fragment: string,
 
     /**
-     * Set one or more method relationships.
+     * The relationships to add;
      */
     relationships: MethodRelationship | MethodRelationship[]
 };

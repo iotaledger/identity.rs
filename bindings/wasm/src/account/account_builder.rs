@@ -137,6 +137,9 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_ACCOUNT_BUILDER_OPTIONS: &'static str = r#"
+/**
+ * Options for creating a new account builder.
+ */
 export type AccountBuilderOptions = {
 
     /**

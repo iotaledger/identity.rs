@@ -49,7 +49,13 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
+/**
+ * Optoins for deleting a method on an identity.
+ */
 export type DeleteMethodOptions = {
-  fragment: string,
+    /**
+     * The identifier of the method in the document, required.
+     */
+    fragment: string,
 };
 "#;

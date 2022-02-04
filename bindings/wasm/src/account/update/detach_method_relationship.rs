@@ -78,8 +78,18 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_DETACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
+/**
+ * Options for detaching one or more verification relationships from a method on an identity.
+ */
 export type DetachMethodRelationshipOptions = {
-  fragment: string,
-  relationships: MethodRelationship | MethodRelationship[]
+    /**
+     * The identifier of the method in the document.
+     */
+    fragment: string,
+
+    /**
+     * The relationships to remove.
+     */
+    relationships: MethodRelationship | MethodRelationship[]
 };
 "#;

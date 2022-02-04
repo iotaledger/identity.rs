@@ -86,10 +86,28 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_CREATE_SERVICE_OPTIONS: &'static str = r#"
+/**
+ * Options for creating a new service on an identity.
+ */
 export type CreateServiceOptions = {
-  fragment: string,
-  type: string,
-  endpoint: string,
-  properties?: any,
-};
+    /**
+     * The identifier of the service in the document.
+     */
+    fragment: string,
+
+    /**
+     * The type of the service.
+     */
+    type: string,
+
+    /**
+     * The `ServiceEndpoint` of the service.
+     */
+    endpoint: string,
+
+    /**
+     * Additional properties of the service.
+     */
+    properties?: any,
+  };
 "#;

@@ -25,7 +25,14 @@ const TS_IDENTITY_SETUP: &'static str = r#"
  * Overrides the default creation of private and public keys.
  */
 export type IdentitySetup = {
+    /**
+     * Key type of the initial verification method.
+     */
     keyType?: KeyType,
+
+    /**
+     * {@link MethodSecret} used for the identity creation.
+     */
     methodSecret?: MethodSecret
 };
 "#;

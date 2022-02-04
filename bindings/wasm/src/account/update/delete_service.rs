@@ -50,7 +50,13 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_DELETE_SERVICE_OPTIONS: &'static str = r#"
+/**
+ * Options for deleting a service on an identity.
+ */
 export type DeleteServiceOptions = {
-  fragment: string,
+    /**
+     * The identifier of the service in the document.
+     */
+    fragment: string,
 };
 "#;

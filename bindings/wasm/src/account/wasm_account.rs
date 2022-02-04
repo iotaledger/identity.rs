@@ -59,12 +59,6 @@ impl WasmAccount {
     WasmAutoSave(self.0.as_ref().borrow().autosave())
   }
 
-  /// Returns the total number of actions executed by this instance.
-  #[wasm_bindgen]
-  pub fn actions(&self) -> usize {
-    self.0.as_ref().borrow().actions()
-  }
-
   /// Returns a copy of the document managed by the `Account`.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
@@ -123,28 +117,19 @@ impl WasmAccount {
   #[wasm_bindgen]
   pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> Promise {
     let account = self.0.clone();
+    let mut options: PublishOptions = PublishOptions::default();
     if let Some(publish_options) = publish_options {
-      let options = PublishOptions::from(publish_options);
-      future_to_promise(async move {
-        account
-          .as_ref()
-          .borrow_mut()
-          .publish_with_options(options)
-          .await
-          .map(|_| JsValue::undefined())
-          .wasm_result()
-      })
-    } else {
-      future_to_promise(async move {
-        account
-          .as_ref()
-          .borrow_mut()
-          .publish()
-          .await
-          .map(|_| JsValue::undefined())
-          .wasm_result()
-      })
-    }
+      options = PublishOptions::from(publish_options);
+    };
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .publish_with_options(options)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
   }
 
   /// Signs a {@link Credential} with the key specified by `fragment`.
@@ -219,7 +204,7 @@ impl WasmAccount {
 
   /// Overwrites the {@link Document} this account manages, **without doing any validation**.
   ///
-  /// # WARNING
+  /// ### WARNING
   ///
   /// This method is dangerous and can easily corrupt the internal state,
   /// potentially making the identity unusable. Only call this if you fully
@@ -326,8 +311,8 @@ impl From<WasmPublishOptions> for PublishOptions {
     }
 
     if let Some(sign_with) = publish_options.signWith() {
-      let s: String = sign_with;
-      options = options.sign_with(s);
+      let sign_with: String = sign_with;
+      options = options.sign_with(sign_with);
     };
     options
   }

@@ -86,10 +86,28 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_CREATE_METHOD_OPTIONS: &'static str = r#"
+/**
+ * Options for creating a new method on an identity.
+ */
 export type CreateMethodOptions = {
-  fragment: string,
-  methodScope?: MethodScope,
-  methodType?: MethodType,
-  methodSecret?: MethodSecret
-};
+    /**
+     * The identifier of the method in the document, required.
+     */
+    fragment: string,
+
+    /**
+     * The scope of the method.
+     */
+    methodScope?: MethodScope,
+
+    /**
+     * The type of the method, defaults to Ed25519VerificationKey2018.
+     */
+    methodType?: MethodType,
+
+    /**
+     * The secret key to use for the method, optional. Will be generated when omitted.
+     */
+    methodSecret?: MethodSecret
+  };
 "#;
