@@ -62,6 +62,9 @@ pub enum ValidationError {
   /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials
   #[error("presentation validation failed: The nonTransferable property of the credential at position {credential_position} is not met")]
   NonTransferableViolation { credential_position: usize },
+  /// Indicates that the presentation does not have a holder
+  #[error("presentation validation failed: the presentation is required to have a non-empty holder property")]
+  MissingPresentationHolder,
 }
 
 // Todo: Should the DocumentResolution variants in Error be moved to their own enum?
@@ -120,6 +123,8 @@ impl Display for PresentationResolutionError {
     )
   }
 }
+
+impl std::error::Error for PresentationResolutionError {}
 
 // Todo: should we insert a PhantomData field declared as pub (crate) in CredentialResolutionError and/or
 // PresentationResolutionError for future proofing?
