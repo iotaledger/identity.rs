@@ -6,9 +6,10 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use identity::account::{Account, IdentityUpdater};
 use identity::account::DetachMethodRelationshipBuilder;
 use identity::account::UpdateError::MissingRequiredField;
+use identity::account::Account;
+use identity::account::IdentityUpdater;
 use identity::core::OneOrMany;
 
 use identity::did::MethodRelationship;
@@ -46,9 +47,8 @@ impl WasmAccount {
     let promise: Promise = future_to_promise(async move {
       let mut account: RefMut<Account> = account.as_ref().borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
-      let mut detach_relationship: DetachMethodRelationshipBuilder<'_> = updater
-        .detach_method_relationship()
-        .fragment(fragment);
+      let mut detach_relationship: DetachMethodRelationshipBuilder<'_> =
+        updater.detach_method_relationship().fragment(fragment);
 
       for relationship in relationships {
         detach_relationship = detach_relationship.relationship(relationship);

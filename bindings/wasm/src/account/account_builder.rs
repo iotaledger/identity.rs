@@ -67,7 +67,6 @@ impl WasmAccountBuilder {
   pub fn load_identity(&mut self, did: WasmDID) -> Result<PromiseAccount> {
     let builder = self.0.clone();
     let promise: Promise = future_to_promise(async move {
-
       builder
         .as_ref()
         .borrow_mut()

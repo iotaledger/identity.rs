@@ -307,7 +307,12 @@ impl Account {
     // TODO: An account always holds a valid identity,
     // so if None is returned, that's a broken invariant.
     // This should be mapped to a fatal error in the future.
-    self.storage().as_ref().state(self.did()).await?.ok_or(Error::IdentityNotFound)
+    self
+      .storage()
+      .as_ref()
+      .state(self.did())
+      .await?
+      .ok_or(Error::IdentityNotFound)
   }
 
   pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {

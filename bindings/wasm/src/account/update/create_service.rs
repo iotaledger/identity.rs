@@ -7,8 +7,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::Account;
-use identity::account::IdentityUpdater;
 use identity::account::CreateServiceBuilder;
+use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Object;
 use identity::core::Url;
@@ -55,11 +55,7 @@ impl WasmAccount {
         create_service = create_service.properties(properties)
       }
 
-      create_service
-        .apply()
-        .await
-        .wasm_result()
-        .map(|_| JsValue::undefined())
+      create_service.apply().await.wasm_result().map(|_| JsValue::undefined())
     });
 
     Ok(promise)
