@@ -4,6 +4,8 @@
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
+use crate::ThreadId;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
@@ -32,6 +34,8 @@ pub enum Error {
   HookInvocationError(String),
   #[error("failed to deserialize: {0}")]
   DeserializationFailure(String),
+  #[error("thread with id {0} not found")]
+  ThreadNotFound(ThreadId),
 }
 
 // impl From<ListenErr> for Error {

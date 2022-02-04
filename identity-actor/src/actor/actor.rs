@@ -11,15 +11,18 @@ use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::ActorRequest;
 use crate::AsyncFn;
+use crate::DidCommPlaintextMessage;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
 use crate::RequestMessage;
 use crate::Result;
+use crate::ThreadId;
 
 use dashmap::DashMap;
-use futures::channel::mpsc::{self};
+use futures::channel::mpsc;
+use futures::channel::oneshot;
 use futures::Future;
 use futures::StreamExt;
 use libp2p::Multiaddr;
@@ -71,6 +74,8 @@ pub struct Actor {
   handlers: Arc<HandlerMap>,
   objects: Arc<ObjectMap>,
   listener_handle: Arc<Mutex<Option<JoinHandle<Result<()>>>>>,
+  threads_receiver: Arc<DashMap<ThreadId, oneshot::Receiver<DidCommPlaintextMessage>>>,
+  threads_sender: Arc<DashMap<ThreadId, oneshot::Sender<DidCommPlaintextMessage>>>,
 }
 
 impl Actor {
@@ -89,6 +94,8 @@ impl Actor {
       handlers: Arc::clone(&handlers),
       objects: Arc::clone(&objects),
       listener_handle: Arc::new(Mutex::new(None)),
+      threads_receiver: Arc::new(DashMap::new()),
+      threads_sender: Arc::new(DashMap::new()),
     };
 
     // TODO: Always start listener, change `listener_handle` in actor accordingly.
@@ -148,7 +155,22 @@ impl Actor {
     task::spawn(async move {
       loop {
         if let Some(request) = receiver.next().await {
-          self.clone().spawn_handler(request);
+          if self.handlers.contains_key(&request.endpoint) {
+            self.clone().spawn_handler(request);
+          } else {
+            // store in thread channel
+            let plaintext_msg: DidCommPlaintextMessage = serde_json::from_slice(&request.input).expect("TODO");
+            let thread_id = plaintext_msg.thread_id();
+
+            match self.threads_sender.remove(thread_id) {
+              Some(sender) => {
+                sender.1.send(plaintext_msg).expect("TODO");
+              }
+              None => {
+                log::error!("TODO: no handler or thread found for the received message");
+              }
+            }
+          }
         } else {
           return Ok(());
         }
@@ -165,6 +187,10 @@ impl Actor {
 
       log::debug!("request for endpoint {endpoint}");
 
+      let plaintext_msg: DidCommPlaintextMessage = serde_json::from_slice(&input).expect("TODO");
+      // TODO: Fix this, obviously.
+      let input: Vec<u8> = serde_json::to_vec(&plaintext_msg.body).expect("TODO");
+
       // If the handler is not found, check if a catch all handler exists and use it.
       // If not, return the original error so the other side gets
       // `endpoint ab/cd not found` rather than `endpoint ab/* not found`
@@ -176,6 +202,7 @@ impl Actor {
         },
       };
 
+      // TODO: Don't clone actor again, extract copy of NetCommander instead.
       let mut actor = self.clone();
 
       match handler_object_tuple {
@@ -184,6 +211,7 @@ impl Actor {
           Self::send_response(&mut actor.commander, Ok(()), response_channel).await;
 
           let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
+
           let input = handler.value().1.deserialize_request(input).unwrap();
           match handler.value().1.invoke(actor, request_context, object, input) {
             Ok(invocation) => {
@@ -234,7 +262,7 @@ impl Actor {
     channel: ResponseChannel<DidCommResponse>,
   ) {
     let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
-    // TODO: This could produce an InboundFailure but we ignore it. Should we handle it?
+    // TODO: This could produce an InboundFailure the function currently does not return. Should we change that?
     commander.send_response(response, channel).await;
   }
 
@@ -299,26 +327,61 @@ impl Actor {
     // }
   }
 
-  pub async fn send_message<Request: ActorRequest>(&mut self, peer: PeerId, command: Request) -> Result<()> {
-    self.send_named_message(peer, &command.request_name(), command).await
+  pub async fn send_message<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    thread_id: &ThreadId,
+    command: Request,
+  ) -> Result<()> {
+    self
+      .send_named_message(peer, &command.request_name(), thread_id, command)
+      .await
   }
 
   pub async fn send_named_message<Request: ActorRequest>(
     &mut self,
     peer: PeerId,
     name: &str,
-    command: Request,
+    thread_id: &ThreadId,
+    message: Request,
   ) -> Result<()> {
-    let command_vec = serde_json::to_vec(&command).expect("TODO");
-    let request = serde_json::to_vec(&RequestMessage::new(name, command_vec)?).unwrap();
+    self.create_thread_channels(thread_id);
+
+    let message: serde_json::Value = serde_json::to_value(&message).expect("TODO");
+    let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
+
+    let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
+    let message = serde_json::to_vec(&RequestMessage::new(name, dcpm_vec)?).unwrap();
 
     log::debug!("Sending `{}` message", name);
 
-    let response = self.commander.send_request(peer, request).await?;
+    let response = self.commander.send_request(peer, message).await?;
 
     serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).expect("TODO")?;
 
     Ok(())
+  }
+
+  pub async fn await_message(&mut self, thread_id: &ThreadId) -> Result<DidCommPlaintextMessage> {
+    if let Some(receiver) = self.threads_receiver.remove(thread_id) {
+      let msg = receiver.1.await.expect("TODO: (?) channel closed");
+      Ok(msg)
+    } else {
+      log::warn!("attempted to wait for a message on thread {thread_id:?}, which does not exist");
+      Err(crate::Error::ThreadNotFound(thread_id.to_owned()))
+    }
+  }
+
+  // Creates the channels used to await a message on a thread.
+  fn create_thread_channels(&mut self, thread_id: &ThreadId) {
+    let (sender, receiver) = oneshot::channel();
+
+    // The logic is that for every received message on a thread,
+    // there must be a preceding send_message on that same thread.
+    // Note that on the receiving actor, the very first message of a protocol
+    // is not awaited through await_message, so it does not need to follow that logic.
+    self.threads_sender.insert(thread_id.to_owned(), sender);
+    self.threads_receiver.insert(thread_id.to_owned(), receiver);
   }
 
   /// Call the hook identified by the given `endpoint`.

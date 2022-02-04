@@ -12,6 +12,7 @@ use crate::ActorRequest;
 use crate::Error;
 use crate::IdentityResolve;
 use crate::RequestContext;
+use crate::ThreadId;
 
 use super::default_listening_actor;
 use super::default_sending_actor;
@@ -29,6 +30,7 @@ async fn test_unknown_request() -> anyhow::Result<()> {
     .send_named_message(
       peer_id,
       request_name,
+      &ThreadId::new(),
       IdentityResolve::new("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
     )
     .await;
@@ -86,9 +88,15 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 
   actor1.add_address(actor2.peer_id().await, addr).await;
 
-  actor1.send_message(actor2.peer_id().await, Dummy).await.unwrap();
+  actor1
+    .send_message(actor2.peer_id().await, &ThreadId::new(), Dummy)
+    .await
+    .unwrap();
 
-  actor2.send_message(actor1.peer_id().await, Dummy).await.unwrap();
+  actor2
+    .send_message(actor1.peer_id().await, &ThreadId::new(), Dummy)
+    .await
+    .unwrap();
 
   actor1.stop_handling_requests().await.unwrap();
   actor2.stop_handling_requests().await.unwrap();
@@ -101,6 +109,8 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 
 #[tokio::test]
 async fn test_actor_handler_is_invoked() -> crate::Result<()> {
+  pretty_env_logger::init();
+
   let (mut receiver, receiver_addr, receiver_peer_id) = default_listening_actor().await;
   let mut sender = default_sending_actor().await;
 
@@ -136,7 +146,10 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 
   sender.add_address(receiver_peer_id, receiver_addr).await;
 
-  sender.send_message(receiver_peer_id, Dummy(42)).await.unwrap();
+  sender
+    .send_message(receiver_peer_id, &ThreadId::new(), Dummy(42))
+    .await
+    .unwrap();
 
   sender.stop_handling_requests().await.unwrap();
   receiver.stop_handling_requests().await.unwrap();
