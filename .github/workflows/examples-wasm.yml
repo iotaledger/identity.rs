@@ -8,7 +8,7 @@ on:
       - epic/*
     paths:
       - '.github/workflows/examples-wasm.yml'
-      - 'bindings/wasm/'
+      - 'bindings/wasm/**'
 
 jobs:
   examples-wasm:
