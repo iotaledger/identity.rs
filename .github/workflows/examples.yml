@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  rust-examples:
+  examples-rust:
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-run-rust-examples.yml@chore/run-examples-on-dependabot-alerts
+    uses: iotaledger/identity.rs/.github/workflows/examples-rust.yml@chore/run-examples-on-dependabot-alerts
 
-  wasm-examples:
+  examples-wasm:
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-run-wasm-examples.yml@chore/run-examples-on-dependabot-alerts
+    uses: iotaledger/identity.rs/.github/workflows/examples-wasm.yml@chore/run-examples-on-dependabot-alerts

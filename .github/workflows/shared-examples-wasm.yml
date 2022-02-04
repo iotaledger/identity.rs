@@ -1,10 +1,10 @@
-name: Shared / Run Rust examples
+name: Shared / Run Examples Wasm
 
 on:
   workflow_call:
 
 jobs:
-  rust-examples:
+  examples-wasm:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,13 +43,23 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
 
-      - name: Build
-        uses: actions-rs/cargo@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
         with:
-          command: build
-          args: --examples --release
+          node-version: 16.x
 
-      - name: Run Rust examples
-        working-directory: examples
-        run: |
-          cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
+      - name: Install JS dependencies
+        run: npm install
+        working-directory: bindings/wasm
+
+      - name: Build Wasm bindings
+        run: npm run build
+        working-directory: bindings/wasm
+
+      - name: Build Wasm examples
+        run: npm run build:examples
+        working-directory: bindings/wasm
+
+      - name: Test Wasm examples
+        run: npm run test
+        working-directory: bindings/wasm
