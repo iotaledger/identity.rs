@@ -35,11 +35,11 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Add date to the cache to keep it up to date, exclude bindings since they don't influence core builds
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml', '!bindings/**') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml', '!bindings/**') }}-
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
 
