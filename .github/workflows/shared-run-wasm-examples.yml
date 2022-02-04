@@ -60,14 +60,6 @@ jobs:
         run: npm run build:examples
         working-directory: bindings/wasm
 
-      - name: Test Wasm examples (node)
-        run: npm run test:node
-        working-directory: bindings/wasm
-
-      - name: Test Wasm examples (browser)
-        run: npm run test:browser
-        working-directory: bindings/wasm
-
-      - name: Test Wasm README.md examples
-        run: npm run test:readme
+      - name: Test Wasm examples
+        run: npm run test
         working-directory: bindings/wasm
