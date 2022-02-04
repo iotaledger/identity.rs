@@ -19,7 +19,6 @@ use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
 use crate::account::wasm_method_relationship::WasmMethodRelationship;
-use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -40,9 +39,6 @@ impl WasmAccount {
       .map(Into::into)
       .collect();
 
-    if relationships.is_empty() {
-      return Err(wasm_error(MissingRequiredField("relationships is empty")));
-    }
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
     let fragment: String = options
       .fragment()
@@ -50,6 +46,9 @@ impl WasmAccount {
       .wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
+      if relationships.is_empty() {
+        return Ok(JsValue::undefined());
+      }
       let mut account: RefMut<Account> = account.as_ref().borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
       let mut attach_relationship: AttachMethodRelationshipBuilder<'_> =

@@ -27,6 +27,7 @@ use js_sys::Promise;
 use crate::account::wasm_auto_save::WasmAutoSave;
 use std::rc::Rc;
 use std::sync::Arc;
+use wasm_bindgen::__rt::Ref;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -43,8 +44,8 @@ pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 impl WasmAccount {
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
-    let x = self.0.as_ref().borrow();
-    WasmDID::from(x.document().id().clone())
+    let account: Ref<Account> = self.0.as_ref().borrow();
+    WasmDID::from(account.document().id().clone())
   }
 
   /// Returns whether auto-publish is enabled.
@@ -92,7 +93,7 @@ impl WasmAccount {
     // Get IotaDID and storage from the account.
     let account: Rc<WasmRefCell<Account>> = self.0;
     let did: IotaDID = account.as_ref().borrow().did().to_owned();
-    let storage: Arc<dyn Storage> = account.as_ref().borrow().storage();
+    let storage: Arc<dyn Storage> = Arc::clone(account.as_ref().borrow().storage());
 
     // Drop account should release the DIDLease because we cannot take ownership of the Rc.
     // Note that this will still fail if anyone else has a reference to the Account.

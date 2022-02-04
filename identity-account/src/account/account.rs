@@ -130,8 +130,8 @@ impl Account {
   // ===========================================================================
 
   /// Returns a reference counter to the [Storage] implementation.
-  pub fn storage(&self) -> Arc<dyn Storage> {
-    Arc::clone(&self.storage)
+  pub fn storage(&self) -> &Arc<dyn Storage> {
+    &self.storage
   }
 
   /// Returns whether auto-publish is enabled.
