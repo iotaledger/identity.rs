@@ -11,7 +11,7 @@ async function manipulateIdentity() {
     // ===========================================================================
 
     // Create a new Account with the default configuration.
-    let builder = new AccountBuilder({autopublish: false});
+    let builder = new AccountBuilder();
     let account = await builder.createIdentity();
 
     // ===========================================================================
