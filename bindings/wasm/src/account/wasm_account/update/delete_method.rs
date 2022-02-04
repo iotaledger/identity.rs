@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -22,11 +21,13 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
     let promise: Promise = future_to_promise(async move {
-      let update = Update::DeleteMethod { fragment };
       account
         .as_ref()
         .borrow_mut()
-        .process_update(update)
+        .update_identity()
+        .delete_method()
+        .fragment(fragment)
+        .apply()
         .await
         .wasm_result()
         .map(|_| JsValue::undefined())
@@ -41,13 +42,19 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DeleteMethodOptions")]
   pub type DeleteMethodOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &DeleteMethodOptions) -> Option<String>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
+/**
+ * Optoins for deleting a method on an identity.
+ */
 export type DeleteMethodOptions = {
-  fragment: string,
+    /**
+     * The identifier of the method in the document, required.
+     */
+    fragment: string,
 };
 "#;

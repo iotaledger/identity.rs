@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -21,13 +20,15 @@ impl WasmAccount {
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
-    let update = Update::DeleteService { fragment };
 
     let promise: Promise = future_to_promise(async move {
       account
         .as_ref()
         .borrow_mut()
-        .process_update(update)
+        .update_identity()
+        .delete_service()
+        .fragment(fragment)
+        .apply()
         .await
         .wasm_result()
         .map(|_| JsValue::undefined())
@@ -42,13 +43,19 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DeleteServiceOptions")]
   pub type DeleteServiceOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &DeleteServiceOptions) -> Option<String>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_DELETE_SERVICE_OPTIONS: &'static str = r#"
+/**
+ * Options for deleting a service on an identity.
+ */
 export type DeleteServiceOptions = {
-  fragment: string,
+    /**
+     * The identifier of the service in the document.
+     */
+    fragment: string,
 };
 "#;

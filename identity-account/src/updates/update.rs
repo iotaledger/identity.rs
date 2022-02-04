@@ -102,7 +102,7 @@ pub(crate) async fn create_identity(
 }
 
 #[derive(Clone, Debug)]
-pub enum Update {
+pub(crate) enum Update {
   CreateMethod {
     scope: MethodScope,
     type_: MethodType,

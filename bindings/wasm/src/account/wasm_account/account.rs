@@ -9,8 +9,7 @@ use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::PublishOptions;
 use identity::account::Storage;
-use identity::credential::Credential;
-use identity::credential::Presentation;
+use identity::crypto::SetSignature;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::IotaDID;
@@ -19,6 +18,7 @@ use js_sys::Promise;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::__rt::Ref;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmAutoSave;
@@ -43,8 +43,8 @@ pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 impl WasmAccount {
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
-    let x = self.0.as_ref().borrow();
-    WasmDID::from(x.document().id().clone())
+    let account: Ref<Account> = self.0.as_ref().borrow();
+    WasmDID::from(account.document().id().clone())
   }
 
   /// Returns whether auto-publish is enabled.
@@ -57,12 +57,6 @@ impl WasmAccount {
   #[wasm_bindgen]
   pub fn autosave(&self) -> WasmAutoSave {
     WasmAutoSave(self.0.as_ref().borrow().autosave())
-  }
-
-  /// Returns the total number of actions executed by this instance.
-  #[wasm_bindgen]
-  pub fn actions(&self) -> usize {
-    self.0.as_ref().borrow().actions()
   }
 
   /// Returns a copy of the document managed by the `Account`.
@@ -95,12 +89,10 @@ impl WasmAccount {
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
-    //ToDo: test once `load_identity(..)` is implemented.
-
     // Get IotaDID and storage from the account.
     let account: Rc<WasmRefCell<Account>> = self.0;
     let did: IotaDID = account.as_ref().borrow().did().to_owned();
-    let storage: Arc<dyn Storage> = account.as_ref().borrow().storage_arc();
+    let storage: Arc<dyn Storage> = Arc::clone(account.as_ref().borrow().storage());
 
     // Drop account should release the DIDLease because we cannot take ownership of the Rc.
     // Note that this will still fail if anyone else has a reference to the Account.
@@ -125,37 +117,19 @@ impl WasmAccount {
   #[wasm_bindgen]
   pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> Promise {
     let account = self.0.clone();
+    let mut options: PublishOptions = PublishOptions::default();
     if let Some(publish_options) = publish_options {
-      let mut options: PublishOptions = PublishOptions::new();
-
-      if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
-        options = options.force_integration_update(force_integration);
-      }
-
-      if let Some(sign_with) = publish_options.signWith() {
-        let s: String = sign_with;
-        options = options.sign_with(s);
-      };
-      future_to_promise(async move {
-        account
-          .as_ref()
-          .borrow_mut()
-          .publish_with_options(options)
-          .await
-          .map(|_| JsValue::undefined())
-          .wasm_result()
-      })
-    } else {
-      future_to_promise(async move {
-        account
-          .as_ref()
-          .borrow_mut()
-          .publish()
-          .await
-          .map(|_| JsValue::undefined())
-          .wasm_result()
-      })
-    }
+      options = PublishOptions::from(publish_options);
+    };
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .publish_with_options(options)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
   }
 
   /// Signs a {@link Credential} with the key specified by `fragment`.
@@ -166,21 +140,9 @@ impl WasmAccount {
     credential: &WasmCredential,
     signature_options: &WasmSignatureOptions,
   ) -> PromiseCredential {
-    let account = self.0.clone();
-    let mut cred: Credential = credential.0.clone();
-    let options: SignatureOptions = SignatureOptions::from(signature_options);
-
-    let promise: Promise = future_to_promise(async move {
-      account
-        .as_ref()
-        .borrow_mut()
-        .sign(fragment.as_str(), &mut cred, options)
-        .await
-        .map(|_| JsValue::undefined())
-        .wasm_result()?;
-      JsValue::from_serde(&cred).wasm_result()
-    });
-    promise.unchecked_into::<PromiseCredential>()
+    self
+      .create_signed(fragment, credential.0.clone(), signature_options)
+      .unchecked_into::<PromiseCredential>()
   }
 
   /// Signs a {@link Document} with the key specified by `fragment`.
@@ -191,21 +153,9 @@ impl WasmAccount {
     document: &WasmDocument,
     signature_options: &WasmSignatureOptions,
   ) -> PromiseDocument {
-    let account = self.0.clone();
-    let mut doc: IotaDocument = document.0.clone();
-    let options: SignatureOptions = SignatureOptions::from(signature_options);
-
-    let promise: Promise = future_to_promise(async move {
-      account
-        .as_ref()
-        .borrow_mut()
-        .sign(fragment.as_str(), &mut doc, options)
-        .await
-        .map(|_| JsValue::undefined())
-        .wasm_result()?;
-      JsValue::from_serde(&doc).wasm_result()
-    });
-    promise.unchecked_into::<PromiseDocument>()
+    self
+      .create_signed(fragment, document.0.clone(), signature_options)
+      .unchecked_into::<PromiseDocument>()
   }
 
   /// Signs a {@link Presentation} the key specified by `fragment`.
@@ -216,21 +166,9 @@ impl WasmAccount {
     presentation: &WasmPresentation,
     signature_options: &WasmSignatureOptions,
   ) -> PromisePresentation {
-    let account = self.0.clone();
-    let mut pres: Presentation = presentation.0.clone();
-    let options: SignatureOptions = SignatureOptions::from(signature_options);
-
-    let promise: Promise = future_to_promise(async move {
-      account
-        .as_ref()
-        .borrow_mut()
-        .sign(fragment.as_str(), &mut pres, options)
-        .await
-        .map(|_| JsValue::undefined())
-        .wasm_result()?;
-      JsValue::from_serde(&pres).wasm_result()
-    });
-    promise.unchecked_into::<PromisePresentation>()
+    self
+      .create_signed(fragment, presentation.0.clone(), signature_options)
+      .unchecked_into::<PromisePresentation>()
   }
 
   /// Signs arbitrary `data` with the key specified by `fragment`.
@@ -241,26 +179,32 @@ impl WasmAccount {
     data: &JsValue,
     signature_options: &WasmSignatureOptions,
   ) -> Result<Promise> {
+    let verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
+    Ok(self.create_signed(fragment, verifiable_properties, signature_options))
+  }
+
+  fn create_signed<U>(&self, fragment: String, mut data: U, signature_options: &WasmSignatureOptions) -> Promise
+  where
+    U: serde::Serialize + SetSignature + 'static,
+  {
     let account = self.0.clone();
-    let mut verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
     let options: SignatureOptions = SignatureOptions::from(signature_options);
 
-    let promise = future_to_promise(async move {
+    future_to_promise(async move {
       account
         .as_ref()
         .borrow_mut()
-        .sign(fragment.as_str(), &mut verifiable_properties, options)
+        .sign(fragment.as_str(), &mut data, options)
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()?;
-      JsValue::from_serde(&verifiable_properties).wasm_result()
-    });
-    Ok(promise)
+      JsValue::from_serde(&data).wasm_result()
+    })
   }
 
   /// Overwrites the {@link Document} this account manages, **without doing any validation**.
   ///
-  /// # WARNING
+  /// ### WARNING
   ///
   /// This method is dangerous and can easily corrupt the internal state,
   /// potentially making the identity unusable. Only call this if you fully
@@ -322,10 +266,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "PublishOptions")]
   pub type WasmPublishOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn forceIntegrationUpdate(this: &WasmPublishOptions) -> Option<bool>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn signWith(this: &WasmPublishOptions) -> Option<String>;
 }
 
@@ -357,3 +301,19 @@ export type PublishOptions = {
      signWith?: string
  }
 "#;
+
+impl From<WasmPublishOptions> for PublishOptions {
+  fn from(publish_options: WasmPublishOptions) -> Self {
+    let mut options: PublishOptions = PublishOptions::new();
+
+    if let Some(force_integration) = publish_options.forceIntegrationUpdate() {
+      options = options.force_integration_update(force_integration);
+    }
+
+    if let Some(sign_with) = publish_options.signWith() {
+      let sign_with: String = sign_with;
+      options = options.sign_with(sign_with);
+    };
+    options
+  }
+}

@@ -26,7 +26,7 @@ async function unchecked() {
     // Print the local state of the DID Document
     console.log(`Document before update`, document);
 
-    // Override the updated field timestamp to 01.01.1990 00:00:00.
+    // Override the updated field timestamp to 01.01.1900 00:00:00.
     // because we can. This is usually set automatically when updating via the `Account`.
     document.metadataUpdated = Timestamp.parse("1900-01-01T00:00:00Z")
 

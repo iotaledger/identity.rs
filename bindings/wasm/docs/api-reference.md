@@ -138,7 +138,6 @@ publishing to the Tangle.
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.actions()](#Account+actions) ⇒ <code>number</code>
     * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
     * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -210,12 +209,6 @@ Returns whether auto-publish is enabled.
 
 ### account.autosave() ⇒ [<code>AutoSave</code>](#AutoSave)
 Returns the auto-save configuration value.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+actions"></a>
-
-### account.actions() ⇒ <code>number</code>
-Returns the total number of actions executed by this instance.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+document"></a>
@@ -306,7 +299,7 @@ Signs arbitrary `data` with the key specified by `fragment`.
 ### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;any&gt;</code>
 Overwrites the [Document](#Document) this account manages, **without doing any validation**.
 
-# WARNING
+### WARNING
 
 This method is dangerous and can easily corrupt the internal state,
 potentially making the identity unusable. Only call this if you fully
@@ -368,7 +361,7 @@ the configuration of previously built accounts.
 
 * [AccountBuilder](#AccountBuilder)
     * [new AccountBuilder(options)](#new_AccountBuilder_new)
-    * [.loadIdentity(_did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+    * [.loadIdentity(did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
     * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
 
 <a name="new_AccountBuilder_new"></a>
@@ -383,7 +376,7 @@ Creates a new `AccountBuilder`.
 
 <a name="AccountBuilder+loadIdentity"></a>
 
-### accountBuilder.loadIdentity(_did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
+### accountBuilder.loadIdentity(did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
 Loads an existing identity with the specified `did` using the current builder configuration.
 The identity must exist in the configured `Storage`.
 
@@ -391,7 +384,7 @@ The identity must exist in the configured `Storage`.
 
 | Param | Type |
 | --- | --- |
-| _did | [<code>DID</code>](#DID) | 
+| did | [<code>DID</code>](#DID) | 
 
 <a name="AccountBuilder+createIdentity"></a>
 

@@ -4,12 +4,14 @@
 use std::rc::Rc;
 
 use identity::account::Account;
+use identity::account::CreateMethodBuilder;
+use identity::account::IdentityUpdater;
 use identity::account::MethodSecret;
-use identity::account::Update;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
 use identity::did::MethodType;
 use js_sys::Promise;
+use wasm_bindgen::__rt::RefMut;
 use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -28,35 +30,35 @@ impl WasmAccount {
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
     let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
 
-    let method_type: MethodType = options
-      .methodType()
-      .map(|m| m.0)
-      .unwrap_or(MethodType::Ed25519VerificationKey2018);
+    let method_type: Option<MethodType> = options.methodType().map(|m| m.0);
 
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
-    let method_scope: MethodScope = options.methodScope().map(|ms| ms.0).unwrap_or_default();
+    let method_scope: Option<MethodScope> = options.methodScope().map(|ms| ms.0);
 
     let method_secret: Option<MethodSecret> = options.methodSecret().map(|ms| ms.0);
 
     let promise: Promise = future_to_promise(async move {
-      let update = Update::CreateMethod {
-        type_: method_type,
-        fragment,
-        method_secret,
-        scope: method_scope,
+      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut updater: IdentityUpdater<'_> = account.update_identity();
+      let mut create_method: CreateMethodBuilder<'_> = updater.create_method().fragment(fragment);
+
+      if let Some(type_) = method_type {
+        create_method = create_method.type_(type_);
       };
 
-      account
-        .as_ref()
-        .borrow_mut()
-        .process_update(update)
-        .await
-        .wasm_result()
-        .map(|_| JsValue::undefined())
+      if let Some(scope) = method_scope {
+        create_method = create_method.scope(scope);
+      };
+
+      if let Some(method_secret) = method_secret {
+        create_method = create_method.method_secret(method_secret);
+      };
+
+      create_method.apply().await.wasm_result().map(|_| JsValue::undefined())
     });
 
     Ok(promise)
@@ -68,25 +70,43 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "CreateMethodOptions")]
   pub type CreateMethodOptions;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &CreateMethodOptions) -> Option<String>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodScope(this: &CreateMethodOptions) -> Option<WasmMethodScope>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodType(this: &CreateMethodOptions) -> Option<WasmMethodType>;
 
-  #[wasm_bindgen(structural, getter, method)]
+  #[wasm_bindgen(getter, method)]
   pub fn methodSecret(this: &CreateMethodOptions) -> Option<WasmMethodSecret>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_CREATE_METHOD_OPTIONS: &'static str = r#"
+/**
+ * Options for creating a new method on an identity.
+ */
 export type CreateMethodOptions = {
-  fragment: string,
-  methodScope?: MethodScope,
-  methodType?: MethodType,
-  methodSecret?: MethodSecret
-};
+    /**
+     * The identifier of the method in the document, required.
+     */
+    fragment: string,
+
+    /**
+     * The scope of the method.
+     */
+    methodScope?: MethodScope,
+
+    /**
+     * The type of the method, defaults to Ed25519VerificationKey2018.
+     */
+    methodType?: MethodType,
+
+    /**
+     * The secret key to use for the method, optional. Will be generated when omitted.
+     */
+    methodSecret?: MethodSecret
+  };
 "#;
