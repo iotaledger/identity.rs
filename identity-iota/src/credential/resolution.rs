@@ -78,13 +78,14 @@ async fn resolve_presentation_generic<T, U, R, F, G, H>(
   initial_validator: F,
   holder_validator: G,
   credential_resolver: H,
+  fail_on_unresolved_holder: bool,
 ) -> std::result::Result<ResolvedPresentation<T, U>, PresentationResolutionError>
 where
   T: Serialize + Clone,
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
   F: Fn(&Presentation<T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
-  G: Fn(Option<(ResolvedHolderEvent<'_, T, U>, &mut Vec<ValidationError>)>) -> ControlFlow<()>,
+  G: Fn(ResolvedHolderEvent<'_, T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
   H: Fn(
     Credential<U>,
     &R,
@@ -113,7 +114,7 @@ where
     return Err(presentation_resolution_error);
   }
 
-  // Now we try to resolve the holder URL
+  // Now we try to resolve the holder's DID Document
   let mut resolved_holder_document: Option<ResolvedIotaDocument> = None;
   match presentation
     .holder
@@ -125,33 +126,31 @@ where
       let resolved_holder_doc = resolve_document(resolver, holder_doc).await;
       match resolved_holder_doc {
         Ok(resolved_document) => {
+          // now try to verify the holder's signature using the holder's resolved DID Document
+          if is_break(holder_validator(
+            ResolvedHolderEvent {
+              presentation: &presentation,
+              resolved_holder_doc: &resolved_document,
+            },
+            presentation_validation_errors,
+          )) {
+            return Err(presentation_resolution_error);
+          }
           resolved_holder_document = Some(resolved_document);
         }
         Err(error) => {
           presentation_validation_errors.push(ValidationError::HolderDocumentResolution { source: error.into() });
+          if fail_on_unresolved_holder {
+            return Err(presentation_resolution_error);
+          }
         }
       }
     }
     Err(error) => {
       presentation_validation_errors.push(error);
-    }
-  }
-
-  // Now try to verify the presentation's signature using the holder's document
-  if let Some(ref doc) = resolved_holder_document {
-    if is_break(holder_validator(Some((
-      ResolvedHolderEvent {
-        presentation: &presentation,
-        resolved_holder_doc: &doc,
-      },
-      presentation_validation_errors,
-    )))) {
-      return Err(presentation_resolution_error);
-    }
-  } else {
-    // Todo: Maybe we should always break here? It is not possible to create the ResolvedPresentation at this point ...
-    if is_break(holder_validator(None)) {
-      return Err(presentation_resolution_error);
+      if fail_on_unresolved_holder {
+        return Err(presentation_resolution_error);
+      }
     }
   }
 
