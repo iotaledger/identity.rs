@@ -73,7 +73,7 @@ where
   
   // now we introduce our credential resolver 
   
-  let credential_resolver =  |credential: Credential<U>, resolver: &R| {
+  let credential_resolver =  |credential: Credential<U>| {
     async {
       resolve_credential(resolver, credential, &validation_options.common_validation_options, fail_fast).await
     }
@@ -128,8 +128,8 @@ struct ResolvedHolderEvent<'a, T, U> {
 
 type CredentialResolutionErrors = BTreeMap<usize, CredentialResolutionError>;
 
-async fn resolve_presentation_generic<'a, T, U, R, I, H, C, F>(
-  resolver: &'a R,
+async fn resolve_presentation_generic<T, U, R, I, H, C, F>(
+  resolver: &R,
   presentation: Presentation<T, U>,
   initial_validator: I,
   holder_validator: H,
@@ -145,7 +145,6 @@ where
   H: Fn(ResolvedHolderEvent<'_, T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
   C: Fn(
     Credential<U>,
-    &'a R,
   ) -> F, 
   F: Future<Output = Result<ResolvedCredential<U>, CredentialResolutionError>>, 
 {
@@ -215,7 +214,7 @@ where
   // Resolve all associated credentials
   let mut credentials: Vec<ResolvedCredential<U>> = Vec::new();
   for (position, credential) in presentation.verifiable_credential.iter().cloned().enumerate() {
-    match credential_resolver(credential, resolver).await {
+    match credential_resolver(credential).await {
       Ok(resolved_credential) => {
         credentials.push(resolved_credential);
       }, 
