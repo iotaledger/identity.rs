@@ -37,7 +37,8 @@ where
   R: ?Sized + TangleResolve,
 {
   let initial_validator =
-    |presentation: &Presentation<T, U>, validation_errors: &mut Vec<ValidationError>| -> ControlFlow<()> {
+    |initial_presentation_event: InitialPresentationEvent<'_, T, U>, validation_errors: &mut Vec<ValidationError>| -> ControlFlow<()> {
+      let presentation = initial_presentation_event.presentation; 
       // set up the first validator that validates as much of the presentation as possible without resolving any
       // documents.
       if let Err(error) = presentation.check_structure() {
@@ -111,6 +112,26 @@ where
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
 {
+  /*  
+  let initial_validator = |_, _| ControlFlow::Continue(());
+
+  let credential_resolver =
+    |credential: Credential<U>| async { resolve_credential_unvalidated(resolver, credential, verifier_options).await };
+
+  let fail_on_unresolved_holder = true;
+  let fail_on_unresolved_credentials = true;
+
+  resolve_presentation_generic(
+    resolver,
+    presentation,
+    initial_validator,
+    holder_validator,
+    credential_resolver,
+    fail_on_unresolved_holder,
+    fail_on_unresolved_credentials,
+  )
+  .await
+  */ 
   todo!()
 }
 
@@ -118,13 +139,43 @@ where
 async fn resolve_presentation_unchecked<T, U, R>(
   resolver: &R,
   presentation: Presentation<T, U>,
+  fail_on_unresolved_subjects: bool, 
+  fail_on_unresolved_credentials: bool, 
 ) -> std::result::Result<ResolvedPresentation<T, U>, PresentationResolutionError>
 where
   T: Serialize + Clone,
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
 {
-  todo!()
+  
+  let initial_validator = |_, _| ControlFlow::Continue(());
+
+  let holder_validator = |_: ResolvedHolderEvent<'_, T, U>,_: &mut Vec<ValidationError>| -> ControlFlow<()>{
+    ControlFlow::Continue(())
+  };
+
+  let credential_resolver =
+    |credential: Credential<U>| async { resolve_credential_unchecked(resolver, credential, fail_on_unresolved_subjects).await };
+
+  let fail_on_unresolved_holder = true;
+  let fail_on_unresolved_credentials = true;
+
+  resolve_presentation_generic(
+    resolver,
+    presentation,
+    initial_validator,
+    holder_validator,
+    credential_resolver,
+    fail_on_unresolved_holder,
+    fail_on_unresolved_credentials,
+  )
+  .await
+
+  
+}
+
+struct InitialPresentationEvent<'a, T, U> {
+  presentation: &'a Presentation<T,U>
 }
 
 struct ResolvedHolderEvent<'a, T, U> {
@@ -147,7 +198,7 @@ where
   T: Serialize + Clone,
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
-  I: Fn(&Presentation<T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
+  I: Fn(InitialPresentationEvent<'_, T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
   H: Fn(ResolvedHolderEvent<'_, T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
   C: Fn(Credential<U>) -> F, /* Would be natural to make &R an additional argument to `credential_resolver`, but async closures that take references seem to be problematic in Rust for the time being (https://users.rust-lang.org/t/async-closure-that-takes-a-reference/52079). */
   F: Future<Output = Result<ResolvedCredential<U>, CredentialResolutionError>>,
@@ -171,7 +222,7 @@ where
   };
 
   // We start with some validation checks we can do directly on the Presentation
-  if is_break(initial_validator(&presentation, presentation_validation_errors)) {
+  if is_break(initial_validator(InitialPresentationEvent{presentation: &&presentation}, presentation_validation_errors)) {
     return Err(presentation_resolution_error);
   }
 
