@@ -57,8 +57,8 @@ pub enum Error {
   CredentialValidation(#[from] crate::credential::errors::ValidationError),
   /// Caused by a failure to resolve a Credential  
   #[error("credential resolution failed")]
-  CredentialResolution(#[from] crate::credential::errors::CredentialResolutionError),
+  CredentialResolution(#[source] crate::credential::errors::CredentialResolutionError),
   /// Caused by a failure to resolve a Presentation
   #[error("presentation resolution failed")]
-  CredentialPresentation(#[from] crate::credential::errors::PresentationResolutionError),
+  PresentationResolution(#[source] crate::credential::errors::PresentationResolutionError),
 }

@@ -24,9 +24,8 @@ use crate::tangle::TangleResolve;
 use crate::Result;
 use std::collections::BTreeMap;
 
-
 /// Resolves and validates a `Credential` in accordance with the given `validation_options`.
-async fn resolve_credential<T: Serialize, R: ?Sized + TangleResolve>(
+pub(crate) async fn resolve_credential<T: Serialize, R: ?Sized + TangleResolve>(
   resolver: &R,
   credential: Credential<T>,
   validation_options: &CredentialValidationOptions,
@@ -131,7 +130,7 @@ async fn resolve_credential<T: Serialize, R: ?Sized + TangleResolve>(
 }
 
 /// Resolves the `Credential` and verifies its signature using the issuers DID Document.
-async fn resolve_credential_unvalidated<T: Serialize, R: ?Sized + TangleResolve>(
+pub(crate) async fn resolve_credential_unvalidated<T: Serialize, R: ?Sized + TangleResolve>(
   resolver: &R,
   credential: Credential<T>,
   verifier_options: &VerifierOptions,
@@ -158,7 +157,7 @@ async fn resolve_credential_unvalidated<T: Serialize, R: ?Sized + TangleResolve>
   // We only care about verifying the signature using the issuer's DID Document
   let initial_validator = |_: InitialisationEvent<'_, T>, _: &mut ValidationErrors| ControlFlow::Continue(());
 
-  let subject_event_validator = |event: ResolvedSubjectEvent<'_>, _: &mut ValidationErrors| ControlFlow::Continue(());
+  let subject_event_validator = |_: ResolvedSubjectEvent<'_>, _: &mut ValidationErrors| ControlFlow::Continue(());
 
   let fail_on_unresolved_issuer = true;
   let fail_on_unresolved_subjects = true;
@@ -184,7 +183,7 @@ async fn resolve_credential_unvalidated<T: Serialize, R: ?Sized + TangleResolve>
 ///
 /// Fails if the issuer's DID Document cannot be resolved, and the same holds for subject DID Documents if
 /// `fail_on_unresolved_subjects` is true.
-async fn resolve_credential_unchecked<T: Serialize, R: ?Sized + TangleResolve>(
+pub(crate) async fn resolve_credential_unchecked<T: Serialize, R: ?Sized + TangleResolve>(
   resolver: &R,
   credential: Credential<T>,
   fail_on_unresolved_subjects: bool,
@@ -193,9 +192,9 @@ async fn resolve_credential_unchecked<T: Serialize, R: ?Sized + TangleResolve>(
   let initial_validator = |_: InitialisationEvent<'_, T>, _: &mut ValidationErrors| ControlFlow::Continue(());
 
   let issuer_event_validator =
-    |event: ResolvedIssuerEvent<'_, T>, _: &mut ValidationErrors| -> ControlFlow<()> { ControlFlow::Continue(()) };
+    |_: ResolvedIssuerEvent<'_, T>, _: &mut ValidationErrors| -> ControlFlow<()> { ControlFlow::Continue(()) };
 
-  let subject_event_validator = |event: ResolvedSubjectEvent<'_>, _: &mut ValidationErrors| ControlFlow::Continue(());
+  let subject_event_validator = |_: ResolvedSubjectEvent<'_>, _: &mut ValidationErrors| ControlFlow::Continue(());
 
   let fail_on_unresolved_issuer = true;
   resolve_credential_episodic(
@@ -210,9 +209,8 @@ async fn resolve_credential_unchecked<T: Serialize, R: ?Sized + TangleResolve>(
   .await
 }
 
-
 /// Resolves and validates a `Presentation` in accordance with the given `validation_options`
-async fn resolve_presentation<T, U, R>(
+pub(crate) async fn resolve_presentation<T, U, R>(
   resolver: &R,
   presentation: Presentation<T, U>,
   validation_options: &PresentationValidationOptions,
@@ -223,26 +221,27 @@ where
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
 {
-  let initial_validator =
-    |initial_presentation_event: InitialPresentationEvent<'_, T, U>, validation_errors: &mut Vec<ValidationError>| -> ControlFlow<()> {
-      let presentation = initial_presentation_event.presentation; 
-      // set up the first validator that validates as much of the presentation as possible without resolving any
-      // documents.
-      if let Err(error) = presentation.check_structure() {
-        validation_errors.push(ValidationError::PresentationStructure(error));
-        if fail_fast {
-          return ControlFlow::Break(());
-        }
+  let initial_validator = |initial_presentation_event: InitialPresentationEvent<'_, T, U>,
+                           validation_errors: &mut Vec<ValidationError>|
+   -> ControlFlow<()> {
+    let presentation = initial_presentation_event.presentation;
+    // set up the first validator that validates as much of the presentation as possible without resolving any
+    // documents.
+    if let Err(error) = presentation.check_structure() {
+      validation_errors.push(ValidationError::PresentationStructure(error));
+      if fail_fast {
+        return ControlFlow::Break(());
       }
-      if let Some((credential_position, _)) = presentation.non_transferable_violations().next() {
-        validation_errors.push(ValidationError::NonTransferableViolation { credential_position });
-        if fail_fast {
-          return ControlFlow::Break(());
-        }
+    }
+    if let Some((credential_position, _)) = presentation.non_transferable_violations().next() {
+      validation_errors.push(ValidationError::NonTransferableViolation { credential_position });
+      if fail_fast {
+        return ControlFlow::Break(());
       }
+    }
 
-      ControlFlow::Continue(())
-    };
+    ControlFlow::Continue(())
+  };
 
   // now define the validator that uses the holder's resolved DID Document to verify the holder's signature.
   let holder_validator = |resolved_holder_event: ResolvedHolderEvent<'_, T, U>,
@@ -289,7 +288,7 @@ where
 }
 
 /// Resolves the `Presentation` and verifies the signatures of the holder and the issuer of each `Credential`.
-async fn resolve_presentation_unvalidated<T, U, R>(
+pub(crate) async fn resolve_presentation_unvalidated<T, U, R>(
   resolver: &R,
   presentation: Presentation<T, U>,
   verifier_options: &VerifierOptions,
@@ -299,18 +298,15 @@ where
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
 {
-  
-  let initial_validator = |_: InitialPresentationEvent<'_, T, U>, _:&mut Vec<ValidationError>| ControlFlow::Continue(());
+  let initial_validator =
+    |_: InitialPresentationEvent<'_, T, U>, _: &mut Vec<ValidationError>| ControlFlow::Continue(());
 
   // now define the validator that uses the holder's resolved DID Document to verify the holder's signature.
   let holder_validator = |resolved_holder_event: ResolvedHolderEvent<'_, T, U>,
                           validation_errors: &mut Vec<ValidationError>|
    -> ControlFlow<()> {
     let holder_doc = &resolved_holder_event.resolved_holder_doc.document;
-    if let Err(error) = holder_doc.verify_data(
-      resolved_holder_event.presentation,
-      &verifier_options
-    ) {
+    if let Err(error) = holder_doc.verify_data(resolved_holder_event.presentation, &verifier_options) {
       validation_errors.push(ValidationError::HolderProof { source: error.into() });
       return ControlFlow::Break(());
     }
@@ -333,30 +329,29 @@ where
     fail_on_unresolved_credentials,
   )
   .await
-  
 }
 
 /// Resolves the `Presentation` without applying any checks.  
-async fn resolve_presentation_unchecked<T, U, R>(
+pub(crate) async fn resolve_presentation_unchecked<T, U, R>(
   resolver: &R,
   presentation: Presentation<T, U>,
-  fail_on_unresolved_subjects: bool, 
-  fail_on_unresolved_credentials: bool, 
+  fail_on_unresolved_subjects: bool,
+  fail_on_unresolved_credentials: bool,
 ) -> std::result::Result<ResolvedPresentation<T, U>, PresentationResolutionError>
 where
   T: Serialize + Clone,
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
 {
-  
-  let initial_validator = |_: InitialPresentationEvent<'_, T ,U>, _: &mut Vec<ValidationError>| ControlFlow::Continue(());
+  let initial_validator =
+    |_: InitialPresentationEvent<'_, T, U>, _: &mut Vec<ValidationError>| ControlFlow::Continue(());
 
-  let holder_validator = |_: ResolvedHolderEvent<'_, T, U>,_: &mut Vec<ValidationError>| -> ControlFlow<()>{
-    ControlFlow::Continue(())
+  let holder_validator =
+    |_: ResolvedHolderEvent<'_, T, U>, _: &mut Vec<ValidationError>| -> ControlFlow<()> { ControlFlow::Continue(()) };
+
+  let credential_resolver = |credential: Credential<U>| async {
+    resolve_credential_unchecked(resolver, credential, fail_on_unresolved_subjects).await
   };
-
-  let credential_resolver =
-    |credential: Credential<U>| async { resolve_credential_unchecked(resolver, credential, fail_on_unresolved_subjects).await };
 
   let fail_on_unresolved_holder = true;
 
@@ -370,13 +365,13 @@ where
     fail_on_unresolved_credentials,
   )
   .await
-
-  
 }
 
-// ---------------------------------- very general helper functionality ----------------------------------------------------------------------------------
+// ---------------------------------- very general helper functionality
+// ----------------------------------------------------------------------------------
 
-// ---------------------------------- credential resolution utilities ------------------------------------------------------------------------------------
+// ---------------------------------- credential resolution utilities
+// ------------------------------------------------------------------------------------
 
 type ValidationErrors = OneOrMany<ValidationError>;
 
@@ -508,10 +503,10 @@ where
   Err(CredentialResolutionError { validation_errors })
 }
 
-
-//------------------------------------------------------------ presentation resolution utilities --------------------------------------------------------------
+//------------------------------------------------------------ presentation resolution utilities
+//------------------------------------------------------------ --------------------------------------------------------------
 struct InitialPresentationEvent<'a, T, U> {
-  presentation: &'a Presentation<T,U>
+  presentation: &'a Presentation<T, U>,
 }
 
 struct ResolvedHolderEvent<'a, T, U> {
@@ -521,10 +516,11 @@ struct ResolvedHolderEvent<'a, T, U> {
 
 type CredentialResolutionErrors = BTreeMap<usize, CredentialResolutionError>;
 
-// Resolve and validate a presentation 
-// the `initial_validator` runs before any DID documents get resolved. 
-// The next step is resolving the holder's DID document which `holder_validator` may then use to run additional checks on the presentation. 
-// Finally we loop over all the credentials in the presentation and let `credential_resolver` resolve them. 
+// Resolve and validate a presentation
+// the `initial_validator` runs before any DID documents get resolved.
+// The next step is resolving the holder's DID document which `holder_validator` may then use to run additional checks
+// on the presentation. Finally we loop over all the credentials in the presentation and let `credential_resolver`
+// resolve them.
 async fn resolve_presentation_generic<T, U, R, I, H, C, F>(
   resolver: &R,
   presentation: Presentation<T, U>,
@@ -562,7 +558,12 @@ where
   };
 
   // We start with some validation checks we can do directly on the Presentation
-  if is_break(initial_validator(InitialPresentationEvent{presentation: &&presentation}, presentation_validation_errors)) {
+  if is_break(initial_validator(
+    InitialPresentationEvent {
+      presentation: &&presentation,
+    },
+    presentation_validation_errors,
+  )) {
     return Err(presentation_resolution_error);
   }
 
