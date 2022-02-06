@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::ControlFlow;
 use std::future::Future;
+use std::ops::ControlFlow;
 
 use identity_core::common::OneOrMany;
 use identity_credential::credential::Credential;
@@ -36,33 +36,36 @@ where
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
 {
-  let initial_validator = |presentation: &Presentation<T,U>, validation_errors: &mut Vec<ValidationError>| -> ControlFlow<()> {
-  // set up the first validator that validates as much of the presentation as possible without resolving any documents. 
-  if let Err(error) = presentation.check_structure() {
-    validation_errors.push(ValidationError::PresentationStructure(error)); 
-    if fail_fast {
-      return ControlFlow::Break(()); 
-    }
-  }
-  if let Some((credential_position, _)) = presentation.non_transferable_violations().next() {
-    validation_errors.push(
-      ValidationError::NonTransferableViolation {credential_position}
-    );
-    if fail_fast {
-      return ControlFlow::Break(());
-    }
-  }
+  let initial_validator =
+    |presentation: &Presentation<T, U>, validation_errors: &mut Vec<ValidationError>| -> ControlFlow<()> {
+      // set up the first validator that validates as much of the presentation as possible without resolving any
+      // documents.
+      if let Err(error) = presentation.check_structure() {
+        validation_errors.push(ValidationError::PresentationStructure(error));
+        if fail_fast {
+          return ControlFlow::Break(());
+        }
+      }
+      if let Some((credential_position, _)) = presentation.non_transferable_violations().next() {
+        validation_errors.push(ValidationError::NonTransferableViolation { credential_position });
+        if fail_fast {
+          return ControlFlow::Break(());
+        }
+      }
 
-  ControlFlow::Continue(())
-  }; 
+      ControlFlow::Continue(())
+    };
 
-  // now define the validator that uses the holder's resolved DID Document to verify the holder's signature.  
-  let holder_validator = |resolved_holder_event: ResolvedHolderEvent<'_, T, U>, validation_errors: &mut Vec<ValidationError>| -> ControlFlow<()> {
+  // now define the validator that uses the holder's resolved DID Document to verify the holder's signature.
+  let holder_validator = |resolved_holder_event: ResolvedHolderEvent<'_, T, U>,
+                          validation_errors: &mut Vec<ValidationError>|
+   -> ControlFlow<()> {
     let holder_doc = &resolved_holder_event.resolved_holder_doc.document;
-    if let Err(error) = holder_doc.verify_data(resolved_holder_event.presentation, &validation_options.common_validation_options.verifier_options) {
-      validation_errors.push(
-        ValidationError::HolderProof {source: error.into()}
-      );
+    if let Err(error) = holder_doc.verify_data(
+      resolved_holder_event.presentation,
+      &validation_options.common_validation_options.verifier_options,
+    ) {
+      validation_errors.push(ValidationError::HolderProof { source: error.into() });
       if fail_fast {
         return ControlFlow::Break(());
       }
@@ -70,18 +73,20 @@ where
     ControlFlow::Continue(())
   };
 
-  
-  // now we introduce our credential resolver 
-  
-  let credential_resolver =  |credential: Credential<U>| {
-    async {
-      resolve_credential(resolver, credential, &validation_options.common_validation_options, fail_fast).await
-    }
+  // now we introduce our credential resolver
+
+  let credential_resolver = |credential: Credential<U>| async {
+    resolve_credential(
+      resolver,
+      credential,
+      &validation_options.common_validation_options,
+      fail_fast,
+    )
+    .await
   };
 
-  let fail_on_unresolved_holder = true; 
+  let fail_on_unresolved_holder = true;
   let fail_on_unresolved_credentials = true;
-
 
   resolve_presentation_generic(
     resolver,
@@ -91,7 +96,8 @@ where
     credential_resolver,
     fail_on_unresolved_holder,
     fail_on_unresolved_credentials,
-  ).await
+  )
+  .await
 }
 
 /// Resolves the `Presentation` and verifies the signatures of the holder and the issuer of each `Credential`.
@@ -135,18 +141,16 @@ async fn resolve_presentation_generic<T, U, R, I, H, C, F>(
   holder_validator: H,
   credential_resolver: C,
   fail_on_unresolved_holder: bool,
-  fail_on_unresolved_credentials: bool, 
+  fail_on_unresolved_credentials: bool,
 ) -> std::result::Result<ResolvedPresentation<T, U>, PresentationResolutionError>
-where 
+where
   T: Serialize + Clone,
   U: Serialize + Clone,
   R: ?Sized + TangleResolve,
   I: Fn(&Presentation<T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
   H: Fn(ResolvedHolderEvent<'_, T, U>, &mut Vec<ValidationError>) -> ControlFlow<()>,
-  C: Fn(
-    Credential<U>,
-  ) -> F, 
-  F: Future<Output = Result<ResolvedCredential<U>, CredentialResolutionError>>, 
+  C: Fn(Credential<U>) -> F, /* Would be natural to make &R an additional argument to `credential_resolver`, but async closures that take references seem to be problematic in Rust for the time being (https://users.rust-lang.org/t/async-closure-that-takes-a-reference/52079). */
+  F: Future<Output = Result<ResolvedCredential<U>, CredentialResolutionError>>,
 {
   let mut presentation_resolution_error = PresentationResolutionError {
     presentation_validation_errors: Vec::<ValidationError>::new(),
@@ -217,11 +221,11 @@ where
     match credential_resolver(credential).await {
       Ok(resolved_credential) => {
         credentials.push(resolved_credential);
-      }, 
+      }
       Err(error) => {
         credential_errors.insert(position, error);
         if fail_on_unresolved_credentials {
-          return Err(presentation_resolution_error); 
+          return Err(presentation_resolution_error);
         }
       }
     }
