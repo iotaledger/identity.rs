@@ -24,19 +24,18 @@ use delegate::delegate;
 /// - [`Self::try_only_active_subject_documents`]
 /// - [`Self::try_expires_after()`]
 /// - [`Self::check_structure()`]
-pub struct ResolvedCredential<'a, T> {
-  pub(crate) credential: &'a Credential<T>,
-  pub(crate) issuer: &'a ResolvedIotaDocument,
-  pub(crate) subjects: &'a OneOrMany<ResolvedIotaDocument>,
+pub struct ResolvedCredential<T> {
+  pub(crate) credential: Credential<T>,
+  pub(crate) issuer: ResolvedIotaDocument,
+  pub(crate) subjects: OneOrMany<ResolvedIotaDocument>,
 }
 
-impl<'a, T: Serialize> ResolvedCredential<'a, T> {
-  /// Combines a `Credential` with the issuer's `ResolvedIotaDocument` and a mapping with values `ResolvedIotaDocument`
-  /// and keys the corresponding `Url` represented as a `String`.
+impl<T: Serialize> ResolvedCredential<T> {
+  /// Combines a `Credential` with [`ResolvedIotaDocument`]s belonging to the issuer and credential subjects.
   pub fn try_new(
-    credential: &'a Credential<T>,
-    issuer: &'a ResolvedIotaDocument,
-    subjects: &'a OneOrMany<ResolvedIotaDocument>,
+    credential: Credential<T>,
+    issuer: ResolvedIotaDocument,
+    subjects: OneOrMany<ResolvedIotaDocument>,
   ) -> Result<Self> {
     // check that the issuer corresponds with the issuer stated in the credential.
     //  need to parse a valid IotaDID from the credential's issuer and check that the DID matches with the provided
@@ -60,7 +59,7 @@ impl<'a, T: Serialize> ResolvedCredential<'a, T> {
         credential_subject
           .id
           .as_ref()
-          // Todo: id().to_url().to_string().as_str() is there a better way? 
+          // Todo: id().to_url().to_string().as_str() is there a better way?
           // will that even work?
           .filter(|url| url == &subject.document.id().to_url().to_string().as_str())
           .is_some()
@@ -98,6 +97,12 @@ impl<'a, T: Serialize> ResolvedCredential<'a, T> {
       .iter()
       .map(|doc| doc)
       .filter(|resolved_doc| !resolved_doc.document.active())
+  }
+
+  /// Unpacks [`Self`] into a triple corresponding to the credential, the issuer's [ResolvedIotaDocument] and the
+  /// [`ResolvedIotaDocument`]s of the subjects respectively.
+  pub fn de_assemble(self) -> (Credential<T>, ResolvedIotaDocument, OneOrMany<ResolvedIotaDocument>) {
+    (self.credential, self.issuer, self.subjects)
   }
   delegate! {
       to self.credential {

@@ -6,7 +6,6 @@ use identity_did::verifiable::VerifierOptions;
 pub struct CredentialValidationOptions {
   pub(crate) expires_after: Timestamp,
   pub(crate) issued_before: Timestamp,
-  pub(crate) allow_deactivated_subject_documents: bool,
   pub(crate) verifier_options: VerifierOptions,
 }
 
@@ -15,7 +14,6 @@ impl Default for CredentialValidationOptions {
     Self {
       expires_after: Timestamp::now_utc(),
       issued_before: Timestamp::now_utc(),
-      allow_deactivated_subject_documents: false,
       verifier_options: VerifierOptions::default(),
     }
   }
@@ -29,11 +27,6 @@ impl CredentialValidationOptions {
 
   pub fn with_earliest_issuance_date(mut self, timestamp: Timestamp) -> Self {
     self.issued_before = timestamp;
-    self
-  }
-
-  pub fn allow_deactivated_subject_documents(mut self, value: bool) -> Self {
-    self.allow_deactivated_subject_documents = value;
     self
   }
 
