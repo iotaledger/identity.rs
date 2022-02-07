@@ -6,7 +6,7 @@ import {
 } from './../../node/identity_wasm.js';
 
 /**
- * This example shows is an introduction about how to sign data using the account.
+ * This example demonstrates how to issue and sign Verifiable Credentials using the account.
  */
 async function signing() {
 
@@ -18,6 +18,8 @@ async function signing() {
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder();
     let account = await builder.createIdentity();
+
+    //ToDo: Add Stronghold storage.
 
     // ===========================================================================
     // Signing Example
