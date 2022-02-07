@@ -28,8 +28,7 @@ async function config() {
     const config = new Config();
     config.setNetwork(network);
     config.setPrimaryNode(private_node_url);
-
-    // set a permanode for the same network
+    // Set a permanode for the same network.
     // config.setPermanode("<permanode_url>");
 
 
