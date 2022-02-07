@@ -39,7 +39,6 @@ async function config() {
         // `AutoSave.every()` saves immediately after every action,
         autosave: AutoSave.batch(10), // saves after every 10 actions.
         autopublish: true, // publish to the tangle automatically on every update
-        milestone: 4, // save a snapshot every 4 actions
         clientConfig: config // set the client configuration.
         //TODO configure storage.
     });

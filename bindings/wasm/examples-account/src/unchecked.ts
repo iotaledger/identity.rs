@@ -21,14 +21,14 @@ async function unchecked() {
     // Print the local state of the DID Document
     console.log(`[Example] Document before update`, account.document());
 
-    // Override the updated field timestamp to 01.01.1900 00:00:00.
-    // because we can. This is usually set automatically when updating via the `Account`.
-    document.metadataUpdated = Timestamp.parse("1900-01-01T00:00:00Z")
-
     // Add a custom property to the document.
     const documentJSON = document.toJSON();
     documentJSON["doc"]["myCustomPropertyKey"] = "value";
     document = Document.fromJSON(documentJSON);
+
+    // Override the updated field timestamp to 01.01.1900 00:00:00.
+    // because we can. This is usually set automatically when updating via the `Account`.
+    document.metadataUpdated = Timestamp.parse("1900-01-01T00:00:00Z")
 
     // Update the identity without validation and publish the result to the Tangle
     // (depending on the account's autopublish setting).

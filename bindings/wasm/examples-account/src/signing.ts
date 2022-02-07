@@ -66,8 +66,6 @@ async function signing() {
     // Retrieve the DID from the newly created identity.
     let did = account.did().toString();
 
-    console.log("[Example] DID = ", did);
-
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 

@@ -39,12 +39,12 @@ impl WasmAccount {
       .map(MethodRelationship::from)
       .collect();
 
-    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());

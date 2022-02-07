@@ -29,8 +29,6 @@ impl WasmAccount {
   /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
-    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
-
     let method_type: Option<MethodType> = options.methodType().map(|m| m.0);
 
     let fragment: String = options
@@ -42,6 +40,7 @@ impl WasmAccount {
 
     let method_secret: Option<MethodSecret> = options.methodSecret().map(|ms| ms.0);
 
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();

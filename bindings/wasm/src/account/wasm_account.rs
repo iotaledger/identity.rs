@@ -309,7 +309,6 @@ impl From<WasmPublishOptions> for PublishOptions {
     }
 
     if let Some(sign_with) = publish_options.signWith() {
-      let sign_with: String = sign_with;
       options = options.sign_with(sign_with);
     };
     options
