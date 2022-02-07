@@ -37,7 +37,7 @@ async = ["identity-iota/async"]
 wasm = ["identity-iota/wasm", "identity-comm/wasm", "identity-core/wasm", "identity-account/wasm"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account", "wasm"]
+account = ["identity-account"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]
