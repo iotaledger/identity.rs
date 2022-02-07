@@ -94,8 +94,9 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
-
+          cargo read-manifest > ../example-manifest.json
+          cd ../
+          cat ./example-manifest.json | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" --release || exit 1; done
       - name: Stop sccache (Windows)
         uses: './.github/actions/rust/sccache/stop-sccache-windows'
         if: matrix.os == 'windows-latest'
