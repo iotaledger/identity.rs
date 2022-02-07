@@ -15,12 +15,13 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Deletes a Service if it exists.
   #[wasm_bindgen(js_name = deleteService)]
-  pub fn delete_service(&mut self, options: DeleteServiceOptions) -> Result<Promise> {
-    let account = self.0.clone();
+  pub fn delete_service(&mut self, options: &DeleteServiceOptions) -> Result<Promise> {
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
+
+    let account = self.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       account

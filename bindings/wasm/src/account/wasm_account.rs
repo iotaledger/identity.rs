@@ -42,6 +42,7 @@ pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  /// Returns the {@link DID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
     let account: Ref<Account> = self.0.as_ref().borrow();

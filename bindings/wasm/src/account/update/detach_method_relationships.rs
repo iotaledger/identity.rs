@@ -32,7 +32,7 @@ impl WasmAccount {
       .map(OneOrMany::into_vec)
       .wasm_result()?
       .into_iter()
-      .map(Into::into)
+      .map(MethodRelationship::from)
       .collect();
 
     let fragment: String = options

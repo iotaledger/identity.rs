@@ -43,17 +43,18 @@ impl WasmAccountBuilder {
     let default_config: AccountConfig = AccountConfig::default();
     let mut builder = AccountBuilder::new();
 
-    if let Some(o) = options {
+    if let Some(builder_options) = options {
       builder = builder
-        .autopublish(o.autopublish().unwrap_or(default_config.autopublish))
-        .milestone(o.milestone().unwrap_or(default_config.milestone))
+        .autopublish(builder_options.autopublish().unwrap_or(default_config.autopublish))
+        .milestone(builder_options.milestone().unwrap_or(default_config.milestone))
         .autosave(
-          o.autosave()
+          builder_options
+            .autosave()
             .map(|auto_save| auto_save.0)
             .unwrap_or(default_config.autosave),
         );
       //todo storage
-      if let Some(mut config) = o.clientConfig() {
+      if let Some(mut config) = builder_options.clientConfig() {
         let client: WasmClient = WasmClient::from_config(&mut config)?;
         builder = builder.client(Arc::new(client.client.as_ref().clone()));
       };
