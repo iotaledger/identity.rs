@@ -42,7 +42,6 @@ pub(crate) struct AccountConfig {
 }
 
 impl AccountConfig {
-
   /// Creates a new default [`Config`].
   pub(crate) fn new() -> Self {
     Self {
