@@ -22,6 +22,7 @@ on:
 
 env:
   RUST_BACKTRACE: full
+  CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
@@ -137,7 +138,6 @@ jobs:
             sccache-path: /home/runner/.cache/sccache
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
-      CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
       RUSTC_WRAPPER: sccache
 
     steps:
