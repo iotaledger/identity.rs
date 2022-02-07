@@ -37,6 +37,12 @@ impl From<SignatureOptions> for WasmSignatureOptions {
   }
 }
 
+impl From<&WasmSignatureOptions> for SignatureOptions {
+  fn from(options: &WasmSignatureOptions) -> Self {
+    options.0.clone()
+  }
+}
+
 /// Interface to allow creating `SignatureOptions` easily.
 #[wasm_bindgen]
 extern "C" {
