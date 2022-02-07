@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
@@ -15,7 +15,7 @@ use crate::verification::VerificationMethod;
 #[derive(Clone, Debug)]
 pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
   pub(crate) id: Option<CoreDID>,
-  pub(crate) controller: Option<CoreDID>,
+  pub(crate) controller: Vec<CoreDID>,
   pub(crate) also_known_as: Vec<Url>,
   pub(crate) verification_method: Vec<VerificationMethod<U>>,
   pub(crate) authentication: Vec<MethodRef<U>>,
@@ -32,7 +32,7 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
   pub fn new(properties: T) -> Self {
     Self {
       id: None,
-      controller: None,
+      controller: Vec::new(),
       also_known_as: Vec::new(),
       verification_method: Vec::new(),
       authentication: Vec::new(),
@@ -52,10 +52,10 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
     self
   }
 
-  /// Sets the `controller` value.
+  /// Adds a value to the `controller` set.
   #[must_use]
   pub fn controller(mut self, value: CoreDID) -> Self {
-    self.controller = Some(value);
+    self.controller.push(value);
     self
   }
 

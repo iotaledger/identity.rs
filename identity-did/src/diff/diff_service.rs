@@ -168,8 +168,8 @@ impl Diff for ServiceEndpoint {
 mod test {
   use indexmap::IndexMap;
 
-  use crate::utils::OrderedSet;
   use identity_core::common::Object;
+  use identity_core::common::OrderedSet;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;

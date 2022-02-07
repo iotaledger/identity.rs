@@ -82,10 +82,24 @@ jobs:
             PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
           fi
 
-          if [[ $PREVIOUS_VERSION ]]; then
-            SINCE_ARG="--since-tag $PREVIOUS_VERSION"
+          # create a list of tags that are unrelated to the current release
+          ALL_TAGS=$(git tag -l)
+          temp_array=()
+          for value in ${ALL_TAGS[@]}
+          do
+              if ! [[ $value != $PREVIOUS_VERSION || $value != $CURRENT_VERSION ]]; then
+                temp_array+=($value)
+              fi
+          done
+          UNRELATED_TAGS=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
+          unset temp_array
+          echo UNRELATED_TAGS=$UNRELATED_TAGS
+          if [[ $UNRELATED_TAGS != '' ]]; then
+            FIRST="--exclude-tags "
+            SECOND=$UNRELATED_TAGS
+            EXCLUDE_ARG=$FIRST$SECOND
           fi
-
+          
           echo IS_DEV_RELEASE=$IS_DEV_RELEASE
           echo IS_DEV_RELEASE=$IS_DEV_RELEASE >> $GITHUB_ENV
           echo "::set-output name=is-dev-release::$IS_DEV_RELEASE"
@@ -95,8 +109,8 @@ jobs:
           echo PREVIOUS_VERSION=$PREVIOUS_VERSION
           echo PREVIOUS_VERSION=$PREVIOUS_VERSION >> $GITHUB_ENV
           echo "::set-output name=previous-version::$PREVIOUS_VERSION"
-          echo SINCE_ARG=$SINCE_ARG
-          echo SINCE_ARG=$SINCE_ARG >> $GITHUB_ENV
+          echo EXCLUDE_ARG=$EXCLUDE_ARG
+          echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
 
       - name: Import GPG key
         if: ${{env.IS_RELEASE}}
@@ -118,14 +132,16 @@ jobs:
           git push --follow-tags
 
       - name: Run Changelog Generator
-        if: ${{env.IS_RELEASE}}
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
         uses: './.github/actions/release/changelog-generator'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-path: RELEASE_CHANGELOG.md
           changelog-config-path: ${{ inputs.changelog-config-path }}
-          future-release: ${{ env.CURRENT_VERSION }} 
-          optional-arg: ${{ env.SINCE_ARG }}
+          output-only-current-release: true
+          future-release: ${{ env.CURRENT_VERSION }}
+          previous-release: ${{ env.PREVIOUS_VERSION }}
+          optional-arg: ${{env.EXCLUDE_ARG}}
 
       - name: Create GitHub release
         if: ${{env.IS_RELEASE && inputs.create-github-release}}
