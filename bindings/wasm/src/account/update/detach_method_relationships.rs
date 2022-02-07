@@ -35,11 +35,12 @@ impl WasmAccount {
       .map(Into::into)
       .collect();
 
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
+
+    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
 
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {

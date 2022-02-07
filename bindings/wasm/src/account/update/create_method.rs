@@ -91,12 +91,12 @@ const TS_CREATE_METHOD_OPTIONS: &'static str = r#"
  */
 export type CreateMethodOptions = {
     /**
-     * The identifier of the method in the document, required.
+     * The identifier of the method in the document.
      */
     fragment: string,
 
     /**
-     * The scope of the method.
+     * The scope of the method, defaults to VerificationMethod.
      */
     methodScope?: MethodScope,
 
@@ -106,7 +106,7 @@ export type CreateMethodOptions = {
     methodType?: MethodType,
 
     /**
-     * The secret key to use for the method, optional. Will be generated when omitted.
+     * The private key to use for the method, optional. A new private key will be generated if omitted.
      */
     methodSecret?: MethodSecret
   };
