@@ -35,10 +35,10 @@ impl AccountSetup {
 
 /// Configuration for [`Account`][crate::account::Account]s.
 #[derive(Clone, Debug)]
-pub struct AccountConfig {
-  pub autosave: AutoSave,
-  pub autopublish: bool,
-  pub testmode: bool,
+pub(crate) struct AccountConfig {
+  pub(crate) autosave: AutoSave,
+  pub(crate) autopublish: bool,
+  pub(crate) testmode: bool,
 }
 
 impl AccountConfig {

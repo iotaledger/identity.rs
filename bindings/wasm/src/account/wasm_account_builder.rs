@@ -12,7 +12,6 @@ use crate::tangle::Client as WasmClient;
 use crate::tangle::Config;
 
 use identity::account::AccountBuilder;
-use identity::account::AccountConfig;
 use identity::account::IdentitySetup;
 
 use crate::account::wasm_auto_save::WasmAutoSave;
@@ -40,23 +39,23 @@ impl WasmAccountBuilder {
   /// Creates a new `AccountBuilder`.
   #[wasm_bindgen(constructor)]
   pub fn new(options: Option<AccountBuilderOptions>) -> Result<WasmAccountBuilder> {
-    let default_config: AccountConfig = AccountConfig::default();
     let mut builder = AccountBuilder::new();
 
     if let Some(builder_options) = options {
-      builder = builder
-        .autopublish(builder_options.autopublish().unwrap_or(default_config.autopublish))
-        .autosave(
-          builder_options
-            .autosave()
-            .map(|auto_save| auto_save.0)
-            .unwrap_or(default_config.autosave),
-        );
-      //todo storage
+      if let Some(autopublish) = builder_options.autopublish() {
+        builder = builder.autopublish(autopublish);
+      }
+
+      if let Some(autosave) = builder_options.autosave() {
+        builder = builder.autosave(autosave.0);
+      }
+
       if let Some(mut config) = builder_options.clientConfig() {
         let client: WasmClient = WasmClient::from_config(&mut config)?;
         builder = builder.client(Arc::new(client.client.as_ref().clone()));
       };
+
+      //todo storage
     }
 
     Ok(Self(Rc::new(RefCell::new(builder))))
