@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::credential::errors::DocumentAssociationError;
+
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
@@ -52,13 +54,19 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
-  /// Caused by a single validation unit failing
-  #[error("validation unit failed")]
-  CredentialValidation(#[from] crate::credential::errors::StandaloneValidationError),
-  /// Caused by a failure to resolve a Credential  
-  #[error("credential resolution failed")]
-  CredentialResolution(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
-  /// Caused by a failure to resolve a Presentation
-  #[error("presentation resolution failed")]
-  PresentationResolution(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
+  /// Caused by a single validation unit failing.
+  #[error("A validation unit failed")]
+  UnsuccessfulValidationUnit(#[from] crate::credential::errors::StandaloneValidationError),
+  /// Caused by a failure to resolve a Credential.  
+  #[error("credential validation failed")]
+  UnsuccessfulCredentialValidation(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
+  /// Caused by a failure to validate a Presentation.
+  #[error("presentation validation failed")]
+  UnsuccessfulPresentationValidation(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
+  /// Caused by a failure to construct a `ResolvedCredential`.
+  #[error("failed to construct ResolvedCredential: invalid input data")]
+  InvalidCredentialPairing(#[source] DocumentAssociationError),
+  /// Caused by a failure to construct a `ResolvedPresentation`.
+  #[error("failed to construct ResolvedPresentation: invalid input data")]
+  InvalidPresentationPairing(#[source] DocumentAssociationError),
 }

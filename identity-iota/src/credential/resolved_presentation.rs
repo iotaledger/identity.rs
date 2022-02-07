@@ -10,13 +10,13 @@ use crate::document::ResolvedIotaDocument;
 use crate::Result;
 
 /// A verifiable presentation whose associated DID documents have been resolved from the Tangle.
-pub struct ResolvedPresentation<T = Object, U = Object> {
-  pub presentation: Presentation<T, U>,
-  pub holder: ResolvedIotaDocument,
-  pub credentials: Vec<ResolvedCredential<U>>,
+pub struct ResolvedPresentation<'a, 'b,  T = Object, U = Object> {
+  pub presentation: &'b Presentation<T, U>,
+  pub holder: &'b ResolvedIotaDocument,
+  pub credentials: &'b [ResolvedCredential<'a, U>],
 }
 
-impl<T, U> ResolvedPresentation<T, U> {
+impl<'a, 'b, T, U> ResolvedPresentation<'a,'b, T, U> {
   delegate::delegate! {
       to self.presentation {
         /// An iterator over the credentials (with their corresponding position in the presentation) that have the

@@ -11,7 +11,7 @@ use crate::did::IotaDIDUrl;
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
-/// An error associated with credential validation. 
+/// An error associated with credential validation.
 pub enum StandaloneValidationError {
   /// Indicates that the expiration date of the credential is not considered valid.
   #[error("credential validation failed: the expiration date does not satisfy the validation criterea")]
@@ -22,7 +22,8 @@ pub enum StandaloneValidationError {
   /// The DID document corresponding to `did` has been deactivated.
   #[error("credential validation failed: encountered deactivated subject document")]
   //Todo: Should the did_url be included in the error message? Would it be better in terms of abstraction and
-  // flexibility to include more information in a simple String?
+  // flexibility to include more information in a simple String? Can the `did_url` be problematic in terms of GDPR if
+  // it gets written to a log file?
   DeactivatedSubjectDocument { did_url: IotaDIDUrl },
   /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
   #[error("credential validation failed: could not verify the issuer's signature")]
@@ -50,24 +51,6 @@ pub enum StandaloneValidationError {
   /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not spec compliant
   #[error("presentation validation failed: the presentation's structure is not spec compliant")]
   PresentationStructure(#[source] identity_credential::Error),
-  /// Indicates that the issuer's DID document could not be resolved,
-  #[error("credential validation failed: The issuer's DID Document could not be resolved")]
-  IssuerDocumentResolution {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: would it be better to use a specific type
-                                                                 * here? */
-  },
-  #[error("presentation validation failed: The holder's DID Document could not be resolved")]
-  HolderDocumentResolution {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: would it be better to use a specific type
-                                                                 * here? */
-  },
-  #[error("credential validation failed: Could not resolve a subject's DID Document")]
-  SubjectDocumentResolution {
-    did_url: Url, /* Todo: Should did_url be included in the error message? Would it be better to include
-                   * additional information in a String? */
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: would it be better to use a specific type
-                                                                 * here? */
-  },
   /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials
   #[error("presentation validation failed: The nonTransferable property of the credential at position {credential_position} is not met")]
   NonTransferableViolation { credential_position: usize },
@@ -76,11 +59,24 @@ pub enum StandaloneValidationError {
   MissingPresentationHolder,
 }
 
-// Todo: Should the DocumentResolution variants in Error be moved to their own enum?
-// If so would then AccumulatedError have an additional field?
+#[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
+/// An error caused by an attempt to group credentials with unrelated resolved DID documents
+pub enum DocumentAssociationError {
+  #[error("could not associate the provided resolved DID document with the credential's issuer")]
+  UnrelatedIssuer,
+  #[error(
+    "the subject data at {position} in the provided mapping cannot be associated with any of the credential's subjects"
+  )]
+  UnrelatedSubjects { position: usize },
+  #[error("could not associate the provided resolved DID document with the presentation's holder")]
+  UnrelatedHolder,
+  #[error("the credential at {position} in the provided resolved credentials cannot be associated with any of the presentation's credentials")]
+  UnrelatedCredentials { position: usize },
+}
 
 #[derive(Debug)]
-/// An error caused by a failure to resolve a Credential.  
+/// An error caused by a failure to validate a Credential.  
 pub struct AccumulatedCredentialValidationError {
   pub validation_errors: OneOrMany<StandaloneValidationError>,
 }
@@ -95,7 +91,7 @@ impl Display for AccumulatedCredentialValidationError {
     .collect();
     write!(
       f,
-      "credential resolution was unsuccessful. The following errors occurred: {}",
+      "credential validation was unsuccessful. The following errors occurred: {}",
       detailed_information
     )
   }
@@ -104,6 +100,7 @@ impl Display for AccumulatedCredentialValidationError {
 impl std::error::Error for AccumulatedCredentialValidationError {}
 
 #[derive(Debug)]
+/// An error caused by a failure to validate a Presentation.
 pub struct AccumulatedPresentationValidationError {
   pub credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError>,
   pub presentation_validation_errors: Vec<StandaloneValidationError>,
@@ -113,7 +110,7 @@ impl Display for AccumulatedPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let credential_error_formatter = |(position, reason): (&usize, &AccumulatedCredentialValidationError)| -> String {
       format!(
-        "could not resolve credential at position {}. The following errors occurred {}",
+        "could not validate credential at position {}. The following errors occurred {}",
         position,
         reason.to_string().as_str()
       )
@@ -127,11 +124,10 @@ impl Display for AccumulatedPresentationValidationError {
     let detailed_information: String = itertools::intersperse(error_string_iter, ", ".to_string()).collect();
     write!(
       f,
-      "presentation resolution was unsuccessful. The following errors occurred: {}",
+      "presentation validation was unsuccessful. The following errors occurred: {}",
       detailed_information
     )
   }
 }
 
 impl std::error::Error for AccumulatedPresentationValidationError {}
-

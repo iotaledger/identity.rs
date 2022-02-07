@@ -1,27 +1,83 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::BTreeMap;
-
+use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
 use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
+use super::errors::DocumentAssociationError;
+use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
-use crate::tangle::TangleRef;
+use crate::Error;
 use crate::Result;
 use delegate::delegate;
 
 /// A verifiable credential whose associated DID documents have been resolved from the Tangle.
-pub struct ResolvedCredential<T> {
-  pub credential: Credential<T>,
-  pub issuer: ResolvedIotaDocument,
-  pub subjects: BTreeMap<String, ResolvedIotaDocument>,
+///
+/// This struct enables low-level control over how a [`Credential`] gets validated by offering the following validation
+/// units
+/// - [`Self::verify_signature()`]
+/// - [`Self::try_issued_before()`]
+/// - [`Self::try_only_active_subject_documents`]
+/// - [`Self::try_expires_after()`]
+/// - [`Self::check_structure()`]
+pub struct ResolvedCredential<'a, T> {
+  pub(crate) credential: &'a Credential<T>,
+  pub(crate) issuer: &'a ResolvedIotaDocument,
+  pub(crate) subjects: &'a OneOrMany<ResolvedIotaDocument>,
 }
 
-impl<T: Serialize> ResolvedCredential<T> {
+impl<'a, T: Serialize> ResolvedCredential<'a, T> {
+  /// Combines a `Credential` with the issuer's `ResolvedIotaDocument` and a mapping with values `ResolvedIotaDocument`
+  /// and keys the corresponding `Url` represented as a `String`.
+  pub fn try_new(
+    credential: &'a Credential<T>,
+    issuer: &'a ResolvedIotaDocument,
+    subjects: &'a OneOrMany<ResolvedIotaDocument>,
+  ) -> Result<Self> {
+    // check that the issuer corresponds with the issuer stated in the credential.
+    //  need to parse a valid IotaDID from the credential's issuer and check that the DID matches with the provided
+    // resolved DID document
+    let credential_issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
+    if let Ok(did) = credential_issuer_did {
+      if &did != issuer.document.id() {
+        return Err(Error::InvalidCredentialPairing(
+          DocumentAssociationError::UnrelatedIssuer,
+        ));
+      }
+    } else {
+      return Err(Error::InvalidCredentialPairing(
+        DocumentAssociationError::UnrelatedIssuer,
+      ));
+    }
+
+    // check that the subjects correspond to the credential's subjects
+    for (position, subject) in subjects.iter().enumerate() {
+      if !credential.credential_subject.iter().any(|credential_subject| {
+        credential_subject
+          .id
+          .as_ref()
+          // Todo: id().to_url().to_string().as_str() is there a better way? 
+          // will that even work?
+          .filter(|url| url == &subject.document.id().to_url().to_string().as_str())
+          .is_some()
+      }) {
+        return Err(Error::InvalidCredentialPairing(
+          DocumentAssociationError::UnrelatedSubjects { position },
+        ));
+      }
+    }
+
+    Ok(Self {
+      credential,
+      issuer,
+      subjects,
+    })
+  }
+
   /// Verify the signature using the issuer's DID document.
   ///
   /// # Terminology
@@ -40,7 +96,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .subjects
       .iter()
-      .map(|(_, doc)| doc)
+      .map(|doc| doc)
       .filter(|resolved_doc| !resolved_doc.document.active())
   }
   delegate! {
@@ -56,10 +112,10 @@ impl<T: Serialize> ResolvedCredential<T> {
           pub fn matches_types(&self, other: &[&str]) -> bool;
 
           /// Returns an iterator of the `types` of this Credential that are not in `input_types`.
-          pub fn types_difference_left<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &String> + 'a;
+          pub fn types_difference_left<'b>(&'b self, input_types: &'b [&str]) -> impl Iterator<Item = &String> + 'b;
 
           /// Returns an iterator of `types` that are in `input_types`, but not in this Credential.
-          pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item= &str> + 'a;
+          pub fn types_difference_right<'b>(&'b self, input_types: &'b [&str]) -> impl Iterator<Item= &str> + 'b;
       }
   }
 
@@ -100,7 +156,7 @@ impl<T: Serialize> ResolvedCredential<T> {
         // Todo: Should this method document that it allocates on failure since it is considered part of the
         // low-level validation API?
         super::errors::StandaloneValidationError::DeactivatedSubjectDocument {
-          did_url: deactivated_doc.did().to_url(),
+          did_url: deactivated_doc.document.id().to_url(),
         }
         .into(),
       )

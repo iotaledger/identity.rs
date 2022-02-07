@@ -44,7 +44,7 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
   ) -> Result<()> {
     self
       .validate_credential_internal(credential, options, fail_fast)
-      .map_err(Error::CredentialResolution)
+      .map_err(Error::UnsuccessfulCredentialValidation)
   }
 
   /// Validate a `Presentation`
@@ -63,7 +63,7 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
   ) -> Result<()> {
     self
       .validate_presentation_internal(presentation, options, fail_fast)
-      .map_err(Error::PresentationResolution)
+      .map_err(Error::UnsuccessfulPresentationValidation)
   }
 
   /// Validate the structure, expiration date and issuance date of the given credential.

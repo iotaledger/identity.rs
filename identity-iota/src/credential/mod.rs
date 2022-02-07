@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod errors;
-pub(crate) mod resolution;
 mod resolved_credential;
 mod resolved_presentation;
-mod resolution_options; 
 mod validation_options;
 mod validator;
 
