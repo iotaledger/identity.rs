@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::account::wasm_account::PromiseAccount;
 use crate::account::wasm_account::WasmAccount;
+use std::cell::RefCell;
 
 use crate::did::WasmDID;
 use crate::error::Result;
@@ -18,7 +20,6 @@ use crate::account::wasm_identity_setup::WasmIdentitySetup;
 use js_sys::Promise;
 use std::rc::Rc;
 use std::sync::Arc;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -32,7 +33,7 @@ use wasm_bindgen_futures::future_to_promise;
 /// This means a builder can be reconfigured in-between account creations, without affecting
 /// the configuration of previously built accounts.
 #[wasm_bindgen(js_name = AccountBuilder)]
-pub struct WasmAccountBuilder(Rc<WasmRefCell<AccountBuilder>>);
+pub struct WasmAccountBuilder(Rc<RefCell<AccountBuilder>>);
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
@@ -58,14 +59,15 @@ impl WasmAccountBuilder {
       };
     }
 
-    Ok(Self(Rc::new(WasmRefCell::new(builder))))
+    Ok(Self(Rc::new(RefCell::new(builder))))
   }
 
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
-  pub fn load_identity(&mut self, did: WasmDID) -> Result<PromiseAccount> {
+  pub fn load_identity(&mut self, did: &WasmDID) -> Result<PromiseAccount> {
     let builder = self.0.clone();
+    let did = did.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
@@ -89,13 +91,10 @@ impl WasmAccountBuilder {
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
     // Create IdentitySetup
-    let mut setup = IdentitySetup::new();
-    if let Some(identity_setup) = identity_setup {
-      setup = IdentitySetup::from(identity_setup)
-    }
+    let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
 
     // Call the builder.
-    let builder: Rc<WasmRefCell<AccountBuilder>> = self.0.clone();
+    let builder: Rc<RefCell<AccountBuilder>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
@@ -108,12 +107,6 @@ impl WasmAccountBuilder {
     });
     Ok(promise.unchecked_into::<PromiseAccount>())
   }
-}
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<Account>")]
-  pub type PromiseAccount;
 }
 
 #[wasm_bindgen]
@@ -137,7 +130,7 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_ACCOUNT_BUILDER_OPTIONS: &'static str = r#"
 /**
- * Options for creating a new account builder.
+ * Options for creating a new {@link AccountBuilder}.
  */
 export type AccountBuilderOptions = {
 

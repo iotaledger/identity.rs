@@ -318,3 +318,9 @@ impl From<WasmPublishOptions> for PublishOptions {
     options
   }
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Account>")]
+  pub type PromiseAccount;
+}
