@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
+use std::cell::RefCell;
+use std::cell::RefMut;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -13,8 +15,6 @@ use identity::account::MethodSecret;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
 use identity::did::MethodType;
-use wasm_bindgen::__rt::RefMut;
-use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
 use crate::account::wasm_method_secret::WasmMethodSecret;
@@ -29,7 +29,7 @@ impl WasmAccount {
   /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
 
     let method_type: Option<MethodType> = options.methodType().map(|m| m.0);
 
@@ -43,7 +43,7 @@ impl WasmAccount {
     let method_secret: Option<MethodSecret> = options.methodSecret().map(|ms| ms.0);
 
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
       let mut create_method: CreateMethodBuilder<'_> = updater.create_method().fragment(fragment);
 

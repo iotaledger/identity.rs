@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
+use std::cell::RefCell;
+use std::cell::RefMut;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -12,11 +14,9 @@ use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Object;
 use identity::core::Url;
-use wasm_bindgen::__rt::RefMut;
-use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
-use crate::error::wasm_error;
+
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -38,9 +38,9 @@ impl WasmAccount {
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
     let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
 
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
       let mut create_service: CreateServiceBuilder<'_> = updater
         .create_service()

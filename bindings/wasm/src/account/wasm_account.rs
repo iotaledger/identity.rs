@@ -15,6 +15,8 @@ use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::PublishOptions;
 use identity::account::Storage;
+use std::cell::Ref;
+use std::cell::RefCell;
 
 use identity::crypto::SetSignature;
 use identity::crypto::SignatureOptions;
@@ -27,8 +29,6 @@ use js_sys::Promise;
 use crate::account::wasm_auto_save::WasmAutoSave;
 use std::rc::Rc;
 use std::sync::Arc;
-use wasm_bindgen::__rt::Ref;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -38,33 +38,33 @@ use wasm_bindgen_futures::future_to_promise;
 /// It handles private keys, writing to storage and
 /// publishing to the Tangle.
 #[wasm_bindgen(js_name = Account)]
-pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
+pub struct WasmAccount(pub(crate) Rc<RefCell<Account>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   /// Returns the {@link DID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
-    let account: Ref<Account> = self.0.as_ref().borrow();
-    WasmDID::from(account.document().id().clone())
+    let account: Ref<Account> = self.0.borrow();
+    WasmDID::from(account.did().clone())
   }
 
   /// Returns whether auto-publish is enabled.
   #[wasm_bindgen]
   pub fn autopublish(&self) -> bool {
-    self.0.as_ref().borrow().autopublish()
+    self.0.borrow().autopublish()
   }
 
   /// Returns the auto-save configuration value.
   #[wasm_bindgen]
   pub fn autosave(&self) -> WasmAutoSave {
-    WasmAutoSave(self.0.as_ref().borrow().autosave())
+    WasmAutoSave(self.0.borrow().autosave())
   }
 
   /// Returns a copy of the document managed by the `Account`.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
-    let document: IotaDocument = self.0.as_ref().borrow().document().clone();
+    let document: IotaDocument = self.0.borrow().document().clone();
     WasmDocument::from(document)
   }
 
@@ -92,13 +92,12 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
     // Get IotaDID and storage from the account.
-    let account: Rc<WasmRefCell<Account>> = self.0;
-    let did: IotaDID = account.as_ref().borrow().did().to_owned();
-    let storage: Arc<dyn Storage> = Arc::clone(account.as_ref().borrow().storage());
+    let did: IotaDID = self.0.borrow().did().to_owned();
+    let storage: Arc<dyn Storage> = Arc::clone(self.0.borrow().storage());
 
     // Drop account should release the DIDLease because we cannot take ownership of the Rc.
     // Note that this will still fail if anyone else has a reference to the Account.
-    std::mem::drop(account);
+    std::mem::drop(self.0);
 
     future_to_promise(async move {
       // Create a new account since `delete_identity` consumes it.
@@ -247,7 +246,7 @@ impl WasmAccount {
 
 impl From<Account> for WasmAccount {
   fn from(account: Account) -> WasmAccount {
-    WasmAccount(Rc::new(WasmRefCell::new(account)))
+    WasmAccount(Rc::new(RefCell::new(account)))
   }
 }
 

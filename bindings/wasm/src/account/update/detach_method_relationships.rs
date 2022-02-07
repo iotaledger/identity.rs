@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use js_sys::Promise;
+use std::cell::RefCell;
+use std::cell::RefMut;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -13,8 +15,6 @@ use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 
 use identity::did::MethodRelationship;
-use wasm_bindgen::__rt::RefMut;
-use wasm_bindgen::__rt::WasmRefCell;
 
 use crate::account::wasm_account::WasmAccount;
 use crate::account::wasm_method_relationship::WasmMethodRelationship;
@@ -40,13 +40,13 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
 
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());
       }
-      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
       let mut detach_relationship: DetachMethodRelationshipBuilder<'_> =
         updater.detach_method_relationship().fragment(fragment);
