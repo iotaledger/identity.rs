@@ -39,11 +39,9 @@ pub(crate) struct AccountConfig {
   pub(crate) autosave: AutoSave,
   pub(crate) autopublish: bool,
   pub(crate) testmode: bool,
-  pub(crate) milestone: u32,
 }
 
 impl AccountConfig {
-  const MILESTONE: u32 = 1;
 
   /// Creates a new default [`Config`].
   pub(crate) fn new() -> Self {
@@ -51,7 +49,6 @@ impl AccountConfig {
       autosave: AutoSave::Every,
       autopublish: true,
       testmode: false,
-      milestone: Self::MILESTONE,
     }
   }
 
@@ -73,12 +70,6 @@ impl AccountConfig {
   /// Default: `true`
   pub(crate) fn autopublish(mut self, value: bool) -> Self {
     self.autopublish = value;
-    self
-  }
-
-  /// Save a state snapshot every N actions.
-  pub(crate) fn milestone(mut self, value: u32) -> Self {
-    self.milestone = value;
     self
   }
 
