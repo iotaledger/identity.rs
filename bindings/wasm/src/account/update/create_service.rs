@@ -25,11 +25,7 @@ impl WasmAccount {
   /// Adds a new Service to the DID Document.
   #[wasm_bindgen(js_name = createService)]
   pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
-
-    let service_type: String = options
-      .type_()
-      .ok_or_else(|| wasm_error(MissingRequiredField("type")))?;
+    let service_type: String = options.type_().ok_or(MissingRequiredField("type")).wasm_result()?;
 
     let fragment: String = options
       .fragment()
@@ -42,6 +38,7 @@ impl WasmAccount {
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
     let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
 
+    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       let mut account: RefMut<Account> = account.as_ref().borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
