@@ -46,7 +46,6 @@ impl WasmAccountBuilder {
     if let Some(builder_options) = options {
       builder = builder
         .autopublish(builder_options.autopublish().unwrap_or(default_config.autopublish))
-        .milestone(builder_options.milestone().unwrap_or(default_config.milestone))
         .autosave(
           builder_options
             .autosave()
@@ -145,11 +144,6 @@ export type AccountBuilderOptions = {
      * `autopublish == false` the account will combine and publish message when .publish() is called.
      */
     autopublish?: boolean,
-
-    /**
-     * Number of actions required to save a snapshot.
-     */
-    milestone?: number,
 
     /**
      * Client for tangle requests.
