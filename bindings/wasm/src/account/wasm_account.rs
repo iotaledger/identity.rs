@@ -186,7 +186,7 @@ impl WasmAccount {
     U: serde::Serialize + SetSignature + 'static,
   {
     let account = self.0.clone();
-    let options: SignatureOptions = SignatureOptions::from(signature_options.0.clone());
+    let options: SignatureOptions = signature_options.0.clone();
 
     future_to_promise(async move {
       account
