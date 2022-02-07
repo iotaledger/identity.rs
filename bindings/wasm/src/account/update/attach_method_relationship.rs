@@ -29,7 +29,7 @@ impl WasmAccount {
   /// Note: the method must exist and be in the set of verification methods;
   /// it cannot be an embedded method.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
-  pub fn attach_relationships(&mut self, options: &AttachMethodRelationshipOptions) -> Result<Promise> {
+  pub fn attach_method_relationships(&mut self, options: &AttachMethodRelationshipOptions) -> Result<Promise> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()

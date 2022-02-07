@@ -25,7 +25,7 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Detaches the given relationship from the given method, if the method exists.
   #[wasm_bindgen(js_name = detachMethodRelationships)]
-  pub fn detach_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<Promise> {
+  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<Promise> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
