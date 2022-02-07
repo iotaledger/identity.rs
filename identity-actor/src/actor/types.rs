@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::ActorRequest;
 use crate::Endpoint;
 use crate::Result;
 
@@ -50,7 +51,7 @@ impl<T> RequestContext<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DidCommPlaintextMessage {
+pub struct DidCommPlaintextMessage<T> {
   pub typ: String,
   pub id: ThreadId,
   pub thid: Option<ThreadId>,
@@ -61,11 +62,11 @@ pub struct DidCommPlaintextMessage {
   pub to: String,
   pub created_time: u32,
   pub expires_time: u32,
-  pub body: serde_json::Value,
+  pub body: T,
 }
 
-impl DidCommPlaintextMessage {
-  pub fn new(id: ThreadId, type_: String, body: serde_json::Value) -> Self {
+impl<T> DidCommPlaintextMessage<T> {
+  pub fn new(id: ThreadId, type_: String, body: T) -> Self {
     DidCommPlaintextMessage {
       id,
       type_,
@@ -88,6 +89,17 @@ impl DidCommPlaintextMessage {
   }
 }
 
+impl<T> ActorRequest for DidCommPlaintextMessage<T>
+where
+  T: ActorRequest,
+{
+  type Response = ();
+
+  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    self.body.request_name()
+  }
+}
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ThreadId {
   inner: String,
@@ -106,3 +118,8 @@ impl Display for ThreadId {
     write!(f, "{}", self.inner)
   }
 }
+
+/// Can be returned from a hook to indicate that the protocol should immediately terminate.
+/// This doesn't include any way to set a cause for the termination, as it is expected that
+/// a hook sends a problem report to the peer before returning this type.
+pub struct DidCommTermination;

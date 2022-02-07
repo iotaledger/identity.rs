@@ -3,11 +3,10 @@
 
 use libp2p::PeerId;
 
-use crate::didcomm::actor::DidCommMessages;
 use crate::Actor;
+use crate::DidCommPlaintextMessage;
 use crate::RequestContext;
-
-use super::actor::DidCommActor;
+use crate::ThreadId;
 
 #[derive(Clone)]
 pub struct DidCommHandler;
@@ -17,61 +16,76 @@ impl DidCommHandler {
     Self
   }
 
-  pub async fn presentation_holder_actor_handler(self, mut actor: Actor, request: RequestContext<PresentationRequest>) {
+  pub async fn presentation_holder_actor_handler(
+    self,
+    actor: Actor,
+    request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
+  ) {
     log::debug!("holder: received presentation request");
 
-    let did_comm_actor = DidCommActor::new(actor.clone());
+    // let did_comm_actor = DidCommActor::new(actor.clone());
 
-    actor
-      .add_state(did_comm_actor.messages.clone())
-      .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-      .unwrap();
+    // actor
+    //   .add_state(did_comm_actor.messages.clone())
+    //   .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
+    //   .unwrap();
 
-    presentation_holder_handler(DidCommActor::new(actor), request.peer, Some(request.input))
+    presentation_holder_handler(actor, request.peer, Some(request.input))
       .await
       .unwrap();
   }
 
-  pub async fn presentation_verifier_actor_handler(self, mut actor: Actor, request: RequestContext<PresentationOffer>) {
+  pub async fn presentation_verifier_actor_handler(
+    self,
+    actor: Actor,
+    request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>,
+  ) {
     log::debug!("verifier: received offer from {}", request.peer);
 
-    let did_comm_actor = DidCommActor::new(actor.clone());
+    // let did_comm_actor = DidCommActor::new(actor.clone());
 
-    actor
-      .add_state(did_comm_actor.messages.clone())
-      .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-      .unwrap();
+    // actor
+    //   .add_state(did_comm_actor.messages.clone())
+    //   .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
+    //   .unwrap();
 
-    presentation_verifier_handler(did_comm_actor, request.peer, Some(request.input))
+    presentation_verifier_handler(actor, request.peer, Some(request.input))
       .await
       .unwrap();
   }
 }
 
 pub async fn presentation_holder_handler(
-  mut actor: DidCommActor,
+  mut actor: Actor,
   peer: PeerId,
-  request: Option<PresentationRequest>,
+  request: Option<DidCommPlaintextMessage<PresentationRequest>>,
 ) -> crate::Result<()> {
-  let _request: PresentationRequest = match request {
+  let request: DidCommPlaintextMessage<PresentationRequest> = match request {
     Some(request) => request,
     None => {
       log::debug!("holder: sending presentation offer");
-      actor.send_request(peer, PresentationOffer::default()).await?;
+      // actor.send_request(peer, PresentationOffer::default()).await?;
 
-      let req = actor.await_message(peer).await;
+      let thread_id = ThreadId::new();
+      actor
+        .send_message(peer, &thread_id, PresentationOffer::default())
+        .await?;
+
+      let req = actor.await_message(&thread_id).await;
       log::debug!("holder: received presentation request");
 
       req?
     }
   };
 
+  let thread_id = request.thread_id();
+
   // let _result = actor.call_hook("didcomm/presentation/user_consent", request).await?;
 
   log::debug!("holder: sending presentation");
-  actor.send_request(peer, Presentation::default()).await?;
+  actor.send_message(peer, thread_id, Presentation::default()).await?;
 
-  let _result: PresentationResult = actor.await_message(peer).await?;
+  let _result: DidCommPlaintextMessage<PresentationResult> = actor.await_message(thread_id).await?;
   log::debug!("holder: received presentation result");
 
   // let _result = actor.call_hook("didcomm/presentation/result", result).await?;
@@ -80,18 +94,29 @@ pub async fn presentation_holder_handler(
 }
 
 pub async fn presentation_verifier_handler(
-  mut actor: DidCommActor,
+  mut actor: Actor,
   peer: PeerId,
-  _offer: Option<PresentationOffer>,
+  offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
 ) -> crate::Result<()> {
-  log::debug!("verifier: sending request");
-  actor.send_request(peer, PresentationRequest::default()).await?;
+  let thread_id: ThreadId = if let Some(offer) = offer {
+    offer.thread_id().to_owned()
+  } else {
+    ThreadId::new()
+  };
 
-  let presentation: Presentation = actor.await_message(peer).await?;
+  log::debug!("verifier: sending request");
+  actor
+    .send_message(peer, &thread_id, PresentationRequest::default())
+    .await?;
+
+  log::debug!("verifier: awaiting presentation");
+  let presentation: DidCommPlaintextMessage<Presentation> = actor.await_message(&thread_id).await?;
   log::debug!("verifier: received presentation: {:?}", presentation);
 
   log::debug!("verifier: sending presentation result");
-  actor.send_request(peer, PresentationResult::default()).await?;
+  actor
+    .send_message(peer, &thread_id, PresentationResult::default())
+    .await?;
   Ok(())
 }
 

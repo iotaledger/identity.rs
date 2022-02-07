@@ -164,9 +164,17 @@ impl EventLoop {
   }
 }
 
+#[derive(Debug)]
 pub struct InboundRequest {
   pub peer_id: PeerId,
   pub endpoint: Endpoint,
   pub input: Vec<u8>,
   pub response_channel: ResponseChannel<DidCommResponse>,
+}
+
+#[derive(Debug)]
+pub struct ThreadRequest {
+  pub peer_id: PeerId,
+  pub endpoint: Endpoint,
+  pub input: Vec<u8>,
 }

@@ -49,14 +49,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 
   holder_actor.add_address(peer_id, addr.clone()).await;
 
-  let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
-
-  holder_actor
-    .add_state(holder_didcomm_actor.messages.clone())
-    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    .unwrap();
-
-  presentation_holder_handler(holder_didcomm_actor, peer_id, None)
+  presentation_holder_handler(holder_actor.clone(), peer_id, None)
     .await
     .unwrap();
 
@@ -81,14 +74,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 
   verifier_actor.add_address(peer_id, addr.clone()).await;
 
-  let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
-
-  verifier_actor
-    .add_state(verifier_didcomm_actor.messages.clone())
-    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    .unwrap();
-
-  presentation_verifier_handler(verifier_didcomm_actor, peer_id, None)
+  presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
     .await
     .unwrap();
 
@@ -99,7 +85,8 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> Result<()> {
+async fn test_didcomm_presentation_verifier_initiates_with_await_message_hook() -> Result<()> {
+  pretty_env_logger::init();
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut verifier_actor = default_sending_actor().await;
@@ -116,10 +103,11 @@ async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> R
   async fn presentation_request_hook(
     state: TestFunctionState,
     _: Actor,
-    req: RequestContext<PresentationRequest>,
+    request: RequestContext<PresentationRequest>,
   ) -> StdResult<PresentationRequest, DidCommTermination> {
+    log::debug!("invoked hook");
     state.was_called.store(true, Ordering::SeqCst);
-    Ok(req.input)
+    Ok(request.input)
   }
 
   verifier_actor
@@ -129,14 +117,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> R
 
   verifier_actor.add_address(peer_id, addr.clone()).await;
 
-  let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
-
-  verifier_actor
-    .add_state(verifier_didcomm_actor.messages.clone())
-    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    .unwrap();
-
-  presentation_verifier_handler(verifier_didcomm_actor, peer_id, None)
+  presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
     .await
     .unwrap();
 
@@ -179,14 +160,7 @@ async fn test_didcomm_presentation_holder_initiates_with_implicit_hooks() -> Res
 
   holder_actor.add_address(peer_id, addr.clone()).await;
 
-  let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
-
-  holder_actor
-    .add_state(holder_didcomm_actor.messages.clone())
-    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    .unwrap();
-
-  presentation_holder_handler(holder_didcomm_actor, peer_id, None)
+  presentation_holder_handler(holder_actor.clone(), peer_id, None)
     .await
     .unwrap();
 

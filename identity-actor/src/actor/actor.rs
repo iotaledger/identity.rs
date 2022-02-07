@@ -8,10 +8,12 @@ use std::sync::Arc;
 
 use crate::p2p::behaviour::DidCommResponse;
 use crate::p2p::event_loop::InboundRequest;
+use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::ActorRequest;
 use crate::AsyncFn;
 use crate::DidCommPlaintextMessage;
+use crate::DidCommTermination;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
@@ -30,6 +32,7 @@ use libp2p::PeerId;
 
 use libp2p::request_response::ResponseChannel;
 use libp2p::TransportError;
+use serde::de::DeserializeOwned;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tokio::task::{self};
@@ -74,8 +77,8 @@ pub struct Actor {
   handlers: Arc<HandlerMap>,
   objects: Arc<ObjectMap>,
   listener_handle: Arc<Mutex<Option<JoinHandle<Result<()>>>>>,
-  threads_receiver: Arc<DashMap<ThreadId, oneshot::Receiver<DidCommPlaintextMessage>>>,
-  threads_sender: Arc<DashMap<ThreadId, oneshot::Sender<DidCommPlaintextMessage>>>,
+  threads_receiver: Arc<DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>>,
+  threads_sender: Arc<DashMap<ThreadId, oneshot::Sender<ThreadRequest>>>,
 }
 
 impl Actor {
@@ -151,25 +154,45 @@ impl Actor {
   /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
-  fn spawn_listener(self, mut receiver: mpsc::Receiver<InboundRequest>) -> JoinHandle<Result<()>> {
+  fn spawn_listener(mut self, mut receiver: mpsc::Receiver<InboundRequest>) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       loop {
         if let Some(request) = receiver.next().await {
+          log::debug!("received a request for endpoint: {}", request.endpoint);
+
           if self.handlers.contains_key(&request.endpoint) {
+            log::debug!("going down the handler path");
+
             self.clone().spawn_handler(request);
           } else {
             // store in thread channel
-            let plaintext_msg: DidCommPlaintextMessage = serde_json::from_slice(&request.input).expect("TODO");
+            let plaintext_msg: DidCommPlaintextMessage<serde_json::Value> =
+              serde_json::from_slice(&request.input).expect("TODO");
             let thread_id = plaintext_msg.thread_id();
+
+            log::debug!(
+              "going down the thread route path, thread exists: {}",
+              self.threads_sender.contains_key(thread_id)
+            );
 
             match self.threads_sender.remove(thread_id) {
               Some(sender) => {
-                sender.1.send(plaintext_msg).expect("TODO");
+                let thread_request = ThreadRequest {
+                  peer_id: request.peer_id,
+                  endpoint: request.endpoint,
+                  input: request.input,
+                };
+
+                sender.1.send(thread_request).expect("TODO");
               }
               None => {
                 log::error!("TODO: no handler or thread found for the received message");
               }
             }
+
+            // TODO: Should this always just return ok or an error if not thread exists?
+            // E.g: "received unexpected message"?
+            Self::send_response(&mut self.commander, Ok(()), request.response_channel).await;
           }
         } else {
           return Ok(());
@@ -187,9 +210,15 @@ impl Actor {
 
       log::debug!("request for endpoint {endpoint}");
 
-      let plaintext_msg: DidCommPlaintextMessage = serde_json::from_slice(&input).expect("TODO");
+      let plaintext_msg: DidCommPlaintextMessage<serde_json::Value> = serde_json::from_slice(&input).expect("TODO");
+
+      // log::debug!(
+      //   "received: {}",
+      //   serde_json::to_string_pretty(&plaintext_msg).expect("todo")
+      // );
+
       // TODO: Fix this, obviously.
-      let input: Vec<u8> = serde_json::to_vec(&plaintext_msg.body).expect("TODO");
+      let input: Vec<u8> = serde_json::to_vec(&plaintext_msg).expect("TODO");
 
       // If the handler is not found, check if a catch all handler exists and use it.
       // If not, return the original error so the other side gets
@@ -261,6 +290,7 @@ impl Actor {
     response: StdResult<(), RemoteSendError>,
     channel: ResponseChannel<DidCommResponse>,
   ) {
+    log::debug!("responding with {:?}", response);
     let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
     // TODO: This could produce an InboundFailure the function currently does not return. Should we change that?
     commander.send_response(response, channel).await;
@@ -347,6 +377,8 @@ impl Actor {
   ) -> Result<()> {
     self.create_thread_channels(thread_id);
 
+    let message = self.send_message_hook(peer, message).await?;
+
     let message: serde_json::Value = serde_json::to_value(&message).expect("TODO");
     let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
 
@@ -357,15 +389,72 @@ impl Actor {
 
     let response = self.commander.send_request(peer, message).await?;
 
+    log::debug!(
+      "ack was: {:#?}",
+      serde_json::from_slice::<serde_json::Value>(&response.0).expect("TODO")
+    );
+
     serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).expect("TODO")?;
 
     Ok(())
   }
 
-  pub async fn await_message(&mut self, thread_id: &ThreadId) -> Result<DidCommPlaintextMessage> {
+  #[inline(always)]
+  async fn send_message_hook<REQ: ActorRequest>(&self, peer: PeerId, input: REQ) -> Result<REQ> {
+    let endpoint = Endpoint::new_hook(input.request_name())?;
+
+    if self.handlers().contains_key(&endpoint) {
+      log::debug!("Calling send hook: {}", endpoint);
+
+      let hook_result: StdResult<StdResult<REQ, DidCommTermination>, RemoteSendError> =
+        self.call_hook(endpoint, peer, input).await;
+
+      match hook_result {
+        Ok(Ok(request)) => Ok(request),
+        Ok(Err(_)) => {
+          unimplemented!("didcomm termination");
+        }
+        Err(err) => Err(err.into()),
+      }
+    } else {
+      Ok(input)
+    }
+  }
+
+  // TODO: This should take a T: DeserializeOwned to deserialize into and
+  // return a DidCommPlaintextMessage<T> (which requires changing that type)
+  // TODO: Consider changing the T to ActorRequest and return a ActorRequest::RES.
+  // This could be used to encode the response type of a certain request message for more safety?
+  pub async fn await_message<T: DeserializeOwned + Send + 'static>(&mut self, thread_id: &ThreadId) -> Result<T> {
     if let Some(receiver) = self.threads_receiver.remove(thread_id) {
-      let msg = receiver.1.await.expect("TODO: (?) channel closed");
-      Ok(msg)
+      // Receival + Deserialization
+      let inbound_request = receiver.1.await.expect("TODO: (?) channel closed");
+
+      let message: T = serde_json::from_slice(inbound_request.input.as_ref())
+        .map_err(|err| crate::Error::DeserializationFailure(err.to_string()))?;
+
+      log::debug!("awaited message {}", inbound_request.endpoint);
+
+      // Hooking
+      let mut hook_endpoint: Endpoint = inbound_request.endpoint;
+      hook_endpoint.set_is_hook(true);
+
+      if self.handlers().contains_key(&hook_endpoint) {
+        log::debug!("Calling hook: {}", hook_endpoint);
+
+        let hook_result: StdResult<StdResult<T, DidCommTermination>, RemoteSendError> =
+          self.call_hook(hook_endpoint, inbound_request.peer_id, message).await;
+
+        match hook_result {
+          Ok(Ok(request)) => return Ok(request),
+          Ok(Err(_)) => {
+            unimplemented!("didcomm termination");
+          }
+          Err(err) => return Err(err.into()),
+        }
+      } else {
+        return Ok(message);
+      }
     } else {
       log::warn!("attempted to wait for a message on thread {thread_id:?}, which does not exist");
       Err(crate::Error::ThreadNotFound(thread_id.to_owned()))

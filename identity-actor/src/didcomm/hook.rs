@@ -102,9 +102,13 @@ where
 
     let future = async move {
       let response: Result<REQ, DidCommTermination> = (self.func)(*boxed_object, actor, request).await;
+      if let Ok(r) = &response {
+        log::debug!("hook returned {:?}", r);
+      }
       let type_erased: Box<dyn Any> = Box::new(response);
       type_erased
     };
+
     Ok(Box::pin(future))
   }
 
