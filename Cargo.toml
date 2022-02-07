@@ -10,7 +10,7 @@ members = [
   "identity-diff",
   "identity-iota",
 
-  "examples",
+  # "examples",
 ]
 
 exclude = [

@@ -35,7 +35,7 @@ impl<T, U> ResolvedPresentation<T, U> {
     self
       .presentation
       .check_structure()
-      .map_err(super::errors::ValidationError::PresentationStructure)
+      .map_err(super::errors::StandaloneValidationError::PresentationStructure)
       .map_err(Into::into)
   }
 
@@ -52,7 +52,7 @@ impl<T, U> ResolvedPresentation<T, U> {
   /// This is a *validation unit*
   pub fn check_non_transferable(&self) -> Result<()> {
     if let Some((position, _)) = self.non_transferable_violations().next() {
-      let err = super::errors::ValidationError::NonTransferableViolation {
+      let err = super::errors::StandaloneValidationError::NonTransferableViolation {
         credential_position: position,
       };
       Err(err.into())

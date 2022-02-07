@@ -10,7 +10,6 @@
 use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
 use identity::iota::ClientMap;
-use identity::iota::CredentialValidation;
 use identity::iota::Receipt;
 use identity::prelude::*;
 

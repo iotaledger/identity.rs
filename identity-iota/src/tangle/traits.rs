@@ -267,3 +267,6 @@ pub trait TangleResolve {
       .await
   }
 }
+
+#[cfg(test)]
+mod tests {}

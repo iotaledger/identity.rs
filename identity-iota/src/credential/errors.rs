@@ -11,8 +11,8 @@ use crate::did::IotaDIDUrl;
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
-/// credential operations in this crate such as resolution and validation.  
-pub enum ValidationError {
+/// An error associated with credential validation. 
+pub enum StandaloneValidationError {
   /// Indicates that the expiration date of the credential is not considered valid.
   #[error("credential validation failed: the expiration date does not satisfy the validation criterea")]
   ExpirationDate,
@@ -24,12 +24,21 @@ pub enum ValidationError {
   //Todo: Should the did_url be included in the error message? Would it be better in terms of abstraction and
   // flexibility to include more information in a simple String?
   DeactivatedSubjectDocument { did_url: IotaDIDUrl },
-  /// The proof verification failed.
+  /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
   #[error("credential validation failed: could not verify the issuer's signature")]
   IssuerProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
   },
+  /// Indicates an attempt to validate a credential signed by an untrusted issuer
+  #[error("credential validation failed: the credential is signed by an untrusted issuer")]
+  UntrustedIssuer,
+
+  /// Indicates that the credential's issuer could not be parsed as a valid DID
+  #[error("credential validation failed: The issuer property could not be parsed to a valid DID")]
+  IssuerUrl,
+
+  /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
   #[error("presentation validation failed: could not verify the holder's signature")]
   HolderProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
@@ -72,11 +81,11 @@ pub enum ValidationError {
 
 #[derive(Debug)]
 /// An error caused by a failure to resolve a Credential.  
-pub struct CredentialResolutionError {
-  pub validation_errors: OneOrMany<ValidationError>,
+pub struct AccumulatedCredentialValidationError {
+  pub validation_errors: OneOrMany<StandaloneValidationError>,
 }
 
-impl Display for CredentialResolutionError {
+impl Display for AccumulatedCredentialValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     // intersperse might become available in the standard library soon: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.intersperse
     let detailed_information: String = itertools::intersperse(
@@ -92,17 +101,17 @@ impl Display for CredentialResolutionError {
   }
 }
 
-impl std::error::Error for CredentialResolutionError {}
+impl std::error::Error for AccumulatedCredentialValidationError {}
 
 #[derive(Debug)]
-pub struct PresentationResolutionError {
-  pub credential_errors: BTreeMap<usize, CredentialResolutionError>,
-  pub presentation_validation_errors: Vec<ValidationError>,
+pub struct AccumulatedPresentationValidationError {
+  pub credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError>,
+  pub presentation_validation_errors: Vec<StandaloneValidationError>,
 }
 
-impl Display for PresentationResolutionError {
+impl Display for AccumulatedPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let credential_error_formatter = |(position, reason): (&usize, &CredentialResolutionError)| -> String {
+    let credential_error_formatter = |(position, reason): (&usize, &AccumulatedCredentialValidationError)| -> String {
       format!(
         "could not resolve credential at position {}. The following errors occurred {}",
         position,
@@ -124,7 +133,5 @@ impl Display for PresentationResolutionError {
   }
 }
 
-impl std::error::Error for PresentationResolutionError {}
+impl std::error::Error for AccumulatedPresentationValidationError {}
 
-// Todo: should we insert a PhantomData field declared as pub (crate) in CredentialResolutionError and/or
-// PresentationResolutionError for future proofing?

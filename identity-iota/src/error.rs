@@ -54,11 +54,11 @@ pub enum Error {
   InvalidMessageFlags,
   /// Caused by a single validation unit failing
   #[error("validation unit failed")]
-  CredentialValidation(#[from] crate::credential::errors::ValidationError),
+  CredentialValidation(#[from] crate::credential::errors::StandaloneValidationError),
   /// Caused by a failure to resolve a Credential  
   #[error("credential resolution failed")]
-  CredentialResolution(#[source] crate::credential::errors::CredentialResolutionError),
+  CredentialResolution(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
   /// Caused by a failure to resolve a Presentation
   #[error("presentation resolution failed")]
-  PresentationResolution(#[source] crate::credential::errors::PresentationResolutionError),
+  PresentationResolution(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
 }

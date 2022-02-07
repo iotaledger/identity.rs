@@ -31,7 +31,7 @@ impl<T: Serialize> ResolvedCredential<T> {
       .issuer
       .document
       .verify_data(&self.credential, options)
-      .map_err(|err| super::errors::ValidationError::IssuerProof { source: err.into() })
+      .map_err(|err| super::errors::StandaloneValidationError::IssuerProof { source: err.into() })
       .map_err(Into::into)
   }
 
@@ -71,7 +71,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .expires_after(timestamp)
       .then(|| ())
-      .ok_or(super::errors::ValidationError::ExpirationDate)
+      .ok_or(super::errors::StandaloneValidationError::ExpirationDate)
       .map_err(Into::into)
   }
 
@@ -83,7 +83,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .issued_before(timestamp)
       .then(|| ())
-      .ok_or(super::errors::ValidationError::IssuanceDate)
+      .ok_or(super::errors::StandaloneValidationError::IssuanceDate)
       .map_err(Into::into)
   }
 
@@ -99,7 +99,7 @@ impl<T: Serialize> ResolvedCredential<T> {
       Err(
         // Todo: Should this method document that it allocates on failure since it is considered part of the
         // low-level validation API?
-        super::errors::ValidationError::DeactivatedSubjectDocument {
+        super::errors::StandaloneValidationError::DeactivatedSubjectDocument {
           did_url: deactivated_doc.did().to_url(),
         }
         .into(),
@@ -117,7 +117,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .credential
       .check_structure()
-      .map_err(super::errors::ValidationError::CredentialStructure)
+      .map_err(super::errors::StandaloneValidationError::CredentialStructure)
       .map_err(Into::into)
   }
 }
