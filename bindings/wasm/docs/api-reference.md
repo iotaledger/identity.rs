@@ -92,9 +92,9 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 </dl>
 
@@ -184,6 +184,8 @@ Adds a new Service to the DID Document.
 <a name="Account+did"></a>
 
 ### account.did() ⇒ [<code>DID</code>](#DID)
+Returns the [DID](#DID) of the managed identity.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+autopublish"></a>
 
@@ -401,19 +403,19 @@ by the [Client](#Client) used to publish it.
 <a name="AutoSave.never"></a>
 
 ### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
-Never save
+Never save.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.every"></a>
 
 ### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every action
+Save after every action.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.batch"></a>
 
 ### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every N actions
+Save after every N actions.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 
@@ -2683,13 +2685,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## KeyType
 **Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="start"></a>
 
