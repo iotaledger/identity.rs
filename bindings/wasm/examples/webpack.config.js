@@ -1,45 +1,47 @@
 const path = require('path');
 const CopyWebPlugin = require('copy-webpack-plugin');
 const serverConfig = {
-    target: 'node',
+    target: 'node16',
     entry: './examples/src/node.js',
     devtool: "source-map",
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'node.js',
-    },
-    externals: [
-        function ({ context, request }, callback) {
-            if (/^@iota\/identity-wasm$/.test(request)) {
-                // Externalize to a commonjs module
-                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
-            }
-
-            // Continue without externalizing the import
-            callback();
+        filename: 'node.mjs',
+        library: {
+            type: 'module',
         },
-    ],
+    },
+    experiments: {
+        asyncWebAssembly: true,
+        outputModule: true,
+    },
+    resolve: {
+        alias: {
+            '@iota/identity-wasm': path.resolve(__dirname, '../node/identity_wasm.js'),
+        },
+    },
 };
 
 const serverTestConfig = {
-    target: 'node',
+    target: 'node16',
     entry: './examples/src/test.js',
     devtool: "source-map",
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'test.js',
-    },
-    externals: [
-        function ({ context, request }, callback) {
-            if (/^@iota\/identity-wasm$/.test(request)) {
-                // Externalize to a commonjs module
-                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
-            }
-
-            // Continue without externalizing the import
-            callback();
+        filename: 'test.mjs',
+        library: {
+            type: 'module',
         },
-    ],
+    },
+    experiments: {
+        asyncWebAssembly: true,
+        outputModule: true,
+    },
+    resolve: {
+        alias: {
+            '@iota/identity-wasm': path.resolve(__dirname, '../node/identity_wasm.js'),
+        },
+    },
 };
 
 const clientConfig = {
@@ -56,6 +58,7 @@ const clientConfig = {
     experiments: {
         topLevelAwait: true,
         outputModule: true,
+        asyncWebAssembly: true,
     },
     resolve: {
         alias: {

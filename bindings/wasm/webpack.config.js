@@ -1,41 +1,55 @@
 const path = require("path");
 const CopyWebPlugin = require('copy-webpack-plugin');
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const nodeExternals = require('webpack-node-externals');
 
 const dist = path.resolve(__dirname, "dist");
 
 module.exports = {
   mode: "production",
   entry: {
-    index: "./examples/web.js"
+    index: "./node/identity_wasm.js"
   },
   output: {
     path: dist,
-    filename: "[name].js"
+    filename: 'index.mjs',
+    module: true,
+    chunkFormat: 'module',
+    library: {
+      type: 'module'
+    },
+    environment: {
+      module: true
+    }
   },
-  devServer: {
-    contentBase: dist,
+  target: 'node16',
+  //externalsType: 'module',
+  // resolve: {
+  //   fallback: { "crypto": false }
+  // },
+  externalsPresets: { node: true },
+  externals: {
+    crypto: 'crypto',
+    'node-fetch': 'node-fetch',
   },
+  //externals: [nodeExternals({importType: "module"})], // in order to ignore all modules in node_modules folder
   plugins: [
-    new CopyWebPlugin({
-      patterns: [
-        {
-          from: path.resolve(__dirname, "static")
-        }
-      ]
-    }),
+    // new CopyWebPlugin({
+    //   patterns: [
+    //     {
+    //       from: path.resolve(__dirname, "static")
+    //     }
+    //   ]
+    // }),
 
-    new WasmPackPlugin({
-      crateDirectory: __dirname,
-    }),
   ],
-  // Makes the output less verbose
-  stats: 'minimal',
-  // Removes the asset size warning
-  performance: {
-    hints: false,
-  },
+  // // Makes the output less verbose
+  // stats: 'minimal',
+  // // Removes the asset size warning
+  // performance: {
+  //   hints: false,
+  // },
   experiments: {
-    asyncWebAssembly: true
+    asyncWebAssembly: true,
+    outputModule: true,
   }
 };
