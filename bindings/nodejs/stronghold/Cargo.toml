@@ -1,0 +1,22 @@
+[package]
+edition = "2021"
+name = "stronghold"
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
+napi = { version = "2.0.3", default-features = false, features = ["napi4", "tokio_rt"] }
+napi-derive = "2.0.7"
+identity-account = { version = "=0.5.0-dev.3", path = "../../../identity-account", default-features = true }
+identity-wasm = { version = "=0.5.0-dev.3", path = "../../wasm" }
+tokio = { version = "1.14", features = ["sync"] }
+hashbrown = { version = "0.11", features = ["serde"] }
+
+[build-dependencies]
+napi-build = "1.2.1"
+
+[profile.release]
+lto = true

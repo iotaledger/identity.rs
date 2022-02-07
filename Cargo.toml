@@ -14,6 +14,7 @@ members = [
 ]
 
 exclude = [
+  "bindings/nodejs",
   "bindings/wasm",
   "libjose",
 ]
