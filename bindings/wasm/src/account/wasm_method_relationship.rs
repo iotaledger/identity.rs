@@ -7,7 +7,7 @@ use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen (js_name = MethodRelationship)]
-#[derive(Clone, Copy, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Serialize_repr, Deserialize_repr)]
 #[repr(u8)]
 pub enum WasmMethodRelationship {
   Authentication = 0,
@@ -18,8 +18,8 @@ pub enum WasmMethodRelationship {
 }
 
 impl From<WasmMethodRelationship> for MethodRelationship {
-  fn from(r: WasmMethodRelationship) -> Self {
-    match r {
+  fn from(relationship: WasmMethodRelationship) -> Self {
+    match relationship {
       WasmMethodRelationship::Authentication => MethodRelationship::Authentication,
       WasmMethodRelationship::AssertionMethod => MethodRelationship::AssertionMethod,
       WasmMethodRelationship::KeyAgreement => MethodRelationship::KeyAgreement,

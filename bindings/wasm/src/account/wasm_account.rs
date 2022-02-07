@@ -117,11 +117,8 @@ impl WasmAccount {
   /// Push all unpublished changes to the tangle in a single message.
   #[wasm_bindgen]
   pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> Promise {
+    let options: PublishOptions = publish_options.map(PublishOptions::from).unwrap_or_default();
     let account = self.0.clone();
-    let mut options: PublishOptions = PublishOptions::default();
-    if let Some(publish_options) = publish_options {
-      options = PublishOptions::from(publish_options);
-    };
     future_to_promise(async move {
       account
         .as_ref()
@@ -189,7 +186,7 @@ impl WasmAccount {
     U: serde::Serialize + SetSignature + 'static,
   {
     let account = self.0.clone();
-    let options: SignatureOptions = SignatureOptions::from(signature_options);
+    let options: SignatureOptions = SignatureOptions::from(signature_options.0.clone());
 
     future_to_promise(async move {
       account
@@ -293,11 +290,11 @@ export type PublishOptions = {
 
 
     /**
-     *
-     *
      * Set the fragment of a verification method with which to sign the update.
      * This must point to an Ed25519 method with a capability invocation
      * verification relationship.
+     *
+     *  If omitted, the default signing method on the Document will be used.
      */
      signWith?: string
  }
