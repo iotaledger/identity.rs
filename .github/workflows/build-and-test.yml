@@ -80,8 +80,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-          command: test
-          args: --all --release --no-run
+          command: build
+          args: --workspace --tests --examples --release
 
       - name: Run tests
         uses: actions-rs/cargo@v1
@@ -91,6 +91,8 @@ jobs:
 
       - name: Run Rust examples
         working-directory: examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
         run: |
           cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
 
