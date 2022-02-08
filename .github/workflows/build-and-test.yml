@@ -26,8 +26,22 @@ env:
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
 
 jobs:
+
+  determine-modification:
+    runs-on: ubuntu-latest
+    outputs:
+      core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
+    steps:
+      - name: Run change detection
+        id: change-detection
+        run: |
+
+          echo "::set-output name=core-modified::$(.github/workflows/scripts/check-if-modified.sh ':!bindings')"
+
   build-and-test:
     runs-on: ${{ matrix.os }}
+    needs: determine-modification
+    if: ${{needs.determine-modification.outputs.core-modified}}
     strategy:
       fail-fast: false
       matrix:
