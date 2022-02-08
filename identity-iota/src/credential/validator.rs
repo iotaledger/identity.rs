@@ -24,11 +24,10 @@ pub struct CredentialValidator {
 }
 
 impl CredentialValidator {
-
-  /// Constructs a new [CredentialValidator] 
+  /// Constructs a new [CredentialValidator]
   pub fn new() -> Self {
     Self {
-      _future_proofing: PhantomData
+      _future_proofing: PhantomData,
     }
   }
 
@@ -48,7 +47,7 @@ impl CredentialValidator {
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
-    trusted_issuers: &[ResolvedIotaDocument], 
+    trusted_issuers: &[ResolvedIotaDocument], // Todo: Should this be part of CredentialValidationOptions?
     fail_fast: bool,
   ) -> Result<()> {
     self
@@ -245,7 +244,12 @@ impl CredentialValidator {
 
     // validate the presentations credentials
     for (position, credential) in presentation.verifiable_credential.iter().enumerate() {
-      if let Err(error) = self.validate_credential_internal(credential, &options.common_validation_options, trusted_issuers, fail_fast) {
+      if let Err(error) = self.validate_credential_internal(
+        credential,
+        &options.common_validation_options,
+        trusted_issuers,
+        fail_fast,
+      ) {
         credential_errors.insert(position, error);
         if fail_fast {
           return Err(presentation_resolution_error);

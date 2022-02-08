@@ -21,6 +21,7 @@ use identity::iota::CredentialValidator;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota::TangleResolve;
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
@@ -48,9 +49,15 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
   Ok(credential)
 }
 
-pub async fn resolve_trusted_issuer_documents<>(issuer_documents: &[IotaDocument]) -> Result<Vec<ResolvedIotaDocument>> 
-{
-  todo!()
+/// Helper that resolves documents to
+pub async fn resolve_documents(issuer_documents: &[IotaDocument]) -> Result<Vec<ResolvedIotaDocument>> {
+  let mut resolved_documents: Vec<ResolvedIotaDocument> = Vec::new();
+  let client: ClientMap = ClientMap::new();
+  for doc in issuer_documents {
+    let resolved_document: ResolvedIotaDocument = client.resolve(&doc.id()).await?;
+    resolved_documents.push(resolved_document);
+  }
+  Ok(resolved_documents)
 }
 
 /// Convenience function for checking that a verifiable credential is valid and not revoked.
@@ -68,7 +75,7 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
     .check_credential(&credential_json, VerifierOptions::default())
     .await?;
   Ok(validation)
-  */ 
+  */
   Ok(())
 }
 

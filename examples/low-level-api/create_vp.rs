@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
   assert!(validation.verified);
 
   println!("Presentation Validation > {:#?}", validation);
-  */ 
+  */
 
   Ok(())
 }

@@ -11,10 +11,10 @@ use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
 use identity::iota::Receipt;
+use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
-use identity::iota::ResolvedIotaDocument; 
-use identity::iota::CredentialValidator; 
 use identity::prelude::*;
 
 mod common;
@@ -44,11 +44,11 @@ pub async fn create_vc() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // Validate the verifiable credential
-  let validator = CredentialValidator::new(); 
-  let validation_options = CredentialValidationOptions::default(); 
+  let validator = CredentialValidator::new();
+  let validation_options = CredentialValidationOptions::default();
   let trusted_issuer: ResolvedIotaDocument = client.resolve(&issuer_doc.id()).await?;
-  let fail_fast = true; 
-  validator.validate_credential(&credential, &validation_options,&[trusted_issuer], fail_fast)
+  let fail_fast = true;
+  validator.validate_credential(&credential, &validation_options, &[trusted_issuer], fail_fast)
 }
 
 #[tokio::main]

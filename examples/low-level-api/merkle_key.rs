@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
 
   println!("Credential Validation > {:#?}", validation);
 
-  */ 
+  */
 
   Ok(())
 }

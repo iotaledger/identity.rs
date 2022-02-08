@@ -39,6 +39,8 @@ impl CredentialValidationOptions {
   pub fn verifier_options_mut(&mut self) -> &mut VerifierOptions {
     &mut self.verifier_options
   }
+
+  //Todo: Should there also be an into_verifier_options method?
 }
 
 pub struct PresentationValidationOptions {
@@ -57,5 +59,9 @@ impl PresentationValidationOptions {
   pub fn with_common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.common_validation_options = options;
     self
+  }
+  // Returns an option as we may want this field to be optional in the future.
+  pub fn common_validation_options_mut(&mut self) -> Option<&mut CredentialValidationOptions> {
+    Some(&mut self.common_validation_options)
   }
 }
