@@ -216,7 +216,7 @@ jobs:
           command: test
           args: --manifest-path ./bindings/wasm/Cargo.toml --release
 
-      - name: Test Wasm unit and examples
+      - name: Run Wasm unit tests and examples
         run: npm run test
         working-directory: bindings/wasm
 
