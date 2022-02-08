@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 use std::fmt::Display;
 
 use identity_core::common::OneOrMany;
-use identity_core::common::Url;
 
 use crate::did::IotaDIDUrl;
 

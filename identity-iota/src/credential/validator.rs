@@ -3,6 +3,7 @@
 
 use std::borrow::Borrow;
 use std::collections::BTreeMap;
+use std::marker::PhantomData;
 
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -21,9 +22,19 @@ use super::PresentationValidationOptions;
 
 pub struct CredentialValidator<U: Borrow<Vec<ResolvedIotaDocument>>> {
   trusted_issuers: U,
+  _future_proofing: PhantomData<u8>,
 }
 
 impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
+
+  /// Constructs a new [CredentialValidator] 
+  pub fn new(trusted_issuers: U) -> Self {
+    Self {
+      trusted_issuers,
+      _future_proofing: PhantomData
+    }
+  }
+
   /// Validate a `Credential`.
   ///
   /// # Errors

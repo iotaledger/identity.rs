@@ -10,7 +10,11 @@
 use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
 use identity::iota::ClientMap;
+use identity::iota::CredentialValidationOptions;
 use identity::iota::Receipt;
+use identity::iota::TangleResolve;
+use identity::iota::ResolvedIotaDocument; 
+use identity::iota::CredentialValidator; 
 use identity::prelude::*;
 
 mod common;
@@ -40,10 +44,14 @@ pub async fn create_vc() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // Validate the verifiable credential
-  let validation: CredentialValidation = common::check_credential(&client, &credential).await?;
-  println!("Credential Validation > {:#?}", validation);
-  assert!(validation.verified);
-
+  // in order to validate the credential we first need to set up a credential validator 
+  // the validator needs a list of resolved DID Documents from trusted issuers. 
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(&issuer_doc.id()).await?;
+  let trusted_issuers = vec![trusted_issuer]; 
+  let validator = CredentialValidator::new(trusted_issuers); 
+  // now we validate the credential using the default validation options
+  let validation_options = CredentialValidationOptions::default(); 
+  assert!(validator.validate_credential(&credential, &validation_options, true).is_ok());
   Ok(())
 }
 

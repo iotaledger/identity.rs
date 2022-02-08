@@ -19,7 +19,6 @@ use identity::crypto::PublicKey;
 use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::iota::ClientMap;
-use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
@@ -31,6 +30,7 @@ mod create_did;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+  /*
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
@@ -108,6 +108,8 @@ async fn main() -> Result<()> {
   assert!(!validation.verified);
 
   println!("Credential Validation > {:#?}", validation);
+
+  */ 
 
   Ok(())
 }

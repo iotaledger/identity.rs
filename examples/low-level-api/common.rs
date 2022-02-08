@@ -17,7 +17,6 @@ use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
-use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -48,8 +47,11 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
   Ok(credential)
 }
 
+pub async fn resolve_trusted_issuer_documents<>(issuer_documents: &[IotaDocument]) 
+
 /// Convenience function for checking that a verifiable credential is valid and not revoked.
-pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<CredentialValidation> {
+pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<()> {
+  /*
   // Convert the Verifiable Credential to JSON to potentially "exchange" with a verifier
   let credential_json = credential.to_json()?;
 
@@ -62,6 +64,8 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
     .check_credential(&credential_json, VerifierOptions::default())
     .await?;
   Ok(validation)
+  */ 
+  Ok(())
 }
 
 /// Convenience function for adding a new `VerificationMethod` with tag #newKey to a DID document

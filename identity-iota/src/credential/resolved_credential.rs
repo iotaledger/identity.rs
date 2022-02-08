@@ -32,11 +32,12 @@ pub struct ResolvedCredential<T> {
 
 impl<T: Serialize> ResolvedCredential<T> {
   /// Combines a `Credential` with [`ResolvedIotaDocument`]s belonging to the issuer and credential subjects.
-  /// 
+  ///
   /// # Errors
-  /// Fails if the credential's issuer property has an url that cannot be identified with the DID of the `issuer` argument, 
-  /// or the extracted DID's from the `subjects` are distinct from values in the credential subject property.
-  // Todo: Find a better way to describe how this operation can fail.    
+  /// Fails if the credential's issuer property has an url that cannot be identified with the DID of the `issuer`
+  /// argument, or the extracted DID's from the `subjects` are distinct from values in the credential subject
+  /// property.
+  // Todo: Find a better way to describe how this operation can fail.
   pub fn try_new(
     credential: Credential<T>,
     issuer: ResolvedIotaDocument,

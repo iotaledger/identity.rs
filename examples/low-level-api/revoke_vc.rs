@@ -18,7 +18,6 @@ use identity::crypto::SignatureOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
-use identity::iota::CredentialValidation;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -30,6 +29,7 @@ mod create_did;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+  /*
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
@@ -61,6 +61,7 @@ async fn main() -> Result<()> {
   let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
   println!("VC verification result (false = revoked) > {:#?}", validation.verified);
   assert!(!validation.verified);
+  */ 
   Ok(())
 }
 

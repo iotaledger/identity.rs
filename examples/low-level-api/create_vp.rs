@@ -15,7 +15,6 @@ use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
-use identity::iota::PresentationValidation;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
@@ -64,6 +63,7 @@ pub async fn create_vp() -> Result<Presentation> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+  /*
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
@@ -90,6 +90,7 @@ async fn main() -> Result<()> {
   assert!(validation.verified);
 
   println!("Presentation Validation > {:#?}", validation);
+  */ 
 
   Ok(())
 }
