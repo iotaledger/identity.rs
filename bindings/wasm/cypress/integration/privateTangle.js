@@ -5,7 +5,7 @@ import {
 
 // Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
 describe(
-    "Test browser examples",
+    "privateTangle",
     {
         defaultCommandTimeout: 300000, // 5 minutes to account for spurious network delays
     },
