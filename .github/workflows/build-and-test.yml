@@ -115,12 +115,10 @@ jobs:
           args: --all --release
 
       - name: Run Rust examples
-        working-directory: examples
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo read-manifest > ../example-manifest.json
-          cd ../
+          cargo read-manifest --manifest-path ./examples/Cargo.toml > ./example-manifest.json
           cat ./example-manifest.json | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" --release || exit 1; done
       - name: Stop sccache (Windows)
         uses: './.github/actions/rust/sccache/stop-sccache-windows'
