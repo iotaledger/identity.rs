@@ -3,6 +3,7 @@
 
 use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
+
 pub struct CredentialValidationOptions {
   pub(crate) expires_after: Timestamp,
   pub(crate) issued_before: Timestamp,

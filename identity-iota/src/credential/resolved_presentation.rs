@@ -31,6 +31,10 @@ pub struct ResolvedPresentation<T = Object, U = Object> {
 impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
   /// Combines a [`Presentation`] with the [`ResolvedIotaDocument`] belonging to the holder and the
   /// [`ResolvedCredential`]s corresponding to the presentation's credentials.
+  /// 
+  /// # Errors
+  /// Fails if the presentation's holder property does not have a url corresponding to the `holder`, 
+  /// or `resolved_credentials` contains credentials that cannot be found in the presentations `verifiable_credential` property.  
   pub fn try_new(
     &self,
     presentation: Presentation<T, U>,
