@@ -20,7 +20,7 @@ on:
 
 env:
   RUST_BACKTRACE: full
-  CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
+  CARGO_INCREMENTAL: 0 # disabled to reduce target cache size and improve sccache (https://github.com/mozilla/sccache#known-caveats)
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
