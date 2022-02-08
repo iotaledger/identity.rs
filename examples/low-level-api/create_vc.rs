@@ -44,15 +44,11 @@ pub async fn create_vc() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // Validate the verifiable credential
-  // in order to validate the credential we first need to set up a credential validator 
-  // the validator needs a list of resolved DID Documents from trusted issuers. 
-  let trusted_issuer: ResolvedIotaDocument = client.resolve(&issuer_doc.id()).await?;
-  let trusted_issuers = vec![trusted_issuer]; 
-  let validator = CredentialValidator::new(trusted_issuers); 
-  // now we validate the credential using the default validation options
+  let validator = CredentialValidator::new(); 
   let validation_options = CredentialValidationOptions::default(); 
-  assert!(validator.validate_credential(&credential, &validation_options, true).is_ok());
-  Ok(())
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(&issuer_doc.id()).await?;
+  let fail_fast = true; 
+  validator.validate_credential(&credential, &validation_options,&[trusted_issuer], fail_fast)
 }
 
 #[tokio::main]

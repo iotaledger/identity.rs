@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Borrow;
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
@@ -20,17 +19,15 @@ use super::errors::StandaloneValidationError;
 use super::CredentialValidationOptions;
 use super::PresentationValidationOptions;
 
-pub struct CredentialValidator<U: Borrow<Vec<ResolvedIotaDocument>>> {
-  trusted_issuers: U,
+pub struct CredentialValidator {
   _future_proofing: PhantomData<u8>,
 }
 
-impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
+impl CredentialValidator {
 
   /// Constructs a new [CredentialValidator] 
-  pub fn new(trusted_issuers: U) -> Self {
+  pub fn new() -> Self {
     Self {
-      trusted_issuers,
       _future_proofing: PhantomData
     }
   }
@@ -51,10 +48,11 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
+    trusted_issuers: &[ResolvedIotaDocument], 
     fail_fast: bool,
   ) -> Result<()> {
     self
-      .validate_credential_internal(credential, options, fail_fast)
+      .validate_credential_internal(credential, options, trusted_issuers, fail_fast)
       .map_err(Error::UnsuccessfulCredentialValidation)
   }
 
@@ -70,10 +68,11 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
     &self,
     presentation: &Presentation<T, S>,
     options: &PresentationValidationOptions,
+    trusted_issuers: &[ResolvedIotaDocument],
     fail_fast: bool,
   ) -> Result<()> {
     self
-      .validate_presentation_internal(presentation, options, fail_fast)
+      .validate_presentation_internal(presentation, options, trusted_issuers, fail_fast)
       .map_err(Error::UnsuccessfulPresentationValidation)
   }
 
@@ -135,6 +134,7 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
+    trusted_issuers: &[ResolvedIotaDocument],
     fail_fast: bool,
   ) -> Result<(), AccumulatedCredentialValidationError> {
     // first run the preliminary validation checks not requiring any DID Documents
@@ -149,7 +149,6 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
     // now check the issuer's signature
     let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
     if let Ok(did) = issuer_did {
-      let trusted_issuers: &Vec<ResolvedIotaDocument> = self.trusted_issuers.borrow();
       // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
       // the signature
       if let Err(issuer_proof_error) = trusted_issuers
@@ -222,6 +221,7 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
     &self,
     presentation: &Presentation<T, S>,
     options: &PresentationValidationOptions,
+    trusted_issuers: &[ResolvedIotaDocument],
     fail_fast: bool,
   ) -> Result<(), AccumulatedPresentationValidationError> {
     // first run some preliminary validation checks directly on the presentation
@@ -245,7 +245,7 @@ impl<U: Borrow<Vec<ResolvedIotaDocument>>> CredentialValidator<U> {
 
     // validate the presentations credentials
     for (position, credential) in presentation.verifiable_credential.iter().enumerate() {
-      if let Err(error) = self.validate_credential_internal(credential, &options.common_validation_options, fail_fast) {
+      if let Err(error) = self.validate_credential_internal(credential, &options.common_validation_options, trusted_issuers, fail_fast) {
         credential_errors.insert(position, error);
         if fail_fast {
           return Err(presentation_resolution_error);

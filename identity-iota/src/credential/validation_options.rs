@@ -35,6 +35,10 @@ impl CredentialValidationOptions {
     self.verifier_options = verifier_options;
     self
   }
+
+  pub fn verifier_options_mut(&mut self) -> &mut VerifierOptions {
+    &mut self.verifier_options
+  }
 }
 
 pub struct PresentationValidationOptions {
