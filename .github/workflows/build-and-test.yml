@@ -35,13 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          # checkout HEAD instead of merge for change detection
-          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: Run change detection
         id: change-detection
         run: |
-          CORE_MODIFIED=$(.github/workflows/scripts/check-if-modified.sh ':!bindings')
+          echo comparing $(git rev-parse HEAD^) and $(git rev-parse HEAD)
+          #https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgt--ltpathgt82308203
+          if [[ $(git diff HEAD^ HEAD -- $1) != '' ]]; then
+              # modified
+              CORE_MODIFIED=true
+          else
+              # unmodified
+             CORE_MODIFIED=false
+          fi
           echo CORE_MODIFIED=$CORE_MODIFIED
           echo "::set-output name=core-modified::$CORE_MODIFIED"
 
