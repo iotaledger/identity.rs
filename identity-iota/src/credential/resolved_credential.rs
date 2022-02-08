@@ -181,5 +181,3 @@ impl<T: Serialize> ResolvedCredential<T> {
       .map_err(Into::into)
   }
 }
-
-// Todo: Create tests for verify_signature and deactivated_subject_documents

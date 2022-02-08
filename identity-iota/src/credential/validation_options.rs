@@ -44,13 +44,16 @@ impl CredentialValidationOptions {
 }
 
 pub struct PresentationValidationOptions {
-  pub(crate) common_validation_options: CredentialValidationOptions,
+  pub(crate) common_validation_options: CredentialValidationOptions, // used when validating the credentials
+  pub(crate) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature.
+                                                                      * Todo: Find a better name. */
 }
 
 impl Default for PresentationValidationOptions {
   fn default() -> Self {
     Self {
       common_validation_options: CredentialValidationOptions::default(),
+      presentation_verifier_options: VerifierOptions::default(),
     }
   }
 }
@@ -58,6 +61,11 @@ impl Default for PresentationValidationOptions {
 impl PresentationValidationOptions {
   pub fn with_common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.common_validation_options = options;
+    self
+  }
+
+  pub fn with_presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
+    self.presentation_verifier_options = options;
     self
   }
   // Returns an option as we may want this field to be optional in the future.

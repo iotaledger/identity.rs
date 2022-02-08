@@ -270,7 +270,7 @@ impl CredentialValidator {
         .err()
         .unwrap_or_default();
 
-    let mut presentation_resolution_error = AccumulatedPresentationValidationError {
+    let mut compound_error = AccumulatedPresentationValidationError {
       presentation_validation_errors: preliminary_presentation_validation_errors.into_vec(),
       credential_errors: BTreeMap::<usize, AccumulatedCredentialValidationError>::new(),
     };
@@ -278,14 +278,14 @@ impl CredentialValidator {
     let AccumulatedPresentationValidationError {
       ref mut presentation_validation_errors,
       ref mut credential_errors,
-    } = presentation_resolution_error;
+    } = compound_error;
 
     // now check the holder's signature
     if presentation_validation_errors.is_empty() || (!fail_fast) {
       if let Err(proof_error) = Self::verify_presentation_signature(
         presentation,
         resolved_holder_document,
-        &options.common_validation_options.verifier_options,
+        &options.presentation_verifier_options,
       ) {
         presentation_validation_errors.push(proof_error);
       }
@@ -293,7 +293,7 @@ impl CredentialValidator {
 
     // if any of the preliminary validations failed and fail_fast is true we must return now
     if (!presentation_validation_errors.is_empty()) && fail_fast {
-      return Err(presentation_resolution_error);
+      return Err(compound_error);
     }
 
     // validate the presentations credentials
@@ -306,7 +306,7 @@ impl CredentialValidator {
       ) {
         credential_errors.insert(position, error);
         if fail_fast {
-          return Err(presentation_resolution_error);
+          return Err(compound_error);
         }
       }
     }
@@ -314,7 +314,7 @@ impl CredentialValidator {
     if presentation_validation_errors.is_empty() && credential_errors.is_empty() {
       Ok(())
     } else {
-      Err(presentation_resolution_error)
+      Err(compound_error)
     }
   }
 }
@@ -322,8 +322,11 @@ impl CredentialValidator {
 #[cfg(test)]
 mod tests {
   use identity_core::common::Timestamp;
+  use identity_core::common::Url;
+  use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
+  use identity_credential::presentation::PresentationBuilder;
 
   use crate::credential::CredentialValidationOptions;
   use crate::document::IotaDocument;
@@ -331,7 +334,8 @@ mod tests {
   use super::super::test_utils;
   use super::*;
 
-  fn credential_validation_setup() -> (IotaDocument, KeyPair, Credential) {
+  // generates a triple: issuer document, issuer's keys, unsigned credential issued by issuer
+  fn credential_setup() -> (IotaDocument, KeyPair, Credential) {
     let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
     let (subject_doc, _) = test_utils::generate_document_with_keys();
     let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
@@ -343,7 +347,7 @@ mod tests {
   #[test]
   fn test_validate_credential() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -368,7 +372,7 @@ mod tests {
   #[test]
   fn test_validate_credential_invalid_signature() {
     // setup
-    let (issuer_doc, _, mut credential) = credential_validation_setup();
+    let (issuer_doc, _, mut credential) = credential_setup();
     let (_, other_keys) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
@@ -406,7 +410,7 @@ mod tests {
   #[test]
   fn test_validate_credential_untrusted_issuer() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
@@ -444,7 +448,7 @@ mod tests {
   #[test]
   fn test_validate_credential_invalid_expiration_date() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -482,7 +486,7 @@ mod tests {
   #[test]
   fn test_validate_credential_invalid_issuance_date() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -521,7 +525,7 @@ mod tests {
   #[test]
   fn test_validate_credential_invalid_structure() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -560,7 +564,7 @@ mod tests {
   #[test]
   fn test_validate_credential_multiple_errors_fail_fast() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     let (other_issuer, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
@@ -597,7 +601,7 @@ mod tests {
   #[test]
   fn test_validate_credential_multiple_errors_accumulate_all_errors() {
     // setup
-    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (issuer_doc, issuer_key, mut credential) = credential_setup();
     let (other_issuer, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
@@ -631,13 +635,477 @@ mod tests {
     assert!(error.len() >= 4);
   }
 
-  fn test_validate_presentation() {}
+  #[test]
+  fn test_validate_presentation() {
+    // create a first credential
+    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
+    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
+    let mut credential_foo = test_utils::generate_credential(
+      &issuer_foo_doc,
+      std::slice::from_ref(&subject_foo_doc),
+      issuance_date,
+      expiration_date,
+    );
+    // set the nonTransferable option on the first credential
+    credential_foo.non_transferable = Some(true);
+    // sign the credential
+    issuer_foo_doc
+      .sign_data(
+        &mut credential_foo,
+        issuer_foo_key.private(),
+        issuer_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+    // create and sign a second credential
+    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = credential_setup();
+    issuer_bar_doc
+      .sign_data(
+        &mut credential_bar,
+        issuer_bar_key.private(),
+        issuer_bar_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
 
-  fn test_validate_presentation_invalid_holder_signature() {}
+    let mut presentation: Presentation = PresentationBuilder::default()
+      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
+      .credential(credential_foo)
+      .credential(credential_bar)
+      .build()
+      .unwrap();
+    // sign the presentation using subject_foo's document and private key
 
-  fn test_validate_presentation_invalid_credential() {}
+    subject_foo_doc
+      .sign_data(
+        &mut presentation,
+        subject_foo_key.private(),
+        subject_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
+      )
+      .unwrap();
 
-  fn test_validate_presentation_non_transferable_property_violation() {}
+    // validate the presentation
+    let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
+    let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
+    let credential_validation_options = CredentialValidationOptions::default()
+      .expires_after(expires_after)
+      .issued_before(issued_before);
+    let presentation_verifier_options =
+      VerifierOptions::default().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
+    let presentation_validation_options = PresentationValidationOptions::default()
+      .with_common_validation_options(credential_validation_options)
+      .with_presentation_verifier_options(presentation_verifier_options);
 
-  fn test_validate_presentation_multiple_errors() {}
+    let validator = CredentialValidator::new();
+
+    let trusted_issuers = [
+      test_utils::mock_resolved_document(issuer_foo_doc),
+      test_utils::mock_resolved_document(issuer_bar_doc),
+    ];
+
+    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    assert!(validator
+      .validate_presentation(
+        &presentation,
+        &presentation_validation_options,
+        &trusted_issuers,
+        &resolved_holder_document,
+        true
+      )
+      .is_ok());
+  }
+
+  #[test]
+  fn test_validate_presentation_invalid_holder_signature() {
+    // create a first credential
+    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
+    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
+    let mut credential_foo = test_utils::generate_credential(
+      &issuer_foo_doc,
+      std::slice::from_ref(&subject_foo_doc),
+      issuance_date,
+      expiration_date,
+    );
+    // set the nonTransferable option on the first credential
+    credential_foo.non_transferable = Some(true);
+    // sign the credential
+    issuer_foo_doc
+      .sign_data(
+        &mut credential_foo,
+        issuer_foo_key.private(),
+        issuer_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+    // create and sign a second credential
+    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = credential_setup();
+    issuer_bar_doc
+      .sign_data(
+        &mut credential_bar,
+        issuer_bar_key.private(),
+        issuer_bar_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+
+    let mut presentation: Presentation = PresentationBuilder::default()
+      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
+      .credential(credential_foo)
+      .credential(credential_bar)
+      .build()
+      .unwrap();
+    // sign the presentation using subject_foo's document and private key
+
+    subject_foo_doc
+      .sign_data(
+        &mut presentation,
+        subject_foo_key.private(),
+        subject_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::new().challenge("some challenge".to_owned()),
+      )
+      .unwrap();
+
+    // validate the presentation
+    let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
+    let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
+    let credential_validation_options = CredentialValidationOptions::default()
+      .expires_after(expires_after)
+      .issued_before(issued_before);
+    let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); //validate with another challenge
+    let presentation_validation_options = PresentationValidationOptions::default()
+      .with_common_validation_options(credential_validation_options)
+      .with_presentation_verifier_options(presentation_verifier_options);
+
+    let validator = CredentialValidator::new();
+
+    let trusted_issuers = [
+      test_utils::mock_resolved_document(issuer_foo_doc),
+      test_utils::mock_resolved_document(issuer_bar_doc),
+    ];
+
+    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+
+    let error = match validator
+      .validate_presentation(
+        &presentation,
+        &presentation_validation_options,
+        &trusted_issuers,
+        &resolved_holder_document,
+        true,
+      )
+      .unwrap_err()
+    {
+      Error::UnsuccessfulPresentationValidation(mut err) => err.presentation_validation_errors.pop().unwrap(),
+      _ => unreachable!(),
+    };
+
+    assert!(matches!(error, StandaloneValidationError::HolderProof { source }));
+  }
+
+  #[test]
+  fn test_validate_presentation_invalid_credential() {
+    // create a first credential
+    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
+    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
+    let mut credential_foo = test_utils::generate_credential(
+      &issuer_foo_doc,
+      std::slice::from_ref(&subject_foo_doc),
+      issuance_date,
+      expiration_date,
+    );
+    // set the nonTransferable option on the first credential
+    credential_foo.non_transferable = Some(true);
+    // sign the credential
+    issuer_foo_doc
+      .sign_data(
+        &mut credential_foo,
+        issuer_foo_key.private(),
+        issuer_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+    // create and sign a second credential
+    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = credential_setup();
+    issuer_bar_doc
+      .sign_data(
+        &mut credential_bar,
+        issuer_bar_key.private(),
+        issuer_bar_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+
+    let mut presentation: Presentation = PresentationBuilder::default()
+      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
+      .credential(credential_foo)
+      .credential(credential_bar)
+      .build()
+      .unwrap();
+    // sign the presentation using subject_foo's document and private key
+
+    subject_foo_doc
+      .sign_data(
+        &mut presentation,
+        subject_foo_key.private(),
+        subject_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::new().challenge("some challenge".to_owned()),
+      )
+      .unwrap();
+
+    // validate the presentation
+    let issued_before = Timestamp::parse("2019-01-02T00:00:00Z").unwrap(); // only the first credential is issued before this date
+    let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
+    let credential_validation_options = CredentialValidationOptions::default()
+      .expires_after(expires_after)
+      .issued_before(issued_before);
+    let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
+    let presentation_validation_options = PresentationValidationOptions::default()
+      .with_common_validation_options(credential_validation_options)
+      .with_presentation_verifier_options(presentation_verifier_options);
+
+    let validator = CredentialValidator::new();
+
+    let trusted_issuers = [
+      test_utils::mock_resolved_document(issuer_foo_doc),
+      test_utils::mock_resolved_document(issuer_bar_doc),
+    ];
+
+    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+
+    let error = match validator
+      .validate_presentation(
+        &presentation,
+        &presentation_validation_options,
+        &trusted_issuers,
+        &resolved_holder_document,
+        true,
+      )
+      .unwrap_err()
+    {
+      Error::UnsuccessfulPresentationValidation(err) => {
+        assert!(err.presentation_validation_errors.is_empty());
+        err.credential_errors
+      }
+      _ => unreachable!(),
+    };
+
+    assert!(matches!(
+      error.get(&1),
+      Some(_) // the credential at position 1 fails validation
+    ));
+  }
+
+  #[test]
+  fn test_validate_presentation_non_transferable_property_violation() {
+    // create a first credential
+    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
+    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
+    let mut credential_foo = test_utils::generate_credential(
+      &issuer_foo_doc,
+      std::slice::from_ref(&subject_foo_doc),
+      issuance_date,
+      expiration_date,
+    );
+    // set the nonTransferable option on the first credential
+    credential_foo.non_transferable = Some(true);
+    // sign the credential
+    issuer_foo_doc
+      .sign_data(
+        &mut credential_foo,
+        issuer_foo_key.private(),
+        issuer_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+    // create and sign a second credential
+    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = credential_setup();
+    issuer_bar_doc
+      .sign_data(
+        &mut credential_bar,
+        issuer_bar_key.private(),
+        issuer_bar_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+
+    // create a presentation where the subject of the second credential is the holder.
+    // This violates the non transferable property of the first credential.
+    let mut presentation: Presentation = PresentationBuilder::default()
+      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .holder(
+        credential_bar
+          .credential_subject
+          .first()
+          .and_then(|subject| subject.id.as_ref())
+          .unwrap()
+          .clone(),
+      )
+      .credential(credential_foo)
+      .credential(credential_bar)
+      .build()
+      .unwrap();
+        // sign the presentation using subject_foo's document and private key. 
+
+
+    subject_foo_doc
+      .sign_data(
+        &mut presentation,
+        subject_foo_key.private(),
+        subject_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::new().challenge("some challenge".to_owned()),
+      )
+      .unwrap();
+
+    // validate the presentation
+    let issued_before = Timestamp::parse("2020-02-02T00:00:00Z").unwrap();
+    let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
+    let credential_validation_options = CredentialValidationOptions::default()
+      .expires_after(expires_after)
+      .issued_before(issued_before);
+    let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
+    let presentation_validation_options = PresentationValidationOptions::default()
+      .with_common_validation_options(credential_validation_options)
+      .with_presentation_verifier_options(presentation_verifier_options);
+
+    let validator = CredentialValidator::new();
+
+    let trusted_issuers = [
+      test_utils::mock_resolved_document(issuer_foo_doc),
+      test_utils::mock_resolved_document(issuer_bar_doc),
+    ];
+
+    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+
+    let error = match validator
+      .validate_presentation(
+        &presentation,
+        &presentation_validation_options,
+        &trusted_issuers,
+        &resolved_holder_document,
+        true,
+      )
+      .unwrap_err()
+    {
+      Error::UnsuccessfulPresentationValidation(mut err) => err.presentation_validation_errors.pop().unwrap(),
+      _ => unreachable!(),
+    };
+
+    assert!(matches!(
+      error,
+      StandaloneValidationError::NonTransferableViolation { credential_position: 0 }
+    ));
+  }
+
+  #[test]
+  fn test_validate_presentation_multiple_errors() {
+    // create a first credential
+    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
+    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
+    let mut credential_foo = test_utils::generate_credential(
+      &issuer_foo_doc,
+      std::slice::from_ref(&subject_foo_doc),
+      issuance_date,
+      expiration_date,
+    );
+    // set the nonTransferable option on the first credential
+    credential_foo.non_transferable = Some(true);
+    // sign the credential
+    issuer_foo_doc
+      .sign_data(
+        &mut credential_foo,
+        issuer_foo_key.private(),
+        issuer_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+    // create and sign a second credential
+    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = credential_setup();
+    issuer_bar_doc
+      .sign_data(
+        &mut credential_bar,
+        issuer_bar_key.private(),
+        issuer_bar_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
+
+    // create a presentation where the subject of the second credential is the holder.
+    // This violates the non transferable property of the first credential.
+    let mut presentation: Presentation = PresentationBuilder::default()
+      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .holder(
+        credential_bar
+          .credential_subject
+          .first()
+          .and_then(|subject| subject.id.as_ref())
+          .unwrap()
+          .clone(),
+      )
+      .credential(credential_foo)
+      .credential(credential_bar)
+      .build()
+      .unwrap();
+    // sign the presentation using subject_foo's document and private key
+
+    subject_foo_doc
+      .sign_data(
+        &mut presentation,
+        subject_foo_key.private(),
+        subject_foo_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::new().challenge("some challenge".to_owned()),
+      )
+      .unwrap();
+
+    // validate the presentation
+    let issued_before = Timestamp::parse("2010-02-02T00:00:00Z").unwrap(); // both credentials were issued after this
+    let expires_after = Timestamp::parse("2050-01-01T00:00:00Z").unwrap(); // both credentials expire before this 
+    let credential_validation_options = CredentialValidationOptions::default()
+      .expires_after(expires_after)
+      .issued_before(issued_before);
+    let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge 
+    let presentation_validation_options = PresentationValidationOptions::default()
+      .with_common_validation_options(credential_validation_options)
+      .with_presentation_verifier_options(presentation_verifier_options);
+
+    let validator = CredentialValidator::new();
+
+    let trusted_issuers = [
+      test_utils::mock_resolved_document(issuer_foo_doc),
+      test_utils::mock_resolved_document(issuer_bar_doc),
+    ];
+
+    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+
+    let (presentation_validation_errors, credential_errors) = match validator
+      .validate_presentation(
+        &presentation,
+        &presentation_validation_options,
+        &trusted_issuers,
+        &resolved_holder_document,
+        false,
+      )
+      .unwrap_err()
+    {
+      Error::UnsuccessfulPresentationValidation(err) => (err.presentation_validation_errors, err.credential_errors),
+      _ => unreachable!(),
+    };
+
+    assert!(
+      presentation_validation_errors.len() + credential_errors.values().map(|error| error.validation_errors.len()).sum::<usize>() >= 6 
+    );
+  }
 }
