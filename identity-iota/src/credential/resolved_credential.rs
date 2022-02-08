@@ -9,6 +9,7 @@ use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
 use super::errors::CompoundError;
+use super::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::Error;
@@ -49,14 +50,10 @@ impl<T: Serialize> ResolvedCredential<T> {
     let credential_issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
     if let Ok(did) = credential_issuer_did {
       if &did != issuer.document.id() {
-        return Err(Error::InvalidCredentialPairing(
-          CompoundError::UnrelatedIssuer,
-        ));
+        return Err(Error::InvalidCredentialPairing(CompoundError::UnrelatedIssuer));
       }
     } else {
-      return Err(Error::InvalidCredentialPairing(
-        CompoundError::UnrelatedIssuer,
-      ));
+      return Err(Error::InvalidCredentialPairing(CompoundError::UnrelatedIssuer));
     }
 
     // check that the subjects correspond to the credential's subjects
@@ -70,9 +67,9 @@ impl<T: Serialize> ResolvedCredential<T> {
           .filter(|url| url == &subject.document.id().to_url().to_string().as_str())
           .is_some()
       }) {
-        return Err(Error::InvalidCredentialPairing(
-          CompoundError::UnrelatedSubjects { position },
-        ));
+        return Err(Error::InvalidCredentialPairing(CompoundError::UnrelatedSubjects {
+          position,
+        }));
       }
     }
 
@@ -88,12 +85,8 @@ impl<T: Serialize> ResolvedCredential<T> {
   /// # Terminology
   /// This method is a *validation unit*
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<()> {
-    self
-      .issuer
-      .document
-      .verify_data(&self.credential, options)
-      .map_err(|err| super::errors::StandaloneValidationError::IssuerProof { source: err.into() })
-      .map_err(Into::into)
+    CredentialValidator::verify_credential_signature(&self.credential, std::slice::from_ref(&self.issuer), options)
+      .map_err(Error::UnsuccessfulValidationUnit)
   }
 
   /// Returns an iterator over the resolved documents that have been deactivated.

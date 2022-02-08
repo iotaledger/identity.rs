@@ -21,22 +21,22 @@ impl Default for CredentialValidationOptions {
 }
 
 impl CredentialValidationOptions {
-  pub fn with_latest_expiration_date(mut self, timestamp: Timestamp) -> Self {
+  pub fn expires_after(mut self, timestamp: Timestamp) -> Self {
     self.expires_after = timestamp;
     self
   }
 
-  pub fn with_earliest_issuance_date(mut self, timestamp: Timestamp) -> Self {
+  pub fn issued_before(mut self, timestamp: Timestamp) -> Self {
     self.issued_before = timestamp;
     self
   }
 
-  pub fn with_verifier_options(mut self, verifier_options: VerifierOptions) -> Self {
+  pub fn verifier_options(mut self, verifier_options: VerifierOptions) -> Self {
     self.verifier_options = verifier_options;
     self
   }
 
-  pub fn verifier_options_mut(&mut self) -> &mut VerifierOptions {
+  pub fn get_verifier_options_mut(&mut self) -> &mut VerifierOptions {
     &mut self.verifier_options
   }
 

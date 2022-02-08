@@ -9,6 +9,7 @@ use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
 use super::errors::CompoundError;
+use super::CredentialValidator;
 use super::ResolvedCredential;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -49,21 +50,15 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
     let presentation_holder_did: Result<IotaDID> = presentation
       .holder
       .clone()
-      .ok_or(Error::InvalidPresentationPairing(
-        CompoundError::UnrelatedHolder,
-      ))?
+      .ok_or(Error::InvalidPresentationPairing(CompoundError::UnrelatedHolder))?
       .as_str()
       .parse();
     if let Ok(did) = presentation_holder_did {
       if &did != holder.document.id() {
-        return Err(Error::InvalidPresentationPairing(
-          CompoundError::UnrelatedHolder,
-        ));
+        return Err(Error::InvalidPresentationPairing(CompoundError::UnrelatedHolder));
       }
     } else {
-      return Err(Error::InvalidPresentationPairing(
-        CompoundError::UnrelatedHolder,
-      ));
+      return Err(Error::InvalidPresentationPairing(CompoundError::UnrelatedHolder));
     }
 
     // check that the resolved credentials correspond to the presentation's credentials
@@ -72,9 +67,9 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
         .verifiable_credential
         .contains(&resolved_credential.credential)
       {
-        return Err(Error::InvalidPresentationPairing(
-          CompoundError::UnrelatedCredentials { position },
-        ));
+        return Err(Error::InvalidPresentationPairing(CompoundError::UnrelatedCredentials {
+          position,
+        }));
       }
     }
 
@@ -90,12 +85,8 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
   /// # Terminology
   /// This method is a *validation unit*
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<()> {
-    self
-      .holder
-      .document
-      .verify_data(&self.presentation, options)
-      .map_err(|err| super::errors::StandaloneValidationError::HolderProof { source: err.into() })
-      .map_err(Into::into)
+    CredentialValidator::verify_presentation_signature(&self.presentation, &self.holder, options)
+      .map_err(Error::UnsuccessfulValidationUnit)
   }
   delegate::delegate! {
       to self.presentation {

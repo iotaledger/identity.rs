@@ -42,9 +42,10 @@ pub enum StandaloneValidationError {
   #[error("presentation validation failed: The holder property could not be parsed to a valid DID")]
   HolderUrl,
 
-  /// Indicates an attempt to validate a presentation using a resolved DID document not corresponding to the URL of the presentation's holder property.
+  /// Indicates an attempt to validate a presentation using a resolved DID document not corresponding to the URL of the
+  /// presentation's holder property.
   #[error("presentation validation failed: The provided holder document does not correspond to the presentation's holder property")]
-  IncompatibleHolderDocument,  
+  IncompatibleHolderDocument,
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
   #[error("presentation validation failed: could not verify the holder's signature")]
@@ -55,7 +56,8 @@ pub enum StandaloneValidationError {
   /// Indicates that the structure of the [identity_credential::credential::Credential] is not semantically correct.
   #[error("credential validation failed: the credential's structure is not spec compliant")]
   CredentialStructure(#[source] identity_credential::Error),
-  /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not semantically correct.
+  /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not semantically
+  /// correct.
   #[error("presentation validation failed: the presentation's structure is not spec compliant")]
   PresentationStructure(#[source] identity_credential::Error),
   /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials.
