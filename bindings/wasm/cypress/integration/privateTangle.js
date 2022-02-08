@@ -17,7 +17,7 @@ describe(
             // from the shared context as `this.config` because it has a race condition with initializing the wasm.
             // So call `defaultClientConfig()` manually for now.
         });
-        it("private tangle", async function () {
+        it("Private Tangle", async function () {
             try {
                 await privateTangle()
                 throw new Error("Did not throw.")
