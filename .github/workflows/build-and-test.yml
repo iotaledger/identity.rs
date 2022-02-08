@@ -15,8 +15,8 @@ on:
       - '.github/actions'
       - '**.rs'
       - '**.toml'
-      - 'bindings/wasm/package-lock.json'
-      - 'bindings/wasm/**/*.js'
+      - 'bindings/wasm/'
+      - '!bindings/wasm/**.md'
 
 # Figure out job level constraints
 
