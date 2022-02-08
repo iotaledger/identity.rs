@@ -44,7 +44,7 @@ jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     needs: determine-modification
-    if: ${{needs.determine-modification.outputs.core-modified}}
+    if: ${{needs.determine-modification.outputs.core-modified == 'true'}}
     strategy:
       fail-fast: false
       matrix:

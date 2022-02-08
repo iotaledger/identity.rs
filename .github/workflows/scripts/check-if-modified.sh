@@ -1,7 +1,7 @@
 if [[ $(git diff HEAD^ HEAD -- $1) != '' ]]; then
     # modified
-    echo 0
+    echo 'true'
 else
     # unmodified
-    echo 1
+    echo 'false'
 fi
