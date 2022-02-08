@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 10
+          fetch-depth: 0
       - name: Run change detection
         id: change-detection
         run: |
