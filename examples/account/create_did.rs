@@ -46,5 +46,7 @@ async fn main() -> Result<()> {
     explorer.resolver_url(iota_did)?
   );
 
-  Ok(())
+  // Ok(())
+  // TODO: remove
+  Err(identity::account::Error::InvalidPrivateKey("test that pipeline fails".to_owned()))
 }
