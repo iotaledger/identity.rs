@@ -322,20 +322,28 @@ impl CredentialValidator {
 #[cfg(test)]
 mod tests {
   use identity_core::common::Timestamp;
+  use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
 
   use crate::credential::CredentialValidationOptions;
+  use crate::document::IotaDocument;
 
   use super::super::test_utils;
   use super::*;
-  #[test]
-  fn test_validate_credential() {
-    // setup
+
+  fn credential_validation_setup() -> (IotaDocument, KeyPair, Credential) {
     let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
     let (subject_doc, _) = test_utils::generate_document_with_keys();
     let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+    let credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+    (issuer_doc, issuer_key, credential)
+  }
+
+  #[test]
+  fn test_validate_credential() {
+    // setup
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -344,7 +352,7 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    // validate credential
+    // declare the credential validation parameters
     let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
@@ -360,11 +368,7 @@ mod tests {
   #[test]
   fn test_validate_credential_invalid_signature() {
     // setup
-    let (issuer_doc, _) = test_utils::generate_document_with_keys();
-    let (subject_doc, _) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+    let (issuer_doc, _, mut credential) = credential_validation_setup();
     let (_, other_keys) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
@@ -374,7 +378,7 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    // validate credential
+    // declare the credential validation parameters
     let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
@@ -402,21 +406,17 @@ mod tests {
   #[test]
   fn test_validate_credential_untrusted_issuer() {
     // setup
-    let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-    let (subject_doc, _) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
-        issuer_key.private(), 
+        issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
         SignatureOptions::default(),
       )
       .unwrap();
-    // validate credential
+    // declare the credential validation parameters
     let trusted_issuer = test_utils::mock_resolved_document(other_doc); // the trusted issuer did not sign the credential
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
@@ -444,20 +444,17 @@ mod tests {
   #[test]
   fn test_validate_credential_invalid_expiration_date() {
     // setup
-    let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-    let (subject_doc, _) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
     issuer_doc
       .sign_data(
         &mut credential,
-        issuer_key.private(), 
+        issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
         SignatureOptions::default(),
       )
       .unwrap();
-    // validate credential
+
+    // declare the credential validation parameters
     let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2023-02-01T00:00:00Z").unwrap(); // note that expires_after > expiration_date
@@ -484,111 +481,101 @@ mod tests {
 
   #[test]
   fn test_validate_credential_invalid_issuance_date() {
+    // setup
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    issuer_doc
+      .sign_data(
+        &mut credential,
+        issuer_key.private(),
+        issuer_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
 
-      // setup
-      let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-      let (subject_doc, _) = test_utils::generate_document_with_keys();
-      let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-      let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-      let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
-      issuer_doc
-        .sign_data(
-          &mut credential,
-          issuer_key.private(), 
-          issuer_doc.default_signing_method().unwrap().id(),
-          SignatureOptions::default(),
-        )
-        .unwrap();
-      // validate credential
-      let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
-      let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // note that issued_before < issuance_date
-      let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
-      let options = CredentialValidationOptions::default()
-        .issued_before(issued_before)
-        .expires_after(expires_after);
-      let validator = CredentialValidator::new();
-      // validate and extract the nested error according to our expectations
-      let error = match validator
-        .validate_credential(&credential, &options, &[trusted_issuer], true)
-        .unwrap_err()
-      {
-        Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
-          match accumulated_validation_error.validation_errors {
-            OneOrMany::One(validation_error) => validation_error,
-            _ => unreachable!(),
-          }
+    // declare the credential validation parameters
+    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // note that issued_before < issuance_date
+    let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
+    let options = CredentialValidationOptions::default()
+      .issued_before(issued_before)
+      .expires_after(expires_after);
+
+    let validator = CredentialValidator::new();
+    // validate and extract the nested error according to our expectations
+    let error = match validator
+      .validate_credential(&credential, &options, &[trusted_issuer], true)
+      .unwrap_err()
+    {
+      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+        match accumulated_validation_error.validation_errors {
+          OneOrMany::One(validation_error) => validation_error,
+          _ => unreachable!(),
         }
-        _ => unreachable!(),
-      };
-  
-      assert!(matches!(error, StandaloneValidationError::IssuanceDate));
+      }
+      _ => unreachable!(),
+    };
+
+    assert!(matches!(error, StandaloneValidationError::IssuanceDate));
   }
 
   #[test]
   fn test_validate_credential_invalid_structure() {
-
-     // setup
-     let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-     let (subject_doc, _) = test_utils::generate_document_with_keys();
-     let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-     let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-     let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
-     issuer_doc
-       .sign_data(
-         &mut credential,
-         issuer_key.private(), 
-         issuer_doc.default_signing_method().unwrap().id(),
-         SignatureOptions::default(),
-       )
-       .unwrap();
+    // setup
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    issuer_doc
+      .sign_data(
+        &mut credential,
+        issuer_key.private(),
+        issuer_doc.default_signing_method().unwrap().id(),
+        SignatureOptions::default(),
+      )
+      .unwrap();
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
-     // validate credential
-     let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
-     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap(); 
-     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
-     let options = CredentialValidationOptions::default()
-       .issued_before(issued_before)
-       .expires_after(expires_after);
-     let validator = CredentialValidator::new();
-     // validate and extract the nested error according to our expectations
-     let error = match validator
-       .validate_credential(&credential, &options, &[trusted_issuer], true)
-       .unwrap_err()
-     {
-       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
-         match accumulated_validation_error.validation_errors {
-           OneOrMany::One(validation_error) => validation_error,
-           _ => unreachable!(),
-         }
-       }
-       _ => unreachable!(),
-     };
- 
-     assert!(matches!(error, StandaloneValidationError::CredentialStructure(_)));
+
+    // declare the credential validation parameters
+    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
+    let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
+    let options = CredentialValidationOptions::default()
+      .issued_before(issued_before)
+      .expires_after(expires_after);
+    let validator = CredentialValidator::new();
+    // validate and extract the nested error according to our expectations
+    let error = match validator
+      .validate_credential(&credential, &options, &[trusted_issuer], true)
+      .unwrap_err()
+    {
+      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+        match accumulated_validation_error.validation_errors {
+          OneOrMany::One(validation_error) => validation_error,
+          _ => unreachable!(),
+        }
+      }
+      _ => unreachable!(),
+    };
+
+    assert!(matches!(error, StandaloneValidationError::CredentialStructure(_)));
   }
 
   #[test]
   fn test_validate_credential_multiple_errors_fail_fast() {
     // setup
-    let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-    let (subject_doc, _) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
-    let (other_issuer, _) = test_utils::generate_document_with_keys(); 
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (other_issuer, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
-        issuer_key.private(), // sign with other keys
+        issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
         SignatureOptions::default(),
       )
       .unwrap();
-   credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
-    // validate credential
-    let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential 
+    credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
+
+    // declare the credential validation parameters
+    let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date
-    let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date 
+    let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date
     let options = CredentialValidationOptions::default()
       .issued_before(issued_before)
       .expires_after(expires_after);
@@ -610,22 +597,19 @@ mod tests {
   #[test]
   fn test_validate_credential_multiple_errors_accumulate_all_errors() {
     // setup
-    let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-    let (subject_doc, _) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let mut credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
-    let (other_issuer, _) = test_utils::generate_document_with_keys(); 
+    let (issuer_doc, issuer_key, mut credential) = credential_validation_setup();
+    let (other_issuer, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
-        issuer_key.private(), 
+        issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
         SignatureOptions::default(),
       )
       .unwrap();
-   credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct [first error]
-    // validate credential
+    credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct [first error]
+
+    // declare the credential validation parameters
     let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential [second error]
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date [third error]
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date [fourth error]
