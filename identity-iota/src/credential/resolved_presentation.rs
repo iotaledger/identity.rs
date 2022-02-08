@@ -8,7 +8,7 @@ use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
-use super::errors::DocumentAssociationError;
+use super::errors::CompoundError;
 use super::ResolvedCredential;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -50,19 +50,19 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
       .holder
       .clone()
       .ok_or(Error::InvalidPresentationPairing(
-        DocumentAssociationError::UnrelatedHolder,
+        CompoundError::UnrelatedHolder,
       ))?
       .as_str()
       .parse();
     if let Ok(did) = presentation_holder_did {
       if &did != holder.document.id() {
         return Err(Error::InvalidPresentationPairing(
-          DocumentAssociationError::UnrelatedHolder,
+          CompoundError::UnrelatedHolder,
         ));
       }
     } else {
       return Err(Error::InvalidPresentationPairing(
-        DocumentAssociationError::UnrelatedHolder,
+        CompoundError::UnrelatedHolder,
       ));
     }
 
@@ -73,7 +73,7 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
         .contains(&resolved_credential.credential)
       {
         return Err(Error::InvalidPresentationPairing(
-          DocumentAssociationError::UnrelatedCredentials { position },
+          CompoundError::UnrelatedCredentials { position },
         ));
       }
     }

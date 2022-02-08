@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::credential::errors::DocumentAssociationError;
+use crate::credential::errors::CompoundError;
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
@@ -65,8 +65,8 @@ pub enum Error {
   UnsuccessfulPresentationValidation(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
   /// Caused by a failure to construct a `ResolvedCredential`.
   #[error("failed to construct ResolvedCredential: invalid input data")]
-  InvalidCredentialPairing(#[source] DocumentAssociationError),
+  InvalidCredentialPairing(#[source] CompoundError),
   /// Caused by a failure to construct a `ResolvedPresentation`.
   #[error("failed to construct ResolvedPresentation: invalid input data")]
-  InvalidPresentationPairing(#[source] DocumentAssociationError),
+  InvalidPresentationPairing(#[source] CompoundError),
 }

@@ -8,7 +8,7 @@ use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
-use super::errors::DocumentAssociationError;
+use super::errors::CompoundError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::Error;
@@ -50,12 +50,12 @@ impl<T: Serialize> ResolvedCredential<T> {
     if let Ok(did) = credential_issuer_did {
       if &did != issuer.document.id() {
         return Err(Error::InvalidCredentialPairing(
-          DocumentAssociationError::UnrelatedIssuer,
+          CompoundError::UnrelatedIssuer,
         ));
       }
     } else {
       return Err(Error::InvalidCredentialPairing(
-        DocumentAssociationError::UnrelatedIssuer,
+        CompoundError::UnrelatedIssuer,
       ));
     }
 
@@ -71,7 +71,7 @@ impl<T: Serialize> ResolvedCredential<T> {
           .is_some()
       }) {
         return Err(Error::InvalidCredentialPairing(
-          DocumentAssociationError::UnrelatedSubjects { position },
+          CompoundError::UnrelatedSubjects { position },
         ));
       }
     }

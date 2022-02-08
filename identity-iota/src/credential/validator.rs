@@ -11,6 +11,7 @@ use crate::Result;
 use identity_core::common::OneOrMany;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
 use super::errors::AccumulatedCredentialValidationError;
@@ -47,7 +48,7 @@ impl CredentialValidator {
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
-    trusted_issuers: &[ResolvedIotaDocument], // Todo: Should this be part of CredentialValidationOptions?
+    trusted_issuers: &[ResolvedIotaDocument],
     fail_fast: bool,
   ) -> Result<()> {
     self
@@ -68,10 +69,11 @@ impl CredentialValidator {
     presentation: &Presentation<T, S>,
     options: &PresentationValidationOptions,
     trusted_issuers: &[ResolvedIotaDocument],
+    resolved_holder_document: &ResolvedIotaDocument, 
     fail_fast: bool,
   ) -> Result<()> {
     self
-      .validate_presentation_internal(presentation, options, trusted_issuers, fail_fast)
+      .validate_presentation_internal(presentation, options, trusted_issuers, resolved_holder_document, fail_fast)
       .map_err(Error::UnsuccessfulPresentationValidation)
   }
 
@@ -128,24 +130,12 @@ impl CredentialValidator {
     }
   }
 
-  // helper function to see the kind of error validation may yield
-  fn validate_credential_internal<T: Serialize>(
-    &self,
-    credential: &Credential<T>,
-    options: &CredentialValidationOptions,
-    trusted_issuers: &[ResolvedIotaDocument],
-    fail_fast: bool,
-  ) -> Result<(), AccumulatedCredentialValidationError> {
-    // first run the preliminary validation checks not requiring any DID Documents
-    let validation_errors = Self::preliminary_credential_validation(credential, options, fail_fast)
-      .err()
-      .unwrap_or_default();
-    let mut errors = AccumulatedCredentialValidationError { validation_errors };
-    if (!errors.validation_errors.is_empty()) && fail_fast {
-      return Err(errors);
-    }
+  /// Checks the [Credential]'s signature.
+  /// 
+  /// If the Credential's issuer corresponds to one of the `trusted_issuer`'s then the signature will be verified using this issuer's DID document. 
+  pub(crate) fn verify_credential_signature<T: Serialize>(credential: &Credential<T>, trusted_issuers: &[ResolvedIotaDocument], options: &VerifierOptions) -> Result<(), StandaloneValidationError> 
+  {
 
-    // now check the issuer's signature
     let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
     if let Ok(did) = issuer_did {
       // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
@@ -157,30 +147,42 @@ impl CredentialValidator {
         .and_then(|trusted_issuer_doc| {
           trusted_issuer_doc
             .document
-            .verify_data(&credential, &options.verifier_options)
+            .verify_data(&credential, &options)
             .map_err(|error| StandaloneValidationError::IssuerProof { source: error.into() })
         })
       {
         // the credential issuer's url could be parsed to a valid IOTA DID, but verification failed for one of the
         // following reasons; Either the credential issuer is not trusted, or the credential issuer is trusted,
         // but the signature could not be verified using the issuer's resolved DID document
-        errors.validation_errors.push(issuer_proof_error);
-        if fail_fast {
-          return Err(errors);
-        }
+          return Err(issuer_proof_error);
       }
-    } else {
-      // the issuer's url could not be parsed to a valid IotaDID
-      errors.validation_errors.push(StandaloneValidationError::IssuerUrl);
-      if fail_fast {
-        return Err(errors);
-      }
-    }
-
-    if errors.validation_errors.is_empty() {
       Ok(())
     } else {
-      Err(errors)
+      // the issuer's url could not be parsed to a valid IotaDID   
+        return Err(StandaloneValidationError::IssuerUrl);
+    }
+  }
+
+  // helper function to see the kind of error validation may yield
+  fn validate_credential_internal<T: Serialize>(
+    &self,
+    credential: &Credential<T>,
+    options: &CredentialValidationOptions,
+    trusted_issuers: &[ResolvedIotaDocument],
+    fail_fast: bool,
+  ) -> Result<(), AccumulatedCredentialValidationError> {
+    // first run the preliminary validation checks not requiring any DID Documents
+    let mut validation_errors: OneOrMany<StandaloneValidationError> =  Self::preliminary_credential_validation(credential, options, fail_fast).err().unwrap_or_default();
+    // now check the credential's signature 
+    if validation_errors.is_empty() || !fail_fast {
+      if let Err(proof_error) = Self::verify_credential_signature(credential, trusted_issuers, &options.verifier_options) {
+        validation_errors.push(proof_error);
+      }
+    }
+    if validation_errors.is_empty() {
+      Ok(())
+    } else {
+      Err( AccumulatedCredentialValidationError {validation_errors})
     }
   }
 
@@ -215,18 +217,36 @@ impl CredentialValidator {
     }
   }
 
+
+  /// Verify the presentation's signature using the resolved document of the holder 
+  /// 
+  /// # Errors
+  /// Fails if the supplied `resolved_holder_document` cannot be identified with the URL of the `presentation`'s holder property  
+  pub(crate) fn verify_presentation_signature<T: Serialize, S: Serialize>(presentation: &Presentation<T,S>,resolved_holder_document: &ResolvedIotaDocument, options: &VerifierOptions) -> Result<(), StandaloneValidationError> 
+  {
+    let did: IotaDID = presentation.holder.as_ref().ok_or(StandaloneValidationError::HolderUrl).and_then(
+      |value| IotaDID::parse(value.as_str()).map_err(|_| StandaloneValidationError::HolderUrl)
+    )?; 
+    if &did != resolved_holder_document.document.id() {
+      return Err(StandaloneValidationError::IncompatibleHolderDocument); 
+    }
+    resolved_holder_document.document.verify_data(&presentation, options).map_err(|error|StandaloneValidationError::HolderProof {source: error.into()})
+  }
+
   // helper function to see the kind of error validation may yield
   fn validate_presentation_internal<T: Serialize, S: Serialize>(
     &self,
     presentation: &Presentation<T, S>,
     options: &PresentationValidationOptions,
     trusted_issuers: &[ResolvedIotaDocument],
+    resolved_holder_document: &ResolvedIotaDocument,
     fail_fast: bool,
   ) -> Result<(), AccumulatedPresentationValidationError> {
     // first run some preliminary validation checks directly on the presentation
     let preliminary_presentation_validation_errors = Self::preliminaty_presentation_validation(presentation, fail_fast)
       .err()
       .unwrap_or_default();
+
     let mut presentation_resolution_error = AccumulatedPresentationValidationError {
       presentation_validation_errors: preliminary_presentation_validation_errors.into_vec(),
       credential_errors: BTreeMap::<usize, AccumulatedCredentialValidationError>::new(),
@@ -236,6 +256,13 @@ impl CredentialValidator {
       ref mut presentation_validation_errors,
       ref mut credential_errors,
     } = presentation_resolution_error;
+
+    // now check the holder's signature 
+    if presentation_validation_errors.is_empty() || (!fail_fast) {
+      if let Err(proof_error) = Self::verify_presentation_signature(presentation, resolved_holder_document, &options.common_validation_options.verifier_options) {
+        presentation_validation_errors.push(proof_error);
+      }
+    }
 
     // if any of the preliminary validations failed and fail_fast is true we must return now
     if (!presentation_validation_errors.is_empty()) && fail_fast {
@@ -262,5 +289,53 @@ impl CredentialValidator {
     } else {
       Err(presentation_resolution_error)
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+
+  fn test_validate_credential() {
+
+  }
+
+  fn test_validate_credential_invalid_signature() {
+  }
+
+  fn test_validate_credential_untrusted_issuer() {
+
+  }
+
+  fn test_validate_credential_invalid_expiration_date() {
+
+  }
+
+  fn test_validate_credential_invalid_issuance_date() {
+  }
+
+  fn test_validate_credential_invalid_structure() {
+  }
+
+  fn test_validate_credential_multiple_errors() {
+  }
+
+  fn test_validate_presentation() {
+
+  }
+
+  fn test_validate_presentation_invalid_holder_signature() {
+
+  }
+
+  fn test_validate_presentation_invalid_credential() {
+
+  }
+
+  fn test_validate_presentation_non_transferable_property_violation() {
+
+  }
+
+  fn test_validate_presentation_multiple_errors() {
+
   }
 }

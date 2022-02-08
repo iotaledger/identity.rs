@@ -10,7 +10,7 @@ use crate::did::IotaDIDUrl;
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
-/// An error associated with credential validation.
+/// An error associated with validating credentials and presentations.
 pub enum StandaloneValidationError {
   /// Indicates that the expiration date of the credential is not considered valid.
   #[error("credential validation failed: the expiration date does not satisfy the validation criterea")]
@@ -30,13 +30,21 @@ pub enum StandaloneValidationError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
   },
-  /// Indicates an attempt to validate a credential signed by an untrusted issuer
+  /// Indicates an attempt to validate a credential signed by an untrusted issuer.
   #[error("credential validation failed: the credential is signed by an untrusted issuer")]
   UntrustedIssuer,
 
-  /// Indicates that the credential's issuer could not be parsed as a valid DID
+  /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("credential validation failed: The issuer property could not be parsed to a valid DID")]
   IssuerUrl,
+
+  /// Indicates that the credential's issuer could not be parsed as a valid DID.
+  #[error("presentation validation failed: The holder property could not be parsed to a valid DID")]
+  HolderUrl,
+
+  /// Indicates an attempt to validate a presentation using a resolved DID document not corresponding to the URL of the presentation's holder property.
+  #[error("presentation validation failed: The provided holder document does not correspond to the presentation's holder property")]
+  IncompatibleHolderDocument,  
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
   #[error("presentation validation failed: could not verify the holder's signature")]
@@ -44,16 +52,16 @@ pub enum StandaloneValidationError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
   },
-  /// Indicates that the structure of the [identity_credential::credential::Credential] is not spec compliant
+  /// Indicates that the structure of the [identity_credential::credential::Credential] is not semantically correct.
   #[error("credential validation failed: the credential's structure is not spec compliant")]
   CredentialStructure(#[source] identity_credential::Error),
-  /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not spec compliant
+  /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not semantically correct.
   #[error("presentation validation failed: the presentation's structure is not spec compliant")]
   PresentationStructure(#[source] identity_credential::Error),
-  /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials
+  /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials.
   #[error("presentation validation failed: The nonTransferable property of the credential at position {credential_position} is not met")]
   NonTransferableViolation { credential_position: usize },
-  /// Indicates that the presentation does not have a holder
+  /// Indicates that the presentation does not have a holder.
   #[error("presentation validation failed: the presentation is required to have a non-empty holder property")]
   MissingPresentationHolder,
 }
@@ -61,11 +69,11 @@ pub enum StandaloneValidationError {
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 /// An error caused by an attempt to group credentials with unrelated resolved DID documents
-pub enum DocumentAssociationError {
+pub enum CompoundError {
   #[error("could not associate the provided resolved DID document with the credential's issuer")]
   UnrelatedIssuer,
   #[error(
-    "the subject data at {position} in the provided mapping cannot be associated with any of the credential's subjects"
+    "the subject data at {position} in the provided vector cannot be associated with any of the credential's subjects"
   )]
   UnrelatedSubjects { position: usize },
   #[error("could not associate the provided resolved DID document with the presentation's holder")]
