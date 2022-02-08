@@ -50,6 +50,7 @@ type HandlerObjectTuple<'a> = (
   Box<dyn Any + Send + Sync>,
 );
 
+// TODO: Can this take OBJ as a parameter for more type safety across add_state + add_handler?
 pub struct HandlerBuilder {
   pub(crate) object_id: Uuid,
   pub(crate) handlers: Arc<HandlerMap>,
@@ -127,7 +128,7 @@ impl Actor {
     }
   }
 
-  pub fn handlers(&self) -> &HandlerMap {
+  fn handlers(&self) -> &HandlerMap {
     self.handlers.as_ref()
   }
 
@@ -140,11 +141,6 @@ impl Actor {
 
   pub async fn peer_id(&mut self) -> PeerId {
     self.commander.peer_id().await
-  }
-
-  pub async fn stop_listening(&mut self) {
-    // self.commander.stop_listening().await;
-    todo!()
   }
 
   pub async fn addresses(&mut self) -> Vec<Multiaddr> {
@@ -444,14 +440,14 @@ impl Actor {
           self.call_hook(hook_endpoint, inbound_request.peer_id, message).await;
 
         match hook_result {
-          Ok(Ok(request)) => return Ok(request),
+          Ok(Ok(request)) => Ok(request),
           Ok(Err(_)) => {
             unimplemented!("didcomm termination");
           }
-          Err(err) => return Err(err.into()),
+          Err(err) => Err(err.into()),
         }
       } else {
-        return Ok(message);
+        Ok(message)
       }
     } else {
       log::warn!("attempted to wait for a message on thread {thread_id:?}, which does not exist");

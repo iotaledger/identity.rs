@@ -128,9 +128,8 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 
   impl State {
     async fn handler(self, _actor: Actor, req: RequestContext<DidCommPlaintextMessage<Dummy>>) {
-      match req.input.body {
-        Dummy(42) => self.0.store(true, std::sync::atomic::Ordering::SeqCst),
-        _ => (),
+      if let Dummy(42) = req.input.body {
+        self.0.store(true, std::sync::atomic::Ordering::SeqCst);
       }
     }
   }

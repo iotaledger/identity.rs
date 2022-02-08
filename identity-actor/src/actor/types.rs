@@ -10,6 +10,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::Debug;
 use std::fmt::Display;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestMessage
@@ -101,21 +102,18 @@ where
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ThreadId {
-  inner: String,
-}
+pub struct ThreadId(Uuid);
 
 impl ThreadId {
+  #[allow(clippy::new_without_default)]
   pub fn new() -> Self {
-    Self {
-      inner: uuid::Uuid::new_v4().to_string(),
-    }
+    Self(Uuid::new_v4())
   }
 }
 
 impl Display for ThreadId {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}", self.inner)
+    write!(f, "{}", self.0)
   }
 }
 

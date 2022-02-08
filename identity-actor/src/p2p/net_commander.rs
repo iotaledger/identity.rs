@@ -68,7 +68,7 @@ impl NetCommander {
     receiver.await.expect("sender was dropped")
   }
 
-  pub async fn stop_listening(&mut self) -> () {
+  pub async fn stop_listening(&mut self) {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::StopListening {

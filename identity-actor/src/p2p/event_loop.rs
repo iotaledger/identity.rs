@@ -109,14 +109,12 @@ impl EventLoop {
           if let Some(response_channel) = self.await_response.remove(&request_id) {
             let _ = response_channel.send(Ok(response));
           }
-          return;
         }
       },
       SwarmEvent::Behaviour(RequestResponseEvent::OutboundFailure { request_id, error, .. }) => {
         if let Some(response_channel) = self.await_response.remove(&request_id) {
           let _ = response_channel.send(Err(error));
         }
-        return;
       }
       _ => (),
     }
@@ -149,7 +147,6 @@ impl EventLoop {
       } => {
         let result: Result<(), _> = self.swarm.listen_on(address).map(|listener_id| {
           self.listener_ids.push(listener_id);
-          ()
         });
 
         response_channel.send(result).expect("sender was dropped");
@@ -164,11 +161,11 @@ impl EventLoop {
       }
       SwarmCommand::GetPeerId { response_channel } => {
         response_channel
-          .send(self.swarm.local_peer_id().clone())
+          .send(*self.swarm.local_peer_id())
           .expect("sender was dropped");
       }
       SwarmCommand::StopListening { response_channel } => {
-        for listener in std::mem::replace(&mut self.listener_ids, Vec::new()).into_iter() {
+        for listener in std::mem::take(&mut self.listener_ids).into_iter() {
           let _ = self.swarm.remove_listener(listener);
         }
         response_channel.send(()).expect("sender was dropped");

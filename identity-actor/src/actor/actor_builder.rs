@@ -80,7 +80,7 @@ impl ActorBuilder {
     TRA::Error: Send + Sync,
   {
     let (noise_keypair, peer_id) = {
-      let keypair = self.keypair.unwrap_or_else(|| Keypair::generate_ed25519());
+      let keypair = self.keypair.unwrap_or_else(Keypair::generate_ed25519);
       let noise_keypair = NoiseKeypair::<X25519Spec>::new().into_authentic(&keypair).unwrap();
       let peer_id = keypair.public().to_peer_id();
       (noise_keypair, peer_id)
