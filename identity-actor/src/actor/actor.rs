@@ -53,7 +53,7 @@ type HandlerObjectTuple<'a> = (
 // TODO: Can this take OBJ as a parameter for more type safety across add_state + add_handler?
 pub struct HandlerBuilder {
   pub(crate) object_id: Uuid,
-  pub(crate) handlers: Arc<HandlerMap>,
+  pub(crate) actor_state: Arc<ActorState>,
 }
 
 impl HandlerBuilder {
@@ -66,20 +66,25 @@ impl HandlerBuilder {
   {
     let handler = AsyncFn::new(handler);
     self
+      .actor_state
       .handlers
       .insert(Endpoint::new(cmd)?, (self.object_id, Box::new(handler)));
     Ok(self)
   }
 }
 
+pub struct ActorState {
+  pub(crate) handlers: HandlerMap,
+  pub(crate) objects: ObjectMap,
+  pub(crate) listener_handle: Mutex<Option<JoinHandle<Result<()>>>>,
+  pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
+  pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
+}
+
 #[derive(Clone)]
 pub struct Actor {
   commander: NetCommander,
-  handlers: Arc<HandlerMap>,
-  objects: Arc<ObjectMap>,
-  listener_handle: Arc<Mutex<Option<JoinHandle<Result<()>>>>>,
-  threads_receiver: Arc<DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>>,
-  threads_sender: Arc<DashMap<ThreadId, oneshot::Sender<ThreadRequest>>>,
+  state: Arc<ActorState>,
 }
 
 impl Actor {
@@ -90,23 +95,22 @@ impl Actor {
     objects: ObjectMap,
     listening_addresses: Vec<Multiaddr>,
   ) -> Result<Self> {
-    let handlers = Arc::new(handlers);
-    let objects = Arc::new(objects);
-
     let mut actor = Self {
       commander,
-      handlers: Arc::clone(&handlers),
-      objects: Arc::clone(&objects),
-      listener_handle: Arc::new(Mutex::new(None)),
-      threads_receiver: Arc::new(DashMap::new()),
-      threads_sender: Arc::new(DashMap::new()),
+      state: Arc::new(ActorState {
+        handlers,
+        objects,
+        listener_handle: Mutex::new(None),
+        threads_receiver: DashMap::new(),
+        threads_sender: DashMap::new(),
+      }),
     };
 
     // TODO: Always start listener, change `listener_handle` in actor accordingly.
     // if !listening_addresses.is_empty() {
     let handle = actor.clone().spawn_listener(receiver);
 
-    actor.listener_handle.lock().await.replace(handle);
+    actor.state.listener_handle.lock().await.replace(handle);
     // };
 
     for addr in listening_addresses {
@@ -121,21 +125,18 @@ impl Actor {
     OBJ: Clone + Send + Sync + 'static,
   {
     let object_id = Uuid::new_v4();
-    self.objects.insert(object_id, Box::new(handler));
+    self.state.objects.insert(object_id, Box::new(handler));
     HandlerBuilder {
       object_id,
-      handlers: Arc::clone(&self.handlers),
+      actor_state: Arc::clone(&self.state),
     }
   }
 
   fn handlers(&self) -> &HandlerMap {
-    self.handlers.as_ref()
+    &self.state.as_ref().handlers
   }
 
-  pub async fn start_listening(
-    &mut self,
-    address: Multiaddr,
-  ) -> std::result::Result<(), TransportError<std::io::Error>> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> StdResult<(), TransportError<std::io::Error>> {
     self.commander.start_listening(address).await
   }
 
@@ -166,7 +167,7 @@ impl Actor {
   #[inline(always)]
   fn handle_request(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
-      if self.handlers.contains_key(&request.endpoint) {
+      if self.state.handlers.contains_key(&request.endpoint) {
         self.invoke_handler(request).await;
       } else {
         let result: StdResult<(), RemoteSendError> =
@@ -175,7 +176,7 @@ impl Actor {
             Ok(plaintext_msg) => {
               let thread_id = plaintext_msg.thread_id();
 
-              match self.threads_sender.remove(thread_id) {
+              match self.state.threads_sender.remove(thread_id) {
                 Some(sender) => {
                   let thread_request = ThreadRequest {
                     peer_id: request.peer_id,
@@ -213,24 +214,18 @@ impl Actor {
 
     log::debug!("request for endpoint {endpoint}");
 
-    // If the handler is not found, check if a catch all handler exists and use it.
-    // If not, return the original error so the other side gets
-    // `endpoint ab/cd not found` rather than `endpoint ab/* not found`
-    let handler_object_tuple: StdResult<_, RemoteSendError> = match self.get_handler(&endpoint) {
-      Ok(handler_tuple) => Ok(handler_tuple),
-      Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
-        Ok(tuple) => Ok(tuple),
-        Err(_) => Err(error),
-      },
-    };
+    let handler_object_tuple: StdResult<_, RemoteSendError> = self.get_handler(&endpoint);
 
-    // TODO: Don't clone actor again, extract copy of NetCommander instead.
-    let mut actor = self.clone();
+    // TODO: Would be nice if we didn't have to clone again. Passing a &mut ref would be nice, but
+    // introduces lifetimes in lots of places.
+    let actor = self.clone();
+
+    let mut commander = self.commander.clone();
 
     match handler_object_tuple {
       Ok((handler, object)) => {
         // Send actor-level acknowledgment that the message was received and a handler exists.
-        Self::send_response(&mut actor.commander, Ok(()), response_channel).await;
+        Self::send_response(&mut commander, Ok(()), response_channel).await;
 
         let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
 
@@ -248,7 +243,7 @@ impl Actor {
         log::debug!("handler error: {error:?}");
 
         let err_response: StdResult<(), RemoteSendError> = Err(error);
-        Self::send_response(&mut actor.commander, err_response, response_channel).await;
+        Self::send_response(&mut commander, err_response, response_channel).await;
 
         // TODO: If the response could not be sent, log the error.
         // log::error!("could not respond to `{}` request", endpoint);
@@ -257,11 +252,11 @@ impl Actor {
   }
 
   fn get_handler(&self, endpoint: &Endpoint) -> std::result::Result<HandlerObjectTuple<'_>, RemoteSendError> {
-    match self.handlers.get(endpoint) {
+    match self.state.handlers.get(endpoint) {
       Some(handler_tuple) => {
         let object_id = handler_tuple.0;
 
-        if let Some(object) = self.objects.get(&object_id) {
+        if let Some(object) = self.state.objects.get(&object_id) {
           let object_clone = handler_tuple.1.clone_object(object.deref());
           Ok((handler_tuple, object_clone))
         } else {
@@ -304,7 +299,7 @@ impl Actor {
   pub async fn stop_handling_requests(mut self) -> Result<()> {
     // TODO: aborting means that even requests that have been received and are being processed are cancelled
     // We should instead use some signalling mechanism that breaks the loop
-    if let Some(listener_handle) = self.listener_handle.lock().await.take() {
+    if let Some(listener_handle) = self.state.listener_handle.lock().await.take() {
       listener_handle.abort();
       let _ = listener_handle.await;
     }
@@ -420,7 +415,7 @@ impl Actor {
     &mut self,
     thread_id: &ThreadId,
   ) -> Result<DidCommPlaintextMessage<T>> {
-    if let Some(receiver) = self.threads_receiver.remove(thread_id) {
+    if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
       let inbound_request = receiver.1.await.expect("TODO: (?) channel closed");
 
@@ -463,8 +458,8 @@ impl Actor {
     // there must be a preceding send_message on that same thread.
     // Note that on the receiving actor, the very first message of a protocol
     // is not awaited through await_message, so it does not need to follow that logic.
-    self.threads_sender.insert(thread_id.to_owned(), sender);
-    self.threads_receiver.insert(thread_id.to_owned(), receiver);
+    self.state.threads_sender.insert(thread_id.to_owned(), sender);
+    self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
   }
 
   /// Call the hook identified by the given `endpoint`.
@@ -506,7 +501,7 @@ impl Actor {
   }
 
   pub async fn join(self) {
-    if let Some(listener_handle) = self.listener_handle.lock().await.take() {
+    if let Some(listener_handle) = self.state.listener_handle.lock().await.take() {
       listener_handle.await.unwrap().unwrap();
     }
   }

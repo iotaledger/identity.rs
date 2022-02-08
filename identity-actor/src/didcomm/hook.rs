@@ -28,6 +28,7 @@ impl HandlerBuilder {
   {
     let handler = DidCommHook::new(handler);
     self
+      .actor_state
       .handlers
       .insert(Endpoint::new(cmd)?, (self.object_id, Box::new(handler)));
     Ok(self)
