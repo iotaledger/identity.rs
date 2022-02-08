@@ -5,7 +5,6 @@ import {
     resolution,
 } from '../../examples/dist/web'
 
-// Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
 describe(
     "resolution",
     {
