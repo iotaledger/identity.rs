@@ -32,10 +32,10 @@ jobs:
     outputs:
       core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
     steps:
+      - uses: actions/checkout@v2
       - name: Run change detection
         id: change-detection
         run: |
-
           echo "::set-output name=core-modified::$(.github/workflows/scripts/check-if-modified.sh ':!bindings')"
 
   build-and-test:
