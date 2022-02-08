@@ -39,12 +39,14 @@ jobs:
       - name: Run change detection
         id: change-detection
         run: |
-          echo "::set-output name=core-modified::$(.github/workflows/scripts/check-if-modified.sh ':!bindings')"
+          CORE_MODIFIED=$(.github/workflows/scripts/check-if-modified.sh ':!bindings')
+          echo CORE_MODIFIED=$CORE_MODIFIED
+          echo "::set-output name=core-modified::$CORE_MODIFIED"
 
   build-and-test:
     runs-on: ${{ matrix.os }}
     needs: determine-modification
-    if: ${{needs.determine-modification.outputs.core-modified == 'true'}}
+    if: ${{ needs.determine-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
