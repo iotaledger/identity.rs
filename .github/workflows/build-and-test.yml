@@ -18,8 +18,6 @@ on:
       - 'bindings/wasm/'
       - '!bindings/wasm/**.md'
 
-# Figure out job level constraints
-
 env:
   RUST_BACKTRACE: full
   CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
