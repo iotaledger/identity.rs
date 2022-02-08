@@ -12,6 +12,7 @@ on:
       - epic/*
     paths:
       - '.github/workflows/build-and-test.yml'
+      - '.github/workflows/scripts'
       - '.github/actions'
       - '**.rs'
       - '**.toml'
@@ -33,6 +34,8 @@ jobs:
       core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 10
       - name: Run change detection
         id: change-detection
         run: |
