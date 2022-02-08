@@ -14,6 +14,7 @@ use tokio::sync::RwLock;
 
 use crate::Actor;
 use crate::ActorRequest;
+use crate::DidCommTermination;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
@@ -21,7 +22,7 @@ use crate::RequestContext;
 /// Can be returned from a hook to indicate that the protocol should immediately terminate.
 /// This doesn't include any way to set a cause for the termination, as it is expected that
 /// a hook sends a problem report to the peer before returning this type.
-pub struct DidCommTermination;
+// pub struct DidCommTermination;
 
 // Putting this field in the DidCommActor directly would leak memory,
 // since the DidCommActor contains an Actor, but the DidCommActor would

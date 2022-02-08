@@ -8,10 +8,10 @@ use std::marker::PhantomData;
 use futures::Future;
 
 use crate::actor::HandlerBuilder;
-use crate::didcomm::actor::DidCommTermination;
 use crate::Actor;
 use crate::ActorRequest;
 use crate::AnyFuture;
+use crate::DidCommTermination;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
@@ -102,9 +102,6 @@ where
 
     let future = async move {
       let response: Result<REQ, DidCommTermination> = (self.func)(*boxed_object, actor, request).await;
-      if let Ok(r) = &response {
-        log::debug!("hook returned {:?}", r);
-      }
       let type_erased: Box<dyn Any> = Box::new(response);
       type_erased
     };

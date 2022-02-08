@@ -377,10 +377,10 @@ impl Actor {
   ) -> Result<()> {
     self.create_thread_channels(thread_id);
 
-    let message = self.send_message_hook(peer, message).await?;
-
-    let message: serde_json::Value = serde_json::to_value(&message).expect("TODO");
+    // let message: serde_json::Value = serde_json::to_value(&message).expect("TODO");
     let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
+
+    let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
     let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
     let message = serde_json::to_vec(&RequestMessage::new(name, dcpm_vec)?).unwrap();
@@ -400,7 +400,7 @@ impl Actor {
   }
 
   #[inline(always)]
-  async fn send_message_hook<REQ: ActorRequest>(&self, peer: PeerId, input: REQ) -> Result<REQ> {
+  async fn call_send_message_hook<REQ: ActorRequest>(&self, peer: PeerId, input: REQ) -> Result<REQ> {
     let endpoint = Endpoint::new_hook(input.request_name())?;
 
     if self.handlers().contains_key(&endpoint) {
@@ -423,14 +423,15 @@ impl Actor {
 
   // TODO: This should take a T: DeserializeOwned to deserialize into and
   // return a DidCommPlaintextMessage<T> (which requires changing that type)
-  // TODO: Consider changing the T to ActorRequest and return a ActorRequest::RES.
-  // This could be used to encode the response type of a certain request message for more safety?
-  pub async fn await_message<T: DeserializeOwned + Send + 'static>(&mut self, thread_id: &ThreadId) -> Result<T> {
+  pub async fn await_message<T: DeserializeOwned + Send + 'static>(
+    &mut self,
+    thread_id: &ThreadId,
+  ) -> Result<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
       let inbound_request = receiver.1.await.expect("TODO: (?) channel closed");
 
-      let message: T = serde_json::from_slice(inbound_request.input.as_ref())
+      let message: DidCommPlaintextMessage<T> = serde_json::from_slice(inbound_request.input.as_ref())
         .map_err(|err| crate::Error::DeserializationFailure(err.to_string()))?;
 
       log::debug!("awaited message {}", inbound_request.endpoint);
@@ -442,7 +443,7 @@ impl Actor {
       if self.handlers().contains_key(&hook_endpoint) {
         log::debug!("Calling hook: {}", hook_endpoint);
 
-        let hook_result: StdResult<StdResult<T, DidCommTermination>, RemoteSendError> =
+        let hook_result: StdResult<StdResult<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
           self.call_hook(hook_endpoint, inbound_request.peer_id, message).await;
 
         match hook_result {

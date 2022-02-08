@@ -23,16 +23,11 @@ impl DidCommHandler {
   ) {
     log::debug!("holder: received presentation request");
 
-    // let did_comm_actor = DidCommActor::new(actor.clone());
+    let result = presentation_holder_handler(actor, request.peer, Some(request.input)).await;
 
-    // actor
-    //   .add_state(did_comm_actor.messages.clone())
-    //   .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    //   .unwrap();
-
-    presentation_holder_handler(actor, request.peer, Some(request.input))
-      .await
-      .unwrap();
+    if let Err(err) = result {
+      log::error!("{:?}", err);
+    }
   }
 
   pub async fn presentation_verifier_actor_handler(
@@ -42,16 +37,11 @@ impl DidCommHandler {
   ) {
     log::debug!("verifier: received offer from {}", request.peer);
 
-    // let did_comm_actor = DidCommActor::new(actor.clone());
+    let result = presentation_verifier_handler(actor, request.peer, Some(request.input)).await;
 
-    // actor
-    //   .add_state(did_comm_actor.messages.clone())
-    //   .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    //   .unwrap();
-
-    presentation_verifier_handler(actor, request.peer, Some(request.input))
-      .await
-      .unwrap();
+    if let Err(err) = result {
+      log::error!("{:?}", err);
+    }
   }
 }
 

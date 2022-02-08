@@ -9,6 +9,7 @@ use libp2p::Multiaddr;
 use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
+use crate::DidCommPlaintextMessage;
 use crate::Error;
 use crate::IdentityResolve;
 use crate::RequestContext;
@@ -24,12 +25,10 @@ async fn test_unknown_request() -> anyhow::Result<()> {
   let mut sending_actor = default_sending_actor().await;
   sending_actor.add_address(peer_id, addr).await;
 
-  let request_name = "unknown/request";
-
   let result = sending_actor
     .send_named_message(
       peer_id,
-      request_name,
+      "unknown/request",
       &ThreadId::new(),
       IdentityResolve::new("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
     )
@@ -54,7 +53,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   let addr: Multiaddr = actor2.addresses().await.into_iter().next().unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct Dummy;
+  pub struct Dummy(u8);
 
   impl ActorRequest for Dummy {
     type Response = ();
@@ -68,7 +67,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   pub struct State(pub Arc<AtomicBool>);
 
   impl State {
-    async fn handler(self, _actor: Actor, _req: RequestContext<Dummy>) {
+    async fn handler(self, _actor: Actor, _req: RequestContext<DidCommPlaintextMessage<Dummy>>) {
       self.0.store(true, std::sync::atomic::Ordering::SeqCst);
     }
   }
@@ -89,12 +88,12 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   actor1.add_address(actor2.peer_id().await, addr).await;
 
   actor1
-    .send_message(actor2.peer_id().await, &ThreadId::new(), Dummy)
+    .send_message(actor2.peer_id().await, &ThreadId::new(), Dummy(42))
     .await
     .unwrap();
 
   actor2
-    .send_message(actor1.peer_id().await, &ThreadId::new(), Dummy)
+    .send_message(actor1.peer_id().await, &ThreadId::new(), Dummy(43))
     .await
     .unwrap();
 

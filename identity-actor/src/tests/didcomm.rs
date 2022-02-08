@@ -1,9 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::didcomm::actor::DidCommActor;
-use crate::didcomm::actor::DidCommMessages;
-use crate::didcomm::actor::DidCommTermination;
 use crate::didcomm::presentation::presentation_holder_handler;
 use crate::didcomm::presentation::presentation_verifier_handler;
 use crate::didcomm::presentation::DidCommHandler;
@@ -11,8 +8,11 @@ use crate::didcomm::presentation::Presentation;
 use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::presentation::PresentationRequest;
 use crate::Actor;
+use crate::DidCommPlaintextMessage;
+use crate::DidCommTermination;
 use crate::RequestContext;
 use crate::Result;
+use crate::ThreadId;
 use std::result::Result as StdResult;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -85,8 +85,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_verifier_initiates_with_await_message_hook() -> Result<()> {
-  pretty_env_logger::init();
+async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> Result<()> {
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut verifier_actor = default_sending_actor().await;
@@ -103,9 +102,8 @@ async fn test_didcomm_presentation_verifier_initiates_with_await_message_hook() 
   async fn presentation_request_hook(
     state: TestFunctionState,
     _: Actor,
-    request: RequestContext<PresentationRequest>,
-  ) -> StdResult<PresentationRequest, DidCommTermination> {
-    log::debug!("invoked hook");
+    request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
+  ) -> StdResult<DidCommPlaintextMessage<PresentationRequest>, DidCommTermination> {
     state.was_called.store(true, Ordering::SeqCst);
     Ok(request.input)
   }
@@ -130,7 +128,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_await_message_hook() 
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_holder_initiates_with_implicit_hooks() -> Result<()> {
+async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> Result<()> {
   let mut holder_actor = default_sending_actor().await;
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
@@ -147,8 +145,8 @@ async fn test_didcomm_presentation_holder_initiates_with_implicit_hooks() -> Res
   async fn receive_presentation_hook(
     state: TestFunctionState,
     _: Actor,
-    req: RequestContext<Presentation>,
-  ) -> StdResult<Presentation, DidCommTermination> {
+    req: RequestContext<DidCommPlaintextMessage<Presentation>>,
+  ) -> StdResult<DidCommPlaintextMessage<Presentation>, DidCommTermination> {
     state.was_called.store(true, Ordering::SeqCst);
     Ok(req.input)
   }
@@ -179,8 +177,8 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
   async fn presentation_request_hook(
     _: (),
     _: Actor,
-    req: RequestContext<PresentationOffer>,
-  ) -> StdResult<PresentationOffer, DidCommTermination> {
+    req: RequestContext<DidCommPlaintextMessage<PresentationOffer>>,
+  ) -> StdResult<DidCommPlaintextMessage<PresentationOffer>, DidCommTermination> {
     Ok(req.input)
   }
 
@@ -191,10 +189,10 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
     .unwrap();
 
   let peer_id = verifier_actor.peer_id().await;
-  let mut verifier_didcomm_actor = DidCommActor::new(verifier_actor);
+  let thread_id = ThreadId::new();
 
-  let result = verifier_didcomm_actor
-    .send_request(peer_id, PresentationRequest::default())
+  let result = verifier_actor
+    .send_message(peer_id, &thread_id, PresentationRequest::default())
     .await;
 
   assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
@@ -208,44 +206,40 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
 
-  let mut holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
-  let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
-
-  verifier_actor
-    .add_state(verifier_didcomm_actor.messages.clone())
-    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-    .unwrap();
-
   async fn presentation_request_hook(
     _: (),
     _: Actor,
-    req: RequestContext<PresentationRequest>,
-  ) -> StdResult<PresentationRequest, DidCommTermination> {
+    req: RequestContext<DidCommPlaintextMessage<Presentation>>,
+  ) -> StdResult<DidCommPlaintextMessage<Presentation>, DidCommTermination> {
     Ok(req.input)
   }
 
-  // Register a hook that has the wrong type: PresentationRequest instead of PresentationOffer
   verifier_actor
+    .add_state(DidCommHandler)
+    .add_handler(
+      "didcomm/presentation_offer",
+      DidCommHandler::presentation_verifier_actor_handler,
+    )
+    .unwrap();
+
+  // Register a hook that has the wrong type: Presentation instead of PresentationRequest
+  holder_actor
     .add_state(())
-    .add_hook("didcomm/presentation_offer/hook", presentation_request_hook)
+    .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
     .unwrap();
 
   let verifier_peer_id = verifier_actor.peer_id().await;
-  let holder_peer_id = holder_actor.peer_id().await;
 
   holder_actor.add_address(verifier_peer_id, addr.clone()).await;
 
-  let task = tokio::spawn(async move {
-    let message: crate::Result<PresentationOffer> = verifier_didcomm_actor.await_message(holder_peer_id).await;
+  let thread_id = ThreadId::new();
 
-    assert!(matches!(message.unwrap_err(), crate::Error::HookInvocationError(_)));
-  });
-
-  holder_didcomm_actor
-    .send_request(peer_id, PresentationOffer::default())
+  holder_actor
+    .send_message(peer_id, &thread_id, PresentationOffer::default())
     .await?;
 
-  task.await.unwrap();
+  let result: StdResult<DidCommPlaintextMessage<PresentationRequest>, _> = holder_actor.await_message(&thread_id).await;
+  assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
 
   verifier_actor.stop_handling_requests().await.unwrap();
   holder_actor.stop_handling_requests().await.unwrap();
