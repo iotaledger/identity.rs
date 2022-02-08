@@ -118,8 +118,11 @@ jobs:
         # run examples only on ubuntu for now
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt-get update
+          sudo apt-get install parallel
           cargo read-manifest --manifest-path ./examples/Cargo.toml > ./example-manifest.json
-          cat ./example-manifest.json | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" --release || exit 1; done
+          # run examples in parallel with 4 threads and 1 retry
+          cat ./example-manifest.json | jq -r '.targets[].name' | parallel -k -j 4 --retries 1 cargo run --example {} --release
       - name: Stop sccache (Windows)
         uses: './.github/actions/rust/sccache/stop-sccache-windows'
         if: matrix.os == 'windows-latest'
