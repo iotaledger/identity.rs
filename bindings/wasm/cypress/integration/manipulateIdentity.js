@@ -9,7 +9,7 @@ import {
 describe(
     "manipulateIdentity",
     {
-        defaultCommandTimeout: 300000, // 5 minutes to account for spurious network delays
+        defaultCommandTimeout: 1000*60*3, // 3 minutes to account for spurious network delays
     },
     () => {
         before(async () => {
