@@ -197,6 +197,8 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
 
   assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
 
+  verifier_actor.stop_handling_requests().await.unwrap();
+
   Ok(())
 }
 

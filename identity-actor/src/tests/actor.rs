@@ -34,9 +34,12 @@ async fn test_unknown_request() -> anyhow::Result<()> {
     )
     .await;
 
+  println!("{:?}", result);
+
   assert!(matches!(result.unwrap_err(), Error::UnknownRequest(_)));
 
   listening_actor.stop_handling_requests().await.unwrap();
+  sending_actor.stop_handling_requests().await.unwrap();
 
   Ok(())
 }
@@ -108,8 +111,6 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 
 #[tokio::test]
 async fn test_actor_handler_is_invoked() -> crate::Result<()> {
-  pretty_env_logger::init();
-
   let (mut receiver, receiver_addr, receiver_peer_id) = default_listening_actor().await;
   let mut sender = default_sending_actor().await;
 
@@ -128,8 +129,8 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   pub struct State(pub Arc<AtomicBool>);
 
   impl State {
-    async fn handler(self, _actor: Actor, req: RequestContext<Dummy>) {
-      match req.input {
+    async fn handler(self, _actor: Actor, req: RequestContext<DidCommPlaintextMessage<Dummy>>) {
+      match req.input.body {
         Dummy(42) => self.0.store(true, std::sync::atomic::Ordering::SeqCst),
         _ => (),
       }

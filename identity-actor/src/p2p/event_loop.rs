@@ -8,6 +8,7 @@ use futures::channel::oneshot;
 use futures::FutureExt;
 use futures::SinkExt;
 use futures::StreamExt;
+use libp2p::core::connection::ListenerId;
 use libp2p::request_response::OutboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::RequestResponse;
@@ -30,6 +31,7 @@ pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
   event_channel: mpsc::Sender<InboundRequest>,
+  listener_ids: Vec<ListenerId>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<DidCommResponse, OutboundFailure>>>,
 }
 
@@ -43,6 +45,7 @@ impl EventLoop {
       swarm,
       command_channel,
       event_channel,
+      listener_ids: Vec::new(),
       await_response: HashMap::new(),
     }
   }
@@ -144,7 +147,11 @@ impl EventLoop {
         address,
         response_channel,
       } => {
-        let result: Result<(), _> = self.swarm.listen_on(address).map(|_| ());
+        let result: Result<(), _> = self.swarm.listen_on(address).map(|listener_id| {
+          self.listener_ids.push(listener_id);
+          ()
+        });
+
         response_channel.send(result).expect("sender was dropped");
       }
       SwarmCommand::AddAddress { peer, address } => {
@@ -159,6 +166,12 @@ impl EventLoop {
         response_channel
           .send(self.swarm.local_peer_id().clone())
           .expect("sender was dropped");
+      }
+      SwarmCommand::StopListening { response_channel } => {
+        for listener in std::mem::replace(&mut self.listener_ids, Vec::new()).into_iter() {
+          let _ = self.swarm.remove_listener(listener);
+        }
+        response_channel.send(()).expect("sender was dropped");
       }
     }
   }

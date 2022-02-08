@@ -165,17 +165,11 @@ impl Actor {
 
             self.clone().spawn_handler(request);
           } else {
-            // store in thread channel
             let plaintext_msg: DidCommPlaintextMessage<serde_json::Value> =
               serde_json::from_slice(&request.input).expect("TODO");
             let thread_id = plaintext_msg.thread_id();
 
-            log::debug!(
-              "going down the thread route path, thread exists: {}",
-              self.threads_sender.contains_key(thread_id)
-            );
-
-            match self.threads_sender.remove(thread_id) {
+            let result = match self.threads_sender.remove(thread_id) {
               Some(sender) => {
                 let thread_request = ThreadRequest {
                   peer_id: request.peer_id,
@@ -184,15 +178,20 @@ impl Actor {
                 };
 
                 sender.1.send(thread_request).expect("TODO");
+
+                Ok(())
               }
               None => {
-                log::error!("TODO: no handler or thread found for the received message");
+                log::info!(
+                  "no handler or thread found for the received message `{}`",
+                  request.endpoint
+                );
+                // TODO: Should this be a more generic error name, including unknown endpoint + unknown thread?
+                Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()))
               }
-            }
+            };
 
-            // TODO: Should this always just return ok or an error if not thread exists?
-            // E.g: "received unexpected message"?
-            Self::send_response(&mut self.commander, Ok(()), request.response_channel).await;
+            Self::send_response(&mut self.commander, result, request.response_channel).await;
           }
         } else {
           return Ok(());
@@ -311,13 +310,16 @@ impl Actor {
   //   }
   // }
 
-  pub async fn stop_handling_requests(self) -> Result<()> {
+  pub async fn stop_handling_requests(mut self) -> Result<()> {
     // TODO: aborting means that even requests that have been received and are being processed are cancelled
     // We should instead use some signalling mechanism that breaks the loop
     if let Some(listener_handle) = self.listener_handle.lock().await.take() {
       listener_handle.abort();
       let _ = listener_handle.await;
     }
+
+    self.commander.stop_listening().await;
+
     Ok(())
   }
 
