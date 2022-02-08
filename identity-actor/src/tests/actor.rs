@@ -34,8 +34,6 @@ async fn test_unknown_request() -> anyhow::Result<()> {
     )
     .await;
 
-  println!("{:?}", result);
-
   assert!(matches!(result.unwrap_err(), Error::UnknownRequest(_)));
 
   listening_actor.stop_handling_requests().await.unwrap();

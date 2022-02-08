@@ -154,45 +154,12 @@ impl Actor {
   /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
-  fn spawn_listener(mut self, mut receiver: mpsc::Receiver<InboundRequest>) -> JoinHandle<Result<()>> {
+  fn spawn_listener(self, mut receiver: mpsc::Receiver<InboundRequest>) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       loop {
         if let Some(request) = receiver.next().await {
           log::debug!("received a request for endpoint: {}", request.endpoint);
-
-          if self.handlers.contains_key(&request.endpoint) {
-            log::debug!("going down the handler path");
-
-            self.clone().spawn_handler(request);
-          } else {
-            let plaintext_msg: DidCommPlaintextMessage<serde_json::Value> =
-              serde_json::from_slice(&request.input).expect("TODO");
-            let thread_id = plaintext_msg.thread_id();
-
-            let result = match self.threads_sender.remove(thread_id) {
-              Some(sender) => {
-                let thread_request = ThreadRequest {
-                  peer_id: request.peer_id,
-                  endpoint: request.endpoint,
-                  input: request.input,
-                };
-
-                sender.1.send(thread_request).expect("TODO");
-
-                Ok(())
-              }
-              None => {
-                log::info!(
-                  "no handler or thread found for the received message `{}`",
-                  request.endpoint
-                );
-                // TODO: Should this be a more generic error name, including unknown endpoint + unknown thread?
-                Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()))
-              }
-            };
-
-            Self::send_response(&mut self.commander, result, request.response_channel).await;
-          }
+          self.clone().handle_request(request);
         } else {
           return Ok(());
         }
@@ -200,69 +167,97 @@ impl Actor {
     })
   }
 
-  fn spawn_handler(self, inbound_request: InboundRequest) -> JoinHandle<Result<()>> {
-    task::spawn(async move {
-      let input: Vec<u8> = inbound_request.input;
-      let endpoint: Endpoint = inbound_request.endpoint;
-      let peer_id: PeerId = inbound_request.peer_id;
-      let response_channel: ResponseChannel<_> = inbound_request.response_channel;
+  #[inline(always)]
+  fn handle_request(mut self, request: InboundRequest) {
+    let _ = tokio::spawn(async move {
+      if self.handlers.contains_key(&request.endpoint) {
+        self.invoke_handler(request).await;
+      } else {
+        let result: StdResult<(), RemoteSendError> =
+          match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
+            Err(error) => Err(RemoteSendError::DeserializationFailure(error.to_string())),
+            Ok(plaintext_msg) => {
+              let thread_id = plaintext_msg.thread_id();
 
-      log::debug!("request for endpoint {endpoint}");
+              match self.threads_sender.remove(thread_id) {
+                Some(sender) => {
+                  let thread_request = ThreadRequest {
+                    peer_id: request.peer_id,
+                    endpoint: request.endpoint,
+                    input: request.input,
+                  };
 
-      let plaintext_msg: DidCommPlaintextMessage<serde_json::Value> = serde_json::from_slice(&input).expect("TODO");
+                  sender.1.send(thread_request).expect("TODO");
 
-      // log::debug!(
-      //   "received: {}",
-      //   serde_json::to_string_pretty(&plaintext_msg).expect("todo")
-      // );
-
-      // TODO: Fix this, obviously.
-      let input: Vec<u8> = serde_json::to_vec(&plaintext_msg).expect("TODO");
-
-      // If the handler is not found, check if a catch all handler exists and use it.
-      // If not, return the original error so the other side gets
-      // `endpoint ab/cd not found` rather than `endpoint ab/* not found`
-      let handler_object_tuple: StdResult<_, RemoteSendError> = match self.get_handler(&endpoint) {
-        Ok(handler_tuple) => Ok(handler_tuple),
-        Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
-          Ok(tuple) => Ok(tuple),
-          Err(_) => Err(error),
-        },
-      };
-
-      // TODO: Don't clone actor again, extract copy of NetCommander instead.
-      let mut actor = self.clone();
-
-      match handler_object_tuple {
-        Ok((handler, object)) => {
-          // Send actor-level acknowledgment that the message was received and a handler exists.
-          Self::send_response(&mut actor.commander, Ok(()), response_channel).await;
-
-          let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
-
-          let input = handler.value().1.deserialize_request(input).unwrap();
-          match handler.value().1.invoke(actor, request_context, object, input) {
-            Ok(invocation) => {
-              invocation.await;
+                  Ok(())
+                }
+                None => {
+                  log::info!(
+                    "no handler or thread found for the received message `{}`",
+                    request.endpoint
+                  );
+                  // TODO: Should this be a more generic error name, including unknown endpoint + unknown thread?
+                  Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()))
+                }
+              }
             }
-            Err(err) => {
-              log::error!("{}", err);
-            }
+          };
+
+        Self::send_response(&mut self.commander, result, request.response_channel).await;
+      }
+    });
+  }
+
+  #[inline(always)]
+  async fn invoke_handler(self, inbound_request: InboundRequest) {
+    let input: Vec<u8> = inbound_request.input;
+    let endpoint: Endpoint = inbound_request.endpoint;
+    let peer_id: PeerId = inbound_request.peer_id;
+    let response_channel: ResponseChannel<_> = inbound_request.response_channel;
+
+    log::debug!("request for endpoint {endpoint}");
+
+    // If the handler is not found, check if a catch all handler exists and use it.
+    // If not, return the original error so the other side gets
+    // `endpoint ab/cd not found` rather than `endpoint ab/* not found`
+    let handler_object_tuple: StdResult<_, RemoteSendError> = match self.get_handler(&endpoint) {
+      Ok(handler_tuple) => Ok(handler_tuple),
+      Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
+        Ok(tuple) => Ok(tuple),
+        Err(_) => Err(error),
+      },
+    };
+
+    // TODO: Don't clone actor again, extract copy of NetCommander instead.
+    let mut actor = self.clone();
+
+    match handler_object_tuple {
+      Ok((handler, object)) => {
+        // Send actor-level acknowledgment that the message was received and a handler exists.
+        Self::send_response(&mut actor.commander, Ok(()), response_channel).await;
+
+        let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
+
+        let input = handler.value().1.deserialize_request(input).unwrap();
+        match handler.value().1.invoke(actor, request_context, object, input) {
+          Ok(invocation) => {
+            invocation.await;
+          }
+          Err(err) => {
+            log::error!("{}", err);
           }
         }
-        Err(error) => {
-          log::debug!("handler error: {error:?}");
-
-          let err_response: StdResult<(), RemoteSendError> = Err(error);
-          Self::send_response(&mut actor.commander, err_response, response_channel).await;
-
-          // TODO: If the response could not be sent, log the error.
-          // log::error!("could not respond to `{}` request", endpoint);
-        }
       }
+      Err(error) => {
+        log::debug!("handler error: {error:?}");
 
-      Ok(())
-    })
+        let err_response: StdResult<(), RemoteSendError> = Err(error);
+        Self::send_response(&mut actor.commander, err_response, response_channel).await;
+
+        // TODO: If the response could not be sent, log the error.
+        // log::error!("could not respond to `{}` request", endpoint);
+      }
+    }
   }
 
   fn get_handler(&self, endpoint: &Endpoint) -> std::result::Result<HandlerObjectTuple<'_>, RemoteSendError> {
