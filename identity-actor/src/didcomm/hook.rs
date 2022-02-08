@@ -18,10 +18,12 @@ use crate::RequestContext;
 use crate::RequestHandler;
 use crate::Result as ActorResult;
 
-impl HandlerBuilder {
-  pub fn add_hook<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> ActorResult<Self>
+impl<OBJ> HandlerBuilder<OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
+  pub fn add_hook<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> ActorResult<Self>
   where
-    OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,

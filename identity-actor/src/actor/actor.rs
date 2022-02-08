@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
+use std::marker::PhantomData;
 use std::ops::Deref;
 use std::result::Result as StdResult;
 use std::sync::Arc;
@@ -51,15 +52,21 @@ type HandlerObjectTuple<'a> = (
 );
 
 // TODO: Can this take OBJ as a parameter for more type safety across add_state + add_handler?
-pub struct HandlerBuilder {
+pub struct HandlerBuilder<OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
   pub(crate) object_id: Uuid,
   pub(crate) actor_state: Arc<ActorState>,
+  _marker_obj: PhantomData<&'static OBJ>,
 }
 
-impl HandlerBuilder {
-  pub fn add_handler<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
+impl<OBJ> HandlerBuilder<OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
+  pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
   where
-    OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
     FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
@@ -120,7 +127,7 @@ impl Actor {
     Ok(actor)
   }
 
-  pub fn add_state<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder
+  pub fn add_state<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder<OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
   {
@@ -129,6 +136,7 @@ impl Actor {
     HandlerBuilder {
       object_id,
       actor_state: Arc::clone(&self.state),
+      _marker_obj: PhantomData,
     }
   }
 
