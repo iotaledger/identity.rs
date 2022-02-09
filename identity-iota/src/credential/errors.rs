@@ -11,40 +11,46 @@ use crate::did::IotaDIDUrl;
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
-pub enum StandaloneValidationError {
+pub enum ValidationError {
   /// Indicates that the expiration date of the credential is not considered valid.
-  #[error("credential validation failed: the expiration date does not satisfy the validation criterea")]
+  #[error("the expiration date does not satisfy the validation criterea")]
   ExpirationDate,
   /// Indicates that the issuance date of the credential is not considered valid.
-  #[error("credential validation failed: the issuance date does not satisfy the validation criterea")]
+  #[error("the issuance date does not satisfy the validation criterea")]
   IssuanceDate,
   /// The DID document corresponding to `did` has been deactivated.
-  #[error("credential validation failed: encountered deactivated subject document")]
+  #[error("encountered deactivated subject document")]
   //Todo: Should the did_url be included in the error message? Would it be better in terms of abstraction and
   // flexibility to include more information in a simple String? Can the `did_url` be problematic in terms of GDPR if
   // it gets written to a log file?
   DeactivatedSubjectDocument { did_url: IotaDIDUrl },
   /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
-  #[error("credential validation failed: could not verify the issuer's signature")]
+  #[error("could not verify the issuer's signature")]
   IssuerProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
   },
   /// Indicates an attempt to validate a credential signed by an untrusted issuer.
-  #[error("credential validation failed: the credential is signed by an untrusted issuer")]
+  #[error("the credential is signed by an untrusted issuer")]
   UntrustedIssuer,
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
-  #[error("credential validation failed: The issuer property could not be parsed to a valid DID")]
-  IssuerUrl,
+  #[error("the credential's issuer property could not be parsed to a valid DID")]
+  IssuerUrl {
+    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
+                                                                 * here? */
+  },
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
-  #[error("presentation validation failed: The holder property could not be parsed to a valid DID")]
-  HolderUrl,
+  #[error("the presentation's holder property could not be parsed to a valid DID")]
+  HolderUrl {
+    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
+                                                                 * here? */
+  },
 
   /// Indicates an attempt to validate a presentation using a resolved DID document not corresponding to the URL of the
   /// presentation's holder property.
-  #[error("presentation validation failed: The provided holder document does not correspond to the presentation's holder property")]
+  #[error("the provided holder document does not correspond to the presentation's holder property")]
   IncompatibleHolderDocument,
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
@@ -54,40 +60,36 @@ pub enum StandaloneValidationError {
                                                                  * here? */
   },
   /// Indicates that the structure of the [identity_credential::credential::Credential] is not semantically correct.
-  #[error("credential validation failed: the credential's structure is not spec compliant")]
+  #[error("the credential's structure is not semantically correct")]
   CredentialStructure(#[source] identity_credential::Error),
   /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not semantically
   /// correct.
-  #[error("presentation validation failed: the presentation's structure is not spec compliant")]
+  #[error("the presentation's structure is not spec compliant")]
   PresentationStructure(#[source] identity_credential::Error),
   /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials.
-  #[error("presentation validation failed: The nonTransferable property of the credential at position {credential_position} is not met")]
+  #[error(
+    "the nonTransferable property of the credential at position {credential_position} in the presentation is not met"
+  )]
   NonTransferableViolation { credential_position: usize },
   /// Indicates that the presentation does not have a holder.
-  #[error("presentation validation failed: the presentation is required to have a non-empty holder property")]
+  #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
-}
 
-#[derive(Debug, thiserror::Error)]
-#[non_exhaustive]
-/// An error caused by an attempt to group credentials with unrelated resolved DID documents
-pub enum CompoundError {
-  #[error("could not associate the provided resolved DID document with the credential's issuer")]
+  #[error("could not associate the provided resolved DID Document with the credential's issuer")]
   UnrelatedIssuer,
-  #[error(
-    "the subject data at {position} in the provided vector cannot be associated with any of the credential's subjects"
-  )]
-  UnrelatedSubjects { position: usize },
-  #[error("could not associate the provided resolved DID document with the presentation's holder")]
+
+  #[error("attempted to group a credential with unrelated subject documents")]
+  UnrelatedSubjects,
+  #[error("attempted to group a presentation with an unrelated holder document")]
   UnrelatedHolder,
-  #[error("the credential at {position} in the provided resolved credentials cannot be associated with any of the presentation's credentials")]
-  UnrelatedCredentials { position: usize },
+  #[error("attempted to group a presentation with an unrelated credential")]
+  UnrelatedCredentials,
 }
 
 #[derive(Debug)]
 /// An error caused by a failure to validate a Credential.  
 pub struct AccumulatedCredentialValidationError {
-  pub validation_errors: OneOrMany<StandaloneValidationError>,
+  pub validation_errors: OneOrMany<ValidationError>,
 }
 
 impl Display for AccumulatedCredentialValidationError {
@@ -112,7 +114,7 @@ impl std::error::Error for AccumulatedCredentialValidationError {}
 /// An error caused by a failure to validate a Presentation.
 pub struct AccumulatedPresentationValidationError {
   pub credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError>,
-  pub presentation_validation_errors: Vec<StandaloneValidationError>,
+  pub presentation_validation_errors: Vec<ValidationError>,
 }
 
 impl Display for AccumulatedPresentationValidationError {

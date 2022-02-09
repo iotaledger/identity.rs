@@ -8,10 +8,11 @@ use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
-use super::errors::CompoundError;
+use super::errors::ValidationError;
 use super::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
+use crate::tangle::TangleResolve;
 use crate::Error;
 use crate::Result;
 use delegate::delegate;
@@ -39,7 +40,7 @@ impl<T: Serialize> ResolvedCredential<T> {
   /// argument, or the extracted DID's from the `subjects` are distinct from values in the credential subject
   /// property.
   // Todo: Find a better way to describe how this operation can fail.
-  pub fn try_new(
+  pub fn assemble(
     credential: Credential<T>,
     issuer: ResolvedIotaDocument,
     subjects: OneOrMany<ResolvedIotaDocument>,
@@ -50,14 +51,14 @@ impl<T: Serialize> ResolvedCredential<T> {
     let credential_issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
     if let Ok(did) = credential_issuer_did {
       if &did != issuer.document.id() {
-        return Err(Error::InvalidCredentialPairing(CompoundError::UnrelatedIssuer));
+        return Err(Error::InvalidCredentialPairing(ValidationError::UnrelatedIssuer));
       }
     } else {
-      return Err(Error::InvalidCredentialPairing(CompoundError::UnrelatedIssuer));
+      return Err(Error::InvalidCredentialPairing(ValidationError::UnrelatedIssuer));
     }
 
     // check that the subjects correspond to the credential's subjects
-    for (position, subject) in subjects.iter().enumerate() {
+    for subject in subjects.iter() {
       if !credential.credential_subject.iter().any(|credential_subject| {
         credential_subject
           .id
@@ -67,9 +68,7 @@ impl<T: Serialize> ResolvedCredential<T> {
           .filter(|url| url == &subject.document.id().to_url().to_string().as_str())
           .is_some()
       }) {
-        return Err(Error::InvalidCredentialPairing(CompoundError::UnrelatedSubjects {
-          position,
-        }));
+        return Err(Error::InvalidCredentialPairing(ValidationError::UnrelatedSubjects));
       }
     }
 
@@ -80,6 +79,21 @@ impl<T: Serialize> ResolvedCredential<T> {
     })
   }
 
+  /// Resolves the issuer's DID Document and combines it with the credential as a [ResolvedCredential].
+  ///
+  /// Note: This method only resolves the issuer's DID document. If checks concerning the DID documents of the
+  /// credential's subjects are necessary then one should use [`Self::assemble()`] instead.
+  pub async fn from_remote_issuer_document<R: TangleResolve>(credential: Credential<T>, resolver: R) -> Result<Self> {
+    let issuer_url: &str = credential.issuer.url().as_str();
+    let did: IotaDID = issuer_url.parse()?;
+    let issuer: ResolvedIotaDocument = resolver.resolve(&did).await?;
+
+    Ok(Self {
+      credential,
+      issuer,
+      subjects: OneOrMany::empty(),
+    })
+  }
   /// Verify the signature using the issuer's DID document.
   ///
   /// # Terminology
@@ -89,7 +103,7 @@ impl<T: Serialize> ResolvedCredential<T> {
       .map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  /// Returns an iterator over the resolved documents that have been deactivated.
+  /// Returns an iterator over the resolved subject documents that have been deactivated.
   pub fn deactivated_subject_documents(&self) -> impl Iterator<Item = &ResolvedIotaDocument> + '_ {
     self
       .subjects
@@ -100,7 +114,7 @@ impl<T: Serialize> ResolvedCredential<T> {
 
   /// Unpacks [`Self`] into a triple corresponding to the credential, the issuer's [ResolvedIotaDocument] and the
   /// [`ResolvedIotaDocument`]s of the subjects respectively.
-  pub fn de_assemble(self) -> (Credential<T>, ResolvedIotaDocument, OneOrMany<ResolvedIotaDocument>) {
+  pub fn disassemble(self) -> (Credential<T>, ResolvedIotaDocument, OneOrMany<ResolvedIotaDocument>) {
     (self.credential, self.issuer, self.subjects)
   }
   delegate! {
@@ -131,7 +145,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .expires_after(timestamp)
       .then(|| ())
-      .ok_or(super::errors::StandaloneValidationError::ExpirationDate)
+      .ok_or(super::errors::ValidationError::ExpirationDate)
       .map_err(Into::into)
   }
 
@@ -143,7 +157,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .issued_before(timestamp)
       .then(|| ())
-      .ok_or(super::errors::StandaloneValidationError::IssuanceDate)
+      .ok_or(super::errors::ValidationError::IssuanceDate)
       .map_err(Into::into)
   }
 
@@ -159,7 +173,7 @@ impl<T: Serialize> ResolvedCredential<T> {
       Err(
         // Todo: Should this method document that it allocates on failure since it is considered part of the
         // low-level validation API?
-        super::errors::StandaloneValidationError::DeactivatedSubjectDocument {
+        super::errors::ValidationError::DeactivatedSubjectDocument {
           did_url: deactivated_doc.document.id().to_url(),
         }
         .into(),
@@ -177,7 +191,7 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .credential
       .check_structure()
-      .map_err(super::errors::StandaloneValidationError::CredentialStructure)
+      .map_err(super::errors::ValidationError::CredentialStructure)
       .map_err(Into::into)
   }
 }
