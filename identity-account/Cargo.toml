@@ -23,7 +23,7 @@ itoa = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 paste = { version = "1.0" }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive", "rc"] }
 slog = { version = "2.7" }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }

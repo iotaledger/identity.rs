@@ -1,7 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account::error::Result as AccountResult;
+use identity::account::Result as AccountResult;
+use identity::core::Result as CoreResult;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 
@@ -13,5 +14,11 @@ pub trait NapiResult<T> {
 impl<T> NapiResult<T> for AccountResult<T> {
   fn napi_result(self) -> Result<T> {
     self.map_err(|account_error| Error::from_reason(account_error.to_string()))
+  }
+}
+
+impl<T> NapiResult<T> for CoreResult<T> {
+  fn napi_result(self) -> Result<T> {
+    self.map_err(|core_error| Error::from_reason(core_error.to_string()))
   }
 }
