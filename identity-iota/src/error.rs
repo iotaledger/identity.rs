@@ -61,10 +61,10 @@ pub enum Error {
   /// Caused by a failure to validate a Presentation.
   #[error("presentation validation failed")]
   UnsuccessfulPresentationValidation(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
-  /// Caused by a failure to construct a `ResolvedCredential`.
+  /// Caused by a failure to group a credential with related resolved DID documents.
   #[error("failed to construct ResolvedCredential")]
   InvalidCredentialPairing(#[source] crate::credential::errors::ValidationError),
-  /// Caused by a failure to construct a `ResolvedPresentation`.
+  /// Caused by a failure to group a presentation with related resolved DID documents.
   #[error("failed to construct ResolvedPresentation")]
   InvalidPresentationPairing(#[source] crate::credential::errors::ValidationError),
 }

@@ -79,18 +79,6 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
     })
   }
 
-  /// Resolves the holder's and credential issuer's DID Documents and combines these with the presentation as a
-  /// [ResolvedPresentation].
-  pub async fn from_remote_signer_documents<R: TangleResolve>(
-    presentation: Presentation<T, U>,
-    resolver: R,
-  ) -> Result<Self> {
-    //let holder_url: &str = presentation.holder.
-    //let did: IotaDID = holder_url.parse()?;
-    //let issuer: ResolvedIotaDocument = resolver.resolve(&did).await?;
-    todo!()
-  }
-
   /// Verify the signature using the holders's DID document.
   ///
   /// # Terminology
@@ -107,6 +95,11 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
           pub fn non_transferable_violations(&self) -> impl Iterator<Item = (usize, &Credential<U>)> + '_ ;
 
       }
+  }
+
+  /// Get a slice of the resolved credentials associated with this resolved presentation.
+  pub fn get_resolved_credentials(&self) -> &[ResolvedCredential<U>] {
+    self.resolved_credentials.as_slice()
   }
 
   /// Validates the semantic structure of the `Presentation`.
@@ -153,5 +146,48 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
     OneOrMany<ResolvedCredential<U>>,
   ) {
     (self.presentation, self.holder, self.resolved_credentials)
+  }
+}
+
+impl<T: Serialize, U: Serialize + PartialEq + Clone> ResolvedPresentation<T, U> {
+  /// Resolves the holder's and credential issuer's DID Documents and combines these with the presentation as a
+  /// [ResolvedPresentation].
+  pub async fn from_remote_signer_documents<R: TangleResolve>(
+    presentation: Presentation<T, U>,
+    resolver: &R,
+  ) -> Result<Self> {
+    let holder_url: &str = presentation
+      .holder
+      .as_ref()
+      .map(|holder_url| holder_url.as_str())
+      .ok_or(ValidationError::MissingPresentationHolder)
+      .map_err(Error::InvalidPresentationPairing)?;
+    let did: IotaDID = holder_url
+      .parse::<IotaDID>()
+      .map_err(|error| ValidationError::HolderUrl { source: error.into() })
+      .map_err(Error::InvalidPresentationPairing)?;
+    let holder: ResolvedIotaDocument = resolver.resolve(&did).await?;
+    let resolved_credentials: OneOrMany<ResolvedCredential<U>> = match presentation.verifiable_credential {
+      OneOrMany::One(ref credential) => {
+        let resolved_credential: ResolvedCredential<U> =
+          ResolvedCredential::from_remote_issuer_document(credential.clone(), resolver).await?;
+        OneOrMany::One(resolved_credential)
+      }
+      OneOrMany::Many(ref credentials) => {
+        let mut resolved_credentials = OneOrMany::Many(Vec::with_capacity(credentials.len()));
+        for credential in credentials.iter() {
+          let resolved_credential: ResolvedCredential<U> =
+            ResolvedCredential::from_remote_issuer_document(credential.clone(), resolver).await?;
+          resolved_credentials.push(resolved_credential);
+        }
+        resolved_credentials
+      }
+    };
+
+    Ok(Self {
+      presentation,
+      holder,
+      resolved_credentials,
+    })
   }
 }

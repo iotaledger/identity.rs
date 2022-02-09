@@ -83,9 +83,12 @@ impl<T: Serialize> ResolvedCredential<T> {
   ///
   /// Note: This method only resolves the issuer's DID document. If checks concerning the DID documents of the
   /// credential's subjects are necessary then one should use [`Self::assemble()`] instead.
-  pub async fn from_remote_issuer_document<R: TangleResolve>(credential: Credential<T>, resolver: R) -> Result<Self> {
+  pub async fn from_remote_issuer_document<R: TangleResolve>(credential: Credential<T>, resolver: &R) -> Result<Self> {
     let issuer_url: &str = credential.issuer.url().as_str();
-    let did: IotaDID = issuer_url.parse()?;
+    let did: IotaDID = issuer_url
+      .parse::<IotaDID>()
+      .map_err(|error| ValidationError::IssuerUrl { source: error.into() })
+      .map_err(Error::InvalidCredentialPairing)?;
     let issuer: ResolvedIotaDocument = resolver.resolve(&did).await?;
 
     Ok(Self {
