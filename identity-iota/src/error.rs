@@ -34,8 +34,6 @@ pub enum Error {
   InvalidNetworkName,
   #[error("{0}")]
   IncompatibleNetwork(String),
-  #[error("Invalid Presentation Holder")]
-  InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
   #[error("Missing Signing Key")]

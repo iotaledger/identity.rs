@@ -5,18 +5,19 @@
 //!
 //! cargo run --example merkle_key
 
+use identity::iota::CredentialValidationOptions;
+use identity::iota::ResolvedIotaDocument;
+use identity::iota::TangleResolve;
 use rand::rngs::OsRng;
 use rand::Rng;
 
 use identity::core::Timestamp;
-use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
@@ -30,7 +31,6 @@ mod create_did;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  /*
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
@@ -77,16 +77,18 @@ async fn main() -> Result<()> {
 
   println!("Credential JSON > {:#}", credential);
 
-  let credential_json: String = credential.to_json()?;
-
   // Check the verifiable credential is valid
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
-  let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
-    .await?;
-  assert!(validation.verified);
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  assert!(CredentialValidator::new()
+    .validate_credential(
+      &credential,
+      &CredentialValidationOptions::default(),
+      &[trusted_issuer],
+      true
+    )
+    .is_ok());
 
-  println!("Credential Validation > {:#?}", validation);
+  println!("the credential was successfully validated as expected");
 
   // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
   issuer_doc
@@ -102,14 +104,17 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Check the verifiable credential is revoked
-  let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
-    .await?;
-  assert!(!validation.verified);
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  assert!(CredentialValidator::new()
+    .validate_credential(
+      &credential,
+      &CredentialValidationOptions::default(),
+      &[trusted_issuer],
+      true
+    )
+    .is_err());
 
-  println!("Credential Validation > {:#?}", validation);
-
-  */
+  println!("credential validation returned an error after the issuer revoked their keys as expected");
 
   Ok(())
 }

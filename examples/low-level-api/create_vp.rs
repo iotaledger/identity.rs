@@ -6,6 +6,7 @@
 //!
 //! cargo run --example create_vp
 
+use identity::core::FromJson;
 use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
@@ -13,15 +14,23 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
+use identity::did::DID;
+use identity::iota::errors::ValidationError;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
+use identity::iota::Error;
+use identity::iota::IotaDID;
+use identity::iota::PresentationValidationOptions;
 use identity::iota::Receipt;
+use identity::iota::ResolvedIotaDocument;
+use identity::iota::TangleResolve;
 use identity::prelude::*;
 
 mod common;
 mod create_did;
 
-pub async fn create_vp() -> Result<Presentation> {
+/// Returns a triple corresponding to a Presentation, a credential issuer and the presentation holder
+pub async fn create_vp() -> Result<(Presentation, IotaDocument, IotaDocument)> {
   // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (doc_iss, key_iss, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
@@ -58,39 +67,51 @@ pub async fn create_vp() -> Result<Presentation> {
     SignatureOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
   )?;
 
-  Ok(presentation)
+  Ok((presentation, doc_iss, doc_sub))
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  /*
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
   // Issue a Verifiable Presentation with a newly created DID Document.
-  let presentation: Presentation = create_vp().await?;
+  let (presentation, issuer_doc, holder_doc): (Presentation, IotaDocument, IotaDocument) = create_vp().await?;
 
   // Convert the Verifiable Presentation to JSON and "exchange" with a verifier
   let presentation_json: String = presentation.to_json()?;
 
-  // Create a `CredentialValidator` instance to fetch and validate all
-  // associated DID Documents from the Tangle.
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
-
   // Validate the presentation and all the credentials included in it.
   //
   // Also verify the challenge matches.
-  let validation: PresentationValidation = validator
-    .check_presentation(
-      &presentation_json,
-      VerifierOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
-    )
-    .await?;
-  println!("validation = {:#?}", validation);
-  assert!(validation.verified);
 
-  println!("Presentation Validation > {:#?}", validation);
-  */
+  // deserialize the presentation:
+  let presentation: Presentation = Presentation::from_json(&presentation_json)?;
+  // in order to validate the presentation we need to resolve the holder's and issuer's DID documents.
 
-  Ok(())
+  //Todo: extract the issuer and holder DID's from the presentation itself
+  let resolved_holder_document: ResolvedIotaDocument = client.resolve(&holder_doc.id()).await?;
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(&issuer_doc.id()).await?;
+  let trusted_issuers = &[trusted_issuer];
+
+  let validator: CredentialValidator = CredentialValidator::new();
+
+  let presentation_verifier_options =
+    VerifierOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
+
+  let presentation_validation_options =
+    PresentationValidationOptions::default().with_presentation_verifier_options(presentation_verifier_options);
+
+  let fail_fast = true;
+  let validation_result = validator.validate_presentation(
+    &presentation,
+    &presentation_validation_options,
+    trusted_issuers,
+    &resolved_holder_document,
+    fail_fast,
+  );
+  if validation_result.is_ok() {
+    println!("successfully validated presentation!");
+  }
+  validation_result
 }

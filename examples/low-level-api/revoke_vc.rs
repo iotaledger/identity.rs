@@ -18,10 +18,14 @@ use identity::crypto::SignatureOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
+use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::ResolvedIotaDocument;
 use identity::iota::Result;
+use identity::iota::TangleResolve;
 use identity::prelude::*;
 
 mod common;
@@ -29,7 +33,6 @@ mod create_did;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  /*
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
@@ -58,10 +61,18 @@ async fn main() -> Result<()> {
   );
 
   // Check the verifiable credential
-  let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
-  println!("VC verification result (false = revoked) > {:#?}", validation.verified);
-  assert!(!validation.verified);
-  */
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let validation_result = CredentialValidator::new().validate_credential(
+    &signed_vc,
+    &CredentialValidationOptions::default(),
+    &[trusted_issuer],
+    true,
+  );
+
+  println!("VC validation result: {:?}", validation_result);
+  assert!(validation_result.is_err());
+  println!("VC validation failed as expected");
+
   Ok(())
 }
 

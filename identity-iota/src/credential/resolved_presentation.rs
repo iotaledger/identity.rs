@@ -8,6 +8,7 @@ use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
+use super::PresentationValidationOptions;
 use super::errors::ValidationError;
 use super::CredentialValidator;
 use super::ResolvedCredential;
@@ -38,8 +39,8 @@ pub struct ResolvedPresentation<T = Object, U = Object> {
 impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
   /// Combines a [`Presentation`] with the [`ResolvedIotaDocument`] belonging to the holder and
   /// [`ResolvedCredential`]s corresponding to the presentation's credentials.
-  /// 
-  /// 
+  ///
+  ///
   /// # Security
   /// It is the caller's responsibility to ensure that all resolved DID documents are up to date for the entire lifetime
   /// of this object. # Errors
@@ -89,12 +90,12 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
 
   /// Verify the signature using the holders's DID document.
   ///
-  /// 
+  ///
   /// # Security
   /// This method uses the holder's DID document that was received upon creation. It is the caller's responsibility to
-  /// ensure that this document is still up to date. 
-  /// 
-  /// 
+  /// ensure that this document is still up to date.
+  ///
+  ///
   /// # Terminology
   /// This method is a *validation unit*
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<()> {
@@ -116,14 +117,13 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
     self.resolved_credentials.as_slice()
   }
 
-    /// Returns the resolved DID Document associated with the holder.
-    /// 
-    /// # Security 
-    /// This DID Document may no longer be up to date. 
-    pub fn get_holder(&self) -> &ResolvedIotaDocument {
-      &self.holder
-    }
-  
+  /// Returns the resolved DID Document associated with the holder.
+  ///
+  /// # Security
+  /// This DID Document may no longer be up to date.
+  pub fn get_holder(&self) -> &ResolvedIotaDocument {
+    &self.holder
+  }
 
   /// Validates the semantic structure of the `Presentation`.
   ///

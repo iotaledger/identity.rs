@@ -8,16 +8,16 @@
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Timestamp;
-use identity::core::ToJson;
+
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::did::verifiable::VerifierOptions;
+
 use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
-use identity::iota::CredentialValidator;
+
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
@@ -58,25 +58,6 @@ pub async fn resolve_documents(issuer_documents: &[IotaDocument]) -> Result<Vec<
     resolved_documents.push(resolved_document);
   }
   Ok(resolved_documents)
-}
-
-/// Convenience function for checking that a verifiable credential is valid and not revoked.
-pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<()> {
-  /*
-  // Convert the Verifiable Credential to JSON to potentially "exchange" with a verifier
-  let credential_json = credential.to_json()?;
-
-  // Create a `CredentialValidator` instance to fetch and validate all
-  // associated DID Documents from the Tangle.
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(client);
-
-  // Perform the validation operation.
-  let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
-    .await?;
-  Ok(validation)
-  */
-  Ok(())
 }
 
 /// Convenience function for adding a new `VerificationMethod` with tag #newKey to a DID document

@@ -9,6 +9,7 @@ use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
 use super::errors::ValidationError;
+use super::CredentialValidationOptions;
 use super::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -110,8 +111,8 @@ impl<T: Serialize> ResolvedCredential<T> {
   ///
   /// # Security
   /// This method uses the issuer's DID document that was received upon creation. It is the caller's responsibility to
-  /// ensure that this document is still up to date. 
-  /// 
+  /// ensure that this document is still up to date.
+  ///
   /// # Terminology
   /// This method is a *validation unit*
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<()> {
@@ -204,8 +205,8 @@ impl<T: Serialize> ResolvedCredential<T> {
   }
 
   /// Returns the resolved DID Document associated with the issuer.
-  /// 
-  /// # This DID Document may no longer be up to date. 
+  ///
+  /// # This DID Document may no longer be up to date.
   pub fn get_issuer(&self) -> &ResolvedIotaDocument {
     &self.issuer
   }
@@ -220,5 +221,23 @@ impl<T: Serialize> ResolvedCredential<T> {
       .check_structure()
       .map_err(super::errors::ValidationError::CredentialStructure)
       .map_err(Into::into)
+  }
+
+  /// Validate the credential using the issuer's resolved DID Document received upon creation.
+  /// # Errors
+  /// Fails if any of the following conditions occur
+  /// - The structure of the credential is not semantically valid
+  /// - The expiration date does not meet the requirement set in `options`
+  /// - The issuance date does not meet the requirement set in `options`
+  /// - The issuer has not been specified as trust
+  /// - The credential's signature cannot be verified using the issuer's DID Document
+  // Todo: Should we also check for deactivated subject documents here?
+  pub fn full_validation(&self, validation_options: &CredentialValidationOptions, fail_fast: bool) -> Result<()> {
+    CredentialValidator::new().validate_credential(
+      &self.credential,
+      validation_options,
+      std::slice::from_ref(&self.issuer),
+      fail_fast,
+    )
   }
 }
