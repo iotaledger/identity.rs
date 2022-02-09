@@ -26,6 +26,11 @@ use delegate::delegate;
 /// - [`Self::try_only_active_subject_documents`]
 /// - [`Self::try_expires_after()`]
 /// - [`Self::check_structure()`]
+///
+/// # Security
+/// This struct uses resolved DID Documents received upon construction. These associated documents may become outdated
+/// at any point in time and will then no longer be fit for purpose. We encourage disposing these objects as soon as
+/// possible.
 pub struct ResolvedCredential<T> {
   pub(crate) credential: Credential<T>,
   pub(crate) issuer: ResolvedIotaDocument,
@@ -34,6 +39,10 @@ pub struct ResolvedCredential<T> {
 
 impl<T: Serialize> ResolvedCredential<T> {
   /// Combines a `Credential` with [`ResolvedIotaDocument`]s belonging to the issuer and credential subjects.
+  ///
+  /// # Security
+  /// It is the caller's responsibility to ensure that all resolved DID documents are up to date for the entire lifetime
+  /// of this object.
   ///
   /// # Errors
   /// Fails if the credential's issuer property has an url that cannot be identified with the DID of the `issuer`
@@ -99,6 +108,10 @@ impl<T: Serialize> ResolvedCredential<T> {
   }
   /// Verify the signature using the issuer's DID document.
   ///
+  /// # Security
+  /// This method uses the issuer's DID document that was received upon creation. It is the caller's responsibility to
+  /// ensure that this document is still up to date. 
+  /// 
   /// # Terminology
   /// This method is a *validation unit*
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<()> {
@@ -107,6 +120,10 @@ impl<T: Serialize> ResolvedCredential<T> {
   }
 
   /// Returns an iterator over the resolved subject documents that have been deactivated.
+  ///
+  /// # Security
+  /// This method uses DID documents received upon construction. It is the caller's responsibility to ensure that these
+  /// documents are still up to date.
   pub fn deactivated_subject_documents(&self) -> impl Iterator<Item = &ResolvedIotaDocument> + '_ {
     self
       .subjects
@@ -184,6 +201,13 @@ impl<T: Serialize> ResolvedCredential<T> {
     } else {
       Ok(())
     }
+  }
+
+  /// Returns the resolved DID Document associated with the issuer.
+  /// 
+  /// # This DID Document may no longer be up to date. 
+  pub fn get_issuer(&self) -> &ResolvedIotaDocument {
+    &self.issuer
   }
 
   /// Validates the semantic structure of the `Credential`.

@@ -34,6 +34,11 @@ impl CredentialValidator {
 
   /// Validate a `Credential`.
   ///
+  /// # Security
+  /// It is the callers responsibility to ensure that the trusted issuers have up to date DID Documents. Furthermore
+  /// most applications will want to apply their own domain specific validations as this method only covers common
+  /// concerns. See the [Errors](#Errors) section to get an overview of what gets validated.
+  ///
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the credential is not semantically valid
@@ -58,6 +63,11 @@ impl CredentialValidator {
 
   /// Validate a `Presentation`
   ///
+  ///
+  /// # Security
+  /// It is the callers responsibility to ensure that all supplied resolved DID Documents are up to date. Furthermore
+  /// most applications will want to apply their own domain specific validations as this method only covers common
+  /// concerns. See the [Errors](#Errors) section to get an overview of what gets validated.
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the presentation is not semantically valid

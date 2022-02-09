@@ -24,6 +24,11 @@ use crate::Result;
 /// - [`Self::verify_signature()`]
 /// - [`Self::check_non_transferable()`]
 /// - [`Self::check_structure()`]
+///
+/// # Security
+/// This struct uses resolved DID Documents received upon construction. These associated documents may become outdated
+/// at any point in time and will then no longer be fit for purpose. We encourage disposing these objects as soon as
+/// possible.
 pub struct ResolvedPresentation<T = Object, U = Object> {
   pub(crate) presentation: Presentation<T, U>,
   pub(crate) holder: ResolvedIotaDocument,
@@ -33,8 +38,11 @@ pub struct ResolvedPresentation<T = Object, U = Object> {
 impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
   /// Combines a [`Presentation`] with the [`ResolvedIotaDocument`] belonging to the holder and
   /// [`ResolvedCredential`]s corresponding to the presentation's credentials.
-  ///
-  /// # Errors
+  /// 
+  /// 
+  /// # Security
+  /// It is the caller's responsibility to ensure that all resolved DID documents are up to date for the entire lifetime
+  /// of this object. # Errors
   /// Fails if the presentation's holder property does not have a url corresponding to the `holder`,
   /// or `resolved_credentials` contains credentials that cannot be found in the presentations `verifiable_credential`
   /// property.
@@ -81,6 +89,12 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
 
   /// Verify the signature using the holders's DID document.
   ///
+  /// 
+  /// # Security
+  /// This method uses the holder's DID document that was received upon creation. It is the caller's responsibility to
+  /// ensure that this document is still up to date. 
+  /// 
+  /// 
   /// # Terminology
   /// This method is a *validation unit*
   pub fn verify_signature(&self, options: &VerifierOptions) -> Result<()> {
@@ -101,6 +115,15 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
   pub fn get_resolved_credentials(&self) -> &[ResolvedCredential<U>] {
     self.resolved_credentials.as_slice()
   }
+
+    /// Returns the resolved DID Document associated with the holder.
+    /// 
+    /// # Security 
+    /// This DID Document may no longer be up to date. 
+    pub fn get_holder(&self) -> &ResolvedIotaDocument {
+      &self.holder
+    }
+  
 
   /// Validates the semantic structure of the `Presentation`.
   ///
@@ -151,7 +174,10 @@ impl<T: Serialize, U: Serialize + PartialEq> ResolvedPresentation<T, U> {
 
 impl<T: Serialize, U: Serialize + PartialEq + Clone> ResolvedPresentation<T, U> {
   /// Resolves the holder's and credential issuer's DID Documents and combines these with the presentation as a
-  /// [ResolvedPresentation].
+  ///
+  /// # Security
+  /// It is the caller's responsibility to ensure that the resolved DID Documents do not get outdated throughout this
+  /// objects lifetime. [ResolvedPresentation].
   pub async fn from_remote_signer_documents<R: TangleResolve>(
     presentation: Presentation<T, U>,
     resolver: &R,
