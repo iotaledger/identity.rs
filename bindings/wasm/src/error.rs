@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::account::UpdateError;
 use std::borrow::Cow;
+use std::sync::PoisonError;
 
 use wasm_bindgen::JsValue;
 
@@ -85,7 +87,7 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  // identity::comm::Error,
+  identity::account::Error,
   identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
@@ -106,6 +108,24 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
   fn from(error: identity::iota::BeeMessageError) -> Self {
     Self {
       name: Cow::Borrowed("bee_message::Error"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+impl<T> From<PoisonError<T>> for WasmError<'_> {
+  fn from(error: PoisonError<T>) -> Self {
+    Self {
+      name: Cow::Borrowed("Mutex::PoisonError"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+impl From<UpdateError> for WasmError<'_> {
+  fn from(error: UpdateError) -> Self {
+    Self {
+      name: Cow::Borrowed("Update::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }

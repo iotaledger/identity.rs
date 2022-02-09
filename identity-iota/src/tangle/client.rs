@@ -30,7 +30,8 @@ use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
 
 /// Client for performing IOTA Identity operations on the Tangle.
-#[derive(Debug)]
+#[cfg_attr(feature = "wasm", derive(Debug, Clone))]
+#[cfg_attr(not(feature = "wasm"), derive(Debug))]
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
