@@ -9,6 +9,7 @@ use futures::Future;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
+use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::did::IotaDID;

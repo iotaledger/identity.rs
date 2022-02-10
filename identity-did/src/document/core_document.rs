@@ -1,12 +1,19 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::Serialize;
+
 use identity_core::common::BitSet;
+use identity_core::common::Object;
+use identity_core::common::OneOrSet;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::convert::FmtJson;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleDigestTag;
@@ -18,18 +25,12 @@ use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_key::VerificationKey;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
-
-use serde::Serialize;
-
-use identity_core::common::Object;
-use identity_core::common::Url;
-use identity_core::convert::FmtJson;
-use identity_core::crypto::PrivateKey;
 
 use crate::did::CoreDID;
 use crate::did::CoreDIDUrl;
@@ -37,11 +38,11 @@ use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
-use crate::utils::OrderedSet;
+use crate::utils::DIDUrlQuery;
+use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
 use crate::verifiable::Revocation;
 use crate::verifiable::VerifierOptions;
-use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
 use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
@@ -58,9 +59,9 @@ use crate::verification::VerificationMethod;
 pub struct CoreDocument<T = Object, U = Object, V = Object> {
   pub(crate) id: CoreDID,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) controller: Option<CoreDID>,
-  #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "Vec::is_empty")]
-  pub(crate) also_known_as: Vec<Url>,
+  pub(crate) controller: Option<OneOrSet<CoreDID>>,
+  #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "OrderedSet::is_empty")]
+  pub(crate) also_known_as: OrderedSet<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) verification_method: OrderedSet<VerificationMethod<U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
@@ -91,8 +92,11 @@ impl<T, U, V> CoreDocument<T, U, V> {
   pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
-      controller: builder.controller,
-      also_known_as: builder.also_known_as,
+      controller: Some(builder.controller)
+        .filter(|controllers| !controllers.is_empty())
+        .map(TryFrom::try_from)
+        .transpose()?,
+      also_known_as: builder.also_known_as.try_into()?,
       verification_method: builder.verification_method.try_into()?,
       authentication: builder.authentication.try_into()?,
       assertion_method: builder.assertion_method.try_into()?,
@@ -115,22 +119,22 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Returns a reference to the `CoreDocument` controller.
-  pub fn controller(&self) -> Option<&CoreDID> {
+  pub fn controller(&self) -> Option<&OneOrSet<CoreDID>> {
     self.controller.as_ref()
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  pub fn controller_mut(&mut self) -> Option<&mut CoreDID> {
-    self.controller.as_mut()
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<CoreDID>> {
+    &mut self.controller
   }
 
   /// Returns a reference to the `CoreDocument` alsoKnownAs set.
-  pub fn also_known_as(&self) -> &[Url] {
+  pub fn also_known_as(&self) -> &OrderedSet<Url> {
     &self.also_known_as
   }
 
   /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
-  pub fn also_known_as_mut(&mut self) -> &mut Vec<Url> {
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
     &mut self.also_known_as
   }
 
@@ -327,9 +331,9 @@ impl<T, U, V> CoreDocument<T, U, V> {
     relationship: MethodRelationship,
   ) -> Result<bool>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
-    let method_query: MethodQuery<'query> = method_query.into();
+    let method_query: DIDUrlQuery<'query> = method_query.into();
 
     match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
       None => match self.resolve_method(method_query) {
@@ -364,9 +368,9 @@ impl<T, U, V> CoreDocument<T, U, V> {
     relationship: MethodRelationship,
   ) -> Result<bool>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
-    let method_query: MethodQuery<'query> = method_query.into();
+    let method_query: DIDUrlQuery<'query> = method_query.into();
     match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
       None => match self.resolve_method(method_query) {
         Some(_) => Err(Error::InvalidMethodEmbedded),
@@ -425,7 +429,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
   pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_inner(query.into())
   }
@@ -437,7 +441,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Fails if no matching method is found.
   pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_inner(query.into()).ok_or(Error::MethodNotFound)
   }
@@ -450,7 +454,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     scope: MethodScope,
   ) -> Option<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     let resolve_ref_helper = |method_ref: &'me MethodRef<U>| self.resolve_method_ref(method_ref);
 
@@ -488,7 +492,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     scope: MethodScope,
   ) -> Result<&VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .resolve_method_with_scope(query, scope)
@@ -499,7 +503,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// matching the provided `query`.
   pub fn resolve_method_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_mut_inner(query.into())
   }
@@ -512,7 +516,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Fails if no matching [`VerificationMethod`] is found.
   pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_mut_inner(query.into()).ok_or(Error::MethodNotFound)
   }
@@ -525,7 +529,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  fn resolve_method_inner(&self, query: MethodQuery<'_>) -> Option<&VerificationMethod<U>> {
+  fn resolve_method_inner(&self, query: DIDUrlQuery<'_>) -> Option<&VerificationMethod<U>> {
     let mut method: Option<&MethodRef<U>> = None;
 
     if method.is_none() {
@@ -555,7 +559,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  fn resolve_method_mut_inner(&mut self, query: MethodQuery<'_>) -> Option<&mut VerificationMethod<U>> {
+  fn resolve_method_mut_inner(&mut self, query: DIDUrlQuery<'_>) -> Option<&mut VerificationMethod<U>> {
     let mut method: Option<&mut MethodRef<U>> = None;
 
     if method.is_none() {
@@ -737,6 +741,7 @@ mod tests {
   use crate::did::CoreDID;
   use crate::did::DID;
   use crate::document::CoreDocument;
+  use crate::utils::Queryable;
   use crate::verification::MethodData;
   use crate::verification::MethodRelationship;
   use crate::verification::MethodScope;

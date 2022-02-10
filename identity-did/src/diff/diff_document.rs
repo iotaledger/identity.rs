@@ -5,6 +5,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
@@ -15,7 +17,6 @@ use identity_core::diff::Result;
 use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::service::Service;
-use crate::utils::OrderedSet;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
 
@@ -30,7 +31,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DiffString>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<Option<DiffString>>,
+  controller: Option<Option<DiffVec<CoreDID>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -130,18 +131,23 @@ where
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: Option<CoreDID> = diff
+    let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
-      .flatten()
-      .and_then(|value| self.controller().map(|controller| controller.merge(value)))
+      .map(|value| match value {
+        Some(diff_value) => self
+          .controller()
+          .map(|controller| controller.merge(diff_value))
+          .transpose(),
+        None => Ok(None),
+      })
       .transpose()?
-      .or_else(|| self.controller().cloned());
+      .unwrap_or_else(|| self.controller().cloned());
 
-    let also_known_as: Vec<Url> = diff
+    let also_known_as: OrderedSet<Url> = diff
       .also_known_as
-      .map(|value| self.also_known_as().to_vec().merge(value))
+      .map(|value| self.also_known_as().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.also_known_as().to_vec());
+      .unwrap_or_else(|| self.also_known_as().clone());
 
     let verification_method: OrderedSet<VerificationMethod<U>> = diff
       .verification_method
@@ -213,16 +219,16 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
-    let controller: Option<CoreDID> = diff
+    let controller: Option<OneOrSet<CoreDID>> = diff
       .controller
       .map(|diff| match diff {
-        Some(diff) => Some(CoreDID::from_diff(diff)).transpose(),
+        Some(diff) => Some(OneOrSet::from_diff(diff)).transpose(),
         None => Ok(None),
       })
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.controller`"))?;
 
-    let also_known_as: Vec<Url> = diff
+    let also_known_as: OrderedSet<Url> = diff
       .also_known_as
       .map(Diff::from_diff)
       .transpose()?
@@ -312,12 +318,12 @@ where
 mod test {
   use std::collections::BTreeMap;
 
-  use crate::did::CoreDIDUrl;
-  use crate::did::DID;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
 
+  use crate::did::CoreDIDUrl;
+  use crate::did::DID;
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
@@ -386,19 +392,44 @@ mod test {
   }
 
   #[test]
-  fn test_controller() {
-    let doc = document();
-    let mut new = doc.clone();
+  fn test_controller_one() {
+    let doc: CoreDocument = document();
+    let mut new: CoreDocument = doc.clone();
     let new_controller: CoreDID = "did:diff:1234".parse().unwrap();
-    *new.controller_mut().unwrap() = new_controller.clone();
+    *new.controller_mut() = Some(OneOrSet::new_one(new_controller));
     assert_ne!(doc, new);
 
-    let diff = doc.diff(&new).unwrap();
-    assert_eq!(
-      diff.clone().controller.unwrap(),
-      Some(DiffString(Some(new_controller.to_string())))
-    );
-    let merge = doc.merge(diff).unwrap();
+    let diff: DiffDocument = doc.diff(&new).unwrap();
+    let merge: CoreDocument = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_controller_set() {
+    let doc: CoreDocument = document();
+    let mut new: CoreDocument = doc.clone();
+    let new_controllers: Vec<CoreDID> = vec![
+      "did:diff:1234".parse().unwrap(),
+      "did:diff:5678".parse().unwrap(),
+      "did:diff:9012".parse().unwrap(),
+    ];
+    *new.controller_mut() = Some(new_controllers.try_into().unwrap());
+    assert_ne!(doc, new);
+
+    let diff: DiffDocument = doc.diff(&new).unwrap();
+    let merge: CoreDocument = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_controller_unset() {
+    let doc: CoreDocument = document();
+    let mut new: CoreDocument = doc.clone();
+    *new.controller_mut() = None;
+    assert_ne!(doc, new);
+
+    let diff: DiffDocument = doc.diff(&new).unwrap();
+    let merge: CoreDocument = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
 
@@ -406,8 +437,9 @@ mod test {
   fn test_also_known_as() {
     let doc = document();
     let mut new = doc.clone();
-    new.also_known_as_mut().push("diff:diff:1234".parse().unwrap());
+    new.also_known_as_mut().append("diff:diff:1234".parse().unwrap());
     assert_ne!(doc, new);
+
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -419,9 +451,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    assert!(new
-      .verification_method_mut()
-      .append(method(&doc.clone().controller.unwrap(), "#key-diff")));
+    assert!(new.verification_method_mut().append(method(&doc.id, "#key-diff")));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -464,7 +494,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.authentication_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -478,7 +508,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.authentication().first().unwrap().clone();
     new.authentication_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -507,7 +537,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.assertion_method_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -521,7 +551,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.assertion_method().first().unwrap().clone();
     new.assertion_method_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -550,7 +580,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.key_agreement_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -564,7 +594,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.key_agreement().first().unwrap().clone();
     new.key_agreement_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -593,7 +623,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.capability_delegation_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -607,7 +637,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.capability_delegation().first().unwrap().clone();
     new.capability_delegation_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -636,7 +666,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.capability_invocation_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -650,7 +680,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.capability_invocation().first().unwrap().clone();
     new.capability_invocation_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -679,7 +709,7 @@ mod test {
     let mut new = doc.clone();
 
     // Add new service
-    let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
+    let service = service(doc.id.to_url().join("#key-diff").unwrap());
     assert!(new.service_mut().append(service));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -693,7 +723,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new service
-    let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
+    let service = service(doc.id.to_url().join("#key-diff").unwrap());
     let first = new.service().first().unwrap().clone();
     new.service_mut().replace(&first, service);
     assert_ne!(doc, new);
@@ -772,7 +802,7 @@ mod test {
 
     let method_ref: MethodRef = MethodBuilder::default()
       .id(first)
-      .controller(new.controller.clone().unwrap())
+      .controller(new.id.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_multibase(b"key_material"))
       .build()

@@ -40,7 +40,6 @@ async fn main() -> Result<()> {
     .autosave(AutoSave::Every) // save immediately after every action
     .autosave(AutoSave::Batch(10)) // save after every 10 actions
     .autopublish(true) // publish to the tangle automatically on every update
-    .milestone(4) // save a snapshot every 4 actions
     .storage(AccountStorage::Memory) // use the default in-memory storage
     .client_builder(
       // Configure a client for the private network
