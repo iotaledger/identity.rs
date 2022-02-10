@@ -8,7 +8,7 @@ use wasm_bindgen_futures::future_to_promise;
 use identity::account::UpdateError::MissingRequiredField;
 
 use crate::account::wasm_account::WasmAccount;
-use crate::common::PromiseUndefined;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::JsCast;
@@ -17,7 +17,7 @@ use wasm_bindgen::JsCast;
 impl WasmAccount {
   /// Deletes a verification method if the method exists.
   #[wasm_bindgen(js_name = deleteMethod)]
-  pub fn delete_method(&mut self, options: &DeleteMethodOptions) -> Result<PromiseUndefined> {
+  pub fn delete_method(&mut self, options: &DeleteMethodOptions) -> Result<PromiseVoid> {
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
@@ -36,7 +36,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
     });
 
-    Ok(promise.unchecked_into::<PromiseUndefined>())
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 

@@ -21,7 +21,7 @@ use crate::account::wasm_method_secret::WasmMethodSecret;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 
-use crate::common::PromiseUndefined;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::JsCast;
@@ -30,7 +30,7 @@ use wasm_bindgen::JsCast;
 impl WasmAccount {
   /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
-  pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<PromiseUndefined> {
+  pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<PromiseVoid> {
     let method_type: Option<MethodType> = options.methodType().map(|m| m.0);
 
     let fragment: String = options
@@ -63,7 +63,7 @@ impl WasmAccount {
       create_method.apply().await.wasm_result().map(|_| JsValue::undefined())
     });
 
-    Ok(promise.unchecked_into::<PromiseUndefined>())
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 

@@ -5,6 +5,6 @@ use wasm_bindgen::prelude::*;
 // Workaround for Typescript type annotations on async functions that don't return anything.
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<undefined>")]
-  pub type PromiseUndefined;
+  #[wasm_bindgen(typescript_type = "Promise<void>")]
+  pub type PromiseVoid;
 }

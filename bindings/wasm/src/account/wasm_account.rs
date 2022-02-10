@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::PromiseUndefined;
+use crate::common::PromiseVoid;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmSignatureOptions;
@@ -91,7 +91,7 @@ impl WasmAccount {
   ///
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   #[wasm_bindgen(js_name = deleteIdentity)]
-  pub fn delete_identity(self) -> PromiseUndefined {
+  pub fn delete_identity(self) -> PromiseVoid {
     // Get IotaDID and storage from the account.
     let did: IotaDID = self.0.borrow().did().to_owned();
     let storage: Arc<dyn Storage> = Arc::clone(self.0.borrow().storage());
@@ -113,12 +113,12 @@ impl WasmAccount {
         Err(e) => Err(e),
       }
     })
-    .unchecked_into::<PromiseUndefined>()
+    .unchecked_into::<PromiseVoid>()
   }
 
   /// Push all unpublished changes to the tangle in a single message.
   #[wasm_bindgen]
-  pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> PromiseUndefined {
+  pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> PromiseVoid {
     let options: PublishOptions = publish_options.map(PublishOptions::from).unwrap_or_default();
     let account = self.0.clone();
     future_to_promise(async move {
@@ -130,7 +130,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
         .wasm_result()
     })
-    .unchecked_into::<PromiseUndefined>()
+    .unchecked_into::<PromiseVoid>()
   }
 
   /// Signs a {@link Credential} with the key specified by `fragment`.
@@ -179,17 +179,12 @@ impl WasmAccount {
     fragment: String,
     data: &JsValue,
     signature_options: &WasmSignatureOptions,
-  ) -> Result<PromiseUndefined> {
+  ) -> Result<PromiseVoid> {
     let verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
     Ok(self.create_signed(fragment, verifiable_properties, signature_options))
   }
 
-  fn create_signed<U>(
-    &self,
-    fragment: String,
-    mut data: U,
-    signature_options: &WasmSignatureOptions,
-  ) -> PromiseUndefined
+  fn create_signed<U>(&self, fragment: String, mut data: U, signature_options: &WasmSignatureOptions) -> PromiseVoid
   where
     U: serde::Serialize + SetSignature + 'static,
   {
@@ -206,7 +201,7 @@ impl WasmAccount {
         .wasm_result()?;
       JsValue::from_serde(&data).wasm_result()
     })
-    .unchecked_into::<PromiseUndefined>()
+    .unchecked_into::<PromiseVoid>()
   }
 
   /// Overwrites the {@link Document} this account manages, **without doing any validation**.
@@ -217,7 +212,7 @@ impl WasmAccount {
   /// potentially making the identity unusable. Only call this if you fully
   /// understand the implications!
   #[wasm_bindgen(js_name = updateDocumentUnchecked)]
-  pub fn update_document_unchecked(&mut self, document: &WasmDocument) -> PromiseUndefined {
+  pub fn update_document_unchecked(&mut self, document: &WasmDocument) -> PromiseVoid {
     let account = self.0.clone();
     let document_copy: IotaDocument = document.0.clone();
     future_to_promise(async move {
@@ -229,7 +224,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
         .wasm_result()
     })
-    .unchecked_into::<PromiseUndefined>()
+    .unchecked_into::<PromiseVoid>()
   }
 
   /// Fetches the latest changes from the tangle and **overwrites** the local document.
@@ -237,7 +232,7 @@ impl WasmAccount {
   /// If a DID is managed from distributed accounts, this should be called before making changes
   /// to the identity, to avoid publishing updates that would be ignored.
   #[wasm_bindgen(js_name = fetchState)]
-  pub fn fetch_state(&mut self) -> PromiseUndefined {
+  pub fn fetch_state(&mut self) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
       account
@@ -248,7 +243,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
         .wasm_result()
     })
-    .unchecked_into::<PromiseUndefined>()
+    .unchecked_into::<PromiseVoid>()
   }
 }
 

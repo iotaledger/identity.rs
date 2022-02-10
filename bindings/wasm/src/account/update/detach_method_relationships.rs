@@ -18,7 +18,7 @@ use identity::did::MethodRelationship;
 
 use crate::account::wasm_account::WasmAccount;
 use crate::account::wasm_method_relationship::WasmMethodRelationship;
-use crate::common::PromiseUndefined;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use wasm_bindgen::JsCast;
@@ -27,7 +27,7 @@ use wasm_bindgen::JsCast;
 impl WasmAccount {
   /// Detaches the given relationship from the given method, if the method exists.
   #[wasm_bindgen(js_name = detachMethodRelationships)]
-  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<PromiseUndefined> {
+  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<PromiseVoid> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
@@ -63,7 +63,7 @@ impl WasmAccount {
         .wasm_result()
         .map(|_| JsValue::undefined())
     });
-    Ok(promise.unchecked_into::<PromiseUndefined>())
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 
