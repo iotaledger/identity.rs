@@ -118,13 +118,28 @@ struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
 impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "{}. ", self.0)?;
     match &self.0 {
-      identity::iota::Error::UnsuccessfulCredentialValidation(e) => error_chain_fmt(&e, f),
-      identity::iota::Error::UnsuccessfulPresentationValidation(e) => error_chain_fmt(&e, f),
-      identity::iota::Error::UnsuccessfulValidationUnit(e) => error_chain_fmt(&e, f),
-      identity::iota::Error::InvalidCredentialPairing(e) => error_chain_fmt(&e, f),
-      identity::iota::Error::InvalidPresentationPairing(e) => error_chain_fmt(&e, f),
+      //Todo: simplify some of this with a macro
+      identity::iota::Error::UnsuccessfulCredentialValidation(e) => {
+        write!(f, "{}. ", self.0)?;
+        error_chain_fmt(&e, f)
+      }
+      identity::iota::Error::UnsuccessfulPresentationValidation(e) => {
+        write!(f, "{}. ", self.0)?;
+        error_chain_fmt(&e, f)
+      }
+      identity::iota::Error::UnsuccessfulValidationUnit(e) => {
+        write!(f, "{}. ", self.0)?;
+        error_chain_fmt(&e, f)
+      }
+      identity::iota::Error::InvalidCredentialPairing(e) => {
+        write!(f, "{}. ", self.0)?;
+        error_chain_fmt(&e, f)
+      }
+      identity::iota::Error::InvalidPresentationPairing(e) => {
+        write!(f, "{}. ", self.0)?;
+        error_chain_fmt(&e, f)
+      }
       // the rest include the source error's message in their own
       _ => self.0.fmt(f),
     }
