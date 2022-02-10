@@ -106,9 +106,25 @@ impl From<IotaDID> for WasmDID {
   }
 }
 
+impl From<WasmDID> for IotaDID {
+  fn from(did: WasmDID) -> Self {
+    did.0
+  }
+}
+
 /// Duck-typed union to pass either a string or WasmDID as a parameter.
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "DID | string")]
   pub type UWasmDID;
+}
+
+impl TryFrom<UWasmDID> for WasmDID {
+  type Error = JsValue;
+
+  fn try_from(did: UWasmDID) -> std::result::Result<Self, Self::Error> {
+    // Parse rather than going through serde directly to return proper error types.
+    let json: String = did.into_serde().wasm_result()?;
+    WasmDID::parse(&json)
+  }
 }
