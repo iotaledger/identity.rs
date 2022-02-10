@@ -6,34 +6,33 @@ use identity_did::verifiable::VerifierOptions;
 
 #[derive(Debug)]
 pub struct CredentialValidationOptions {
-  pub(crate) expires_after: Timestamp,
-  pub(crate) issued_before: Timestamp,
+  pub(crate) earliest_expiry_date: Timestamp,
+  pub(crate) latest_issuance_date: Timestamp,
   pub(crate) verifier_options: VerifierOptions,
 }
 
 impl Default for CredentialValidationOptions {
   fn default() -> Self {
     Self {
-      expires_after: Timestamp::now_utc(),
-      issued_before: Timestamp::now_utc(),
+      earliest_expiry_date: Timestamp::now_utc(),
+      latest_issuance_date: Timestamp::now_utc(),
       verifier_options: VerifierOptions::default(),
     }
   }
 }
 
 impl CredentialValidationOptions {
-
   pub fn new() -> Self {
     Self::default()
   }
 
-  pub fn expires_after(mut self, timestamp: Timestamp) -> Self {
-    self.expires_after = timestamp;
+  pub fn earliest_expiry_date(mut self, timestamp: Timestamp) -> Self {
+    self.earliest_expiry_date = timestamp;
     self
   }
 
-  pub fn issued_before(mut self, timestamp: Timestamp) -> Self {
-    self.issued_before = timestamp;
+  pub fn latest_issuance_date(mut self, timestamp: Timestamp) -> Self {
+    self.latest_issuance_date = timestamp;
     self
   }
 
@@ -56,13 +55,11 @@ pub struct PresentationValidationOptions {
                                                                       * Todo: Find a better name. */
 }
 
-
 impl PresentationValidationOptions {
-
   pub fn new() -> Self {
     Self::default()
   }
-  
+
   pub fn with_common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.common_validation_options = options;
     self

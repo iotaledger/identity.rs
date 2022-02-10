@@ -79,8 +79,8 @@ async function merkleKey(clientConfig) {
 
     // Check the verifiable credential is valid
     const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result: ${result.verified}`);
-    if (!result.verified) throw new Error("VC not valid");
+    console.log(`VC validation result: ${result}`);
+    if (!result) throw new Error("VC not valid");
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
@@ -91,9 +91,15 @@ async function merkleKey(clientConfig) {
     logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);
 
     // Check the verifiable credential is revoked
-    const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result (false = revoked): ${newResult.verified}`);
-    if (newResult.verified) throw new Error("VC not revoked");
+    let vc_revoked = false; 
+    try {
+        const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
+    } catch (exception)  {
+        console.log(`VC validation. The credential was revoked. Error message: ${exception.message}`);
+        vc_revoked = true;
+    }
+    
+    if (!vc_revoked) throw new Error("VC not revoked");
 }
 
 export {merkleKey};

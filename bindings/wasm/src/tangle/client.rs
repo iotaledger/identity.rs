@@ -10,11 +10,14 @@ use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::iota::Client as IotaClient;
-use identity::iota::CredentialValidator;
+use identity::iota::CredentialValidationOptions;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
+use identity::iota::PresentationValidationOptions;
+use identity::iota::ResolvedCredential;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota::ResolvedPresentation;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -237,14 +240,18 @@ impl Client {
   #[wasm_bindgen(js_name = checkCredential)]
   pub fn check_credential(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
-    let data: Credential = Credential::from_json(&data).wasm_result()?;
+    let credential: Credential = Credential::from_json(&data).wasm_result()?;
+    let credential_validation_options = CredentialValidationOptions::default().verifier_options(options.0);
+    let fail_fast = true;
 
     let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&*client)
-        .validate_credential(data, options.0)
+      let resolved_credential = ResolvedCredential::from_remote_issuer_document(credential, &*client)
         .await
+        .wasm_result()?;
+      resolved_credential
+        .full_validation(&credential_validation_options, fail_fast)
         .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
+        .map(|_| JsValue::TRUE)
     });
 
     Ok(promise)
@@ -255,14 +262,19 @@ impl Client {
   #[wasm_bindgen(js_name = checkPresentation)]
   pub fn check_presentation(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
-    let data: Presentation = Presentation::from_json(&data).wasm_result()?;
+    let presentation: Presentation = Presentation::from_json(&data).wasm_result()?;
+    let presentation_validation_options =
+      PresentationValidationOptions::default().with_presentation_verifier_options(options.0);
+    let fail_fast = true;
 
     let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&*client)
-        .validate_presentation(data, options.0)
+      let resolved_presentation = ResolvedPresentation::from_remote_signer_documents(presentation, &*client)
         .await
+        .wasm_result()?;
+      resolved_presentation
+        .full_validation(&presentation_validation_options, fail_fast)
         .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
+        .map(|_| JsValue::TRUE)
     });
 
     Ok(promise)

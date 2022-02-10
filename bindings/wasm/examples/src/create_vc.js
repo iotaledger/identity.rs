@@ -48,10 +48,10 @@ async function createVC(clientConfig) {
         private: issuer.newKey.private,
     }, SignatureOptions.default());
 
-    // Check if the credential is verifiable.
+    // Check if the credential is validated.
     const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
 
-    console.log(`VC verification result: ${result.verified}`);
+    console.log(`VC validated: ${result}`);
 
     return {alice, issuer, signedVc};
 }

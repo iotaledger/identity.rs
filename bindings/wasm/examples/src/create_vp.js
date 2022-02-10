@@ -43,7 +43,7 @@ async function createVP(clientConfig) {
         challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440"
     }));
 
-    console.log(`VP verification result: ${result.verified}`);
+    console.log(`VP validation result: ${result}`);
 }
 
 export {createVP};

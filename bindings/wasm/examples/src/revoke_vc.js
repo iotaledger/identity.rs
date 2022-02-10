@@ -44,8 +44,12 @@ async function revokeVC(clientConfig) {
     logResolverUrl("Explore the Issuer DID Document:", clientConfig.explorer, issuer.doc.id.toString());
 
     // Check the verifiable credential
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result (false = revoked): ${result.verified}`);
+    try {
+        const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
+    } catch (exception) {
+    console.log(`VC validation result (false = revoked): ${exception}`);
+    console.log(`${exception.message}`)
+    }
 }
 
 export {revokeVC};

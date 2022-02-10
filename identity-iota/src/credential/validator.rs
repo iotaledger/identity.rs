@@ -117,7 +117,7 @@ impl CredentialValidator {
     // check that the expiry date complies with the time set in the validation options
 
     if let Err(error) = credential
-      .expires_after(options.expires_after)
+      .earliest_expiry_date(options.earliest_expiry_date)
       .then(|| ())
       .ok_or(ValidationError::ExpirationDate)
     {
@@ -130,7 +130,7 @@ impl CredentialValidator {
     // check that the issuance date complies with the time set in the validation options
 
     if let Err(error) = credential
-      .issued_before(options.issued_before)
+      .latest_issuance_date(options.latest_issuance_date)
       .then(|| ())
       .ok_or(ValidationError::IssuanceDate)
     {
@@ -445,8 +445,8 @@ mod tests {
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     assert!(validator
       .validate_credential(&credential, &options, &[trusted_issuer], true)
@@ -471,8 +471,8 @@ mod tests {
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
@@ -509,8 +509,8 @@ mod tests {
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
@@ -547,8 +547,8 @@ mod tests {
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2023-02-01T00:00:00Z").unwrap(); // note that expires_after > expiration_date
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
@@ -585,8 +585,8 @@ mod tests {
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // note that issued_before < issuance_date
     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
 
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
@@ -625,8 +625,8 @@ mod tests {
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
@@ -665,8 +665,8 @@ mod tests {
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
@@ -702,8 +702,8 @@ mod tests {
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date [third error]
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date [fourth error]
     let options = CredentialValidationOptions::default()
-      .issued_before(issued_before)
-      .expires_after(expires_after);
+      .latest_issuance_date(issued_before)
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
@@ -776,8 +776,8 @@ mod tests {
     let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
-      .expires_after(expires_after)
-      .issued_before(issued_before);
+      .earliest_expiry_date(expires_after)
+      .latest_issuance_date(issued_before);
     let presentation_verifier_options =
       VerifierOptions::default().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
@@ -860,8 +860,8 @@ mod tests {
     let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
-      .expires_after(expires_after)
-      .issued_before(issued_before);
+      .earliest_expiry_date(expires_after)
+      .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); //validate with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
       .with_common_validation_options(credential_validation_options)
@@ -950,8 +950,8 @@ mod tests {
     let issued_before = Timestamp::parse("2019-01-02T00:00:00Z").unwrap(); // only the first credential is issued before this date
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
-      .expires_after(expires_after)
-      .issued_before(issued_before);
+      .earliest_expiry_date(expires_after)
+      .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
       .with_common_validation_options(credential_validation_options)
@@ -1055,8 +1055,8 @@ mod tests {
     let issued_before = Timestamp::parse("2020-02-02T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
-      .expires_after(expires_after)
-      .issued_before(issued_before);
+      .earliest_expiry_date(expires_after)
+      .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
       .with_common_validation_options(credential_validation_options)
@@ -1157,8 +1157,8 @@ mod tests {
     let issued_before = Timestamp::parse("2010-02-02T00:00:00Z").unwrap(); // both credentials were issued after this
     let expires_after = Timestamp::parse("2050-01-01T00:00:00Z").unwrap(); // both credentials expire before this
     let credential_validation_options = CredentialValidationOptions::default()
-      .expires_after(expires_after)
-      .issued_before(issued_before);
+      .earliest_expiry_date(expires_after)
+      .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
       .with_common_validation_options(credential_validation_options)
@@ -1263,8 +1263,8 @@ mod tests {
     let issued_before = Timestamp::parse("2010-02-02T00:00:00Z").unwrap(); // both credentials were issued after this
     let expires_after = Timestamp::parse("2050-01-01T00:00:00Z").unwrap(); // both credentials expire before this
     let credential_validation_options = CredentialValidationOptions::default()
-      .expires_after(expires_after)
-      .issued_before(issued_before);
+      .earliest_expiry_date(expires_after)
+      .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
       .with_common_validation_options(credential_validation_options)

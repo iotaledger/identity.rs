@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
+use std::fmt::Display;
 
 use wasm_bindgen::JsValue;
 
@@ -89,9 +90,55 @@ impl_wasm_error_from!(
   identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
-  identity::did::DIDError,
-  identity::iota::Error
+  identity::did::DIDError
 );
+
+// identity::iota now has some errors where the error message does not include the source error's error message.
+// This is in compliance with the Rust error handling project group's recommendation:
+// * An error type with a source error should either return that error via source or include that source's error message
+//   in its own Display output, but never both. *
+// See https://blog.rust-lang.org/inside-rust/2021/07/01/What-the-error-handling-project-group-is-working-towards.html#guidelines-for-implementing-displayfmt-and-errorsource.
+//
+// However in WasmError we want the display message of the entire error chain. We introduce a workaround here that let's
+// us display the entire display chain for new variants that don't include the error message of the source error in its
+// own display.
+
+// the following function is inspired by https://www.lpalmieri.com/posts/error-handling-rust/#error-source
+fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  write!(f, "{}. ", e)?;
+  let mut current = e.source();
+  while let Some(cause) = current {
+    write!(f, "Caused by: {}. ", cause)?;
+    current = cause.source();
+  }
+  Ok(())
+}
+
+struct ErrorMessage<'a, E: std::error::Error>(&'a E);
+
+impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}. ", self.0)?;
+    match &self.0 {
+      identity::iota::Error::UnsuccessfulCredentialValidation(e) => error_chain_fmt(&e, f),
+      identity::iota::Error::UnsuccessfulPresentationValidation(e) => error_chain_fmt(&e, f),
+      identity::iota::Error::UnsuccessfulValidationUnit(e) => error_chain_fmt(&e, f),
+      identity::iota::Error::InvalidCredentialPairing(e) => error_chain_fmt(&e, f),
+      identity::iota::Error::InvalidPresentationPairing(e) => error_chain_fmt(&e, f),
+      // the rest include the source error's message in their own
+      _ => self.0.fmt(f),
+    }
+  }
+}
+
+impl From<identity::iota::Error> for WasmError<'_> {
+  fn from(error: identity::iota::Error) -> Self {
+    Self {
+      message: Cow::Owned(ErrorMessage(&error).to_string()),
+      name: Cow::Borrowed(error.into()),
+    }
+  }
+}
 
 impl From<serde_json::Error> for WasmError<'_> {
   fn from(error: serde_json::Error) -> Self {

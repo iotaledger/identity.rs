@@ -139,12 +139,12 @@ impl<T: Serialize> ResolvedCredential<T> {
   }
   delegate! {
       to self.credential {
-          /// Checks whether this Credential expires after the given `Timestamp`.
+          /// Checks whether this Credential does not expire before the given `Timestamp`.
           /// True is returned in the case of no expiration date.
-          pub fn expires_after(&self, timestamp: Timestamp) -> bool;
+          pub fn earliest_expiry_date(&self, timestamp: Timestamp) -> bool;
 
-          /// Checks whether the issuance date of this Credential is before the given `Timestamp`.
-          pub fn issued_before(&self, timestamp: Timestamp) -> bool;
+          /// Checks whether the issuance date of this Credential is no later than the given `Timestamp`.
+          pub fn latest_issuance_date(&self, timestamp: Timestamp) -> bool;
 
           /// Checks whether this Credential's types match the input.
           pub fn matches_types(&self, other: &[&str]) -> bool;
@@ -157,25 +157,25 @@ impl<T: Serialize> ResolvedCredential<T> {
       }
   }
 
-  /// Validate that the [ResolvedCredential] expires after the specified [Timestamp].
+  /// Validate that the [ResolvedCredential] does not expire before the specified [Timestamp].
   ///
   /// # Terminology
   /// This is a *validation unit*
-  pub fn try_expires_after(&self, timestamp: Timestamp) -> Result<()> {
+  pub fn try_earliest_expiry_date(&self, timestamp: Timestamp) -> Result<()> {
     self
-      .expires_after(timestamp)
+      .earliest_expiry_date(timestamp)
       .then(|| ())
       .ok_or(super::errors::ValidationError::ExpirationDate)
       .map_err(Into::into)
   }
 
-  /// Validate that the [ResolvedCredential] is issued before the specified [Timestamp].
+  /// Validate that the [ResolvedCredential] is issued no later than the specified [Timestamp].
   ///
   /// # Terminology
   /// This is a *validation unit*
-  pub fn try_issued_before(&self, timestamp: Timestamp) -> Result<()> {
+  pub fn try_latest_issuance_date(&self, timestamp: Timestamp) -> Result<()> {
     self
-      .issued_before(timestamp)
+      .latest_issuance_date(timestamp)
       .then(|| ())
       .ok_or(super::errors::ValidationError::IssuanceDate)
       .map_err(Into::into)

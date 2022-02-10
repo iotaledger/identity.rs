@@ -165,19 +165,19 @@ impl<T> Credential<T> {
     self.proof.as_mut()
   }
 
-  /// Checks whether this Credential expires after the given `Timestamp`.
+  /// Checks whether this Credential does not expire before the given `Timestamp`.
   /// True is returned in the case of no expiration date.
-  pub fn expires_after(&self, timestamp: Timestamp) -> bool {
+  pub fn earliest_expiry_date(&self, timestamp: Timestamp) -> bool {
     if let Some(expiration_date) = self.expiration_date {
-      expiration_date > timestamp
+      expiration_date >= timestamp
     } else {
       true
     }
   }
 
-  /// Checks whether the issuance date of this Credential is before the given `Timestamp`.
-  pub fn issued_before(&self, timestamp: Timestamp) -> bool {
-    self.issuance_date < timestamp // todo: would <= be better than < ?
+  /// Checks whether the issuance date of this Credential is no later than the given `Timestamp`.
+  pub fn latest_issuance_date(&self, timestamp: Timestamp) -> bool {
+    self.issuance_date <= timestamp
   }
 
   /// Checks whether this Credential's types match the input
@@ -284,10 +284,10 @@ mod tests {
     // now that we are sure that our parsed credential has the expected expiration date set we can start testing the
     // expires_after method with a later date
     let later_date = Timestamp::parse("2020-02-01T15:10:21Z").unwrap();
-    assert!(!credential.expires_after(later_date));
+    assert!(!credential.earliest_expiry_date(later_date));
     // and now with an earlier date
     let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
-    assert!(credential.expires_after(earlier_date));
+    assert!(credential.earliest_expiry_date(earlier_date));
   }
 
   // test with a few timestamps that should be RFC3339 compatible
@@ -300,8 +300,8 @@ mod tests {
       assert_eq!(credential.expiration_date.unwrap(), expected_expiration_date, "the expiration date of the parsed credential does not match our expectation");
       let after_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() + seconds).unwrap();
       let before_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() - seconds).unwrap();
-      assert!(!credential.expires_after(after_expiration_date));
-      assert!(credential.expires_after(before_expiration_date));
+      assert!(!credential.earliest_expiry_date(after_expiration_date));
+      assert!(credential.earliest_expiry_date(before_expiration_date));
     }
   }
 
@@ -315,7 +315,7 @@ mod tests {
         "The credential had an expiration date contrary to our expectation"
       );
       // expires after whatever the timestamp may be because the expires_after field is None.
-      assert!(credential.expires_after(Timestamp::from_unix(seconds).unwrap()));
+      assert!(credential.earliest_expiry_date(Timestamp::from_unix(seconds).unwrap()));
     }
   }
 
@@ -330,9 +330,9 @@ mod tests {
     );
     // now that we are sure that our parsed credential has the expected issuance date set we can start testing issued
     // before with an earlier timestamp
-    assert!(!credential.issued_before(Timestamp::parse("2010-01-01T19:22:09Z").unwrap()));
+    assert!(!credential.latest_issuance_date(Timestamp::parse("2010-01-01T19:22:09Z").unwrap()));
     // and now with a later timestamp
-    assert!(credential.issued_before(Timestamp::parse("2010-01-01T20:00:00Z").unwrap()));
+    assert!(credential.latest_issuance_date(Timestamp::parse("2010-01-01T20:00:00Z").unwrap()));
   }
 
   proptest! {
@@ -344,8 +344,8 @@ mod tests {
       assert_eq!(credential.issuance_date, expected_issuance_date, "the issuance date of the parsed credential does not match our expectation");
       let earlier_than_issuance_date = Timestamp::from_unix(expected_issuance_date.to_unix() - seconds).unwrap();
       let later_than_issuance_date = Timestamp::from_unix(expected_issuance_date.to_unix() + seconds).unwrap();
-      assert!(!credential.issued_before(earlier_than_issuance_date));
-      assert!(credential.issued_before(later_than_issuance_date));
+      assert!(!credential.latest_issuance_date(earlier_than_issuance_date));
+      assert!(credential.latest_issuance_date(later_than_issuance_date));
     }
   }
 
