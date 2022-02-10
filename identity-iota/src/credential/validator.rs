@@ -86,7 +86,7 @@ impl CredentialValidator {
       .validate_presentation_internal(
         presentation,
         options,
-        trusted_issuers,
+        std::iter::repeat(trusted_issuers),
         resolved_holder_document,
         fail_fast,
       )
@@ -271,11 +271,11 @@ impl CredentialValidator {
   }
 
   // helper function to see the kind of error validation may yield
-  fn validate_presentation_internal<T: Serialize, S: Serialize>(
+  pub (crate) fn validate_presentation_internal<'a, T: Serialize, S: Serialize, I: IntoIterator<Item = &'a [ResolvedIotaDocument]>>(
     &self,
     presentation: &Presentation<T, S>,
     options: &PresentationValidationOptions,
-    trusted_issuers: &[ResolvedIotaDocument],
+    trusted_issuers: I,
     resolved_holder_document: &ResolvedIotaDocument,
     fail_fast: bool,
   ) -> Result<(), AccumulatedPresentationValidationError> {
@@ -311,8 +311,14 @@ impl CredentialValidator {
       return Err(compound_error);
     }
 
+    let mut trusted_issuers_iter = trusted_issuers.into_iter();
     // validate the presentations credentials
     for (position, credential) in presentation.verifiable_credential.iter().enumerate() {
+      let trusted_issuers = trusted_issuers_iter.next().expect("
+      incorrect parameters passed to private function validate_presentation_internal: 
+      the iterator over trusted issuers returns less elements than the number of credentials in the presentation. 
+      This is a bug which we encourage reporting at https://github.com/iotaledger/identity.rs/issues
+      "); 
       if let Err(error) = self.validate_credential_internal(
         credential,
         &options.common_validation_options,
