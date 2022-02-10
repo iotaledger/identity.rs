@@ -1414,7 +1414,7 @@ E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> | 
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
 
 <a name="ExplorerUrl+toString"></a>
 
