@@ -37,20 +37,4 @@ function prettyPrintJSON(data, title = null) {
     console.log(JSON.stringify(JSON.parse(data.toString()), null, 2));
 }
 
-/**
- * If a function throws an exception, run it again to make the tests more consistent (less prone to network issues).
- *
- * @param fn asynchronous function to be tested
- * @param args parameters for fn
- * @returns {Promise<void>}
- */
-async function repeatAsyncTest(fn, ...args) {
-    try {
-        await fn(...args);
-    } catch (e) {
-        console.warn("Repeating async test due to error:", e);
-        await fn(...args);
-    }
-}
-
-export {logExplorerUrl, logResolverUrl, prettyPrintJSON, repeatAsyncTest}
+export {logExplorerUrl, logResolverUrl, prettyPrintJSON}
