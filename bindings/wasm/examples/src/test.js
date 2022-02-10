@@ -12,7 +12,6 @@ import {merkleKey} from "./merkle_key";
 import {resolveHistory} from "./resolve_history";
 import {CLIENT_CONFIG} from "./config";
 import {privateTangle} from "./private_tangle";
-import {repeatAsyncTest} from "./utils";
 
 const TIMEOUT = 300000; // 5 minutes to account for spurious network delays, most tests pass in a few seconds
 
@@ -21,25 +20,25 @@ const TIMEOUT = 300000; // 5 minutes to account for spurious network delays, mos
 parallel("Test node examples", function () {
     this.timeout(TIMEOUT);
     it("Create Identity", async () => {
-        await repeatAsyncTest(createIdentity, CLIENT_CONFIG);
+        await createIdentity(CLIENT_CONFIG);
     });
     it("Manipulate Identity", async () => {
-        await repeatAsyncTest(manipulateIdentity, CLIENT_CONFIG);
+        await manipulateIdentity(CLIENT_CONFIG);
     });
     it("Resolution", async () => {
-        await repeatAsyncTest(resolution, CLIENT_CONFIG);
+        await resolution(CLIENT_CONFIG);
     });
     it("Create Verifiable Credential", async () => {
-        await repeatAsyncTest(createVC, CLIENT_CONFIG);
+        await createVC(CLIENT_CONFIG);
     });
     it("Create Verifiable Presentation", async () => {
-        await repeatAsyncTest(createVP, CLIENT_CONFIG);
+        await createVP(CLIENT_CONFIG);
     });
     it("Revoke Verifiable Credential", async () => {
-        await repeatAsyncTest(revokeVC, CLIENT_CONFIG);
+        await revokeVC(CLIENT_CONFIG);
     });
     it("Merkle Key", async () => {
-        await repeatAsyncTest(merkleKey, CLIENT_CONFIG);
+        await merkleKey(CLIENT_CONFIG);
     });
     it("Private Tangle", async () => {
         try {
@@ -52,9 +51,9 @@ parallel("Test node examples", function () {
         }
     });
     it("Diff Chain", async () => {
-        await repeatAsyncTest(createDiff, CLIENT_CONFIG);
+        await createDiff(CLIENT_CONFIG);
     });
     it("Resolve History", async () => {
-        await repeatAsyncTest(resolveHistory, CLIENT_CONFIG);
+        await resolveHistory(CLIENT_CONFIG);
     });
 })

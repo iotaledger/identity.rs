@@ -1,7 +1,6 @@
 import {
     defaultClientConfig,
     initIdentity,
-    repeatAsyncTest,
     revokeVC
 } from '../../examples/dist/web'
 
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Revoke Verifiable Credential", async () => {
-            await repeatAsyncTest(revokeVC, defaultClientConfig());
+            await revokeVC(defaultClientConfig());
         });
     }
 );

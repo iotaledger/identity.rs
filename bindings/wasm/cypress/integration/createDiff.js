@@ -2,7 +2,6 @@ import {
     createDiff,
     defaultClientConfig,
     initIdentity,
-    repeatAsyncTest
 } from '../../examples/dist/web'
 
 describe(
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Diff Chain", async () => {
-            await repeatAsyncTest(createDiff, defaultClientConfig());
+            await createDiff(defaultClientConfig());
         });
     }
 );

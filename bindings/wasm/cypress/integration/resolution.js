@@ -1,7 +1,6 @@
 import {
     defaultClientConfig,
     initIdentity,
-    repeatAsyncTest,
     resolution,
 } from '../../examples/dist/web'
 
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Resolution", async () => {
-            await repeatAsyncTest(resolution, defaultClientConfig());
+            await resolution(defaultClientConfig());
         });
     }
 );

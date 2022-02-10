@@ -2,7 +2,6 @@ import {
     createVP,
     defaultClientConfig,
     initIdentity,
-    repeatAsyncTest
 } from '../../examples/dist/web'
 
 describe(
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Create Verifiable Presentation", async () => {
-            await repeatAsyncTest(createVP, defaultClientConfig());
+            await createVP(defaultClientConfig());
         });
     }
 );

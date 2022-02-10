@@ -2,7 +2,6 @@ import {
     defaultClientConfig,
     initIdentity,
     merkleKey,
-    repeatAsyncTest
 } from '../../examples/dist/web'
 
 describe(
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Merkle Key", async () => {
-            await repeatAsyncTest(merkleKey, defaultClientConfig());
+            await merkleKey(defaultClientConfig());
         });
     }
 );

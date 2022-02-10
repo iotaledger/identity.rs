@@ -119,7 +119,7 @@ jobs:
         run: |
           cargo read-manifest --manifest-path ./examples/Cargo.toml | \
           jq -r '.targets[].name' | \
-          parallel -k -j 4 --retries 1 cargo run --example {} --release
+          parallel -k -j 4 --retries 3 cargo run --example {} --release
       - name: Stop sccache (Windows)
         uses: './.github/actions/rust/sccache/stop-sccache-windows'
         if: matrix.os == 'windows-latest'

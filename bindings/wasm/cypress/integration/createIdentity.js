@@ -2,7 +2,6 @@ import {
     createIdentity,
     defaultClientConfig,
     initIdentity,
-    repeatAsyncTest
 } from '../../examples/dist/web'
 
 describe(
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Create Identity", async () => {
-            await repeatAsyncTest(createIdentity, defaultClientConfig());
+            await createIdentity(defaultClientConfig());
         });
     }
 );

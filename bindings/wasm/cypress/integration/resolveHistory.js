@@ -1,7 +1,6 @@
 import {
     defaultClientConfig,
     initIdentity,
-    repeatAsyncTest,
     resolveHistory
 } from '../../examples/dist/web'
 
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Resolve History", async () => {
-            await repeatAsyncTest(resolveHistory, defaultClientConfig());
+            await resolveHistory(defaultClientConfig());
         });
     }
 );

@@ -2,7 +2,6 @@ import {
     defaultClientConfig,
     initIdentity,
     manipulateIdentity,
-    repeatAsyncTest
 } from '../../examples/dist/web'
 
 describe(
@@ -20,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Manipulate Identity", async () => {
-            await repeatAsyncTest(manipulateIdentity, defaultClientConfig());
+            await manipulateIdentity(defaultClientConfig());
         });
     }
 );
