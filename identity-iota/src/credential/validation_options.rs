@@ -4,6 +4,7 @@
 use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
 
+#[derive(Debug)]
 pub struct CredentialValidationOptions {
   pub(crate) expires_after: Timestamp,
   pub(crate) issued_before: Timestamp,
@@ -21,6 +22,11 @@ impl Default for CredentialValidationOptions {
 }
 
 impl CredentialValidationOptions {
+
+  pub fn new() -> Self {
+    Self::default()
+  }
+
   pub fn expires_after(mut self, timestamp: Timestamp) -> Self {
     self.expires_after = timestamp;
     self
@@ -43,22 +49,20 @@ impl CredentialValidationOptions {
   //Todo: Should there also be an into_verifier_options method?
 }
 
+#[derive(Debug, Default)]
 pub struct PresentationValidationOptions {
   pub(crate) common_validation_options: CredentialValidationOptions, // used when validating the credentials
   pub(crate) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature.
                                                                       * Todo: Find a better name. */
 }
 
-impl Default for PresentationValidationOptions {
-  fn default() -> Self {
-    Self {
-      common_validation_options: CredentialValidationOptions::default(),
-      presentation_verifier_options: VerifierOptions::default(),
-    }
-  }
-}
 
 impl PresentationValidationOptions {
+
+  pub fn new() -> Self {
+    Self::default()
+  }
+  
   pub fn with_common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.common_validation_options = options;
     self

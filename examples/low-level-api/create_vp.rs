@@ -17,8 +17,6 @@ use identity::did::verifiable::VerifierOptions;
 
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
-use identity::iota::Error;
-use identity::iota::IotaDID;
 use identity::iota::PresentationValidationOptions;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
@@ -89,8 +87,8 @@ async fn main() -> Result<()> {
   // in order to validate the presentation we need to resolve the holder's and issuer's DID documents.
 
   //Todo: extract the issuer and holder DID's from the presentation itself
-  let resolved_holder_document: ResolvedIotaDocument = client.resolve(&holder_doc.id()).await?;
-  let trusted_issuer: ResolvedIotaDocument = client.resolve(&issuer_doc.id()).await?;
+  let resolved_holder_document: ResolvedIotaDocument = client.resolve(holder_doc.id()).await?;
+  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let trusted_issuers = &[trusted_issuer];
 
   let validator: CredentialValidator = CredentialValidator::new();

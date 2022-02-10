@@ -198,7 +198,7 @@ impl<T> Credential<T> {
   pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &str> + 'a {
     input_types
       .iter()
-      .map(|value| *value)
+      .copied()
       .filter(|value| !self.types.iter().any(|other| value == other))
   }
 }
@@ -293,7 +293,7 @@ mod tests {
   // test with a few timestamps that should be RFC3339 compatible
   proptest! {
     #[test]
-    fn property_based_expires_after_with_expiration_date(seconds in 0..1000_000_000i64) {
+    fn property_based_expires_after_with_expiration_date(seconds in 0..1_000_000_000_i64) {
       let credential = deserialize_credential(JSON6);
       let expected_expiration_date = Timestamp::parse("2020-01-01T19:23:24Z").unwrap();
       // check that this credential has the expected expiration date
@@ -337,7 +337,7 @@ mod tests {
 
   proptest! {
     #[test]
-    fn property_based_issued_before(seconds in 0 ..1000_000_000i64) {
+    fn property_based_issued_before(seconds in 0 ..1_000_000_000_i64) {
       let credential = deserialize_credential(JSON1);
       let expected_issuance_date = Timestamp::parse("2010-01-01T19:23:24Z").unwrap();
       // check that this credential has the expected issuance date

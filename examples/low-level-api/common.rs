@@ -54,7 +54,7 @@ pub async fn resolve_documents(issuer_documents: &[IotaDocument]) -> Result<Vec<
   let mut resolved_documents: Vec<ResolvedIotaDocument> = Vec::new();
   let client: ClientMap = ClientMap::new();
   for doc in issuer_documents {
-    let resolved_document: ResolvedIotaDocument = client.resolve(&doc.id()).await?;
+    let resolved_document: ResolvedIotaDocument = client.resolve(doc.id()).await?;
     resolved_documents.push(resolved_document);
   }
   Ok(resolved_documents)

@@ -129,7 +129,6 @@ impl<T: Serialize> ResolvedCredential<T> {
     self
       .subjects
       .iter()
-      .map(|doc| doc)
       .filter(|resolved_doc| !resolved_doc.document.active())
   }
 

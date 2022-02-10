@@ -20,6 +20,7 @@ use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 use super::PresentationValidationOptions;
 
+#[derive(Debug, Default)]
 pub struct CredentialValidator {
   _future_proofing: PhantomData<u8>,
 }
@@ -161,13 +162,13 @@ impl CredentialValidator {
         // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
         // the signature
         if let Err(issuer_proof_error) = trusted_issuers
-          .into_iter()
+          .iter()
           .find(|issuer_doc| issuer_doc.document.id() == &did)
           .ok_or(ValidationError::UntrustedIssuer)
           .and_then(|trusted_issuer_doc| {
             trusted_issuer_doc
               .document
-              .verify_data(&credential, &options)
+              .verify_data(&credential, options)
               .map_err(|error| ValidationError::IssuerProof { source: error.into() })
           })
         {
@@ -180,7 +181,7 @@ impl CredentialValidator {
       }
       Err(error) => {
         // the issuer's url could not be parsed to a valid IotaDID
-        return Err(ValidationError::IssuerUrl { source: error.into() });
+        Err(ValidationError::IssuerUrl { source: error.into() })
       }
     }
   }
