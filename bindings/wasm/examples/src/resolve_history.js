@@ -12,7 +12,6 @@ import {
     Timestamp,
     VerificationMethod
 } from '@iota/identity-wasm';
-import {prettyPrintJSON} from "./utils";
 import {createIdentity} from "./create_did";
 
 /**
@@ -151,7 +150,7 @@ async function resolveHistory(clientConfig) {
     const history1 = await client.resolveHistory(doc.id);
 
     // The history shows two documents in the integration chain, and two diffs in the diff chain.
-    prettyPrintJSON(history1, "History (1):");
+    console.log("History (1):", JSON.stringify(history1, null, 2));
 
     // ===========================================================================
     // Integration Chain Update 2
@@ -191,7 +190,7 @@ async function resolveHistory(clientConfig) {
     // The history now shows three documents in the integration chain, and no diffs in the diff chain.
     // This is because each integration chain document has its own diff chain but only the last one
     // is used during resolution.
-    prettyPrintJSON(history2, "History (2):");
+    console.log("History (2):", JSON.stringify(history2, null, 2));
 
     // ===========================================================================
     // Diff Chain History
@@ -201,7 +200,7 @@ async function resolveHistory(clientConfig) {
     // Old diff chains can be retrieved but they no longer affect DID resolution.
     let previousIntegrationDocument = history2.integrationChainData()[1];
     let previousDiffHistory = await client.resolveDiffHistory(previousIntegrationDocument);
-    prettyPrintJSON(previousDiffHistory, "Previous Diff History:");
+    console.log("Previous Diff History:", JSON.stringify(previousDiffHistory, null, 2));
 }
 
 export {resolveHistory};
