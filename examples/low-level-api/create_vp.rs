@@ -14,8 +14,7 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
-use identity::did::DID;
-use identity::iota::errors::ValidationError;
+
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
 use identity::iota::Error;

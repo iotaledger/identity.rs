@@ -86,8 +86,8 @@ pub enum ValidationError {
   UnrelatedCredentials,
 }
 
-// Todo: Would prefer to implement Error on OneOrMany<E: Error>, but this conflicts with the current Display implementation, so need to introduce 
-// another error here. 
+// Todo: Would prefer to implement Error on OneOrMany<E: Error>, but this conflicts with the current Display
+// implementation, so need to introduce another error here.
 #[derive(Debug)]
 /// An error caused by a failure to validate a Credential.  
 pub struct AccumulatedCredentialValidationError {
@@ -102,11 +102,7 @@ impl Display for AccumulatedCredentialValidationError {
       ", ".to_string(),
     )
     .collect();
-    write!(
-      f,
-      "The following errors occurred: {}",
-      detailed_information
-    )
+    write!(f, "The following errors occurred: {}", detailed_information)
   }
 }
 
@@ -135,11 +131,7 @@ impl Display for AccumulatedPresentationValidationError {
       .map(|error| error.to_string())
       .chain(self.credential_errors.iter().map(credential_error_formatter));
     let detailed_information: String = itertools::intersperse(error_string_iter, ", ".to_string()).collect();
-    write!(
-      f,
-      "the following errors occurred: {}",
-      detailed_information
-    )
+    write!(f, "the following errors occurred: {}", detailed_information)
   }
 }
 

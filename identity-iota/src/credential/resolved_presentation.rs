@@ -8,9 +8,9 @@ use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
-use super::PresentationValidationOptions;
 use super::errors::ValidationError;
 use super::CredentialValidator;
+use super::PresentationValidationOptions;
 use super::ResolvedCredential;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -217,26 +217,34 @@ impl<T: Serialize, U: Serialize + PartialEq + Clone> ResolvedPresentation<T, U> 
     })
   }
 
-  /// Validate the presentation using the Resolved DID documents of the holders and credential issuers received upon creation. 
-  /// 
+  /// Validate the presentation using the Resolved DID documents of the holders and credential issuers received upon
+  /// creation.
+  ///
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the presentation is not semantically valid
   /// - The nonTransferable property is set in one of the credentials, but the credential's subject is not the holder of
   ///   the presentation.
   /// - Validation of any of the presentation's credentials fails.
-  // Todo: This method does currently not fail on deactivated subject documents in the ResolvedCredentials. Should it? 
-  pub fn full_validation(&self, presentation_validation_options: &PresentationValidationOptions, fail_fast: bool) -> Result<()> 
-  {
-    let trusted_issuers_per_credential = self.resolved_credentials.iter().map(
-      |resolved_credential| std::slice::from_ref(&resolved_credential.issuer)); 
+  // Todo: This method does currently not fail on deactivated subject documents in the ResolvedCredentials. Should it?
+  pub fn full_validation(
+    &self,
+    presentation_validation_options: &PresentationValidationOptions,
+    fail_fast: bool,
+  ) -> Result<()> {
+    let trusted_issuers_per_credential = self
+      .resolved_credentials
+      .iter()
+      .map(|resolved_credential| std::slice::from_ref(&resolved_credential.issuer));
 
-    CredentialValidator::new().validate_presentation_internal(
-      &self.presentation,
-      presentation_validation_options,
-      trusted_issuers_per_credential,
-      &self.holder,
-      fail_fast
-    ).map_err(Error::UnsuccessfulPresentationValidation)
+    CredentialValidator::new()
+      .validate_presentation_internal(
+        &self.presentation,
+        presentation_validation_options,
+        trusted_issuers_per_credential,
+        &self.holder,
+        fail_fast,
+      )
+      .map_err(Error::UnsuccessfulPresentationValidation)
   }
 }

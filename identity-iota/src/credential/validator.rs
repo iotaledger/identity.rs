@@ -34,11 +34,11 @@ impl CredentialValidator {
 
   /// Validate a `Credential`.
   ///
-  /// # Security 
-  /// It is the callers responsibility to ensure that the trusted issuers have up to date DID Documents. Furthermore 
-  /// most applications will want to apply their own domain specific validations as this method only covers common concerns. 
-  /// See the [Errors](#Errors) section to get an overview of what gets validated. 
-  /// 
+  /// # Security
+  /// It is the callers responsibility to ensure that the trusted issuers have up to date DID Documents. Furthermore
+  /// most applications will want to apply their own domain specific validations as this method only covers common
+  /// concerns. See the [Errors](#Errors) section to get an overview of what gets validated.
+  ///
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the credential is not semantically valid
@@ -63,11 +63,11 @@ impl CredentialValidator {
 
   /// Validate a `Presentation`
   ///
-  /// 
-  /// # Security 
-  /// It is the callers responsibility to ensure that all supplied resolved DID Documents are up to date. Furthermore 
-  /// most applications will want to apply their own domain specific validations as this method only covers common concerns. 
-  /// See the [Errors](#Errors) section to get an overview of what gets validated. 
+  ///
+  /// # Security
+  /// It is the callers responsibility to ensure that all supplied resolved DID Documents are up to date. Furthermore
+  /// most applications will want to apply their own domain specific validations as this method only covers common
+  /// concerns. See the [Errors](#Errors) section to get an overview of what gets validated.
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the presentation is not semantically valid
@@ -271,7 +271,12 @@ impl CredentialValidator {
   }
 
   // helper function to see the kind of error validation may yield
-  pub (crate) fn validate_presentation_internal<'a, T: Serialize, S: Serialize, I: IntoIterator<Item = &'a [ResolvedIotaDocument]>>(
+  pub(crate) fn validate_presentation_internal<
+    'a,
+    T: Serialize,
+    S: Serialize,
+    I: IntoIterator<Item = &'a [ResolvedIotaDocument]>,
+  >(
     &self,
     presentation: &Presentation<T, S>,
     options: &PresentationValidationOptions,
@@ -314,11 +319,13 @@ impl CredentialValidator {
     let mut trusted_issuers_iter = trusted_issuers.into_iter();
     // validate the presentations credentials
     for (position, credential) in presentation.verifiable_credential.iter().enumerate() {
-      let trusted_issuers = trusted_issuers_iter.next().expect("
+      let trusted_issuers = trusted_issuers_iter.next().expect(
+        "
       incorrect parameters passed to private function validate_presentation_internal: 
       the iterator over trusted issuers returns less elements than the number of credentials in the presentation. 
       This is a bug which we encourage reporting at https://github.com/iotaledger/identity.rs/issues
-      "); 
+      ",
+      );
       if let Err(error) = self.validate_credential_internal(
         credential,
         &options.common_validation_options,
@@ -344,23 +351,79 @@ impl CredentialValidator {
 mod tests {
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
+  use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
+  use identity_core::json;
+  use identity_credential::credential::CredentialBuilder;
+  use identity_credential::credential::Subject;
   use identity_credential::presentation::PresentationBuilder;
+  use identity_did::did::DID;
+  use iota_client::bee_message::MessageId;
 
+  use super::*;
   use crate::credential::CredentialValidationOptions;
   use crate::document::IotaDocument;
 
-  use super::super::test_utils;
-  use super::*;
+  fn generate_document_with_keys() -> (IotaDocument, KeyPair) {
+    // Generate a new Ed25519 public/private key pair.
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+
+    // Create a DID Document (an identity) from the generated key pair.
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+
+    (document, keypair)
+  }
+
+  fn generate_credential(
+    issuer: &IotaDocument,
+    subjects: &[IotaDocument],
+    issuance_date: Timestamp,
+    expiration_date: Timestamp,
+  ) -> Credential {
+    let credential_subjects: Result<Vec<Subject>> = subjects
+      .iter()
+      .map(|subject| {
+        Subject::from_json_value(json!({
+          "id": subject.id().as_str(),
+          "name": "Alice",
+          "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science and Arts",
+          },
+          "GPA": "4.0",
+        }))
+        .map_err(Into::into)
+      })
+      .collect();
+
+    // Build credential using subject above and issuer.
+    CredentialBuilder::default()
+      .id(Url::parse("https://example.edu/credentials/3732").unwrap())
+      .issuer(Url::parse(issuer.id().as_str()).unwrap())
+      .type_("UniversityDegreeCredential")
+      .subjects(credential_subjects.unwrap())
+      .issuance_date(issuance_date)
+      .expiration_date(expiration_date)
+      .build()
+      .unwrap()
+  }
+
+  fn mock_resolved_document(document: IotaDocument) -> ResolvedIotaDocument {
+    ResolvedIotaDocument {
+      document,
+      integration_message_id: MessageId::null(), // not necessary for validation at least not at the moment
+      diff_message_id: MessageId::null(),        // not necessary for validation at least not at the moment
+    }
+  }
 
   // generates a triple: issuer document, issuer's keys, unsigned credential issued by issuer
   fn credential_setup() -> (IotaDocument, KeyPair, Credential) {
-    let (issuer_doc, issuer_key) = test_utils::generate_document_with_keys();
-    let (subject_doc, _) = test_utils::generate_document_with_keys();
+    let (issuer_doc, issuer_key) = generate_document_with_keys();
+    let (subject_doc, _) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
-    let credential = test_utils::generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+    let credential = generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
     (issuer_doc, issuer_key, credential)
   }
 
@@ -377,7 +440,7 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let trusted_issuer = mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -393,7 +456,7 @@ mod tests {
   fn test_validate_credential_invalid_signature() {
     // setup
     let (issuer_doc, _, mut credential) = credential_setup();
-    let (_, other_keys) = test_utils::generate_document_with_keys();
+    let (_, other_keys) = generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -403,7 +466,7 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let trusted_issuer = mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -431,7 +494,7 @@ mod tests {
   fn test_validate_credential_untrusted_issuer() {
     // setup
     let (issuer_doc, issuer_key, mut credential) = credential_setup();
-    let (other_doc, _) = test_utils::generate_document_with_keys();
+    let (other_doc, _) = generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -441,7 +504,7 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(other_doc); // the trusted issuer did not sign the credential
+    let trusted_issuer = mock_resolved_document(other_doc); // the trusted issuer did not sign the credential
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -479,7 +542,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let trusted_issuer = mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2023-02-01T00:00:00Z").unwrap(); // note that expires_after > expiration_date
     let options = CredentialValidationOptions::default()
@@ -517,7 +580,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let trusted_issuer = mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // note that issued_before < issuance_date
     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -557,7 +620,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let trusted_issuer = mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -585,7 +648,7 @@ mod tests {
   fn test_validate_credential_multiple_errors_fail_fast() {
     // setup
     let (issuer_doc, issuer_key, mut credential) = credential_setup();
-    let (other_issuer, _) = test_utils::generate_document_with_keys();
+    let (other_issuer, _) = generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -597,7 +660,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential
+    let trusted_issuer = mock_resolved_document(other_issuer); // trusted issuer did not issue the credential
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date
     let options = CredentialValidationOptions::default()
@@ -622,7 +685,7 @@ mod tests {
   fn test_validate_credential_multiple_errors_accumulate_all_errors() {
     // setup
     let (issuer_doc, issuer_key, mut credential) = credential_setup();
-    let (other_issuer, _) = test_utils::generate_document_with_keys();
+    let (other_issuer, _) = generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -634,7 +697,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct [first error]
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential [second error]
+    let trusted_issuer = mock_resolved_document(other_issuer); // trusted issuer did not issue the credential [second error]
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date [third error]
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date [fourth error]
     let options = CredentialValidationOptions::default()
@@ -658,11 +721,11 @@ mod tests {
   #[test]
   fn test_validate_presentation() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let (issuer_foo_doc, issuer_foo_key) = generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
+    let mut credential_foo = generate_credential(
       &issuer_foo_doc,
       std::slice::from_ref(&subject_foo_doc),
       issuance_date,
@@ -723,11 +786,11 @@ mod tests {
     let validator = CredentialValidator::new();
 
     let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
+      mock_resolved_document(issuer_foo_doc),
+      mock_resolved_document(issuer_bar_doc),
     ];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = mock_resolved_document(subject_foo_doc);
     assert!(validator
       .validate_presentation(
         &presentation,
@@ -742,11 +805,11 @@ mod tests {
   #[test]
   fn test_validate_presentation_invalid_holder_signature() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let (issuer_foo_doc, issuer_foo_key) = generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
+    let mut credential_foo = generate_credential(
       &issuer_foo_doc,
       std::slice::from_ref(&subject_foo_doc),
       issuance_date,
@@ -806,11 +869,11 @@ mod tests {
     let validator = CredentialValidator::new();
 
     let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
+      mock_resolved_document(issuer_foo_doc),
+      mock_resolved_document(issuer_bar_doc),
     ];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = mock_resolved_document(subject_foo_doc);
 
     let error = match validator
       .validate_presentation(
@@ -832,11 +895,11 @@ mod tests {
   #[test]
   fn test_validate_presentation_invalid_credential() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let (issuer_foo_doc, issuer_foo_key) = generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
+    let mut credential_foo = generate_credential(
       &issuer_foo_doc,
       std::slice::from_ref(&subject_foo_doc),
       issuance_date,
@@ -896,11 +959,11 @@ mod tests {
     let validator = CredentialValidator::new();
 
     let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
+      mock_resolved_document(issuer_foo_doc),
+      mock_resolved_document(issuer_bar_doc),
     ];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = mock_resolved_document(subject_foo_doc);
 
     let error = match validator
       .validate_presentation(
@@ -928,11 +991,11 @@ mod tests {
   #[test]
   fn test_validate_presentation_non_transferable_property_violation() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let (issuer_foo_doc, issuer_foo_key) = generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
+    let mut credential_foo = generate_credential(
       &issuer_foo_doc,
       std::slice::from_ref(&subject_foo_doc),
       issuance_date,
@@ -1001,11 +1064,11 @@ mod tests {
     let validator = CredentialValidator::new();
 
     let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
+      mock_resolved_document(issuer_foo_doc),
+      mock_resolved_document(issuer_bar_doc),
     ];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = mock_resolved_document(subject_foo_doc);
 
     let error = match validator
       .validate_presentation(
@@ -1030,11 +1093,11 @@ mod tests {
   #[test]
   fn test_validate_presentation_multiple_errors_accumulate_errors() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let (issuer_foo_doc, issuer_foo_key) = generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
+    let mut credential_foo = generate_credential(
       &issuer_foo_doc,
       std::slice::from_ref(&subject_foo_doc),
       issuance_date,
@@ -1103,11 +1166,11 @@ mod tests {
     let validator = CredentialValidator::new();
 
     let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
+      mock_resolved_document(issuer_foo_doc),
+      mock_resolved_document(issuer_bar_doc),
     ];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = mock_resolved_document(subject_foo_doc);
 
     let (presentation_validation_errors, credential_errors) = match validator
       .validate_presentation(
@@ -1136,11 +1199,11 @@ mod tests {
   #[test]
   fn test_validate_presentation_multiple_errors_fail_fast() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+    let (issuer_foo_doc, issuer_foo_key) = generate_document_with_keys();
+    let (subject_foo_doc, subject_foo_key) = generate_document_with_keys();
     let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
     let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
+    let mut credential_foo = generate_credential(
       &issuer_foo_doc,
       std::slice::from_ref(&subject_foo_doc),
       issuance_date,
@@ -1209,11 +1272,11 @@ mod tests {
     let validator = CredentialValidator::new();
 
     let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
+      mock_resolved_document(issuer_foo_doc),
+      mock_resolved_document(issuer_bar_doc),
     ];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = mock_resolved_document(subject_foo_doc);
 
     let (presentation_validation_errors, credential_errors) = match validator
       .validate_presentation(

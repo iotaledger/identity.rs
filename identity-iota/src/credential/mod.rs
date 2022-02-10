@@ -4,8 +4,6 @@
 pub mod errors;
 mod resolved_credential;
 mod resolved_presentation;
-#[cfg(test)]
-mod test_utils;
 mod validation_options;
 mod validator;
 
