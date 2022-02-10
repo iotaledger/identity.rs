@@ -86,8 +86,7 @@ pub enum ValidationError {
   UnrelatedCredentials,
 }
 
-// Todo: Would prefer to implement Error on OneOrMany<E: Error>, but this conflicts with the current Display
-// implementation, so need to introduce another error here.
+// Todo: Consider implementing Display for OneOrMany<E: std::error::Error> to avoid wrapping it in AccumulatedCredentialValidationError 
 #[derive(Debug)]
 /// An error caused by a failure to validate a Credential.  
 pub struct AccumulatedCredentialValidationError {
