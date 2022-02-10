@@ -106,12 +106,6 @@ impl From<IotaDID> for WasmDID {
   }
 }
 
-impl From<WasmDID> for IotaDID {
-  fn from(did: WasmDID) -> Self {
-    did.0
-  }
-}
-
 /// Duck-typed union to pass either a string or WasmDID as a parameter.
 #[wasm_bindgen]
 extern "C" {
