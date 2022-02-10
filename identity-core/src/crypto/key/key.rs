@@ -37,7 +37,7 @@ impl private::Sealed for Private {}
 // =============================================================================
 
 /// A cryptographic key.
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Key<V: private::Sealed> {
   key: Box<[u8]>,
   vis: PhantomData<V>,

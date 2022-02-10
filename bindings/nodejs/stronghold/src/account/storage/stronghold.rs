@@ -7,6 +7,7 @@ use identity::account::Storage;
 use identity::account::Stronghold;
 use identity::core::decode_b58;
 use identity::core::encode_b58;
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use napi::bindgen_prelude::Error;
 use napi::Result;
@@ -44,10 +45,11 @@ impl JsStronghold {
     password: String,
     dropsave: Option<bool>,
   ) -> Result<JsStronghold> {
-    let stronghold: Stronghold = Stronghold::new(&snapshot, &*password, dropsave)
-      .await
-      .napi_result()?;
-    Ok(JsStronghold(stronghold))
+    Ok(JsStronghold(
+      Stronghold::new(&snapshot, &*password, dropsave)
+        .await
+        .napi_result()?,
+    ))
   }
 
   /// Returns whether save-on-drop is enabled.
@@ -66,17 +68,13 @@ impl JsStronghold {
   /// Sets the account password.
   #[napi]
   pub async fn set_password(&self, password: Vec<u32>) -> Result<()> {
-    let password: Vec<u8> = password
+    let password: [u8; 32] = password
       .into_iter()
       .filter_map(|n| u8::try_from(n).ok())
-      .collect();
-    self
-      .0
-      .set_password(password.try_into().map_err(|_| {
-        Error::from_reason(String::from("Invalid password type. Expected [u8; 32]"))
-      })?)
-      .await
-      .napi_result()
+      .collect::<Vec<u8>>()
+      .try_into()
+      .map_err(|_| Error::from_reason("Invalid password type. Expected [u8; 32]".to_owned()))?;
+    self.0.set_password(password).await.napi_result()
   }
 
   /// Write any unsaved changes to disk.
@@ -109,13 +107,10 @@ impl JsStronghold {
     location: &JsKeyLocation,
     private_key: String,
   ) -> Result<String> {
+    let private_key: PrivateKey = decode_b58(&private_key).napi_result()?.into();
     let public_key: PublicKey = self
       .0
-      .key_insert(
-        &did.0,
-        &location.0,
-        decode_b58(&private_key).napi_result()?.into(),
-      )
+      .key_insert(&did.0, &location.0, private_key)
       .await
       .napi_result()?;
     Ok(encode_b58(&public_key))
@@ -142,16 +137,11 @@ impl JsStronghold {
     location: &JsKeyLocation,
     data: Vec<u32>,
   ) -> Result<JsSignature> {
-    let mut data_u8: Vec<u8> = Vec::new();
-    for v in data {
-      match u8::try_from(v) {
-        Ok(v) => data_u8.push(v),
-        Err(_) => {
-          return Err(Error::from_reason(String::from(
-            "Invalid data type. Expected Vec<u8>",
-          )))
-        }
-      }
+    let data_u8: Vec<u8> = data.iter().filter_map(|n| u8::try_from(*n).ok()).collect();
+    if data_u8.len() != data.len() {
+      return Err(Error::from_reason(String::from(
+        "Invalid data type. Expected Vec<u8>",
+      )));
     }
     self
       .0
