@@ -12,7 +12,7 @@ on:
       - epic/*
     paths:
       - '.github/workflows/build-and-test.yml'
-      - '.github/actions'
+      - '.github/actions/**'
       - '**.rs'
       - '**.toml'
 
