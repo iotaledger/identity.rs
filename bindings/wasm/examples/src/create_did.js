@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {Client, Config, Document, KeyPair, KeyType} from '@iota/identity-wasm';
-import {logExplorerUrl, logResolverUrl} from './utils';
 
 /**
  This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
@@ -32,8 +31,8 @@ async function createIdentity(clientConfig) {
     const receipt = await client.publishDocument(doc);
 
     // Log the results.
-    logExplorerUrl("DID Document Transaction:", clientConfig.explorer, receipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
+    console.log(`DID Document Transaction: ${clientConfig.explorer.messageUrl(receipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
 
     // Return the results.
     return {key, doc, receipt};
