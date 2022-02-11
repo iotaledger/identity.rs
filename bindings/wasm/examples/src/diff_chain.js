@@ -43,8 +43,8 @@ async function createDiff(clientConfig) {
     // Publish diff to the Tangle
     const diffReceipt = await client.publishDiff(receipt.messageId, diff);
     console.log(diffReceipt);
-    console.log("Diff Chain Transaction:", clientConfig.explorer.messageUrl(diffReceipt.messageId));
-    console.log("Explore the DID Document:", clientConfig.explorer.resolverUrl(doc.id));
+    console.log(`Diff Chain Transaction: ${clientConfig.explorer.messageUrl(diffReceipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
 
     return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
 }

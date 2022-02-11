@@ -58,7 +58,7 @@ async function privateTangle(restURL, networkName) {
 
     console.log(`Published the DID document to the private tangle:`);
     console.log(resolved);
-    console.log("Explore the DID Document:", explorer.resolverUrl(doc.id));
+    console.log(`Explore the DID Document: ${explorer.resolverUrl(doc.id)}`);
 
     // Return the results.
     return {key, resolved, receipt};

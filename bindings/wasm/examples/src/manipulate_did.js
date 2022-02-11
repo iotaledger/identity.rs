@@ -62,8 +62,8 @@ async function manipulateIdentity(clientConfig) {
     const updateReceipt = await client.publishDocument(doc);
 
     // Log the results.
-    console.log("DID Document Update Transaction:", clientConfig.explorer.messageUrl(updateReceipt.messageId));
-    console.log("Explore the DID Document:", clientConfig.explorer.resolverUrl(doc.id));
+    console.log(`DID Document Update Transaction: ${clientConfig.explorer.messageUrl(updateReceipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
 
     return {
         key,

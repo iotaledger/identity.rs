@@ -39,8 +39,8 @@ async function revokeVC(clientConfig) {
     const {messageId} = await client.publishDocument(issuer.doc);
 
     // Log the resulting Identity update
-    console.log("Issuer Update Transaction:", clientConfig.explorer.messageUrl(messageId));
-    console.log("Explore the Issuer DID Document:", clientConfig.explorer.resolverUrl(issuer.doc.id));
+    console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(messageId)}`);
+    console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
 
     // Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());

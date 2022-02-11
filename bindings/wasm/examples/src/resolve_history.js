@@ -74,7 +74,7 @@ async function resolveHistory(clientConfig) {
     const intReceipt1 = await client.publishDocument(intDoc1);
 
     // Log the results.
-    console.log("Int. Chain Update (1):", clientConfig.explorer.messageUrl(intReceipt1.messageId));
+    console.log(`Int. Chain Update (1): ${clientConfig.explorer.messageUrl(intReceipt1.messageId)}`);
 
     // ===========================================================================
     // Diff Chain Update 1
@@ -100,7 +100,7 @@ async function resolveHistory(clientConfig) {
 
     // Publish the diff to the Tangle, starting a diff chain.
     const diffReceipt1 = await client.publishDiff(intReceipt1.messageId, diff1);
-    console.log("Diff Chain Transaction (1):", clientConfig.explorer.messageUrl(diffReceipt1.messageId));
+    console.log(`Diff Chain Transaction (1): ${clientConfig.explorer.messageUrl(diffReceipt1.messageId)}`);
 
     // ===========================================================================
     // Diff Chain Update 2
@@ -128,7 +128,7 @@ async function resolveHistory(clientConfig) {
     // Note that we still use the `messageId` from the last integration chain message here to link
     // the current diff chain to that point on the integration chain.
     const diffReceipt2 = await client.publishDiff(intReceipt1.messageId, diff2);
-    console.log("Diff Chain Transaction (2):", clientConfig.explorer.messageUrl(diffReceipt2.messageId));
+    console.log(`Diff Chain Transaction (2): ${clientConfig.explorer.messageUrl(diffReceipt2.messageId)}`);
 
     // ===========================================================================
     // Diff Chain Spam
@@ -150,7 +150,7 @@ async function resolveHistory(clientConfig) {
     const history1 = await client.resolveHistory(doc.id);
 
     // The history shows two documents in the integration chain, and two diffs in the diff chain.
-    console.log("History (1):", JSON.stringify(history1, null, 2));
+    console.log(`History (1): ${JSON.stringify(history1, null, 2)}`);
 
     // ===========================================================================
     // Integration Chain Update 2
@@ -178,7 +178,7 @@ async function resolveHistory(clientConfig) {
     const intReceipt2 = await client.publishDocument(intDoc2);
 
     // Log the results.
-    console.log("Int. Chain Update (2):", clientConfig.explorer.messageUrl(intReceipt2.messageId));
+    console.log(`Int. Chain Update (2): ${clientConfig.explorer.messageUrl(intReceipt2.messageId)}`);
 
     // ===========================================================================
     // DID History 2
@@ -190,7 +190,7 @@ async function resolveHistory(clientConfig) {
     // The history now shows three documents in the integration chain, and no diffs in the diff chain.
     // This is because each integration chain document has its own diff chain but only the last one
     // is used during resolution.
-    console.log("History (2):", JSON.stringify(history2, null, 2));
+    console.log(`History (2): ${JSON.stringify(history2, null, 2)}`);
 
     // ===========================================================================
     // Diff Chain History
@@ -200,7 +200,7 @@ async function resolveHistory(clientConfig) {
     // Old diff chains can be retrieved but they no longer affect DID resolution.
     let previousIntegrationDocument = history2.integrationChainData()[1];
     let previousDiffHistory = await client.resolveDiffHistory(previousIntegrationDocument);
-    console.log("Previous Diff History:", JSON.stringify(previousDiffHistory, null, 2));
+    console.log(`Previous Diff History: ${JSON.stringify(previousDiffHistory, null, 2)}`);
 }
 
 export {resolveHistory};
