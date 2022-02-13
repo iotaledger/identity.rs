@@ -8,6 +8,7 @@ use core::fmt::Formatter;
 use serde::Serialize;
 
 use identity_core::common::BitSet;
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -34,6 +35,7 @@ use identity_core::crypto::Verify;
 
 use crate::did::CoreDID;
 use crate::did::CoreDIDUrl;
+use crate::did::DID;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
@@ -56,10 +58,13 @@ use crate::verification::VerificationMethod;
 /// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub struct CoreDocument<T = Object, U = Object, V = Object> {
-  pub(crate) id: CoreDID,
+pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
+  where
+    D: DID + KeyComparable
+{
+  pub(crate) id: D,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) controller: Option<OneOrSet<CoreDID>>,
+  pub(crate) controller: Option<OneOrSet<D>>,
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) also_known_as: OrderedSet<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
@@ -80,16 +85,19 @@ pub struct CoreDocument<T = Object, U = Object, V = Object> {
   pub(crate) properties: T,
 }
 
-impl<T, U, V> CoreDocument<T, U, V> {
+impl<D, T, U, V> CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   /// Creates a [`DocumentBuilder`] to configure a new `CoreDocument`.
   ///
   /// This is the same as [`DocumentBuilder::new`].
-  pub fn builder(properties: T) -> DocumentBuilder<T, U, V> {
+  pub fn builder(properties: T) -> DocumentBuilder<D, T, U, V> {
     DocumentBuilder::new(properties)
   }
 
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
-  pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
+  pub fn from_builder(builder: DocumentBuilder<D, T, U, V>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
       controller: Some(builder.controller)
@@ -109,22 +117,22 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Returns a reference to the `CoreDocument` id.
-  pub fn id(&self) -> &CoreDID {
+  pub fn id(&self) -> &D {
     &self.id
   }
 
   /// Returns a mutable reference to the `CoreDocument` id.
-  pub fn id_mut(&mut self) -> &mut CoreDID {
+  pub fn id_mut(&mut self) -> &mut D {
     &mut self.id
   }
 
   /// Returns a reference to the `CoreDocument` controller.
-  pub fn controller(&self) -> Option<&OneOrSet<CoreDID>> {
+  pub fn controller(&self) -> Option<&OneOrSet<D>> {
     self.controller.as_ref()
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<CoreDID>> {
+  pub fn controller_mut(&mut self) -> &mut Option<OneOrSet<D>> {
     &mut self.controller
   }
 
@@ -220,7 +228,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
   /// Maps `CoreDocument<T>` to `CoreDocument<U>` by applying a function to the custom
   /// properties.
-  pub fn map<A, F>(self, f: F) -> CoreDocument<A, U, V>
+  pub fn map<A, F>(self, f: F) -> CoreDocument<D, A, U, V>
   where
     F: FnOnce(T) -> A,
   {
@@ -244,7 +252,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// # Errors
   ///
   /// `try_map` can fail if the provided function fails.
-  pub fn try_map<A, F, E>(self, f: F) -> Result<CoreDocument<A, U, V>, E>
+  pub fn try_map<A, F, E>(self, f: F) -> Result<CoreDocument<D, A, U, V>, E>
   where
     F: FnOnce(T) -> Result<A, E>,
   {
@@ -590,7 +598,10 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 }
 
-impl<T, U: Revocation, V> CoreDocument<T, U, V> {
+impl<D, T, U: Revocation, V> CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   /// Verifies the signature of the provided data.
   ///
   /// # Errors
@@ -713,20 +724,27 @@ where
 // Signature Extensions
 // =============================================================================
 
-impl<T, U, V> CoreDocument<T, U, V> {
+impl<D, T, U, V> CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, T, U, V> {
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, D, T, U, V> {
     DocumentSigner::new(self, private)
   }
 }
 
-impl<T, U, V> TryMethod for CoreDocument<T, U, V> {
+impl<D, T, U, V> TryMethod for CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
-impl<T, U, V> Display for CoreDocument<T, U, V>
+impl<D, T, U, V> Display for CoreDocument<D, T, U, V>
 where
+  D: DID + KeyComparable + Serialize,
   T: Serialize,
   U: Serialize,
   V: Serialize,

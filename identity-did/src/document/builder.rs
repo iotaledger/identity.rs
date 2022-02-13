@@ -1,10 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Url;
 
 use crate::did::CoreDID;
+use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
@@ -13,9 +15,12 @@ use crate::verification::VerificationMethod;
 
 /// A `DocumentBuilder` is used to generate a customized [Document].
 #[derive(Clone, Debug)]
-pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
-  pub(crate) id: Option<CoreDID>,
-  pub(crate) controller: Vec<CoreDID>,
+pub struct DocumentBuilder<D = CoreDID, T = Object, U = Object, V = Object>
+where
+  D: DID + KeyComparable,
+{
+  pub(crate) id: Option<D>,
+  pub(crate) controller: Vec<D>,
   pub(crate) also_known_as: Vec<Url>,
   pub(crate) verification_method: Vec<VerificationMethod<U>>,
   pub(crate) authentication: Vec<MethodRef<U>>,
@@ -27,7 +32,10 @@ pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
   pub(crate) properties: T,
 }
 
-impl<T, U, V> DocumentBuilder<T, U, V> {
+impl<D, T, U, V> DocumentBuilder<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   /// Creates a new `DocumentBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
@@ -47,14 +55,14 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
 
   /// Sets the `id` value.
   #[must_use]
-  pub fn id(mut self, value: CoreDID) -> Self {
+  pub fn id(mut self, value: D) -> Self {
     self.id = Some(value);
     self
   }
 
   /// Adds a value to the `controller` set.
   #[must_use]
-  pub fn controller(mut self, value: CoreDID) -> Self {
+  pub fn controller(mut self, value: D) -> Self {
     self.controller.push(value);
     self
   }
@@ -116,13 +124,14 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
   }
 
   /// Returns a new `Document` based on the `DocumentBuilder` configuration.
-  pub fn build(self) -> Result<CoreDocument<T, U, V>> {
+  pub fn build(self) -> Result<CoreDocument<D, T, U, V>> {
     CoreDocument::from_builder(self)
   }
 }
 
-impl<T, U, V> Default for DocumentBuilder<T, U, V>
+impl<D, T, U, V> Default for DocumentBuilder<D, T, U, V>
 where
+  D: DID + KeyComparable,
   T: Default,
 {
   fn default() -> Self {

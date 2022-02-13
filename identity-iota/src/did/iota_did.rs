@@ -125,7 +125,7 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn check_method(did: &CoreDID) -> Result<()> {
+  pub fn check_method<D: DID>(did: &D) -> Result<()> {
     if did.method() != Self::METHOD {
       Err(Error::InvalidDID(DIDError::InvalidMethodName))
     } else {
@@ -138,7 +138,7 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn check_method_id(did: &CoreDID) -> Result<()> {
+  pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
     if segments.is_empty() || segments.len() > 3 {
@@ -162,7 +162,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
   /// See [`NetworkName`] for validation requirements.
-  pub fn check_network(did: &CoreDID) -> Result<()> {
+  pub fn check_network<D: DID>(did: &D) -> Result<()> {
     let network_name = Segments(did.method_id()).network();
     NetworkName::validate_network_name(network_name)
   }
@@ -172,7 +172,7 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn check_validity(did: &CoreDID) -> Result<()> {
+  pub fn check_validity<D: DID>(did: &D) -> Result<()> {
     Self::check_method(did)?;
     Self::check_method_id(did)?;
     Self::check_network(did)?;

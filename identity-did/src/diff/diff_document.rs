@@ -4,17 +4,18 @@
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
-use identity_core::diff::DiffString;
 use identity_core::diff::DiffVec;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
 use crate::did::CoreDID;
+use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::service::Service;
 use crate::verification::MethodRef;
@@ -22,16 +23,17 @@ use crate::verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<T = Object, U = Object, V = Object>
+pub struct DiffDocument<D = CoreDID, T = Object, U = Object, V = Object>
 where
+  D: Diff + Serialize + for<'__de> Deserialize<'__de>,
   T: Diff + Serialize + for<'__de> Deserialize<'__de>,
   U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
   V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<DiffString>,
+  id: Option<<D as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<Option<DiffVec<CoreDID>>>,
+  controller: Option<Option<DiffVec<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -52,13 +54,14 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<T, U, V> Diff for CoreDocument<T, U, V>
+impl<D, T, U, V> Diff for CoreDocument<D, T, U, V>
 where
+  D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
   T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffDocument<T, U, V>;
+  type Type = DiffDocument<D, T, U, V>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -125,13 +128,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: CoreDID = diff
+    let id: D = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: Option<OneOrSet<CoreDID>> = diff
+    let controller: Option<OneOrSet<D>> = diff
       .controller
       .map(|value| match value {
         Some(diff_value) => self
@@ -213,13 +216,13 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: CoreDID = diff
+    let id: D = diff
       .id
-      .map(CoreDID::from_diff)
+      .map(D::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
-    let controller: Option<OneOrSet<CoreDID>> = diff
+    let controller: Option<OneOrSet<D>> = diff
       .controller
       .map(|diff| match diff {
         Some(diff) => Some(OneOrSet::from_diff(diff)).transpose(),
@@ -321,6 +324,7 @@ mod test {
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
+  use identity_core::diff::DiffString;
 
   use crate::did::CoreDIDUrl;
   use crate::did::DID;

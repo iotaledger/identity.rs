@@ -10,6 +10,7 @@ use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -28,6 +29,7 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
@@ -186,11 +188,14 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Returns `Err` if the document is not a valid IOTA DID Document.
-  fn validate_core_document<T, U, V>(document: &CoreDocument<T, U, V>) -> Result<()> {
+  fn validate_core_document<D, T, U, V>(document: &CoreDocument<D, T, U, V>) -> Result<()>
+  where
+    D: DID + KeyComparable,
+  {
     // Validate that the DID conforms to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::id()` method which
     // creates an `IotaDID::new_unchecked_ref()` from the underlying DID.
-    let _ = IotaDID::try_from_borrowed(document.id())?;
+    let _ = IotaDID::check_validity(document.id())?;
 
     // Validate that the document controllers (if any) conform to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::controller()` method
