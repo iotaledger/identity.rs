@@ -489,6 +489,57 @@ mod tests {
   }
 
   #[test]
+  fn test_try_map() {
+    // One - OK
+    let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
+    let one_add: OneOrSet<MockKeyU8> = one.try_map(|item| if item.key() == &1 {
+      Ok(MockKeyU8(item.0 + 1))
+    } else {
+      Err(Error::OneOrSetEmpty)
+    }).unwrap();
+    assert_eq!(one_add, OneOrSet::new_one(MockKeyU8(2)));
+
+    // One - ERROR
+    let one_err: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
+    let result_one: Result<OneOrSet<MockKeyBool>> = one_err.try_map(|item| if item.key() == &1 {
+      Err(Error::OneOrSetEmpty)
+    } else {
+      Ok(MockKeyBool(false))
+    });
+    assert!(matches!(result_one, Err(Error::OneOrSetEmpty)));
+
+    // Set - OK
+    let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
+    let set_add: OneOrSet<MockKeyU8> = set.try_map(|item| if item.key() < &4 {
+      Ok(MockKeyU8(item.0 + 10))
+    } else {
+      Err(Error::OneOrSetEmpty)
+    }).unwrap();
+    assert_eq!(set_add, OneOrSet::new_set((11..=13).map(MockKeyU8).collect()).unwrap());
+
+    // Set - ERROR
+    let set_err: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
+    let result_set: Result<OneOrSet<MockKeyU8>> = set_err.try_map(|item| if item.key() < &4 {
+      Err(Error::OneOrSetEmpty)
+    } else {
+      Ok(MockKeyU8(item.0))
+    });
+    assert!(matches!(result_set, Err(Error::OneOrSetEmpty)));
+
+    // Set reduced to one - OK
+    let set_many: OneOrSet<MockKeyU8> = OneOrSet::new_set([2, 4, 6, 8].into_iter().map(MockKeyU8).collect()).unwrap();
+    assert_eq!(set_many.len(), 4);
+    let set_bool: OneOrSet<MockKeyBool> = set_many.try_map(|item| if item.key() % 2 == 0 {
+      Ok(MockKeyBool(item.0 % 2 == 0))
+    } else {
+      Err(Error::OneOrSetEmpty)
+    }).unwrap();
+    assert_eq!(set_bool, OneOrSet::new_one(MockKeyBool(true)));
+    assert_eq!(set_bool.0, OneOrSetInner::One(MockKeyBool(true)));
+    assert_eq!(set_bool.len(), 1);
+  }
+
+  #[test]
   fn test_iter() {
     // One.
     let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
