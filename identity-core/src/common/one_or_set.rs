@@ -105,6 +105,30 @@ where
     })
   }
 
+  /// Apply a map function to convert this into a new `OneOrSet<S>`.
+  pub fn try_map<S, F, E>(self, mut f: F) -> Result<OneOrSet<S>, E>
+  where
+    S: KeyComparable,
+    F: FnMut(T) -> Result<S, E>,
+  {
+    Ok(OneOrSet(match self.0 {
+      OneOrSetInner::One(item) => OneOrSetInner::One(f(item)?),
+      OneOrSetInner::Set(set_t) => {
+        let set_s: OrderedSet<S> = set_t
+          .into_vec()
+          .into_iter()
+          .map(f)
+          .collect::<Result<OrderedSet<S>, E>>()?;
+        // Key equivalence could differ between T and S.
+        if set_s.len() == 1 {
+          OneOrSetInner::One(set_s.into_vec().pop().expect("OneOrSet::map infallible"))
+        } else {
+          OneOrSetInner::Set(set_s)
+        }
+      }
+    }))
+  }
+
   /// Returns the number of elements in the collection.
   #[allow(clippy::len_without_is_empty)]
   pub fn len(&self) -> usize {
