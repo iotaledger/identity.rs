@@ -228,13 +228,15 @@ where
 
   /// Maps `CoreDocument<T>` to `CoreDocument<U>` by applying a function to the custom
   /// properties.
-  pub fn map<A, F>(self, f: F) -> CoreDocument<D, A, U, V>
+  pub fn map<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
   where
-    F: FnOnce(T) -> A,
+    C: DID + KeyComparable,
+    F: FnMut(D) -> C,
+    G: FnOnce(T) -> S,
   {
     CoreDocument {
-      id: self.id,
-      controller: self.controller,
+      id: f(self.id),
+      controller: self.controller.map(|controller_set| controller_set.map(f)),
       also_known_as: self.also_known_as,
       verification_method: self.verification_method,
       authentication: self.authentication,
@@ -243,7 +245,7 @@ where
       capability_delegation: self.capability_delegation,
       capability_invocation: self.capability_invocation,
       service: self.service,
-      properties: f(self.properties),
+      properties: g(self.properties),
     }
   }
 
@@ -252,13 +254,18 @@ where
   /// # Errors
   ///
   /// `try_map` can fail if the provided function fails.
-  pub fn try_map<A, F, E>(self, f: F) -> Result<CoreDocument<D, A, U, V>, E>
+  pub fn try_map<S, C, F, G, E>(self, mut f: F, g: G) -> Result<CoreDocument<C, S, U, V>, E>
   where
-    F: FnOnce(T) -> Result<A, E>,
+    C: DID + KeyComparable,
+    F: FnMut(D) -> Result<C, E>,
+    G: FnOnce(T) -> Result<S, E>,
   {
     Ok(CoreDocument {
-      id: self.id,
-      controller: self.controller,
+      id: f(self.id)?,
+      controller: self
+        .controller
+        .map(|controller_set| controller_set.try_map(f))
+        .transpose()?,
       also_known_as: self.also_known_as,
       verification_method: self.verification_method,
       authentication: self.authentication,
@@ -267,7 +274,7 @@ where
       capability_delegation: self.capability_delegation,
       capability_invocation: self.capability_invocation,
       service: self.service,
-      properties: f(self.properties)?,
+      properties: g(self.properties)?,
     })
   }
 
