@@ -3,7 +3,7 @@
 
 use crypto::signatures::ed25519;
 
-use identity_core::common::Fragment;
+use identity_core::common::{Fragment, OneOrSet};
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::crypto::KeyPair;
@@ -130,6 +130,9 @@ pub(crate) enum Update {
   DeleteService {
     fragment: String,
   },
+  SetController {
+    controllers: Option<OneOrSet<IotaDID>>,
+  }
 }
 
 impl Update {
@@ -269,6 +272,9 @@ impl Update {
 
         state.document_mut().remove_service(service_url)?;
       }
+      Self::SetController { controllers } => {
+        state.document_mut().set_controller(controllers);
+      }
     }
 
     state.document_mut().metadata.updated = Timestamp::now_utc();
@@ -405,4 +411,9 @@ impl_update_builder!(
 /// - `fragment`: the identifier of the service in the document, required.
 DeleteService {
   @required fragment String,
+});
+
+impl_update_builder!(
+SetController {
+    @required controllers Option<OneOrSet<IotaDID>>,
 });
