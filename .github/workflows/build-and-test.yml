@@ -15,7 +15,7 @@ on:
       - '.github/actions/**'
       - '**.rs'
       - '**.toml'
-      - 'bindings/wasm/'
+      - 'bindings/wasm/**'
       - '!bindings/wasm/**.md'
 
 env:
