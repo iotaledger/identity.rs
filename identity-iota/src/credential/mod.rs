@@ -3,6 +3,7 @@
 
 mod credential_validator;
 pub mod errors;
+mod presentation_validator;
 mod resolved_credential;
 mod resolved_presentation;
 #[cfg(test)]

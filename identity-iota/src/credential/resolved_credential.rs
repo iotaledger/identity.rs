@@ -8,9 +8,9 @@ use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
+use super::credential_validator::CredentialValidator;
 use super::errors::ValidationError;
 use super::CredentialValidationOptions;
-use super::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::tangle::TangleResolve;
@@ -38,24 +38,14 @@ pub struct ResolvedCredential<T> {
   pub issuer: ResolvedIotaDocument,
 }
 
+// Todo: Provide a way to construct this object on the new Resolver.
+
 impl<T: Serialize> ResolvedCredential<T> {
-  /// Resolves the issuer's DID Document and combines it with the credential as a [ResolvedCredential].
+  /// Validate the credential.
   ///
-  /// Note: This method only resolves the issuer's DID document. If checks concerning the DID documents of the
-  /// credential's subjects are necessary then one should use [`Self::assemble()`] instead.
-  // Todo: Remove this method and let the new Resolver be responsible for construction instead. 
-  pub async fn from_remote_issuer_document<R: TangleResolve>(credential: Credential<T>, resolver: &R) -> Result<Self> {
-    let issuer_url: &str = credential.issuer.url().as_str();
-    let did: IotaDID = issuer_url
-      .parse::<IotaDID>()
-      .map_err(|error| ValidationError::IssuerUrl { source: error.into() })
-      .map_err(Error::InvalidCredentialPairing)?;
-    let issuer: ResolvedIotaDocument = resolver.resolve(&did).await?;
-
-    Ok(Self { credential, issuer })
-  }
-
-  /// Validate the credential using the issuer's resolved DID Document received upon creation.
+  /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
+  /// structure.
+  ///
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the credential is not semantically valid
@@ -64,12 +54,7 @@ impl<T: Serialize> ResolvedCredential<T> {
   /// - The issuer has not been specified as trust
   /// - The credential's signature cannot be verified using the issuer's DID Document
   // Todo: Should we also check for deactivated subject documents here?
-  pub fn full_validation(&self, validation_options: &CredentialValidationOptions, fail_fast: bool) -> Result<()> {
-    CredentialValidator::new().validate_credential(
-      &self.credential,
-      validation_options,
-      std::slice::from_ref(&self.issuer),
-      fail_fast,
-    )
+  pub fn validate(&self, options: &CredentialValidationOptions) -> Result<()> {
+    CredentialValidator::new(&self.credential).full_validation(options, std::slice::from_ref(&self.issuer))
   }
 }
