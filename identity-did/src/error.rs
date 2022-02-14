@@ -29,6 +29,7 @@ pub enum Error {
   #[error("Invalid Service Property: `service_endpoint`")]
   BuilderInvalidServiceEndpoint,
 
+  // TODO: replace/merge these errors
   #[error("Invalid Verification Method Property: `id`")]
   BuilderInvalidMethodId,
   #[error("Invalid Verification Method Property: `controller`")]

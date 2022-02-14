@@ -5,6 +5,7 @@ use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -14,6 +15,7 @@ use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
 use identity_did::utils::Queryable;
+use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -90,7 +92,7 @@ pub(crate) async fn create_identity(
   let method_fragment = location.fragment().to_owned();
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(did, setup.key_type, &public, method_fragment.name())?;
+    IotaVerificationMethod::new(did, setup.key_type, &public, method_fragment.name())?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
@@ -167,7 +169,7 @@ impl Update {
         }?;
 
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
+          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
 
         state.store_method_generations(location.fragment().clone());
 
@@ -177,20 +179,19 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
 
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
-        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent deleting the last method capable of signing the DID document.
         let capability_invocation_set = state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
-          .any(|method_ref| method_ref.id() == &core_method_url);
+          .any(|method_ref| method_ref.id() == &method_url);
 
         ensure!(
           !(is_capability_invocation && capability_invocation_set.len() == 1),
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.document_mut().remove_method(method_url)?;
+        state.document_mut().remove_method(&method_url)?;
       }
       Self::AttachMethodRelationship {
         fragment,
@@ -204,7 +205,7 @@ impl Update {
           // Ignore result: attaching is idempotent.
           let _ = state
             .document_mut()
-            .attach_method_relationship(method_url.clone(), relationship)?;
+            .attach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::DetachMethodRelationship {
@@ -214,13 +215,13 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
 
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
-        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent detaching the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().core_document().capability_invocation();
+        let capability_invocation_set: &OrderedSet<MethodRef<IotaDID>> =
+          state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
-          .any(|method_ref| method_ref.id() == &core_method_url);
+          .any(|method_ref| method_ref.id() == &method_url);
 
         ensure!(
           !(is_capability_invocation && capability_invocation_set.len() == 1),
@@ -231,7 +232,7 @@ impl Update {
           // Ignore result: detaching is idempotent.
           let _ = state
             .document_mut()
-            .detach_method_relationship(method_url.clone(), relationship)?;
+            .detach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::CreateService {

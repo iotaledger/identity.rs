@@ -237,7 +237,7 @@ where
 
   /// Creates a new [`MerkleKeyCollection2021`](MethodType::MerkleKeyCollection2021) method from
   /// the given key collection.
-  pub fn new_merkle_key_collection<M>(did: D, keys: &KeyCollection, fragment: &str) -> Result<Self>
+  pub fn new_merkle_key<M>(did: D, keys: &KeyCollection, fragment: &str) -> Result<Self>
   where
     M: MerkleDigest,
   {
@@ -258,11 +258,18 @@ where
   }
 
   /// Revokes the public key of a Merkle Key Collection at the specified `index`.
-  pub fn revoke_merkle_key(&mut self, index: u32) -> Result<bool> {
+  ///
+  /// # Errors
+  ///
+  /// - if this is called on a `VerificationMethod` with a type other than [`MethodType::MerkleKeyCollection2021`].
+  /// - if the index exceeds u32.
+  pub fn revoke_merkle_key(&mut self, index: usize) -> Result<bool> {
     if self.key_type() != MethodType::MerkleKeyCollection2021 {
       return Err(Error::InvalidMethodRevocation);
     }
 
+    // TODO: map this to a proper error?
+    let index: u32 = index.try_into().map_err(|_| Error::InvalidMethodRevocation)?;
     let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
     let revoked: bool = revocation.insert(index);
 

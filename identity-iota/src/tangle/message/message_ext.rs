@@ -183,7 +183,10 @@ mod test {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .sign_self(
+        keypair.private(),
+        document.default_signing_method().unwrap().id().clone(),
+      )
       .unwrap();
 
     for encoding in [DIDMessageEncoding::Json, DIDMessageEncoding::JsonBrotli] {
@@ -202,7 +205,7 @@ mod test {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut doc1: IotaDocument = IotaDocument::new(&keypair).unwrap();
     doc1
-      .sign_self(keypair.private(), &doc1.default_signing_method().unwrap().id())
+      .sign_self(keypair.private(), doc1.default_signing_method().unwrap().id().clone())
       .unwrap();
 
     let mut doc2: IotaDocument = doc1.clone();
@@ -216,7 +219,7 @@ mod test {
     ));
     doc2
       .insert_method(
-        IotaVerificationMethod::from_did(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(),
+        IotaVerificationMethod::new(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(),
         MethodScope::authentication(),
       )
       .unwrap();

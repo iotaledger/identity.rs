@@ -289,7 +289,10 @@ mod tests {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .sign_self(
+        keypair.private(),
+        document.default_signing_method().unwrap().id().clone(),
+      )
       .unwrap();
     let mut resolved: ResolvedIotaDocument = ResolvedIotaDocument::from(document);
     resolved.set_message_id(MessageId::new([1; 32]));

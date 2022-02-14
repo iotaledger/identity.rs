@@ -30,7 +30,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   // Add a new VerificationMethod with a new keypair
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(document.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::new(document.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
 
   // Add a new Service
@@ -48,7 +48,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   document.metadata.updated = Timestamp::now_utc();
 
   // Sign the DID Document with the original private key.
-  document.sign_self(keypair.private(), &document.default_signing_method()?.id())?;
+  document.sign_self(keypair.private(), document.default_signing_method()?.id().clone())?;
 
   // Publish the updated DID Document to the Tangle.
   let update_receipt: Receipt = client.publish_document(&document).await?;

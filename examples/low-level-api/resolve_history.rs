@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
 
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     let keys_1: KeyPair = KeyPair::new_ed25519()?;
-    let method_1: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_1.id().clone(), keys_1.type_(), keys_1.public(), "keys-1")?;
+    let method_1: IotaVerificationMethod = IotaVerificationMethod::new(int_doc_1.id().clone(), keys_1.type_(), keys_1.public(), "keys-1")?;
     assert!(int_doc_1.insert_method(method_1, MethodScope::VerificationMethod).is_ok());
 
     // Add the `message_id` of the previous message in the chain.
@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
     int_doc_1.metadata.updated = Timestamp::now_utc();
 
     // Sign the DID Document with the original private key.
-    int_doc_1.sign_self(keypair.private(), &int_doc_1.default_signing_method()?.id())?;
+    int_doc_1.sign_self(keypair.private(), int_doc_1.default_signing_method()?.id().clone())?;
 
     int_doc_1
   };
@@ -169,14 +169,14 @@ async fn main() -> Result<()> {
     let mut int_doc_2 = diff_doc_2.clone();
 
     // Remove the #keys-1 VerificationMethod
-    int_doc_2.remove_method(int_doc_2.id().to_url().join("#keys-1")?)?;
+    int_doc_2.remove_method(&int_doc_2.id().to_url().join("#keys-1")?)?;
 
     // Remove the #linked-domain-1 Service
     int_doc_2.remove_service(int_doc_2.id().to_url().join("#linked-domain-1")?)?;
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     let keys_2: KeyPair = KeyPair::new_ed25519()?;
-    let method_2: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_2.id().clone(), keys_2.type_(), keys_2.public(), "keys-2")?;
+    let method_2: IotaVerificationMethod = IotaVerificationMethod::new(int_doc_2.id().clone(), keys_2.type_(), keys_2.public(), "keys-2")?;
     assert!(int_doc_2.insert_method(method_2, MethodScope::VerificationMethod).is_ok());
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
@@ -184,7 +184,7 @@ async fn main() -> Result<()> {
     int_doc_2.metadata.previous_message_id = *int_receipt_1.message_id();
     int_doc_2.metadata.updated = Timestamp::now_utc();
 
-    int_doc_2.sign_self(keypair.private(), &int_doc_2.default_signing_method()?.id())?;
+    int_doc_2.sign_self(keypair.private(), int_doc_2.default_signing_method()?.id().clone())?;
     int_doc_2
   };
   let _int_receipt_2: Receipt = client.publish_document(&int_doc_2).await?;

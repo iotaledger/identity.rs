@@ -110,7 +110,7 @@ mod tests {
   #[should_panic = "InvalidMethodId"]
   fn test_missing_id() {
     let _: VerificationMethod = MethodBuilder::default()
-      .controller("did:example:123".parse().unwrap())
+      .controller("did:example:123#key".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
@@ -121,7 +121,7 @@ mod tests {
   #[should_panic = "InvalidMethodType"]
   fn test_missing_key_type() {
     let _: VerificationMethod = MethodBuilder::default()
-      .id("did:example:123".parse().unwrap())
+      .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
@@ -132,7 +132,7 @@ mod tests {
   #[should_panic = "InvalidMethodData"]
   fn test_missing_key_data() {
     let _: VerificationMethod = MethodBuilder::default()
-      .id("did:example:123".parse().unwrap())
+      .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .build()
@@ -143,7 +143,7 @@ mod tests {
   #[should_panic = "InvalidMethodController"]
   fn test_missing_controller() {
     let _: VerificationMethod = MethodBuilder::default()
-      .id("did:example:123".parse().unwrap())
+      .id("did:example:123#key".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
