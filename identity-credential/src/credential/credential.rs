@@ -179,28 +179,6 @@ impl<T> Credential<T> {
   pub fn latest_issuance_date(&self, timestamp: Timestamp) -> bool {
     self.issuance_date <= timestamp
   }
-
-  /// Checks whether this Credential's types match the input
-  pub fn matches_types(&self, other: &[&str]) -> bool {
-    if self.types.len() == other.len() {
-      self.types.iter().all(|value| other.contains(&value.as_str()))
-    } else {
-      false
-    }
-  }
-
-  /// Returns an iterator of the `types` of this Credential that are not in `input_types`.
-  pub fn types_difference_left<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &String> + 'a {
-    self.types.iter().filter(|value| !input_types.contains(&value.as_str()))
-  }
-
-  /// Returns an iterator of `types` that are in `input_types`, but not in this Credential.
-  pub fn types_difference_right<'a>(&'a self, input_types: &'a [&str]) -> impl Iterator<Item = &str> + 'a {
-    input_types
-      .iter()
-      .copied()
-      .filter(|value| !self.types.iter().any(|other| value == other))
-  }
 }
 
 impl<T> Display for Credential<T>
@@ -239,7 +217,6 @@ mod tests {
   use identity_core::convert::FromJson;
 
   use super::*;
-  use proptest::proptest;
 
   const JSON1: &str = include_str!("../../tests/fixtures/credential-1.json");
   const JSON2: &str = include_str!("../../tests/fixtures/credential-2.json");
@@ -254,9 +231,6 @@ mod tests {
   const JSON11: &str = include_str!("../../tests/fixtures/credential-11.json");
   const JSON12: &str = include_str!("../../tests/fixtures/credential-12.json");
 
-  const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
-  const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
-
   fn deserialize_credential(credential_str: &str) -> Credential {
     Credential::from_json(credential_str).unwrap()
   }
@@ -269,116 +243,5 @@ mod tests {
     for credential_str in credentials {
       let _ = deserialize_credential(credential_str);
     }
-  }
-
-  #[test]
-  fn simple_expires_after_with_expiration_date() {
-    let credential = deserialize_credential(JSON6);
-    let expected_expiration_date = Timestamp::parse("2020-01-01T19:23:24Z").unwrap();
-    // check that this credential has the expected expiration date
-    assert_eq!(
-      credential.expiration_date.unwrap(),
-      expected_expiration_date,
-      "the expiration date of the parsed credential does not match our expectation"
-    );
-    // now that we are sure that our parsed credential has the expected expiration date set we can start testing the
-    // expires_after method with a later date
-    let later_date = Timestamp::parse("2020-02-01T15:10:21Z").unwrap();
-    assert!(!credential.earliest_expiry_date(later_date));
-    // and now with an earlier date
-    let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
-    assert!(credential.earliest_expiry_date(earlier_date));
-  }
-
-  // test with a few timestamps that should be RFC3339 compatible
-  proptest! {
-    #[test]
-    fn property_based_expires_after_with_expiration_date(seconds in 0..1_000_000_000_i64) {
-      let credential = deserialize_credential(JSON6);
-      let expected_expiration_date = Timestamp::parse("2020-01-01T19:23:24Z").unwrap();
-      // check that this credential has the expected expiration date
-      assert_eq!(credential.expiration_date.unwrap(), expected_expiration_date, "the expiration date of the parsed credential does not match our expectation");
-      let after_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() + seconds).unwrap();
-      let before_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() - seconds).unwrap();
-      assert!(!credential.earliest_expiry_date(after_expiration_date));
-      assert!(credential.earliest_expiry_date(before_expiration_date));
-    }
-  }
-
-  proptest! {
-    #[test]
-    fn property_based_expires_after_no_expiration_date(seconds in FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP..LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP) {
-      let credential = deserialize_credential(JSON1);
-      // check that this credential does not have a timestamp as per our expectation
-      assert!(
-        credential.expiration_date.is_none(),
-        "The credential had an expiration date contrary to our expectation"
-      );
-      // expires after whatever the timestamp may be because the expires_after field is None.
-      assert!(credential.earliest_expiry_date(Timestamp::from_unix(seconds).unwrap()));
-    }
-  }
-
-  #[test]
-  fn simple_issued_before() {
-    let credential = deserialize_credential(JSON1);
-    let expected_issuance_date = Timestamp::parse("2010-01-01T19:23:24Z").unwrap();
-    // check that this credential has the expected issuance date
-    assert_eq!(
-      credential.issuance_date, expected_issuance_date,
-      "the issuance date of the parsed credential does not match our expectation"
-    );
-    // now that we are sure that our parsed credential has the expected issuance date set we can start testing issued
-    // before with an earlier timestamp
-    assert!(!credential.latest_issuance_date(Timestamp::parse("2010-01-01T19:22:09Z").unwrap()));
-    // and now with a later timestamp
-    assert!(credential.latest_issuance_date(Timestamp::parse("2010-01-01T20:00:00Z").unwrap()));
-  }
-
-  proptest! {
-    #[test]
-    fn property_based_issued_before(seconds in 0 ..1_000_000_000_i64) {
-      let credential = deserialize_credential(JSON1);
-      let expected_issuance_date = Timestamp::parse("2010-01-01T19:23:24Z").unwrap();
-      // check that this credential has the expected issuance date
-      assert_eq!(credential.issuance_date, expected_issuance_date, "the issuance date of the parsed credential does not match our expectation");
-      let earlier_than_issuance_date = Timestamp::from_unix(expected_issuance_date.to_unix() - seconds).unwrap();
-      let later_than_issuance_date = Timestamp::from_unix(expected_issuance_date.to_unix() + seconds).unwrap();
-      assert!(!credential.latest_issuance_date(earlier_than_issuance_date));
-      assert!(credential.latest_issuance_date(later_than_issuance_date));
-    }
-  }
-
-  #[test]
-  fn matching_types() {
-    let credential = deserialize_credential(JSON2);
-    assert!(!credential.matches_types(&["VerifiableCredential"]));
-    assert!(credential.matches_types(&["VerifiableCredential", "UniversityDegreeCredential"]));
-    // the order does not matter
-    assert!(credential.matches_types(&["UniversityDegreeCredential", "VerifiableCredential"]));
-  }
-
-  #[test]
-  fn types_difference_left() {
-    let credential = deserialize_credential(JSON1);
-    let mut iter = credential.types_difference_left(&[
-      "VerifiableCredential",
-      "UniversityDegreeCredential",
-      "PrescriptionCredential",
-    ]);
-    assert_eq!(iter.next().map(|value| value.as_str()), Some("AlumniCredential"));
-    assert_eq!(iter.next(), None);
-  }
-
-  #[test]
-  fn types_difference_right() {
-    let credential = deserialize_credential(JSON1);
-    let mut iter = credential.types_difference_right(&[
-      "VerifiableCredential",
-      "UniversityDegreeCredential",
-      "PrescriptionCredential",
-    ]);
-    assert_eq!(iter.next(), Some("UniversityDegreeCredential"));
-    assert_eq!(iter.next(), Some("PrescriptionCredential"));
   }
 }
