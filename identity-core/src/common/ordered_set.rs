@@ -9,6 +9,7 @@ use core::iter::FromIterator;
 use core::ops::Deref;
 use core::slice::Iter;
 use core::slice::IterMut;
+use std::vec::IntoIter;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -202,6 +203,15 @@ impl<T> OrderedSet<T> {
     }
 
     index.is_some()
+  }
+}
+
+impl<T> IntoIterator for OrderedSet<T> {
+  type Item = T;
+  type IntoIter = IntoIter<T>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.0.into_iter()
   }
 }
 

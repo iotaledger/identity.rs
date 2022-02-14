@@ -1,26 +1,33 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
 
 use crate::did::CoreDID;
-use crate::did::CoreDIDUrl;
+use crate::did::DIDUrl;
+use crate::did::DID;
 use crate::error::Result;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::VerificationMethod;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
-#[derive(Clone, Debug, Default)]
-pub struct MethodBuilder<T = Object> {
-  pub(crate) id: Option<CoreDIDUrl>,
-  pub(crate) controller: Option<CoreDID>,
+#[derive(Clone, Debug)]
+pub struct MethodBuilder<D = CoreDID, T = Object>
+where
+  D: DID,
+{
+  pub(crate) id: Option<DIDUrl<D>>,
+  pub(crate) controller: Option<D>,
   pub(crate) key_type: Option<MethodType>,
   pub(crate) key_data: Option<MethodData>,
   pub(crate) properties: T,
 }
 
-impl<T> MethodBuilder<T> {
+impl<D, T> MethodBuilder<D, T>
+where
+  D: DID,
+{
   /// Creates a new `MethodBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
@@ -34,14 +41,14 @@ impl<T> MethodBuilder<T> {
 
   /// Sets the `id` value of the generated `VerificationMethod`.
   #[must_use]
-  pub fn id(mut self, value: CoreDIDUrl) -> Self {
+  pub fn id(mut self, value: DIDUrl<D>) -> Self {
     self.id = Some(value);
     self
   }
 
   /// Sets the `controller` value of the generated `VerificationMethod`.
   #[must_use]
-  pub fn controller(mut self, value: CoreDID) -> Self {
+  pub fn controller(mut self, value: D) -> Self {
     self.controller = Some(value);
     self
   }
@@ -61,8 +68,24 @@ impl<T> MethodBuilder<T> {
   }
 
   /// Returns a new `VerificationMethod` based on the `MethodBuilder` configuration.
-  pub fn build(self) -> Result<VerificationMethod<T>> {
+  pub fn build(self) -> Result<VerificationMethod<D, T>> {
     VerificationMethod::from_builder(self)
+  }
+}
+
+impl<D, T> Default for MethodBuilder<D, T>
+where
+  D: DID,
+  T: Default,
+{
+  fn default() -> Self {
+    Self {
+      id: None,
+      controller: None,
+      key_type: None,
+      key_data: None,
+      properties: Default::default(),
+    }
   }
 }
 
@@ -74,7 +97,7 @@ mod tests {
   fn test_method_builder_success() {
     for method_data_fn in [MethodData::new_b58, MethodData::new_multibase] {
       let result: Result<VerificationMethod> = MethodBuilder::default()
-        .id("did:example:123".parse().unwrap())
+        .id("did:example:123#key".parse().unwrap())
         .controller("did:example:123".parse().unwrap())
         .key_type(MethodType::Ed25519VerificationKey2018)
         .key_data(method_data_fn(""))

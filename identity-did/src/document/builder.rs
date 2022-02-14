@@ -22,12 +22,12 @@ where
   pub(crate) id: Option<D>,
   pub(crate) controller: Vec<D>,
   pub(crate) also_known_as: Vec<Url>,
-  pub(crate) verification_method: Vec<VerificationMethod<U>>,
-  pub(crate) authentication: Vec<MethodRef<U>>,
-  pub(crate) assertion_method: Vec<MethodRef<U>>,
-  pub(crate) key_agreement: Vec<MethodRef<U>>,
-  pub(crate) capability_delegation: Vec<MethodRef<U>>,
-  pub(crate) capability_invocation: Vec<MethodRef<U>>,
+  pub(crate) verification_method: Vec<VerificationMethod<D, U>>,
+  pub(crate) authentication: Vec<MethodRef<D, U>>,
+  pub(crate) assertion_method: Vec<MethodRef<D, U>>,
+  pub(crate) key_agreement: Vec<MethodRef<D, U>>,
+  pub(crate) capability_delegation: Vec<MethodRef<D, U>>,
+  pub(crate) capability_invocation: Vec<MethodRef<D, U>>,
   pub(crate) service: Vec<Service<V>>,
   pub(crate) properties: T,
 }
@@ -76,42 +76,42 @@ where
 
   /// Adds a value to the `verificationMethod` set.
   #[must_use]
-  pub fn verification_method(mut self, value: VerificationMethod<U>) -> Self {
+  pub fn verification_method(mut self, value: VerificationMethod<D, U>) -> Self {
     self.verification_method.push(value);
     self
   }
 
   /// Adds a value to the `authentication` set.
   #[must_use]
-  pub fn authentication(mut self, value: impl Into<MethodRef<U>>) -> Self {
+  pub fn authentication(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
     self.authentication.push(value.into());
     self
   }
 
   /// Adds a value to the `assertionMethod` set.
   #[must_use]
-  pub fn assertion_method(mut self, value: impl Into<MethodRef<U>>) -> Self {
+  pub fn assertion_method(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
     self.assertion_method.push(value.into());
     self
   }
 
   /// Adds a value to the `keyAgreement` set.
   #[must_use]
-  pub fn key_agreement(mut self, value: impl Into<MethodRef<U>>) -> Self {
+  pub fn key_agreement(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
     self.key_agreement.push(value.into());
     self
   }
 
   /// Adds a value to the `capabilityDelegation` set.
   #[must_use]
-  pub fn capability_delegation(mut self, value: impl Into<MethodRef<U>>) -> Self {
+  pub fn capability_delegation(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
     self.capability_delegation.push(value.into());
     self
   }
 
   /// Adds a value to the `capabilityInvocation` set.
   #[must_use]
-  pub fn capability_invocation(mut self, value: impl Into<MethodRef<U>>) -> Self {
+  pub fn capability_invocation(mut self, value: impl Into<MethodRef<D, U>>) -> Self {
     self.capability_invocation.push(value.into());
     self
   }

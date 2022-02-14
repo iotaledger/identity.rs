@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
@@ -139,7 +139,7 @@ impl IotaVerificationMethod {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid IOTA verification method.
-  pub fn check_validity<T>(method: &VerificationMethod<T>) -> Result<()> {
+  pub fn check_validity<D: DID, T>(method: &VerificationMethod<D, T>) -> Result<()> {
     // Ensure all associated DIDs are valid IotaDIDs.
     IotaDID::check_validity(method.id().did())?;
     IotaDID::check_validity(method.controller())?;

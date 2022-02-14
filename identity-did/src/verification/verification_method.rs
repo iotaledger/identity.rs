@@ -12,7 +12,8 @@ use identity_core::common::Object;
 use identity_core::convert::FmtJson;
 
 use crate::did::CoreDID;
-use crate::did::CoreDIDUrl;
+use crate::did::DIDUrl;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification::MethodBuilder;
@@ -24,9 +25,12 @@ use crate::verification::MethodType;
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct VerificationMethod<T = Object> {
-  pub(crate) id: CoreDIDUrl,
-  pub(crate) controller: CoreDID,
+pub struct VerificationMethod<D = CoreDID, T = Object>
+where
+  D: DID,
+{
+  pub(crate) id: DIDUrl<D>,
+  pub(crate) controller: D,
   #[serde(rename = "type")]
   pub(crate) key_type: MethodType,
   #[serde(flatten)]
@@ -35,16 +39,19 @@ pub struct VerificationMethod<T = Object> {
   pub(crate) properties: T,
 }
 
-impl<T> VerificationMethod<T> {
+impl<D, T> VerificationMethod<D, T>
+where
+  D: DID,
+{
   /// Creates a `MethodBuilder` to configure a new `Method`.
   ///
   /// This is the same as `MethodBuilder::new()`.
-  pub fn builder(properties: T) -> MethodBuilder<T> {
+  pub fn builder(properties: T) -> MethodBuilder<D, T> {
     MethodBuilder::new(properties)
   }
 
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
-  pub fn from_builder(builder: MethodBuilder<T>) -> Result<Self> {
+  pub fn from_builder(builder: MethodBuilder<D, T>) -> Result<Self> {
     Ok(VerificationMethod {
       id: builder.id.ok_or(Error::BuilderInvalidMethodId)?,
       controller: builder.controller.ok_or(Error::BuilderInvalidMethodController)?,
@@ -55,22 +62,22 @@ impl<T> VerificationMethod<T> {
   }
 
   /// Returns a reference to the verification `Method` id.
-  pub fn id(&self) -> &CoreDIDUrl {
+  pub fn id(&self) -> &DIDUrl<D> {
     &self.id
   }
 
   /// Returns a mutable reference to the verification `Method` id.
-  pub fn id_mut(&mut self) -> &mut CoreDIDUrl {
+  pub fn id_mut(&mut self) -> &mut DIDUrl<D> {
     &mut self.id
   }
 
   /// Returns a reference to the verification `Method` controller.
-  pub fn controller(&self) -> &CoreDID {
+  pub fn controller(&self) -> &D {
     &self.controller
   }
 
   /// Returns a mutable reference to the verification `Method` controller.
-  pub fn controller_mut(&mut self) -> &mut CoreDID {
+  pub fn controller_mut(&mut self) -> &mut D {
     &mut self.controller
   }
 
@@ -113,13 +120,45 @@ impl<T> VerificationMethod<T> {
   }
 
   /// Creates a new [`MethodRef`] from `self`.
-  pub fn into_ref(self) -> MethodRef<T> {
+  pub fn into_ref(self) -> MethodRef<D, T> {
     MethodRef::Embed(self)
+  }
+
+  /// Maps `VerificationMethod<D,T>` to `VerificationMethod<C,U>` by applying a function `f` to
+  /// the id and controller.
+  pub fn map<C, F>(self, mut f: F) -> VerificationMethod<C, T>
+  where
+    C: DID,
+    F: FnMut(D) -> C,
+  {
+    VerificationMethod {
+      id: self.id.map(&mut f),
+      controller: f(self.controller),
+      key_type: self.key_type,
+      key_data: self.key_data,
+      properties: self.properties,
+    }
+  }
+
+  /// Fallible version of [`VerificationMethod::map`].
+  pub fn try_map<C, F, E>(self, mut f: F) -> Result<VerificationMethod<C, T>, E>
+  where
+    C: DID,
+    F: FnMut(D) -> Result<C, E>,
+  {
+    Ok(VerificationMethod {
+      id: self.id.try_map(&mut f)?,
+      controller: f(self.controller)?,
+      key_type: self.key_type,
+      key_data: self.key_data,
+      properties: self.properties,
+    })
   }
 }
 
-impl<T> Display for VerificationMethod<T>
+impl<D, T> Display for VerificationMethod<D, T>
 where
+  D: DID + Serialize,
   T: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
@@ -127,14 +166,20 @@ where
   }
 }
 
-impl<T> AsRef<CoreDIDUrl> for VerificationMethod<T> {
-  fn as_ref(&self) -> &CoreDIDUrl {
+impl<D, T> AsRef<DIDUrl<D>> for VerificationMethod<D, T>
+where
+  D: DID,
+{
+  fn as_ref(&self) -> &DIDUrl<D> {
     self.id()
   }
 }
 
-impl<T> KeyComparable for VerificationMethod<T> {
-  type Key = CoreDIDUrl;
+impl<D, T> KeyComparable for VerificationMethod<D, T>
+where
+  D: DID,
+{
+  type Key = DIDUrl<D>;
 
   #[inline]
   fn key(&self) -> &Self::Key {

@@ -1,6 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification::VerificationMethod;
@@ -24,7 +25,10 @@ pub trait TryMethod {
   const TYPE: MethodUriType;
 
   /// Returns String representation of absolute or relative method URI, if any.
-  fn method<U>(method: &VerificationMethod<U>) -> Option<String> {
+  fn method<D, U>(method: &VerificationMethod<D, U>) -> Option<String>
+  where
+    D: DID,
+  {
     method.id().fragment()?;
 
     match Self::TYPE {
@@ -38,7 +42,10 @@ pub trait TryMethod {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used.
-  fn try_method<U>(method: &VerificationMethod<U>) -> Result<String> {
+  fn try_method<D, U>(method: &VerificationMethod<D, U>) -> Result<String>
+  where
+    D: DID,
+  {
     Self::method(method).ok_or(Error::InvalidMethodFragment)
   }
 }
