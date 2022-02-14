@@ -12,26 +12,27 @@ use identity::crypto::PublicKey;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 
-use crate::account::JsChainState;
-use crate::account::JsDIDLease;
-use crate::account::JsGeneration;
-use crate::account::JsIdentityState;
-use crate::account::JsKeyLocation;
-use crate::account::JsSignature;
-use crate::did::JsDID;
+use crate::account::NapiChainState;
+use crate::account::NapiDIDLease;
+use crate::account::NapiGeneration;
+use crate::account::NapiIdentityState;
+use crate::account::NapiKeyLocation;
+use crate::account::NapiSignature;
+use crate::did::NapiDID;
 use crate::error::NapiResult;
 
-#[napi(js_name = Stronghold)]
+#[napi]
 #[derive(Debug)]
-pub struct JsStronghold(pub(crate) Stronghold);
+pub struct NapiStronghold(pub(crate) Stronghold);
 
 #[napi]
-impl JsStronghold {
+impl NapiStronghold {
   /// Creates an instance of `Stronghold`.
   /// Prefer to use Stronghold.new(snapshot, password, dropsave)
   #[napi(factory)]
-  pub fn create(snapshot: String, password: String, dropsave: Option<bool>) -> JsStronghold {
-    let js_stronghold_result = executor::block_on(JsStronghold::new(snapshot, password, dropsave));
+  pub fn create(snapshot: String, password: String, dropsave: Option<bool>) -> NapiStronghold {
+    let js_stronghold_result =
+      executor::block_on(NapiStronghold::new(snapshot, password, dropsave));
     match js_stronghold_result {
       Ok(stronghold) => stronghold,
       Err(e) => panic!("Unable to create Stronghold: {:?}", e),
@@ -44,8 +45,8 @@ impl JsStronghold {
     snapshot: String,
     password: String,
     dropsave: Option<bool>,
-  ) -> Result<JsStronghold> {
-    Ok(JsStronghold(
+  ) -> Result<NapiStronghold> {
+    Ok(NapiStronghold(
       Stronghold::new(&snapshot, &*password, dropsave)
         .await
         .napi_result()?,
@@ -87,14 +88,14 @@ impl JsStronghold {
   /// The caller is expected to make no more modifications after the lease has been dropped.
   /// Returns an IdentityInUse error if already leased.
   #[napi]
-  pub async fn lease_did(&self, did: &JsDID) -> Result<JsDIDLease> {
+  pub async fn lease_did(&self, did: &NapiDID) -> Result<NapiDIDLease> {
     let did_lease: DIDLease = self.0.lease_did(&did.0).await.napi_result()?;
     Ok(did_lease.into())
   }
 
   /// Creates a new keypair at the specified `location`
   #[napi]
-  pub async fn key_new(&self, did: &JsDID, location: &JsKeyLocation) -> Result<String> {
+  pub async fn key_new(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<String> {
     let public_key: PublicKey = self.0.key_new(&did.0, &location.0).await.napi_result()?;
     Ok(encode_b58(&public_key))
   }
@@ -103,8 +104,8 @@ impl JsStronghold {
   #[napi]
   pub async fn key_insert(
     &self,
-    did: &JsDID,
-    location: &JsKeyLocation,
+    did: &NapiDID,
+    location: &NapiKeyLocation,
     private_key: String,
   ) -> Result<String> {
     let private_key: PrivateKey = decode_b58(&private_key).napi_result()?.into();
@@ -118,14 +119,14 @@ impl JsStronghold {
 
   /// Retrieves the public key at the specified `location`.
   #[napi]
-  pub async fn key_get(&self, did: &JsDID, location: &JsKeyLocation) -> Result<String> {
+  pub async fn key_get(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<String> {
     let public_key: PublicKey = self.0.key_get(&did.0, &location.0).await.napi_result()?;
     Ok(encode_b58(&public_key))
   }
 
   /// Deletes the keypair specified by `location`.
   #[napi]
-  pub async fn key_del(&self, did: &JsDID, location: &JsKeyLocation) -> Result<()> {
+  pub async fn key_del(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<()> {
     self.0.key_del(&did.0, &location.0).await.napi_result()
   }
 
@@ -133,10 +134,10 @@ impl JsStronghold {
   #[napi]
   pub async fn key_sign(
     &self,
-    did: &JsDID,
-    location: &JsKeyLocation,
+    did: &NapiDID,
+    location: &NapiKeyLocation,
     data: Vec<u32>,
-  ) -> Result<JsSignature> {
+  ) -> Result<NapiSignature> {
     let data_u8: Vec<u8> = data.iter().filter_map(|n| u8::try_from(*n).ok()).collect();
     if data_u8.len() != data.len() {
       return Err(Error::from_reason(String::from(
@@ -153,13 +154,13 @@ impl JsStronghold {
 
   /// Returns `true` if a keypair exists at the specified `location`.
   #[napi]
-  pub async fn key_exists(&self, did: &JsDID, location: &JsKeyLocation) -> Result<bool> {
+  pub async fn key_exists(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
   }
 
   /// Returns the last generation that has been published to the tangle for the given `did`.
   #[napi]
-  pub async fn published_generation(&self, did: &JsDID) -> Result<Option<JsGeneration>> {
+  pub async fn published_generation(&self, did: &NapiDID) -> Result<Option<NapiGeneration>> {
     self
       .0
       .published_generation(&did.0)
@@ -170,7 +171,11 @@ impl JsStronghold {
 
   /// Sets the last generation that has been published to the tangle for the given `did`.
   #[napi]
-  pub async fn set_published_generation(&self, did: &JsDID, index: &JsGeneration) -> Result<()> {
+  pub async fn set_published_generation(
+    &self,
+    did: &NapiDID,
+    index: &NapiGeneration,
+  ) -> Result<()> {
     self
       .0
       .set_published_generation(&did.0, index.0)
@@ -180,7 +185,7 @@ impl JsStronghold {
 
   /// Returns the chain state of the identity specified by `did`.
   #[napi]
-  pub async fn chain_state(&self, did: &JsDID) -> Result<Option<JsChainState>> {
+  pub async fn chain_state(&self, did: &NapiDID) -> Result<Option<NapiChainState>> {
     self
       .0
       .chain_state(&did.0)
@@ -191,7 +196,7 @@ impl JsStronghold {
 
   /// Set the chain state of the identity specified by `did`.
   #[napi]
-  pub async fn set_chain_state(&self, did: &JsDID, chain_state: &JsChainState) -> Result<()> {
+  pub async fn set_chain_state(&self, did: &NapiDID, chain_state: &NapiChainState) -> Result<()> {
     self
       .0
       .set_chain_state(&did.0, &chain_state.0)
@@ -201,7 +206,7 @@ impl JsStronghold {
 
   /// Returns the state of the identity specified by `did`.
   #[napi]
-  pub async fn state(&self, did: &JsDID) -> Result<Option<JsIdentityState>> {
+  pub async fn state(&self, did: &NapiDID) -> Result<Option<NapiIdentityState>> {
     self
       .0
       .state(&did.0)
@@ -212,13 +217,13 @@ impl JsStronghold {
 
   /// Sets a new state for the identity specified by `did`.
   #[napi]
-  pub async fn set_state(&self, did: &JsDID, state: &JsIdentityState) -> Result<()> {
+  pub async fn set_state(&self, did: &NapiDID, state: &NapiIdentityState) -> Result<()> {
     self.0.set_state(&did.0, &state.0).await.napi_result()
   }
 
   /// Removes the keys and any state for the identity specified by `did`.
   #[napi]
-  pub async fn purge(&self, did: &JsDID) -> Result<()> {
+  pub async fn purge(&self, did: &NapiDID) -> Result<()> {
     self.0.purge(&did.0).await.napi_result()
   }
 }

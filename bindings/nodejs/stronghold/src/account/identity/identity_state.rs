@@ -2,42 +2,42 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::account::IdentityState;
-use napi::Error;
 use napi::JsBuffer;
 use napi::Result;
 
-#[napi]
-#[derive(Deserialize, Serialize)]
-pub struct JsIdentityState(pub(crate) IdentityState);
+use crate::error::NapiResult;
 
 #[napi]
-impl JsIdentityState {
+#[derive(Deserialize, Serialize)]
+pub struct NapiIdentityState(pub(crate) IdentityState);
+
+#[napi]
+impl NapiIdentityState {
   #[napi]
-  pub fn from_json_value(json_value: serde_json::Value) -> Result<JsIdentityState> {
-    serde_json::from_value(json_value).map_err(|e| Error::from_reason(e.to_string()))
+  pub fn from_json_value(json_value: serde_json::Value) -> Result<NapiIdentityState> {
+    serde_json::from_value(json_value).napi_result()
   }
 
   #[napi]
-  pub fn from_buffer(buffer: JsBuffer) -> Result<JsIdentityState> {
+  pub fn from_buffer(buffer: JsBuffer) -> Result<NapiIdentityState> {
     let bytes: &[u8] = &buffer.into_value()?;
-    bincode::deserialize(bytes).map_err(|e| Error::from_reason(e.to_string()))
+    bincode::deserialize(bytes).napi_result()
   }
 
   #[napi]
   pub fn as_json(&self) -> Result<serde_json::Value> {
-    serde_json::to_value(&self).map_err(|e| Error::from_reason(e.to_string()))
+    serde_json::to_value(&self).napi_result()
   }
 
   #[napi]
   pub fn as_bytes(&self) -> Result<Vec<u32>> {
-    let bytes: Vec<u8> =
-      bincode::serialize(&self).map_err(|e| Error::from_reason(e.to_string()))?;
+    let bytes: Vec<u8> = bincode::serialize(&self).napi_result()?;
     Ok(bytes.into_iter().map(|v| v as u32).collect())
   }
 }
 
-impl From<IdentityState> for JsIdentityState {
+impl From<IdentityState> for NapiIdentityState {
   fn from(identity_state: IdentityState) -> Self {
-    JsIdentityState(identity_state)
+    NapiIdentityState(identity_state)
   }
 }

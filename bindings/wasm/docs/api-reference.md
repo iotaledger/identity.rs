@@ -26,6 +26,8 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
+<dt><a href="#DIDLease">DIDLease</a></dt>
+<dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd></dd>
 <dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
@@ -41,11 +43,11 @@ the configuration of previously built accounts.</p>
 <dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#Ed25519">Ed25519</a></dt>
+<dd></dd>
 <dt><a href="#EncryptionKey">EncryptionKey</a></dt>
 <dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
-<dd></dd>
-<dt><a href="#Fragment">Fragment</a></dt>
 <dd></dd>
 <dt><a href="#Generation">Generation</a></dt>
 <dd></dd>
@@ -83,7 +85,11 @@ the configuration of previously built accounts.</p>
 <dd><p>An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 merged with one or more <code>DiffMessages</code>.</p>
 </dd>
+<dt><a href="#SecretKey">SecretKey</a></dt>
+<dd></dd>
 <dt><a href="#Service">Service</a></dt>
+<dd></dd>
+<dt><a href="#Signature">Signature</a></dt>
 <dd></dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
 <dd><p>Holds additional options for creating signatures.
@@ -102,13 +108,13 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -131,10 +137,10 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -148,8 +154,33 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteMethod"></a>
 
@@ -172,28 +203,6 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -320,30 +329,27 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+attachMethodRelationships"></a>
+<a name="Account+createMethod"></a>
 
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new verification method to the DID document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
+| options | <code>CreateMethodOptions</code> | 
 
-<a name="Account+detachMethodRelationships"></a>
+<a name="Account+createService"></a>
 
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
+### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new Service to the DID Document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -441,11 +447,15 @@ Save after every N actions
 **Kind**: global class  
 
 * [ChainState](#ChainState)
-    * [.lastIntegrationMessageId()](#ChainState+lastIntegrationMessageId) ⇒ [<code>MessageId</code>](#MessageId)
-    * [.lastDiffMessageId()](#ChainState+lastDiffMessageId) ⇒ [<code>MessageId</code>](#MessageId)
-    * [.setLastIntegrationMessageId(message)](#ChainState+setLastIntegrationMessageId)
-    * [.setLastDiffMessageId(message)](#ChainState+setLastDiffMessageId)
-    * [.isNewIdentity()](#ChainState+isNewIdentity) ⇒ <code>boolean</code>
+    * _instance_
+        * [.lastIntegrationMessageId()](#ChainState+lastIntegrationMessageId) ⇒ [<code>MessageId</code>](#MessageId)
+        * [.lastDiffMessageId()](#ChainState+lastDiffMessageId) ⇒ [<code>MessageId</code>](#MessageId)
+        * [.setLastIntegrationMessageId(message)](#ChainState+setLastIntegrationMessageId)
+        * [.setLastDiffMessageId(message)](#ChainState+setLastDiffMessageId)
+        * [.isNewIdentity()](#ChainState+isNewIdentity) ⇒ <code>boolean</code>
+        * [.asBytes()](#ChainState+asBytes) ⇒ <code>Uint8Array</code>
+    * _static_
+        * [.fromBytes(bytes)](#ChainState.fromBytes) ⇒ [<code>ChainState</code>](#ChainState)
 
 <a name="ChainState+lastIntegrationMessageId"></a>
 
@@ -491,7 +501,23 @@ Sets the last diff message id.
 ### chainState.isNewIdentity() ⇒ <code>boolean</code>
 Returns whether the identity has been published before.
 
-**Kind**: instance method of [<code>ChainState</code>](#ChainState)
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+<a name="ChainState+asBytes"></a>
+
+### chainState.asBytes() ⇒ <code>Uint8Array</code>
+Serializes a `ChainState` as `Uint8Array`.
+
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
+<a name="ChainState.fromBytes"></a>
+
+### ChainState.fromBytes(bytes) ⇒ [<code>ChainState</code>](#ChainState)
+Deserializes a `Uint8Array` as `ChainState`.
+
+**Kind**: static method of [<code>ChainState</code>](#ChainState)  
+
+| Param | Type |
+| --- | --- |
+| bytes | <code>Uint8Array</code> | 
 
 <a name="Client"></a>
 
@@ -903,6 +929,7 @@ Deserializes a `Credential` object from a JSON object.
         * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DID+toString) ⇒ <code>string</code>
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
+        * [.asBytes()](#DID+asBytes) ⇒ <code>Uint8Array</code>
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
@@ -971,6 +998,12 @@ Returns the `DID` as a string.
 Serializes a `DID` as a JSON object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+asBytes"></a>
+
+### did.asBytes() ⇒ <code>Uint8Array</code>
+Serializes a `DID` as `Uint8Array`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
 
 ### DID.fromBase58(key, network) ⇒ [<code>DID</code>](#DID)
@@ -994,6 +1027,28 @@ Parses a `DID` from the input string.
 | --- | --- |
 | input | <code>string</code> | 
 
+<a name="DIDLease"></a>
+
+## DIDLease
+**Kind**: global class  
+
+* [DIDLease](#DIDLease)
+    * [.store(value)](#DIDLease+store)
+    * [.load()](#DIDLease+load) ⇒ <code>boolean</code>
+
+<a name="DIDLease+store"></a>
+
+### didLease.store(value)
+**Kind**: instance method of [<code>DIDLease</code>](#DIDLease)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="DIDLease+load"></a>
+
+### didLease.load() ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>DIDLease</code>](#DIDLease)  
 <a name="DIDUrl"></a>
 
 ## DIDUrl
@@ -1781,6 +1836,20 @@ Returns the timestamp of the last DID document update.
 Returns a reference to the `proof`.
 
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="Ed25519"></a>
+
+## Ed25519
+**Kind**: global class  
+<a name="Ed25519.sign"></a>
+
+### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
+**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
+
+| Param | Type |
+| --- | --- |
+| message | <code>Uint8Array</code> | 
+| key | <code>string</code> | 
+
 <a name="EncryptionKey"></a>
 
 ## EncryptionKey
@@ -1865,36 +1934,6 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="Fragment"></a>
-
-## Fragment
-**Kind**: global class  
-
-* [Fragment](#Fragment)
-    * [new Fragment(value)](#new_Fragment_new)
-    * [.identifier](#Fragment+identifier) ⇒ <code>string</code>
-    * [.name](#Fragment+name) ⇒ <code>string</code>
-
-<a name="new_Fragment_new"></a>
-
-### new Fragment(value)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Fragment+identifier"></a>
-
-### fragment.identifier ⇒ <code>string</code>
-Returns the complete fragment identifier.
-
-**Kind**: instance property of [<code>Fragment</code>](#Fragment)  
-<a name="Fragment+name"></a>
-
-### fragment.name ⇒ <code>string</code>
-Returns the fragment name.
-
-**Kind**: instance property of [<code>Fragment</code>](#Fragment)  
 <a name="Generation"></a>
 
 ## Generation
@@ -1906,10 +1945,12 @@ Returns the fragment name.
         * [.toUnsignedInteger()](#Generation+toUnsignedInteger) ⇒ <code>number</code>
         * [.tryIncrement()](#Generation+tryIncrement) ⇒ [<code>Generation</code>](#Generation)
         * [.tryDecrement()](#Generation+tryDecrement) ⇒ [<code>Generation</code>](#Generation)
+        * [.asBytes()](#Generation+asBytes) ⇒ <code>Uint8Array</code>
     * _static_
         * [.fromUnsignedInteger(value)](#Generation.fromUnsignedInteger) ⇒ [<code>Generation</code>](#Generation)
         * [.min()](#Generation.min) ⇒ [<code>Generation</code>](#Generation)
         * [.max()](#Generation.max) ⇒ [<code>Generation</code>](#Generation)
+        * [.fromBytes(bytes)](#Generation.fromBytes) ⇒ [<code>Generation</code>](#Generation)
 
 <a name="new_Generation_new"></a>
 
@@ -1942,6 +1983,12 @@ Decrements the `WasmGeneration`.
 Fails in case of underflow.
 
 **Kind**: instance method of [<code>Generation</code>](#Generation)  
+<a name="Generation+asBytes"></a>
+
+### generation.asBytes() ⇒ <code>Uint8Array</code>
+Serializes a `Generation` as `Uint8Array`.
+
+**Kind**: instance method of [<code>Generation</code>](#Generation)  
 <a name="Generation.fromUnsignedInteger"></a>
 
 ### Generation.fromUnsignedInteger(value) ⇒ [<code>Generation</code>](#Generation)
@@ -1965,78 +2012,44 @@ Returns a `WasmGeneration` of minimum value.
 Returns a `WasmGeneration` of maximum value.
 
 **Kind**: static method of [<code>Generation</code>](#Generation)  
+<a name="Generation.fromBytes"></a>
+
+### Generation.fromBytes(bytes) ⇒ [<code>Generation</code>](#Generation)
+Deserializes a `Uint8Array` as `Generation`.
+
+**Kind**: static method of [<code>Generation</code>](#Generation)  
+
+| Param | Type |
+| --- | --- |
+| bytes | <code>Uint8Array</code> | 
+
 <a name="IdentityState"></a>
 
 ## IdentityState
 **Kind**: global class  
 
 * [IdentityState](#IdentityState)
-    * [new IdentityState(document)](#new_IdentityState_new)
-    * [.generation](#IdentityState+generation) ⇒ [<code>Generation</code>](#Generation)
-    * [.document](#IdentityState+document) ⇒ [<code>Document</code>](#Document)
-    * [.incrementGeneration()](#IdentityState+incrementGeneration)
-    * [.storeMethodGenerations(fragment)](#IdentityState+storeMethodGenerations)
-    * [.methodLocation(method_type, fragment)](#IdentityState+methodLocation) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-    * [.keyLocation(method, fragment)](#IdentityState+keyLocation) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+    * _instance_
+        * [.asBytes()](#IdentityState+asBytes) ⇒ <code>Uint8Array</code>
+    * _static_
+        * [.fromBytes(bytes)](#IdentityState.fromBytes) ⇒ [<code>IdentityState</code>](#IdentityState)
 
-<a name="new_IdentityState_new"></a>
+<a name="IdentityState+asBytes"></a>
 
-### new IdentityState(document)
+### identityState.asBytes() ⇒ <code>Uint8Array</code>
+Serializes a `IdentityState` as `Uint8Array`.
+
+**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
+<a name="IdentityState.fromBytes"></a>
+
+### IdentityState.fromBytes(bytes) ⇒ [<code>IdentityState</code>](#IdentityState)
+Deserializes a `Uint8Array` as `IdentityState`.
+
+**Kind**: static method of [<code>IdentityState</code>](#IdentityState)  
 
 | Param | Type |
 | --- | --- |
-| document | [<code>Document</code>](#Document) | 
-
-<a name="IdentityState+generation"></a>
-
-### identityState.generation ⇒ [<code>Generation</code>](#Generation)
-Returns the current generation of the identity integration chain.
-
-**Kind**: instance property of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState+document"></a>
-
-### identityState.document ⇒ [<code>Document</code>](#Document)
-**Kind**: instance property of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState+incrementGeneration"></a>
-
-### identityState.incrementGeneration()
-Increments the generation of the identity diff chain.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState+storeMethodGenerations"></a>
-
-### identityState.storeMethodGenerations(fragment)
-Stores the generations at which the method was inserted.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| fragment | [<code>Fragment</code>](#Fragment) | 
-
-<a name="IdentityState+methodLocation"></a>
-
-### identityState.methodLocation(method_type, fragment) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Return the `KeyLocation` of the given method.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| method_type | [<code>MethodType</code>](#MethodType) | 
-| fragment | <code>string</code> | 
-
-<a name="IdentityState+keyLocation"></a>
-
-### identityState.keyLocation(method, fragment) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Returns a key location suitable for the specified `fragment`.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| method | [<code>MethodType</code>](#MethodType) | 
-| fragment | <code>string</code> | 
+| bytes | <code>Uint8Array</code> | 
 
 <a name="IntegrationChainHistory"></a>
 
@@ -2203,9 +2216,10 @@ Deserializes a `KeyCollection` object from a JSON object.
 * [KeyLocation](#KeyLocation)
     * [new KeyLocation(method, fragment, generation)](#new_KeyLocation_new)
     * [.method](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
-    * [.fragment](#KeyLocation+fragment) ⇒ [<code>Fragment</code>](#Fragment)
+    * [.fragment](#KeyLocation+fragment) ⇒ <code>string</code>
     * [.fragmentName](#KeyLocation+fragmentName) ⇒ <code>string</code>
     * [.generation](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
+    * [.asBytes()](#KeyLocation+asBytes) ⇒ <code>Uint8Array</code>
 
 <a name="new_KeyLocation_new"></a>
 
@@ -2225,7 +2239,7 @@ Returns the method type of the key location.
 **Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation+fragment"></a>
 
-### keyLocation.fragment ⇒ [<code>Fragment</code>](#Fragment)
+### keyLocation.fragment ⇒ <code>string</code>
 Returns the fragment name of the key location.
 
 **Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
@@ -2241,6 +2255,12 @@ Returns the fragment name of the key location.
 Returns the integration generation when this key was created.
 
 **Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+asBytes"></a>
+
+### keyLocation.asBytes() ⇒ <code>Uint8Array</code>
+Serializes a `KeyLocation` as `Uint8Array`.
+
+**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -2770,6 +2790,30 @@ Deserializes a `Document` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="SecretKey"></a>
+
+## SecretKey
+**Kind**: global class  
+
+* [SecretKey](#SecretKey)
+    * _instance_
+        * [.publicKey()](#SecretKey+publicKey) ⇒ <code>string</code>
+    * _static_
+        * [.fromPrivateKey(private_key)](#SecretKey.fromPrivateKey) ⇒ [<code>SecretKey</code>](#SecretKey)
+
+<a name="SecretKey+publicKey"></a>
+
+### secretKey.publicKey() ⇒ <code>string</code>
+**Kind**: instance method of [<code>SecretKey</code>](#SecretKey)  
+<a name="SecretKey.fromPrivateKey"></a>
+
+### SecretKey.fromPrivateKey(private_key) ⇒ [<code>SecretKey</code>](#SecretKey)
+**Kind**: static method of [<code>SecretKey</code>](#SecretKey)  
+
+| Param | Type |
+| --- | --- |
+| private_key | <code>string</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -2797,6 +2841,53 @@ Deserializes a `Service` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | value | <code>any</code> | 
+
+<a name="Signature"></a>
+
+## Signature
+**Kind**: global class  
+
+* [Signature](#Signature)
+    * [new Signature(pkey, data)](#new_Signature_new)
+    * _instance_
+        * [.pkey](#Signature+pkey) ⇒ <code>string</code>
+        * [.data](#Signature+data) ⇒ <code>Uint8Array</code>
+    * _static_
+        * [.fromBytes(bytes)](#Signature.fromBytes) ⇒ [<code>Signature</code>](#Signature)
+
+<a name="new_Signature_new"></a>
+
+### new Signature(pkey, data)
+Creates a new `Signature`.
+
+
+| Param | Type |
+| --- | --- |
+| pkey | <code>string</code> | 
+| data | <code>Uint8Array</code> | 
+
+<a name="Signature+pkey"></a>
+
+### signature.pkey ⇒ <code>string</code>
+Returns the public key used to verify this signature.
+
+**Kind**: instance property of [<code>Signature</code>](#Signature)  
+<a name="Signature+data"></a>
+
+### signature.data ⇒ <code>Uint8Array</code>
+Returns the the signature data as a vec of bytes.
+
+**Kind**: instance property of [<code>Signature</code>](#Signature)  
+<a name="Signature.fromBytes"></a>
+
+### Signature.fromBytes(bytes) ⇒ [<code>Signature</code>](#Signature)
+Deserializes a `Uint8Array` as `Signature`.
+
+**Kind**: static method of [<code>Signature</code>](#Signature)  
+
+| Param | Type |
+| --- | --- |
+| bytes | <code>Uint8Array</code> | 
 
 <a name="SignatureOptions"></a>
 
@@ -3002,6 +3093,10 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
@@ -3013,10 +3108,6 @@ Creates a new `VerifierOptions` with default options.
 <a name="Digest"></a>
 
 ## Digest
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

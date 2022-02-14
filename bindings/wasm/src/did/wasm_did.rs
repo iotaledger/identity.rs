@@ -14,7 +14,7 @@ use crate::tangle::WasmNetwork;
 
 /// @typicalname did
 #[wasm_bindgen(js_name = DID, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct WasmDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = DID)]
@@ -97,6 +97,12 @@ impl WasmDID {
   pub fn to_json(&self) -> JsValue {
     // This must match the serialization of IotaDID for UWasmDID to work.
     JsValue::from_str(self.0.as_str())
+  }
+
+  /// Serializes a `DID` as `Uint8Array`.
+  #[wasm_bindgen(js_name = asBytes)]
+  pub fn as_bytes(&self) -> Result<Vec<u8>> {
+    bincode::serialize(&self).wasm_result()
   }
 }
 

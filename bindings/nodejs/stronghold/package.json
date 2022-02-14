@@ -25,5 +25,8 @@
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version"
+  },
+  "dependencies": {
+    "@types/node": "^17.0.17"
   }
 }

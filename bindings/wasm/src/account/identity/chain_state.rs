@@ -4,9 +4,12 @@
 use identity::account::ChainState;
 use wasm_bindgen::prelude::*;
 
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::tangle::WasmMessageId;
 
 #[wasm_bindgen(js_name = ChainState, inspectable)]
+#[derive(Serialize, Deserialize)]
 pub struct WasmChainState(pub(crate) ChainState);
 
 #[wasm_bindgen(js_class = ChainState)]
@@ -49,6 +52,18 @@ impl WasmChainState {
   #[wasm_bindgen(js_name = isNewIdentity)]
   pub fn is_new_identity(&self) -> bool {
     self.0.is_new_identity()
+  }
+
+  /// Serializes a `ChainState` as `Uint8Array`.
+  #[wasm_bindgen(js_name = asBytes)]
+  pub fn as_bytes(&self) -> Result<Vec<u8>> {
+    bincode::serialize(&self).wasm_result()
+  }
+
+  /// Deserializes a `Uint8Array` as `ChainState`.
+  #[wasm_bindgen(js_name = fromBytes)]
+  pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmChainState> {
+    bincode::deserialize(&bytes).wasm_result()
   }
 }
 

@@ -9,8 +9,10 @@ use wasm_bindgen::prelude::*;
 
 use crate::error::wasm_error;
 use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Signature, inspectable)]
+#[derive(Deserialize)]
 pub struct WasmSignature(pub(crate) Signature);
 
 #[wasm_bindgen(js_class = Signature)]
@@ -32,5 +34,11 @@ impl WasmSignature {
   /// Returns the the signature data as a vec of bytes.
   pub fn data(&self) -> Vec<u8> {
     self.0.data().to_vec()
+  }
+
+  /// Deserializes a `Uint8Array` as `Signature`.
+  #[wasm_bindgen(js_name = fromBytes)]
+  pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmSignature> {
+    bincode::deserialize(&bytes).wasm_result()
   }
 }

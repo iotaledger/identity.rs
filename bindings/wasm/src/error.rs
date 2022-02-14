@@ -97,6 +97,15 @@ impl_wasm_error_from!(
   identity::iota::Error
 );
 
+impl From<bincode::Error> for WasmError<'_> {
+  fn from(error: bincode::Error) -> Self {
+    Self {
+      name: Cow::Borrowed("bincode::Error"), // the exact error code is embedded in the message
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
 impl From<serde_json::Error> for WasmError<'_> {
   fn from(error: serde_json::Error) -> Self {
     Self {

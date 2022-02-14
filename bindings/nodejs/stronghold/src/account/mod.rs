@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use self::identity::JsChainState;
-pub use self::identity::JsDIDLease;
-pub use self::identity::JsIdentityState;
-pub use self::types::JsGeneration;
-pub use self::types::JsKeyLocation;
-pub use self::types::JsSignature;
+pub use self::identity::NapiChainState;
+pub use self::identity::NapiDIDLease;
+pub use self::identity::NapiIdentityState;
+pub use self::types::NapiGeneration;
+pub use self::types::NapiKeyLocation;
+pub use self::types::NapiSignature;
 
 mod identity;
 mod storage;

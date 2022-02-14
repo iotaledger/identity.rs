@@ -6,8 +6,11 @@ use wasm_bindgen::prelude::*;
 
 use crate::account::types::WasmGeneration;
 use crate::did::WasmMethodType;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
+#[derive(Serialize)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
 
 #[wasm_bindgen(js_class = KeyLocation)]
@@ -39,6 +42,12 @@ impl WasmKeyLocation {
   #[wasm_bindgen(getter)]
   pub fn generation(&self) -> WasmGeneration {
     self.0.generation().into()
+  }
+
+  /// Serializes a `KeyLocation` as `Uint8Array`.
+  #[wasm_bindgen(js_name = asBytes)]
+  pub fn as_bytes(&self) -> Result<Vec<u8>> {
+    bincode::serialize(&self).wasm_result()
   }
 }
 

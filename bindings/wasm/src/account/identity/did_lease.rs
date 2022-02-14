@@ -14,10 +14,12 @@ impl WasmDIDLease {
     WasmDIDLease(DIDLease::new())
   }
 
+  #[wasm_bindgen]
   pub fn store(&self, value: bool) {
     self.0.store(value);
   }
 
+  #[wasm_bindgen]
   pub fn load(&self) -> bool {
     self.0.load()
   }
