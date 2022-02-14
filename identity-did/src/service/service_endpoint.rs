@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -7,10 +7,9 @@ use core::fmt::Formatter;
 use indexmap::map::IndexMap;
 use serde::Serialize;
 
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-
-use crate::utils::OrderedSet;
 
 /// A single URL, set, or map of endpoints specified in a [`Service`].
 ///
@@ -50,14 +49,10 @@ impl Display for ServiceEndpoint {
 
 #[cfg(test)]
 mod tests {
-  use indexmap::map::IndexMap;
-
-  use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
 
-  use crate::service::ServiceEndpoint;
-  use crate::utils::OrderedSet;
+  use super::*;
 
   #[test]
   fn test_service_endpoint_one() {

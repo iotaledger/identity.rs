@@ -26,6 +26,8 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
+<dt><a href="#DIDLease">DIDLease</a></dt>
+<dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd></dd>
 <dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
@@ -41,11 +43,11 @@ the configuration of previously built accounts.</p>
 <dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#Ed25519">Ed25519</a></dt>
+<dd></dd>
 <dt><a href="#EncryptionKey">EncryptionKey</a></dt>
 <dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
-<dd></dd>
-<dt><a href="#Fragment">Fragment</a></dt>
 <dd></dd>
 <dt><a href="#Generation">Generation</a></dt>
 <dd></dd>
@@ -83,7 +85,11 @@ the configuration of previously built accounts.</p>
 <dd><p>An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 merged with one or more <code>DiffMessages</code>.</p>
 </dd>
+<dt><a href="#SecretKey">SecretKey</a></dt>
+<dd></dd>
 <dt><a href="#Service">Service</a></dt>
+<dd></dd>
+<dt><a href="#Signature">Signature</a></dt>
 <dd></dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
 <dd><p>Holds additional options for creating signatures.
@@ -106,9 +112,9 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 </dl>
 
@@ -133,8 +139,6 @@ publishing to the Tangle.
 * [Account](#Account)
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -148,6 +152,8 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
 
@@ -173,31 +179,11 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
-
 <a name="Account+did"></a>
 
 ### account.did() ⇒ [<code>DID</code>](#DID)
+Returns the [DID](#DID) of the managed identity.
+
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+autopublish"></a>
 
@@ -320,6 +306,28 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
+
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -415,19 +423,19 @@ by the [Client](#Client) used to publish it.
 <a name="AutoSave.never"></a>
 
 ### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
-Never save
+Never save.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.every"></a>
 
 ### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every action
+Save after every action.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.batch"></a>
 
 ### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every N actions
+Save after every N actions.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
 
@@ -491,8 +499,7 @@ Sets the last diff message id.
 ### chainState.isNewIdentity() ⇒ <code>boolean</code>
 Returns whether the identity has been published before.
 
-**Kind**: instance method of [<code>ChainState</code>](#ChainState)
-
+**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
 <a name="Client"></a>
 
 ## Client
@@ -994,6 +1001,28 @@ Parses a `DID` from the input string.
 | --- | --- |
 | input | <code>string</code> | 
 
+<a name="DIDLease"></a>
+
+## DIDLease
+**Kind**: global class  
+
+* [DIDLease](#DIDLease)
+    * [.store(value)](#DIDLease+store)
+    * [.load()](#DIDLease+load) ⇒ <code>boolean</code>
+
+<a name="DIDLease+store"></a>
+
+### didLease.store(value)
+**Kind**: instance method of [<code>DIDLease</code>](#DIDLease)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="DIDLease+load"></a>
+
+### didLease.load() ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>DIDLease</code>](#DIDLease)  
 <a name="DIDUrl"></a>
 
 ## DIDUrl
@@ -1781,6 +1810,20 @@ Returns the timestamp of the last DID document update.
 Returns a reference to the `proof`.
 
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="Ed25519"></a>
+
+## Ed25519
+**Kind**: global class  
+<a name="Ed25519.sign"></a>
+
+### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
+**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
+
+| Param | Type |
+| --- | --- |
+| message | <code>Uint8Array</code> | 
+| key | <code>string</code> | 
+
 <a name="EncryptionKey"></a>
 
 ## EncryptionKey
@@ -1865,36 +1908,6 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="Fragment"></a>
-
-## Fragment
-**Kind**: global class  
-
-* [Fragment](#Fragment)
-    * [new Fragment(value)](#new_Fragment_new)
-    * [.identifier](#Fragment+identifier) ⇒ <code>string</code>
-    * [.name](#Fragment+name) ⇒ <code>string</code>
-
-<a name="new_Fragment_new"></a>
-
-### new Fragment(value)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Fragment+identifier"></a>
-
-### fragment.identifier ⇒ <code>string</code>
-Returns the complete fragment identifier.
-
-**Kind**: instance property of [<code>Fragment</code>](#Fragment)  
-<a name="Fragment+name"></a>
-
-### fragment.name ⇒ <code>string</code>
-Returns the fragment name.
-
-**Kind**: instance property of [<code>Fragment</code>](#Fragment)  
 <a name="Generation"></a>
 
 ## Generation
@@ -1969,75 +1982,6 @@ Returns a `WasmGeneration` of maximum value.
 
 ## IdentityState
 **Kind**: global class  
-
-* [IdentityState](#IdentityState)
-    * [new IdentityState(document)](#new_IdentityState_new)
-    * [.generation](#IdentityState+generation) ⇒ [<code>Generation</code>](#Generation)
-    * [.document](#IdentityState+document) ⇒ [<code>Document</code>](#Document)
-    * [.incrementGeneration()](#IdentityState+incrementGeneration)
-    * [.storeMethodGenerations(fragment)](#IdentityState+storeMethodGenerations)
-    * [.methodLocation(method_type, fragment)](#IdentityState+methodLocation) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-    * [.keyLocation(method, fragment)](#IdentityState+keyLocation) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-
-<a name="new_IdentityState_new"></a>
-
-### new IdentityState(document)
-
-| Param | Type |
-| --- | --- |
-| document | [<code>Document</code>](#Document) | 
-
-<a name="IdentityState+generation"></a>
-
-### identityState.generation ⇒ [<code>Generation</code>](#Generation)
-Returns the current generation of the identity integration chain.
-
-**Kind**: instance property of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState+document"></a>
-
-### identityState.document ⇒ [<code>Document</code>](#Document)
-**Kind**: instance property of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState+incrementGeneration"></a>
-
-### identityState.incrementGeneration()
-Increments the generation of the identity diff chain.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState+storeMethodGenerations"></a>
-
-### identityState.storeMethodGenerations(fragment)
-Stores the generations at which the method was inserted.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| fragment | [<code>Fragment</code>](#Fragment) | 
-
-<a name="IdentityState+methodLocation"></a>
-
-### identityState.methodLocation(method_type, fragment) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Return the `KeyLocation` of the given method.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| method_type | [<code>MethodType</code>](#MethodType) | 
-| fragment | <code>string</code> | 
-
-<a name="IdentityState+keyLocation"></a>
-
-### identityState.keyLocation(method, fragment) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Returns a key location suitable for the specified `fragment`.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| method | [<code>MethodType</code>](#MethodType) | 
-| fragment | <code>string</code> | 
-
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -2203,7 +2147,7 @@ Deserializes a `KeyCollection` object from a JSON object.
 * [KeyLocation](#KeyLocation)
     * [new KeyLocation(method, fragment, generation)](#new_KeyLocation_new)
     * [.method](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
-    * [.fragment](#KeyLocation+fragment) ⇒ [<code>Fragment</code>](#Fragment)
+    * [.fragment](#KeyLocation+fragment) ⇒ <code>string</code>
     * [.fragmentName](#KeyLocation+fragmentName) ⇒ <code>string</code>
     * [.generation](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
 
@@ -2225,7 +2169,7 @@ Returns the method type of the key location.
 **Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation+fragment"></a>
 
-### keyLocation.fragment ⇒ [<code>Fragment</code>](#Fragment)
+### keyLocation.fragment ⇒ <code>string</code>
 Returns the fragment name of the key location.
 
 **Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
@@ -2770,6 +2714,30 @@ Deserializes a `Document` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="SecretKey"></a>
+
+## SecretKey
+**Kind**: global class  
+
+* [SecretKey](#SecretKey)
+    * _instance_
+        * [.publicKey()](#SecretKey+publicKey) ⇒ <code>string</code>
+    * _static_
+        * [.fromPrivateKey(private_key)](#SecretKey.fromPrivateKey) ⇒ [<code>SecretKey</code>](#SecretKey)
+
+<a name="SecretKey+publicKey"></a>
+
+### secretKey.publicKey() ⇒ <code>string</code>
+**Kind**: instance method of [<code>SecretKey</code>](#SecretKey)  
+<a name="SecretKey.fromPrivateKey"></a>
+
+### SecretKey.fromPrivateKey(private_key) ⇒ [<code>SecretKey</code>](#SecretKey)
+**Kind**: static method of [<code>SecretKey</code>](#SecretKey)  
+
+| Param | Type |
+| --- | --- |
+| private_key | <code>string</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -2798,6 +2766,39 @@ Deserializes a `Service` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="Signature"></a>
+
+## Signature
+**Kind**: global class  
+
+* [Signature](#Signature)
+    * [new Signature(pkey, data)](#new_Signature_new)
+    * [.pkey](#Signature+pkey) ⇒ <code>string</code>
+    * [.data](#Signature+data) ⇒ <code>Uint8Array</code>
+
+<a name="new_Signature_new"></a>
+
+### new Signature(pkey, data)
+Creates a new `Signature`.
+
+
+| Param | Type |
+| --- | --- |
+| pkey | <code>string</code> | 
+| data | <code>Uint8Array</code> | 
+
+<a name="Signature+pkey"></a>
+
+### signature.pkey ⇒ <code>string</code>
+Returns the public key used to verify this signature.
+
+**Kind**: instance property of [<code>Signature</code>](#Signature)  
+<a name="Signature+data"></a>
+
+### signature.data ⇒ <code>Uint8Array</code>
+Returns the the signature data as a vec of bytes.
+
+**Kind**: instance property of [<code>Signature</code>](#Signature)  
 <a name="SignatureOptions"></a>
 
 ## SignatureOptions
@@ -3010,13 +3011,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## KeyType
 **Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="start"></a>
 

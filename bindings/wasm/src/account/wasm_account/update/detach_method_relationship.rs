@@ -1,6 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use js_sys::Promise;
+use std::cell::RefCell;
+use std::cell::RefMut;
 use std::rc::Rc;
 
 use identity::account::Account;
@@ -9,9 +12,6 @@ use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 use identity::did::MethodRelationship;
-use js_sys::Promise;
-use wasm_bindgen::__rt::RefMut;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
@@ -24,27 +24,28 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Detaches the given relationship from the given method, if the method exists.
   #[wasm_bindgen(js_name = detachMethodRelationships)]
-  pub fn detach_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<Promise> {
+  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<Promise> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
       .map(OneOrMany::into_vec)
       .wasm_result()?
       .into_iter()
-      .map(Into::into)
+      .map(MethodRelationship::from)
       .collect();
 
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
+
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());
       }
-      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
       let mut detach_relationship: DetachMethodRelationshipBuilder<'_> =
         updater.detach_method_relationship().fragment(fragment);

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::crypto::SignatureOptions;
@@ -37,9 +37,9 @@ impl From<SignatureOptions> for WasmSignatureOptions {
   }
 }
 
-impl From<&WasmSignatureOptions> for SignatureOptions {
-  fn from(options: &WasmSignatureOptions) -> Self {
-    options.clone().0
+impl From<WasmSignatureOptions> for SignatureOptions {
+  fn from(options: WasmSignatureOptions) -> Self {
+    options.0
   }
 }
 

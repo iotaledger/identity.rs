@@ -1,11 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-
 use core::str::FromStr;
 use std::cmp::Ordering;
 use std::convert::TryInto;
@@ -14,6 +13,7 @@ use std::hash::Hasher;
 
 use did_url::DID as BaseDIDUrl;
 
+use identity_core::common::KeyComparable;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
@@ -573,6 +573,15 @@ where
 
   fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
     self.to_string().into_diff()
+  }
+}
+
+impl KeyComparable for CoreDIDUrl {
+  type Key = CoreDIDUrl;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self
   }
 }
 

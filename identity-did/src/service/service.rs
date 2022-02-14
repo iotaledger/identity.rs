@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -6,6 +6,7 @@ use core::fmt::Formatter;
 
 use serde::Serialize;
 
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
 
@@ -103,17 +104,26 @@ where
   }
 }
 
+impl<T> KeyComparable for Service<T> {
+  type Key = CoreDIDUrl;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self.as_ref()
+  }
+}
+
 #[cfg(test)]
 mod tests {
-  use crate::did::CoreDIDUrl;
-  use crate::service::Service;
   use identity_core::common::Object;
+  use identity_core::common::OrderedSet;
   use identity_core::common::Url;
-
-  use crate::service::service::ServiceEndpoint;
-  use crate::utils::OrderedSet;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
+
+  use crate::did::CoreDIDUrl;
+  use crate::service::service::ServiceEndpoint;
+  use crate::service::Service;
 
   #[test]
   fn test_service_serde() {

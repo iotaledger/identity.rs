@@ -14,12 +14,12 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Deletes a verification method if the method exists.
   #[wasm_bindgen(js_name = deleteMethod)]
-  pub fn delete_method(&mut self, options: DeleteMethodOptions) -> Result<Promise> {
-    let account = self.0.clone();
+  pub fn delete_method(&mut self, options: &DeleteMethodOptions) -> Result<Promise> {
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
+    let account = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       account
         .as_ref()
@@ -53,7 +53,7 @@ const TS_APPEND_CONTENT: &'static str = r#"
  */
 export type DeleteMethodOptions = {
     /**
-     * The identifier of the method in the document, required.
+     * The identifier of the method in the document.
      */
     fragment: string,
 };

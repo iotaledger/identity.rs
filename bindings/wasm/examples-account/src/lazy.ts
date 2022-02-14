@@ -3,6 +3,10 @@
 
 import { AccountBuilder, ExplorerUrl } from './../../node/identity_wasm.js';
 
+/**
+ * This example demonstrates how to take control over publishing DID updates manually, 
+ * instead of the default automated behavior. 
+ */
 async function lazy() {
 
     // Create a new Account with auto publishing set to false.
@@ -32,21 +36,15 @@ async function lazy() {
     });
 
     // Delete the previously added service.
-    await account.deleteService({ 
+    await account.deleteService({
         fragment: "example-service"
-     });
+    });
 
     // Publish the updates as one message to the tangle.
     await account.publish();
 
     // Retrieve the did of the newly created identity.
     let iotaDid = account.did().toString();
-
-    // Print the DID of the created Identity.
-    console.log(iotaDid)
-
-    // Print the local state of the DID Document.
-    console.log(account.document());
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));

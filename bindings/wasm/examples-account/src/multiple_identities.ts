@@ -3,6 +3,10 @@
 
 import { AccountBuilder, ExplorerUrl } from './../../node/identity_wasm.js';
 
+/**
+ * This example demonstrates how to create multiple identities from a builder 
+ * and how to load existing identities into an account.
+ */
 async function multipleIdentities() {
 
     // Create an AccountBuilder to make it easier to create multiple identities.

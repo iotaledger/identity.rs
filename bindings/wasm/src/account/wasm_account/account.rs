@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::Ref;
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -15,10 +17,8 @@ use identity::did::verifiable::VerifiableProperties;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use js_sys::Promise;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use wasm_bindgen::__rt::Ref;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmAutoSave;
@@ -37,32 +37,33 @@ use crate::error::WasmResult;
 /// It handles private keys, writing to storage and
 /// publishing to the Tangle.
 #[wasm_bindgen(js_name = Account)]
-pub struct WasmAccount(pub(crate) Rc<WasmRefCell<Account>>);
+pub struct WasmAccount(pub(crate) Rc<RefCell<Account>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
+  /// Returns the {@link DID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
-    let account: Ref<Account> = self.0.as_ref().borrow();
-    WasmDID::from(account.document().id().clone())
+    let account: Ref<Account> = self.0.borrow();
+    WasmDID::from(account.did().clone())
   }
 
   /// Returns whether auto-publish is enabled.
   #[wasm_bindgen]
   pub fn autopublish(&self) -> bool {
-    self.0.as_ref().borrow().autopublish()
+    self.0.borrow().autopublish()
   }
 
   /// Returns the auto-save configuration value.
   #[wasm_bindgen]
   pub fn autosave(&self) -> WasmAutoSave {
-    WasmAutoSave(self.0.as_ref().borrow().autosave())
+    WasmAutoSave(self.0.borrow().autosave())
   }
 
   /// Returns a copy of the document managed by the `Account`.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
-    let document: IotaDocument = self.0.as_ref().borrow().document().clone();
+    let document: IotaDocument = self.0.borrow().document().clone();
     WasmDocument::from(document)
   }
 
@@ -90,13 +91,12 @@ impl WasmAccount {
   #[wasm_bindgen(js_name = deleteIdentity)]
   pub fn delete_identity(self) -> Promise {
     // Get IotaDID and storage from the account.
-    let account: Rc<WasmRefCell<Account>> = self.0;
-    let did: IotaDID = account.as_ref().borrow().did().to_owned();
-    let storage: Arc<dyn Storage> = Arc::clone(account.as_ref().borrow().storage());
+    let did: IotaDID = self.0.borrow().did().to_owned();
+    let storage: Arc<dyn Storage> = Arc::clone(self.0.borrow().storage());
 
     // Drop account should release the DIDLease because we cannot take ownership of the Rc.
     // Note that this will still fail if anyone else has a reference to the Account.
-    std::mem::drop(account);
+    std::mem::drop(self.0);
 
     future_to_promise(async move {
       // Create a new account since `delete_identity` consumes it.
@@ -116,11 +116,8 @@ impl WasmAccount {
   /// Push all unpublished changes to the tangle in a single message.
   #[wasm_bindgen]
   pub fn publish(&mut self, publish_options: Option<WasmPublishOptions>) -> Promise {
+    let options: PublishOptions = publish_options.map(PublishOptions::from).unwrap_or_default();
     let account = self.0.clone();
-    let mut options: PublishOptions = PublishOptions::default();
-    if let Some(publish_options) = publish_options {
-      options = PublishOptions::from(publish_options);
-    };
     future_to_promise(async move {
       account
         .as_ref()
@@ -188,7 +185,7 @@ impl WasmAccount {
     U: serde::Serialize + SetSignature + 'static,
   {
     let account = self.0.clone();
-    let options: SignatureOptions = SignatureOptions::from(signature_options);
+    let options: SignatureOptions = signature_options.0.clone();
 
     future_to_promise(async move {
       account
@@ -245,7 +242,7 @@ impl WasmAccount {
 
 impl From<Account> for WasmAccount {
   fn from(account: Account) -> WasmAccount {
-    WasmAccount(Rc::new(WasmRefCell::new(account)))
+    WasmAccount(Rc::new(RefCell::new(account)))
   }
 }
 
@@ -292,11 +289,11 @@ export type PublishOptions = {
 
 
     /**
-     *
-     *
      * Set the fragment of a verification method with which to sign the update.
      * This must point to an Ed25519 method with a capability invocation
      * verification relationship.
+     *
+     *  If omitted, the default signing method on the Document will be used.
      */
      signWith?: string
  }
@@ -311,9 +308,14 @@ impl From<WasmPublishOptions> for PublishOptions {
     }
 
     if let Some(sign_with) = publish_options.signWith() {
-      let sign_with: String = sign_with;
       options = options.sign_with(sign_with);
     };
     options
   }
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Account>")]
+  pub type PromiseAccount;
 }

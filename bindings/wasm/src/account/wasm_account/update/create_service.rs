@@ -1,6 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::RefCell;
+use std::cell::RefMut;
+use std::rc::Rc;
+
 use identity::account::Account;
 use identity::account::CreateServiceBuilder;
 use identity::account::IdentityUpdater;
@@ -8,14 +12,10 @@ use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Object;
 use identity::core::Url;
 use js_sys::Promise;
-use std::rc::Rc;
-use wasm_bindgen::__rt::RefMut;
-use wasm_bindgen::__rt::WasmRefCell;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::WasmAccount;
-use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -24,11 +24,7 @@ impl WasmAccount {
   /// Adds a new Service to the DID Document.
   #[wasm_bindgen(js_name = createService)]
   pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
-    let account: Rc<WasmRefCell<Account>> = Rc::clone(&self.0);
-
-    let service_type: String = options
-      .type_()
-      .ok_or_else(|| wasm_error(MissingRequiredField("type")))?;
+    let service_type: String = options.type_().ok_or(MissingRequiredField("type")).wasm_result()?;
 
     let fragment: String = options
       .fragment()
@@ -41,8 +37,9 @@ impl WasmAccount {
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
     let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
 
+    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<Account> = account.as_ref().borrow_mut();
+      let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
       let mut create_service: CreateServiceBuilder<'_> = updater
         .create_service()
