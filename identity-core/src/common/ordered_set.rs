@@ -1,25 +1,30 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::borrow::Borrow;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::slice::Iter;
-use serde::Deserialize;
+use core::slice::IterMut;
 
-use crate::did::CoreDIDUrl;
+use serde::Deserialize;
+use serde::Serialize;
+
+use identity_diff::Diff;
+use identity_diff::DiffVec;
+
+use crate::common::KeyComparable;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::KeyComparable;
-use crate::verification::MethodQuery;
 
 /// An ordered set backed by a `Vec<T>`.
 ///
 /// Note: Ordering is based on insert order and **not** [`Ord`].
+///
+/// See: https://infra.spec.whatwg.org/#ordered-set
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(bound(deserialize = "T: KeyComparable + Deserialize<'de>"), try_from = "Vec<T>")]
@@ -54,6 +59,14 @@ impl<T> OrderedSet<T> {
   #[inline]
   pub fn iter(&self) -> Iter<'_, T> {
     self.0.iter()
+  }
+
+  /// Returns an iterator that allows modifying each value.
+  ///
+  /// WARNING: improper usage of this allows violating the key-uniqueness of the OrderedSet.
+  #[inline]
+  pub fn iter_mut_unchecked(&mut self) -> IterMut<'_, T> {
+    self.0.iter_mut()
   }
 
   /// Returns the first element in the set, or `None` if the set is empty.
@@ -106,7 +119,7 @@ impl<T> OrderedSet<T> {
     T: KeyComparable,
     U: KeyComparable<Key = T::Key>,
   {
-    self.0.iter().any(|other| other.as_key() == item.as_key())
+    self.0.iter().any(|other| other.key() == item.key())
   }
 
   /// Adds a new value to the end of the `OrderedSet`; returns `true` if the
@@ -146,7 +159,7 @@ impl<T> OrderedSet<T> {
     U: KeyComparable<Key = T::Key>,
   {
     self.change(update, |item, update| {
-      item.as_key() == current.as_key() || item.as_key() == update.as_key()
+      item.key() == current.key() || item.key() == update.key()
     })
   }
 
@@ -157,7 +170,7 @@ impl<T> OrderedSet<T> {
   where
     T: KeyComparable,
   {
-    self.change(update, |item, update| item.as_key() == update.as_key())
+    self.change(update, |item, update| item.key() == update.key())
   }
 
   /// Removes all matching items from the set.
@@ -168,7 +181,7 @@ impl<T> OrderedSet<T> {
     U: KeyComparable<Key = T::Key>,
   {
     if self.contains(item) {
-      self.0.retain(|this| this.borrow().as_key() != item.as_key());
+      self.0.retain(|this| this.borrow().key() != item.key());
       true
     } else {
       false
@@ -231,6 +244,7 @@ where
 
     let mut this: Self = Self::with_capacity(size);
 
+    // Ignore duplicates.
     for item in iter {
       this.append(item);
     }
@@ -258,26 +272,30 @@ where
   }
 }
 
-impl<T> OrderedSet<T>
+impl<T> Diff for OrderedSet<T>
 where
-  T: AsRef<CoreDIDUrl>,
+  T: Diff + KeyComparable + Serialize + for<'de> Deserialize<'de>,
 {
-  pub fn query<'query, Q>(&self, query: Q) -> Option<&T>
-  where
-    Q: Into<MethodQuery<'query>>,
-  {
-    let query: MethodQuery<'query> = query.into();
+  type Type = DiffVec<T>;
 
-    self.0.iter().find(|method| query.matches(method.as_ref()))
+  fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
+    self.clone().into_vec().diff(&other.clone().into_vec())
   }
 
-  pub(crate) fn query_mut<'query, Q>(&mut self, query: Q) -> Option<&mut T>
-  where
-    Q: Into<MethodQuery<'query>>,
-  {
-    let query: MethodQuery<'query> = query.into();
+  fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
+    self
+      .clone()
+      .into_vec()
+      .merge(diff)
+      .and_then(|this| Self::try_from(this).map_err(identity_diff::Error::merge))
+  }
 
-    self.0.iter_mut().find(|method| query.matches(method.as_ref()))
+  fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
+    Vec::from_diff(diff).and_then(|this| Self::try_from(this).map_err(identity_diff::Error::convert))
+  }
+
+  fn into_diff(self) -> identity_diff::Result<Self::Type> {
+    self.into_vec().into_diff()
   }
 }
 
@@ -285,13 +303,10 @@ where
 mod tests {
   use super::*;
 
-  use crate::did::CoreDIDUrl;
-  use crate::verification::MethodRef;
-
   impl KeyComparable for &str {
     type Key = str;
 
-    fn as_key(&self) -> &Self::Key {
+    fn key(&self) -> &Self::Key {
       self
     }
   }
@@ -299,7 +314,7 @@ mod tests {
   impl KeyComparable for u8 {
     type Key = u8;
 
-    fn as_key(&self) -> &Self::Key {
+    fn key(&self) -> &Self::Key {
       self
     }
   }
@@ -338,9 +353,9 @@ mod tests {
   #[test]
   fn test_from_vec_valid() {
     let source: Vec<u8> = vec![3, 1, 2, 0];
-    let oset: OrderedSet<u8> = OrderedSet::try_from(source).unwrap();
+    let set: OrderedSet<u8> = OrderedSet::try_from(source).unwrap();
 
-    assert_eq!(&*oset, &[3, 1, 2, 0]);
+    assert_eq!(&*set, &[3, 1, 2, 0]);
   }
 
   #[test]
@@ -353,22 +368,25 @@ mod tests {
   #[test]
   fn test_collect() {
     let source: Vec<u8> = vec![1, 2, 3, 3, 2, 4, 5, 1, 1];
-    let oset: OrderedSet<u8> = source.into_iter().collect();
+    let set: OrderedSet<u8> = source.into_iter().collect();
 
-    assert_eq!(&*oset, &[1, 2, 3, 4, 5]);
+    assert_eq!(&*set, &[1, 2, 3, 4, 5]);
   }
 
   #[test]
   fn test_contains() {
-    let did1: CoreDIDUrl = CoreDIDUrl::parse("did:example:123").unwrap();
-    let did2: CoreDIDUrl = CoreDIDUrl::parse("did:example:456").unwrap();
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    let cs2 = ComparableStruct { key: 1, value: 20 };
+    let cs3 = ComparableStruct { key: 2, value: 10 };
+    let cs4 = ComparableStruct { key: 3, value: 20 };
 
-    let source: Vec<MethodRef> = vec![MethodRef::Refer(did1.clone()), MethodRef::Refer(did2.clone())];
+    let source: Vec<ComparableStruct> = vec![cs1, cs2];
+    let set: OrderedSet<ComparableStruct> = source.into_iter().collect();
 
-    let oset: OrderedSet<MethodRef> = source.into_iter().collect();
-
-    assert!(oset.contains(&MethodRef::<()>::Refer(did1)));
-    assert!(oset.contains(&MethodRef::<()>::Refer(did2)));
+    assert!(set.contains(&cs1));
+    assert!(set.contains(&cs2));
+    assert!(!set.contains(&cs3));
+    assert!(!set.contains(&cs4));
   }
 
   #[derive(Clone, Copy, PartialEq, Eq)]
@@ -380,7 +398,8 @@ mod tests {
   impl KeyComparable for ComparableStruct {
     type Key = u8;
 
-    fn as_key(&self) -> &Self::Key {
+    #[inline]
+    fn key(&self) -> &Self::Key {
       &self.key
     }
   }

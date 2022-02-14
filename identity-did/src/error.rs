@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Errors that may occur when working with Decentralized Identifiers.
@@ -16,8 +16,6 @@ pub enum Error {
   #[error("{0}")]
   InvalidDID(#[from] crate::did::DIDError),
 
-  #[error("Duplicate Item in Ordered Set")]
-  OrderedSetDuplicate,
   #[error("Verification Method Not Found")]
   MethodNotFound,
 

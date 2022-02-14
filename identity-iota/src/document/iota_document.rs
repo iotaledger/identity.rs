@@ -11,6 +11,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
@@ -24,13 +26,13 @@ use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
-use identity_did::utils::OrderedSet;
+use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::VerifierOptions;
-use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
@@ -190,10 +192,12 @@ impl IotaDocument {
     // creates an `IotaDID::new_unchecked_ref()` from the underlying DID.
     let _ = IotaDID::try_from_borrowed(document.id())?;
 
-    // Validate that the document controller (if any) conforms to the IotaDID specification.
+    // Validate that the document controllers (if any) conform to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::controller()` method
-    // which creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
-    document.controller().map_or(Ok(()), IotaDID::check_validity)?;
+    // which casts `&[CoreDID]` to `&[IotaDID]` from the underlying document.
+    document
+      .controller()
+      .map_or(Ok(()), |set| set.iter().try_for_each(IotaDID::check_validity))?;
 
     // Validate that the verification methods conform to the IotaDID specification.
     // This check is required to ensure the correctness of the
@@ -256,15 +260,31 @@ impl IotaDocument {
     unsafe { IotaDID::new_unchecked_ref(self.document.id()) }
   }
 
-  /// Returns a reference to the `IotaDocument` controller.
-  pub fn controller(&self) -> Option<&IotaDID> {
-    // SAFETY: Validity of controller checked in DID Document constructors.
-    unsafe { self.document.controller().map(|did| IotaDID::new_unchecked_ref(did)) }
+  /// Returns a reference to the [`IotaDocument`] controllers.
+  pub fn controller(&self) -> Option<&[IotaDID]> {
+    self.document.controller().map(|set|
+      // SAFETY: transmuting slices of types with transparent layouts is valid and the
+      // validity of the controller DID entries is checked in the DID Document constructors.
+      unsafe {
+        core::slice::from_raw_parts(set.as_slice().as_ptr() as *const IotaDID, set.as_slice().len())
+      })
   }
 
-  /// Returns a reference to the [`CoreDocument`] alsoKnownAs set.
-  pub fn also_known_as(&self) -> &[Url] {
+  /// Sets the [`IotaDocument`] controllers.
+  ///
+  /// NOTE: controllers are not currently used for delegating or authenticating update permissions.
+  pub fn set_controller(&mut self, controllers: Option<OneOrSet<IotaDID>>) {
+    *self.document.controller_mut() = controllers.map(|set| set.map(CoreDID::from));
+  }
+
+  /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
+  pub fn also_known_as(&self) -> &OrderedSet<Url> {
     self.document.also_known_as()
+  }
+
+  /// Returns a mutable reference to the [`IotaDocument`] alsoKnownAs set.
+  pub fn also_known_as_mut(&mut self) -> &mut OrderedSet<Url> {
+    self.document.also_known_as_mut()
   }
 
   /// Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
@@ -366,7 +386,7 @@ impl IotaDocument {
   /// matching the provided `query`.
   pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
@@ -385,7 +405,7 @@ impl IotaDocument {
   /// Fails if no matching verification [`IotaVerificationMethod`] is found.
   pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
@@ -400,7 +420,7 @@ impl IotaDocument {
   #[doc(hidden)]
   pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self.document.try_resolve_method_mut(query).map_err(Into::into)
   }
@@ -409,7 +429,7 @@ impl IotaDocument {
   /// and the verification relationship specified by `scope`.
   pub fn resolve_method_with_scope<'query, Q>(&self, query: Q, scope: MethodScope) -> Option<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     self
@@ -421,7 +441,7 @@ impl IotaDocument {
   /// Attempts to resolve the given method query into a method capable of signing a document update.
   pub fn try_resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .resolve_method_with_scope(query, MethodScope::capability_invocation())
@@ -464,7 +484,7 @@ impl IotaDocument {
   ) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .signer(private_key)
@@ -487,7 +507,7 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used or the signature operation fails.
   pub fn sign_self<'query, Q>(&mut self, private_key: &PrivateKey, method_query: Q) -> Result<()>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     // Ensure method is permitted to sign document updates.
     let method: &VerificationMethod<_> = self.try_resolve_signing_method(method_query.into())?;
@@ -595,12 +615,12 @@ impl IotaDocument {
     method_query: Q,
   ) -> Result<DiffMessage>
   where
-    Q: Into<MethodQuery<'query>>,
+    Q: Into<DIDUrlQuery<'query>>,
   {
     let mut diff: DiffMessage = DiffMessage::new(self, other, message_id)?;
 
     // Ensure the method is allowed to sign document updates.
-    let method_query: MethodQuery<'_> = method_query.into();
+    let method_query: DIDUrlQuery<'_> = method_query.into();
     let _ = self.try_resolve_signing_method(method_query.clone())?;
 
     self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;
@@ -726,6 +746,7 @@ mod tests {
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
+  use identity_core::common::OneOrSet;
   use identity_core::common::Timestamp;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
@@ -782,13 +803,13 @@ mod tests {
     IotaDocument::try_from_core(
       CoreDocument::builder(Object::default())
         .id(controller.clone())
+        .controller(controller.clone())
         .verification_method(core_verification_method(controller, "#key-1"))
         .verification_method(core_verification_method(controller, "#key-2"))
         .verification_method(core_verification_method(controller, "#key-3"))
         .authentication(core_verification_method(controller, "#auth-key"))
         .authentication(controller.to_url().join("#key-3").unwrap())
         .key_agreement(controller.to_url().join("#key-4").unwrap())
-        .controller(controller.clone())
         .build()
         .unwrap(),
       metadata,
@@ -1025,10 +1046,34 @@ mod tests {
 
   #[test]
   fn test_controller_from_core() {
-    let controller: CoreDID = valid_did();
-    let document: IotaDocument = iota_document_from_core(&controller);
-    let expected_controller: Option<IotaDID> = Some(IotaDID::try_from_owned(controller).unwrap());
-    assert_eq!(document.controller(), expected_controller.as_ref());
+    // One controller.
+    {
+      let controller: CoreDID = valid_did();
+      let mut document: IotaDocument = iota_document_from_core(&controller);
+      let expected: IotaDID = IotaDID::new(&[0; 32]).unwrap();
+      document.set_controller(Some(OneOrSet::new_one(expected.clone())));
+      assert_eq!(document.controller().unwrap(), &[expected]);
+      // Unset.
+      document.set_controller(None);
+      assert!(document.controller().is_none());
+    }
+
+    // Many controllers.
+    {
+      let controller: CoreDID = valid_did();
+      let mut document: IotaDocument = iota_document_from_core(&controller);
+      let expected_controllers: Vec<IotaDID> = vec![
+        IotaDID::try_from_owned(controller).unwrap(),
+        IotaDID::new(&[0; 32]).unwrap(),
+        IotaDID::new(&[1; 32]).unwrap(),
+        IotaDID::new(&[2; 32]).unwrap(),
+      ];
+      document.set_controller(Some(expected_controllers.clone().try_into().unwrap()));
+      assert_eq!(document.controller().unwrap(), &expected_controllers);
+      // Unset.
+      document.set_controller(None);
+      assert!(document.controller().is_none());
+    }
   }
 
   #[test]

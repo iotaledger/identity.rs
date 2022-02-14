@@ -4,7 +4,7 @@
 import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
 
 /**
- * This example shows some configurations that can be used for the account.
+ * This example demonstrates some of the configuration options for the account.
  */
 async function config() {
 
@@ -27,23 +27,24 @@ async function config() {
     // Create a `Config`for the network.
     const config = new Config();
     config.setNetwork(network);
-
-    // This URL points to the REST API of the locally running hornet node.
     config.setPrimaryNode(private_node_url);
+    // Set a permanode for the same network.
+    // config.setPermanode("<permanode_url>");
+
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
     let builder = new AccountBuilder({
         // `AutoSave.never()` never auto-saves, relies on the storage drop save.
         // `AutoSave.every()` saves immediately after every action,
-        // `AutoSave.batch(10)` saves after every 10 actions.
-        autosave: AutoSave.never(), // never auto-save
+        autosave: AutoSave.batch(10), // saves after every 10 actions.
         autopublish: true, // publish to the tangle automatically on every update
-        milestone: 4, // save a snapshot every 4 actions
-        clientConfig: config // set client to the previously defined client.
+        clientConfig: config // set the client configuration.
         //TODO configure storage.
     });
 
+    // Create an identity and publish it.
+    // The created DID will use the network name configured for the client.
     try {
         let account = await builder.createIdentity();
         let did = account.did();

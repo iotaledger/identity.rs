@@ -3,7 +3,10 @@
 
 import { ExplorerUrl, AccountBuilder, MethodRelationship } from './../../node/identity_wasm.js';
 
-
+/**
+ * This example demonstrates how to manipulate a DID Document by adding/removing 
+ * Verification Methods and Services.
+ */
 async function manipulateIdentity() {
 
     // ===========================================================================
@@ -11,7 +14,7 @@ async function manipulateIdentity() {
     // ===========================================================================
 
     // Create a new Account with the default configuration.
-    let builder = new AccountBuilder({autopublish: false});
+    let builder = new AccountBuilder();
     let account = await builder.createIdentity();
 
     // ===========================================================================
@@ -44,12 +47,6 @@ async function manipulateIdentity() {
 
     // Retrieve the did of the newly created identity.
     let iotaDid = account.did().toString();
-
-    // Print the DID of the created Identity.
-    console.log(iotaDid)
-
-    // Print the local state of the DID Document.
-    console.log(account.document());
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));

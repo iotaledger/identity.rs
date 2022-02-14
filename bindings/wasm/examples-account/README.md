@@ -37,13 +37,15 @@ npm run example:account -- create_did
 
 | # | Name | Details |
 | -------- | -------- | -------- |
-| 1 |[create_did](src/create_did.ts)|Generates and publishes a DID Document, the fundamental building block for decentralized identity.|
-|2| [manipulate_did](src/manipulate_did.ts)|  Adds verification methods and service endpoints to a DID Document and updates an already existing DID Document.|
-|3| [lazy](src/lazy.ts)| Manipulates a DID Document and publishes multiple changes to the tangle at once.|
-|4| [signing](src/signing.ts) | Creates a DID with a verification method, signs a verifiable credential, verifies the signature.|
-|5| [config](src/config.ts) | Applies different account configurations|
-|6| [unchecked](src/unchecked.ts) | Updates an Identity without validation and publishes it to the tangle.|
-|7| [multiple_identities](src/multiple_identities.ts) | Managing multiple identities with the Account.|
+| 1 |[create_did](src/create_did.ts)| A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity.    |
+|5| [config](src/config.ts) | How to configure the account to work with different networks and other settings. |
+|2| [manipulate_did](src/manipulate_did.ts)|  How to manipulate a DID Document by adding/removing Verification Methods and Services. |
+|3| [lazy](src/lazy.ts)|  How to take control over publishing DID updates manually, instead of the default automated behavior. |
+|4| [signing](src/signing.ts) | Using a DID to sign arbitrary statements and validating them. |
+|7| [multiple_identities](src/multiple_identities.ts) | How to create multiple identities from a builder and how to load existing identities into an account. |
+|6| [unchecked](src/unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
 ## Browser
 
 Although the examples should work in browser environment, we don't provide a browser project as for now.
+
+TODO: add browser account examples.

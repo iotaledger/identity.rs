@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
@@ -11,14 +11,12 @@ use crate::did::DIDUrl;
 use crate::did::RelativeDIDUrl;
 use crate::did::DID;
 
-/// Specifies the conditions of a DID document method resolution query.
-///
-/// See `Document::resolve`.
+/// Specifies a DIDUrl or fragment to query a service or method in a DID Document.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
-pub struct MethodQuery<'query>(Cow<'query, str>);
+pub struct DIDUrlQuery<'query>(Cow<'query, str>);
 
-impl<'query> MethodQuery<'query> {
+impl<'query> DIDUrlQuery<'query> {
   /// Returns whether this query matches the given DIDUrl.
   pub(crate) fn matches(&self, did_url: &CoreDIDUrl) -> bool {
     // Ensure the DID matches if included in the query.
@@ -68,19 +66,19 @@ impl<'query> MethodQuery<'query> {
   }
 }
 
-impl<'query> From<&'query str> for MethodQuery<'query> {
+impl<'query> From<&'query str> for DIDUrlQuery<'query> {
   fn from(other: &'query str) -> Self {
     Self(Cow::Borrowed(other))
   }
 }
 
-impl<'query> From<&'query String> for MethodQuery<'query> {
+impl<'query> From<&'query String> for DIDUrlQuery<'query> {
   fn from(other: &'query String) -> Self {
     Self(Cow::Borrowed(&**other))
   }
 }
 
-impl<'query, T> From<&'query DIDUrl<T>> for MethodQuery<'query>
+impl<'query, T> From<&'query DIDUrl<T>> for DIDUrlQuery<'query>
 where
   T: DID,
 {
@@ -89,7 +87,7 @@ where
   }
 }
 
-impl<'query, T> From<DIDUrl<T>> for MethodQuery<'query>
+impl<'query, T> From<DIDUrl<T>> for DIDUrlQuery<'query>
 where
   T: DID,
 {
@@ -98,14 +96,14 @@ where
   }
 }
 
-impl<'query> From<&'query RelativeDIDUrl> for MethodQuery<'query> {
+impl<'query> From<&'query RelativeDIDUrl> for DIDUrlQuery<'query> {
   fn from(other: &'query RelativeDIDUrl) -> Self {
     // TODO: improve RelativeDIDUrl performance - internal string segments representation
     Self(Cow::Owned(other.to_string()))
   }
 }
 
-impl<'query> From<&'query Signature> for MethodQuery<'query> {
+impl<'query> From<&'query Signature> for DIDUrlQuery<'query> {
   fn from(other: &'query Signature) -> Self {
     Self(Cow::Borrowed(other.verification_method()))
   }
@@ -119,59 +117,59 @@ mod tests {
 
   #[test]
   fn test_did_str() {
-    assert!(MethodQuery::from("").did_str().is_none());
-    assert!(MethodQuery::from("fragment").did_str().is_none());
-    assert!(MethodQuery::from("#fragment").did_str().is_none());
-    assert!(MethodQuery::from("?query").did_str().is_none());
-    assert!(MethodQuery::from("/path").did_str().is_none());
-    assert!(MethodQuery::from("/path?query#fragment").did_str().is_none());
-    assert!(MethodQuery::from("method:missingscheme123").did_str().is_none());
-    assert!(MethodQuery::from("iota:example").did_str().is_none());
+    assert!(DIDUrlQuery::from("").did_str().is_none());
+    assert!(DIDUrlQuery::from("fragment").did_str().is_none());
+    assert!(DIDUrlQuery::from("#fragment").did_str().is_none());
+    assert!(DIDUrlQuery::from("?query").did_str().is_none());
+    assert!(DIDUrlQuery::from("/path").did_str().is_none());
+    assert!(DIDUrlQuery::from("/path?query#fragment").did_str().is_none());
+    assert!(DIDUrlQuery::from("method:missingscheme123").did_str().is_none());
+    assert!(DIDUrlQuery::from("iota:example").did_str().is_none());
     assert_eq!(
-      MethodQuery::from("did:iota:example").did_str(),
+      DIDUrlQuery::from("did:iota:example").did_str(),
       Some("did:iota:example")
     );
     assert_eq!(
-      MethodQuery::from("did:iota:example#fragment").did_str(),
+      DIDUrlQuery::from("did:iota:example#fragment").did_str(),
       Some("did:iota:example")
     );
     assert_eq!(
-      MethodQuery::from("did:iota:example?query").did_str(),
+      DIDUrlQuery::from("did:iota:example?query").did_str(),
       Some("did:iota:example")
     );
     assert_eq!(
-      MethodQuery::from("did:iota:example/path").did_str(),
+      DIDUrlQuery::from("did:iota:example/path").did_str(),
       Some("did:iota:example")
     );
     assert_eq!(
-      MethodQuery::from("did:iota:example/path?query#fragment").did_str(),
+      DIDUrlQuery::from("did:iota:example/path?query#fragment").did_str(),
       Some("did:iota:example")
     );
     assert_eq!(
-      MethodQuery::from("did:iota:example/path?query&relativeRef=/#fragment").did_str(),
+      DIDUrlQuery::from("did:iota:example/path?query&relativeRef=/#fragment").did_str(),
       Some("did:iota:example")
     );
   }
 
   #[test]
   fn test_fragment() {
-    assert!(MethodQuery::from("").fragment().is_none());
-    assert_eq!(MethodQuery::from("fragment").fragment(), Some("fragment"));
-    assert_eq!(MethodQuery::from("#fragment").fragment(), Some("fragment"));
-    assert_eq!(MethodQuery::from("/path?query#fragment").fragment(), Some("fragment"));
-    assert!(MethodQuery::from("did:iota:example").fragment().is_none());
+    assert!(DIDUrlQuery::from("").fragment().is_none());
+    assert_eq!(DIDUrlQuery::from("fragment").fragment(), Some("fragment"));
+    assert_eq!(DIDUrlQuery::from("#fragment").fragment(), Some("fragment"));
+    assert_eq!(DIDUrlQuery::from("/path?query#fragment").fragment(), Some("fragment"));
+    assert!(DIDUrlQuery::from("did:iota:example").fragment().is_none());
     assert_eq!(
-      MethodQuery::from("did:iota:example#fragment").fragment(),
+      DIDUrlQuery::from("did:iota:example#fragment").fragment(),
       Some("fragment")
     );
-    assert!(MethodQuery::from("did:iota:example?query").fragment().is_none());
-    assert!(MethodQuery::from("did:iota:example/path").fragment().is_none());
+    assert!(DIDUrlQuery::from("did:iota:example?query").fragment().is_none());
+    assert!(DIDUrlQuery::from("did:iota:example/path").fragment().is_none());
     assert_eq!(
-      MethodQuery::from("did:iota:example/path?query#fragment").fragment(),
+      DIDUrlQuery::from("did:iota:example/path?query#fragment").fragment(),
       Some("fragment")
     );
     assert_eq!(
-      MethodQuery::from("did:iota:example/path?query&relativeRef=/#fragment").fragment(),
+      DIDUrlQuery::from("did:iota:example/path?query&relativeRef=/#fragment").fragment(),
       Some("fragment")
     );
   }
@@ -188,7 +186,7 @@ mod tests {
 
     // INVALID: empty query should not match anything.
     {
-      let query_empty = MethodQuery::from("");
+      let query_empty = DIDUrlQuery::from("");
       assert!(query_empty.matches(&did_base).not());
       assert!(query_empty.matches(&did_path).not());
       assert!(query_empty.matches(&did_query).not());
@@ -200,7 +198,7 @@ mod tests {
 
     // VALID: query with only a fragment should match the same fragment.
     {
-      let query_fragment_only = MethodQuery::from("fragment");
+      let query_fragment_only = DIDUrlQuery::from("fragment");
       assert!(query_fragment_only.matches(&did_base).not());
       assert!(query_fragment_only.matches(&did_path).not());
       assert!(query_fragment_only.matches(&did_query).not());
@@ -212,7 +210,7 @@ mod tests {
 
     // VALID: query with differentfragment should only match the same fragment.
     {
-      let query_different_fragment = MethodQuery::from("differentfragment");
+      let query_different_fragment = DIDUrlQuery::from("differentfragment");
       assert!(query_different_fragment.matches(&did_base).not());
       assert!(query_different_fragment.matches(&did_path).not());
       assert!(query_different_fragment.matches(&did_query).not());
@@ -224,7 +222,7 @@ mod tests {
 
     // VALID: query with a #fragment should match the same fragment.
     {
-      let query_fragment_delimiter = MethodQuery::from("#fragment");
+      let query_fragment_delimiter = DIDUrlQuery::from("#fragment");
       assert!(query_fragment_delimiter.matches(&did_base).not());
       assert!(query_fragment_delimiter.matches(&did_path).not());
       assert!(query_fragment_delimiter.matches(&did_query).not());
@@ -236,7 +234,7 @@ mod tests {
 
     // VALID: query with a relative DID Url should match the same fragment.
     {
-      let query_relative_did_url = MethodQuery::from("/path?query#fragment");
+      let query_relative_did_url = DIDUrlQuery::from("/path?query#fragment");
       assert!(query_relative_did_url.matches(&did_base).not());
       assert!(query_relative_did_url.matches(&did_path).not());
       assert!(query_relative_did_url.matches(&did_query).not());
@@ -248,7 +246,7 @@ mod tests {
 
     // INVALID: query with DID and no fragment should not match anything.
     {
-      let query_did = MethodQuery::from("did:iota:example");
+      let query_did = DIDUrlQuery::from("did:iota:example");
       assert!(query_did.matches(&did_base).not());
       assert!(query_did.matches(&did_path).not());
       assert!(query_did.matches(&did_query).not());
@@ -260,7 +258,7 @@ mod tests {
 
     // VALID: query with a DID fragment should match the same fragment.
     {
-      let query_did_fragment = MethodQuery::from("did:iota:example#fragment");
+      let query_did_fragment = DIDUrlQuery::from("did:iota:example#fragment");
       assert!(query_did_fragment.matches(&did_base).not());
       assert!(query_did_fragment.matches(&did_path).not());
       assert!(query_did_fragment.matches(&did_query).not());
@@ -272,7 +270,7 @@ mod tests {
 
     // VALID: query with a DID Url with a fragment should match the same fragment.
     {
-      let query_did_fragment = MethodQuery::from("did:iota:example/path?query#fragment");
+      let query_did_fragment = DIDUrlQuery::from("did:iota:example/path?query#fragment");
       assert!(query_did_fragment.matches(&did_base).not());
       assert!(query_did_fragment.matches(&did_path).not());
       assert!(query_did_fragment.matches(&did_query).not());
@@ -284,7 +282,7 @@ mod tests {
 
     // VALID: query with a complex DID Url with a fragment should match the same fragment.
     {
-      let query_did_fragment = MethodQuery::from("did:iota:example/path?query&relativeRef=/#fragment");
+      let query_did_fragment = DIDUrlQuery::from("did:iota:example/path?query&relativeRef=/#fragment");
       assert!(query_did_fragment.matches(&did_base).not());
       assert!(query_did_fragment.matches(&did_path).not());
       assert!(query_did_fragment.matches(&did_query).not());

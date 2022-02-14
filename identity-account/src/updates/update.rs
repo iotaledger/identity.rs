@@ -13,6 +13,7 @@ use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
+use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;

@@ -1,11 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-
 use core::str::FromStr;
 use std::convert::TryInto;
 
@@ -15,6 +14,7 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::KeyComparable;
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
 use identity_did::did::BaseDIDUrl;
@@ -358,6 +358,15 @@ impl TryFrom<String> for IotaDID {
 impl From<IotaDID> for String {
   fn from(did: IotaDID) -> Self {
     did.into_string()
+  }
+}
+
+impl KeyComparable for IotaDID {
+  type Key = CoreDID;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self.as_ref()
   }
 }
 

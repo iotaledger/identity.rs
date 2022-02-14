@@ -83,13 +83,6 @@ impl AccountBuilder {
     self
   }
 
-  /// Save a state snapshot every N actions.
-  #[must_use]
-  pub fn milestone(mut self, value: u32) -> Self {
-    self.config = self.config.milestone(value);
-    self
-  }
-
   /// Set whether the account is in testmode or not.
   /// In testmode, the account skips publishing to the tangle.
   #[cfg(test)]
