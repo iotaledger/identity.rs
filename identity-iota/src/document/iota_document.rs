@@ -47,12 +47,14 @@ use crate::did::IotaDID;
 use crate::did::IotaDIDUrl;
 use crate::diff::DiffMessage;
 use crate::document::IotaDocumentMetadata;
-use crate::document::IotaVerificationMethod;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::NetworkName;
+
+/// A [`VerificationMethod`] adhering to the IOTA DID method specification.
+pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///

@@ -5,17 +5,25 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::iter::once;
 
+use serde::de;
+use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::BitSet;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::merkle_key::MerkleDigest;
+use identity_core::crypto::KeyCollection;
+use identity_core::crypto::KeyType;
+use identity_core::crypto::PublicKey;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::verifiable::Revocation;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodRef;
@@ -29,6 +37,7 @@ pub struct VerificationMethod<D = CoreDID, T = Object>
 where
   D: DID,
 {
+  #[serde(deserialize_with = "deserialize_did_url_with_fragment")]
   pub(crate) id: DIDUrl<D>,
   pub(crate) controller: D,
   #[serde(rename = "type")]
@@ -39,10 +48,39 @@ where
   pub(crate) properties: T,
 }
 
+/// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
+fn deserialize_did_url_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+  T: DID + serde::Deserialize<'de>,
+{
+  let did_url: DIDUrl<T> = DIDUrl::deserialize(deserializer)?;
+  validate_id_fragment(&did_url).map_err(de::Error::custom)?;
+  Ok(did_url)
+}
+
+/// Validates whether the given [`DIDUrl`] has an identifying fragment for a verification method.
+///
+/// # Errors
+/// [`Error::BuilderInvalidMethodId`] if the fragment is missing.
+fn validate_id_fragment<D>(id: &DIDUrl<D>) -> Result<()>
+where
+  D: DID,
+{
+  if id.fragment().unwrap_or_default().is_empty() {
+    return Err(Error::InvalidMethodFragment);
+  }
+  Ok(())
+}
+
 impl<D, T> VerificationMethod<D, T>
 where
   D: DID,
 {
+  // ===========================================================================
+  // Builder
+  // ===========================================================================
+
   /// Creates a `MethodBuilder` to configure a new `Method`.
   ///
   /// This is the same as `MethodBuilder::new()`.
@@ -52,8 +90,11 @@ where
 
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<D, T>) -> Result<Self> {
+    let id: DIDUrl<D> = builder.id.ok_or(Error::BuilderInvalidMethodId)?;
+    validate_id_fragment(&id)?;
+
     Ok(VerificationMethod {
-      id: builder.id.ok_or(Error::BuilderInvalidMethodId)?,
+      id,
       controller: builder.controller.ok_or(Error::BuilderInvalidMethodController)?,
       key_type: builder.key_type.ok_or(Error::BuilderInvalidMethodType)?,
       key_data: builder.key_data.ok_or(Error::BuilderInvalidMethodData)?,
@@ -61,14 +102,23 @@ where
     })
   }
 
-  /// Returns a reference to the verification `Method` id.
+  // ===========================================================================
+  // Properties
+  // ===========================================================================
+
+  /// Returns a reference to the `VerificationMethod` id.
   pub fn id(&self) -> &DIDUrl<D> {
     &self.id
   }
 
-  /// Returns a mutable reference to the verification `Method` id.
-  pub fn id_mut(&mut self) -> &mut DIDUrl<D> {
-    &mut self.id
+  /// Sets the `VerificationMethod` id.
+  ///
+  /// # Errors
+  /// [`Error::BuilderInvalidMethodId`] if there is no fragment on the [`DIDUrl`].
+  pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
+    validate_id_fragment(&id)?;
+    self.id = id;
+    Ok(())
   }
 
   /// Returns a reference to the verification `Method` controller.
@@ -111,6 +161,7 @@ where
     &mut self.properties
   }
 
+  /// Returns the fragment of the `VerificationMethod` id field.
   pub fn try_into_fragment(&self) -> Result<String> {
     self
       .id
@@ -153,6 +204,71 @@ where
       key_data: self.key_data,
       properties: self.properties,
     })
+  }
+}
+
+impl<D, T> VerificationMethod<D, T>
+where
+  D: DID,
+  T: Revocation + Default,
+{
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+
+  /// Creates a new [`IotaVerificationMethod`] from the given `did` and `keypair`.
+  pub fn new(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
+    let method_fragment: String = if !fragment.starts_with('#') {
+      format!("#{}", fragment)
+    } else {
+      fragment.to_owned()
+    };
+    let id: DIDUrl<D> = did.to_url().join(method_fragment)?;
+
+    let mut builder: MethodBuilder<D, T> = MethodBuilder::default().id(id).controller(did);
+    match key_type {
+      KeyType::Ed25519 => {
+        builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
+        builder = builder.key_data(MethodData::new_multibase(public_key));
+      }
+    }
+    builder.build()
+  }
+
+  /// Creates a new [`MerkleKeyCollection2021`](MethodType::MerkleKeyCollection2021) method from
+  /// the given key collection.
+  pub fn new_merkle_key_collection<M>(did: D, keys: &KeyCollection, fragment: &str) -> Result<Self>
+  where
+    M: MerkleDigest,
+  {
+    let method_fragment: String = if fragment.starts_with('#') {
+      fragment.to_owned()
+    } else {
+      format!("#{}", fragment)
+    };
+    let id: DIDUrl<D> = did.to_url().join(method_fragment)?;
+
+    MethodBuilder::default()
+      .id(id)
+      .controller(did)
+      .key_type(MethodType::MerkleKeyCollection2021)
+      .key_data(MethodData::new_multibase(&keys.encode_merkle_key::<M>()))
+      .build()
+      .map_err(Into::into)
+  }
+
+  /// Revokes the public key of a Merkle Key Collection at the specified `index`.
+  pub fn revoke_merkle_key(&mut self, index: u32) -> Result<bool> {
+    if self.key_type() != MethodType::MerkleKeyCollection2021 {
+      return Err(Error::InvalidMethodRevocation);
+    }
+
+    let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
+    let revoked: bool = revocation.insert(index);
+
+    self.set_revocation(Some(revocation))?;
+
+    Ok(revoked)
   }
 }
 

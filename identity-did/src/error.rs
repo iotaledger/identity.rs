@@ -38,7 +38,7 @@ pub enum Error {
   #[error("Invalid Verification Method Property: `data`")]
   BuilderInvalidMethodData,
 
-  #[error("Invalid Verification Method Fragment")]
+  #[error("invalid or empty verification method `id` fragment")]
   InvalidMethodFragment,
   #[error("Invalid Verification Method Type")]
   InvalidMethodType,
@@ -49,6 +49,10 @@ pub enum Error {
   /// Caused by attempting to attach or detach a relationship on an embedded method.
   #[error("unable to modify relationships on embedded methods, use insert or remove instead")]
   InvalidMethodEmbedded,
+
+  /// Caused by attempting to revoke an unsupported method.
+  #[error("revocation is not supported for methods other than MerkleKeyCollection2021")]
+  InvalidMethodRevocation,
 
   #[error("Unknown Method Scope")]
   UnknownMethodScope,

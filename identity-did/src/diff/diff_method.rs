@@ -175,7 +175,7 @@ mod test {
 
   fn test_method() -> VerificationMethod {
     VerificationMethod::builder(Default::default())
-      .id("did:example:123".parse().unwrap())
+      .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
@@ -247,14 +247,14 @@ mod test {
   fn test_id() {
     let method = test_method();
     let mut new = method.clone();
-    *new.id_mut() = "did:diff:123".parse().unwrap();
+    new.set_id("did:diff:123#key".parse().unwrap()).unwrap();
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.controller.is_none());
     assert!(diff.key_data.is_none());
     assert!(diff.key_type.is_none());
     assert!(diff.properties.is_none());
-    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123".to_string()))));
+    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123#key".to_string()))));
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -357,7 +357,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add id
-    *new.id_mut() = "did:diff:123".parse().unwrap();
+    new.set_id("did:diff:123#key".parse().unwrap()).unwrap();
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
