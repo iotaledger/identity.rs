@@ -6,6 +6,7 @@ on:
       - main
       - dev
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
       - dev
@@ -28,7 +29,7 @@ env:
 jobs:
 
   check-for-modification:
-    if: ${{ !github.event.pull_request || github.event.pull_request.draft == 'false' }}
+    if: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     outputs:
       core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
@@ -54,7 +55,7 @@ jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     needs: check-for-modification
-    if: ${{ (!github.event.pull_request || github.event.pull_request.draft == 'false') && needs.check-for-modification.outputs.core-modified == 'true' }}
+    if: ${{ (!github.event.pull_request || github.event.pull_request.draft == false) && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -130,7 +131,7 @@ jobs:
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
   build-and-test-libjose:
-    if: ${{ !github.event.pull_request || github.event.pull_request.draft == 'false' }}
+    if: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -161,7 +162,7 @@ jobs:
           args: --manifest-path ./libjose/Cargo.toml --release
 
   build-and-test-wasm:
-    if: ${{ !github.event.pull_request || github.event.pull_request.draft == 'false' }}
+    if: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
