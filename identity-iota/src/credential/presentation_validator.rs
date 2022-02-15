@@ -14,7 +14,6 @@ use serde::Serialize;
 use super::errors::AccumulatedCredentialValidationError;
 use super::errors::AccumulatedPresentationValidationError;
 use super::errors::ValidationError;
-use super::CredentialValidationOptions;
 use super::PresentationValidationOptions;
 use crate::credential::credential_validator::CredentialValidator;
 use crate::did::IotaDID;
@@ -185,6 +184,7 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
     trusted_issuers: &[ResolvedIotaDocument],
   ) -> PresentationValidationResult {
     let fail_fast = options.fail_fast;
+    let mut observed_error = false;
 
     // setup error container
     let mut compound_error = AccumulatedPresentationValidationError {
@@ -199,6 +199,7 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
 
     if let Err(structure_error) = self.check_structure_local_error() {
       presentation_validation_errors.push(structure_error);
+      observed_error = true;
       if fail_fast {
         return Err(compound_error);
       }
@@ -209,14 +210,18 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
         .non_transferable_violations()
         .map(|(credential_position, _)| ValidationError::NonTransferableViolation { credential_position }),
     );
-    if (!presentation_validation_errors.is_empty()) && fail_fast {
-      return Err(compound_error);
+    if !presentation_validation_errors.is_empty() {
+      observed_error = true;
+      if fail_fast {
+        return Err(compound_error);
+      }
     }
 
     if let Err(signature_error) =
       self.verify_presentation_signature_local_error(resolved_holder_document, &options.presentation_verifier_options)
     {
       presentation_validation_errors.push(signature_error);
+      observed_error = true;
       if fail_fast {
         return Err(compound_error);
       }
@@ -225,16 +230,21 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
     // now validate the credentials
     for (position, credential) in self.presentation.borrow().verifiable_credential.iter().enumerate() {
       if let Err(credential_error) = CredentialValidator::new(credential)
-        .full_validation_local_error(&CredentialValidationOptions::default(), trusted_issuers)
+        .full_validation_local_error(&options.common_validation_options, trusted_issuers)
       {
+        observed_error = true;
         credential_errors.insert(position, credential_error);
         if fail_fast {
           return Err(compound_error);
         }
       }
     }
-
-    Ok(())
+    // if fail_fast was false, but we observed an error we return our error
+    if observed_error {
+      Err(compound_error)
+    } else {
+      Ok(())
+    }
   }
 }
 
@@ -246,6 +256,7 @@ mod tests {
   use identity_credential::presentation::PresentationBuilder;
 
   use crate::credential::test_utils;
+  use crate::credential::CredentialValidationOptions;
 
   use super::*;
   #[test]
@@ -797,11 +808,13 @@ mod tests {
     let expires_after = Timestamp::parse("2050-01-01T00:00:00Z").unwrap(); // both credentials expire before this
     let credential_validation_options = CredentialValidationOptions::default()
       .earliest_expiry_date(expires_after)
-      .latest_issuance_date(issued_before);
+      .latest_issuance_date(issued_before)
+      .fail_fast(false);
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
       .common_validation_options(credential_validation_options)
-      .presentation_verifier_options(presentation_verifier_options);
+      .presentation_verifier_options(presentation_verifier_options)
+      .fail_fast(false);
 
     let validator = PresentationValidator::new(presentation);
 
