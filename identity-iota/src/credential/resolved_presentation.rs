@@ -37,7 +37,6 @@ impl<T: Serialize, U: Serialize + PartialEq + Clone> ResolvedPresentation<T, U> 
   /// - The nonTransferable property is set in one of the credentials, but the credential's subject is not the holder of
   ///   the presentation.
   /// - Validation of any of the presentation's credentials fails.
-  // Todo: This method does currently not fail on deactivated subject documents in the ResolvedCredentials. Should it?
   pub fn validate(&self, options: &PresentationValidationOptions) -> Result<()> {
     PresentationValidator::new(&self.presentation).full_validation(
       options,

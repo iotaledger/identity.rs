@@ -30,7 +30,6 @@ impl<T: Serialize> ResolvedCredential<T> {
   /// - The issuance date does not meet the requirement set in `options`
   /// - The issuer has not been specified as trust
   /// - The credential's signature cannot be verified using the issuer's DID Document
-  // Todo: Should we also check for deactivated subject documents here?
   pub fn validate(&self, options: &CredentialValidationOptions) -> Result<()> {
     CredentialValidator::new(&self.credential).full_validation(options, std::slice::from_ref(&self.issuer))
   }
