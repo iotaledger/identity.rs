@@ -80,6 +80,7 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::Error;
   use identity_core::common::Url;
 
   use super::*;
@@ -95,43 +96,39 @@ mod tests {
   }
 
   #[test]
-  #[should_panic = "InvalidServiceId"]
   fn test_missing_id() {
-    let _: Service = ServiceBuilder::default()
+    let result: Result<Service> = ServiceBuilder::default()
       .type_("ServiceType")
       .service_endpoint(Url::parse("https://example.com").unwrap().into())
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }
 
   #[test]
-  #[should_panic]
   fn test_missing_id_fragment() {
-    let _: Service = ServiceBuilder::default()
+    let result: Result<Service> = ServiceBuilder::default()
       .id("did:example:123".parse().unwrap())
       .type_("ServiceType")
       .service_endpoint(Url::parse("https://example.com").unwrap().into())
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }
 
   #[test]
-  #[should_panic = "InvalidServiceType"]
   fn test_missing_type_() {
-    let _: Service = ServiceBuilder::default()
+    let result: Result<Service> = ServiceBuilder::default()
       .id("did:example:123#service".parse().unwrap())
       .service_endpoint(Url::parse("https://example.com").unwrap().into())
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }
 
   #[test]
-  #[should_panic = "InvalidServiceEndpoint"]
   fn test_missing_service_endpoint() {
-    let _: Service = ServiceBuilder::default()
+    let result: Result<Service> = ServiceBuilder::default()
       .id("did:example:123#service".parse().unwrap())
       .type_("ServiceType")
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }
 }

@@ -12,7 +12,6 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),
-
   #[error("{0}")]
   InvalidDID(#[from] crate::did::DIDError),
 
@@ -22,13 +21,9 @@ pub enum Error {
   /// Caused by invalid or missing properties when constructing a [`CoreDocument`].
   #[error("invalid document property: {0}")]
   InvalidDocument(&'static str, #[source] Option<::identity_core::Error>),
-
-  #[error("Invalid Service Property: `id`")]
-  BuilderInvalidServiceId,
-  #[error("Invalid Service Property: `type`")]
-  BuilderInvalidServiceType,
-  #[error("Invalid Service Property: `service_endpoint`")]
-  BuilderInvalidServiceEndpoint,
+  /// Caused by invalid or missing properties when constructing a [`Service`].
+  #[error("invalid service property: {0}")]
+  InvalidService(&'static str),
 
   // TODO: replace/merge these errors
   #[error("Invalid Verification Method Property: `id`")]
@@ -40,7 +35,7 @@ pub enum Error {
   #[error("Invalid Verification Method Property: `data`")]
   BuilderInvalidMethodData,
 
-  #[error("invalid or empty verification method `id` fragment")]
+  #[error("invalid or empty `id` fragment")]
   InvalidMethodFragment,
   #[error("Invalid Verification Method Type")]
   InvalidMethodType,

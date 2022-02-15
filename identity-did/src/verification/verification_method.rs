@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::iter::once;
 
+use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -22,7 +23,6 @@ use crate::did::DIDUrl;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::check_fragment_non_empty;
 use crate::verifiable::Revocation;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
@@ -37,7 +37,7 @@ pub struct VerificationMethod<D = CoreDID, T = Object>
 where
   D: DID,
 {
-  #[serde(deserialize_with = "crate::utils::deserialize_did_url_with_fragment")]
+  #[serde(deserialize_with = "deserialize_id_with_fragment")]
   pub(crate) id: DIDUrl<D>,
   pub(crate) controller: D,
   #[serde(rename = "type")]
@@ -46,6 +46,19 @@ where
   pub(crate) key_data: MethodData,
   #[serde(flatten)]
   pub(crate) properties: T,
+}
+
+/// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
+fn deserialize_id_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+  T: DID + serde::Deserialize<'de>,
+{
+  let did_url: DIDUrl<T> = DIDUrl::deserialize(deserializer)?;
+  if did_url.fragment().unwrap_or_default().is_empty() {
+    return Err(de::Error::custom("method id missing fragment"));
+  }
+  Ok(did_url)
 }
 
 impl<D, T> VerificationMethod<D, T>
@@ -66,7 +79,9 @@ where
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<D, T>) -> Result<Self> {
     let id: DIDUrl<D> = builder.id.ok_or(Error::BuilderInvalidMethodId)?;
-    check_fragment_non_empty(&id)?;
+    if id.fragment().unwrap_or_default().is_empty() {
+      return Err(Error::BuilderInvalidMethodId);
+    }
 
     Ok(VerificationMethod {
       id,
@@ -91,7 +106,9 @@ where
   /// # Errors
   /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
-    check_fragment_non_empty(&id)?;
+    if id.fragment().unwrap_or_default().is_empty() {
+      return Err(Error::InvalidMethodFragment);
+    }
     self.id = id;
     Ok(())
   }

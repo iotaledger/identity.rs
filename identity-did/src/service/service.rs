@@ -4,6 +4,7 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -18,17 +19,17 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
-use crate::utils::check_fragment_non_empty;
 
 /// A DID Document Service used to enable trusted interactions associated with a DID subject.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#services)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(bound(deserialize = "D: DID + Deserialize<'de>, T: serde::Deserialize<'de>"))]
 pub struct Service<D = CoreDID, T = Object>
 where
   D: DID,
 {
-  // #[serde(deserialize_with = "crate::utils::deserialize_did_url_with_fragment")]
+  #[serde(deserialize_with = "deserialize_id_with_fragment")]
   pub(crate) id: DIDUrl<D>,
   #[serde(rename = "type")]
   pub(crate) type_: String,
@@ -36,6 +37,19 @@ where
   pub(crate) service_endpoint: ServiceEndpoint,
   #[serde(flatten)]
   pub(crate) properties: T,
+}
+
+/// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
+fn deserialize_id_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
+where
+  D: de::Deserializer<'de>,
+  T: DID + serde::Deserialize<'de>,
+{
+  let did_url: DIDUrl<T> = DIDUrl::deserialize(deserializer)?;
+  if did_url.fragment().unwrap_or_default().is_empty() {
+    return Err(de::Error::custom(Error::InvalidService("empty id fragment")));
+  }
+  Ok(did_url)
 }
 
 impl<D, T> Service<D, T>
@@ -51,13 +65,17 @@ where
 
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
   pub fn from_builder(builder: ServiceBuilder<D, T>) -> Result<Self> {
-    let id: DIDUrl<D> = builder.id.ok_or(Error::BuilderInvalidServiceId)?;
-    check_fragment_non_empty(&id)?;
+    let id: DIDUrl<D> = builder.id.ok_or(Error::InvalidService("missing id"))?;
+    if id.fragment().unwrap_or_default().is_empty() {
+      return Err(Error::InvalidService("empty id fragment"));
+    }
 
     Ok(Self {
       id,
-      type_: builder.type_.ok_or(Error::BuilderInvalidServiceType)?,
-      service_endpoint: builder.service_endpoint.ok_or(Error::BuilderInvalidServiceEndpoint)?,
+      type_: builder.type_.ok_or(Error::InvalidService("missing type"))?,
+      service_endpoint: builder
+        .service_endpoint
+        .ok_or(Error::InvalidService("missing endpoint"))?,
       properties: builder.properties,
     })
   }
@@ -72,7 +90,9 @@ where
   /// # Errors
   /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
-    check_fragment_non_empty(&id)?;
+    if id.fragment().unwrap_or_default().is_empty() {
+      return Err(Error::InvalidMethodFragment);
+    }
     self.id = id;
     Ok(())
   }
@@ -170,15 +190,12 @@ where
 
 #[cfg(test)]
 mod tests {
-  use identity_core::common::Object;
+  use super::*;
+  use crate::did::CoreDIDUrl;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-
-  use crate::did::CoreDIDUrl;
-  use crate::service::service::ServiceEndpoint;
-  use crate::service::Service;
 
   #[test]
   fn test_service_serde() {
@@ -215,5 +232,13 @@ mod tests {
       assert_eq!(service.to_json().unwrap(), expected);
       assert_eq!(Service::from_json(expected).unwrap(), service)
     }
+  }
+
+  #[test]
+  fn test_service_deserialize_empty_fragment_fails() {
+    let empty_id_fragment: &str =
+      r#"{"id":"did:example:123","type":"LinkedDomains","serviceEndpoint":"https://iota.org/"}"#;
+    let result: Result<Service, identity_core::Error> = Service::from_json(empty_id_fragment);
+    assert!(result.is_err());
   }
 }
