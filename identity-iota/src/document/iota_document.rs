@@ -277,6 +277,11 @@ impl IotaDocument {
     *self.document.controller_mut() = controllers.map(|set| set.map(CoreDID::from));
   }
 
+  /// Sets the ['IotaDocument'] alsoKnownAs set.
+  pub fn set_also_known_as(&mut self, urls: OrderedSet<Url>) {
+    *self.document.also_known_as_mut() = urls;
+  }
+
   /// Returns a reference to the [`IotaDocument`] alsoKnownAs set.
   pub fn also_known_as(&self) -> &OrderedSet<Url> {
     self.document.also_known_as()
