@@ -5,7 +5,6 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::iter::once;
 
-use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -23,6 +22,7 @@ use crate::did::DIDUrl;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::utils::check_fragment_non_empty;
 use crate::verifiable::Revocation;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
@@ -37,7 +37,7 @@ pub struct VerificationMethod<D = CoreDID, T = Object>
 where
   D: DID,
 {
-  #[serde(deserialize_with = "deserialize_did_url_with_fragment")]
+  #[serde(deserialize_with = "crate::utils::deserialize_did_url_with_fragment")]
   pub(crate) id: DIDUrl<D>,
   pub(crate) controller: D,
   #[serde(rename = "type")]
@@ -46,31 +46,6 @@ where
   pub(crate) key_data: MethodData,
   #[serde(flatten)]
   pub(crate) properties: T,
-}
-
-/// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
-fn deserialize_did_url_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
-where
-  D: de::Deserializer<'de>,
-  T: DID + serde::Deserialize<'de>,
-{
-  let did_url: DIDUrl<T> = DIDUrl::deserialize(deserializer)?;
-  validate_id_fragment(&did_url).map_err(de::Error::custom)?;
-  Ok(did_url)
-}
-
-/// Validates whether the given [`DIDUrl`] has an identifying fragment for a verification method.
-///
-/// # Errors
-/// [`Error::BuilderInvalidMethodId`] if the fragment is missing.
-fn validate_id_fragment<D>(id: &DIDUrl<D>) -> Result<()>
-where
-  D: DID,
-{
-  if id.fragment().unwrap_or_default().is_empty() {
-    return Err(Error::InvalidMethodFragment);
-  }
-  Ok(())
 }
 
 impl<D, T> VerificationMethod<D, T>
@@ -91,7 +66,7 @@ where
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<D, T>) -> Result<Self> {
     let id: DIDUrl<D> = builder.id.ok_or(Error::BuilderInvalidMethodId)?;
-    validate_id_fragment(&id)?;
+    check_fragment_non_empty(&id)?;
 
     Ok(VerificationMethod {
       id,
@@ -114,9 +89,9 @@ where
   /// Sets the `VerificationMethod` id.
   ///
   /// # Errors
-  /// [`Error::BuilderInvalidMethodId`] if there is no fragment on the [`DIDUrl`].
+  /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
-    validate_id_fragment(&id)?;
+    check_fragment_non_empty(&id)?;
     self.id = id;
     Ok(())
   }
@@ -175,7 +150,7 @@ where
     MethodRef::Embed(self)
   }
 
-  /// Maps `VerificationMethod<D,T>` to `VerificationMethod<C,U>` by applying a function `f` to
+  /// Maps `VerificationMethod<D,T>` to `VerificationMethod<C,T>` by applying a function `f` to
   /// the id and controller.
   pub fn map<C, F>(self, mut f: F) -> VerificationMethod<C, T>
   where

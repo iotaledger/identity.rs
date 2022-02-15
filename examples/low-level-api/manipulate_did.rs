@@ -14,6 +14,7 @@ use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::ExplorerUrl;
+use identity::iota::IotaService;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::prelude::*;
@@ -34,7 +35,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
 
   // Add a new Service
-  let service: Service = Service::from_json_value(json!({
+  let service: IotaService = Service::from_json_value(json!({
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org"

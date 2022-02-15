@@ -18,6 +18,7 @@ use identity::iota::Client;
 use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
 use identity::iota::IotaDocument;
+use identity::iota::IotaService;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
@@ -89,7 +90,7 @@ async fn main() -> Result<()> {
     let mut diff_doc_1: IotaDocument = int_doc_1.clone();
 
     // Add a new Service with the tag "linked-domain-1"
-    let service: Service = Service::from_json_value(json!({
+    let service: IotaService = Service::from_json_value(json!({
       "id": diff_doc_1.id().to_url().join("#linked-domain-1")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org/"
@@ -117,7 +118,7 @@ async fn main() -> Result<()> {
     let mut diff_doc_2: IotaDocument = diff_doc_1.clone();
 
     // Add a second Service with the tag "linked-domain-2"
-    let service: Service = Service::from_json_value(json!({
+    let service: IotaService = Service::from_json_value(json!({
       "id": diff_doc_2.id().to_url().join("#linked-domain-2")?,
       "type": "LinkedDomains",
       "serviceEndpoint": {
@@ -172,7 +173,7 @@ async fn main() -> Result<()> {
     int_doc_2.remove_method(&int_doc_2.id().to_url().join("#keys-1")?)?;
 
     // Remove the #linked-domain-1 Service
-    int_doc_2.remove_service(int_doc_2.id().to_url().join("#linked-domain-1")?)?;
+    int_doc_2.remove_service(&int_doc_2.id().to_url().join("#linked-domain-1")?)?;
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     let keys_2: KeyPair = KeyPair::new_ed25519()?;

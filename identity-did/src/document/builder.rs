@@ -28,7 +28,7 @@ where
   pub(crate) key_agreement: Vec<MethodRef<D, U>>,
   pub(crate) capability_delegation: Vec<MethodRef<D, U>>,
   pub(crate) capability_invocation: Vec<MethodRef<D, U>>,
-  pub(crate) service: Vec<Service<V>>,
+  pub(crate) service: Vec<Service<D, V>>,
   pub(crate) properties: T,
 }
 
@@ -118,7 +118,7 @@ where
 
   /// Adds a value to the `service` set.
   #[must_use]
-  pub fn service(mut self, value: Service<V>) -> Self {
+  pub fn service(mut self, value: Service<D, V>) -> Self {
     self.service.push(value);
     self
   }

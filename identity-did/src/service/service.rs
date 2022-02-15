@@ -4,24 +4,32 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
 
-use crate::did::CoreDIDUrl;
+use crate::did::CoreDID;
+use crate::did::DIDUrl;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
+use crate::utils::check_fragment_non_empty;
 
 /// A DID Document Service used to enable trusted interactions associated with a DID subject.
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#services)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Service<T = Object> {
-  pub(crate) id: CoreDIDUrl,
+pub struct Service<D = CoreDID, T = Object>
+where
+  D: DID,
+{
+  // #[serde(deserialize_with = "crate::utils::deserialize_did_url_with_fragment")]
+  pub(crate) id: DIDUrl<D>,
   #[serde(rename = "type")]
   pub(crate) type_: String,
   #[serde(rename = "serviceEndpoint")]
@@ -30,18 +38,24 @@ pub struct Service<T = Object> {
   pub(crate) properties: T,
 }
 
-impl<T> Service<T> {
+impl<D, T> Service<D, T>
+where
+  D: DID,
+{
   /// Creates a `ServiceBuilder` to configure a new `Service`.
   ///
   /// This is the same as `ServiceBuilder::new()`.
-  pub fn builder(properties: T) -> ServiceBuilder<T> {
+  pub fn builder(properties: T) -> ServiceBuilder<D, T> {
     ServiceBuilder::new(properties)
   }
 
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
-  pub fn from_builder(builder: ServiceBuilder<T>) -> Result<Self> {
+  pub fn from_builder(builder: ServiceBuilder<D, T>) -> Result<Self> {
+    let id: DIDUrl<D> = builder.id.ok_or(Error::BuilderInvalidServiceId)?;
+    check_fragment_non_empty(&id)?;
+
     Ok(Self {
-      id: builder.id.ok_or(Error::BuilderInvalidServiceId)?,
+      id,
       type_: builder.type_.ok_or(Error::BuilderInvalidServiceType)?,
       service_endpoint: builder.service_endpoint.ok_or(Error::BuilderInvalidServiceEndpoint)?,
       properties: builder.properties,
@@ -49,13 +63,18 @@ impl<T> Service<T> {
   }
 
   /// Returns a reference to the `Service` id.
-  pub fn id(&self) -> &CoreDIDUrl {
+  pub fn id(&self) -> &DIDUrl<D> {
     &self.id
   }
 
-  /// Returns a mutable reference to the `Service` id.
-  pub fn id_mut(&mut self) -> &mut CoreDIDUrl {
-    &mut self.id
+  /// Sets the `Service` id.
+  ///
+  /// # Errors
+  /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
+  pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
+    check_fragment_non_empty(&id)?;
+    self.id = id;
+    Ok(())
   }
 
   /// Returns a reference to the `Service` type.
@@ -87,16 +106,49 @@ impl<T> Service<T> {
   pub fn properties_mut(&mut self) -> &mut T {
     &mut self.properties
   }
+
+  /// Maps `Service<D,T>` to `Service<C,T>` by applying a function `f` to
+  /// the id.
+  pub fn map<C, F>(self, f: F) -> Service<C, T>
+  where
+    C: DID,
+    F: FnMut(D) -> C,
+  {
+    Service {
+      id: self.id.map(f),
+      type_: self.type_,
+      service_endpoint: self.service_endpoint,
+      properties: self.properties,
+    }
+  }
+
+  /// Fallible version of [`Service::map`].
+  pub fn try_map<C, F, E>(self, f: F) -> Result<Service<C, T>, E>
+  where
+    C: DID,
+    F: FnMut(D) -> Result<C, E>,
+  {
+    Ok(Service {
+      id: self.id.try_map(f)?,
+      type_: self.type_,
+      service_endpoint: self.service_endpoint,
+      properties: self.properties,
+    })
+  }
 }
 
-impl<T> AsRef<CoreDIDUrl> for Service<T> {
-  fn as_ref(&self) -> &CoreDIDUrl {
+impl<D, T> AsRef<DIDUrl<D>> for Service<D, T>
+where
+  D: DID,
+{
+  fn as_ref(&self) -> &DIDUrl<D> {
     self.id()
   }
 }
 
-impl<T> Display for Service<T>
+impl<D, T> Display for Service<D, T>
 where
+  D: DID + Serialize,
   T: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
@@ -104,8 +156,11 @@ where
   }
 }
 
-impl<T> KeyComparable for Service<T> {
-  type Key = CoreDIDUrl;
+impl<D, T> KeyComparable for Service<D, T>
+where
+  D: DID,
+{
+  type Key = DIDUrl<D>;
 
   #[inline]
   fn key(&self) -> &Self::Key {

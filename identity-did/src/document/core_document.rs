@@ -80,7 +80,7 @@ pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   #[serde(default = "Default::default", rename = "capabilityInvocation", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) capability_invocation: OrderedSet<MethodRef<D,U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) service: OrderedSet<Service<V>>,
+  pub(crate) service: OrderedSet<Service<D,V>>,
   #[serde(flatten)]
   pub(crate) properties: T,
 }
@@ -207,12 +207,12 @@ where
   }
 
   /// Returns a reference to the `CoreDocument` service set.
-  pub fn service(&self) -> &OrderedSet<Service<V>> {
+  pub fn service(&self) -> &OrderedSet<Service<D, V>> {
     &self.service
   }
 
   /// Returns a mutable reference to the `CoreDocument` service set.
-  pub fn service_mut(&mut self) -> &mut OrderedSet<Service<V>> {
+  pub fn service_mut(&mut self) -> &mut OrderedSet<Service<D, V>> {
     &mut self.service
   }
 
@@ -228,6 +228,7 @@ where
 
   /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields
   /// and another function `g` to the custom properties.
+  // TODO: remove this? Unused but useful due to lack of From specialization.
   pub fn map<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
   where
     C: DID + KeyComparable,
@@ -268,7 +269,7 @@ where
         .into_iter()
         .map(|method_ref| method_ref.map(&mut f))
         .collect(),
-      service: self.service,
+      service: self.service.into_iter().map(|service| service.map(&mut f)).collect(),
       properties: g(self.properties),
     }
   }
@@ -278,6 +279,7 @@ where
   /// # Errors
   ///
   /// `try_map` can fail if either of the provided functions fail.
+  // TODO: remove this? Unused but useful due to lack of TryFrom specialization.
   pub fn try_map<S, C, F, G, E>(self, mut f: F, g: G) -> Result<CoreDocument<C, S, U, V>, E>
   where
     C: DID + KeyComparable,
@@ -321,7 +323,11 @@ where
         .into_iter()
         .map(|method_ref| method_ref.try_map(&mut f))
         .collect::<Result<_, E>>()?,
-      service: self.service,
+      service: self
+        .service
+        .into_iter()
+        .map(|service| service.try_map(&mut f))
+        .collect::<Result<_, E>>()?,
       properties: g(self.properties)?,
     })
   }

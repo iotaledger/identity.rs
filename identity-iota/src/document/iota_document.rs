@@ -25,7 +25,6 @@ use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
-use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
@@ -51,6 +50,9 @@ use crate::tangle::NetworkName;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
 pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
+
+/// A [`Service`] adhering to the IOTA DID method specification.
+pub type IotaService = Service<IotaDID, Object>;
 
 /// A [`CoreDocument`] whose fields adhere to the IOTA DID method specification.
 pub type IotaCoreDocument = CoreDocument<IotaDID>;
@@ -232,12 +234,12 @@ impl IotaDocument {
   // ===========================================================================
 
   /// Return a set of all [`Service`]s in the document.
-  pub fn service(&self) -> &OrderedSet<Service> {
+  pub fn service(&self) -> &OrderedSet<IotaService> {
     self.document.service()
   }
 
   /// Add a new [`Service`] to the document.
-  pub fn insert_service(&mut self, service: Service) -> bool {
+  pub fn insert_service(&mut self, service: IotaService) -> bool {
     if service.id().fragment().is_none() {
       false
     } else {
@@ -247,9 +249,8 @@ impl IotaDocument {
 
   /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
   // TODO: return an error or bool if no service was removed?
-  pub fn remove_service(&mut self, did_url: IotaDIDUrl) -> Result<()> {
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-    self.document.service_mut().remove(&core_did_url);
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
+    self.document.service_mut().remove(did_url);
     Ok(())
   }
 
@@ -1064,7 +1065,7 @@ mod tests {
 
       // Add a service to an updated document.
       let mut doc2: IotaDocument = doc1.clone();
-      let service: Service = Service::from_json(
+      let service: IotaService = Service::from_json(
         r#"{
         "id":"did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain",
         "type": "LinkedDomains",
@@ -1461,7 +1462,7 @@ mod tests {
   fn test_document_services() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-    let service: Service = Service::from_json(
+    let service: IotaService = Service::from_json(
       r#"{
       "id":"did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain",
       "type": "LinkedDomains",
@@ -1474,7 +1475,9 @@ mod tests {
     assert_eq!(1, document.service().len());
 
     document
-      .remove_service(IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap())
+      .remove_service(
+        &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap(),
+      )
       .ok();
     assert_eq!(0, document.service().len());
   }

@@ -165,7 +165,6 @@ mod test {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::CoreDIDUrl;
   use identity_did::service::ServiceBuilder;
   use identity_did::service::ServiceEndpoint;
   use identity_did::verification::MethodScope;
@@ -211,7 +210,7 @@ mod test {
     let mut doc2: IotaDocument = doc1.clone();
     assert!(doc2.insert_service(
       ServiceBuilder::default()
-        .id(CoreDIDUrl::from(doc1.id().to_url().join("#linked-domain").unwrap()))
+        .id(doc1.id().to_url().join("#linked-domain").unwrap())
         .service_endpoint(ServiceEndpoint::One(Url::parse("https://example.com/").unwrap()))
         .type_("LinkedDomains")
         .build()

@@ -13,6 +13,7 @@ use crate::did::CoreDID;
 use crate::did::DIDUrl;
 use crate::did::DID;
 use crate::diff::DiffMethodData;
+use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::VerificationMethod;
@@ -103,13 +104,14 @@ where
       .transpose()?
       .unwrap_or_else(|| self.properties().clone());
 
-    Ok(VerificationMethod {
-      id,
-      controller,
-      key_type,
-      key_data,
-      properties,
-    })
+    // Use builder to enforce invariants.
+    MethodBuilder::new(properties)
+      .id(id)
+      .controller(controller)
+      .key_type(key_type)
+      .key_data(key_data)
+      .build()
+      .map_err(Error::merge)
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
@@ -139,13 +141,14 @@ where
 
     let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
-    Ok(VerificationMethod {
-      id,
-      controller,
-      key_type,
-      key_data,
-      properties,
-    })
+    // Use builder to enforce invariants.
+    MethodBuilder::new(properties)
+      .id(id)
+      .controller(controller)
+      .key_type(key_type)
+      .key_data(key_data)
+      .build()
+      .map_err(Error::convert)
   }
 
   fn into_diff(self) -> Result<Self::Type> {

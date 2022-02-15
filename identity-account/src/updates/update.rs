@@ -22,6 +22,7 @@ use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
+use identity_iota::document::IotaService;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::tangle::NetworkName;
 
@@ -242,15 +243,15 @@ impl Update {
         properties,
       } => {
         let fragment = Fragment::new(fragment);
-        let did_url: CoreDIDUrl = did.as_ref().to_owned().join(fragment.identifier())?;
+        let did_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
-        // The service must not exist
+        // The service must not exist.
         ensure!(
           state.document().service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment.name().to_owned()),
         );
 
-        let service: Service = Service::builder(properties.unwrap_or_default())
+        let service: IotaService = Service::builder(properties.unwrap_or_default())
           .id(did_url)
           .service_endpoint(endpoint)
           .type_(type_)
@@ -260,7 +261,7 @@ impl Update {
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
-        let service_url = did.to_url().join(fragment.identifier())?;
+        let service_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         // The service must exist
         ensure!(
@@ -268,7 +269,7 @@ impl Update {
           UpdateError::ServiceNotFound
         );
 
-        state.document_mut().remove_service(service_url)?;
+        state.document_mut().remove_service(&service_url)?;
       }
     }
 

@@ -49,7 +49,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   capability_invocation: Option<DiffVec<MethodRef<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  service: Option<DiffVec<Service<V>>>,
+  service: Option<DiffVec<Service<D, V>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<T as Diff>::Type>,
 }
@@ -188,7 +188,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.capability_invocation().clone());
 
-    let service: OrderedSet<Service<V>> = diff
+    let service: OrderedSet<Service<D, V>> = diff
       .service
       .map(|value| self.service().merge(value))
       .transpose()?
@@ -273,7 +273,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
 
-    let service: OrderedSet<Service<V>> = diff
+    let service: OrderedSet<Service<D, V>> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?

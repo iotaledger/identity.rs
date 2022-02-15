@@ -107,10 +107,22 @@ mod tests {
   }
 
   #[test]
+  #[should_panic = "InvalidMethodFragment"]
+  fn test_missing_id_fragment() {
+    let _: VerificationMethod = MethodBuilder::default()
+      .id("did:example:123".parse().unwrap())
+      .controller("did:example:123".parse().unwrap())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::PublicKeyMultibase("".into()))
+      .build()
+      .unwrap();
+  }
+
+  #[test]
   #[should_panic = "InvalidMethodId"]
   fn test_missing_id() {
     let _: VerificationMethod = MethodBuilder::default()
-      .controller("did:example:123#key".parse().unwrap())
+      .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
