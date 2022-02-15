@@ -9,15 +9,16 @@ use futures::executor;
 use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
+use identity::iota::errors::ValidationError;
 use identity::iota::Client as IotaClient;
 use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::PresentationValidationOptions;
-use identity::iota::ResolvedCredential;
+use identity::iota::PresentationValidator;
 use identity::iota::ResolvedIotaDocument;
-use identity::iota::ResolvedPresentation;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -242,14 +243,15 @@ impl Client {
     let client: Rc<IotaClient> = self.client.clone();
     let credential: Credential = Credential::from_json(&data).wasm_result()?;
     let credential_validation_options = CredentialValidationOptions::default().verifier_options(options.0);
-    let fail_fast = true;
 
     let promise: Promise = future_to_promise(async move {
-      let resolved_credential = ResolvedCredential::from_remote_issuer_document(credential, &*client)
-        .await
-        .wasm_result()?;
-      resolved_credential
-        .full_validation(&credential_validation_options, fail_fast)
+      // extract the issuer's DID
+      let issuer_url: &str = credential.issuer.url().as_str();
+      // resolve the issuer's DID Document
+      let issuer_doc: ResolvedIotaDocument = resolve_did(client, issuer_url).await.wasm_result()?;
+      // validate the credential (using the issuer's DID document to verify the signature)
+      CredentialValidator::new(credential)
+        .full_validation(&credential_validation_options, &[issuer_doc])
         .wasm_result()
         .map(|_| JsValue::TRUE)
     });
@@ -265,18 +267,46 @@ impl Client {
     let presentation: Presentation = Presentation::from_json(&data).wasm_result()?;
     let presentation_validation_options =
       PresentationValidationOptions::default().with_presentation_verifier_options(options.0);
-    let fail_fast = true;
-
     let promise: Promise = future_to_promise(async move {
-      let resolved_presentation = ResolvedPresentation::from_remote_signer_documents(presentation, &*client)
-        .await
-        .wasm_result()?;
-      resolved_presentation
-        .full_validation(&presentation_validation_options, fail_fast)
+      // resolve the holder's DID Document and also the DID Documents of the credential issuers.
+      let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) =
+        fetch_holder_and_issuers(client, &presentation).await.wasm_result()?;
+
+      PresentationValidator::new(presentation)
+        .full_validation(&presentation_validation_options, &holder_doc, issuer_docs.as_slice())
         .wasm_result()
         .map(|_| JsValue::TRUE)
     });
 
     Ok(promise)
   }
+}
+
+// helper method for credential validation. Will be removed when we get the new Resolver.
+async fn resolve_did(
+  client: Rc<IotaClient>,
+  url: &str,
+) -> std::result::Result<ResolvedIotaDocument, identity::iota::Error> {
+  let did: IotaDID = url.parse()?;
+  let resolved_document: ResolvedIotaDocument = client.resolve(&did).await?;
+  Ok(resolved_document)
+}
+// helper method for presentation validation. Will be removed when we get the new Resolver.
+async fn fetch_holder_and_issuers(
+  client: Rc<IotaClient>,
+  presentation: &Presentation,
+) -> std::result::Result<(ResolvedIotaDocument, Vec<ResolvedIotaDocument>), identity::iota::Error> {
+  let holder_url: &str = presentation.holder.as_ref().map(|holder| holder.as_str()).ok_or(
+    identity::iota::Error::UnsuccessfulValidationUnit(ValidationError::MissingPresentationHolder),
+  )?;
+
+  let holder_doc: ResolvedIotaDocument = resolve_did(client.clone(), holder_url).await?;
+
+  let mut issuer_docs: Vec<ResolvedIotaDocument> = Vec::new();
+  for credential in presentation.verifiable_credential.iter() {
+    let issuer_url: &str = credential.issuer.url().as_str();
+    issuer_docs.push(resolve_did(client.clone(), issuer_url).await?);
+  }
+
+  Ok((holder_doc, issuer_docs))
 }

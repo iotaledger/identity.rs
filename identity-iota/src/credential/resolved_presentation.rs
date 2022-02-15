@@ -2,35 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_core::common::OneOrMany;
-use identity_credential::credential::Credential;
+
 use identity_credential::presentation::Presentation;
-use identity_did::verifiable::VerifierOptions;
+
 use serde::Serialize;
 
-use super::errors::ValidationError;
 use super::presentation_validator::PresentationValidator;
-use super::CredentialValidator;
+
 use super::PresentationValidationOptions;
-use super::ResolvedCredential;
-use crate::did::IotaDID;
+
 use crate::document::ResolvedIotaDocument;
-use crate::tangle::TangleResolve;
-use crate::Error;
+
 use crate::Result;
 
 /// A verifiable presentation whose associated DID documents have been resolved from the Tangle.
-///
-/// This struct enables low-level control over how a [`Presentation`] gets validated by offering the following
-/// validation units
-/// - [`Self::verify_signature()`]
-/// - [`Self::check_non_transferable()`]
-/// - [`Self::check_structure()`]
-///
-/// # Security
-/// This struct uses resolved DID Documents received upon construction. These associated documents may become outdated
-/// at any point in time and will then no longer be fit for purpose. We encourage disposing these objects as soon as
-/// possible.
 #[non_exhaustive]
 pub struct ResolvedPresentation<T = Object, U = Object> {
   pub presentation: Presentation<T, U>,
@@ -57,7 +42,7 @@ impl<T: Serialize, U: Serialize + PartialEq + Clone> ResolvedPresentation<T, U> 
     PresentationValidator::new(&self.presentation).full_validation(
       options,
       &self.holder,
-      &self.credential_issuers.as_slice(),
+      self.credential_issuers.as_slice(),
     )
   }
 }

@@ -164,21 +164,6 @@ impl<T> Credential<T> {
   pub fn proof_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
   }
-
-  /// Checks whether this Credential does not expire before the given `Timestamp`.
-  /// True is returned in the case of no expiration date.
-  pub fn earliest_expiry_date(&self, timestamp: Timestamp) -> bool {
-    if let Some(expiration_date) = self.expiration_date {
-      expiration_date >= timestamp
-    } else {
-      true
-    }
-  }
-
-  /// Checks whether the issuance date of this Credential is no later than the given `Timestamp`.
-  pub fn latest_issuance_date(&self, timestamp: Timestamp) -> bool {
-    self.issuance_date <= timestamp
-  }
 }
 
 impl<T> Display for Credential<T>

@@ -79,13 +79,8 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential is valid
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  assert!(CredentialValidator::new()
-    .validate_credential(
-      &credential,
-      &CredentialValidationOptions::default(),
-      &[trusted_issuer],
-      true
-    )
+  assert!(CredentialValidator::new(&credential)
+    .full_validation(&CredentialValidationOptions::default(), &[trusted_issuer],)
     .is_ok());
 
   println!("the credential was successfully validated as expected");
@@ -105,13 +100,8 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential is revoked
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  assert!(CredentialValidator::new()
-    .validate_credential(
-      &credential,
-      &CredentialValidationOptions::default(),
-      &[trusted_issuer],
-      true
-    )
+  assert!(CredentialValidator::new(&credential)
+    .full_validation(&CredentialValidationOptions::default(), &[trusted_issuer],)
     .is_err());
 
   println!("credential validation returned an error after the issuer revoked their keys as expected");

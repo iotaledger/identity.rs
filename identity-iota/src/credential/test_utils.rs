@@ -1,18 +1,20 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::Result;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_core::crypto::KeyPair;
-use identity_core::crypto::SignatureOptions;
+
 use identity_core::json;
 use identity_credential::credential::Credential;
 use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
-use identity_credential::presentation::PresentationBuilder;
+
 use identity_did::did::DID;
 use iota_client::bee_message::MessageId;
 
-use crate::credential::CredentialValidationOptions;
 use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 
@@ -66,4 +68,14 @@ pub(super) fn mock_resolved_document(document: IotaDocument) -> ResolvedIotaDocu
     integration_message_id: MessageId::null(), // not necessary for validation at least not at the moment
     diff_message_id: MessageId::null(),        // not necessary for validation at least not at the moment
   }
+}
+
+// generates a triple: issuer document, issuer's keys, unsigned credential issued by issuer
+pub(super) fn credential_setup() -> (IotaDocument, KeyPair, Credential) {
+  let (issuer_doc, issuer_key) = generate_document_with_keys();
+  let (subject_doc, _) = generate_document_with_keys();
+  let issuance_date = Timestamp::parse("2020-01-01T00:00:00Z").unwrap();
+  let expiration_date = Timestamp::parse("2023-01-01T00:00:00Z").unwrap();
+  let credential = generate_credential(&issuer_doc, &[subject_doc], issuance_date, expiration_date);
+  (issuer_doc, issuer_key, credential)
 }

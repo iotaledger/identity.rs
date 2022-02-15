@@ -222,21 +222,14 @@ mod tests {
   use proptest::proptest;
 
   use identity_core::common::Timestamp;
-  use identity_core::common::Url;
+
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
-  use identity_core::json;
-  use identity_credential::credential::CredentialBuilder;
-  use identity_credential::credential::Subject;
-  use identity_credential::presentation::PresentationBuilder;
-  use identity_did::did::DID;
-  use iota_client::bee_message::MessageId;
 
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;
   use crate::document::IotaDocument;
-  use crate::document::ResolvedIotaDocument;
 
   fn deserialize_credential(credential_str: &str) -> Credential {
     Credential::from_json(credential_str).unwrap()
@@ -245,7 +238,7 @@ mod tests {
   const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
   const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
 
-  const SIMPLE_CREDENTIAL_JSON: &'static str = r#"{
+  const SIMPLE_CREDENTIAL_JSON: &str = r#"{
     "@context": [
       "https://www.w3.org/2018/credentials/v1",
       "https://www.w3.org/2018/credentials/examples/v1"

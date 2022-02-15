@@ -16,8 +16,8 @@ use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 
 use identity::iota::ClientMap;
-use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidationOptions;
+use identity::iota::PresentationValidator;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let trusted_issuers = &[trusted_issuer];
 
-  let validator: CredentialValidator = CredentialValidator::new();
+  let validator = PresentationValidator::new(&presentation);
 
   let presentation_verifier_options =
     VerifierOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
@@ -99,13 +99,10 @@ async fn main() -> Result<()> {
   let presentation_validation_options =
     PresentationValidationOptions::default().with_presentation_verifier_options(presentation_verifier_options);
 
-  let fail_fast = true;
-  let validation_result = validator.validate_presentation(
-    &presentation,
+  let validation_result = validator.full_validation(
     &presentation_validation_options,
-    trusted_issuers,
     &resolved_holder_document,
-    fail_fast,
+    trusted_issuers,
   );
   if validation_result.is_ok() {
     println!("successfully validated presentation!");

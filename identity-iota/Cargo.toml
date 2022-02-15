@@ -15,7 +15,6 @@ async-trait = { version = "0.1", default-features = false }
 bee-rest-api = { version = "0.1.7", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
-delegate = "0.6.1"
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.5.0-dev.3", path = "../identity-core" }
