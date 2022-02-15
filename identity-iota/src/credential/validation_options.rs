@@ -57,7 +57,7 @@ impl CredentialValidationOptions {
 
 #[derive(Debug)]
 pub struct PresentationValidationOptions {
-  pub(crate) common_validation_options: CredentialValidationOptions, // used when validating the credentials
+  pub(crate) shared_validation_options: CredentialValidationOptions, // used when validating the credentials
   pub(crate) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature. */
   pub(crate) fail_fast: bool,
 }
@@ -65,24 +65,20 @@ pub struct PresentationValidationOptions {
 impl PresentationValidationOptions {
   pub fn new() -> Self {
     Self {
-      common_validation_options: CredentialValidationOptions::default(),
+      shared_validation_options: CredentialValidationOptions::default(),
       presentation_verifier_options: VerifierOptions::default(),
       fail_fast: true,
     }
   }
 
-  pub fn common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
-    self.common_validation_options = options;
+  pub fn shared_validation_options(mut self, options: CredentialValidationOptions) -> Self {
+    self.shared_validation_options = options;
     self
   }
 
   pub fn presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
     self.presentation_verifier_options = options;
     self
-  }
-  // Returns an option as we may want this field to be optional in the future.
-  pub fn common_validation_options_mut(&mut self) -> Option<&mut CredentialValidationOptions> {
-    Some(&mut self.common_validation_options)
   }
 
   pub fn fail_fast(mut self, value: bool) -> Self {
