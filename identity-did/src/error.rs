@@ -48,14 +48,9 @@ pub enum Error {
   UnknownMethodScope,
   #[error("Unknown Method Type")]
   UnknownMethodType,
-  // TODO: remove this
-  #[error("Unknown Signature Type")]
-  UnknownSignatureType,
 
   #[error("Invalid Key Data")]
   InvalidKeyData,
-  #[error("Invalid Base16 Key Data")]
-  InvalidKeyDataBase16,
   #[error("Invalid Base58 Key Data")]
   InvalidKeyDataBase58,
   #[error("Invalid Multibase Key Data")]
