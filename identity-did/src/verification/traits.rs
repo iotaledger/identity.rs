@@ -46,6 +46,6 @@ pub trait TryMethod {
   where
     D: DID,
   {
-    Self::method(method).ok_or(Error::InvalidMethodFragment)
+    Self::method(method).ok_or(Error::MissingIdFragment)
   }
 }

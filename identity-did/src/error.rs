@@ -24,19 +24,12 @@ pub enum Error {
   /// Caused by invalid or missing properties when constructing a [`Service`].
   #[error("invalid service property: {0}")]
   InvalidService(&'static str),
-
-  // TODO: replace/merge these errors
-  #[error("Invalid Verification Method Property: `id`")]
-  BuilderInvalidMethodId,
-  #[error("Invalid Verification Method Property: `controller`")]
-  BuilderInvalidMethodController,
-  #[error("Invalid Verification Method Property: `type`")]
-  BuilderInvalidMethodType,
-  #[error("Invalid Verification Method Property: `data`")]
-  BuilderInvalidMethodData,
+  /// Caused by invalid or missing properties when constructing a [`VerificationMethod`].
+  #[error("invalid verification method property: {0}")]
+  InvalidMethod(&'static str),
 
   #[error("invalid or empty `id` fragment")]
-  InvalidMethodFragment,
+  MissingIdFragment,
   #[error("Invalid Verification Method Type")]
   InvalidMethodType,
   /// Caused by attempting to add a verification method to a document, where a method with the same fragment already
@@ -55,6 +48,7 @@ pub enum Error {
   UnknownMethodScope,
   #[error("Unknown Method Type")]
   UnknownMethodType,
+  // TODO: remove this
   #[error("Unknown Signature Type")]
   UnknownSignatureType,
 

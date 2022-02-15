@@ -91,7 +91,7 @@ where
   /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {
-      return Err(Error::InvalidMethodFragment);
+      return Err(Error::MissingIdFragment);
     }
     self.id = id;
     Ok(())

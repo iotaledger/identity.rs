@@ -91,6 +91,8 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::Error;
+
   use super::*;
 
   #[test]
@@ -107,58 +109,53 @@ mod tests {
   }
 
   #[test]
-  #[should_panic = "InvalidMethodFragment"]
   fn test_missing_id_fragment() {
-    let _: VerificationMethod = MethodBuilder::default()
+    let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 
   #[test]
-  #[should_panic = "InvalidMethodId"]
   fn test_missing_id() {
-    let _: VerificationMethod = MethodBuilder::default()
+    let result: Result<VerificationMethod> = MethodBuilder::default()
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 
   #[test]
-  #[should_panic = "InvalidMethodType"]
   fn test_missing_key_type() {
-    let _: VerificationMethod = MethodBuilder::default()
+    let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_data(MethodData::PublicKeyMultibase("".into()))
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 
   #[test]
-  #[should_panic = "InvalidMethodData"]
   fn test_missing_key_data() {
-    let _: VerificationMethod = MethodBuilder::default()
+    let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 
   #[test]
-  #[should_panic = "InvalidMethodController"]
   fn test_missing_controller() {
-    let _: VerificationMethod = MethodBuilder::default()
+    let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
-      .build()
-      .unwrap();
+      .build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 }

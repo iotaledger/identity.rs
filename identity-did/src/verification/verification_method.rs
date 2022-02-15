@@ -78,16 +78,16 @@ where
 
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<D, T>) -> Result<Self> {
-    let id: DIDUrl<D> = builder.id.ok_or(Error::BuilderInvalidMethodId)?;
+    let id: DIDUrl<D> = builder.id.ok_or(Error::InvalidMethod("missing id"))?;
     if id.fragment().unwrap_or_default().is_empty() {
-      return Err(Error::BuilderInvalidMethodId);
+      return Err(Error::InvalidMethod("empty id fragment"));
     }
 
     Ok(VerificationMethod {
       id,
-      controller: builder.controller.ok_or(Error::BuilderInvalidMethodController)?,
-      key_type: builder.key_type.ok_or(Error::BuilderInvalidMethodType)?,
-      key_data: builder.key_data.ok_or(Error::BuilderInvalidMethodData)?,
+      controller: builder.controller.ok_or(Error::InvalidMethod("missing controller"))?,
+      key_type: builder.key_type.ok_or(Error::InvalidMethod("missing key_type"))?,
+      key_data: builder.key_data.ok_or(Error::InvalidMethod("missing key_data"))?,
       properties: builder.properties,
     })
   }
@@ -107,7 +107,7 @@ where
   /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {
-      return Err(Error::InvalidMethodFragment);
+      return Err(Error::MissingIdFragment);
     }
     self.id = id;
     Ok(())
@@ -158,7 +158,7 @@ where
     self
       .id
       .fragment()
-      .ok_or(Error::InvalidMethodFragment)
+      .ok_or(Error::MissingIdFragment)
       .map(|fragment| once('#').chain(fragment.chars()).collect())
   }
 
