@@ -142,10 +142,11 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::Error;
 
   #[test]
-  #[should_panic = "InvalidDocumentId"]
   fn test_missing_id() {
-    let _: CoreDocument = DocumentBuilder::default().build().unwrap();
+    let result: Result<CoreDocument> = DocumentBuilder::default().build();
+    assert!(matches!(result.unwrap_err(), Error::InvalidDocument(_, None)));
   }
 }

@@ -19,8 +19,9 @@ pub enum Error {
   #[error("Verification Method Not Found")]
   MethodNotFound,
 
-  #[error("Invalid Document Property: `id`")]
-  BuilderInvalidDocumentId,
+  /// Caused by invalid or missing properties when constructing a [`CoreDocument`].
+  #[error("invalid document property: {0}")]
+  InvalidDocument(&'static str, #[source] Option<::identity_core::Error>),
 
   #[error("Invalid Service Property: `id`")]
   BuilderInvalidServiceId,

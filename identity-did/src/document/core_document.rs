@@ -99,19 +99,44 @@ where
   /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
   pub fn from_builder(builder: DocumentBuilder<D, T, U, V>) -> Result<Self> {
     Ok(Self {
-      id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
+      id: builder.id.ok_or(Error::InvalidDocument("missing id", None))?,
       controller: Some(builder.controller)
         .filter(|controllers| !controllers.is_empty())
         .map(TryFrom::try_from)
-        .transpose()?,
-      also_known_as: builder.also_known_as.try_into()?,
-      verification_method: builder.verification_method.try_into()?,
-      authentication: builder.authentication.try_into()?,
-      assertion_method: builder.assertion_method.try_into()?,
-      key_agreement: builder.key_agreement.try_into()?,
-      capability_delegation: builder.capability_delegation.try_into()?,
-      capability_invocation: builder.capability_invocation.try_into()?,
-      service: builder.service.try_into()?,
+        .transpose()
+        .map_err(|err| Error::InvalidDocument("controller", Some(err)))?,
+      also_known_as: builder
+        .also_known_as
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("also_known_as", Some(err)))?,
+      verification_method: builder
+        .verification_method
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("verification_method", Some(err)))?,
+      authentication: builder
+        .authentication
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("authentication", Some(err)))?,
+      assertion_method: builder
+        .assertion_method
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("assertion_method", Some(err)))?,
+      key_agreement: builder
+        .key_agreement
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("key_agreement", Some(err)))?,
+      capability_delegation: builder
+        .capability_delegation
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("capability_delegation", Some(err)))?,
+      capability_invocation: builder
+        .capability_invocation
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("capability_invocation", Some(err)))?,
+      service: builder
+        .service
+        .try_into()
+        .map_err(|err| Error::InvalidDocument("service", Some(err)))?,
       properties: builder.properties,
     })
   }
