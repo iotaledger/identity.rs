@@ -132,14 +132,6 @@ impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
-      identity::iota::Error::InvalidCredentialPairing(e) => {
-        write!(f, "{}. ", self.0)?;
-        error_chain_fmt(&e, f)
-      }
-      identity::iota::Error::InvalidPresentationPairing(e) => {
-        write!(f, "{}. ", self.0)?;
-        error_chain_fmt(&e, f)
-      }
       // the rest include the source error's message in their own
       _ => self.0.fmt(f),
     }

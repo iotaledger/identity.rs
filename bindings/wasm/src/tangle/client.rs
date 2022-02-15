@@ -266,7 +266,7 @@ impl Client {
     let client: Rc<IotaClient> = self.client.clone();
     let presentation: Presentation = Presentation::from_json(&data).wasm_result()?;
     let presentation_validation_options =
-      PresentationValidationOptions::default().with_presentation_verifier_options(options.0);
+      PresentationValidationOptions::default().presentation_verifier_options(options.0);
     let promise: Promise = future_to_promise(async move {
       // resolve the holder's DID Document and also the DID Documents of the credential issuers.
       let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) =
