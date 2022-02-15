@@ -71,12 +71,12 @@ impl PresentationValidationOptions {
     }
   }
 
-  pub fn with_common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
+  pub fn common_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.common_validation_options = options;
     self
   }
 
-  pub fn with_presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
+  pub fn presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
     self.presentation_verifier_options = options;
     self
   }

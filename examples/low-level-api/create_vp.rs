@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
     VerifierOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
 
   let presentation_validation_options =
-    PresentationValidationOptions::default().with_presentation_verifier_options(presentation_verifier_options);
+    PresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
 
   let validation_result = validator.full_validation(
     &presentation_validation_options,

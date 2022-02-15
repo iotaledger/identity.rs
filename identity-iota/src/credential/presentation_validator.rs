@@ -310,8 +310,8 @@ mod tests {
     let presentation_verifier_options =
       VerifierOptions::default().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
-      .with_common_validation_options(credential_validation_options)
-      .with_presentation_verifier_options(presentation_verifier_options);
+      .common_validation_options(credential_validation_options)
+      .presentation_verifier_options(presentation_verifier_options);
 
     let validator = PresentationValidator::new(&presentation);
 
@@ -407,8 +407,8 @@ mod tests {
       .latest_issuance_date(issued_before);
 
     let presentation_validation_options = PresentationValidationOptions::default()
-      .with_common_validation_options(credential_validation_options)
-      .with_presentation_verifier_options(presentation_verifier_options);
+      .common_validation_options(credential_validation_options)
+      .presentation_verifier_options(presentation_verifier_options);
 
     let error = match validator
       .full_validation(
@@ -486,8 +486,8 @@ mod tests {
       .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
-      .with_common_validation_options(credential_validation_options)
-      .with_presentation_verifier_options(presentation_verifier_options);
+      .common_validation_options(credential_validation_options)
+      .presentation_verifier_options(presentation_verifier_options);
 
     let validator = PresentationValidator::new(&presentation);
 
@@ -598,8 +598,8 @@ mod tests {
       .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
-      .with_common_validation_options(credential_validation_options)
-      .with_presentation_verifier_options(presentation_verifier_options);
+      .common_validation_options(credential_validation_options)
+      .presentation_verifier_options(presentation_verifier_options);
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -696,8 +696,8 @@ mod tests {
       .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
-      .with_common_validation_options(credential_validation_options)
-      .with_presentation_verifier_options(presentation_verifier_options);
+      .common_validation_options(credential_validation_options)
+      .presentation_verifier_options(presentation_verifier_options);
 
     let validator = PresentationValidator::new(presentation);
 
@@ -800,8 +800,8 @@ mod tests {
       .latest_issuance_date(issued_before);
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
-      .with_common_validation_options(credential_validation_options)
-      .with_presentation_verifier_options(presentation_verifier_options);
+      .common_validation_options(credential_validation_options)
+      .presentation_verifier_options(presentation_verifier_options);
 
     let validator = PresentationValidator::new(presentation);
 
