@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState, NapiGeneration } from '../index.js'
-import { DID, KeyLocation, Generation, DIDLease, Signature, ChainState, IdentityState, Storage } from "../../../wasm/node/identity_wasm.js";
+import { DID, KeyLocation, Generation, DIDLease, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm.js";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
