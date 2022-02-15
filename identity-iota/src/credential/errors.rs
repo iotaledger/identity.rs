@@ -6,29 +6,21 @@ use std::fmt::Display;
 
 use identity_core::common::OneOrMany;
 
-use crate::did::IotaDIDUrl;
-
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
 pub enum ValidationError {
   /// Indicates that the expiration date of the credential is not considered valid.
-  #[error("the expiration date does not satisfy the validation criterea")]
+  #[error("the expiration date is in the past or earlier than required.")]
   ExpirationDate,
   /// Indicates that the issuance date of the credential is not considered valid.
-  #[error("the issuance date does not satisfy the validation criterea")]
+  #[error("the credential is yet to be active or has not been active for the required period.")]
   IssuanceDate,
-  /// The DID document corresponding to `did` has been deactivated.
-  #[error("encountered deactivated subject document")]
-  //Todo: Should the did_url be included in the error message? Would it be better in terms of abstraction and
-  // flexibility to include more information in a simple String? Can the `did_url` be problematic in terms of GDPR if
-  // it gets written to a log file?
-  DeactivatedSubjectDocument { did_url: IotaDIDUrl },
   /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
   #[error("could not verify the issuer's signature")]
   IssuerProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
-                                                                 * here? */
+                                                                 * * here? */
   },
   /// Indicates an attempt to validate a credential signed by an untrusted issuer.
   #[error("the credential is signed by an untrusted issuer")]
@@ -54,7 +46,7 @@ pub enum ValidationError {
   IncompatibleHolderDocument,
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
-  #[error("presentation validation failed: could not verify the holder's signature")]
+  #[error("could not verify the holder's signature")]
   HolderProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
@@ -64,26 +56,14 @@ pub enum ValidationError {
   CredentialStructure(#[source] identity_credential::Error),
   /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not semantically
   /// correct.
-  #[error("the presentation's structure is not spec compliant")]
+  #[error("the presentation's structure is not semantically correct")]
   PresentationStructure(#[source] identity_credential::Error),
   /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials.
-  #[error(
-    "the nonTransferable property of the credential at position {credential_position} in the presentation is not met"
-  )]
+  #[error("expected holder = subject of the credential at position {credential_position}")]
   NonTransferableViolation { credential_position: usize },
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
-
-  #[error("could not associate the provided resolved DID Document with the credential's issuer")]
-  UnrelatedIssuer,
-
-  #[error("attempted to group a credential with unrelated subject documents")]
-  UnrelatedSubjects,
-  #[error("attempted to group a presentation with an unrelated holder document")]
-  UnrelatedHolder,
-  #[error("attempted to group a presentation with an unrelated credential")]
-  UnrelatedCredentials,
 }
 
 // Todo: Consider implementing Error for OneOrMany<E: std::error::Error> to avoid wrapping it in
