@@ -88,9 +88,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
@@ -117,29 +117,29 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
     * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
     * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.publish(publish_options)](#Account+publish) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.publish(publish_options)](#Account+publish) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createSignedCredential(fragment, credential, signature_options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
     * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-    * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+deleteMethod"></a>
 
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Deletes a verification method if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -150,7 +150,7 @@ Deletes a verification method if the method exists.
 
 <a name="Account+deleteService"></a>
 
-### account.deleteService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Deletes a Service if it exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -161,7 +161,7 @@ Deletes a Service if it exists.
 
 <a name="Account+createService"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Adds a new Service to the DID Document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -202,7 +202,7 @@ Resolves the DID Document associated with this `Account` from the Tangle.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+deleteIdentity"></a>
 
-### account.deleteIdentity() ⇒ <code>Promise.&lt;any&gt;</code>
+### account.deleteIdentity() ⇒ <code>Promise.&lt;void&gt;</code>
 Removes the identity from the local storage entirely.
 
 Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
@@ -210,7 +210,7 @@ Note: This will remove all associated document updates and key material - recove
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+publish"></a>
 
-### account.publish(publish_options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.publish(publish_options) ⇒ <code>Promise.&lt;void&gt;</code>
 Push all unpublished changes to the tangle in a single message.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -260,7 +260,7 @@ Signs a [Presentation](#Presentation) the key specified by `fragment`.
 
 <a name="Account+createSignedData"></a>
 
-### account.createSignedData(fragment, data, signature_options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createSignedData(fragment, data, signature_options) ⇒ <code>Promise.&lt;void&gt;</code>
 Signs arbitrary `data` with the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -273,7 +273,7 @@ Signs arbitrary `data` with the key specified by `fragment`.
 
 <a name="Account+updateDocumentUnchecked"></a>
 
-### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;void&gt;</code>
 Overwrites the [Document](#Document) this account manages, **without doing any validation**.
 
 ### WARNING
@@ -290,7 +290,7 @@ understand the implications!
 
 <a name="Account+fetchState"></a>
 
-### account.fetchState() ⇒ <code>Promise.&lt;any&gt;</code>
+### account.fetchState() ⇒ <code>Promise.&lt;void&gt;</code>
 Fetches the latest changes from the tangle and **overwrites** the local document.
 
 If a DID is managed from distributed accounts, this should be called before making changes
@@ -299,7 +299,7 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+createMethod"></a>
 
-### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Adds a new verification method to the DID document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -310,7 +310,7 @@ Adds a new verification method to the DID document.
 
 <a name="Account+attachMethodRelationships"></a>
 
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Attach one or more verification relationships to a method.
 
 Note: the method must exist and be in the set of verification methods;
@@ -324,7 +324,7 @@ it cannot be an embedded method.
 
 <a name="Account+detachMethodRelationships"></a>
 
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -2677,13 +2677,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="MethodRelationship"></a>
 

@@ -17,14 +17,16 @@ use identity::core::Url;
 
 use crate::account::wasm_account::WasmAccount;
 
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
+use wasm_bindgen::JsCast;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   /// Adds a new Service to the DID Document.
   #[wasm_bindgen(js_name = createService)]
-  pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<Promise> {
+  pub fn create_service(&mut self, options: &CreateServiceOptions) -> Result<PromiseVoid> {
     let service_type: String = options.type_().ok_or(MissingRequiredField("type")).wasm_result()?;
 
     let fragment: String = options
@@ -55,7 +57,7 @@ impl WasmAccount {
       create_service.apply().await.wasm_result().map(|_| JsValue::undefined())
     });
 
-    Ok(promise)
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 
