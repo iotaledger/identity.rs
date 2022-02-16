@@ -6,7 +6,6 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
 use identity_core::common::OneOrMany;
-use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
@@ -59,10 +58,10 @@ impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
       .map_err(ValidationError::PresentationStructure)
   }
 
-  // An iterator over the credentials (with their corresponding position in the presentation) that have the
-  // `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
-  // holder
-  pub fn non_transferable_violations(&self) -> impl Iterator<Item = (usize, &Credential<V>)> + '_ {
+  /// An iterator over the indices corresponding to the credentials that have the
+  /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
+  /// holder
+  pub fn non_transferable_violations(&self) -> impl Iterator<Item = usize> + '_ {
     let presentation = self.presentation.borrow();
     presentation
       .verifiable_credential
@@ -81,6 +80,7 @@ impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
           false
         }
       })
+      .map(|(position, _)| position)
   }
 
   /// Validates that the nonTransferable property is met.
@@ -100,7 +100,7 @@ impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
   }
 
   fn check_non_transferable_local_error(&self) -> ValidationUnitResult {
-    if let Some((position, _)) = self.non_transferable_violations().next() {
+    if let Some(position) = self.non_transferable_violations().next() {
       let err = ValidationError::NonTransferableViolation {
         credential_position: position,
       };
@@ -208,7 +208,7 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
     presentation_validation_errors.extend(
       self
         .non_transferable_violations()
-        .map(|(credential_position, _)| ValidationError::NonTransferableViolation { credential_position }),
+        .map(|credential_position| ValidationError::NonTransferableViolation { credential_position }),
     );
     if !presentation_validation_errors.is_empty() {
       observed_error = true;
