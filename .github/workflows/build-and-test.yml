@@ -32,9 +32,8 @@ jobs:
     outputs:
       should-run: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
     steps:
-      - name: noop
-        run: |
-          echo "beep boop"
+      - run: |
+          # this run step does nothing, but is needed to get the job output
 
   check-for-modification:
     needs: check-for-run-condition
