@@ -6,10 +6,10 @@ use identity_did::verifiable::VerifierOptions;
 
 #[derive(Debug)]
 pub struct CredentialValidationOptions {
-  pub(crate) earliest_expiry_date: Timestamp,
-  pub(crate) latest_issuance_date: Timestamp,
-  pub(crate) verifier_options: VerifierOptions,
-  pub(crate) fail_fast: bool,
+  pub(super) earliest_expiry_date: Timestamp,
+  pub(super) latest_issuance_date: Timestamp,
+  pub(super) verifier_options: VerifierOptions,
+  pub(super) fail_fast: bool,
 }
 
 impl Default for CredentialValidationOptions {
@@ -57,9 +57,9 @@ impl CredentialValidationOptions {
 
 #[derive(Debug)]
 pub struct PresentationValidationOptions {
-  pub(crate) shared_validation_options: CredentialValidationOptions, // used when validating the credentials
-  pub(crate) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature. */
-  pub(crate) fail_fast: bool,
+  pub(super) shared_validation_options: CredentialValidationOptions, // used when validating the credentials
+  pub(super) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature. */
+  pub(super) fail_fast: bool,
 }
 
 impl PresentationValidationOptions {
