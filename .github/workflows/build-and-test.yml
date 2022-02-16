@@ -38,7 +38,7 @@ jobs:
 
   check-for-modification:
     needs: check-for-run-condition
-    if: ${{ needs.check-for-run-condition.outputs.should-run }}
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
@@ -64,7 +64,7 @@ jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     needs: [check-for-run-condition, check-for-modification]
-    if: ${{ needs.check-for-run-condition.outputs.should-run && needs.check-for-modification.outputs.core-modified == 'true' }}
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -141,7 +141,7 @@ jobs:
 
   build-and-test-libjose:
     needs: check-for-run-condition
-    if: ${{ needs.check-for-run-condition.outputs.should-run }}
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -173,7 +173,7 @@ jobs:
 
   build-and-test-wasm:
     needs: check-for-run-condition
-    if: ${{ needs.check-for-run-condition.outputs.should-run }}
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
