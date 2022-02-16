@@ -3,7 +3,6 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::iter::once;
 
 use serde::de;
 use serde::Deserialize;
@@ -153,17 +152,8 @@ where
     &mut self.properties
   }
 
-  /// Returns the fragment of the `VerificationMethod` id field.
-  pub fn try_into_fragment(&self) -> Result<String> {
-    self
-      .id
-      .fragment()
-      .ok_or(Error::MissingIdFragment)
-      .map(|fragment| once('#').chain(fragment.chars()).collect())
-  }
-
   /// Creates a new [`MethodRef`] from `self`.
-  pub fn into_ref(self) -> MethodRef<D, T> {
+  pub fn into_method_ref(self) -> MethodRef<D, T> {
     MethodRef::Embed(self)
   }
 
@@ -260,7 +250,7 @@ where
       return Err(Error::InvalidMethodRevocation);
     }
 
-    // TODO: map this to a proper error?
+    // TODO: map this to a descriptive error?
     let index: u32 = index.try_into().map_err(|_| Error::InvalidMethodRevocation)?;
     let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
     let revoked: bool = revocation.insert(index);

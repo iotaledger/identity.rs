@@ -123,8 +123,8 @@ impl IotaDocument {
   /// let document = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key")).unwrap();
   /// assert_eq!(document.id().network_str(), "dev");
   /// assert_eq!(
-  ///   document.default_signing_method().unwrap().try_into_fragment().unwrap(),
-  ///   "#auth-key"
+  ///   document.default_signing_method().unwrap().id().fragment().unwrap(),
+  ///   "auth-key"
   /// );
   /// ```
   pub fn new_with_options(keypair: &KeyPair, network: Option<NetworkName>, fragment: Option<&str>) -> Result<Self> {
@@ -410,7 +410,12 @@ impl IotaDocument {
     // Specify the full method DID Url if the verification method id does not match the document id.
     let method_did: &IotaDID = method.id().did();
     let method_id: String = if method_did == self.id() {
-      method.try_into_fragment()?
+      // TODO: re-map this error (along with every other error in sign methods)
+      method
+        .id()
+        .fragment()
+        .map(|fragment| core::iter::once('#').chain(fragment.chars()).collect())
+        .ok_or(Error::InvalidDoc(identity_did::Error::MissingIdFragment))?
     } else {
       method.id().to_string()
     };
@@ -781,8 +786,8 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::new_with_options(&keypair, None, Some("test-key")).unwrap();
     assert_eq!(
-      document.default_signing_method().unwrap().try_into_fragment().unwrap(),
-      "#test-key"
+      document.default_signing_method().unwrap().id().fragment().unwrap(),
+      "test-key"
     );
   }
 
