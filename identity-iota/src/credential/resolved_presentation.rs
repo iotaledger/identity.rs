@@ -44,4 +44,5 @@ impl<T: Serialize, U: Serialize + PartialEq + Clone> ResolvedPresentation<T, U> 
       self.credential_issuers.as_slice(),
     )
   }
+  //Todo: should there also be a method that only verifies signatures?
 }

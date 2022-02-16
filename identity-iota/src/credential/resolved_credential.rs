@@ -33,4 +33,5 @@ impl<T: Serialize> ResolvedCredential<T> {
   pub fn validate(&self, options: &CredentialValidationOptions) -> Result<()> {
     CredentialValidator::new(&self.credential).full_validation(options, std::slice::from_ref(&self.issuer))
   }
+  //Todo: Should there also be a method that only verifies the issuer's signature?
 }
