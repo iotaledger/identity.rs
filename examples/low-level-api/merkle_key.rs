@@ -60,13 +60,13 @@ async fn main() -> Result<()> {
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
   // Select a random key from the collection
-  let index: u32 = OsRng.gen_range(0..keys.len());
+  let index: usize = OsRng.gen_range(0..keys.len());
 
-  let public: &PublicKey = keys.public(index as usize).unwrap();
-  let private: &PrivateKey = keys.private(index as usize).unwrap();
+  let public: &PublicKey = keys.public(index).unwrap();
+  let private: &PrivateKey = keys.private(index).unwrap();
 
   // Generate an inclusion proof for the selected key
-  let proof: Proof<Sha256> = keys.merkle_proof(index as usize).unwrap();
+  let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
 
   // Sign the Credential with the issuers private key
   issuer_doc
@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
   // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
   issuer_doc
     .try_resolve_method_mut("merkle-key")?
-    .revoke_merkle_key(index)?;
+    .revoke_merkle_key(index as u32)?;
   issuer_doc.metadata.previous_message_id = *receipt.message_id();
   issuer_doc.metadata.updated = Timestamp::now_utc();
   issuer_doc.sign_self(issuer_key.private(), issuer_doc.default_signing_method()?.id().clone())?;
