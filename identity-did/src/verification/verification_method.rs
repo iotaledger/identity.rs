@@ -198,7 +198,7 @@ where
   // Constructors
   // ===========================================================================
 
-  /// Creates a new [`IotaVerificationMethod`] from the given `did` and `keypair`.
+  /// Creates a new [`IotaVerificationMethod`] from the given `did` and public key.
   pub fn new(did: D, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
     let method_fragment: String = if !fragment.starts_with('#') {
       format!("#{}", fragment)
