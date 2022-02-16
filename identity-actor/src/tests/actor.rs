@@ -86,15 +86,15 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
     .add_handler("request/test", State::handler)
     .unwrap();
 
-  actor1.add_address(actor2.peer_id().await, addr).await;
+  actor1.add_address(actor2.peer_id(), addr).await;
 
   actor1
-    .send_message(actor2.peer_id().await, &ThreadId::new(), Dummy(42))
+    .send_message(actor2.peer_id(), &ThreadId::new(), Dummy(42))
     .await
     .unwrap();
 
   actor2
-    .send_message(actor1.peer_id().await, &ThreadId::new(), Dummy(43))
+    .send_message(actor1.peer_id(), &ThreadId::new(), Dummy(43))
     .await
     .unwrap();
 

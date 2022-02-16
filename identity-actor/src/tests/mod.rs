@@ -24,7 +24,7 @@ async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
     .unwrap();
 
   let addr = listening_actor.addresses().await.pop().unwrap();
-  let peer_id = listening_actor.peer_id().await;
+  let peer_id = listening_actor.peer_id();
 
   (listening_actor, addr, peer_id)
 }

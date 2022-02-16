@@ -188,7 +188,7 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
     .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
     .unwrap();
 
-  let peer_id = verifier_actor.peer_id().await;
+  let peer_id = verifier_actor.peer_id();
   let thread_id = ThreadId::new();
 
   let result = verifier_actor
@@ -230,7 +230,7 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
     .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
     .unwrap();
 
-  let verifier_peer_id = verifier_actor.peer_id().await;
+  let verifier_peer_id = verifier_actor.peer_id();
 
   holder_actor.add_address(verifier_peer_id, addr.clone()).await;
 

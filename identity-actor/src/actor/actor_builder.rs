@@ -125,6 +125,7 @@ impl ActorBuilder {
       handlers,
       objects,
       self.listening_addresses,
+      peer_id,
     )
     .await
   }

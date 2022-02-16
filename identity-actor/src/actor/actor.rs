@@ -86,6 +86,7 @@ pub struct ActorState {
   pub(crate) listener_handle: Mutex<Option<JoinHandle<Result<()>>>>,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
+  pub(crate) peer_id: PeerId,
 }
 
 #[derive(Clone)]
@@ -101,6 +102,7 @@ impl Actor {
     handlers: HandlerMap,
     objects: ObjectMap,
     listening_addresses: Vec<Multiaddr>,
+    peer_id: PeerId,
   ) -> Result<Self> {
     let mut actor = Self {
       commander,
@@ -110,6 +112,7 @@ impl Actor {
         listener_handle: Mutex::new(None),
         threads_receiver: DashMap::new(),
         threads_sender: DashMap::new(),
+        peer_id,
       }),
     };
 
@@ -148,8 +151,8 @@ impl Actor {
     self.commander.start_listening(address).await
   }
 
-  pub async fn peer_id(&mut self) -> PeerId {
-    self.commander.peer_id().await
+  pub fn peer_id(&mut self) -> PeerId {
+    self.state.peer_id
   }
 
   pub async fn addresses(&mut self) -> Vec<Multiaddr> {
