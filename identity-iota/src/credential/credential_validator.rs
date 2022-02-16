@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::ControlFlow;
-
 use crate::credential::errors::AccumulatedCredentialValidationError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -185,22 +183,17 @@ impl CredentialValidator {
 
     let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(credential));
 
-    let mut validation_errors = OneOrMany::empty();
-    issuance_date_validation
+    let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
       .chain(signature_validation)
-      .try_for_each(|res| {
-        if let Err(error) = res {
-          validation_errors.push(error);
-          if options.fail_fast {
-            return ControlFlow::Break(());
-          }
-          ControlFlow::Continue(())
-        } else {
-          ControlFlow::Continue(())
-        }
-      });
+      .filter_map(|result| result.err());
+    let fail_fast = options.fail_fast;
+    let validation_errors: OneOrMany<ValidationError> = if fail_fast {
+      validation_units_iter.take(1).collect()
+    } else {
+      validation_units_iter.collect()
+    };
     if validation_errors.is_empty() {
       Ok(())
     } else {
