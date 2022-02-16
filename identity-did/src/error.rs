@@ -3,6 +3,8 @@
 
 //! Errors that may occur when working with Decentralized Identifiers.
 
+use crate::verification::MethodType;
+
 /// Alias for a [`Result`][::core::result::Result] with the error type [Error].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
@@ -41,8 +43,8 @@ pub enum Error {
   InvalidMethodEmbedded,
 
   /// Caused by attempting to revoke an unsupported method.
-  #[error("revocation is not supported for methods other than MerkleKeyCollection2021")]
-  InvalidMethodRevocation,
+  #[error("revocation is not supported for {0}")]
+  InvalidMethodRevocation(MethodType),
 
   #[error("Unknown Method Scope")]
   UnknownMethodScope,

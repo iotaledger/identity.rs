@@ -244,14 +244,12 @@ where
   /// # Errors
   ///
   /// - if this is called on a `VerificationMethod` with a type other than [`MethodType::MerkleKeyCollection2021`].
-  /// - if the index exceeds u32.
-  pub fn revoke_merkle_key(&mut self, index: usize) -> Result<bool> {
-    if self.key_type() != MethodType::MerkleKeyCollection2021 {
-      return Err(Error::InvalidMethodRevocation);
+  pub fn revoke_merkle_key(&mut self, index: u32) -> Result<bool> {
+    let method_type: MethodType = self.key_type();
+    if method_type != MethodType::MerkleKeyCollection2021 {
+      return Err(Error::InvalidMethodRevocation(method_type));
     }
 
-    // TODO: map this to a descriptive error?
-    let index: u32 = index.try_into().map_err(|_| Error::InvalidMethodRevocation)?;
     let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
     let revoked: bool = revocation.insert(index);
 

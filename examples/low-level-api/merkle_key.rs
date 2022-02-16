@@ -60,13 +60,13 @@ async fn main() -> Result<()> {
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
   // Select a random key from the collection
-  let index: usize = OsRng.gen_range(0..keys.len());
+  let index: u32 = OsRng.gen_range(0..keys.len());
 
-  let public: &PublicKey = keys.public(index).unwrap();
-  let private: &PrivateKey = keys.private(index).unwrap();
+  let public: &PublicKey = keys.public(index as usize).unwrap();
+  let private: &PrivateKey = keys.private(index as usize).unwrap();
 
   // Generate an inclusion proof for the selected key
-  let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
+  let proof: Proof<Sha256> = keys.merkle_proof(index as usize).unwrap();
 
   // Sign the Credential with the issuers private key
   issuer_doc
