@@ -47,16 +47,15 @@ pub async fn validation_units_vc() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // validate that the credential is valid two weeks from now
-  let validator = CredentialValidator::new(&credential);
-  validator.earliest_expiry_date(two_weeks_from_now_timestamp)?;
+  CredentialValidator::earliest_expiry_date(&credential, two_weeks_from_now_timestamp)?;
 
   // validate that the credential is active now
-  validator.latest_issuance_date(Timestamp::now_utc())?;
+  CredentialValidator::latest_issuance_date(&credential, Timestamp::now_utc())?;
 
   // validate whether the credential has been active for at least two weeks
-  if let Err(issuance_error) = validator.latest_issuance_date(two_weeks_ago_timestamp) {
+  if let Err(issuance_error) = CredentialValidator::latest_issuance_date(&credential, two_weeks_ago_timestamp) {
     // print the error message from the validation error
-    println!("{}", issuance_error.to_string());
+    println!("{}", issuance_error);
     // add some more context ourselves
     println!("the credential has not been active for two weeks!");
   }
@@ -68,7 +67,7 @@ pub async fn validation_units_vc() -> Result<()> {
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let trusted_issuers: Vec<ResolvedIotaDocument> = common::resolve_documents(&[issuer_doc]).await?;
-  validator.verify_signature(trusted_issuers.as_slice(), &VerifierOptions::default())?;
+  CredentialValidator::verify_signature(&credential, trusted_issuers.as_slice(), &VerifierOptions::default())?;
 
   Ok(())
 }

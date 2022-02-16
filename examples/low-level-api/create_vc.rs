@@ -45,10 +45,10 @@ pub async fn create_vc() -> Result<()> {
 
   // Validate the verifiable credential
   //Todo: Use the new resolver to get the necessary DID documents once that becomes available.
-  let validator = CredentialValidator::new(&credential);
+  let validator = CredentialValidator::new();
   let validation_options = CredentialValidationOptions::default();
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  validator.full_validation(&validation_options, &[trusted_issuer])
+  validator.full_validation(&credential, &validation_options, &[trusted_issuer])
 }
 
 #[tokio::main]

@@ -1,9 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Borrow;
 use std::collections::BTreeMap;
-use std::marker::PhantomData;
 
 use identity_core::common::OneOrMany;
 use identity_credential::presentation::Presentation;
@@ -20,40 +18,36 @@ use crate::document::ResolvedIotaDocument;
 use crate::Error;
 use crate::Result;
 
-/// A struct for validating the given [Presentation].
-pub struct PresentationValidator<U, V, T: Borrow<Presentation<U, V>>> {
-  pub presentation: T,
-  _required: (PhantomData<U>, PhantomData<V>), // will not compile without this field
-}
+/// A struct for validating [Presentation]s.
+#[non_exhaustive]
+pub struct PresentationValidator;
 
 // Use the following pattern throughout: for each public method there is corresponding private method returning a more
 // local error.
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type PresentationValidationResult = std::result::Result<(), AccumulatedPresentationValidationError>;
 
-impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
+impl Default for PresentationValidator {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+impl PresentationValidator {
   /// Constructs a new [PresentationValidator]
-  pub fn new(presentation: T) -> Self {
-    Self {
-      presentation,
-      _required: (PhantomData::<U>, PhantomData::<V>),
-    }
+  pub fn new() -> Self {
+    Self {}
   }
 
   /// Validates the semantic structure of the `Presentation`.
   ///
   /// # Terminology
   /// This is a *validation unit*.
-  pub fn check_structure(&self) -> Result<()> {
-    self
-      .check_structure_local_error()
-      .map_err(Error::UnsuccessfulValidationUnit)
+  pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
+    Self::check_structure_local_error(presentation).map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn check_structure_local_error(&self) -> ValidationUnitResult {
-    self
-      .presentation
-      .borrow()
+  fn check_structure_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+    presentation
       .check_structure()
       .map_err(ValidationError::PresentationStructure)
   }
@@ -61,8 +55,7 @@ impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
   /// An iterator over the indices corresponding to the credentials that have the
   /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
   /// holder
-  pub fn non_transferable_violations(&self) -> impl Iterator<Item = usize> + '_ {
-    let presentation = self.presentation.borrow();
+  pub fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
     presentation
       .verifiable_credential
       .as_ref()
@@ -93,14 +86,12 @@ impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
   ///
   /// # Terminology
   /// This is a *validation unit*
-  pub fn check_non_transferable(&self) -> Result<()> {
-    self
-      .check_non_transferable_local_error()
-      .map_err(Error::UnsuccessfulValidationUnit)
+  pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
+    Self::check_non_transferable_local_error(presentation).map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn check_non_transferable_local_error(&self) -> ValidationUnitResult {
-    if let Some(position) = self.non_transferable_violations().next() {
+  fn check_non_transferable_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+    if let Some(position) = Self::non_transferable_violations(presentation).next() {
       let err = ValidationError::NonTransferableViolation {
         credential_position: position,
       };
@@ -109,9 +100,7 @@ impl<U, V, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
       Ok(())
     }
   }
-}
 
-impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationValidator<U, V, T> {
   /// Verify the presentation's signature using the resolved document of the holder
   ///
   /// # Errors
@@ -120,22 +109,20 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
   ///
   /// # Terminology
   /// This is a *validation unit*.
-  pub fn verify_presentation_signature(
-    &self,
+  pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
+    presentation: &Presentation<U, V>,
     resolved_holder_document: &ResolvedIotaDocument,
     options: &VerifierOptions,
   ) -> Result<()> {
-    self
-      .verify_presentation_signature_local_error(resolved_holder_document, options)
+    Self::verify_presentation_signature_local_error(presentation, resolved_holder_document, options)
       .map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn verify_presentation_signature_local_error(
-    &self,
+  fn verify_presentation_signature_local_error<U: Serialize, V: Serialize>(
+    presentation: &Presentation<U, V>,
     resolved_holder_document: &ResolvedIotaDocument,
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    let presentation = self.presentation.borrow();
     let did: IotaDID = presentation
       .holder
       .as_ref()
@@ -166,19 +153,22 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
   /// - The nonTransferable property is set in one of the credentials, but the credential's subject is not the holder of
   ///   the presentation.
   /// - Validation of any of the presentation's credentials fails.
-  pub fn full_validation(
+  // Takes &self in case this method will need some pre-computed state in the future.
+  pub fn full_validation<U: Serialize, V: Serialize>(
     &self,
+    presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     resolved_holder_document: &ResolvedIotaDocument,
     trusted_issuers: &[ResolvedIotaDocument],
   ) -> Result<()> {
     self
-      .full_validation_local_error(options, resolved_holder_document, trusted_issuers)
+      .full_validation_local_error(presentation, options, resolved_holder_document, trusted_issuers)
       .map_err(Error::UnsuccessfulPresentationValidation)
   }
 
-  fn full_validation_local_error(
+  fn full_validation_local_error<U: Serialize, V: Serialize>(
     &self,
+    presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     resolved_holder_document: &ResolvedIotaDocument,
     trusted_issuers: &[ResolvedIotaDocument],
@@ -197,7 +187,7 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
       ref mut credential_errors,
     } = compound_error;
 
-    if let Err(structure_error) = self.check_structure_local_error() {
+    if let Err(structure_error) = Self::check_structure_local_error(presentation) {
       presentation_validation_errors.push(structure_error);
       observed_error = true;
       if fail_fast {
@@ -206,8 +196,7 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
     }
     // collect all nonTransferable violations (if any)
     presentation_validation_errors.extend(
-      self
-        .non_transferable_violations()
+      Self::non_transferable_violations(presentation)
         .map(|credential_position| ValidationError::NonTransferableViolation { credential_position }),
     );
     if !presentation_validation_errors.is_empty() {
@@ -217,9 +206,11 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
       }
     }
 
-    if let Err(signature_error) =
-      self.verify_presentation_signature_local_error(resolved_holder_document, &options.presentation_verifier_options)
-    {
+    if let Err(signature_error) = Self::verify_presentation_signature_local_error(
+      presentation,
+      resolved_holder_document,
+      &options.presentation_verifier_options,
+    ) {
       presentation_validation_errors.push(signature_error);
       observed_error = true;
       if fail_fast {
@@ -228,10 +219,12 @@ impl<U: Serialize, V: Serialize, T: Borrow<Presentation<U, V>>> PresentationVali
     }
 
     // now validate the credentials
-    for (position, credential) in self.presentation.borrow().verifiable_credential.iter().enumerate() {
-      if let Err(credential_error) = CredentialValidator::new(credential)
-        .full_validation_local_error(&options.shared_validation_options, trusted_issuers)
-      {
+    for (position, credential) in presentation.verifiable_credential.iter().enumerate() {
+      if let Err(credential_error) = CredentialValidator::new().full_validation_local_error(
+        credential,
+        &options.shared_validation_options,
+        trusted_issuers,
+      ) {
         observed_error = true;
         credential_errors.insert(position, credential_error);
         if fail_fast {
@@ -324,7 +317,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let validator = PresentationValidator::new(&presentation);
+    let validator = PresentationValidator::new();
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -334,6 +327,7 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     assert!(validator
       .full_validation(
+        &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
@@ -394,8 +388,6 @@ mod tests {
       )
       .unwrap();
 
-    // validate the presentation
-    let validator = PresentationValidator::new(presentation);
     // check the validation unit
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -406,11 +398,15 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
 
     // Todo match on the exact error here
-    assert!(validator
-      .verify_presentation_signature(&resolved_holder_document, &presentation_verifier_options)
-      .is_err());
+    assert!(PresentationValidator::verify_presentation_signature(
+      &presentation,
+      &resolved_holder_document,
+      &presentation_verifier_options
+    )
+    .is_err());
 
     // now check that full_validation also fails
+    let validator = PresentationValidator::new();
     let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
@@ -423,6 +419,7 @@ mod tests {
 
     let error = match validator
       .full_validation(
+        &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
@@ -500,7 +497,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let validator = PresentationValidator::new(&presentation);
+    let validator = PresentationValidator::new();
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -511,6 +508,7 @@ mod tests {
 
     let error = match validator
       .full_validation(
+        &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
@@ -584,9 +582,7 @@ mod tests {
 
     // check that the check_non_transferable validation unit fails
     // Todo: match on the exact error
-    assert!(PresentationValidator::new(&presentation)
-      .check_non_transferable()
-      .is_err());
+    assert!(PresentationValidator::check_non_transferable(&presentation).is_err());
 
     // check that full_validation also fails with the expected error
     // sign the presentation using subject_foo's document and private key.
@@ -601,7 +597,7 @@ mod tests {
       .unwrap();
 
     // validate the presentation
-    let validator = PresentationValidator::new(presentation);
+    let validator = PresentationValidator::new();
     let issued_before = Timestamp::parse("2020-02-02T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
@@ -621,6 +617,7 @@ mod tests {
 
     let error = match validator
       .full_validation(
+        &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
@@ -710,7 +707,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let validator = PresentationValidator::new(presentation);
+    let validator = PresentationValidator::new();
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -721,6 +718,7 @@ mod tests {
 
     let (presentation_validation_errors, credential_errors) = match validator
       .full_validation(
+        &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
@@ -816,7 +814,7 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .fail_fast(false);
 
-    let validator = PresentationValidator::new(presentation);
+    let validator = PresentationValidator::new();
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -827,6 +825,7 @@ mod tests {
 
     let (presentation_validation_errors, credential_errors) = match validator
       .full_validation(
+        &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,

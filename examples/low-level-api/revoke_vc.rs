@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
 
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let validation_result =
-    CredentialValidator::new(&signed_vc).full_validation(&CredentialValidationOptions::default(), &[trusted_issuer]);
+    CredentialValidator::new().full_validation(&signed_vc, &CredentialValidationOptions::default(), &[trusted_issuer]);
 
   println!("VC validation result: {:?}", validation_result);
   assert!(validation_result.is_err());

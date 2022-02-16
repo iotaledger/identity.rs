@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Borrow;
-use std::marker::PhantomData;
 use std::ops::ControlFlow;
 
 use crate::credential::errors::AccumulatedCredentialValidationError;
@@ -19,23 +17,23 @@ use serde::Serialize;
 use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 
-/// A struct for validating the given [Credential].
-pub struct CredentialValidator<U, T: Borrow<Credential<U>>> {
-  pub credential: T,
-  _required: PhantomData<U>, // will not compile without this field
-}
+/// A struct for validating [Credential]s.
+#[non_exhaustive]
+pub struct CredentialValidator;
 
 // Use the following pattern throughout: for each public method there is corresponding private method returning a more
 // local error.
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type CredentialValidationResult = std::result::Result<(), AccumulatedCredentialValidationError>;
 
-impl<U, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
-  pub fn new(credential: T) -> Self {
-    Self {
-      credential,
-      _required: PhantomData::<U>,
-    }
+impl Default for CredentialValidator {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+impl CredentialValidator {
+  pub fn new() -> Self {
+    Self {}
   }
 
   //---------------------------------------------------------- validation units
@@ -45,16 +43,12 @@ impl<U, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
   ///
   /// # Terminology
   /// This is a *validation unit*
-  pub fn check_structure(&self) -> Result<()> {
-    self
-      .check_structure_local_error()
-      .map_err(Error::UnsuccessfulValidationUnit)
+  pub fn check_structure<T>(credential: &Credential<T>) -> Result<()> {
+    Self::check_structure_local_error(credential).map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn check_structure_local_error(&self) -> ValidationUnitResult {
-    self
-      .credential
-      .borrow()
+  fn check_structure_local_error<T>(credential: &Credential<T>) -> ValidationUnitResult {
+    credential
       .check_structure()
       .map_err(ValidationError::CredentialStructure)
   }
@@ -63,14 +57,12 @@ impl<U, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
   ///
   /// # Terminology
   /// This is a *validation unit*
-  pub fn earliest_expiry_date(&self, timestamp: Timestamp) -> Result<()> {
-    self
-      .earliest_expiry_date_local_error(timestamp)
-      .map_err(Error::UnsuccessfulValidationUnit)
+  pub fn earliest_expiry_date<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
+    Self::earliest_expiry_date_local_error(credential, timestamp).map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn earliest_expiry_date_local_error(&self, timestamp: Timestamp) -> ValidationUnitResult {
-    let is_ok = if let Some(expiration_date) = self.credential.borrow().expiration_date {
+  fn earliest_expiry_date_local_error<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
+    let is_ok = if let Some(expiration_date) = credential.expiration_date {
       expiration_date >= timestamp
     } else {
       true
@@ -82,20 +74,16 @@ impl<U, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
   ///
   /// # Terminology
   /// This is a *validation unit*
-  pub fn latest_issuance_date(&self, timestamp: Timestamp) -> Result<()> {
-    self
-      .latest_issuance_date_local_error(timestamp)
-      .map_err(Error::UnsuccessfulValidationUnit)
+  pub fn latest_issuance_date<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
+    Self::latest_issuance_date_local_error(credential, timestamp).map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn latest_issuance_date_local_error(&self, timestamp: Timestamp) -> ValidationUnitResult {
-    (self.credential.borrow().issuance_date <= timestamp)
+  fn latest_issuance_date_local_error<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
+    (credential.issuance_date <= timestamp)
       .then(|| ())
       .ok_or(ValidationError::IssuanceDate)
   }
-}
 
-impl<U: Serialize, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
   /// Verify the signature using the issuer's DID document.
   ///
   /// # Security
@@ -103,18 +91,19 @@ impl<U: Serialize, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
   ///
   /// # Terminology
   /// This method is a *validation unit*
-  pub fn verify_signature(&self, trusted_issuers: &[ResolvedIotaDocument], options: &VerifierOptions) -> Result<()> {
-    self
-      .verify_signature_local_error(trusted_issuers, options)
-      .map_err(Error::UnsuccessfulValidationUnit)
+  pub fn verify_signature<T: Serialize>(
+    credential: &Credential<T>,
+    trusted_issuers: &[ResolvedIotaDocument],
+    options: &VerifierOptions,
+  ) -> Result<()> {
+    Self::verify_signature_local_error(credential, trusted_issuers, options).map_err(Error::UnsuccessfulValidationUnit)
   }
 
-  fn verify_signature_local_error(
-    &self,
+  fn verify_signature_local_error<T: Serialize>(
+    credential: &Credential<T>,
     trusted_issuers: &[ResolvedIotaDocument],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    let credential = self.credential.borrow();
     let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
     match issuer_did {
       Ok(did) => {
@@ -166,31 +155,35 @@ impl<U: Serialize, T: Borrow<Credential<U>>> CredentialValidator<U, T> {
   ///
   /// Fails on the first encountered error if `fail_fast` is true, otherwise all
   /// errors will be accumulated in the returned error.
-  pub fn full_validation(
+  // Takes &self in case this method will need some pre-computed state in the future.
+  pub fn full_validation<T: Serialize>(
     &self,
+    credential: &Credential<T>,
     options: &CredentialValidationOptions,
     trusted_issuers: &[ResolvedIotaDocument],
   ) -> Result<()> {
     self
-      .full_validation_local_error(options, trusted_issuers)
+      .full_validation_local_error(credential, options, trusted_issuers)
       .map_err(Error::UnsuccessfulCredentialValidation)
   }
 
-  pub(super) fn full_validation_local_error(
+  pub(super) fn full_validation_local_error<T: Serialize>(
     &self,
+    credential: &Credential<T>,
     options: &CredentialValidationOptions,
     trusted_issuers: &[ResolvedIotaDocument],
   ) -> CredentialValidationResult {
-    let signature_validation =
-      std::iter::once_with(|| self.verify_signature_local_error(trusted_issuers, &options.verifier_options));
+    let signature_validation = std::iter::once_with(|| {
+      Self::verify_signature_local_error(credential, trusted_issuers, &options.verifier_options)
+    });
 
     let expiry_date_validation =
-      std::iter::once_with(|| self.earliest_expiry_date_local_error(options.earliest_expiry_date));
+      std::iter::once_with(|| Self::earliest_expiry_date_local_error(credential, options.earliest_expiry_date));
 
     let issuance_date_validation =
-      std::iter::once_with(|| self.latest_issuance_date_local_error(options.latest_issuance_date));
+      std::iter::once_with(|| Self::latest_issuance_date_local_error(credential, options.latest_issuance_date));
 
-    let structure_validation = std::iter::once_with(|| self.check_structure_local_error());
+    let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(credential));
 
     let mut validation_errors = OneOrMany::empty();
     issuance_date_validation
@@ -280,11 +273,10 @@ mod tests {
     // now that we are sure that our parsed credential has the expected expiration date set we can start testing the
     // expires_after method with a later date
     let later_date = Timestamp::parse("2020-02-01T15:10:21Z").unwrap();
-    let validator = CredentialValidator::new(credential);
-    assert!(validator.earliest_expiry_date(later_date).is_err());
+    assert!(CredentialValidator::earliest_expiry_date(&credential, later_date).is_err());
     // and now with an earlier date
     let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
-    assert!(validator.earliest_expiry_date(earlier_date).is_ok());
+    assert!(CredentialValidator::earliest_expiry_date(&credential, earlier_date).is_ok());
   }
 
   // test with a few timestamps that should be RFC3339 compatible
@@ -297,9 +289,8 @@ mod tests {
       assert_eq!(credential.expiration_date.unwrap(), expected_expiration_date, "the expiration date of the parsed credential does not match our expectation");
       let after_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() + seconds).unwrap();
       let before_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() - seconds).unwrap();
-      let validator = CredentialValidator::new(credential);
-      assert!(validator.earliest_expiry_date(after_expiration_date).is_err());
-      assert!(validator.earliest_expiry_date(before_expiration_date).is_ok());
+      assert!(CredentialValidator::earliest_expiry_date(&credential, after_expiration_date).is_err());
+      assert!(CredentialValidator::earliest_expiry_date(&credential, before_expiration_date).is_ok());
     }
   }
 
@@ -309,8 +300,7 @@ mod tests {
       let mut credential = deserialize_credential(SIMPLE_CREDENTIAL_JSON);
       credential.expiration_date = None;
       // expires after whatever the timestamp may be because the expires_after field is None.
-      let validator = CredentialValidator::new(credential);
-      assert!(validator.earliest_expiry_date(Timestamp::from_unix(seconds).unwrap()).is_ok());
+      assert!(CredentialValidator::earliest_expiry_date(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
     }
   }
 
@@ -334,9 +324,12 @@ mod tests {
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
-    let validator = CredentialValidator::new(credential);
+    let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, &[trusted_issuer]).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, &[trusted_issuer])
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -360,14 +353,14 @@ mod tests {
     );
     // now that we are sure that our parsed credential has the expected issuance date set we can start testing issued
     // before with an earlier timestamp
-    let validator = CredentialValidator::new(credential);
-    assert!(validator
-      .latest_issuance_date(Timestamp::parse("2010-01-01T19:22:09Z").unwrap())
-      .is_err());
+    assert!(
+      CredentialValidator::latest_issuance_date(&credential, Timestamp::parse("2010-01-01T19:22:09Z").unwrap())
+        .is_err()
+    );
     // and now with a later timestamp
-    assert!(validator
-      .latest_issuance_date(Timestamp::parse("2010-01-01T20:00:00Z").unwrap())
-      .is_ok());
+    assert!(
+      CredentialValidator::latest_issuance_date(&credential, Timestamp::parse("2010-01-01T20:00:00Z").unwrap()).is_ok()
+    );
   }
 
   proptest! {
@@ -379,9 +372,8 @@ mod tests {
       assert_eq!(credential.issuance_date, expected_issuance_date, "the issuance date of the parsed credential does not match our expectation");
       let earlier_than_issuance_date = Timestamp::from_unix(expected_issuance_date.to_unix() - seconds).unwrap();
       let later_than_issuance_date = Timestamp::from_unix(expected_issuance_date.to_unix() + seconds).unwrap();
-      let validator = CredentialValidator::new(credential);
-      assert!(validator.latest_issuance_date(earlier_than_issuance_date).is_err());
-      assert!(validator.latest_issuance_date(later_than_issuance_date).is_ok());
+      assert!(CredentialValidator::latest_issuance_date(&credential, earlier_than_issuance_date).is_err());
+      assert!(CredentialValidator::latest_issuance_date(&credential, later_than_issuance_date).is_ok());
     }
   }
 
@@ -406,9 +398,12 @@ mod tests {
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
 
-    let validator = CredentialValidator::new(&credential);
+    let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, &[trusted_issuer]).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, &[trusted_issuer])
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -440,8 +435,10 @@ mod tests {
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
-    let validator = CredentialValidator::new(&credential);
-    assert!(validator.full_validation(&options, &[trusted_issuer]).is_ok());
+    let validator = CredentialValidator::new();
+    assert!(validator
+      .full_validation(&credential, &options, &[trusted_issuer])
+      .is_ok());
   }
 
   #[test]
@@ -462,16 +459,13 @@ mod tests {
     let trusted_issuer = test_utils::mock_resolved_document(other_doc); // the trusted issuer did not sign the credential
     let trusted_issuers = &[trusted_issuer];
 
-    let validator = CredentialValidator::new(credential);
-
     assert!(matches!(
-      validator
-        .verify_signature(trusted_issuers, &VerifierOptions::default())
-        .unwrap_err(),
+      CredentialValidator::verify_signature(&credential, trusted_issuers, &VerifierOptions::default()).unwrap_err(),
       Error::UnsuccessfulValidationUnit(ValidationError::UntrustedIssuer)
     ));
 
     // also check that the full validation fails as expected
+    let validator = CredentialValidator::new();
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -479,7 +473,10 @@ mod tests {
       .earliest_expiry_date(expires_after);
 
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, trusted_issuers).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, trusted_issuers)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -509,22 +506,23 @@ mod tests {
     let trusted_issuers = &[trusted_issuer];
 
     // run the validation unit
-    let validator = CredentialValidator::new(&credential);
     assert!(matches!(
-      validator
-        .verify_signature(trusted_issuers, &VerifierOptions::default())
-        .unwrap_err(),
+      CredentialValidator::verify_signature(&credential, trusted_issuers, &VerifierOptions::default()).unwrap_err(),
       Error::UnsuccessfulValidationUnit(ValidationError::IssuerProof { .. })
     ));
 
     // check that full_validation also fails as expected
+    let validator = CredentialValidator::new();
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, trusted_issuers).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, trusted_issuers)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -558,9 +556,12 @@ mod tests {
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
-    let validator = CredentialValidator::new(credential);
+    let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, &[trusted_issuer]).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, &[trusted_issuer])
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -596,9 +597,12 @@ mod tests {
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
     // fail_fast = true is default.
-    let validator = CredentialValidator::new(credential);
+    let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, &[trusted_issuer]).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, &[trusted_issuer])
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         accumulated_validation_error.validation_errors
       }
@@ -631,9 +635,12 @@ mod tests {
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after)
       .fail_fast(false);
-    let validator = CredentialValidator::new(credential);
+    let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&options, &[trusted_issuer]).unwrap_err() {
+    let error = match validator
+      .full_validation(&credential, &options, &[trusted_issuer])
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         accumulated_validation_error.validation_errors
       }
