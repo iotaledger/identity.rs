@@ -65,6 +65,8 @@ pub async fn validation_units_vc() -> Result<()> {
   // the validation unit that verifies the issuer's signature needs a list of resolved DID documents of trusted issuers.
   // since we trust our issuer in this case we create a list consisting of this issuer's resolved DID document.
 
+  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
+
   let trusted_issuers: Vec<ResolvedIotaDocument> = common::resolve_documents(&[issuer_doc]).await?;
   validator.verify_signature(trusted_issuers.as_slice(), &VerifierOptions::default())?;
 

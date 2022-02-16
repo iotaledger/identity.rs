@@ -84,7 +84,7 @@ async fn main() -> Result<()> {
 
   // deserialize the presentation:
   let presentation: Presentation = Presentation::from_json(&presentation_json)?;
-  //Todo: validate via ResolvedPresentation once the new Resolver becomes available
+  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let resolved_holder_document: ResolvedIotaDocument = client.resolve(holder_doc.id()).await?;
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;

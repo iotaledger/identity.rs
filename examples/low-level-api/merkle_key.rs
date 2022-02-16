@@ -78,7 +78,8 @@ async fn main() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // Check the verifiable credential is valid
-  // Todo: validate via ResolvedCredential once the new Resolver becomes available
+  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
+
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new(&credential)
     .full_validation(&CredentialValidationOptions::default(), &[trusted_issuer],)
@@ -100,7 +101,8 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Check the verifiable credential is revoked
-  //Todo: validate via ResolvedPresentation once the new Resolver becomes available
+  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
+
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new(&credential)
     .full_validation(&CredentialValidationOptions::default(), &[trusted_issuer],)

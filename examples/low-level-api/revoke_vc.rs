@@ -61,7 +61,8 @@ async fn main() -> Result<()> {
   );
 
   // Check the verifiable credential
-  // Todo: validate via ResolvedCredential once the new Resolver becomes available
+  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
+
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let validation_result =
     CredentialValidator::new(&signed_vc).full_validation(&CredentialValidationOptions::default(), &[trusted_issuer]);
