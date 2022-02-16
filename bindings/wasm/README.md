@@ -77,7 +77,7 @@ client.publishDocument(doc)
     .then((receipt) => {
         const explorer = identity.ExplorerUrl.mainnet();
         // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
-        console.log("Tangle Message Receipt: ", receipt);
+        console.log("Tangle Message Receipt:", receipt);
         console.log("Tangle Exporer Url:", explorer.resolverUrl(doc.id));
     })
     .catch((error) => {
