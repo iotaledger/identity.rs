@@ -282,7 +282,7 @@ impl Update {
         state.document_mut().set_controller(controllers);
       }
       Self::SetAlsoKnownAs { urls } => {
-        state.document_mut().set_also_known_as(urls);
+        *state.document_mut().also_known_as_mut() = urls;
       }
     }
 
