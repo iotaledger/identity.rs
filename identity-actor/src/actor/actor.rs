@@ -24,19 +24,14 @@ use crate::Result;
 use crate::ThreadId;
 
 use dashmap::DashMap;
-use futures::channel::mpsc;
 use futures::channel::oneshot;
 use futures::Future;
-use futures::StreamExt;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
 use libp2p::request_response::ResponseChannel;
 use libp2p::TransportError;
 use serde::de::DeserializeOwned;
-use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
-use tokio::task::{self};
 use uuid::Uuid;
 
 /// A map from an identifier to an object that contains the
@@ -83,7 +78,6 @@ where
 pub struct ActorState {
   pub(crate) handlers: HandlerMap,
   pub(crate) objects: ObjectMap,
-  pub(crate) listener_handle: Mutex<Option<JoinHandle<Result<()>>>>,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   pub(crate) peer_id: PeerId,
@@ -97,35 +91,21 @@ pub struct Actor {
 
 impl Actor {
   pub(crate) async fn from_builder(
-    receiver: mpsc::Receiver<InboundRequest>,
     commander: NetCommander,
     handlers: HandlerMap,
     objects: ObjectMap,
-    listening_addresses: Vec<Multiaddr>,
     peer_id: PeerId,
   ) -> Result<Self> {
-    let mut actor = Self {
+    let actor = Self {
       commander,
       state: Arc::new(ActorState {
         handlers,
         objects,
-        listener_handle: Mutex::new(None),
         threads_receiver: DashMap::new(),
         threads_sender: DashMap::new(),
         peer_id,
       }),
     };
-
-    // TODO: Always start listener, change `listener_handle` in actor accordingly.
-    // if !listening_addresses.is_empty() {
-    let handle = actor.clone().spawn_listener(receiver);
-
-    actor.state.listener_handle.lock().await.replace(handle);
-    // };
-
-    for addr in listening_addresses {
-      actor.commander.start_listening(addr).await.expect("TODO");
-    }
 
     Ok(actor)
   }
@@ -159,24 +139,8 @@ impl Actor {
     self.commander.get_addresses().await
   }
 
-  /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
-  /// This method should only be called once on any given instance.
-  /// A second caller would immediately receive an [`Error::LockInUse`].
-  fn spawn_listener(self, mut receiver: mpsc::Receiver<InboundRequest>) -> JoinHandle<Result<()>> {
-    task::spawn(async move {
-      loop {
-        if let Some(request) = receiver.next().await {
-          log::debug!("received a request for endpoint: {}", request.endpoint);
-          self.clone().handle_request(request);
-        } else {
-          return Ok(());
-        }
-      }
-    })
-  }
-
   #[inline(always)]
-  fn handle_request(mut self, request: InboundRequest) {
+  pub(crate) fn handle_request(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
       if self.state.handlers.contains_key(&request.endpoint) {
         self.invoke_handler(request).await;
@@ -308,14 +272,8 @@ impl Actor {
   // }
 
   pub async fn stop_handling_requests(mut self) -> Result<()> {
-    // TODO: aborting means that even requests that have been received and are being processed are cancelled
-    // We should instead use some signalling mechanism that breaks the loop
-    if let Some(listener_handle) = self.state.listener_handle.lock().await.take() {
-      listener_handle.abort();
-      let _ = listener_handle.await;
-    }
-
     self.commander.stop_listening().await;
+    // TODO: Send and impl shutdown.
 
     Ok(())
   }
@@ -508,12 +466,6 @@ impl Actor {
         }
       }
       Err(error) => Err(error),
-    }
-  }
-
-  pub async fn join(self) {
-    if let Some(listener_handle) = self.state.listener_handle.lock().await.take() {
-      listener_handle.await.unwrap().unwrap();
     }
   }
 }

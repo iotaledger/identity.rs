@@ -15,7 +15,6 @@ async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
   let id_keys = Keypair::generate_ed25519();
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-
   let mut listening_actor = ActorBuilder::new()
     .keypair(id_keys)
     .listen_on(addr.clone())

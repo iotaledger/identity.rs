@@ -6,6 +6,7 @@ use std::iter;
 use crate::p2p::behaviour::DidCommCodec;
 use crate::p2p::behaviour::DidCommProtocol;
 use crate::p2p::event_loop::EventLoop;
+use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
 use crate::Result;
@@ -32,9 +33,6 @@ use libp2p::Multiaddr;
 use libp2p::Swarm;
 
 pub struct ActorBuilder {
-  // receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
-  // comm_builder: StrongholdP2pBuilder<RequestMessage, ResponseMessage>,
-  // commander: EventLoopInstructor,
   listening_addresses: Vec<Multiaddr>,
   keypair: Option<Keypair>,
 }
@@ -109,25 +107,29 @@ impl ActorBuilder {
     };
 
     let (cmd_sender, cmd_receiver) = mpsc::channel(10);
-    let (event_sender, event_receiver) = mpsc::channel(10);
 
-    let event_loop = EventLoop::new(swarm, cmd_receiver, event_sender);
-    let swarm_commander = NetCommander::new(cmd_sender);
-
-    executor.exec(event_loop.run().boxed());
+    let event_loop = EventLoop::new(swarm, cmd_receiver);
+    let mut swarm_commander = NetCommander::new(cmd_sender);
 
     let handlers = DashMap::new();
     let objects = DashMap::new();
 
-    Actor::from_builder(
-      event_receiver,
-      swarm_commander,
-      handlers,
-      objects,
-      self.listening_addresses,
-      peer_id,
-    )
-    .await
+    let actor = Actor::from_builder(swarm_commander.clone(), handlers, objects, peer_id).await?;
+
+    let actor_clone = actor.clone();
+
+    let event_handler = move |event: InboundRequest| {
+      actor_clone.clone().handle_request(event);
+    };
+
+    executor.exec(event_loop.run(event_handler).boxed());
+
+    // TODO: Call swarm directly, earlier?
+    for addr in self.listening_addresses {
+      swarm_commander.start_listening(addr).await.expect("TODO");
+    }
+
+    Ok(actor)
   }
 
   pub fn keypair(mut self, keys: Keypair) -> Self {

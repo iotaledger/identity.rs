@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use futures::channel::mpsc;
 use futures::channel::oneshot;
 use futures::FutureExt;
-use futures::SinkExt;
 use futures::StreamExt;
 use libp2p::core::connection::ListenerId;
 use libp2p::request_response::OutboundFailure;
@@ -30,30 +29,27 @@ use super::net_commander::SwarmCommand;
 pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
-  event_channel: mpsc::Sender<InboundRequest>,
   listener_ids: Vec<ListenerId>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<DidCommResponse, OutboundFailure>>>,
 }
 
 impl EventLoop {
-  pub fn new(
-    swarm: Swarm<RequestResponse<DidCommCodec>>,
-    command_channel: mpsc::Receiver<SwarmCommand>,
-    event_channel: mpsc::Sender<InboundRequest>,
-  ) -> Self {
+  pub fn new(swarm: Swarm<RequestResponse<DidCommCodec>>, command_channel: mpsc::Receiver<SwarmCommand>) -> Self {
     EventLoop {
       swarm,
       command_channel,
-      event_channel,
       listener_ids: Vec::new(),
       await_response: HashMap::new(),
     }
   }
 
-  pub async fn run(mut self) {
+  pub async fn run<F>(mut self, event_handler: F)
+  where
+    F: Fn(InboundRequest),
+  {
     loop {
       futures::select_biased! {
-          event = self.swarm.select_next_some() => self.handle_swarm_event(event).await,
+          event = self.swarm.select_next_some() => self.handle_swarm_event(event, &event_handler).await,
           command = self.command_channel.next().fuse() => {
               if let Some(c) = command {
                   self.handle_command(c)
@@ -72,10 +68,13 @@ impl EventLoop {
   // encryption and from that point forward, transparently encrypt and decrypt messages.
   // Once encryption is taken care of, this handler then distributes messages based on ThreadIds, so
   // higher layers can easily await_message(thread_id).
-  async fn handle_swarm_event<THandleErr>(
+  async fn handle_swarm_event<F, THandleErr>(
     &mut self,
     event: SwarmEvent<RequestResponseEvent<DidCommRequest, DidCommResponse>, THandleErr>,
-  ) {
+    event_handler: &F,
+  ) where
+    F: Fn(InboundRequest),
+  {
     match event {
       SwarmEvent::Behaviour(RequestResponseEvent::Message { message, peer }) => match message {
         RequestResponseMessage::Request { channel, request, .. } => {
@@ -93,16 +92,13 @@ impl EventLoop {
             }
           };
 
-          self
-            .event_channel
-            .send(InboundRequest {
-              peer_id: peer,
-              endpoint: request_message.endpoint,
-              input: request_message.data,
-              response_channel: channel,
-            })
-            .await
-            .expect("event receiver was dropped")
+          let req = InboundRequest {
+            peer_id: peer,
+            endpoint: request_message.endpoint,
+            input: request_message.data,
+            response_channel: channel,
+          };
+          event_handler(req);
         }
         RequestResponseMessage::Response { request_id, response } => {
           // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?

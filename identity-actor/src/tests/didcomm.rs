@@ -62,7 +62,6 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 #[tokio::test]
 async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
-
   let mut verifier_actor = default_sending_actor().await;
 
   let handler = DidCommHandler::new().await;
