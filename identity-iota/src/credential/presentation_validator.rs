@@ -174,67 +174,63 @@ impl PresentationValidator {
     trusted_issuers: &[ResolvedIotaDocument],
   ) -> PresentationValidationResult {
     let fail_fast = options.fail_fast;
-    let mut observed_error = false;
 
-    // setup error container
-    let mut compound_error = AccumulatedPresentationValidationError {
-      presentation_validation_errors: Vec::new(),
-      credential_errors: BTreeMap::<usize, AccumulatedCredentialValidationError>::new(),
+    // first run the presentation specific validation units.
+    // We set up an iterator over these functions and collect any encountered errors
+    let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(presentation));
+    let signature_validation = std::iter::once_with(|| {
+      Self::verify_presentation_signature_local_error(
+        presentation,
+        resolved_holder_document,
+        &options.presentation_verifier_options,
+      )
+    });
+
+    let presentation_validation_errors_iter = structure_validation
+      .chain(
+        Self::non_transferable_violations(presentation)
+          .map(|credential_position| Err(ValidationError::NonTransferableViolation { credential_position })),
+      )
+      .chain(signature_validation)
+      .filter_map(|result| result.err());
+
+    let presentation_validation_errors: Vec<ValidationError> = if fail_fast {
+      presentation_validation_errors_iter.take(1).collect()
+    } else {
+      presentation_validation_errors_iter.collect()
+    };
+    if !presentation_validation_errors.is_empty() && fail_fast {
+      return Err(AccumulatedPresentationValidationError {
+        presentation_validation_errors,
+        credential_errors: BTreeMap::<usize, AccumulatedCredentialValidationError>::new(),
+      });
+    }
+
+    // now run full validations on the credentials and collect any encountered errors
+    let credential_errors_iter = presentation
+      .verifiable_credential
+      .iter()
+      .map(|credential| {
+        CredentialValidator::new().full_validation_local_error(
+          credential,
+          &options.shared_validation_options,
+          trusted_issuers,
+        )
+      })
+      .enumerate()
+      .filter_map(|(position, result)| result.err().map(|error| (position, error)));
+
+    let credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError> = if fail_fast {
+      credential_errors_iter.take(1).collect()
+    } else {
+      credential_errors_iter.collect()
     };
 
-    let AccumulatedPresentationValidationError {
-      ref mut presentation_validation_errors,
-      ref mut credential_errors,
-    } = compound_error;
-
-    if let Err(structure_error) = Self::check_structure_local_error(presentation) {
-      presentation_validation_errors.push(structure_error);
-      observed_error = true;
-      if fail_fast {
-        return Err(compound_error);
-      }
-    }
-    // collect all nonTransferable violations (if any)
-    presentation_validation_errors.extend(
-      Self::non_transferable_violations(presentation)
-        .map(|credential_position| ValidationError::NonTransferableViolation { credential_position }),
-    );
-    if !presentation_validation_errors.is_empty() {
-      observed_error = true;
-      if fail_fast {
-        return Err(compound_error);
-      }
-    }
-
-    if let Err(signature_error) = Self::verify_presentation_signature_local_error(
-      presentation,
-      resolved_holder_document,
-      &options.presentation_verifier_options,
-    ) {
-      presentation_validation_errors.push(signature_error);
-      observed_error = true;
-      if fail_fast {
-        return Err(compound_error);
-      }
-    }
-
-    // now validate the credentials
-    for (position, credential) in presentation.verifiable_credential.iter().enumerate() {
-      if let Err(credential_error) = CredentialValidator::new().full_validation_local_error(
-        credential,
-        &options.shared_validation_options,
-        trusted_issuers,
-      ) {
-        observed_error = true;
-        credential_errors.insert(position, credential_error);
-        if fail_fast {
-          return Err(compound_error);
-        }
-      }
-    }
-    // if fail_fast was false, but we observed an error we return our error
-    if observed_error {
-      Err(compound_error)
+    if !presentation_validation_errors.is_empty() || !credential_errors.is_empty() {
+      Err(AccumulatedPresentationValidationError {
+        presentation_validation_errors,
+        credential_errors,
+      })
     } else {
       Ok(())
     }
