@@ -84,9 +84,8 @@ async fn main() -> Result<()> {
 
   // deserialize the presentation:
   let presentation: Presentation = Presentation::from_json(&presentation_json)?;
-  // in order to validate the presentation we need to resolve the holder's and issuer's DID documents.
+  //Todo: validate via ResolvedPresentation once the new Resolver becomes available
 
-  //Todo: extract the issuer and holder DID's from the presentation itself
   let resolved_holder_document: ResolvedIotaDocument = client.resolve(holder_doc.id()).await?;
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let trusted_issuers = &[trusted_issuer];
