@@ -405,17 +405,17 @@ impl IotaDocument {
     Q: Into<DIDUrlQuery<'query>>,
   {
     // Ensure method is permitted to sign document updates.
+    // TODO: re-map this error
     let method: &IotaVerificationMethod = self.try_resolve_signing_method(method_query.into())?;
 
     // Specify the full method DID Url if the verification method id does not match the document id.
     let method_did: &IotaDID = method.id().did();
     let method_id: String = if method_did == self.id() {
-      // TODO: re-map this error (along with every other error in sign methods)
       method
         .id()
         .fragment()
         .map(|fragment| core::iter::once('#').chain(fragment.chars()).collect())
-        .ok_or(Error::InvalidDoc(identity_did::Error::MissingIdFragment))?
+        .ok_or(Error::DocumentSignError("method missing id fragment", None))?
     } else {
       method.id().to_string()
     };
@@ -423,11 +423,15 @@ impl IotaDocument {
     // Sign document.
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())?;
+        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())
+          .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
-        return Err(Error::InvalidDocumentSigningMethodType);
+        return Err(Error::DocumentSignError(
+          "MerkleKeyCollection2021 not allowed to sign documents",
+          None,
+        ));
       }
     }
 
@@ -1385,7 +1389,7 @@ mod tests {
     assert!(document
       .sign_self(
         keypair.private(),
-        document.default_signing_method().unwrap().id().clone()
+        document.default_signing_method().unwrap().id().clone(),
       )
       .is_ok());
 
@@ -1496,7 +1500,7 @@ mod tests {
     assert!(document
       .sign_self(
         keypair.private(),
-        document.default_signing_method().unwrap().id().clone()
+        document.default_signing_method().unwrap().id().clone(),
       )
       .is_ok());
 

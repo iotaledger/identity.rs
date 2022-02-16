@@ -30,6 +30,8 @@ pub enum Error {
   InvalidRootDocument,
   #[error("Invalid Network Name")]
   InvalidNetworkName,
+  #[error("signing failed: {0}")]
+  DocumentSignError(&'static str, #[source] Option<identity_core::Error>),
   #[error("{0}")]
   IncompatibleNetwork(String),
   #[error("Invalid Presentation Holder")]

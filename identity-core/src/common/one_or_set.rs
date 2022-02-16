@@ -121,7 +121,7 @@ where
           .collect::<Result<OrderedSet<S>, E>>()?;
         // Key equivalence could differ between T and S.
         if set_s.len() == 1 {
-          OneOrSetInner::One(set_s.into_vec().pop().expect("OneOrSet::map infallible"))
+          OneOrSetInner::One(set_s.into_vec().pop().expect("OneOrSet::try_map infallible"))
         } else {
           OneOrSetInner::Set(set_s)
         }
