@@ -20,7 +20,7 @@ where
   D: DID,
 {
   Embed(VerificationMethod<D, T>),
-  Refer(DIDUrl<D>), // TODO: could this also be a relative DIDUrl, or another enum variant?
+  Refer(DIDUrl<D>),
 }
 
 impl<D, T> MethodRef<D, T>
