@@ -146,7 +146,7 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
-  pub fn revoke_merkle_key(&mut self, query: &UDIDUrlQuery, index: usize) -> Result<bool> {
+  pub fn revoke_merkle_key(&mut self, query: &UDIDUrlQuery, index: u32) -> Result<bool> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
     method.revoke_merkle_key(index).wasm_result()
