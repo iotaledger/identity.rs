@@ -78,7 +78,7 @@ async fn main() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // Check the verifiable credential is valid
-  // Todo: validate via ResolvedCredential once the new Resolver becomes available 
+  // Todo: validate via ResolvedCredential once the new Resolver becomes available
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new(&credential)
     .full_validation(&CredentialValidationOptions::default(), &[trusted_issuer],)
