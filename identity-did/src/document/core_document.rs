@@ -253,7 +253,6 @@ where
 
   /// Maps `CoreDocument<D,T>` to `CoreDocument<C,U>` by applying a function `f` to all [`DID`] fields
   /// and another function `g` to the custom properties.
-  // TODO: remove this? Unused but useful due to lack of From specialization.
   pub fn map<S, C, F, G>(self, mut f: F, g: G) -> CoreDocument<C, S, U, V>
   where
     C: DID + KeyComparable,
@@ -304,7 +303,6 @@ where
   /// # Errors
   ///
   /// `try_map` can fail if either of the provided functions fail.
-  // TODO: remove this? Unused but useful due to lack of TryFrom specialization.
   pub fn try_map<S, C, F, G, E>(self, mut f: F, g: G) -> Result<CoreDocument<C, S, U, V>, E>
   where
     C: DID + KeyComparable,
