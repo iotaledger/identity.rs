@@ -165,7 +165,6 @@ mod test {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_did::did::CoreDIDUrl;
   use identity_did::service::ServiceBuilder;
   use identity_did::service::ServiceEndpoint;
   use identity_did::verification::MethodScope;
@@ -183,7 +182,10 @@ mod test {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .sign_self(
+        keypair.private(),
+        document.default_signing_method().unwrap().id().clone(),
+      )
       .unwrap();
 
     for encoding in [DIDMessageEncoding::Json, DIDMessageEncoding::JsonBrotli] {
@@ -202,13 +204,13 @@ mod test {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut doc1: IotaDocument = IotaDocument::new(&keypair).unwrap();
     doc1
-      .sign_self(keypair.private(), &doc1.default_signing_method().unwrap().id())
+      .sign_self(keypair.private(), doc1.default_signing_method().unwrap().id().clone())
       .unwrap();
 
     let mut doc2: IotaDocument = doc1.clone();
     assert!(doc2.insert_service(
       ServiceBuilder::default()
-        .id(CoreDIDUrl::from(doc1.id().to_url().join("#linked-domain").unwrap()))
+        .id(doc1.id().to_url().join("#linked-domain").unwrap())
         .service_endpoint(ServiceEndpoint::One(Url::parse("https://example.com/").unwrap()))
         .type_("LinkedDomains")
         .build()
@@ -216,7 +218,7 @@ mod test {
     ));
     doc2
       .insert_method(
-        IotaVerificationMethod::from_did(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(),
+        IotaVerificationMethod::new(doc1.id().clone(), KeyType::Ed25519, keypair.public(), "key-1").unwrap(),
         MethodScope::authentication(),
       )
       .unwrap();

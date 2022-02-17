@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Deserialize;
@@ -10,14 +10,16 @@ use identity_core::diff::Result;
 use identity_did::diff::DiffDocument;
 use identity_did::document::CoreDocument;
 
+use crate::did::IotaDID;
 use crate::diff::DiffIotaDocumentMetadata;
+use crate::document::IotaCoreDocument;
 use crate::document::IotaDocument;
 use crate::document::IotaDocumentMetadata;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffIotaDocument {
   #[serde(rename = "doc", skip_serializing_if = "Option::is_none")]
-  document: Option<DiffDocument>,
+  document: Option<DiffDocument<IotaDID>>,
   #[serde(rename = "meta", skip_serializing_if = "Option::is_none")]
   metadata: Option<DiffIotaDocumentMetadata>,
 }
@@ -41,7 +43,7 @@ impl Diff for IotaDocument {
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let document: CoreDocument = diff
+    let document: IotaCoreDocument = diff
       .document
       .map(|value| self.core_document().merge(value))
       .transpose()?
@@ -53,11 +55,11 @@ impl Diff for IotaDocument {
       .transpose()?
       .unwrap_or_else(|| self.metadata.clone());
 
-    IotaDocument::try_from_core(document, metadata).map_err(identity_core::diff::Error::merge)
+    Ok(IotaDocument::from((document, metadata)))
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let document: CoreDocument = diff
+    let document: IotaCoreDocument = diff
       .document
       .map(CoreDocument::from_diff)
       .transpose()?
@@ -69,7 +71,7 @@ impl Diff for IotaDocument {
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `metadata`"))?;
 
-    IotaDocument::try_from_core(document, metadata).map_err(identity_core::diff::Error::convert)
+    Ok(IotaDocument::from((document, metadata)))
   }
 
   fn into_diff(self) -> Result<Self::Type> {
