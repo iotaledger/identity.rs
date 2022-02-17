@@ -152,8 +152,8 @@ impl PresentationValidator {
   /// - The structure of the presentation is not semantically valid
   /// - The nonTransferable property is set in one of the credentials, but the credential's subject is not the holder of
   ///   the presentation.
-  /// - The `holder` parameter does not correspond to the holder property of the presentation 
-  /// - The holder's signature cannot be verified 
+  /// - The `holder` parameter does not correspond to the holder property of the presentation
+  /// - The holder's signature cannot be verified
   /// - Validation of any of the presentation's credentials fails (see [CredentialValidator::full_validation()]).
   // Takes &self in case this method will need some pre-computed state in the future.
   pub fn full_validation<U: Serialize, V: Serialize>(
@@ -181,11 +181,7 @@ impl PresentationValidator {
     // We set up an iterator over these functions and collect any encountered errors
     let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(presentation));
     let signature_validation = std::iter::once_with(|| {
-      Self::verify_presentation_signature_local_error(
-        presentation,
-        holder,
-        &options.presentation_verifier_options,
-      )
+      Self::verify_presentation_signature_local_error(presentation, holder, &options.presentation_verifier_options)
     });
 
     let presentation_validation_errors_iter = structure_validation
@@ -207,11 +203,7 @@ impl PresentationValidator {
       .verifiable_credential
       .iter()
       .map(|credential| {
-        CredentialValidator::new().full_validation_local_error(
-          credential,
-          &options.shared_validation_options,
-          issuers,
-        )
+        CredentialValidator::new().full_validation_local_error(credential, &options.shared_validation_options, issuers)
       })
       .enumerate()
       .filter_map(|(position, result)| result.err().map(|error| (position, error)));

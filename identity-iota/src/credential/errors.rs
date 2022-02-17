@@ -22,7 +22,7 @@ pub enum ValidationError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * * here? */
   },
-  /// Indicates an attempt to validate a credential signed by an issuer 
+  /// Indicates an attempt to validate a credential signed by an issuer
   #[error("the credential is signed by an untrusted issuer")]
   IncompatibleIssuerDocuments,
 
@@ -40,8 +40,8 @@ pub enum ValidationError {
                                                                  * here? */
   },
 
-  /// Indicates an attempt to verify a presentation's signature with a resolved DID document not corresponding to the URL of the
-  /// presentation's holder property.
+  /// Indicates an attempt to verify a presentation's signature with a resolved DID document not corresponding to the
+  /// URL of the presentation's holder property.
   #[error("the provided holder document does not correspond to the presentation's holder property")]
   IncompatibleHolderDocument,
 
