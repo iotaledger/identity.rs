@@ -8,10 +8,8 @@ use crate::ThreadId;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
-/// Error type of the identity actor crate.
+/// Errors that can occur during the actor lifecycle.
 pub enum Error {
-  #[error("Lock In Use")]
-  LockInUse,
   #[error("transport error: {0}")]
   TransportError(#[source] libp2p::TransportError<std::io::Error>),
   #[error("could not respond to a {0} request, due to the handler taking too long to produce a response, the connection timing out or a transport error.")]
@@ -23,35 +21,25 @@ pub enum Error {
   #[error("{0}")]
   OutboundFailure(#[from] OutboundFailure),
   /// No handler was set on the receiver and thus we cannot process this request.
-  #[error("unkown request: `{0}`")]
+  #[error("unkown request `{0}`")]
   UnknownRequest(String),
-  #[error("could not invoke the handler: {0}")]
+  #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
   #[error("failed to deserialize: {0}")]
   DeserializationFailure(String),
-  #[error("thread with id {0} not found")]
+  #[error("thread with id `{0}` not found")]
   ThreadNotFound(ThreadId),
 }
 
-// impl From<ListenErr> for Error {
-//   fn from(err: ListenErr) -> Self {
-//     match err {
-//       ListenErr::Shutdown => Error::Shutdown,
-//       ListenErr::Transport(TransportErr::Io(io_err)) => Error::IoError(io_err),
-//       ListenErr::Transport(TransportErr::MultiaddrNotSupported(addr)) => Error::MultiaddrNotSupported(addr),
-//     }
-//   }
-// }
-
-/// Errors that can occur on the remote actor during [Actor::send_request] calls.
+/// Errors that can occur on the remote actor while sending requests.
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
   /// No handler was set on the receiver and thus this request is not processable.
-  #[error("unkown request: `{0}`")]
+  #[error("unkown request `{0}`")]
   UnknownRequest(String),
-  #[error("could not invoke the handler: {0}")]
+  #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
