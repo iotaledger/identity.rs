@@ -1611,6 +1611,7 @@ Deserializes a `KeyCollection` object from a JSON object.
 * [KeyPair](#KeyPair)
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
+        * [.type](#KeyPair+type) ⇒ <code>number</code>
         * [.public](#KeyPair+public) ⇒ <code>string</code>
         * [.private](#KeyPair+private) ⇒ <code>string</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
@@ -1628,6 +1629,12 @@ Generates a new `KeyPair` object.
 | --- | --- |
 | type_ | <code>number</code> | 
 
+<a name="KeyPair+type"></a>
+
+### keyPair.type ⇒ <code>number</code>
+Returns the private key as a base58-encoded string.
+
+**Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+public"></a>
 
 ### keyPair.public ⇒ <code>string</code>
@@ -2177,7 +2184,7 @@ Creates a new `Timestamp` with the current date and time.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(key, fragment)](#new_VerificationMethod_new)
+    * [new VerificationMethod(did, key_type, public_key, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
@@ -2186,19 +2193,21 @@ Creates a new `Timestamp` with the current date and time.
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromDID(did, key, fragment)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.createMerkleKey(digest, did, keys, fragment)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.newMerkleKey(digest, did, keys, fragment)](#VerificationMethod.newMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
 
-### new VerificationMethod(key, fragment)
-Creates a new `VerificationMethod` object from the given `key`.
+### new VerificationMethod(did, key_type, public_key, fragment)
+Creates a new `VerificationMethod` object from the given `did` and
+Base58-BTC encoded public key.
 
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| did | [<code>DID</code>](#DID) | 
+| key_type | <code>number</code> | 
+| public_key | <code>string</code> | 
 | fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
@@ -2242,23 +2251,10 @@ Returns the `VerificationMethod` public key data.
 Serializes a `VerificationMethod` object as a JSON object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod.fromDID"></a>
+<a name="VerificationMethod.newMerkleKey"></a>
 
-### VerificationMethod.fromDID(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new `VerificationMethod` object from the given `did` and `key`.
-
-**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| fragment | <code>string</code> | 
-
-<a name="VerificationMethod.createMerkleKey"></a>
-
-### VerificationMethod.createMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new Merkle Key Collection Method from the given key collection.
+### VerificationMethod.newMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Creates a new `MerkleKeyCollection2021` method from the given key collection.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
 

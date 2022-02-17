@@ -38,7 +38,7 @@ async function merkleKey(clientConfig) {
 
     // Add a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
     const keys = new KeyCollection(KeyType.Ed25519, 8);
-    const method = VerificationMethod.createMerkleKey(Digest.Sha256, issuer.doc.id, keys, "key-collection")
+    const method = VerificationMethod.newMerkleKey(Digest.Sha256, issuer.doc.id, keys, "key-collection")
 
     // Add to the DID Document as a general-purpose verification method
     issuer.doc.insertMethod(method, MethodScope.VerificationMethod());

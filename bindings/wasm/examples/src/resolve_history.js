@@ -57,7 +57,7 @@ async function resolveHistory(clientConfig) {
 
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     const keys1 = new KeyPair(KeyType.Ed25519);
-    const method1 = VerificationMethod.fromDID(intDoc1.id, keys1, "keys-1");
+    const method1 = new VerificationMethod(intDoc1.id, keys1.type, keys1.public, "keys-1");
     intDoc1.insertMethod(method1, MethodScope.VerificationMethod());
 
     // Add the `messageId` of the previous message in the chain.
@@ -167,7 +167,7 @@ async function resolveHistory(clientConfig) {
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     const keys2 = new KeyPair(KeyType.Ed25519);
-    const method2 = VerificationMethod.fromDID(intDoc2.id, keys2, "keys-2");
+    const method2 = new VerificationMethod(intDoc2.id, keys2.type, keys2.public, "keys-2");
     intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain

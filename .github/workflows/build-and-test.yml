@@ -6,6 +6,7 @@ on:
       - main
       - dev
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
       - dev
@@ -26,8 +27,17 @@ env:
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
 
 jobs:
+  check-for-run-condition:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
+    steps:
+      - run: |
+          # this run step does nothing, but is needed to get the job output
 
   check-for-modification:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
@@ -52,8 +62,8 @@ jobs:
 
   build-and-test:
     runs-on: ${{ matrix.os }}
-    needs: check-for-modification
-    if: ${{ needs.check-for-modification.outputs.core-modified == 'true' }}
+    needs: [check-for-run-condition, check-for-modification]
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -129,6 +139,8 @@ jobs:
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
   build-and-test-libjose:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -159,6 +171,8 @@ jobs:
           args: --manifest-path ./libjose/Cargo.toml --release
 
   build-and-test-wasm:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

@@ -3,7 +3,6 @@
 
 use identity::core::Timestamp;
 use identity::crypto::KeyPair;
-use identity::did::CoreDIDUrl;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
@@ -15,6 +14,7 @@ use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
 use identity_core::crypto::SignatureOptions;
+use identity_iota::did::IotaDID;
 use identity_iota::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
@@ -22,7 +22,10 @@ pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
   let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
   document
-    .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+    .sign_self(
+      keypair.private(),
+      document.default_signing_method().unwrap().id().clone(),
+    )
     .unwrap();
 
   let mut resolved: ResolvedIotaDocument = ResolvedIotaDocument::from(document);
@@ -67,25 +70,21 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
   for i in current_n..(n + current_n) {
     let mut new: ResolvedIotaDocument = chain.current().clone();
 
-    let authentication: MethodRef = MethodBuilder::default()
-      .id(CoreDIDUrl::from(
-        chain.id().to_url().join(&format!("#key-{}", i)).unwrap(),
-      ))
-      .controller(chain.id().clone().into())
+    let authentication: MethodRef<IotaDID> = MethodBuilder::default()
+      .id(chain.id().to_url().join(&format!("#key-{}", i)).unwrap())
+      .controller(chain.id().clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_multibase(keypair.public()))
       .build()
       .map(Into::into)
       .unwrap();
 
-    unsafe {
-      new.document.core_document_mut().authentication_mut().clear();
-      new
-        .document
-        .core_document_mut()
-        .authentication_mut()
-        .append(authentication);
-    }
+    new.document.core_document_mut().authentication_mut().clear();
+    new
+      .document
+      .core_document_mut()
+      .authentication_mut()
+      .append(authentication);
 
     new.document.metadata.updated = Timestamp::now_utc();
     new.document.metadata.previous_message_id = *chain.integration_message_id();

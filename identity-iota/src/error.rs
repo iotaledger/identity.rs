@@ -26,12 +26,12 @@ pub enum Error {
   InvalidDocumentMessageId,
   #[error("Invalid Document - Signing Verification Method Type Not Supported")]
   InvalidDocumentSigningMethodType,
-  #[error("Invalid Verification Method - Missing Fragment")]
-  InvalidMethodMissingFragment,
   #[error("Invalid Root Document")]
   InvalidRootDocument,
   #[error("Invalid Network Name")]
   InvalidNetworkName,
+  #[error("signing failed: {0}")]
+  DocumentSignError(&'static str, #[source] Option<identity_core::Error>),
   #[error("{0}")]
   IncompatibleNetwork(String),
   #[error("Invalid Presentation Holder")]
@@ -40,12 +40,8 @@ pub enum Error {
   ChainError { error: &'static str },
   #[error("Missing Signing Key")]
   MissingSigningKey,
-  #[error("Cannot Revoke Verification Method")]
-  CannotRevokeMethod,
   #[error("no client nodes provided for network")]
   NoClientNodesProvided,
-  #[error("No Explorer URL Set")]
-  NoExplorerURLSet,
   #[error("Invalid Explorer Url")]
   InvalidExplorerURL,
   #[error("compression error")]

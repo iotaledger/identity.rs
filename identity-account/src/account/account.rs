@@ -445,7 +445,9 @@ impl Account {
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
-      MessageId::new(unsafe { crypto::utils::rand::gen::<[u8; 32]>().unwrap() })
+      let mut bytes: [u8; 32] = [0; 32];
+      crypto::utils::rand::fill(&mut bytes)?;
+      MessageId::new(bytes)
     } else {
       self.client.publish_document(&new_doc).await?.into()
     };
@@ -510,7 +512,9 @@ impl Account {
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
-      MessageId::new(unsafe { crypto::utils::rand::gen::<[u8; 32]>().unwrap() })
+      let mut bytes: [u8; 32] = [0; 32];
+      crypto::utils::rand::fill(&mut bytes)?;
+      MessageId::new(bytes)
     } else {
       self
         .client
