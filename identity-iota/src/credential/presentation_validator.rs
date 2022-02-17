@@ -104,23 +104,23 @@ impl PresentationValidator {
   /// Verify the presentation's signature using the resolved document of the holder
   ///
   /// # Errors
-  /// Fails if the supplied `resolved_holder_document` cannot be identified with the URL of the `presentation`'s holder
+  /// Fails if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
   /// property
   ///
   /// # Terminology
   /// This is a *validation unit*.
   pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
-    resolved_holder_document: &ResolvedIotaDocument,
+    holder: &ResolvedIotaDocument,
     options: &VerifierOptions,
   ) -> Result<()> {
-    Self::verify_presentation_signature_local_error(presentation, resolved_holder_document, options)
+    Self::verify_presentation_signature_local_error(presentation, holder, options)
       .map_err(Error::UnsuccessfulValidationUnit)
   }
 
   fn verify_presentation_signature_local_error<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
-    resolved_holder_document: &ResolvedIotaDocument,
+    holder: &ResolvedIotaDocument,
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
     let did: IotaDID = presentation
@@ -130,10 +130,10 @@ impl PresentationValidator {
       .and_then(|value| {
         IotaDID::parse(value.as_str()).map_err(|error| ValidationError::HolderUrl { source: error.into() })
       })?;
-    if &did != resolved_holder_document.document.id() {
+    if &did != holder.document.id() {
       return Err(ValidationError::IncompatibleHolderDocument);
     }
-    resolved_holder_document
+    holder
       .document
       .verify_data(&presentation, options)
       .map_err(|error| ValidationError::HolderProof { source: error.into() })
@@ -152,17 +152,19 @@ impl PresentationValidator {
   /// - The structure of the presentation is not semantically valid
   /// - The nonTransferable property is set in one of the credentials, but the credential's subject is not the holder of
   ///   the presentation.
-  /// - Validation of any of the presentation's credentials fails.
+  /// - The `holder` parameter does not correspond to the holder property of the presentation 
+  /// - The holder's signature cannot be verified 
+  /// - Validation of any of the presentation's credentials fails (see [CredentialValidator::full_validation()]).
   // Takes &self in case this method will need some pre-computed state in the future.
   pub fn full_validation<U: Serialize, V: Serialize>(
     &self,
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
-    resolved_holder_document: &ResolvedIotaDocument,
-    trusted_issuers: &[ResolvedIotaDocument],
+    holder: &ResolvedIotaDocument,
+    issuers: &[ResolvedIotaDocument],
   ) -> Result<()> {
     self
-      .full_validation_local_error(presentation, options, resolved_holder_document, trusted_issuers)
+      .full_validation_local_error(presentation, options, holder, issuers)
       .map_err(Error::UnsuccessfulPresentationValidation)
   }
 
@@ -170,8 +172,8 @@ impl PresentationValidator {
     &self,
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
-    resolved_holder_document: &ResolvedIotaDocument,
-    trusted_issuers: &[ResolvedIotaDocument],
+    holder: &ResolvedIotaDocument,
+    issuers: &[ResolvedIotaDocument],
   ) -> PresentationValidationResult {
     let fail_fast = options.fail_fast;
 
@@ -181,7 +183,7 @@ impl PresentationValidator {
     let signature_validation = std::iter::once_with(|| {
       Self::verify_presentation_signature_local_error(
         presentation,
-        resolved_holder_document,
+        holder,
         &options.presentation_verifier_options,
       )
     });
@@ -208,7 +210,7 @@ impl PresentationValidator {
         CredentialValidator::new().full_validation_local_error(
           credential,
           &options.shared_validation_options,
-          trusted_issuers,
+          issuers,
         )
       })
       .enumerate()
