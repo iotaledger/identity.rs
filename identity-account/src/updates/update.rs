@@ -280,8 +280,9 @@ impl Update {
         state.document_mut().remove_service(&service_url)?;
       }
       Self::SetController { controllers } => {
-        state.document_mut().set_controller(controllers);
+        *state.document_mut().controller_mut() = controllers;
       }
+
       Self::SetAlsoKnownAs { urls } => {
         *state.document_mut().also_known_as_mut() = urls;
       }
