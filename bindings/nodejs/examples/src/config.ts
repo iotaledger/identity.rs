@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from "../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../code/stronghold_storage.js'
+import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from "../../../wasm/node/identity_wasm.js";
+import { Stronghold } from '../../code/stronghold_storage.js'
 
 
 /**
@@ -71,4 +71,4 @@ async function config() {
     }
 }
 
-config();
+export { config }

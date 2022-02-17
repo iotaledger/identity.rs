@@ -28,14 +28,16 @@
     "node": ">= 10"
   },
   "scripts": {
-    "build:ts": "tsc",
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
+    "build:ts": "tsc",
     "build:debug": "napi build --platform",
+    "example:stronghold": "ts-node ./examples/src/node.ts",
     "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version"
   },
   "dependencies": {
-    "@types/node": "^17.0.18"
+    "@types/node": "^17.0.18",
+    "ts-node": "^10.4.0"
   }
 }

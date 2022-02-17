@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExplorerUrl, AccountBuilder, MethodRelationship } from "../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../code/stronghold_storage.js'
+import { ExplorerUrl, AccountBuilder, MethodRelationship } from "../../../wasm/node/identity_wasm.js";
+import { Stronghold } from '../../code/stronghold_storage.js'
 
 /**
  * This example demonstrates how to manipulate a DID Document by adding/removing 
@@ -63,4 +63,4 @@ async function manipulateIdentity() {
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
 }
 
-manipulateIdentity();
+export { manipulateIdentity }

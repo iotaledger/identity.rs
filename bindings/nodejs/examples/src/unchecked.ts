@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, Timestamp, ExplorerUrl, Document } from "../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../code/stronghold_storage.js'
-
+import { AccountBuilder, Timestamp, ExplorerUrl, Document } from "../../../wasm/node/identity_wasm.js";
+import { Stronghold } from '../../code/stronghold_storage.js'
 /**
  * This example demonstrates how to update the custom properties of a DID document directly 
  * and publish it without performing validation.
@@ -58,4 +57,4 @@ async function unchecked() {
 
 }
 
-unchecked()
+export { unchecked }

@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl } from "../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../code/stronghold_storage.js'
+import { AccountBuilder, ExplorerUrl } from "../../../wasm/node/identity_wasm.js";
+import { Stronghold } from '../../code/stronghold_storage.js'
 
 /**
  * This example demonstrates how to create multiple identities from a builder 
@@ -59,4 +59,4 @@ async function multipleIdentities() {
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
-multipleIdentities()
+export { multipleIdentities }

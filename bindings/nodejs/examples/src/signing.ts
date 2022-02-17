@@ -3,8 +3,8 @@
 
 import {
     ExplorerUrl, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions
-} from "../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../code/stronghold_storage.js'
+} from "../../../wasm/node/identity_wasm.js";
+import { Stronghold } from '../../code/stronghold_storage.js'
 
 /**
  * This example demonstrates how to issue and sign Verifiable Credentials using the account.
@@ -86,4 +86,4 @@ async function signing() {
     console.log("[Example] Credential Verified = ", verified);
 }
 
-signing()
+export { signing }

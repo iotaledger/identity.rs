@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl } from "../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../code/stronghold_storage.js'
-
+import { AccountBuilder, ExplorerUrl } from "../../../wasm/node/identity_wasm.js";
+import { Stronghold } from '../../code/stronghold_storage.js'
 /**
  * This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle
  * using the Account.
@@ -43,4 +42,4 @@ async function createIdentity() {
     })
 }
 
-createIdentity();
+export { createIdentity }
