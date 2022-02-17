@@ -9,6 +9,7 @@ use crate::p2p::event_loop::EventLoop;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
+use crate::Error;
 use crate::Result;
 use dashmap::DashMap;
 use futures::channel::mpsc;
@@ -32,12 +33,14 @@ use libp2p::yamux::YamuxConfig;
 use libp2p::Multiaddr;
 use libp2p::Swarm;
 
+/// An [`Actor`] builder for easy configuration.
 pub struct ActorBuilder {
   listening_addresses: Vec<Multiaddr>,
   keypair: Option<Keypair>,
 }
 
 impl ActorBuilder {
+  /// Create a new `ActorBuilder`.
   pub fn new() -> Self {
     Self {
       listening_addresses: vec![],
@@ -45,29 +48,32 @@ impl ActorBuilder {
     }
   }
 
+  /// Set the keypair from which the `PeerId` of the actor is derived.
+  ///
+  /// If unset, a new keypair is generated.
+  #[must_use]
+  pub fn keypair(mut self, keys: Keypair) -> Self {
+    self.keypair = Some(keys);
+    self
+  }
+
+  /// Add a [`Multiaddr`] to listen on. This can be called multiple times.
+  #[must_use]
+  pub fn listen_on(mut self, address: Multiaddr) -> Self {
+    self.listening_addresses.push(address);
+    self
+  }
+
+  /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
   pub async fn build(self) -> Result<Actor> {
-    let dns_transport = TokioDnsConfig::system(TokioTcpConfig::new())?;
+    let dns_transport = TokioDnsConfig::system(TokioTcpConfig::new())
+      .map_err(|err| Error::TransportError(libp2p::TransportError::Other(err)))?;
     let transport = dns_transport.clone().or_transport(WsConfig::new(dns_transport));
 
     self.build_with_transport(transport).await
   }
 
-  // pub async fn build_with_transport_and_executor<TRA, EXE>(self, transport: TRA, executor: EXE) -> Result<Actor>
-  // where
-  //   TRA: Transport + Sized + Clone + Send + Sync + 'static,
-  //   TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
-  //   TRA::Dial: Send + 'static,
-  //   TRA::Listener: Send + 'static,
-  //   TRA::ListenerUpgrade: Send + 'static,
-  //   TRA::Error: Send + Sync,
-  //   EXE: Executor + Send + 'static + Clone,
-  // {
-  //   let comm = self.comm_builder.build_with_transport(transport, executor).await;
-  //   let handlers = DashMap::new();
-  //   let objects = DashMap::new();
-  //   Actor::from_builder(self.receiver, comm, handlers, objects, self.listening_addresses).await
-  // }
-
+  /// Build the actor with a custom transport.
   pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<Actor>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
@@ -88,7 +94,7 @@ impl ActorBuilder {
       tokio::spawn(fut);
     });
 
-    let swarm: Swarm<RequestResponse<DidCommCodec>> = {
+    let mut swarm: Swarm<RequestResponse<DidCommCodec>> = {
       let behaviour = RequestResponse::new(
         DidCommCodec(),
         iter::once((DidCommProtocol(), ProtocolSupport::Full)),
@@ -106,10 +112,14 @@ impl ActorBuilder {
         .build()
     };
 
+    for addr in self.listening_addresses {
+      swarm.listen_on(addr).map_err(Error::TransportError)?;
+    }
+
     let (cmd_sender, cmd_receiver) = mpsc::channel(10);
 
     let event_loop = EventLoop::new(swarm, cmd_receiver);
-    let mut swarm_commander = NetCommander::new(cmd_sender);
+    let swarm_commander = NetCommander::new(cmd_sender);
 
     let handlers = DashMap::new();
     let objects = DashMap::new();
@@ -124,22 +134,7 @@ impl ActorBuilder {
 
     executor.exec(event_loop.run(event_handler).boxed());
 
-    // TODO: Call swarm directly, earlier?
-    for addr in self.listening_addresses {
-      swarm_commander.start_listening(addr).await.expect("TODO");
-    }
-
     Ok(actor)
-  }
-
-  pub fn keypair(mut self, keys: Keypair) -> Self {
-    self.keypair = Some(keys);
-    self
-  }
-
-  pub fn listen_on(mut self, address: Multiaddr) -> Self {
-    self.listening_addresses.push(address);
-    self
   }
 }
 

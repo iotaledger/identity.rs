@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use libp2p::request_response::OutboundFailure;
-use libp2p::Multiaddr;
 
 use crate::ThreadId;
 
@@ -13,10 +12,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
   #[error("Lock In Use")]
   LockInUse,
-  #[error("IoError: {0}")]
-  IoError(#[from] std::io::Error),
-  #[error("Multiaddr {0} is not supported")]
-  MultiaddrNotSupported(Multiaddr),
+  #[error("transport error: {0}")]
+  TransportError(#[source] libp2p::TransportError<std::io::Error>),
   #[error("could not respond to a {0} request, due to the handler taking too long to produce a response, the connection timing out or a transport error.")]
   CouldNotRespond(String),
   #[error("the actor was shut down")]
