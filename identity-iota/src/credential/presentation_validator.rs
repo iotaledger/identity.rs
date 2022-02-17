@@ -199,12 +199,6 @@ impl PresentationValidator {
     } else {
       presentation_validation_errors_iter.collect()
     };
-    if !presentation_validation_errors.is_empty() && fail_fast {
-      return Err(AccumulatedPresentationValidationError {
-        presentation_validation_errors,
-        credential_errors: BTreeMap::<usize, AccumulatedCredentialValidationError>::new(),
-      });
-    }
 
     // now run full validations on the credentials and collect any encountered errors
     let credential_errors_iter = presentation
@@ -220,11 +214,19 @@ impl PresentationValidator {
       .enumerate()
       .filter_map(|(position, result)| result.err().map(|error| (position, error)));
 
-    let credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError> = if fail_fast {
-      credential_errors_iter.take(1).collect()
-    } else {
-      credential_errors_iter.collect()
-    };
+    let credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError> = credential_errors_iter
+      .take(if (!presentation_validation_errors.is_empty()) && fail_fast {
+        // we already encountered validation errors and we are supposed to fail fast so don't collect any more errors
+        0
+      } else if fail_fast {
+        // we did not encounter any validation errors yet, but we are supposed to fail fast so collect at most one
+        // credential error
+        1
+      } else {
+        // we are supposed to collect all errors (if any) so collect all credential errors
+        presentation.verifiable_credential.len()
+      })
+      .collect();
 
     if !presentation_validation_errors.is_empty() || !credential_errors.is_empty() {
       Err(AccumulatedPresentationValidationError {
