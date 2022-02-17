@@ -55,6 +55,10 @@ name = "validation_units_vc"
 path = "low-level-api/validation_units_vc.rs"
 
 [[example]]
+name = "validation_units_vp"
+path = "low-level-api/validation_units_vp.rs"
+
+[[example]]
 name = "create_vp"
 path = "low-level-api/create_vp.rs"
 
