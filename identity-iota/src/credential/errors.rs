@@ -22,9 +22,10 @@ pub enum ValidationError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * * here? */
   },
-  /// Indicates an attempt to validate a credential signed by an issuer
-  #[error("the credential is signed by an untrusted issuer")]
-  IncompatibleIssuerDocuments,
+  /// Indicates an attempt to verify a credential's signature with a resolved DID document not corresponding to the
+  /// URL of the credential's issuer.
+  #[error("the provided issuer document does not correspond to the credential's issuer")]
+  IncompatibleIssuerDocument,
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("the credential's issuer property could not be parsed to a valid DID")]

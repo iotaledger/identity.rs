@@ -110,7 +110,7 @@ impl CredentialValidator {
         if let Err(issuer_proof_error) = trusted_issuers
           .iter()
           .find(|issuer_doc| issuer_doc.document.id() == &did)
-          .ok_or(ValidationError::IncompatibleIssuerDocuments)
+          .ok_or(ValidationError::IncompatibleIssuerDocument)
           .and_then(|trusted_issuer_doc| {
             trusted_issuer_doc
               .document
@@ -454,7 +454,7 @@ mod tests {
 
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, trusted_issuers, &VerifierOptions::default()).unwrap_err(),
-      Error::UnsuccessfulValidationUnit(ValidationError::IncompatibleIssuerDocuments)
+      Error::UnsuccessfulValidationUnit(ValidationError::IncompatibleIssuerDocument)
     ));
 
     // also check that the full validation fails as expected
@@ -479,7 +479,7 @@ mod tests {
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::IncompatibleIssuerDocuments));
+    assert!(matches!(error, ValidationError::IncompatibleIssuerDocument));
   }
 
   #[test]
