@@ -98,12 +98,6 @@ impl WasmDID {
     // This must match the serialization of IotaDID for UWasmDID to work.
     JsValue::from_str(self.0.as_str())
   }
-
-  /// Serializes a `DID` as `Uint8Array`.
-  #[wasm_bindgen(js_name = asBytes)]
-  pub fn as_bytes(&self) -> Result<Vec<u8>> {
-    bincode::serialize(&self).wasm_result()
-  }
 }
 
 impl From<IotaDID> for WasmDID {

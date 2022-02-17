@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
+use std::result::Result as StdResult;
 use std::sync::PoisonError;
 
 use identity::account::Error as AccountError;
@@ -97,15 +98,6 @@ impl_wasm_error_from!(
   identity::iota::Error
 );
 
-impl From<bincode::Error> for WasmError<'_> {
-  fn from(error: bincode::Error) -> Self {
-    Self {
-      name: Cow::Borrowed("bincode::Error"), // the exact error code is embedded in the message
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
-
 impl From<serde_json::Error> for WasmError<'_> {
   fn from(error: serde_json::Error) -> Self {
     Self {
@@ -145,48 +137,37 @@ impl From<UpdateError> for WasmError<'_> {
 /// Convenience struct to convert Result<JsValue, JsValue> to an AccountResult<_, AccountError>
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
+impl JsValueResult {
+  /// Consumes the struct and returns a Result<_, AccountError>
+  pub fn account_err(self) -> StdResult<JsValue, AccountError> {
+    self
+      .0
+      .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
+  }
+}
+
 impl From<Result<JsValue>> for JsValueResult {
   fn from(result: Result<JsValue>) -> Self {
     JsValueResult(result)
   }
 }
 
-/// Implement From<JsValueResult> to AccountResult<_, AccountError> for each type
-macro_rules! impl_from_js_value {
-  ( $($t:ty),* ) => {
-    $(impl From<JsValueResult> for AccountResult<$t> {
-      fn from(result: JsValueResult) -> Self {
-        result
-          .0
-          .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
-          .and_then(|js_value| {
-            js_value
-              .into_serde()
-              .map_err(|e| AccountError::SerializationError(e.to_string()))
-          })
-      }
-    })*
-  };
-}
-
-impl_from_js_value!(
-  identity::crypto::PublicKey,
-  identity::account::Signature,
-  Option<identity::account::Generation>,
-  Option<identity::account::ChainState>,
-  Option<identity::account::IdentityState>,
-  bool
-);
-
 impl From<JsValueResult> for AccountResult<()> {
   fn from(result: JsValueResult) -> Self {
-    result
-      .0
-      .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
-      .and_then(|js_value| {
-        js_value
-          .into_serde()
-          .map_err(|e| AccountError::SerializationError(e.to_string()))
-      })
+    result.account_err().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| AccountError::SerializationError(e.to_string()))
+    })
+  }
+}
+
+impl From<JsValueResult> for AccountResult<bool> {
+  fn from(result: JsValueResult) -> Self {
+    result.account_err().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| AccountError::SerializationError(e.to_string()))
+    })
   }
 }

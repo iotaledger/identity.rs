@@ -16,7 +16,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-bincode = { version = "1.3.3" }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 iota-crypto = { version = "0.7", default-features = false, features = ["blake2b", "ed25519", "random", "sha"] }

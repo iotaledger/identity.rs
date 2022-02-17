@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bincode::Result as BincodeResult;
 use identity::account::Result as AccountResult;
 use identity::core::Result as CoreResult;
 use napi::bindgen_prelude::Error;
@@ -22,12 +21,6 @@ impl<T> NapiResult<T> for AccountResult<T> {
 impl<T> NapiResult<T> for CoreResult<T> {
   fn napi_result(self) -> Result<T> {
     self.map_err(|core_error| Error::from_reason(core_error.to_string()))
-  }
-}
-
-impl<T> NapiResult<T> for BincodeResult<T> {
-  fn napi_result(self) -> Result<T> {
-    self.map_err(|bincode_error| Error::from_reason(bincode_error.to_string()))
   }
 }
 

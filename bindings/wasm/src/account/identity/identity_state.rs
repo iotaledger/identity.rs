@@ -13,21 +13,27 @@ pub struct WasmIdentityState(pub(crate) IdentityState);
 
 #[wasm_bindgen(js_class = IdentityState)]
 impl WasmIdentityState {
-  /// Serializes a `IdentityState` as `Uint8Array`.
-  #[wasm_bindgen(js_name = asBytes)]
-  pub fn as_bytes(&self) -> Result<Vec<u8>> {
-    bincode::serialize(&self).wasm_result()
+  // Serializes a `IdentityState` object as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a `Uint8Array` as `IdentityState`.
-  #[wasm_bindgen(js_name = fromBytes)]
-  pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmIdentityState> {
-    bincode::deserialize(&bytes).wasm_result()
+  /// Deserializes a JSON object as `IdentityState`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmIdentityState> {
+    json_value.into_serde().wasm_result()
   }
 }
 
 impl From<IdentityState> for WasmIdentityState {
   fn from(identity_state: IdentityState) -> Self {
     WasmIdentityState(identity_state)
+  }
+}
+
+impl From<WasmIdentityState> for IdentityState {
+  fn from(wasm_identity_state: WasmIdentityState) -> Self {
+    wasm_identity_state.0
   }
 }

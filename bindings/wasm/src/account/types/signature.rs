@@ -36,9 +36,15 @@ impl WasmSignature {
     self.0.data().to_vec()
   }
 
-  /// Deserializes a `Uint8Array` as `Signature`.
-  #[wasm_bindgen(js_name = fromBytes)]
-  pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmSignature> {
-    bincode::deserialize(&bytes).wasm_result()
+  /// Deserializes a JSON object as `Signature`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmSignature> {
+    json_value.into_serde().wasm_result()
+  }
+}
+
+impl From<WasmSignature> for Signature {
+  fn from(wasm_signature: WasmSignature) -> Self {
+    wasm_signature.0
   }
 }

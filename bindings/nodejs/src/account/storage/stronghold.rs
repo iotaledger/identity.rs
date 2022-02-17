@@ -14,7 +14,6 @@ use napi::Result;
 
 use crate::account::NapiChainState;
 use crate::account::NapiDIDLease;
-use crate::account::NapiGeneration;
 use crate::account::NapiIdentityState;
 use crate::account::NapiKeyLocation;
 use crate::account::NapiSignature;
@@ -155,31 +154,6 @@ impl NapiStronghold {
   #[napi]
   pub async fn key_exists(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
-  }
-
-  /// Returns the last generation that has been published to the tangle for the given `did`.
-  #[napi]
-  pub async fn published_generation(&self, did: &NapiDID) -> Result<Option<NapiGeneration>> {
-    self
-      .0
-      .published_generation(&did.0)
-      .await
-      .napi_result()
-      .map(|opt_generation| opt_generation.map(|generation| generation.into()))
-  }
-
-  /// Sets the last generation that has been published to the tangle for the given `did`.
-  #[napi]
-  pub async fn set_published_generation(
-    &self,
-    did: &NapiDID,
-    index: &NapiGeneration,
-  ) -> Result<()> {
-    self
-      .0
-      .set_published_generation(&did.0, index.0)
-      .await
-      .napi_result()
   }
 
   /// Returns the chain state of the identity specified by `did`.

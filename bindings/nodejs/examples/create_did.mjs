@@ -36,6 +36,11 @@ async function createIdentity() {
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
+
+    // Add a new Ed25519 Verification Method to the identity.
+    await account.createMethod({
+        fragment: "key_1"
+    })
 }
 
 createIdentity();
