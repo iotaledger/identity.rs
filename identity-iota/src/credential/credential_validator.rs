@@ -82,10 +82,30 @@ impl CredentialValidator {
       .ok_or(ValidationError::IssuanceDate)
   }
 
-  /// Verify the signature using the issuer's DID document.
+  // helper method for verifying the signature of a trusted issuer
+  fn extract_corresponding_issuer_helper<'a, T, I: Iterator<Item = &'a ResolvedIotaDocument>>(
+    credential: &Credential<T>,
+    mut issuer_docs: I,
+  ) -> std::result::Result<&'a ResolvedIotaDocument, ValidationError> {
+    let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
+    match issuer_did {
+      Ok(did) => {
+        // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
+        // the signature
+        issuer_docs
+          .find(|issuer_doc| issuer_doc.document.id() == &did)
+          .ok_or(ValidationError::IncompatibleIssuerDocument)
+      }
+      Err(error) => {
+        // the issuer's url could not be parsed to a valid IotaDID
+        Err(ValidationError::IssuerUrl { source: error.into() })
+      }
+    }
+  }
+  /// Verify the signature using the DID Document of a trusted issuer.
   ///
-  /// # Security
-  /// The caller must assure that all DID Documents passed in as `trusted_issuers` are up to date.
+  /// This method will only attempt to verify the credential's signature if
+  /// the credential issuer url can be parsed to a DID belonging to one of the trusted issuers.
   ///
   /// # Terminology
   /// This method is a *validation unit*
@@ -102,34 +122,12 @@ impl CredentialValidator {
     trusted_issuers: &[ResolvedIotaDocument],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
-    match issuer_did {
-      Ok(did) => {
-        // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
-        // the signature
-        if let Err(issuer_proof_error) = trusted_issuers
-          .iter()
-          .find(|issuer_doc| issuer_doc.document.id() == &did)
-          .ok_or(ValidationError::IncompatibleIssuerDocument)
-          .and_then(|trusted_issuer_doc| {
-            trusted_issuer_doc
-              .document
-              .verify_data(credential, options)
-              .map_err(|error| ValidationError::IssuerProof { source: error.into() })
-          })
-        {
-          // the credential issuer's url could be parsed to a valid IOTA DID, but verification failed for one of the
-          // following reasons; Either the credential issuer is not trusted, or the credential issuer is trusted,
-          // but the signature could not be verified using the issuer's resolved DID document
-          return Err(issuer_proof_error);
-        }
-        Ok(())
-      }
-      Err(error) => {
-        // the issuer's url could not be parsed to a valid IotaDID
-        Err(ValidationError::IssuerUrl { source: error.into() })
-      }
-    }
+    Self::extract_corresponding_issuer_helper(credential, trusted_issuers.iter()).and_then(|issuer| {
+      issuer
+        .document
+        .verify_data(credential, options)
+        .map_err(|error| ValidationError::IssuerProof { source: error.into() })
+    })
   }
 
   /// Validates the `Credential`.
@@ -158,22 +156,23 @@ impl CredentialValidator {
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
-    trusted_issuers: &[ResolvedIotaDocument],
+    issuer: &ResolvedIotaDocument,
   ) -> Result<()> {
     self
-      .full_validation_local_error(credential, options, trusted_issuers)
+      .full_validation_local_error(credential, options, std::slice::from_ref(issuer))
       .map_err(Error::UnsuccessfulCredentialValidation)
   }
 
+  // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
+  // validation.
   pub(super) fn full_validation_local_error<T: Serialize>(
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
-    trusted_issuers: &[ResolvedIotaDocument],
+    issuers: &[ResolvedIotaDocument],
   ) -> CredentialValidationResult {
-    let signature_validation = std::iter::once_with(|| {
-      Self::verify_signature_local_error(credential, trusted_issuers, &options.verifier_options)
-    });
+    let signature_validation =
+      std::iter::once_with(|| Self::verify_signature_local_error(credential, issuers, &options.verifier_options));
 
     let expiry_date_validation =
       std::iter::once_with(|| Self::earliest_expiry_date_local_error(credential, options.earliest_expiry_date));
@@ -311,7 +310,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2023-02-01T00:00:00Z").unwrap(); // note that expires_after > expiration_date
     let options = CredentialValidationOptions::default()
@@ -319,10 +318,7 @@ mod tests {
       .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator
-      .full_validation(&credential, &options, &[trusted_issuer])
-      .unwrap_err()
-    {
+    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -384,7 +380,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // note that issued_before < issuance_date
     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -393,10 +389,7 @@ mod tests {
 
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator
-      .full_validation(&credential, &options, &[trusted_issuer])
-      .unwrap_err()
-    {
+    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -422,20 +415,18 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-12-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
-    assert!(validator
-      .full_validation(&credential, &options, &[trusted_issuer])
-      .is_ok());
+    assert!(validator.full_validation(&credential, &options, &issuer).is_ok());
   }
 
   #[test]
-  fn test_verify_signature_untrusted_issuer() {
+  fn test_matches_issuer_did_unrelated_issuer() {
     // setup
     let (issuer_doc, issuer_key, mut credential) = credential_setup();
     let (other_doc, _) = test_utils::generate_document_with_keys();
@@ -449,11 +440,11 @@ mod tests {
       .unwrap();
 
     // check that the validation unit returns the expected error
-    let trusted_issuer = test_utils::mock_resolved_document(other_doc); // the trusted issuer did not sign the credential
-    let trusted_issuers = &[trusted_issuer];
+    let issuer = test_utils::mock_resolved_document(other_doc); // the credential was not signed by this issuer
 
     assert!(matches!(
-      CredentialValidator::verify_signature(&credential, trusted_issuers, &VerifierOptions::default()).unwrap_err(),
+      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
+        .unwrap_err(),
       Error::UnsuccessfulValidationUnit(ValidationError::IncompatibleIssuerDocument)
     ));
 
@@ -466,10 +457,7 @@ mod tests {
       .earliest_expiry_date(expires_after);
 
     // validate and extract the nested error according to our expectations
-    let error = match validator
-      .full_validation(&credential, &options, trusted_issuers)
-      .unwrap_err()
-    {
+    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -495,12 +483,12 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
-    let trusted_issuers = &[trusted_issuer];
+    let issuer = test_utils::mock_resolved_document(issuer_doc);
 
     // run the validation unit
     assert!(matches!(
-      CredentialValidator::verify_signature(&credential, trusted_issuers, &VerifierOptions::default()).unwrap_err(),
+      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
+        .unwrap_err(),
       Error::UnsuccessfulValidationUnit(ValidationError::IssuerProof { .. })
     ));
 
@@ -512,10 +500,7 @@ mod tests {
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
     // validate and extract the nested error according to our expectations
-    let error = match validator
-      .full_validation(&credential, &options, trusted_issuers)
-      .unwrap_err()
-    {
+    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -543,7 +528,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = test_utils::mock_resolved_document(issuer_doc);
     let issued_before = Timestamp::parse("2020-02-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2022-02-01T00:00:00Z").unwrap();
     let options = CredentialValidationOptions::default()
@@ -551,10 +536,7 @@ mod tests {
       .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator
-      .full_validation(&credential, &options, &[trusted_issuer])
-      .unwrap_err()
-    {
+    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -583,7 +565,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential
+    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_issuer); // the credential was not issued by `other_issuer`
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date
     let options = CredentialValidationOptions::default()
@@ -593,7 +575,7 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
-      .full_validation(&credential, &options, &[trusted_issuer])
+      .full_validation(&credential, &options, &other_issuer_resolved_doc)
       .unwrap_err()
     {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
@@ -621,7 +603,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default(); // the credential now has no credential subjects which is not semantically correct [first error]
 
     // declare the credential validation parameters
-    let trusted_issuer = test_utils::mock_resolved_document(other_issuer); // trusted issuer did not issue the credential [second error]
+    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_issuer); // other_issuer did not issue the credential [second error]
     let issued_before = Timestamp::parse("2019-02-01T00:00:00Z").unwrap(); // issued_before < issuance_date [third error]
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date [fourth error]
     let options = CredentialValidationOptions::default()
@@ -631,7 +613,7 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let error = match validator
-      .full_validation(&credential, &options, &[trusted_issuer])
+      .full_validation(&credential, &options, &other_issuer_resolved_doc)
       .unwrap_err()
     {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {

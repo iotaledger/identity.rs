@@ -80,9 +80,9 @@ async fn main() -> Result<()> {
   // Check the verifiable credential is valid
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
-  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new()
-    .full_validation(&credential, &CredentialValidationOptions::default(), &[trusted_issuer],)
+    .full_validation(&credential, &CredentialValidationOptions::default(), &resolved_issuer,)
     .is_ok());
 
   println!("the credential was successfully validated as expected");
@@ -102,9 +102,9 @@ async fn main() -> Result<()> {
   // Check the verifiable credential is revoked
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
-  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new()
-    .full_validation(&credential, &CredentialValidationOptions::default(), &[trusted_issuer],)
+    .full_validation(&credential, &CredentialValidationOptions::default(), &resolved_issuer)
     .is_err());
 
   println!("credential validation returned an error after the issuer revoked their keys as expected");

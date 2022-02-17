@@ -251,7 +251,7 @@ impl Client {
       let issuer_doc: ResolvedIotaDocument = resolve_did(client, issuer_url).await.wasm_result()?;
       // validate the credential (using the issuer's DID document to verify the signature)
       CredentialValidator::new()
-        .full_validation(&credential, &credential_validation_options, &[issuer_doc])
+        .full_validation(&credential, &credential_validation_options, &issuer_doc)
         .wasm_result()
         .map(|_| JsValue::TRUE)
     });
