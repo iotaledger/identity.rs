@@ -15,6 +15,7 @@ use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::DiffMessage;
 use identity::iota::ExplorerUrl;
+use identity::iota::IotaService;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
@@ -33,7 +34,7 @@ async fn main() -> Result<()> {
     let mut doc: IotaDocument = document.clone();
 
     // Add a Service
-    let service: Service = Service::from_json_value(json!({
+    let service: IotaService = Service::from_json_value(json!({
       "id": doc.id().to_url().join("#linked-domain-1")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://example.com/"

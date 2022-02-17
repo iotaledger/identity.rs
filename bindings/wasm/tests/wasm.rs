@@ -162,10 +162,17 @@ fn test_document_resolve_method() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
   let default_method: WasmVerificationMethod = document.default_signing_method().unwrap();
-  let new_method: WasmVerificationMethod =
-    WasmVerificationMethod::new(&KeyPair::new(KeyType::Ed25519).unwrap(), "new-key").unwrap();
+
+  let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let method_new: WasmVerificationMethod = WasmVerificationMethod::new(
+    &document.id(),
+    KeyType::Ed25519,
+    keypair_new.public(),
+    "new-key".to_owned(),
+  )
+  .unwrap();
   document
-    .insert_method(&new_method, WasmMethodScope::authentication())
+    .insert_method(&method_new, WasmMethodScope::authentication())
     .unwrap();
 
   // Resolve with DIDUrl method query.
@@ -179,11 +186,11 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(new_method.id()).unchecked_into())
+      .resolve_method(&JsValue::from(method_new.id()).unchecked_into())
       .unwrap()
       .id()
       .to_string(),
-    new_method.id().to_string()
+    method_new.id().to_string()
   );
 
   // Resolve with string method query.
@@ -197,11 +204,11 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&new_method.id().to_string()).unchecked_into())
+      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into())
       .unwrap()
       .id()
       .to_string(),
-    new_method.id().to_string()
+    method_new.id().to_string()
   );
 
   // Resolve with string fragment method query.
@@ -215,11 +222,11 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&new_method.id().fragment().unwrap()).unchecked_into())
+      .resolve_method(&JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into())
       .unwrap()
       .id()
       .to_string(),
-    new_method.id().to_string()
+    method_new.id().to_string()
   );
 }
 

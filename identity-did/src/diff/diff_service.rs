@@ -10,17 +10,21 @@ use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
-use crate::did::CoreDIDUrl;
+use crate::did::CoreDID;
+use crate::did::DIDUrl;
+use crate::did::DID;
 use crate::service::Service;
+use crate::service::ServiceBuilder;
 use crate::service::ServiceEndpoint;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffService<T = Object>
+pub struct DiffService<D = CoreDID, T = Object>
 where
+  D: DID + Diff,
   T: Diff,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<DiffString>,
+  id: Option<<DIDUrl<D> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   type_: Option<DiffString>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -29,11 +33,12 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<T> Diff for Service<T>
+impl<D, T> Diff for Service<D, T>
 where
+  D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
   T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffService<T>;
+  type Type = DiffService<D, T>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffService {
@@ -61,7 +66,7 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: CoreDIDUrl = diff
+    let id: DIDUrl<D> = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
@@ -85,41 +90,43 @@ where
       .transpose()?
       .unwrap_or_else(|| self.properties().clone());
 
-    Ok(Service {
-      id,
-      type_,
-      service_endpoint,
-      properties,
-    })
+    // Use builder to enforce invariants.
+    ServiceBuilder::new(properties)
+      .id(id)
+      .type_(type_)
+      .service_endpoint(service_endpoint)
+      .build()
+      .map_err(Error::merge)
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: CoreDIDUrl = diff
+    let id: DIDUrl<D> = diff
       .id
-      .map(CoreDIDUrl::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.id`"))?;
 
     let type_: String = diff
       .type_
-      .map(String::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.type_`"))?;
 
     let service_endpoint: ServiceEndpoint = diff
       .service_endpoint
-      .map(ServiceEndpoint::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.service_endpoint`"))?;
 
-    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
+    let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
-    Ok(Service {
-      id,
-      type_,
-      service_endpoint,
-      properties,
-    })
+    // Use builder to enforce invariants.
+    ServiceBuilder::new(properties)
+      .id(id)
+      .type_(type_)
+      .service_endpoint(service_endpoint)
+      .build()
+      .map_err(Error::convert)
   }
 
   fn into_diff(self) -> Result<Self::Type> {
@@ -168,6 +175,7 @@ impl Diff for ServiceEndpoint {
 mod test {
   use indexmap::IndexMap;
 
+  use crate::did::CoreDIDUrl;
   use identity_core::common::Object;
   use identity_core::common::OrderedSet;
   use identity_core::common::Url;
@@ -178,7 +186,7 @@ mod test {
   use super::*;
 
   fn controller() -> CoreDIDUrl {
-    "did:example:1234".parse().unwrap()
+    "did:example:1234#service".parse().unwrap()
   }
 
   fn service() -> Service {
@@ -195,13 +203,13 @@ mod test {
   fn test_id() {
     let service = service();
     let mut new = service.clone();
-    *new.id_mut() = "did:diff:123".parse().unwrap();
+    new.set_id("did:diff:123#new-service".parse().unwrap()).unwrap();
 
     let diff = service.diff(&new).unwrap();
     assert!(diff.properties.is_none());
     assert!(diff.service_endpoint.is_none());
     assert!(diff.type_.is_none());
-    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123".to_string()))));
+    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123#new-service".to_string()))));
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }

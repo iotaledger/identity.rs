@@ -11,7 +11,6 @@ import {
     KeyType,
     Network
 } from '@iota/identity-wasm';
-import {logResolverUrl} from "./utils";
 
 /**
  This example shows how a DID document can be created on a private tangle.
@@ -59,7 +58,7 @@ async function privateTangle(restURL, networkName) {
 
     console.log(`Published the DID document to the private tangle:`);
     console.log(resolved);
-    logResolverUrl("Explore the DID Document:", explorer, doc.id.toString());
+    console.log(`Explore the DID Document: ${explorer.resolverUrl(doc.id)}`);
 
     // Return the results.
     return {key, resolved, receipt};

@@ -5,6 +5,9 @@ use std::any::Any;
 
 use serde::Serialize;
 
+use crate::did::CoreDID;
+use crate::did::DID;
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::crypto::merkle_key::Blake2b256;
@@ -40,16 +43,22 @@ use crate::Result;
 // Document Signer - Simplifying Digital Signature Creation Since 2021
 // =============================================================================
 
-pub struct DocumentSigner<'base, 'query, 'proof, T = Object, U = Object, V = Object> {
-  document: &'base CoreDocument<T, U, V>,
+pub struct DocumentSigner<'base, 'query, 'proof, D = CoreDID, T = Object, U = Object, V = Object>
+where
+  D: DID + KeyComparable,
+{
+  document: &'base CoreDocument<D, T, U, V>,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
   merkle_key: Option<(&'proof PublicKey, &'proof dyn Any)>,
   options: SignatureOptions,
 }
 
-impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
-  pub fn new(document: &'base CoreDocument<T, U, V>, private: &'base PrivateKey) -> Self {
+impl<'base, D, T, U, V> DocumentSigner<'base, '_, '_, D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
+  pub fn new(document: &'base CoreDocument<D, T, U, V>, private: &'base PrivateKey) -> Self {
     Self {
       document,
       private,
@@ -103,7 +112,10 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
   }
 }
 
-impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
+impl<'base, 'query, D, T, U, V> DocumentSigner<'base, 'query, '_, D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   #[must_use]
   pub fn method<Q>(mut self, value: Q) -> Self
   where
@@ -114,18 +126,24 @@ impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
   }
 }
 
-impl<'proof, T, U, V> DocumentSigner<'_, '_, 'proof, T, U, V> {
+impl<'proof, D, T, U, V> DocumentSigner<'_, '_, 'proof, D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   #[must_use]
-  pub fn merkle_key<D>(mut self, proof: (&'proof PublicKey, &'proof Proof<D>)) -> Self
+  pub fn merkle_key<M>(mut self, proof: (&'proof PublicKey, &'proof Proof<M>)) -> Self
   where
-    D: MerkleDigest,
+    M: MerkleDigest,
   {
     self.merkle_key = Some((proof.0, proof.1));
     self
   }
 }
 
-impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
+impl<D, T, U, V> DocumentSigner<'_, '_, '_, D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
   /// Signs the provided data with the configured verification method.
   ///
   /// # Errors
@@ -137,7 +155,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     X: Serialize + SetSignature + TryMethod,
   {
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
-    let method: &VerificationMethod<U> = self.document.try_resolve_method(query)?;
+    let method: &VerificationMethod<D, U> = self.document.try_resolve_method(query)?;
     let method_uri: String = X::try_method(method)?;
 
     match method.key_type() {
@@ -164,22 +182,22 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     Ok(())
   }
 
-  fn merkle_key_sign<X, D, S>(&self, that: &mut X, method: String) -> Result<()>
+  fn merkle_key_sign<X, M, S>(&self, that: &mut X, method: String) -> Result<()>
   where
     X: Serialize + SetSignature,
-    D: MerkleDigest,
+    M: MerkleDigest,
     S: MerkleSignature + Sign<Private = [u8]>,
     S::Output: AsRef<[u8]>,
   {
     match self.merkle_key {
       Some((public, proof)) => {
-        let proof: &Proof<D> = proof
+        let proof: &Proof<M> = proof
           .downcast_ref()
           .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
 
-        let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
+        let skey: SigningKey<'_, M> = SigningKey::from_borrowed(public, self.private, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, method, &skey, self.options.clone())?;
+        MerkleSigner::<M, S>::create_signature(that, method, &skey, self.options.clone())?;
 
         Ok(())
       }

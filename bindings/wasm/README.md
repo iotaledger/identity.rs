@@ -54,32 +54,34 @@ cat \
 ```javascript
 const identity = require('@iota/identity-wasm/node')
 
-// Generate a new KeyPair
-const key = new identity.KeyPair(identity.KeyType.Ed25519)
+// Choose the Tangle network to publish on.
+const network = identity.Network.mainnet();
+// const network = identity.Network.devnet();
 
-// Create a new DID Document with the KeyPair as the default verification method
-const doc = new identity.Document(key)
-// const doc = new identity.Document(key, "dev") // if using the devnet
+// Generate a new Ed25519 KeyPair.
+const key = new identity.KeyPair(identity.KeyType.Ed25519);
 
-// Sign the DID Document with the private key
-doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+// Create a new DID Document using the KeyPair for the default VerificationMethod.
+const doc = new identity.Document(key, network.name);
 
-// Create a default client instance for the mainnet
-const config = identity.Config.fromNetwork(identity.Network.mainnet());
-// const config = identity.Config.fromNetwork(identity.Network.devnet()); // if using the devnet
+// Sign the DID Document with the private key.
+doc.signSelf(key, doc.defaultSigningMethod().id);
+
+// Create a default client instance for the network.
+const config = identity.Config.fromNetwork(network);
 const client = identity.Client.fromConfig(config);
 
 // Publish the DID Document to the IOTA Tangle
 // The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
 client.publishDocument(doc)
     .then((receipt) => {
-        let explorer = identity.ExplorerUrl.mainnet();
-        // let explorer = identity.ExplorerUrl.devnet(); // if using the devnet
-        console.log("Tangle Message Receipt: ", receipt)
-        console.log("Tangle Message Url:", explorer.messageUrl(receipt.messageId))
+        const explorer = identity.ExplorerUrl.mainnet();
+        // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
+        console.log("Tangle Message Receipt:", receipt);
+        console.log("Tangle Exporer Url:", explorer.resolverUrl(doc.id));
     })
     .catch((error) => {
-        console.error("Error: ", error)
+        console.error("Error: ", error);
         throw error
     })
 ```

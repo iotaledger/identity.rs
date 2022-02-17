@@ -6,6 +6,7 @@ on:
       - main
       - dev
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
       - dev
@@ -15,16 +16,54 @@ on:
       - '.github/actions/**'
       - '**.rs'
       - '**.toml'
+      - 'bindings/wasm/**'
+      - '!bindings/wasm/**.md'
 
 env:
   RUST_BACKTRACE: full
+  CARGO_INCREMENTAL: 0 # disabled to reduce target cache size and improve sccache (https://github.com/mozilla/sccache#known-caveats)
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
 
 jobs:
+  check-for-run-condition:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
+    steps:
+      - run: |
+          # this run step does nothing, but is needed to get the job output
+
+  check-for-modification:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    runs-on: ubuntu-latest
+    outputs:
+      core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run change detection
+        id: change-detection
+        run: |
+          echo comparing $(git rev-parse HEAD^) and $(git rev-parse HEAD)
+          #https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgt--ltpathgt82308203
+          if [[ $(git diff HEAD^ HEAD -- ':!bindings') != '' ]]; then
+              # modified
+              CORE_MODIFIED=true
+          else
+              # unmodified
+             CORE_MODIFIED=false
+          fi
+          echo CORE_MODIFIED=$CORE_MODIFIED
+          echo "::set-output name=core-modified::$CORE_MODIFIED"
+
   build-and-test:
     runs-on: ${{ matrix.os }}
+    needs: [check-for-run-condition, check-for-modification]
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -75,8 +114,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-          command: test
-          args: --all --release --no-run
+          command: build
+          args: --workspace --tests --examples --release
 
       - name: Run tests
         uses: actions-rs/cargo@v1
@@ -84,6 +123,13 @@ jobs:
           command: test
           args: --all --release
 
+      - name: Run Rust examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
+          jq -r '.targets[].name' | \
+          parallel -k -j 4 --retries 3 cargo run --example {} --release
       - name: Stop sccache (Windows)
         uses: './.github/actions/rust/sccache/stop-sccache-windows'
         if: matrix.os == 'windows-latest'
@@ -93,6 +139,8 @@ jobs:
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
   build-and-test-libjose:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -123,6 +171,8 @@ jobs:
           args: --manifest-path ./libjose/Cargo.toml --release
 
   build-and-test-wasm:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -133,7 +183,6 @@ jobs:
             sccache-path: /home/runner/.cache/sccache
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
-      CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
       RUSTC_WRAPPER: sccache
 
     steps:
@@ -167,9 +216,6 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Install wasm-pack
-        run: npm install -g wasm-pack
-
       - name: Install JS dependencies
         run: npm install
         working-directory: bindings/wasm
@@ -183,13 +229,11 @@ jobs:
         working-directory: bindings/wasm
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path ./bindings/wasm/Cargo.toml --release
+        run: cargo test --release
+        working-directory: bindings/wasm
 
-      - name: Run wasm-bindgen tests # tests annotated with #[wasm_bindgen_test]
-        run: wasm-pack test --node
+      - name: Run Wasm unit tests and examples
+        run: npm run test
         working-directory: bindings/wasm
 
       - name: Stop sccache (Ubuntu/MacOS) 
