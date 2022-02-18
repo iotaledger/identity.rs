@@ -8,11 +8,14 @@ use identity_did::verifiable::VerifierOptions;
 /// Options to declare validation criteria in [super::CredentialValidator::full_validation()].
 #[non_exhaustive]
 pub struct CredentialValidationOptions {
-  /// Declares that the [identity_credential::Credential] is **not** considered valid if it expires before this [Timestamp]. 
+  /// Declares that the [identity_credential::Credential] is **not** considered valid if it expires before this
+  /// [Timestamp].
   pub earliest_expiry_date: Timestamp,
-  /// Declares that the [identity_credential::Credential] is **not** considered valid if it was issued later than this [Timestamp].
+  /// Declares that the [identity_credential::Credential] is **not** considered valid if it was issued later than this
+  /// [Timestamp].
   pub latest_issuance_date: Timestamp,
-  /// Declare that the [identity_credential::Credential]'s signature must be verified according to these [VerifierOptions].
+  /// Declare that the [identity_credential::Credential]'s signature must be verified according to these
+  /// [VerifierOptions].
   pub verifier_options: VerifierOptions,
 }
 
@@ -55,10 +58,12 @@ impl CredentialValidationOptions {
 #[non_exhaustive]
 /// Options to declare validation criteria for [super::PresentationValidator::full_validation()].
 pub struct PresentationValidationOptions {
-  /// Declares that the [identity_credential::Credential] of the [identity_credential::Presentation] must all be validated according to these options. 
-  pub shared_validation_options: CredentialValidationOptions, 
-  /// Declares that the [identity_credential::Presentation]'s signature is to be verified according to these [VerifierOptions].
-  pub presentation_verifier_options: VerifierOptions,       
+  /// Declares that the [identity_credential::Credential] of the [identity_credential::Presentation] must all be
+  /// validated according to these options.
+  pub shared_validation_options: CredentialValidationOptions,
+  /// Declares that the [identity_credential::Presentation]'s signature is to be verified according to these
+  /// [VerifierOptions].
+  pub presentation_verifier_options: VerifierOptions,
 }
 
 impl PresentationValidationOptions {

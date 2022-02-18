@@ -56,38 +56,38 @@ impl PresentationValidator {
   /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
   /// holder
   pub fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter(presentation)
-    .filter(|idx| {
-      presentation.verifiable_credential
-      .get(*idx)
-      .and_then(|credential|credential.non_transferable).unwrap_or(false)
+    Self::holder_not_subject_iter(presentation).filter(|idx| {
+      presentation
+        .verifiable_credential
+        .get(*idx)
+        .and_then(|credential| credential.non_transferable)
+        .unwrap_or(false)
     })
   }
 
-  /// An iterator over the indices corresponding to credentials where the presentation's holder is not the subject of the credential. 
-  pub fn holder_not_subject_iter<U,V>(presentation: &Presentation<U,V>) -> impl Iterator<Item = usize> + '_ {
+  /// An iterator over the indices corresponding to credentials where the presentation's holder is not the subject of
+  /// the credential.
+  pub fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
     presentation
-    .verifiable_credential
-    .as_ref()
-    .iter()
-    .enumerate()
-    .filter(|(_,credential)| {
-      match &credential.credential_subject {
-        OneOrMany::One(ref credential_subject) =>  {
-          credential_subject.id != presentation.holder
-        },
-        OneOrMany::Many(subjects) => {
-          // need to check the case where the Many variant holds a vector of exactly one subject 
-          if let &[ref credential_subject] = subjects.as_slice() {
-            credential_subject.id != presentation.holder
-          } else {
-            // zero or > 1 subjects means that the holder is not the subject
-            true
+      .verifiable_credential
+      .as_ref()
+      .iter()
+      .enumerate()
+      .filter(|(_, credential)| {
+        match &credential.credential_subject {
+          OneOrMany::One(ref credential_subject) => credential_subject.id != presentation.holder,
+          OneOrMany::Many(subjects) => {
+            // need to check the case where the Many variant holds a vector of exactly one subject
+            if let &[ref credential_subject] = subjects.as_slice() {
+              credential_subject.id != presentation.holder
+            } else {
+              // zero or > 1 subjects means that the holder is not the subject
+              true
+            }
           }
         }
-      }
-    })
-    .map(|(position,_)| position)
+      })
+      .map(|(position, _)| position)
   }
 
   /// Validates that the nonTransferable property is met.
