@@ -5,8 +5,10 @@ use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
@@ -132,6 +134,12 @@ pub(crate) enum Update {
   },
   DeleteService {
     fragment: String,
+  },
+  SetController {
+    controllers: Option<OneOrSet<IotaDID>>,
+  },
+  SetAlsoKnownAs {
+    urls: OrderedSet<Url>,
   },
 }
 
@@ -271,6 +279,13 @@ impl Update {
 
         state.document_mut().remove_service(&service_url)?;
       }
+      Self::SetController { controllers } => {
+        *state.document_mut().controller_mut() = controllers;
+      }
+
+      Self::SetAlsoKnownAs { urls } => {
+        *state.document_mut().also_known_as_mut() = urls;
+      }
     }
 
     state.document_mut().metadata.updated = Timestamp::now_utc();
@@ -407,4 +422,14 @@ impl_update_builder!(
 /// - `fragment`: the identifier of the service in the document, required.
 DeleteService {
   @required fragment String,
+});
+
+impl_update_builder!(
+SetController {
+    @required controllers Option<OneOrSet<IotaDID>>,
+});
+
+impl_update_builder!(
+SetAlsoKnownAs {
+    @required urls OrderedSet<Url>,
 });
