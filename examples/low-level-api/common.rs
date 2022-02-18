@@ -49,11 +49,12 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
   Ok(credential)
 }
 
-/// Helper that resolves documents to
-pub async fn resolve_documents(issuer_documents: &[IotaDocument]) -> Result<Vec<ResolvedIotaDocument>> {
+/// Helper method to resolve documents.
+// Todo: Remove this when the new Resolver becomes available.
+pub async fn resolve_documents(documents: &[IotaDocument]) -> Result<Vec<ResolvedIotaDocument>> {
   let mut resolved_documents: Vec<ResolvedIotaDocument> = Vec::new();
   let client: ClientMap = ClientMap::new();
-  for doc in issuer_documents {
+  for doc in documents {
     let resolved_document: ResolvedIotaDocument = client.resolve(doc.id()).await?;
     resolved_documents.push(resolved_document);
   }
