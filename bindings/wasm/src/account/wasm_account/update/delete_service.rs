@@ -4,9 +4,11 @@
 use identity::account::UpdateError::MissingRequiredField;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::WasmAccount;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -14,7 +16,7 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Deletes a Service if it exists.
   #[wasm_bindgen(js_name = deleteService)]
-  pub fn delete_service(&mut self, options: &DeleteServiceOptions) -> Result<Promise> {
+  pub fn delete_service(&mut self, options: &DeleteServiceOptions) -> Result<PromiseVoid> {
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
@@ -35,7 +37,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
     });
 
-    Ok(promise)
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 

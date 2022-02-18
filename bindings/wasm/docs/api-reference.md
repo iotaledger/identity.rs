@@ -137,8 +137,8 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -152,14 +152,14 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+deleteMethod"></a>
 
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Deletes a verification method if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -170,7 +170,7 @@ Deletes a verification method if the method exists.
 
 <a name="Account+deleteService"></a>
 
-### account.deleteService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Deletes a Service if it exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -308,7 +308,7 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+createMethod"></a>
 
-### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Adds a new verification method to the DID document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -319,7 +319,7 @@ Adds a new verification method to the DID document.
 
 <a name="Account+createService"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Adds a new Service to the DID Document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -330,7 +330,7 @@ Adds a new Service to the DID Document.
 
 <a name="Account+attachMethodRelationships"></a>
 
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Attach one or more verification relationships to a method.
 
 Note: the method must exist and be in the set of verification methods;
@@ -344,7 +344,7 @@ it cannot be an embedded method.
 
 <a name="Account+detachMethodRelationships"></a>
 
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;any&gt;</code>
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
