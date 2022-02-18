@@ -6,4 +6,4 @@ npm
 .eslintrc
 .prettierignore
 rustfmt.toml
-yarn.lock
+package-lock.json
