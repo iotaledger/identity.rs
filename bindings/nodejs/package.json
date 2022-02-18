@@ -29,7 +29,8 @@
     "build:debug": "napi build --platform",
     "example:stronghold": "ts-node ./examples/src/node.ts",
     "prepublishOnly": "napi prepublish -t npm",
-    "version": "napi version"
+    "version": "napi version",
+    "create-npm-dir": "napi create-npm-dir --target ./ "
   },
   "dependencies": {
     "@types/node": "^17.0.18",
