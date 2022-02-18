@@ -1,7 +1,7 @@
 name: Stronghold Bindings
 env:
   DEBUG: napi:*
-  APP_NAME: identity-node-stronghold
+  APP_NAME: identity-stronghold-nodejs # must match the package name in package.json
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   WORKING_DIRECTORY: bindings/nodejs
 on:
