@@ -23,7 +23,6 @@ use identity_iota::tangle::PublishType;
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
 use crate::identity::ChainState;
-use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
@@ -50,8 +49,6 @@ pub struct Account {
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
-  // The lease is not read, but releases the DID storage lease when the Account is dropped.
-  _did_lease: DIDLease,
 }
 
 impl Account {
@@ -65,12 +62,7 @@ impl Account {
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(
-    setup: AccountSetup,
-    chain_state: ChainState,
-    state: IdentityState,
-    did_lease: DIDLease,
-  ) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, chain_state: ChainState, state: IdentityState) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
@@ -78,7 +70,6 @@ impl Account {
       actions: AtomicUsize::new(0),
       chain_state,
       state,
-      _did_lease: did_lease,
     })
   }
 
@@ -89,14 +80,14 @@ impl Account {
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(account_setup: AccountSetup, identity_setup: IdentitySetup) -> Result<Self> {
-    let (did_lease, state): (DIDLease, IdentityState) = create_identity(
+    let state: IdentityState = create_identity(
       identity_setup,
       account_setup.client.network().name(),
       account_setup.storage.as_ref(),
     )
     .await?;
 
-    let mut account = Self::with_setup(account_setup, ChainState::new(), state, did_lease).await?;
+    let mut account = Self::with_setup(account_setup, ChainState::new(), state).await?;
 
     account.store_state().await?;
 
@@ -106,6 +97,9 @@ impl Account {
   }
 
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
+  ///
+  /// Callers are expected not to load the same [`IotaDID`] into multiple accounts,
+  /// as that would cause race conditions when updating the identity.
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the DID matches the client network.
     if did.network_str() != setup.client.network().name_str() {
@@ -120,9 +114,7 @@ impl Account {
     let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
     let chain_state = setup.storage.chain_state(&did).await?.ok_or(Error::IdentityNotFound)?;
 
-    let did_lease = setup.storage.lease_did(&did).await?;
-
-    Self::with_setup(setup, chain_state, state, did_lease).await
+    Self::with_setup(setup, chain_state, state).await
   }
 
   // ===========================================================================
