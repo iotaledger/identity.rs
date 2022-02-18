@@ -1,3 +1,3 @@
-# `nodejs-darwin-arm64`
+# `identity-stronghold-nodejs-darwin-arm64`
 
-This is the **aarch64-apple-darwin** binary for `nodejs`
+This is the **aarch64-apple-darwin** binary for `identity-stronghold-nodejs`
