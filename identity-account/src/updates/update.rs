@@ -30,7 +30,6 @@ use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
@@ -45,7 +44,7 @@ pub(crate) async fn create_identity(
   setup: IdentitySetup,
   network: NetworkName,
   store: &dyn Storage,
-) -> Result<(DIDLease, IdentityState)> {
+) -> Result<IdentityState> {
   let method_type = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
   };
@@ -84,8 +83,6 @@ pub(crate) async fn create_identity(
     UpdateError::DocumentAlreadyExists
   );
 
-  let did_lease = store.lease_did(&did).await?;
-
   let private_key = keypair.private().to_owned();
   std::mem::drop(keypair);
 
@@ -104,7 +101,7 @@ pub(crate) async fn create_identity(
   // Store the generations at which the method was added
   state.store_method_generations(method_fragment);
 
-  Ok((did_lease, state))
+  Ok(state)
 }
 
 #[derive(Clone, Debug)]
