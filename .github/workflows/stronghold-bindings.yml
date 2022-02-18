@@ -8,7 +8,7 @@ on:
   pull_request:
 defaults:
   run:
-    working-directory: ${{env.WORKING_DIRECTORY}}
+    working-directory: bindings/nodejs
 jobs:
   build:
     strategy:
