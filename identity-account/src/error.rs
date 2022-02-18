@@ -74,9 +74,6 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
-  /// Caused by attempting to create an account for an identity that is already managed by another account.
-  #[error("Identity Is In-use")]
-  IdentityInUse,
   #[error("method missing fragment")]
   MethodMissingFragment,
 }

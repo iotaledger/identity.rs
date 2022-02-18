@@ -8,7 +8,6 @@ use identity_iota::did::IotaDID;
 
 use crate::error::Result;
 use crate::identity::ChainState;
-use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -25,11 +24,6 @@ pub trait Storage: Debug + Send + Sync + 'static {
 
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
-
-  /// Attempt to obtain the exclusive permission to modify the given `did`.
-  /// The caller is expected to make no more modifications after the lease has been dropped.
-  /// Returns an [`IdentityInUse`][crate::Error::IdentityInUse] error if already leased.
-  async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease>;
 
   /// Creates a new keypair at the specified `location`
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
@@ -79,10 +73,6 @@ impl Storage for Box<dyn Storage> {
 
   async fn flush_changes(&self) -> Result<()> {
     (**self).flush_changes().await
-  }
-
-  async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease> {
-    (**self).lease_did(did).await
   }
 
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {

@@ -8,6 +8,7 @@ use identity::iota::IotaDID;
 use identity::iota::MessageId;
 use wasm_bindgen::prelude::*;
 
+use crate::did::UWasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -51,8 +52,8 @@ impl WasmExplorerUrl {
   ///
   /// E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
   #[wasm_bindgen(js_name = resolverUrl)]
-  pub fn resolver_url(&self, did: &str) -> Result<String> {
-    let did: IotaDID = IotaDID::parse(did).wasm_result()?;
+  pub fn resolver_url(&self, did: UWasmDID) -> Result<String> {
+    let did: IotaDID = IotaDID::try_from(did)?;
     self.0.resolver_url(&did).map(|url| url.to_string()).wasm_result()
   }
 

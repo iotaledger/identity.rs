@@ -3,6 +3,8 @@
 
 use std::sync::Arc;
 
+use identity_core::common::OneOrSet;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::KeyCollection;
@@ -695,6 +697,65 @@ async fn test_remove_service() -> Result<()> {
   let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::ServiceNotFound)));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_set_controller() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+
+  let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
+  let iota_did1: IotaDID = IotaDID::new(keypair1.public().as_ref()).unwrap();
+
+  let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
+  let iota_did2: IotaDID = IotaDID::new(keypair2.public().as_ref()).unwrap();
+
+  // Set one controller.
+  let update: Update = Update::SetController {
+    controllers: Some(OneOrSet::new_one(iota_did1.clone())),
+  };
+  account.process_update(update).await.unwrap();
+  assert_eq!(account.document().controller().unwrap().len(), 1);
+
+  // Set two controllers.
+  let set: OrderedSet<IotaDID> = OrderedSet::from_iter(vec![iota_did1, iota_did2]);
+  let update: Update = Update::SetController {
+    controllers: Some(OneOrSet::new_set(set).unwrap()),
+  };
+  account.process_update(update).await.unwrap();
+  assert_eq!(account.document().controller().unwrap().len(), 2);
+
+  // Remove all controllers.
+  let update: Update = Update::SetController { controllers: None };
+  account.process_update(update).await.unwrap();
+  assert_eq!(account.document().controller(), None);
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_set_also_known_as() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+
+  // No elements by default.
+  assert_eq!(account.document().also_known_as().len(), 0);
+
+  // Set two Urls.
+  let urls: OrderedSet<Url> = OrderedSet::from_iter(vec![
+    Url::parse("did:iota:xyz").unwrap(),
+    Url::parse("did:iota:abc").unwrap(),
+  ]);
+  let update: Update = Update::SetAlsoKnownAs { urls };
+  account.process_update(update).await.unwrap();
+  assert_eq!(account.document().also_known_as().len(), 2);
+
+  // Remove all Urls.
+  let update: Update = Update::SetAlsoKnownAs {
+    urls: OrderedSet::new(),
+  };
+  account.process_update(update).await.unwrap();
+  assert_eq!(account.document().also_known_as().len(), 0);
 
   Ok(())
 }

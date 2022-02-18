@@ -33,8 +33,8 @@ async fn main() -> Result<()> {
   // and publishes it to the IOTA mainnet.
   let account1: Account = builder.create_identity(IdentitySetup::default()).await?;
 
-  // Create a second identity.
-  let account2: Account = builder.create_identity(IdentitySetup::default()).await?;
+  // Create a second identity which uses the same storage.
+  let _account2: Account = builder.create_identity(IdentitySetup::default()).await?;
 
   // Retrieve the did of the identity that account1 manages.
   let iota_did1: IotaDID = account1.did().to_owned();
@@ -53,13 +53,6 @@ async fn main() -> Result<()> {
     .fragment("my-key")
     .apply()
     .await?;
-
-  // Note that there can only ever be one account that manages the same did.
-  // If we attempt to create another account that manages the same did as account2, we get an error.
-  assert!(matches!(
-    builder.load_identity(account2.did().to_owned()).await.unwrap_err(),
-    identity::account::Error::IdentityInUse
-  ));
 
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
