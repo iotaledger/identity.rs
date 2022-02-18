@@ -56,7 +56,7 @@ pub async fn validation_units_vc() -> Result<()> {
   CredentialValidator::latest_issuance_date(&credential, Timestamp::now_utc())?;
 
   // validate whether the credential has been active for at least two weeks
-  if let Err(_) = CredentialValidator::latest_issuance_date(&credential, two_weeks_ago_timestamp) {
+  if CredentialValidator::latest_issuance_date(&credential, two_weeks_ago_timestamp).is_err() {
     println!("the credential has been active for less than two weeks!");
   }
 
