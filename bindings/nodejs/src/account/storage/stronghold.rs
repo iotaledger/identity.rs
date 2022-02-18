@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use futures::executor;
-use identity::account::DIDLease;
 use identity::account::Storage;
 use identity::account::Stronghold;
 use identity::core::decode_b58;
@@ -13,7 +12,6 @@ use napi::bindgen_prelude::Error;
 use napi::Result;
 
 use crate::account::NapiChainState;
-use crate::account::NapiDIDLease;
 use crate::account::NapiIdentityState;
 use crate::account::NapiKeyLocation;
 use crate::account::NapiSignature;
@@ -80,15 +78,6 @@ impl NapiStronghold {
   #[napi]
   pub async fn flush_changes(&self) -> Result<()> {
     self.0.flush_changes().await.napi_result()
-  }
-
-  /// Attempt to obtain the exclusive permission to modify the given `did`.
-  /// The caller is expected to make no more modifications after the lease has been dropped.
-  /// Returns an IdentityInUse error if already leased.
-  #[napi]
-  pub async fn lease_did(&self, did: &NapiDID) -> Result<NapiDIDLease> {
-    let did_lease: DIDLease = self.0.lease_did(&did.0).await.napi_result()?;
-    Ok(did_lease.into())
   }
 
   /// Creates a new keypair at the specified `location`

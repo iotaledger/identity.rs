@@ -14,6 +14,7 @@ use identity::did::resolution::InputMetadata;
 use identity::did::resolution::Resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
+use identity::did::CoreDID;
 use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::IotaDID;
@@ -45,7 +46,13 @@ async fn main() -> Result<()> {
   println!("Resolution > {:#?}", output);
 
   // The resolved Document should be the same as what we published.
-  assert_eq!(&output.document.unwrap(), document.core_document());
+  assert_eq!(
+    output.document.unwrap(),
+    document
+      .core_document()
+      .clone()
+      .map(CoreDID::from, |properties| properties)
+  );
 
   // ===========================================================================
   // DID Dereferencing
@@ -62,7 +69,7 @@ async fn main() -> Result<()> {
   // The resolved resource should be the DID Document's default signing method.
   match output.content.unwrap() {
     Resource::Secondary(SecondaryResource::VerificationKey(method)) => {
-      assert_eq!(method, **document.default_signing_method()?);
+      assert_eq!(method, document.default_signing_method()?.clone().map(CoreDID::from));
     }
     resource => {
       panic!("Invalid Resource Dereference > {:#?}", resource);

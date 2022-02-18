@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
-use core::fmt::Display;
 use core::fmt::Formatter;
 
 use core::hash::Hash;
@@ -110,19 +109,6 @@ where
     match self {
       Self::One(inner) => Debug::fmt(inner, f),
       Self::Many(inner) => Debug::fmt(inner, f),
-    }
-  }
-}
-
-impl<T> Display for OneOrMany<T>
-where
-  T: Display,
-  Vec<T>: Display,
-{
-  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-    match self {
-      Self::One(inner) => Display::fmt(inner, f),
-      Self::Many(inner) => Display::fmt(inner, f),
     }
   }
 }

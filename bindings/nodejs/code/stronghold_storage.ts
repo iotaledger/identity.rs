@@ -1,5 +1,5 @@
 import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../index.js'
-import { DID, KeyLocation, DIDLease, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm.js";
+import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm.js";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
@@ -14,15 +14,6 @@ export class Stronghold implements Storage {
 
     public async flushChanges(): Promise<void> {
         return this.napiStronghold.flushChanges()
-    }
-
-    public async leaseDid(did: DID): Promise<DIDLease> {
-        let napiDID = NapiDID.fromJSON(did.toJSON());
-        // TODO how to get a DIDLease from a NapiDIDLease
-        let napiDIDLease = await this.napiStronghold.leaseDid(napiDID);
-        let didLease = new DIDLease();
-        didLease.store(napiDIDLease.load())
-        return didLease
     }
 
     public async keyNew(did: DID, keyLocation: KeyLocation): Promise<string> {

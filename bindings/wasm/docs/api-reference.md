@@ -26,8 +26,6 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
-<dt><a href="#DIDLease">DIDLease</a></dt>
-<dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd></dd>
 <dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
@@ -110,9 +108,9 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -1020,28 +1018,6 @@ Parses a `DID` from the input string.
 | --- | --- |
 | input | <code>string</code> | 
 
-<a name="DIDLease"></a>
-
-## DIDLease
-**Kind**: global class  
-
-* [DIDLease](#DIDLease)
-    * [.store(value)](#DIDLease+store)
-    * [.load()](#DIDLease+load) ⇒ <code>boolean</code>
-
-<a name="DIDLease+store"></a>
-
-### didLease.store(value)
-**Kind**: instance method of [<code>DIDLease</code>](#DIDLease)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="DIDLease+load"></a>
-
-### didLease.load() ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>DIDLease</code>](#DIDLease)  
 <a name="DIDUrl"></a>
 
 ## DIDUrl
@@ -1895,7 +1871,7 @@ E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> | 
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
 
 <a name="ExplorerUrl+toString"></a>
 
@@ -2241,6 +2217,7 @@ Serializes `Signature` as a JSON object.
 * [KeyPair](#KeyPair)
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
+        * [.type](#KeyPair+type) ⇒ <code>number</code>
         * [.public](#KeyPair+public) ⇒ <code>string</code>
         * [.private](#KeyPair+private) ⇒ <code>string</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
@@ -2258,6 +2235,12 @@ Generates a new `KeyPair` object.
 | --- | --- |
 | type_ | <code>number</code> | 
 
+<a name="KeyPair+type"></a>
+
+### keyPair.type ⇒ <code>number</code>
+Returns the private key as a base58-encoded string.
+
+**Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+public"></a>
 
 ### keyPair.public ⇒ <code>string</code>
@@ -2932,7 +2915,7 @@ Creates a new `Timestamp` with the current date and time.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(key, fragment)](#new_VerificationMethod_new)
+    * [new VerificationMethod(did, key_type, public_key, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
@@ -2941,19 +2924,21 @@ Creates a new `Timestamp` with the current date and time.
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromDID(did, key, fragment)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.createMerkleKey(digest, did, keys, fragment)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.newMerkleKey(digest, did, keys, fragment)](#VerificationMethod.newMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
 
-### new VerificationMethod(key, fragment)
-Creates a new `VerificationMethod` object from the given `key`.
+### new VerificationMethod(did, key_type, public_key, fragment)
+Creates a new `VerificationMethod` object from the given `did` and
+Base58-BTC encoded public key.
 
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| did | [<code>DID</code>](#DID) | 
+| key_type | <code>number</code> | 
+| public_key | <code>string</code> | 
 | fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
@@ -2997,23 +2982,10 @@ Returns the `VerificationMethod` public key data.
 Serializes a `VerificationMethod` object as a JSON object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod.fromDID"></a>
+<a name="VerificationMethod.newMerkleKey"></a>
 
-### VerificationMethod.fromDID(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new `VerificationMethod` object from the given `did` and `key`.
-
-**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| fragment | <code>string</code> | 
-
-<a name="VerificationMethod.createMerkleKey"></a>
-
-### VerificationMethod.createMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new Merkle Key Collection Method from the given key collection.
+### VerificationMethod.newMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Creates a new `MerkleKeyCollection2021` method from the given key collection.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
 
@@ -3069,13 +3041,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## DIDMessageEncoding
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 

@@ -56,23 +56,6 @@ var Stronghold = /** @class */ (function () {
             });
         });
     };
-    Stronghold.prototype.leaseDid = function (did) {
-        return __awaiter(this, void 0, void 0, function () {
-            var napiDID, napiDIDLease, didLease;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        napiDID = index_js_1.NapiDID.fromJSON(did.toJSON());
-                        return [4 /*yield*/, this.napiStronghold.leaseDid(napiDID)];
-                    case 1:
-                        napiDIDLease = _a.sent();
-                        didLease = new identity_wasm_js_1.DIDLease();
-                        didLease.store(napiDIDLease.load());
-                        return [2 /*return*/, didLease];
-                }
-            });
-        });
-    };
     Stronghold.prototype.keyNew = function (did, keyLocation) {
         return __awaiter(this, void 0, void 0, function () {
             var napiDID, napiKeyLocation;
