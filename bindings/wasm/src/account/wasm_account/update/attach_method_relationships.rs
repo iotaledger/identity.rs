@@ -13,10 +13,12 @@ use identity::core::OneOrMany;
 use identity::did::MethodRelationship;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -27,7 +29,7 @@ impl WasmAccount {
   /// Note: the method must exist and be in the set of verification methods;
   /// it cannot be an embedded method.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
-  pub fn attach_method_relationships(&mut self, options: &AttachMethodRelationshipOptions) -> Result<Promise> {
+  pub fn attach_method_relationships(&mut self, options: &AttachMethodRelationshipOptions) -> Result<PromiseVoid> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
@@ -63,7 +65,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
     });
 
-    Ok(promise)
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 
