@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 
 use identity_core::common::OneOrMany;
+use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
@@ -54,39 +55,12 @@ impl PresentationValidator {
 
   /// An iterator over the indices corresponding to the credentials that have the
   /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
-  /// holder
+  /// holder.
+  ///
+  /// The output of this iterator will always be a subset of [Self::holder_not_subject_iter()].
   pub fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter(presentation).filter(|idx| {
-      presentation
-        .verifiable_credential
-        .get(*idx)
-        .and_then(|credential| credential.non_transferable)
-        .unwrap_or(false)
-    })
-  }
-
-  /// An iterator over the indices corresponding to credentials where the presentation's holder is not the subject of
-  /// the credential.
-  pub fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    presentation
-      .verifiable_credential
-      .as_ref()
-      .iter()
-      .enumerate()
-      .filter(|(_, credential)| {
-        match &credential.credential_subject {
-          OneOrMany::One(ref credential_subject) => credential_subject.id != presentation.holder,
-          OneOrMany::Many(subjects) => {
-            // need to check the case where the Many variant holds a vector of exactly one subject
-            if let &[ref credential_subject] = subjects.as_slice() {
-              credential_subject.id != presentation.holder
-            } else {
-              // zero or > 1 subjects means that the holder is not the subject
-              true
-            }
-          }
-        }
-      })
+    Self::holder_not_subject_iter_internal(presentation)
+      .filter(|(_, credential)| credential.non_transferable.unwrap_or(false))
       .map(|(position, _)| position)
   }
 
@@ -113,6 +87,38 @@ impl PresentationValidator {
     } else {
       Ok(())
     }
+  }
+
+  /// An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
+  /// presentation's holder.
+  ///
+  /// The output of this iterator is always a superset of [Self::non_transferable_violations()].
+  pub fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
+    Self::holder_not_subject_iter_internal(presentation).map(|(position, _)| position)
+  }
+
+  fn holder_not_subject_iter_internal<U, V>(
+    presentation: &Presentation<U, V>,
+  ) -> impl Iterator<Item = (usize, &Credential<V>)> + '_ {
+    presentation
+      .verifiable_credential
+      .as_ref()
+      .iter()
+      .enumerate()
+      .filter(|(_, credential)| {
+        match &credential.credential_subject {
+          OneOrMany::One(ref credential_subject) => credential_subject.id != presentation.holder,
+          OneOrMany::Many(subjects) => {
+            // need to check the case where the Many variant holds a vector of exactly one subject
+            if let &[ref credential_subject] = subjects.as_slice() {
+              credential_subject.id != presentation.holder
+            } else {
+              // zero or > 1 subjects means that the holder is not the subject
+              true
+            }
+          }
+        }
+      })
   }
 
   /// Verify the presentation's signature using the resolved document of the holder
@@ -196,11 +202,27 @@ impl PresentationValidator {
       Self::verify_presentation_signature_local_error(presentation, holder, &options.presentation_verifier_options)
     });
 
+    // how the subject holder relationship is validated depends on the settings
+    // if holder_must_be_subject is true then this is what we check for and the presence of the nonTransferable property
+    // is irrelevant. Otherwise this check depends on the value of `allow_non_transferable` parameter.
+    let number_of_credentials = presentation.verifiable_credential.len();
+    let subject_holder_relationship_validation = {
+      let (max_holder_not_subject_checks, max_non_transferable_violation_checks) = match (
+        options.holder_must_be_subject,
+        options.allow_non_transferable_violations,
+      ) {
+        (true, _) => (number_of_credentials, 0),
+        (false, false) => (0, number_of_credentials),
+        (false, true) => (0, 0),
+      };
+      Self::holder_not_subject_iter(presentation)
+        .take(max_holder_not_subject_checks)
+        .chain(Self::non_transferable_violations(presentation).take(max_non_transferable_violation_checks))
+        .map(|credential_position| Err(ValidationError::NonTransferableViolation { credential_position }))
+    };
+
     let presentation_validation_errors_iter = structure_validation
-      .chain(
-        Self::non_transferable_violations(presentation)
-          .map(|credential_position| Err(ValidationError::NonTransferableViolation { credential_position })),
-      )
+      .chain(subject_holder_relationship_validation)
       .chain(signature_validation)
       .filter_map(|result| result.err());
 
@@ -235,7 +257,7 @@ impl PresentationValidator {
         1
       } else {
         // we are supposed to collect all errors (if any) so collect all credential errors
-        presentation.verifiable_credential.len()
+        number_of_credentials
       })
       .collect();
 
@@ -252,13 +274,12 @@ impl PresentationValidator {
 
 #[cfg(test)]
 mod tests {
+  use crate::credential::test_utils;
+  use crate::credential::CredentialValidationOptions;
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
   use identity_core::crypto::SignatureOptions;
   use identity_credential::presentation::PresentationBuilder;
-
-  use crate::credential::test_utils;
-  use crate::credential::CredentialValidationOptions;
 
   use super::*;
   #[test]
@@ -555,8 +576,6 @@ mod tests {
       issuance_date,
       expiration_date,
     );
-    // set the nonTransferable option on the first credential
-    credential_foo.non_transferable = Some(true);
     // sign the credential
     issuer_foo_doc
       .sign_data(
@@ -566,8 +585,11 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    // create and sign a second credential
+    // create a second credential
     let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
+    // set the nonTransferable property on this credential
+    credential_bar.non_transferable = Some(true);
+    // sign the credential
     issuer_bar_doc
       .sign_data(
         &mut credential_bar,
@@ -577,18 +599,11 @@ mod tests {
       )
       .unwrap();
 
-    // create a presentation where the subject of the second credential is the holder.
-    // This violates the non transferable property of the first credential.
+    // create a presentation where the subject of the first credential is the holder.
+    // This violates the non transferable property of the second credential.
     let mut presentation: Presentation = PresentationBuilder::default()
       .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
-      .holder(
-        credential_bar
-          .credential_subject
-          .first()
-          .and_then(|subject| subject.id.as_ref())
-          .unwrap()
-          .clone(),
-      )
+      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
       .credential(credential_foo)
       .credential(credential_bar)
       .build()
@@ -646,8 +661,34 @@ mod tests {
 
     assert!(matches!(
       error,
-      ValidationError::NonTransferableViolation { credential_position: 0 }
+      ValidationError::NonTransferableViolation { credential_position: 1 }
     ));
+
+    // Todo: Consider moving these last two checks out into separate tests.
+
+    // check that the validation passes if we change the options to allow for nonTransferableViolations
+    let options = presentation_validation_options.allow_non_transferable_violations(true);
+    assert!(validator
+      .full_validation(
+        &presentation,
+        &options,
+        &resolved_holder_document,
+        &trusted_issuers,
+        fail_fast,
+      )
+      .is_ok());
+    // finally check that full_validation now does not pass if we set holder_must_be_subject = true.
+    let options = options.holder_must_be_subject(true);
+
+    assert!(validator
+      .full_validation(
+        &presentation,
+        &options,
+        &resolved_holder_document,
+        &trusted_issuers,
+        fail_fast,
+      )
+      .is_err());
   }
 
   #[test]
