@@ -98,7 +98,7 @@ impl Account {
 
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
   ///
-  /// Callers are expected not to load the same [`IotaDID`] into multiple accounts,
+  /// Callers are expected **not** to load the same [`IotaDID`] into more than one account,
   /// as that would cause race conditions when updating the identity.
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the DID matches the client network.
