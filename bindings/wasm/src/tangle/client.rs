@@ -272,7 +272,7 @@ impl Client {
       // resolve the holder's DID Document and also the DID Documents of the credential issuers.
       let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) =
         fetch_holder_and_issuers(client, &presentation).await.wasm_result()?;
-        let fail_fast: bool = true; 
+      let fail_fast: bool = true;
       PresentationValidator::new()
         .full_validation(
           &presentation,
