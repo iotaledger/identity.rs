@@ -65,6 +65,7 @@
     "webpack-dev-server": "^4.7.3"
   },
   "dependencies": {
+    "axios": "^0.26.0",
     "node-fetch": "^2.6.7"
   },
   "engines": {
