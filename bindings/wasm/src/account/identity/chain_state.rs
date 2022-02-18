@@ -54,16 +54,16 @@ impl WasmChainState {
     self.0.is_new_identity()
   }
 
-  /// Serializes a `ChainState` as `Uint8Array`.
-  #[wasm_bindgen(js_name = asBytes)]
-  pub fn as_bytes(&self) -> Result<Vec<u8>> {
-    bincode::serialize(&self).wasm_result()
+  // Serializes a `ChainState` object as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a `Uint8Array` as `ChainState`.
-  #[wasm_bindgen(js_name = fromBytes)]
-  pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmChainState> {
-    bincode::deserialize(&bytes).wasm_result()
+  /// Deserializes a JSON object as `ChainState`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmChainState> {
+    json_value.into_serde().wasm_result()
   }
 }
 
@@ -76,5 +76,11 @@ impl Default for WasmChainState {
 impl From<ChainState> for WasmChainState {
   fn from(chain_state: ChainState) -> Self {
     WasmChainState(chain_state)
+  }
+}
+
+impl From<WasmChainState> for ChainState {
+  fn from(wasm_chain_state: WasmChainState) -> Self {
+    wasm_chain_state.0
   }
 }

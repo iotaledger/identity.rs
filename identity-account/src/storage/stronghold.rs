@@ -1,10 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::Path;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use crypto::keys::slip10::Chain;
 use futures::executor;
-
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
 use identity_core::convert::FromJson;
@@ -16,10 +18,6 @@ use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
-use std::convert::TryFrom;
-use std::io;
-use std::path::Path;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::error::Error;
@@ -32,7 +30,6 @@ use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
@@ -238,40 +235,6 @@ impl Storage for Stronghold {
     // TODO: Will be re-implemented later with the key location refactor
     todo!("stronghold purge not implemented");
   }
-
-  async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {
-    let store: Store<'_> = self.store(&fmt_did(did));
-
-    let bytes = store.get(location_published_generation()).await?;
-
-    if bytes.is_empty() {
-      return Ok(None);
-    }
-
-    let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
-      io::Error::new(
-        io::ErrorKind::InvalidData,
-        format!(
-          "expected to read 4 bytes as the published generation, found {} instead",
-          bytes.len()
-        ),
-      )
-    })?;
-
-    let gen = Generation::from_u32(u32::from_le_bytes(le_bytes));
-
-    Ok(Some(gen))
-  }
-
-  async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
-    let store: Store<'_> = self.store(&fmt_did(did));
-
-    store
-      .set(location_published_generation(), index.to_u32().to_le_bytes(), None)
-      .await?;
-
-    Ok(())
-  }
 }
 
 impl Drop for Stronghold {
@@ -328,10 +291,6 @@ fn location_seed(location: &KeyLocation) -> Location {
 
 fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
-}
-
-fn location_published_generation() -> Location {
-  Location::generic("$published_generation", Vec::new())
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {

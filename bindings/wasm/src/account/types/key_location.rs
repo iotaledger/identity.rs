@@ -44,10 +44,10 @@ impl WasmKeyLocation {
     self.0.generation().into()
   }
 
-  /// Serializes a `KeyLocation` as `Uint8Array`.
-  #[wasm_bindgen(js_name = asBytes)]
-  pub fn as_bytes(&self) -> Result<Vec<u8>> {
-    bincode::serialize(&self).wasm_result()
+  /// Serializes `Signature` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 }
 

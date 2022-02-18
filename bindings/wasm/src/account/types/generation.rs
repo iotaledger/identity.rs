@@ -62,18 +62,6 @@ impl WasmGeneration {
   pub fn max() -> WasmGeneration {
     WasmGeneration(Generation::MAX)
   }
-
-  /// Serializes a `Generation` as `Uint8Array`.
-  #[wasm_bindgen(js_name = asBytes)]
-  pub fn as_bytes(&self) -> Result<Vec<u8>> {
-    bincode::serialize(&self).wasm_result()
-  }
-
-  /// Deserializes a `Uint8Array` as `Generation`.
-  #[wasm_bindgen(js_name = fromBytes)]
-  pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmGeneration> {
-    bincode::deserialize(&bytes).wasm_result()
-  }
 }
 
 impl From<Generation> for WasmGeneration {

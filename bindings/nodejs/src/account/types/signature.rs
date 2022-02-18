@@ -18,14 +18,8 @@ impl From<Signature> for NapiSignature {
 
 #[napi]
 impl NapiSignature {
-  #[napi]
-  pub fn as_json(&self) -> Result<serde_json::Value> {
-    serde_json::to_value(&self).napi_result()
-  }
-
-  #[napi]
-  pub fn as_bytes(&self) -> Result<Vec<u32>> {
-    let bytes: Vec<u8> = bincode::serialize(&self).napi_result()?;
-    Ok(bytes.into_iter().map(|v| v as u32).collect())
+  #[napi(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<serde_json::Value> {
+    serde_json::to_value(&self.0).napi_result()
   }
 }
