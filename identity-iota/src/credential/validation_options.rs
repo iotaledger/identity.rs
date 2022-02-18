@@ -5,10 +5,12 @@ use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
 
 #[derive(Debug)]
+/// Options to declare validation criteria in [super::CredentialValidator::full_validation()].
+#[non_exhaustive]
 pub struct CredentialValidationOptions {
-  pub(super) earliest_expiry_date: Timestamp,
-  pub(super) latest_issuance_date: Timestamp,
-  pub(super) verifier_options: VerifierOptions,
+  pub earliest_expiry_date: Timestamp,
+  pub latest_issuance_date: Timestamp,
+  pub verifier_options: VerifierOptions,
 }
 
 impl Default for CredentialValidationOptions {
@@ -22,51 +24,54 @@ impl Default for CredentialValidationOptions {
 }
 
 impl CredentialValidationOptions {
+  /// Constructor that sets all options to their defaults.
   pub fn new() -> Self {
     Self::default()
   }
 
+  /// Declare that a [identity_credential::Credential] may expire no later than the given `timestamp`.
   pub fn earliest_expiry_date(mut self, timestamp: Timestamp) -> Self {
     self.earliest_expiry_date = timestamp;
     self
   }
-
+  /// Declare that a [identity_credential::Credential] may expire no later than the given `timestamp`.
   pub fn latest_issuance_date(mut self, timestamp: Timestamp) -> Self {
     self.latest_issuance_date = timestamp;
     self
   }
 
-  pub fn verifier_options(mut self, verifier_options: VerifierOptions) -> Self {
-    self.verifier_options = verifier_options;
+  /// Declare that the signature of a [identity_credential::Credential] is to be verified according to the given
+  /// `options`.
+  pub fn verifier_options(mut self, options: VerifierOptions) -> Self {
+    self.verifier_options = options;
     self
   }
-
-  pub fn get_verifier_options_mut(&mut self) -> &mut VerifierOptions {
-    &mut self.verifier_options
-  }
-
-  //Todo: Should there also be an into_verifier_options method?
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
+/// Options to declare validation criteria for [super::PresentationValidator::full_validation()].
 pub struct PresentationValidationOptions {
-  pub(super) shared_validation_options: CredentialValidationOptions, // used when validating the credentials
-  pub(super) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature. */
+  pub shared_validation_options: CredentialValidationOptions, // used when validating the credentials
+  pub presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature. */
 }
 
 impl PresentationValidationOptions {
+  /// Constructor that sets all options to their defaults.
   pub fn new() -> Self {
     Self {
       shared_validation_options: CredentialValidationOptions::default(),
       presentation_verifier_options: VerifierOptions::default(),
     }
   }
-
+  /// Declare that all the [identity_credential::Presentation]'s credentials are all to be validated according to the
+  /// given `options`.
   pub fn shared_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.shared_validation_options = options;
     self
   }
-
+  /// Declare that the [identity_credential::Presentation]'s signature is to be verified according to the given
+  /// `options`.
   pub fn presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
     self.presentation_verifier_options = options;
     self

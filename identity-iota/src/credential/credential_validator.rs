@@ -30,14 +30,12 @@ impl Default for CredentialValidator {
   }
 }
 impl CredentialValidator {
+  /// Constructs a new [CredentialValidator]
   pub fn new() -> Self {
     Self {}
   }
 
-  //---------------------------------------------------------- validation units
-  //---------------------------------------------------------- -------------------------------------------------------------------------
-
-  /// Validates the semantic structure of the `Credential`.
+  /// Validates the semantic structure of the [Credential].
   ///
   /// # Terminology
   /// This is a *validation unit*
@@ -51,7 +49,7 @@ impl CredentialValidator {
       .map_err(ValidationError::CredentialStructure)
   }
 
-  /// Validate that the [ResolvedCredential] does not expire before the specified [Timestamp].
+  /// Validate that the [Credential] does not expire before the specified [Timestamp].
   ///
   /// # Terminology
   /// This is a *validation unit*
@@ -68,7 +66,7 @@ impl CredentialValidator {
     is_ok.then(|| ()).ok_or(ValidationError::ExpirationDate)
   }
 
-  /// Validate that the [ResolvedCredential] is issued no later than the specified [Timestamp].
+  /// Validate that the [Credential] is issued no later than the specified [Timestamp].
   ///
   /// # Terminology
   /// This is a *validation unit*
@@ -135,11 +133,6 @@ impl CredentialValidator {
   /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
   /// structure.
   ///
-  ///
-  /// # Security
-  /// It is the callers responsibility to ensure that the trusted issuers have up to date DID Documents. Furthermore
-  /// most applications will want to apply their own domain specific validations as this method only covers common
-  /// concerns. See the [Errors](#Errors) section to get an overview of what gets validated.
   ///
   /// # Errors
   /// Fails if any of the following conditions occur

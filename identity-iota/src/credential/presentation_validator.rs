@@ -33,12 +33,12 @@ impl Default for PresentationValidator {
   }
 }
 impl PresentationValidator {
-  /// Constructs a new [PresentationValidator]
+  /// Constructs a new [PresentationValidator].
   pub fn new() -> Self {
     Self {}
   }
 
-  /// Validates the semantic structure of the `Presentation`.
+  /// Validates the semantic structure of the [Presentation].
   ///
   /// # Terminology
   /// This is a *validation unit*.
@@ -82,7 +82,7 @@ impl PresentationValidator {
   /// Returns at the first credential requiring a nonTransferable property that is not met.
   ///
   /// If one needs to find *all* the nonTransferable violations of this presentation, then see
-  /// [Self::non_transferable_violations].
+  /// [Self::non_transferable_violations()].
   ///
   /// # Terminology
   /// This is a *validation unit*
