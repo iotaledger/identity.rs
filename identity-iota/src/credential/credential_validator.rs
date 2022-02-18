@@ -94,7 +94,7 @@ impl CredentialValidator {
         // the signature
         issuer_docs
           .find(|issuer_doc| issuer_doc.document.id() == &did)
-          .ok_or(ValidationError::IncompatibleIssuerDocument)
+          .ok_or(ValidationError::IncompatibleIssuerDocuments)
       }
       Err(error) => {
         // the issuer's url could not be parsed to a valid IotaDID
@@ -157,9 +157,10 @@ impl CredentialValidator {
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
     issuer: &ResolvedIotaDocument,
+    fail_fast: bool,
   ) -> Result<()> {
     self
-      .full_validation_local_error(credential, options, std::slice::from_ref(issuer))
+      .full_validation_local_error(credential, options, std::slice::from_ref(issuer), fail_fast)
       .map_err(Error::UnsuccessfulCredentialValidation)
   }
 
@@ -170,6 +171,7 @@ impl CredentialValidator {
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
     issuers: &[ResolvedIotaDocument],
+    fail_fast: bool,
   ) -> CredentialValidationResult {
     let signature_validation =
       std::iter::once_with(|| Self::verify_signature_local_error(credential, issuers, &options.verifier_options));
@@ -187,7 +189,6 @@ impl CredentialValidator {
       .chain(structure_validation)
       .chain(signature_validation)
       .filter_map(|result| result.err());
-    let fail_fast = options.fail_fast;
     let validation_errors: OneOrMany<ValidationError> = if fail_fast {
       validation_units_error_iter.take(1).collect()
     } else {
@@ -318,7 +319,11 @@ mod tests {
       .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
+    let fail_fast = true;
+    let error = match validator
+      .full_validation(&credential, &options, &issuer, fail_fast)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -389,7 +394,11 @@ mod tests {
 
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
+    let fail_fast = true;
+    let error = match validator
+      .full_validation(&credential, &options, &issuer, fail_fast)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -422,7 +431,10 @@ mod tests {
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
-    assert!(validator.full_validation(&credential, &options, &issuer).is_ok());
+    let fail_fast = true;
+    assert!(validator
+      .full_validation(&credential, &options, &issuer, fail_fast)
+      .is_ok());
   }
 
   #[test]
@@ -445,7 +457,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      Error::UnsuccessfulValidationUnit(ValidationError::IncompatibleIssuerDocument)
+      Error::UnsuccessfulValidationUnit(ValidationError::IncompatibleIssuerDocuments)
     ));
 
     // also check that the full validation fails as expected
@@ -457,7 +469,11 @@ mod tests {
       .earliest_expiry_date(expires_after);
 
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
+    let fail_fast = true;
+    let error = match validator
+      .full_validation(&credential, &options, &issuer, fail_fast)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -467,7 +483,7 @@ mod tests {
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::IncompatibleIssuerDocument));
+    assert!(matches!(error, ValidationError::IncompatibleIssuerDocuments));
   }
 
   #[test]
@@ -500,7 +516,11 @@ mod tests {
       .latest_issuance_date(issued_before)
       .earliest_expiry_date(expires_after);
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
+    let fail_fast = true;
+    let error = match validator
+      .full_validation(&credential, &options, &issuer, fail_fast)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -536,7 +556,11 @@ mod tests {
       .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
-    let error = match validator.full_validation(&credential, &options, &issuer).unwrap_err() {
+    let fail_fast = true;
+    let error = match validator
+      .full_validation(&credential, &options, &issuer, fail_fast)
+      .unwrap_err()
+    {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
@@ -574,8 +598,9 @@ mod tests {
     // fail_fast = true is default.
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
+    let fail_fast = true;
     let error = match validator
-      .full_validation(&credential, &options, &other_issuer_resolved_doc)
+      .full_validation(&credential, &options, &other_issuer_resolved_doc, fail_fast)
       .unwrap_err()
     {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
@@ -608,12 +633,12 @@ mod tests {
     let expires_after = Timestamp::parse("2024-02-01T00:00:00Z").unwrap(); // expires_after > expiration_date [fourth error]
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_before)
-      .earliest_expiry_date(expires_after)
-      .fail_fast(false);
+      .earliest_expiry_date(expires_after);
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
+    let fail_fast = false;
     let error = match validator
-      .full_validation(&credential, &options, &other_issuer_resolved_doc)
+      .full_validation(&credential, &options, &other_issuer_resolved_doc, fail_fast)
       .unwrap_err()
     {
       Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {

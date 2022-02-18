@@ -250,8 +250,9 @@ impl Client {
       // resolve the issuer's DID Document
       let issuer_doc: ResolvedIotaDocument = resolve_did(client, issuer_url).await.wasm_result()?;
       // validate the credential (using the issuer's DID document to verify the signature)
+      let fail_fast: bool = true;
       CredentialValidator::new()
-        .full_validation(&credential, &credential_validation_options, &issuer_doc)
+        .full_validation(&credential, &credential_validation_options, &issuer_doc, fail_fast)
         .wasm_result()
         .map(|_| JsValue::TRUE)
     });
@@ -271,13 +272,14 @@ impl Client {
       // resolve the holder's DID Document and also the DID Documents of the credential issuers.
       let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) =
         fetch_holder_and_issuers(client, &presentation).await.wasm_result()?;
-
+        let fail_fast: bool = true; 
       PresentationValidator::new()
         .full_validation(
           &presentation,
           &presentation_validation_options,
           &holder_doc,
           issuer_docs.as_slice(),
+          fail_fast,
         )
         .wasm_result()
         .map(|_| JsValue::TRUE)

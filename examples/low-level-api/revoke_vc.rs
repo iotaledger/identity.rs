@@ -64,8 +64,13 @@ async fn main() -> Result<()> {
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  let validation_result =
-    CredentialValidator::new().full_validation(&signed_vc, &CredentialValidationOptions::default(), &resolved_issuer);
+  let fail_fast = true;
+  let validation_result = CredentialValidator::new().full_validation(
+    &signed_vc,
+    &CredentialValidationOptions::default(),
+    &resolved_issuer,
+    fail_fast,
+  );
 
   println!("VC validation result: {:?}", validation_result);
   assert!(validation_result.is_err());

@@ -18,17 +18,20 @@ pub enum ValidationError {
   IssuanceDate,
   /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
   #[error("could not verify the issuer's signature")]
+  #[non_exhaustive]
   IssuerProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * * here? */
   },
-  /// Indicates an attempt to verify a credential's signature with a resolved DID document not corresponding to the
-  /// URL of the credential's issuer.
-  #[error("the provided issuer document does not correspond to the credential's issuer")]
-  IncompatibleIssuerDocument,
+  /// Indicates a failure to extract a resolved document corresponding to the URL of the credential's issuer upon
+  /// signature verification.
+  #[error("None of the supplied issuer documents correspond to the credential's issuer")]
+  #[non_exhaustive]
+  IncompatibleIssuerDocuments,
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("the credential's issuer property could not be parsed to a valid DID")]
+  #[non_exhaustive]
   IssuerUrl {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
@@ -36,6 +39,7 @@ pub enum ValidationError {
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("the presentation's holder property could not be parsed to a valid DID")]
+  #[non_exhaustive]
   HolderUrl {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
@@ -44,10 +48,12 @@ pub enum ValidationError {
   /// Indicates an attempt to verify a presentation's signature with a resolved DID document not corresponding to the
   /// URL of the presentation's holder property.
   #[error("the provided holder document does not correspond to the presentation's holder property")]
+  #[non_exhaustive]
   IncompatibleHolderDocument,
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
   #[error("could not verify the holder's signature")]
+  #[non_exhaustive]
   HolderProof {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
@@ -61,6 +67,7 @@ pub enum ValidationError {
   PresentationStructure(#[source] identity_credential::Error),
   /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials.
   #[error("expected holder = subject of the credential at position {credential_position}")]
+  #[non_exhaustive]
   NonTransferableViolation { credential_position: usize },
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]

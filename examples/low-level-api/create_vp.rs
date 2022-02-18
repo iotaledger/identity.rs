@@ -97,12 +97,14 @@ async fn main() -> Result<()> {
 
   let presentation_validation_options =
     PresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
+  let fail_fast = true;
 
   let validation_result = validator.full_validation(
     &presentation,
     &presentation_validation_options,
     &resolved_holder_document,
     trusted_issuers,
+    fail_fast,
   );
   if validation_result.is_ok() {
     println!("successfully validated presentation!");

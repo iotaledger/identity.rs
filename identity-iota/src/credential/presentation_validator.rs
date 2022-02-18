@@ -162,9 +162,10 @@ impl PresentationValidator {
     options: &PresentationValidationOptions,
     holder: &ResolvedIotaDocument,
     issuers: &[ResolvedIotaDocument],
+    fail_fast: bool,
   ) -> Result<()> {
     self
-      .full_validation_local_error(presentation, options, holder, issuers)
+      .full_validation_local_error(presentation, options, holder, issuers, fail_fast)
       .map_err(Error::UnsuccessfulPresentationValidation)
   }
 
@@ -174,9 +175,8 @@ impl PresentationValidator {
     options: &PresentationValidationOptions,
     holder: &ResolvedIotaDocument,
     issuers: &[ResolvedIotaDocument],
+    fail_fast: bool,
   ) -> PresentationValidationResult {
-    let fail_fast = options.fail_fast;
-
     // first run the presentation specific validation units.
     // We set up an iterator over these functions and collect any encountered errors
     let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(presentation));
@@ -203,7 +203,12 @@ impl PresentationValidator {
       .verifiable_credential
       .iter()
       .map(|credential| {
-        CredentialValidator::new().full_validation_local_error(credential, &options.shared_validation_options, issuers)
+        CredentialValidator::new().full_validation_local_error(
+          credential,
+          &options.shared_validation_options,
+          issuers,
+          fail_fast,
+        )
       })
       .enumerate()
       .filter_map(|(position, result)| result.err().map(|error| (position, error)));
@@ -317,12 +322,14 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let fail_fast = true;
     assert!(validator
       .full_validation(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
+        fail_fast
       )
       .is_ok());
   }
@@ -409,12 +416,14 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
+    let fail_fast = true;
     let error = match validator
       .full_validation(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
+        fail_fast,
       )
       .unwrap_err()
     {
@@ -497,13 +506,14 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
-
+    let fail_fast = true;
     let error = match validator
       .full_validation(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
+        fail_fast,
       )
       .unwrap_err()
     {
@@ -606,6 +616,7 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let fail_fast = true;
 
     let error = match validator
       .full_validation(
@@ -613,6 +624,7 @@ mod tests {
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
+        fail_fast,
       )
       .unwrap_err()
     {
@@ -707,6 +719,7 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let fail_fast = true;
 
     let (presentation_validation_errors, credential_errors) = match validator
       .full_validation(
@@ -714,6 +727,7 @@ mod tests {
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
+        fail_fast,
       )
       .unwrap_err()
     {
@@ -798,13 +812,13 @@ mod tests {
     let expires_after = Timestamp::parse("2050-01-01T00:00:00Z").unwrap(); // both credentials expire before this
     let credential_validation_options = CredentialValidationOptions::default()
       .earliest_expiry_date(expires_after)
-      .latest_issuance_date(issued_before)
-      .fail_fast(false);
+      .latest_issuance_date(issued_before);
+
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); // verify with another challenge
     let presentation_validation_options = PresentationValidationOptions::default()
       .shared_validation_options(credential_validation_options)
-      .presentation_verifier_options(presentation_verifier_options)
-      .fail_fast(false);
+      .presentation_verifier_options(presentation_verifier_options);
+    let fail_fast = false;
 
     let validator = PresentationValidator::new();
 
@@ -821,6 +835,7 @@ mod tests {
         &presentation_validation_options,
         &resolved_holder_document,
         &trusted_issuers,
+        fail_fast,
       )
       .unwrap_err()
     {

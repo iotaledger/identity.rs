@@ -81,8 +81,14 @@ async fn main() -> Result<()> {
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let fail_fast = true;
   assert!(CredentialValidator::new()
-    .full_validation(&credential, &CredentialValidationOptions::default(), &resolved_issuer,)
+    .full_validation(
+      &credential,
+      &CredentialValidationOptions::default(),
+      &resolved_issuer,
+      fail_fast
+    )
     .is_ok());
 
   println!("the credential was successfully validated as expected");
@@ -104,7 +110,12 @@ async fn main() -> Result<()> {
 
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new()
-    .full_validation(&credential, &CredentialValidationOptions::default(), &resolved_issuer)
+    .full_validation(
+      &credential,
+      &CredentialValidationOptions::default(),
+      &resolved_issuer,
+      true
+    )
     .is_err());
 
   println!("credential validation returned an error after the issuer revoked their keys as expected");

@@ -9,7 +9,6 @@ pub struct CredentialValidationOptions {
   pub(super) earliest_expiry_date: Timestamp,
   pub(super) latest_issuance_date: Timestamp,
   pub(super) verifier_options: VerifierOptions,
-  pub(super) fail_fast: bool,
 }
 
 impl Default for CredentialValidationOptions {
@@ -18,7 +17,6 @@ impl Default for CredentialValidationOptions {
       earliest_expiry_date: Timestamp::now_utc(),
       latest_issuance_date: Timestamp::now_utc(),
       verifier_options: VerifierOptions::default(),
-      fail_fast: true,
     }
   }
 }
@@ -43,11 +41,6 @@ impl CredentialValidationOptions {
     self
   }
 
-  pub fn fail_fast(mut self, value: bool) -> Self {
-    self.fail_fast = value;
-    self
-  }
-
   pub fn get_verifier_options_mut(&mut self) -> &mut VerifierOptions {
     &mut self.verifier_options
   }
@@ -59,7 +52,6 @@ impl CredentialValidationOptions {
 pub struct PresentationValidationOptions {
   pub(super) shared_validation_options: CredentialValidationOptions, // used when validating the credentials
   pub(super) presentation_verifier_options: VerifierOptions,         /* used when verifying the holder's signature. */
-  pub(super) fail_fast: bool,
 }
 
 impl PresentationValidationOptions {
@@ -67,7 +59,6 @@ impl PresentationValidationOptions {
     Self {
       shared_validation_options: CredentialValidationOptions::default(),
       presentation_verifier_options: VerifierOptions::default(),
-      fail_fast: true,
     }
   }
 
@@ -78,11 +69,6 @@ impl PresentationValidationOptions {
 
   pub fn presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
     self.presentation_verifier_options = options;
-    self
-  }
-
-  pub fn fail_fast(mut self, value: bool) -> Self {
-    self.fail_fast = value;
     self
   }
 }
