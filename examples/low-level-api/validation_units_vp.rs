@@ -57,7 +57,7 @@ pub async fn create_invalid_vp() -> Result<(Presentation, IotaDocument, IotaDocu
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
   let mut presentation: Presentation = PresentationBuilder::default()
     .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs")?)
-    .holder(Url::parse(doc_credential_subject.id().as_ref())?)
+    .holder(Url::parse(holder_doc.id().as_ref())?)
     .credential(credential)
     .build()?;
 
@@ -74,7 +74,7 @@ pub async fn create_invalid_vp() -> Result<(Presentation, IotaDocument, IotaDocu
       .expires(Timestamp::from_unix(Timestamp::now_utc().to_unix() + 600)?),
   )?;
 
-  Ok((presentation, doc_iss, doc_credential_subject))
+  Ok((presentation, doc_iss, holder_doc))
 }
 
 #[tokio::main]
@@ -100,7 +100,6 @@ async fn main() -> Result<()> {
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let resolved_holder_document: ResolvedIotaDocument = client.resolve(holder_doc.id()).await?;
-  let resolved_issuer_doc: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   PresentationValidator::verify_presentation_signature(
     &presentation,
     &resolved_holder_document,
@@ -111,7 +110,7 @@ async fn main() -> Result<()> {
   println!("verified the holder's signature");
 
   // extract and validate the presentation's credentials
-
+  let resolved_issuer_doc: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   for credential in presentation.verifiable_credential.iter() {
     CredentialValidator::new().full_validation(
       credential,

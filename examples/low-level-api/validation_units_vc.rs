@@ -28,6 +28,13 @@ pub async fn validation_units_vc() -> Result<()> {
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
+  // define a timestamp representing two weeks from now
+  let two_weeks_from_now_unix: i64 = Timestamp::now_utc().to_unix() + TWO_WEEKS_IN_SECONDS;
+  let two_weeks_from_now_timestamp: Timestamp = Timestamp::from_unix(two_weeks_from_now_unix)?;
+
+  // set the expiration date of the credential to be two weeks from now
+  credential.expiration_date = Some(two_weeks_from_now_timestamp);
+
   // Sign the Credential with the issuer's private key.
   issuer_doc.sign_data(
     &mut credential,
@@ -36,28 +43,21 @@ pub async fn validation_units_vc() -> Result<()> {
     SignatureOptions::default(),
   )?;
 
-  // define a timestamp representing two weeks from now
-  let two_weeks_from_now_unix: i64 = Timestamp::now_utc().to_unix() + TWO_WEEKS_IN_SECONDS;
-  let two_weeks_from_now_timestamp: Timestamp = Timestamp::from_unix(two_weeks_from_now_unix)?;
-  // define a timestamp representing two weeks ago
-  let two_weeks_ago_unix: i64 = Timestamp::now_utc().to_unix() - TWO_WEEKS_IN_SECONDS;
-  let two_weeks_ago_timestamp: Timestamp = Timestamp::from_unix(two_weeks_ago_unix)?;
-  // set the expiration date of the credential to be two weeks from now
-  credential.expiration_date = Some(two_weeks_from_now_timestamp);
   println!("Credential JSON > {:#}", credential);
 
   // validate that the credential is valid two weeks from now
   CredentialValidator::earliest_expiry_date(&credential, two_weeks_from_now_timestamp)?;
 
+  // define a timestamp representing two weeks ago
+  let two_weeks_ago_unix: i64 = Timestamp::now_utc().to_unix() - TWO_WEEKS_IN_SECONDS;
+  let two_weeks_ago_timestamp: Timestamp = Timestamp::from_unix(two_weeks_ago_unix)?;
+
   // validate that the credential is active now
   CredentialValidator::latest_issuance_date(&credential, Timestamp::now_utc())?;
 
   // validate whether the credential has been active for at least two weeks
-  if let Err(issuance_error) = CredentialValidator::latest_issuance_date(&credential, two_weeks_ago_timestamp) {
-    // print the error message from the validation error
-    println!("{}", issuance_error);
-    // add some more context ourselves
-    println!("the credential has not been active for two weeks!");
+  if let Err(_) = CredentialValidator::latest_issuance_date(&credential, two_weeks_ago_timestamp) {
+    println!("the credential has been active for less than two weeks!");
   }
 
   // finally we validate the credential signature
@@ -65,10 +65,9 @@ pub async fn validation_units_vc() -> Result<()> {
   // since we trust our issuer in this case we create a list consisting of this issuer's resolved DID document.
 
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
-
   let trusted_issuers: Vec<ResolvedIotaDocument> = common::resolve_documents(&[issuer_doc]).await?;
   CredentialValidator::verify_signature(&credential, trusted_issuers.as_slice(), &VerifierOptions::default())?;
-
+  println!("the credential signature has been verified");
   Ok(())
 }
 
