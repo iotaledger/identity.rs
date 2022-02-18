@@ -157,10 +157,8 @@ impl PresentationValidator {
   ///
   /// Checks common concerns such as the holder's signature, the nonTransferable property, the semantic structure of the
   /// presentation and common concerns regarding credential validation (see
-  /// [`CredentialValidator::full_validation()`]). # Security
-  /// It is the callers responsibility to ensure that all supplied resolved DID Documents are up to date. Furthermore
-  /// most applications will want to apply their own domain specific validations as this method only covers common
-  /// concerns.
+  /// [`CredentialValidator::full_validation()`]).
+  ///
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the presentation is not semantically valid
