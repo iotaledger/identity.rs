@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-darwin-x64",
+  "name": "identity-stronghold-nodejs-darwin-x64",
   "version": "0.0.0",
   "os": [
     "darwin"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "nodejs.darwin-x64.node",
+  "main": "identity-stronghold-nodejs.darwin-x64.node",
   "files": [
-    "nodejs.darwin-x64.node"
+    "identity-stronghold-nodejs.darwin-x64.node"
   ],
   "license": "MIT",
   "engines": {

@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-win32-x64-msvc",
+  "name": "identity-stronghold-nodejs-win32-x64-msvc",
   "version": "0.0.0",
   "os": [
     "win32"
@@ -7,9 +7,9 @@
   "cpu": [
     "x64"
   ],
-  "main": "nodejs.win32-x64-msvc.node",
+  "main": "identity-stronghold-nodejs.win32-x64-msvc.node",
   "files": [
-    "nodejs.win32-x64-msvc.node"
+    "identity-stronghold-nodejs.win32-x64-msvc.node"
   ],
   "license": "MIT",
   "engines": {
