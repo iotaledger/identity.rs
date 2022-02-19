@@ -499,8 +499,6 @@ async fn _assert_account_send() -> Result<()> {
   fn assert_future_send<T: std::future::Future + Send>(_: T) {}
 
   let mut account: Account = AccountBuilder::default()
-    .testmode(true)
-    .autopublish(false)
     .create_identity(IdentitySetup::default())
     .await?;
 
