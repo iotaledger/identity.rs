@@ -65,10 +65,10 @@ pub enum ValidationError {
   /// correct.
   #[error("the presentation's structure is not semantically correct")]
   PresentationStructure(#[source] identity_credential::Error),
-  /// Indicates that the presentation does not comply with the nonTransferable property of one of its credentials.
+  /// Indicates that the relationship between the presentation holder and one of the credential subjects is not valid.
   #[error("expected holder = subject of the credential at position {credential_position}")]
   #[non_exhaustive]
-  NonTransferableViolation { credential_position: usize },
+  InvalidHolderSubjectRelationship { credential_position: usize },
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,

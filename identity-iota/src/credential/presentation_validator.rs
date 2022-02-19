@@ -80,7 +80,7 @@ impl PresentationValidator {
 
   fn check_non_transferable_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
     if let Some(position) = Self::non_transferable_violations(presentation).next() {
-      let err = ValidationError::NonTransferableViolation {
+      let err = ValidationError::InvalidHolderSubjectRelationship {
         credential_position: position,
       };
       Err(err)
@@ -218,7 +218,7 @@ impl PresentationValidator {
       Self::holder_not_subject_iter(presentation)
         .take(max_holder_not_subject_checks)
         .chain(Self::non_transferable_violations(presentation).take(max_non_transferable_violation_checks))
-        .map(|credential_position| Err(ValidationError::NonTransferableViolation { credential_position }))
+        .map(|credential_position| Err(ValidationError::InvalidHolderSubjectRelationship { credential_position }))
     };
 
     let presentation_validation_errors_iter = structure_validation
@@ -276,25 +276,71 @@ impl PresentationValidator {
 mod tests {
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;
+  use crate::document::IotaDocument;
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
+  use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
   use identity_credential::presentation::PresentationBuilder;
 
   use super::*;
+
+  fn build_presentation(holder: &IotaDocument, credentials: Vec<Credential>) -> Presentation {
+    let mut builder = PresentationBuilder::default()
+      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .holder(Url::parse(holder.id().as_ref()).unwrap());
+    for credential in credentials {
+      builder = builder.credential(credential);
+    }
+    builder.build().unwrap()
+  }
+
+  // setup code shared among many of these tests
+  struct Setup {
+    issuer_foo_doc: IotaDocument,
+    issuer_foo_key: KeyPair,
+    subject_foo_doc: IotaDocument,
+    subject_foo_key: KeyPair,
+    credential_foo: Credential,
+  }
+
+  impl Setup {
+    // generate a setup shared among most of the tests in this module
+    fn new() -> Self {
+      let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
+      let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
+      let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
+      let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
+      let credential_foo = test_utils::generate_credential(
+        &issuer_foo_doc,
+        std::slice::from_ref(&subject_foo_doc),
+        issuance_date,
+        expiration_date,
+      );
+
+      Self {
+        issuer_foo_doc,
+        issuer_foo_key,
+        subject_foo_doc,
+        subject_foo_key,
+        credential_foo,
+      }
+    }
+  }
+
   #[test]
   fn test_full_validation() {
+    let Setup {
+      subject_foo_doc,
+      subject_foo_key,
+      mut credential_foo,
+      issuer_foo_doc,
+      issuer_foo_key,
+      ..
+    } = Setup::new();
+
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
-      &issuer_foo_doc,
-      std::slice::from_ref(&subject_foo_doc),
-      issuance_date,
-      expiration_date,
-    );
+
     // set the nonTransferable option on the first credential
     credential_foo.non_transferable = Some(true);
     // sign the credential
@@ -317,13 +363,8 @@ mod tests {
       )
       .unwrap();
 
-    let mut presentation: Presentation = PresentationBuilder::default()
-      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
-      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
-      .credential(credential_foo)
-      .credential(credential_bar)
-      .build()
-      .unwrap();
+    let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
+
     // sign the presentation using subject_foo's document and private key
 
     subject_foo_doc
@@ -370,16 +411,14 @@ mod tests {
   #[test]
   fn test_full_validation_invalid_holder_signature() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
-      &issuer_foo_doc,
-      std::slice::from_ref(&subject_foo_doc),
-      issuance_date,
-      expiration_date,
-    );
+    let Setup {
+      issuer_foo_doc,
+      issuer_foo_key,
+      subject_foo_doc,
+      subject_foo_key,
+      mut credential_foo,
+      ..
+    } = Setup::new();
     // set the nonTransferable option on the first credential
     credential_foo.non_transferable = Some(true);
     // sign the credential
@@ -402,13 +441,8 @@ mod tests {
       )
       .unwrap();
 
-    let mut presentation: Presentation = PresentationBuilder::default()
-      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
-      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
-      .credential(credential_foo)
-      .credential(credential_bar)
-      .build()
-      .unwrap();
+    let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
+
     // sign the presentation using subject_foo's document and private key
 
     subject_foo_doc
@@ -470,16 +504,14 @@ mod tests {
   #[test]
   fn test_full_validation_invalid_credential() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
-      &issuer_foo_doc,
-      std::slice::from_ref(&subject_foo_doc),
-      issuance_date,
-      expiration_date,
-    );
+    let Setup {
+      issuer_foo_doc,
+      issuer_foo_key,
+      subject_foo_doc,
+      subject_foo_key,
+      mut credential_foo,
+      ..
+    } = Setup::new();
     // set the nonTransferable option on the first credential
     credential_foo.non_transferable = Some(true);
     // sign the credential
@@ -502,13 +534,7 @@ mod tests {
       )
       .unwrap();
 
-    let mut presentation: Presentation = PresentationBuilder::default()
-      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
-      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
-      .credential(credential_foo)
-      .credential(credential_bar)
-      .build()
-      .unwrap();
+    let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
     // sign the presentation using subject_foo's document and private key
 
     subject_foo_doc
@@ -566,16 +592,15 @@ mod tests {
   #[test]
   fn test_non_transferable_property_violation() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
-      &issuer_foo_doc,
-      std::slice::from_ref(&subject_foo_doc),
-      issuance_date,
-      expiration_date,
-    );
+    let Setup {
+      issuer_foo_doc,
+      issuer_foo_key,
+      subject_foo_doc,
+      subject_foo_key,
+      mut credential_foo,
+      ..
+    } = Setup::new();
+
     // sign the credential
     issuer_foo_doc
       .sign_data(
@@ -601,13 +626,7 @@ mod tests {
 
     // create a presentation where the subject of the first credential is the holder.
     // This violates the non transferable property of the second credential.
-    let mut presentation: Presentation = PresentationBuilder::default()
-      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
-      .holder(Url::parse(subject_foo_doc.id().as_ref()).unwrap())
-      .credential(credential_foo)
-      .credential(credential_bar)
-      .build()
-      .unwrap();
+    let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
     // check that the check_non_transferable validation unit fails
     // Todo: match on the exact error
@@ -661,7 +680,7 @@ mod tests {
 
     assert!(matches!(
       error,
-      ValidationError::NonTransferableViolation { credential_position: 1 }
+      ValidationError::InvalidHolderSubjectRelationship { credential_position: 1 }
     ));
 
     // Todo: Consider moving these last two checks out into separate tests.
@@ -694,16 +713,15 @@ mod tests {
   #[test]
   fn test_full_validation_multiple_errors_fail_fast() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
-      &issuer_foo_doc,
-      std::slice::from_ref(&subject_foo_doc),
-      issuance_date,
-      expiration_date,
-    );
+    let Setup {
+      issuer_foo_doc,
+      issuer_foo_key,
+      subject_foo_doc,
+      subject_foo_key,
+      mut credential_foo,
+      ..
+    } = Setup::new();
+
     // set the nonTransferable option on the first credential
     credential_foo.non_transferable = Some(true);
     // sign the credential
@@ -801,16 +819,14 @@ mod tests {
   #[test]
   fn test_validate_presentation_multiple_errors_accumulate_errors() {
     // create a first credential
-    let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
-    let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
-    let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
-    let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-    let mut credential_foo = test_utils::generate_credential(
-      &issuer_foo_doc,
-      std::slice::from_ref(&subject_foo_doc),
-      issuance_date,
-      expiration_date,
-    );
+    let Setup {
+      issuer_foo_doc,
+      issuer_foo_key,
+      subject_foo_doc,
+      subject_foo_key,
+      mut credential_foo,
+      ..
+    } = Setup::new();
     // set the nonTransferable option on the first credential
     credential_foo.non_transferable = Some(true);
     // sign the credential
