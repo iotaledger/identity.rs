@@ -493,3 +493,18 @@ async fn network_resilient_test(
   }
   Ok(())
 }
+
+// Ensure that a future that contains an account is `Send` at compile-time.
+async fn _assert_account_send() -> Result<()> {
+  fn assert_future_send<T: std::future::Future + Send>(_: T) {}
+
+  let mut account: Account = AccountBuilder::default()
+    .testmode(true)
+    .autopublish(false)
+    .create_identity(IdentitySetup::default())
+    .await?;
+
+  assert_future_send(account.update_identity().create_method().apply());
+
+  Ok(())
+}
