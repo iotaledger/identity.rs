@@ -4,7 +4,7 @@
 use crypto::keys::slip10::Chain;
 use crypto::keys::slip10::ChainCode;
 use engine::vault::RecordId;
-use iota_stronghold::Location;
+use iota_stronghold::{Location, StrongholdResult};
 use iota_stronghold::Procedure;
 use iota_stronghold::RecordHint;
 use iota_stronghold::SLIP10DeriveInput;
@@ -15,7 +15,7 @@ use std::path::Path;
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
-use crate::stronghold::Context;
+use crate::stronghold::{Context, IotaStrongholdResult, StrongholdError};
 use crate::stronghold::ProcedureResult;
 
 pub type Record = (RecordId, RecordHint);
@@ -79,11 +79,9 @@ impl Vault<'_> {
   }
 
   /// Returns true if the specified location exists.
-  pub async fn exists(&self, location: Location) -> Result<bool> {
+  pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    let exists: bool = scope.vault_exists(location).await;
-
-    Ok(exists)
+    scope.vault_exists(location).await.map_err(StrongholdError::StrongholdActorError)
   }
 
   /// Runs the Stronghold garbage collector.

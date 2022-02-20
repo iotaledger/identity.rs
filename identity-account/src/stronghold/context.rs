@@ -6,7 +6,7 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use hashbrown::HashMap;
 use hashbrown::HashSet;
-use iota_stronghold::Stronghold;
+use iota_stronghold::{Stronghold, StrongholdResult};
 use iota_stronghold::StrongholdFlags;
 use once_cell::sync::Lazy;
 use std::path::Path;
@@ -24,6 +24,7 @@ use zeroize::Zeroize;
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
+use crate::stronghold::error::{IotaStrongholdResult, StrongholdError};
 use crate::stronghold::SnapshotStatus;
 use crate::utils::fs;
 use crate::utils::EncryptionKey;
@@ -105,10 +106,10 @@ static CONTEXT: Lazy<core::result::Result<Context, String>> = Lazy::new(|| {
 });
 
 impl Context {
-  pub(crate) async fn get() -> Result<&'static Self> {
+  pub(crate) async fn get() -> IotaStrongholdResult<&'static Self> {
     match CONTEXT.deref() {
       Ok(ctx) => Ok(ctx),
-      Err(err) => Err(Error::StrongholdResult(err.to_owned())),
+      Err(err) => Err(StrongholdError::StrongholdResult(err.to_owned())),
     }
   }
 
@@ -116,7 +117,7 @@ impl Context {
     path: &Path,
     name: &[u8],
     flags: &[StrongholdFlags],
-  ) -> Result<AsyncMutexGuard<'static, Database>> {
+  ) -> StrongholdResult<AsyncMutexGuard<'static, Database>> {
     let this: &Self = Self::get().await?;
     let mut database: _ = this.database.lock().await;
 
@@ -211,7 +212,7 @@ impl Database {
     snapshot: &Path,
     client: &[u8],
     flags: &[StrongholdFlags],
-  ) -> Result<()> {
+  ) -> IotaStrongholdResult<()> {
     runtime.set_password_access(snapshot)?;
 
     // Spawn a new actor or switch targets if this client was already spawned
@@ -221,8 +222,7 @@ impl Database {
       self
         .stronghold
         .spawn_stronghold_actor(client.into(), flags.to_vec())
-        .await
-        .to_result()?;
+        .await?;
 
       self.clients_active.insert(client.into());
     }
@@ -235,8 +235,7 @@ impl Database {
         let result: Result<()> = self
           .stronghold
           .read_snapshot(client.into(), None, &password, None, location)
-          .await
-          .to_result();
+          .await?;
 
         password.zeroize();
 
@@ -327,7 +326,7 @@ impl Database {
     result
   }
 
-  async fn switch_snapshot(&mut self, runtime: &Runtime, snapshot: &Path) -> Result<()> {
+  async fn switch_snapshot(&mut self, runtime: &Runtime, snapshot: &Path) -> StrongholdResult<()> {
     let previous: Option<PathBuf> = if self.current_snapshot_neq(snapshot) {
       self.current_snapshot.replace(snapshot.to_path_buf())
     } else {

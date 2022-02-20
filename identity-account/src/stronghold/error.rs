@@ -1,0 +1,31 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+pub type IotaStrongholdResult<T> = Result<T, StrongholdError>;
+
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
+pub enum StrongholdError {
+  /// Caused by errors from the [iota_stronghold] crate.
+  #[error(transparent)]
+  StrongholdActorError(#[from] iota_stronghold::ActorError),
+  #[error(transparent)]
+  StrongholdWriteError(#[from] iota_stronghold::WriteError),
+  #[error(transparent)]
+  StrongholdReadError(#[from] iota_stronghold::ReadError),
+  #[error(transparent)]
+  StrongholdFatalEngineError(#[from] iota_stronghold::FatalEngineError),
+  #[error(transparent)]
+  StrongholdMailboxError(#[from] iota_stronghold::MailboxError),
+  /// Caused by receiving an unexpected return value from a Stronghold procedure.
+  #[error("Stronghold procedure returned unexpected type")]
+  StrongholdProcedureFailure,
+  /// Caused by attempting to access a Stronghold snapshot without a password.
+  #[error("Stronghold snapshot password not found")]
+  StrongholdPasswordNotSet,
+  /// Caused by an internal panic in the Stronghold runtime.
+  #[error("Stronghold mutex poisoned: {0}")]
+  StrongholdMutexPoisoned(&'static str),
+  /// Caused by errors from an invalid Stronghold procedure.
+  #[error("Stronghold error: {0}")]
+  StrongholdResult(String),
+}

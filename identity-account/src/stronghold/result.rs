@@ -3,21 +3,24 @@
 
 use crypto::keys::slip10::ChainCode;
 use iota_stronghold::ProcResult;
+use iota_stronghold::StrongholdResult;
+
 use iota_stronghold::ResultMessage;
 
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
+use crate::stronghold::IotaStrongholdResult;
 
-impl<T> PleaseDontMakeYourOwnResult<T> for ResultMessage<T> {
-  #[allow(clippy::wrong_self_convention)]
-  fn to_result(self) -> Result<T, Error> {
-    match self {
-      Self::Ok(data) => Ok(data),
-      Self::Error(error) => Err(Error::StrongholdResult(error)),
-    }
-  }
-}
+// impl<T> PleaseDontMakeYourOwnResult<T> for StrongholdResult<T> {
+//   #[allow(clippy::wrong_self_convention)]
+//   fn to_result(self) -> Result<T, Error> {
+//     match self {
+//       Self::Ok(data) => Ok(data),
+//       Self::Err(error) => Err(Error::StrongholdResult(error)),
+//     }
+//   }
+// }
 
 #[derive(Clone, Debug)]
 pub enum ProcedureResult {
@@ -41,7 +44,7 @@ impl PleaseDontMakeYourOwnResult<ProcedureResult> for ProcResult {
       ProcResult::BIP39MnemonicSentence(inner) => inner.to_result().map(ProcedureResult::BIP39MnemonicSentence),
       ProcResult::Ed25519PublicKey(inner) => inner.to_result().map(ProcedureResult::Ed25519PublicKey),
       ProcResult::Ed25519Sign(inner) => inner.to_result().map(ProcedureResult::Ed25519Sign),
-      ProcResult::Error(inner) => Err(Error::StrongholdResult(inner)),
+      ProcResult::Error(inner) => Err(IotaStrongholdResult(inner)),
     }
   }
 }
