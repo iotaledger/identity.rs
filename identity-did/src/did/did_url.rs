@@ -31,12 +31,12 @@ pub type CoreDIDUrl = DIDUrl<CoreDID>;
 /// [DID Url]: https://www.w3.org/TR/did-core/#did-url-syntax
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(into = "String", try_from = "String")]
-pub struct DIDUrl<T>
+pub struct DIDUrl<D>
 where
   Self: Sized,
-  T: DID + Sized,
+  D: DID + Sized,
 {
-  did: T,
+  did: D,
   url: RelativeDIDUrl,
 }
 
@@ -280,12 +280,12 @@ impl Hash for RelativeDIDUrl {
   }
 }
 
-impl<T> DIDUrl<T>
+impl<D> DIDUrl<D>
 where
-  T: DID + Sized,
+  D: DID + Sized,
 {
   /// Construct a new [`DIDUrl`] with optional [`RelativeDIDUrl`].
-  pub fn new(did: T, url: Option<RelativeDIDUrl>) -> Self {
+  pub fn new(did: D, url: Option<RelativeDIDUrl>) -> Self {
     Self {
       did,
       url: url.unwrap_or_default(),
@@ -309,19 +309,19 @@ where
     };
 
     // Extract base DID
-    let did: T = {
+    let did: D = {
       let mut base_did: BaseDIDUrl = did_url;
       base_did.set_path("");
       base_did.set_query(None);
       base_did.set_fragment(None);
-      T::try_from(base_did).map_err(|_| DIDError::Other("invalid DID"))?
+      D::try_from(base_did).map_err(|_| DIDError::Other("invalid DID"))?
     };
 
     Ok(Self { did, url })
   }
 
   /// Returns the [`did`][DID].
-  pub fn did(&self) -> &T {
+  pub fn did(&self) -> &D {
     &self.did
   }
 
@@ -406,42 +406,63 @@ where
     Self::from_base_did_url(base_did_url)
   }
 
-  /// Construct a [`DIDUrl<T>`] from a [`DIDUrl<U>`] of a different DID method.
+  /// Construct a `DIDUrl<D>` from a `DIDUrl<U>` of a different DID method.
   ///
   /// Workaround for lack of specialisation preventing a generic `From` implementation.
   pub fn from<U>(other: DIDUrl<U>) -> Self
   where
-    U: DID + Into<T>,
+    U: DID + Into<D>,
   {
-    let did: T = other.did.into();
+    let did: D = other.did.into();
     Self { did, url: other.url }
   }
 
-  /// Attempt to construct a [`DIDUrl<T>`](DIDUrl) from a [`DIDUrl<U>`](DIDUrl) of a different
-  /// DID method.
-  ///
-  /// Workaround for lack of specialisation preventing a generic `TryFrom` implementation.
-  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, <U as TryInto<T>>::Error>
+  /// Fallible version of [`DIDUrl::from`].
+  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, <U as TryInto<D>>::Error>
   where
-    U: DID + TryInto<T>,
+    U: DID + TryInto<D>,
   {
-    let did: T = other.did.try_into()?;
+    let did: D = other.did.try_into()?;
     Ok(Self { did, url: other.url })
+  }
+
+  /// Maps `DIDUrl<D>` to `DIDUrl<U>` by applying a function to its [`DID`].
+  pub fn map<U, F>(self, f: F) -> DIDUrl<U>
+  where
+    F: FnOnce(D) -> U,
+    U: DID,
+  {
+    DIDUrl {
+      did: f(self.did),
+      url: self.url,
+    }
+  }
+
+  /// Fallible version of [`DIDUrl::map`].
+  pub fn try_map<U, F, E>(self, f: F) -> Result<DIDUrl<U>, E>
+  where
+    F: FnOnce(D) -> Result<U, E>,
+    U: DID,
+  {
+    Ok(DIDUrl {
+      did: f(self.did)?,
+      url: self.url,
+    })
   }
 }
 
-impl<T> From<T> for DIDUrl<T>
+impl<D> From<D> for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
-  fn from(did: T) -> Self {
+  fn from(did: D) -> Self {
     Self::new(did, None)
   }
 }
 
-impl<T> FromStr for DIDUrl<T>
+impl<D> FromStr for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   type Err = DIDError;
 
@@ -450,9 +471,9 @@ where
   }
 }
 
-impl<T> TryFrom<String> for DIDUrl<T>
+impl<D> TryFrom<String> for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   type Error = DIDError;
 
@@ -461,44 +482,44 @@ where
   }
 }
 
-impl<T> From<DIDUrl<T>> for String
+impl<D> From<DIDUrl<D>> for String
 where
-  T: DID,
+  D: DID,
 {
-  fn from(did_url: DIDUrl<T>) -> Self {
+  fn from(did_url: DIDUrl<D>) -> Self {
     did_url.to_string()
   }
 }
 
-impl<T> AsRef<T> for DIDUrl<T>
+impl<D> AsRef<D> for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
-  fn as_ref(&self) -> &T {
+  fn as_ref(&self) -> &D {
     &self.did
   }
 }
 
-impl<T: DID> AsRef<DIDUrl<T>> for DIDUrl<T> {
-  fn as_ref(&self) -> &DIDUrl<T> {
+impl<D: DID> AsRef<DIDUrl<D>> for DIDUrl<D> {
+  fn as_ref(&self) -> &DIDUrl<D> {
     self
   }
 }
 
-impl<T> PartialEq for DIDUrl<T>
+impl<D> PartialEq for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   fn eq(&self, other: &Self) -> bool {
     self.did().eq(other.did()) && self.url() == other.url()
   }
 }
 
-impl<T> Eq for DIDUrl<T> where T: DID {}
+impl<D> Eq for DIDUrl<D> where D: DID {}
 
-impl<T> PartialOrd for DIDUrl<T>
+impl<D> PartialOrd for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -510,9 +531,9 @@ where
   }
 }
 
-impl<T> Ord for DIDUrl<T>
+impl<D> Ord for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
@@ -523,36 +544,36 @@ where
   }
 }
 
-impl<T> Hash for DIDUrl<T>
+impl<D> Hash for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   fn hash<H: Hasher>(&self, state: &mut H) {
     self.to_string().hash(state)
   }
 }
 
-impl<T> Debug for DIDUrl<T>
+impl<D> Debug for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self))
   }
 }
 
-impl<T> Display for DIDUrl<T>
+impl<D> Display for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url))
   }
 }
 
-impl<T> Diff for DIDUrl<T>
+impl<D> Diff for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   type Type = DiffString;
 
@@ -576,10 +597,12 @@ where
   }
 }
 
-impl KeyComparable for CoreDIDUrl {
-  type Key = CoreDIDUrl;
+impl<D> KeyComparable for DIDUrl<D>
+where
+  D: DID,
+{
+  type Key = Self;
 
-  #[inline]
   fn key(&self) -> &Self::Key {
     self
   }

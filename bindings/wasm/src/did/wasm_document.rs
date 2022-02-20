@@ -98,8 +98,8 @@ impl WasmDocument {
 
   /// Remove a `Service` identified by the given `DIDUrl` from the document.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: WasmDIDUrl) -> Result<()> {
-    self.0.remove_service(did.0).wasm_result()
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
+    self.0.remove_service(&did.0).wasm_result()
   }
 
   // ===========================================================================
@@ -116,7 +116,7 @@ impl WasmDocument {
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
   pub fn remove_method(&mut self, did: WasmDIDUrl) -> Result<()> {
-    self.0.remove_method(did.0).wasm_result()
+    self.0.remove_method(&did.0).wasm_result()
   }
 
   /// Returns a copy of the first `VerificationMethod` with a capability invocation relationship
@@ -138,7 +138,7 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UWasmMethodQuery) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(&self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
     let method_query: String = query.into_serde().wasm_result()?;
     Ok(WasmVerificationMethod(
       self.0.try_resolve_method(&method_query).wasm_result()?.clone(),
@@ -146,14 +146,9 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
-  pub fn revoke_merkle_key(&mut self, query: &UWasmMethodQuery, index: usize) -> Result<bool> {
+  pub fn revoke_merkle_key(&mut self, query: &UDIDUrlQuery, index: u32) -> Result<bool> {
     let method_query: String = query.into_serde().wasm_result()?;
-    let method: &mut IotaVerificationMethod = self
-      .0
-      .try_resolve_method_mut(&method_query)
-      .and_then(IotaVerificationMethod::try_from_mut)
-      .wasm_result()?;
-
+    let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
     method.revoke_merkle_key(index).wasm_result()
   }
 
@@ -168,7 +163,7 @@ impl WasmDocument {
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifySelfSigned`.
   #[wasm_bindgen(js_name = signSelf)]
-  pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: &UWasmMethodQuery) -> Result<()> {
+  pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: &UDIDUrlQuery) -> Result<()> {
     let method_query: String = method_query.into_serde().wasm_result()?;
     self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
@@ -323,7 +318,7 @@ impl WasmDocument {
     other: &WasmDocument,
     message_id: &str,
     key: &KeyPair,
-    method_query: &UWasmMethodQuery,
+    method_query: &UDIDUrlQuery,
   ) -> Result<WasmDiffMessage> {
     let method_query: String = method_query.into_serde().wasm_result()?;
     self
@@ -468,5 +463,5 @@ impl From<IotaDocument> for WasmDocument {
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
-  pub type UWasmMethodQuery;
+  pub type UDIDUrlQuery;
 }

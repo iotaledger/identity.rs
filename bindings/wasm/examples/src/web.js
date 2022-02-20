@@ -9,7 +9,6 @@ import {merkleKey} from "./merkle_key.js";
 import {privateTangle} from "./private_tangle.js";
 import {createDiff} from "./diff_chain.js";
 import {resolveHistory} from "./resolve_history.js";
-import {repeatAsyncTest} from "./utils.js";
 
 export {
     initIdentity,
@@ -24,7 +23,6 @@ export {
     privateTangle,
     createDiff,
     resolveHistory,
-    repeatAsyncTest
 };
 
 window.onload = async () => {

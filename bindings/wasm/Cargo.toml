@@ -1,6 +1,6 @@
 [package]
 name = "identity-wasm"
-version = "0.5.0-dev.3"
+version = "0.5.0-dev.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -25,7 +25,7 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity]
-version = "=0.5.0-dev.3"
+version = "=0.5.0-dev.4"
 path = "../../identity"
 default-features = false
 features = ["wasm", "account"]

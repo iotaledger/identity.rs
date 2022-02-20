@@ -5,7 +5,10 @@ use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
@@ -14,18 +17,19 @@ use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
 use identity_did::utils::Queryable;
+use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
+use identity_iota::document::IotaService;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
@@ -40,7 +44,7 @@ pub(crate) async fn create_identity(
   setup: IdentitySetup,
   network: NetworkName,
   store: &dyn Storage,
-) -> Result<(DIDLease, IdentityState)> {
+) -> Result<IdentityState> {
   let method_type = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
   };
@@ -79,8 +83,6 @@ pub(crate) async fn create_identity(
     UpdateError::DocumentAlreadyExists
   );
 
-  let did_lease = store.lease_did(&did).await?;
-
   let private_key = keypair.private().to_owned();
   std::mem::drop(keypair);
 
@@ -90,7 +92,7 @@ pub(crate) async fn create_identity(
   let method_fragment = location.fragment().to_owned();
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(did, setup.key_type, &public, method_fragment.name())?;
+    IotaVerificationMethod::new(did, setup.key_type, &public, method_fragment.name())?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
@@ -99,7 +101,7 @@ pub(crate) async fn create_identity(
   // Store the generations at which the method was added
   state.store_method_generations(method_fragment);
 
-  Ok((did_lease, state))
+  Ok(state)
 }
 
 #[derive(Clone, Debug)]
@@ -129,6 +131,12 @@ pub(crate) enum Update {
   },
   DeleteService {
     fragment: String,
+  },
+  SetController {
+    controllers: Option<OneOrSet<IotaDID>>,
+  },
+  SetAlsoKnownAs {
+    urls: OrderedSet<Url>,
   },
 }
 
@@ -167,7 +175,7 @@ impl Update {
         }?;
 
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
+          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
 
         state.store_method_generations(location.fragment().clone());
 
@@ -177,20 +185,19 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
 
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
-        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent deleting the last method capable of signing the DID document.
         let capability_invocation_set = state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
-          .any(|method_ref| method_ref.id() == &core_method_url);
+          .any(|method_ref| method_ref.id() == &method_url);
 
         ensure!(
           !(is_capability_invocation && capability_invocation_set.len() == 1),
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.document_mut().remove_method(method_url)?;
+        state.document_mut().remove_method(&method_url)?;
       }
       Self::AttachMethodRelationship {
         fragment,
@@ -204,7 +211,7 @@ impl Update {
           // Ignore result: attaching is idempotent.
           let _ = state
             .document_mut()
-            .attach_method_relationship(method_url.clone(), relationship)?;
+            .attach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::DetachMethodRelationship {
@@ -214,13 +221,13 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
 
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
-        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent detaching the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().core_document().capability_invocation();
+        let capability_invocation_set: &OrderedSet<MethodRef<IotaDID>> =
+          state.document().core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
-          .any(|method_ref| method_ref.id() == &core_method_url);
+          .any(|method_ref| method_ref.id() == &method_url);
 
         ensure!(
           !(is_capability_invocation && capability_invocation_set.len() == 1),
@@ -231,7 +238,7 @@ impl Update {
           // Ignore result: detaching is idempotent.
           let _ = state
             .document_mut()
-            .detach_method_relationship(method_url.clone(), relationship)?;
+            .detach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::CreateService {
@@ -241,15 +248,15 @@ impl Update {
         properties,
       } => {
         let fragment = Fragment::new(fragment);
-        let did_url: CoreDIDUrl = did.as_ref().to_owned().join(fragment.identifier())?;
+        let did_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
-        // The service must not exist
+        // The service must not exist.
         ensure!(
           state.document().service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment.name().to_owned()),
         );
 
-        let service: Service = Service::builder(properties.unwrap_or_default())
+        let service: IotaService = Service::builder(properties.unwrap_or_default())
           .id(did_url)
           .service_endpoint(endpoint)
           .type_(type_)
@@ -259,7 +266,7 @@ impl Update {
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
-        let service_url = did.to_url().join(fragment.identifier())?;
+        let service_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         // The service must exist
         ensure!(
@@ -267,7 +274,14 @@ impl Update {
           UpdateError::ServiceNotFound
         );
 
-        state.document_mut().remove_service(service_url)?;
+        state.document_mut().remove_service(&service_url)?;
+      }
+      Self::SetController { controllers } => {
+        *state.document_mut().controller_mut() = controllers;
+      }
+
+      Self::SetAlsoKnownAs { urls } => {
+        *state.document_mut().also_known_as_mut() = urls;
       }
     }
 
@@ -405,4 +419,14 @@ impl_update_builder!(
 /// - `fragment`: the identifier of the service in the document, required.
 DeleteService {
   @required fragment String,
+});
+
+impl_update_builder!(
+SetController {
+    @required controllers Option<OneOrSet<IotaDID>>,
+});
+
+impl_update_builder!(
+SetAlsoKnownAs {
+    @required urls OrderedSet<Url>,
 });

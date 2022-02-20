@@ -277,6 +277,7 @@ mod tests {
 
   use crate::diff::DiffMessage;
   use crate::document::IotaDocument;
+  use crate::document::IotaService;
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::ClientBuilder;
   use crate::tangle::MessageId;
@@ -289,7 +290,10 @@ mod tests {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .sign_self(
+        keypair.private(),
+        document.default_signing_method().unwrap().id().clone(),
+      )
       .unwrap();
     let mut resolved: ResolvedIotaDocument = ResolvedIotaDocument::from(document);
     resolved.set_message_id(MessageId::new([1; 32]));
@@ -302,7 +306,7 @@ mod tests {
 
     // Add a new service in a diff update.
     let mut updated1: IotaDocument = original.document.clone();
-    let service: Service = Service::from_json_value(json!({
+    let service: IotaService = Service::from_json_value(json!({
       "id": updated1.id().to_url().join("#linked-domain").unwrap(),
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org"
@@ -323,7 +327,7 @@ mod tests {
     // Remove the same service in a diff update.
     let mut updated2: IotaDocument = updated1.clone();
     assert!(updated2
-      .remove_service(updated1.id().to_url().join("#linked-domain").unwrap())
+      .remove_service(&updated1.id().to_url().join("#linked-domain").unwrap())
       .is_ok());
     let mut diff_delete: DiffMessage = updated1
       .diff(
@@ -361,7 +365,7 @@ mod tests {
 
     // Add a new service in a diff update.
     let mut updated1: IotaDocument = original.document.clone();
-    let service: Service = Service::from_json_value(json!({
+    let service: IotaService = Service::from_json_value(json!({
       "id": updated1.id().to_url().join("#linked-domain").unwrap(),
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org"
@@ -381,7 +385,7 @@ mod tests {
 
     // Edit the same service in a diff update.
     let mut updated2: IotaDocument = updated1.clone();
-    let service_updated: Service = Service::from_json_value(json!({
+    let service_updated: IotaService = Service::from_json_value(json!({
       "id": updated1.id().to_url().join("#linked-domain").unwrap(),
       "type": "LinkedDomains",
       "serviceEndpoint": ["https://example.com", "https://example.org"],

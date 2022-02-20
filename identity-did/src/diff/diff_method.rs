@@ -1,30 +1,33 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
-use identity_core::diff::Diff;
-use identity_core::diff::DiffString;
-use identity_core::diff::Error;
-use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::Object;
+use identity_core::diff::Diff;
+use identity_core::diff::Error;
+use identity_core::diff::Result;
+
 use crate::did::CoreDID;
-use crate::did::CoreDIDUrl;
+use crate::did::DIDUrl;
+use crate::did::DID;
 use crate::diff::DiffMethodData;
+use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffMethod<T = Object>
+pub struct DiffMethod<D = CoreDID, T = Object>
 where
+  D: Diff + DID,
   T: Diff,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<DiffString>,
+  id: Option<<DIDUrl<D> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<DiffString>,
+  controller: Option<<D as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   key_type: Option<MethodType>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -33,11 +36,12 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<T> Diff for VerificationMethod<T>
+impl<D, T> Diff for VerificationMethod<D, T>
 where
+  D: Diff + DID + Serialize + for<'de> Deserialize<'de>,
   T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffMethod<T>;
+  type Type = DiffMethod<D, T>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffMethod {
@@ -70,13 +74,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: CoreDIDUrl = diff
+    let id: DIDUrl<D> = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: CoreDID = diff
+    let controller: D = diff
       .controller
       .map(|value| self.controller().merge(value))
       .transpose()?
@@ -100,49 +104,51 @@ where
       .transpose()?
       .unwrap_or_else(|| self.properties().clone());
 
-    Ok(VerificationMethod {
-      id,
-      controller,
-      key_type,
-      key_data,
-      properties,
-    })
+    // Use builder to enforce invariants.
+    MethodBuilder::new(properties)
+      .id(id)
+      .controller(controller)
+      .key_type(key_type)
+      .key_data(key_data)
+      .build()
+      .map_err(Error::merge)
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: CoreDIDUrl = diff
+    let id: DIDUrl<D> = diff
       .id
-      .map(CoreDIDUrl::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.id`"))?;
 
-    let controller: CoreDID = diff
+    let controller: D = diff
       .controller
-      .map(CoreDID::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.controller`"))?;
 
     let key_type: MethodType = diff
       .key_type
-      .map(MethodType::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.key_type`"))?;
 
     let key_data: MethodData = diff
       .key_data
-      .map(MethodData::from_diff)
+      .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.key_data`"))?;
 
-    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
+    let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
-    Ok(VerificationMethod {
-      id,
-      controller,
-      key_type,
-      key_data,
-      properties,
-    })
+    // Use builder to enforce invariants.
+    MethodBuilder::new(properties)
+      .id(id)
+      .controller(controller)
+      .key_type(key_type)
+      .key_data(key_data)
+      .build()
+      .map_err(Error::convert)
   }
 
   fn into_diff(self) -> Result<Self::Type> {
@@ -162,15 +168,17 @@ where
 
 #[cfg(test)]
 mod test {
-  use super::*;
   use identity_core::common::Object;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
+  use identity_core::diff::DiffString;
+
+  use super::*;
 
   fn test_method() -> VerificationMethod {
     VerificationMethod::builder(Default::default())
-      .id("did:example:123".parse().unwrap())
+      .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyMultibase("".into()))
@@ -242,14 +250,14 @@ mod test {
   fn test_id() {
     let method = test_method();
     let mut new = method.clone();
-    *new.id_mut() = "did:diff:123".parse().unwrap();
+    new.set_id("did:diff:123#key".parse().unwrap()).unwrap();
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.controller.is_none());
     assert!(diff.key_data.is_none());
     assert!(diff.key_type.is_none());
     assert!(diff.properties.is_none());
-    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123".to_string()))));
+    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123#key".to_string()))));
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -352,7 +360,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add id
-    *new.id_mut() = "did:diff:123".parse().unwrap();
+    new.set_id("did:diff:123#key".parse().unwrap()).unwrap();
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
