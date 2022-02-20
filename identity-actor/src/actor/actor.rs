@@ -340,7 +340,7 @@ impl Actor {
     let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
     let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
-    let message = serde_json::to_vec(&RequestMessage::new(name, dcpm_vec)?).unwrap();
+    let message = RequestMessage::new(name, dcpm_vec)?;
 
     log::debug!("Sending `{}` message", name);
 

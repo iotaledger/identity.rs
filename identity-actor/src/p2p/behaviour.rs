@@ -15,12 +15,12 @@ use libp2p::PeerId;
 
 use tokio::io::{self};
 
+use crate::RequestMessage;
+
 #[derive(Debug, Clone)]
 pub struct DidCommProtocol();
 #[derive(Clone)]
 pub struct DidCommCodec();
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DidCommRequest(pub Vec<u8>);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DidCommResponse(pub Vec<u8>);
 
@@ -33,7 +33,7 @@ impl ProtocolName for DidCommProtocol {
 #[async_trait::async_trait]
 impl RequestResponseCodec for DidCommCodec {
   type Protocol = DidCommProtocol;
-  type Request = DidCommRequest;
+  type Request = RequestMessage;
   type Response = DidCommResponse;
 
   async fn read_request<T>(&mut self, _protocol: &Self::Protocol, io: &mut T) -> io::Result<Self::Request>
@@ -41,7 +41,10 @@ impl RequestResponseCodec for DidCommCodec {
     T: AsyncRead + Unpin + Send,
   {
     let vec = upgrade::read_length_prefixed(io, 1_000_000).await?;
-    Ok(DidCommRequest(vec))
+
+    let request: RequestMessage = RequestMessage::from_bytes(vec.as_ref())?;
+
+    Ok(request)
   }
 
   async fn read_response<T>(&mut self, _protocol: &Self::Protocol, io: &mut T) -> io::Result<Self::Response>
@@ -53,16 +56,13 @@ impl RequestResponseCodec for DidCommCodec {
     Ok(DidCommResponse(vec))
   }
 
-  async fn write_request<T>(
-    &mut self,
-    _protocol: &Self::Protocol,
-    io: &mut T,
-    DidCommRequest(data): Self::Request,
-  ) -> io::Result<()>
+  async fn write_request<T>(&mut self, _protocol: &Self::Protocol, io: &mut T, request: Self::Request) -> io::Result<()>
   where
     T: AsyncWrite + Unpin + Send,
   {
-    upgrade::write_length_prefixed(io, data).await?;
+    let bytes: Vec<u8> = request.to_bytes()?;
+
+    upgrade::write_length_prefixed(io, bytes).await?;
     io.close().await
   }
 
@@ -87,7 +87,7 @@ pub struct DidCommBehaviour {
 impl NetworkBehaviour for DidCommBehaviour {
   type ProtocolsHandler = <RequestResponse<DidCommCodec> as NetworkBehaviour>::ProtocolsHandler;
 
-  type OutEvent = RequestResponseEvent<DidCommRequest, DidCommResponse>;
+  type OutEvent = RequestResponseEvent<RequestMessage, DidCommResponse>;
 
   fn new_handler(&mut self) -> Self::ProtocolsHandler {
     self.inner.new_handler()

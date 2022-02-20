@@ -22,7 +22,6 @@ use crate::Endpoint;
 use crate::RequestMessage;
 
 use super::behaviour::DidCommCodec;
-use super::behaviour::DidCommRequest;
 use super::behaviour::DidCommResponse;
 use super::net_commander::SwarmCommand;
 
@@ -70,7 +69,7 @@ impl EventLoop {
   // higher layers can easily await_message(thread_id).
   async fn handle_swarm_event<F, THandleErr>(
     &mut self,
-    event: SwarmEvent<RequestResponseEvent<DidCommRequest, DidCommResponse>, THandleErr>,
+    event: SwarmEvent<RequestResponseEvent<RequestMessage, DidCommResponse>, THandleErr>,
     event_handler: &F,
   ) where
     F: Fn(InboundRequest),
@@ -78,27 +77,12 @@ impl EventLoop {
     match event {
       SwarmEvent::Behaviour(RequestResponseEvent::Message { message, peer }) => match message {
         RequestResponseMessage::Request { channel, request, .. } => {
-          // In the general case, we would decrypt the message and deserialize to RequestMessage.
-          let request_message: RequestMessage = match serde_json::from_slice(request.0.as_ref()) {
-            Ok(request_message) => request_message,
-            Err(err) => {
-              log::error!("could not deserialize to `RequestMessage`: {err:?}");
-              // TODO: Handle _somehow_?
-              let _ = self
-                .swarm
-                .behaviour_mut()
-                .send_response(channel, DidCommResponse(b"nope".to_vec()));
-              return;
-            }
-          };
-
-          let req = InboundRequest {
+          event_handler(InboundRequest {
             peer_id: peer,
-            endpoint: request_message.endpoint,
-            input: request_message.data,
+            endpoint: request.endpoint,
+            input: request.data,
             response_channel: channel,
-          };
-          event_handler(req);
+          });
         }
         RequestResponseMessage::Response { request_id, response } => {
           // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
@@ -123,7 +107,7 @@ impl EventLoop {
         request,
         response_channel,
       } => {
-        let request_id = self.swarm.behaviour_mut().send_request(&peer, DidCommRequest(request));
+        let request_id = self.swarm.behaviour_mut().send_request(&peer, request);
         self.await_response.insert(request_id, response_channel);
       }
       SwarmCommand::SendResponse {
