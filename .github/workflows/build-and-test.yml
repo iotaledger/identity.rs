@@ -228,10 +228,6 @@ jobs:
         run: npm run build:examples
         working-directory: bindings/wasm
 
-      - name: Run tests
-        run: cargo test --release
-        working-directory: bindings/wasm
-
       - name: Run Wasm unit tests and examples
         run: npm run test
         working-directory: bindings/wasm
