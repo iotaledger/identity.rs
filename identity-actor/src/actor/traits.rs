@@ -3,15 +3,12 @@
 
 use std::any::Any;
 use std::any::TypeId;
-use std::borrow::Cow;
-use std::fmt::Debug;
 use std::pin::Pin;
 
 use futures::Future;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 
 use crate::Actor;
+use crate::ActorRequest;
 use crate::RemoteSendError;
 use crate::RequestContext;
 
@@ -57,10 +54,4 @@ pub fn request_handler_clone_object<OBJ: Clone + Send + Sync + 'static>(
 ) -> Box<dyn Any + Send + Sync> {
   // Double indirection is unfortunately required - the downcast fails otherwise.
   Box::new(object.downcast_ref::<OBJ>().unwrap().clone())
-}
-
-pub trait ActorRequest: Debug + Serialize + DeserializeOwned + Send + 'static {
-  type Response: Debug + Serialize + DeserializeOwned + 'static;
-
-  fn request_name<'cow>(&self) -> Cow<'cow, str>;
 }
