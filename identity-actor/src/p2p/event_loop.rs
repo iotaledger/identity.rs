@@ -75,22 +75,26 @@ impl EventLoop {
     F: Fn(InboundRequest),
   {
     match event {
-      SwarmEvent::Behaviour(RequestResponseEvent::Message { message, peer }) => match message {
-        RequestResponseMessage::Request { channel, request, .. } => {
-          event_handler(InboundRequest {
-            peer_id: peer,
-            endpoint: request.endpoint,
-            input: request.data,
-            response_channel: channel,
-          });
+      SwarmEvent::Behaviour(RequestResponseEvent::Message {
+        message: RequestResponseMessage::Request { channel, request, .. },
+        peer,
+      }) => {
+        event_handler(InboundRequest {
+          peer_id: peer,
+          endpoint: request.endpoint,
+          input: request.data,
+          response_channel: channel,
+        });
+      }
+      SwarmEvent::Behaviour(RequestResponseEvent::Message {
+        message: RequestResponseMessage::Response { request_id, response },
+        ..
+      }) => {
+        // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
+        if let Some(response_channel) = self.await_response.remove(&request_id) {
+          let _ = response_channel.send(Ok(response));
         }
-        RequestResponseMessage::Response { request_id, response } => {
-          // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
-          if let Some(response_channel) = self.await_response.remove(&request_id) {
-            let _ = response_channel.send(Ok(response));
-          }
-        }
-      },
+      }
       SwarmEvent::Behaviour(RequestResponseEvent::OutboundFailure { request_id, error, .. }) => {
         if let Some(response_channel) = self.await_response.remove(&request_id) {
           let _ = response_channel.send(Err(error));
