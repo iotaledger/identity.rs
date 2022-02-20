@@ -8,6 +8,7 @@ use futures::channel::oneshot;
 use futures::FutureExt;
 use futures::StreamExt;
 use libp2p::core::connection::ListenerId;
+use libp2p::request_response::InboundFailure;
 use libp2p::request_response::OutboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::RequestResponse;
@@ -30,6 +31,7 @@ pub struct EventLoop {
   command_channel: mpsc::Receiver<SwarmCommand>,
   listener_ids: Vec<ListenerId>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<ResponseMessage, OutboundFailure>>>,
+  await_response_sent: HashMap<RequestId, oneshot::Sender<Result<(), InboundFailure>>>,
 }
 
 impl EventLoop {
@@ -39,6 +41,7 @@ impl EventLoop {
       command_channel,
       listener_ids: Vec::new(),
       await_response: HashMap::new(),
+      await_response_sent: HashMap::new(),
     }
   }
 
@@ -76,7 +79,11 @@ impl EventLoop {
   {
     match event {
       SwarmEvent::Behaviour(RequestResponseEvent::Message {
-        message: RequestResponseMessage::Request { channel, request, .. },
+        message: RequestResponseMessage::Request {
+          channel,
+          request,
+          request_id,
+        },
         peer,
       }) => {
         event_handler(InboundRequest {
@@ -84,12 +91,14 @@ impl EventLoop {
           endpoint: request.endpoint,
           input: request.data,
           response_channel: channel,
+          request_id,
         });
       }
       SwarmEvent::Behaviour(RequestResponseEvent::Message {
         message: RequestResponseMessage::Response { request_id, response },
         ..
       }) => {
+        println!("received response");
         // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
         if let Some(response_channel) = self.await_response.remove(&request_id) {
           let _ = response_channel.send(Ok(response));
@@ -98,6 +107,16 @@ impl EventLoop {
       SwarmEvent::Behaviour(RequestResponseEvent::OutboundFailure { request_id, error, .. }) => {
         if let Some(response_channel) = self.await_response.remove(&request_id) {
           let _ = response_channel.send(Err(error));
+        }
+      }
+      SwarmEvent::Behaviour(RequestResponseEvent::InboundFailure { error, request_id, .. }) => {
+        if let Some(response_channel) = self.await_response_sent.remove(&request_id) {
+          let _ = response_channel.send(Err(error));
+        }
+      }
+      SwarmEvent::Behaviour(RequestResponseEvent::ResponseSent { request_id, .. }) => {
+        if let Some(response_channel) = self.await_response_sent.remove(&request_id) {
+          let _ = response_channel.send(Ok(()));
         }
       }
       _ => (),
@@ -117,13 +136,21 @@ impl EventLoop {
       SwarmCommand::SendResponse {
         response,
         response_channel,
-        cmd_response_channel: _,
+        cmd_response_channel,
+        request_id,
       } => {
-        // TODO: Handle by listening for InboundFailure and returning that via a channel?
-        let _ = self
+        if self
           .swarm
           .behaviour_mut()
-          .send_response(response_channel, ResponseMessage(response));
+          .send_response(response_channel, ResponseMessage(response))
+          .is_err()
+        {
+          cmd_response_channel
+            .send(Err(InboundFailure::ConnectionClosed))
+            .expect("receiver was dropped")
+        } else {
+          self.await_response_sent.insert(request_id, cmd_response_channel);
+        }
       }
       SwarmCommand::StartListening {
         address,
@@ -133,7 +160,7 @@ impl EventLoop {
           self.listener_ids.push(listener_id);
         });
 
-        response_channel.send(result).expect("sender was dropped");
+        response_channel.send(result).expect("receiver was dropped");
       }
       SwarmCommand::AddAddress { peer, address } => {
         self.swarm.behaviour_mut().add_address(&peer, address);
@@ -141,13 +168,13 @@ impl EventLoop {
       SwarmCommand::GetAddresses { response_channel } => {
         response_channel
           .send(self.swarm.listeners().map(|addr| addr.to_owned()).collect())
-          .expect("sender was dropped");
+          .expect("receiver was dropped");
       }
       SwarmCommand::StopListening { response_channel } => {
         for listener in std::mem::take(&mut self.listener_ids).into_iter() {
           let _ = self.swarm.remove_listener(listener);
         }
-        response_channel.send(()).expect("sender was dropped");
+        response_channel.send(()).expect("receiver was dropped");
       }
     }
   }
@@ -159,6 +186,7 @@ pub struct InboundRequest {
   pub endpoint: Endpoint,
   pub input: Vec<u8>,
   pub response_channel: ResponseChannel<ResponseMessage>,
+  pub request_id: RequestId,
 }
 
 #[derive(Debug)]

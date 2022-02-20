@@ -5,7 +5,9 @@ use futures::channel::mpsc;
 use futures::channel::oneshot;
 use futures::future::poll_fn;
 
+use libp2p::request_response::InboundFailure;
 use libp2p::request_response::OutboundFailure;
+use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
@@ -36,17 +38,24 @@ impl NetCommander {
       response_channel: sender,
     };
     self.send_command(command).await;
-    receiver.await.unwrap()
+    receiver.await.expect("sender was dropped")
   }
 
-  pub async fn send_response(&mut self, data: Vec<u8>, channel: ResponseChannel<ResponseMessage>) {
-    let (sender, _receiver) = oneshot::channel();
+  pub async fn send_response(
+    &mut self,
+    data: Vec<u8>,
+    channel: ResponseChannel<ResponseMessage>,
+    request_id: RequestId,
+  ) -> Result<(), InboundFailure> {
+    let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendResponse {
       response: data,
       cmd_response_channel: sender,
       response_channel: channel,
+      request_id,
     };
     self.send_command(command).await;
+    receiver.await.expect("sender was dropped")
   }
 
   pub async fn start_listening(&mut self, address: Multiaddr) -> Result<(), TransportError<std::io::Error>> {
@@ -97,8 +106,9 @@ pub enum SwarmCommand {
   },
   SendResponse {
     response: Vec<u8>,
-    cmd_response_channel: oneshot::Sender<Result<(), OutboundFailure>>,
+    cmd_response_channel: oneshot::Sender<Result<(), InboundFailure>>,
     response_channel: ResponseChannel<ResponseMessage>,
+    request_id: RequestId,
   },
   StartListening {
     address: Multiaddr,

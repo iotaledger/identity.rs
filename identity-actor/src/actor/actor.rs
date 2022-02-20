@@ -29,6 +29,8 @@ use futures::Future;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
+use libp2p::request_response::InboundFailure;
+use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use libp2p::TransportError;
 use serde::de::DeserializeOwned;
@@ -85,7 +87,7 @@ pub struct ActorState {
 
 #[derive(Clone)]
 pub struct Actor {
-  commander: NetCommander,
+  pub commander: NetCommander,
   state: Arc<ActorState>,
 }
 
@@ -175,7 +177,17 @@ impl Actor {
             }
           };
 
-        Self::send_response(&mut self.commander, result, request.response_channel).await;
+        let send_result = Self::send_response(
+          &mut self.commander,
+          result,
+          request.response_channel,
+          request.request_id,
+        )
+        .await;
+
+        if let Err(err) = send_result {
+          log::error!("could not acknowledge request due to: {err:?}",);
+        }
       }
     });
   }
@@ -186,6 +198,7 @@ impl Actor {
     let endpoint: Endpoint = inbound_request.endpoint;
     let peer_id: PeerId = inbound_request.peer_id;
     let response_channel: ResponseChannel<_> = inbound_request.response_channel;
+    let request_id: RequestId = inbound_request.request_id;
 
     log::debug!("request for endpoint {endpoint}");
 
@@ -200,7 +213,12 @@ impl Actor {
     match handler_object_tuple {
       Ok((handler, object)) => {
         // Send actor-level acknowledgment that the message was received and a handler exists.
-        Self::send_response(&mut commander, Ok(()), response_channel).await;
+        let send_result = Self::send_response(&mut commander, Ok(()), response_channel, request_id).await;
+
+        // TODO: If error, should we abort handling this request?
+        if let Err(err) = send_result {
+          log::error!("could not acknowledge request on endpoint `{endpoint}` due to: {err:?}");
+        }
 
         let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
 
@@ -218,10 +236,17 @@ impl Actor {
         log::debug!("handler error: {error:?}");
 
         let err_response: StdResult<(), RemoteSendError> = Err(error);
-        Self::send_response(&mut commander, err_response, response_channel).await;
+        let send_result = Self::send_response(
+          &mut commander,
+          err_response,
+          response_channel,
+          inbound_request.request_id,
+        )
+        .await;
 
-        // TODO: If the response could not be sent, log the error.
-        // log::error!("could not respond to `{}` request", endpoint);
+        if let Err(err) = send_result {
+          log::error!("could not send error for request on endpoint `{endpoint}` due o: {err:?}");
+        }
       }
     }
   }
@@ -249,11 +274,12 @@ impl Actor {
     commander: &mut NetCommander,
     response: StdResult<(), RemoteSendError>,
     channel: ResponseChannel<ResponseMessage>,
-  ) {
+    request_id: RequestId,
+  ) -> StdResult<(), InboundFailure> {
     log::debug!("responding with {:?}", response);
     let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
     // TODO: This could produce an InboundFailure the function currently does not return. Should we change that?
-    commander.send_response(response, channel).await;
+    commander.send_response(response, channel, request_id).await
   }
 
   // fn send_ack(response_tx: Sender<Vec<u8>>) {
