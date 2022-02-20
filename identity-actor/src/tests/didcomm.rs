@@ -53,8 +53,8 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
     .await
     .unwrap();
 
-  verifier_actor.stop_handling_requests().await.unwrap();
-  holder_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.shutdown().await.unwrap();
+  holder_actor.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -77,8 +77,8 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
     .await
     .unwrap();
 
-  holder_actor.stop_handling_requests().await.unwrap();
-  verifier_actor.stop_handling_requests().await.unwrap();
+  holder_actor.shutdown().await.unwrap();
+  verifier_actor.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -118,8 +118,8 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
     .await
     .unwrap();
 
-  verifier_actor.stop_handling_requests().await.unwrap();
-  holder_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.shutdown().await.unwrap();
+  holder_actor.shutdown().await.unwrap();
 
   assert!(function_state.was_called.load(Ordering::SeqCst));
 
@@ -161,8 +161,8 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
     .await
     .unwrap();
 
-  verifier_actor.stop_handling_requests().await.unwrap();
-  holder_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.shutdown().await.unwrap();
+  holder_actor.shutdown().await.unwrap();
 
   assert!(function_state.was_called.load(Ordering::SeqCst));
 
@@ -196,7 +196,7 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
 
   assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
 
-  verifier_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -242,8 +242,8 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
   let result: StdResult<DidCommPlaintextMessage<PresentationRequest>, _> = holder_actor.await_message(&thread_id).await;
   assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
 
-  verifier_actor.stop_handling_requests().await.unwrap();
-  holder_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.shutdown().await.unwrap();
+  holder_actor.shutdown().await.unwrap();
 
   Ok(())
 }

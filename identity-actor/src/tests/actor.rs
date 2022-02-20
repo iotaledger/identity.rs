@@ -36,8 +36,8 @@ async fn test_unknown_request() -> anyhow::Result<()> {
 
   assert!(matches!(result.unwrap_err(), Error::UnknownRequest(_)));
 
-  listening_actor.stop_handling_requests().await.unwrap();
-  sending_actor.stop_handling_requests().await.unwrap();
+  listening_actor.shutdown().await.unwrap();
+  sending_actor.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -98,8 +98,8 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
     .await
     .unwrap();
 
-  actor1.stop_handling_requests().await.unwrap();
-  actor2.stop_handling_requests().await.unwrap();
+  actor1.shutdown().await.unwrap();
+  actor2.shutdown().await.unwrap();
 
   assert!(actor1_state.0.load(std::sync::atomic::Ordering::SeqCst));
   assert!(actor2_state.0.load(std::sync::atomic::Ordering::SeqCst));
@@ -148,8 +148,8 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
     .await
     .unwrap();
 
-  sender.stop_handling_requests().await.unwrap();
-  receiver.stop_handling_requests().await.unwrap();
+  sender.shutdown().await.unwrap();
+  receiver.shutdown().await.unwrap();
 
   assert!(state.0.load(std::sync::atomic::Ordering::SeqCst));
 

@@ -278,28 +278,17 @@ impl Actor {
   ) -> StdResult<(), InboundFailure> {
     log::debug!("responding with {:?}", response);
     let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
-    // TODO: This could produce an InboundFailure the function currently does not return. Should we change that?
     commander.send_response(response, channel, request_id).await
   }
 
-  // fn send_ack(response_tx: Sender<Vec<u8>>) {
-  //   // TODO: can return an error when
-  //   // - connection times out, when
-  //   // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
-  //   // - error on the transport layer
-  //   // - potentially others...
-  //   let ack: StdResult<(), RemoteSendError> = Ok(());
-  //   let response = serde_json::to_vec(&ack).unwrap();
-  //   let response_result = response_tx.send(response);
-
-  //   if response_result.is_err() {
-  //     log::error!("could not respond to request");
-  //   }
-  // }
-
-  pub async fn stop_handling_requests(mut self) -> Result<()> {
+  pub async fn shutdown(mut self) -> Result<()> {
     self.commander.stop_listening().await;
-    // TODO: Send and impl shutdown.
+    // TODO: This implicitly drops the commander. If this is the last copy of the commander,
+    // the event loop will shut down as a result. However, if copies exist, this will return while
+    // the event loop keeps running. Ideally we could join on the background task
+    // to let all tasks finish gracefully. However, not all spawn functions return a JoinHandle,
+    // such as wasm_bindgen_futures::spawn_local. Alternatively, we can use a non-graceful exit and
+    // make shutdown explicit by sending a command that breaks the event loop immediately?
 
     Ok(())
   }
