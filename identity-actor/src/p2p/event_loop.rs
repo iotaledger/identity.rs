@@ -19,17 +19,17 @@ use libp2p::PeerId;
 use libp2p::Swarm;
 
 use crate::Endpoint;
-use crate::RequestMessage;
 
 use super::behaviour::DidCommCodec;
-use super::behaviour::DidCommResponse;
+use super::messages::RequestMessage;
+use super::messages::ResponseMessage;
 use super::net_commander::SwarmCommand;
 
 pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
   listener_ids: Vec<ListenerId>,
-  await_response: HashMap<RequestId, oneshot::Sender<Result<DidCommResponse, OutboundFailure>>>,
+  await_response: HashMap<RequestId, oneshot::Sender<Result<ResponseMessage, OutboundFailure>>>,
 }
 
 impl EventLoop {
@@ -69,7 +69,7 @@ impl EventLoop {
   // higher layers can easily await_message(thread_id).
   async fn handle_swarm_event<F, THandleErr>(
     &mut self,
-    event: SwarmEvent<RequestResponseEvent<RequestMessage, DidCommResponse>, THandleErr>,
+    event: SwarmEvent<RequestResponseEvent<RequestMessage, ResponseMessage>, THandleErr>,
     event_handler: &F,
   ) where
     F: Fn(InboundRequest),
@@ -119,7 +119,7 @@ impl EventLoop {
         let _ = self
           .swarm
           .behaviour_mut()
-          .send_response(response_channel, DidCommResponse(response));
+          .send_response(response_channel, ResponseMessage(response));
       }
       SwarmCommand::StartListening {
         address,
@@ -159,7 +159,7 @@ pub struct InboundRequest {
   pub peer_id: PeerId,
   pub endpoint: Endpoint,
   pub input: Vec<u8>,
-  pub response_channel: ResponseChannel<DidCommResponse>,
+  pub response_channel: ResponseChannel<ResponseMessage>,
 }
 
 #[derive(Debug)]

@@ -3,4 +3,5 @@
 
 pub mod behaviour;
 pub mod event_loop;
+pub mod messages;
 pub mod net_commander;

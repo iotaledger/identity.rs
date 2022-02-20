@@ -3,7 +3,6 @@
 
 use crate::ActorRequest;
 use crate::Endpoint;
-use crate::Result;
 
 use libp2p::PeerId;
 use serde::Deserialize;
@@ -11,39 +10,6 @@ use serde::Serialize;
 use std::fmt::Debug;
 use std::fmt::Display;
 use uuid::Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RequestMessage
-// where
-//   T: Serialize + for<'deser> Deserialize<'deser>,
-{
-  pub endpoint: Endpoint,
-  pub data: Vec<u8>,
-}
-
-impl RequestMessage
-// where
-//   T: Serialize + for<'deser> Deserialize<'deser>,
-{
-  pub fn new(name: impl AsRef<str>, data: Vec<u8>) -> Result<Self> {
-    Ok(Self {
-      endpoint: Endpoint::new(name)?,
-      data,
-    })
-  }
-
-  pub fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
-    // TODO: Replace with some serialization that's faster or more compact?
-    serde_json::from_slice::<'_, Self>(bytes)
-      .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string()))
-  }
-
-  pub fn to_bytes(&self) -> std::io::Result<Vec<u8>> {
-    serde_json::to_vec(self).map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string()))
-  }
-}
-
-pub type ResponseMessage = Vec<u8>;
 
 pub struct RequestContext<T> {
   pub input: T,

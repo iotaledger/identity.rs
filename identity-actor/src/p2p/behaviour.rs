@@ -15,14 +15,13 @@ use libp2p::PeerId;
 
 use tokio::io::{self};
 
-use crate::RequestMessage;
+use super::messages::RequestMessage;
+use super::messages::ResponseMessage;
 
 #[derive(Debug, Clone)]
 pub struct DidCommProtocol();
 #[derive(Clone)]
 pub struct DidCommCodec();
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DidCommResponse(pub Vec<u8>);
 
 impl ProtocolName for DidCommProtocol {
   fn protocol_name(&self) -> &[u8] {
@@ -34,7 +33,7 @@ impl ProtocolName for DidCommProtocol {
 impl RequestResponseCodec for DidCommCodec {
   type Protocol = DidCommProtocol;
   type Request = RequestMessage;
-  type Response = DidCommResponse;
+  type Response = ResponseMessage;
 
   async fn read_request<T>(&mut self, _protocol: &Self::Protocol, io: &mut T) -> io::Result<Self::Request>
   where
@@ -53,7 +52,7 @@ impl RequestResponseCodec for DidCommCodec {
   {
     let vec = upgrade::read_length_prefixed(io, 1_000_000).await?;
 
-    Ok(DidCommResponse(vec))
+    Ok(ResponseMessage(vec))
   }
 
   async fn write_request<T>(&mut self, _protocol: &Self::Protocol, io: &mut T, request: Self::Request) -> io::Result<()>
@@ -70,7 +69,7 @@ impl RequestResponseCodec for DidCommCodec {
     &mut self,
     _protocol: &Self::Protocol,
     io: &mut T,
-    DidCommResponse(data): Self::Response,
+    ResponseMessage(data): Self::Response,
   ) -> io::Result<()>
   where
     T: AsyncWrite + Unpin + Send,
@@ -87,7 +86,7 @@ pub struct DidCommBehaviour {
 impl NetworkBehaviour for DidCommBehaviour {
   type ProtocolsHandler = <RequestResponse<DidCommCodec> as NetworkBehaviour>::ProtocolsHandler;
 
-  type OutEvent = RequestResponseEvent<RequestMessage, DidCommResponse>;
+  type OutEvent = RequestResponseEvent<RequestMessage, ResponseMessage>;
 
   fn new_handler(&mut self) -> Self::ProtocolsHandler {
     self.inner.new_handler()

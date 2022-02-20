@@ -11,9 +11,8 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
 
-use crate::RequestMessage;
-
-use super::behaviour::DidCommResponse;
+use super::messages::RequestMessage;
+use super::messages::ResponseMessage;
 
 #[derive(Clone)]
 pub struct NetCommander {
@@ -29,7 +28,7 @@ impl NetCommander {
     &mut self,
     peer: PeerId,
     request: RequestMessage,
-  ) -> Result<DidCommResponse, OutboundFailure> {
+  ) -> Result<ResponseMessage, OutboundFailure> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
       peer,
@@ -40,7 +39,7 @@ impl NetCommander {
     receiver.await.unwrap()
   }
 
-  pub async fn send_response(&mut self, data: Vec<u8>, channel: ResponseChannel<DidCommResponse>) {
+  pub async fn send_response(&mut self, data: Vec<u8>, channel: ResponseChannel<ResponseMessage>) {
     let (sender, _receiver) = oneshot::channel();
     let command = SwarmCommand::SendResponse {
       response: data,
@@ -106,12 +105,12 @@ pub enum SwarmCommand {
   SendRequest {
     peer: PeerId,
     request: RequestMessage,
-    response_channel: oneshot::Sender<Result<DidCommResponse, OutboundFailure>>,
+    response_channel: oneshot::Sender<Result<ResponseMessage, OutboundFailure>>,
   },
   SendResponse {
     response: Vec<u8>,
     cmd_response_channel: oneshot::Sender<Result<(), OutboundFailure>>,
-    response_channel: ResponseChannel<DidCommResponse>,
+    response_channel: ResponseChannel<ResponseMessage>,
   },
   StartListening {
     address: Multiaddr,

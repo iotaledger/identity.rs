@@ -7,9 +7,10 @@ use std::ops::Deref;
 use std::result::Result as StdResult;
 use std::sync::Arc;
 
-use crate::p2p::behaviour::DidCommResponse;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
+use crate::p2p::messages::RequestMessage;
+use crate::p2p::messages::ResponseMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::ActorRequest;
 use crate::AsyncFn;
@@ -19,7 +20,6 @@ use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
-use crate::RequestMessage;
 use crate::Result;
 use crate::ThreadId;
 
@@ -248,7 +248,7 @@ impl Actor {
   async fn send_response(
     commander: &mut NetCommander,
     response: StdResult<(), RemoteSendError>,
-    channel: ResponseChannel<DidCommResponse>,
+    channel: ResponseChannel<ResponseMessage>,
   ) {
     log::debug!("responding with {:?}", response);
     let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
