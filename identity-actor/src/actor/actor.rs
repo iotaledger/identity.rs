@@ -17,8 +17,8 @@ use crate::p2p::messages::ResponseMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::traits::RequestHandler;
 use crate::ActorRequest;
-use crate::AsyncFn;
 use crate::Endpoint;
+use crate::Handler;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::Result;
@@ -68,7 +68,7 @@ where
     FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   {
-    let handler = AsyncFn::new(handler);
+    let handler = Handler::new(handler);
     self
       .actor_state
       .handlers

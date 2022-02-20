@@ -15,7 +15,7 @@ use crate::RemoteSendError;
 use crate::RequestContext;
 
 #[derive(Clone)]
-pub struct AsyncFn<OBJ, REQ, FUT, FUN>
+pub struct Handler<OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
   REQ: ActorRequest,
@@ -31,7 +31,7 @@ where
   _marker_req: PhantomData<&'static REQ>,
 }
 
-impl<OBJ, REQ, FUT, FUN> AsyncFn<OBJ, REQ, FUT, FUN>
+impl<OBJ, REQ, FUT, FUN> Handler<OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
   REQ: ActorRequest,
@@ -47,7 +47,7 @@ where
   }
 }
 
-impl<OBJ, REQ, FUT, FUN> RequestHandler for AsyncFn<OBJ, REQ, FUT, FUN>
+impl<OBJ, REQ, FUT, FUN> RequestHandler for Handler<OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
