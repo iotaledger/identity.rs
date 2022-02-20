@@ -6,14 +6,14 @@ use std::sync::Arc;
 
 use libp2p::Multiaddr;
 
+use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::didcomm::thread_id::ThreadId;
 use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
-use crate::DidCommPlaintextMessage;
 use crate::Error;
 use crate::IdentityResolve;
 use crate::RequestContext;
-use crate::ThreadId;
 
 use super::default_listening_actor;
 use super::default_sending_actor;

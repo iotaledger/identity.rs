@@ -3,10 +3,10 @@
 
 use libp2p::PeerId;
 
+use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::didcomm::thread_id::ThreadId;
 use crate::Actor;
-use crate::DidCommPlaintextMessage;
 use crate::RequestContext;
-use crate::ThreadId;
 
 #[derive(Clone)]
 pub struct DidCommHandler;

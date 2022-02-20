@@ -7,6 +7,9 @@ use std::ops::Deref;
 use std::result::Result as StdResult;
 use std::sync::Arc;
 
+use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::didcomm::termination::DidCommTermination;
+use crate::didcomm::thread_id::ThreadId;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::messages::RequestMessage;
@@ -14,14 +17,11 @@ use crate::p2p::messages::ResponseMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::ActorRequest;
 use crate::AsyncFn;
-use crate::DidCommPlaintextMessage;
-use crate::DidCommTermination;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
 use crate::Result;
-use crate::ThreadId;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
@@ -39,6 +39,7 @@ use uuid::Uuid;
 /// A map from an identifier to an object that contains the
 /// shared state of the associated handler functions.
 type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
+
 /// A map from a request name to the identifier of the shared state object
 /// and the method that handles that particular request.
 type HandlerMap = DashMap<Endpoint, (Uuid, Box<dyn RequestHandler>)>;
@@ -48,7 +49,6 @@ type HandlerObjectTuple<'a> = (
   Box<dyn Any + Send + Sync>,
 );
 
-// TODO: Can this take OBJ as a parameter for more type safety across add_state + add_handler?
 pub struct HandlerBuilder<OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,

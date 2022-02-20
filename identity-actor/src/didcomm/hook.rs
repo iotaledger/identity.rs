@@ -11,12 +11,13 @@ use crate::actor::HandlerBuilder;
 use crate::Actor;
 use crate::ActorRequest;
 use crate::AnyFuture;
-use crate::DidCommTermination;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
 use crate::Result as ActorResult;
+
+use super::termination::DidCommTermination;
 
 impl<OBJ> HandlerBuilder<OBJ>
 where
