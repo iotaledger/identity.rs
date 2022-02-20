@@ -29,7 +29,7 @@ where
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   {
-    let handler = DidCommHook::new(handler);
+    let handler = Hook::new(handler);
     self
       .actor_state
       .handlers
@@ -39,7 +39,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct DidCommHook<OBJ, REQ, FUT, FUN>
+pub struct Hook<OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
   REQ: ActorRequest,
@@ -55,7 +55,7 @@ where
   _marker_req: PhantomData<&'static REQ>,
 }
 
-impl<OBJ, REQ, FUT, FUN> DidCommHook<OBJ, REQ, FUT, FUN>
+impl<OBJ, REQ, FUT, FUN> Hook<OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
   REQ: ActorRequest,
@@ -71,7 +71,7 @@ where
   }
 }
 
-impl<OBJ, REQ, FUT, FUN> RequestHandler for DidCommHook<OBJ, REQ, FUT, FUN>
+impl<OBJ, REQ, FUT, FUN> RequestHandler for Hook<OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
