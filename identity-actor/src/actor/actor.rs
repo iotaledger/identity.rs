@@ -297,38 +297,6 @@ impl Actor {
     self.commander.add_address(peer, addr).await;
   }
 
-  pub async fn send_request<Request: ActorRequest>(
-    &mut self,
-    _peer: PeerId,
-    _command: Request,
-  ) -> Result<Request::Response> {
-    todo!()
-    // self.send_named_request(peer, &*command.request_name(), command).await
-  }
-
-  pub async fn send_named_request<Request: ActorRequest>(
-    &mut self,
-    _peer: PeerId,
-    _name: &str,
-    _command: Request,
-  ) -> Result<Request::Response> {
-    todo!()
-    // let request = serde_json::to_vec(&RequestMessage::new(name, command)?).unwrap();
-
-    // // log::debug!("Sending `{}` request", request.endpoint);
-
-    // let response = self.commander.send_request(peer, request).await?;
-
-    // let request_response: serde_json::Result<StdResult<Request::Response, RemoteSendError>> =
-    //   serde_json::from_slice(&response);
-
-    // match request_response {
-    //   Ok(Ok(res)) => Ok(res),
-    //   Ok(Err(err)) => Err(err.into()),
-    //   Err(err) => Err(crate::Error::DeserializationFailure(err.to_string())),
-    // }
-  }
-
   pub async fn send_message<Request: ActorRequest>(
     &mut self,
     peer: PeerId,
