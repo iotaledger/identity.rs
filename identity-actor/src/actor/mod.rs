@@ -8,7 +8,7 @@ mod asyncfn;
 mod endpoint;
 mod errors;
 mod request_context;
-mod traits;
+pub(crate) mod traits;
 
 pub use actor::*;
 pub use actor_builder::*;
@@ -16,4 +16,4 @@ pub use asyncfn::*;
 pub use endpoint::*;
 pub use errors::*;
 pub use request_context::*;
-pub use traits::*;
+pub use traits::ActorRequest;

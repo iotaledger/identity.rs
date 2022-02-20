@@ -15,12 +15,12 @@ use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::messages::RequestMessage;
 use crate::p2p::messages::ResponseMessage;
 use crate::p2p::net_commander::NetCommander;
+use crate::traits::RequestHandler;
 use crate::ActorRequest;
 use crate::AsyncFn;
 use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
-use crate::RequestHandler;
 use crate::Result;
 
 use dashmap::DashMap;

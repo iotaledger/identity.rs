@@ -7,12 +7,12 @@ use std::marker::PhantomData;
 
 use futures::Future;
 
+use crate::traits::AnyFuture;
+use crate::traits::RequestHandler;
 use crate::Actor;
 use crate::ActorRequest;
-use crate::AnyFuture;
 use crate::RemoteSendError;
 use crate::RequestContext;
-use crate::RequestHandler;
 
 #[derive(Clone)]
 pub struct AsyncFn<OBJ, REQ, FUT, FUN>
@@ -87,17 +87,14 @@ where
   }
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
-    log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
-    let request: REQ = serde_json::from_slice(&input)?;
-    Ok(Box::new(request))
+    crate::traits::request_handler_deserialize_request::<REQ>(input)
   }
 
   fn object_type_id(&self) -> TypeId {
-    TypeId::of::<OBJ>()
+    crate::traits::request_handler_object_type_id::<OBJ>()
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Box<dyn Any + Send + Sync> {
-    // Double indirection is unfortunately required - the downcast fails otherwise.
-    Box::new(object.downcast_ref::<OBJ>().unwrap().clone())
+    crate::traits::request_handler_clone_object::<OBJ>(object)
   }
 }
