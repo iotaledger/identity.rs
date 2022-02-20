@@ -33,7 +33,6 @@ thiserror = { version = "1.0", default-features = false }
 git = "https://github.com/iotaledger/iota.rs"
 rev = "c3c16d14449cb4f4b49cb3362daa12344d6f2aef"
 default-features = false
-features = []
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
