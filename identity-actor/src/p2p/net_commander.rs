@@ -83,18 +83,6 @@ impl NetCommander {
     receiver.await.expect("sender was dropped")
   }
 
-  // TODO: Remove this and store the peer id on the actor itself,
-  // but only after it's internal representation has been optimized/refactored.
-  pub async fn peer_id(&mut self) -> PeerId {
-    let (sender, receiver) = oneshot::channel();
-    self
-      .send_command(SwarmCommand::GetPeerId {
-        response_channel: sender,
-      })
-      .await;
-    receiver.await.expect("sender was dropped")
-  }
-
   async fn send_command(&mut self, command: SwarmCommand) {
     let _ = poll_fn(|cx| self.command_sender.poll_ready(cx)).await;
     let _ = self.command_sender.start_send(command);
@@ -122,9 +110,6 @@ pub enum SwarmCommand {
   },
   GetAddresses {
     response_channel: oneshot::Sender<Vec<Multiaddr>>,
-  },
-  GetPeerId {
-    response_channel: oneshot::Sender<PeerId>,
   },
   StopListening {
     response_channel: oneshot::Sender<()>,

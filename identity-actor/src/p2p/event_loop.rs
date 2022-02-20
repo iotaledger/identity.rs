@@ -143,11 +143,6 @@ impl EventLoop {
           .send(self.swarm.listeners().map(|addr| addr.to_owned()).collect())
           .expect("sender was dropped");
       }
-      SwarmCommand::GetPeerId { response_channel } => {
-        response_channel
-          .send(*self.swarm.local_peer_id())
-          .expect("sender was dropped");
-      }
       SwarmCommand::StopListening { response_channel } => {
         for listener in std::mem::take(&mut self.listener_ids).into_iter() {
           let _ = self.swarm.remove_listener(listener);
