@@ -6,7 +6,9 @@ use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity::account::Account;
-use identity::core::{OneOrMany, OrderedSet, Url};
+use identity::core::OneOrMany;
+use identity::core::OrderedSet;
+use identity::core::Url;
 
 use js_sys::Promise;
 use std::cell::RefCell;
