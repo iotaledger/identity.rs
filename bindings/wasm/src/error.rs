@@ -142,7 +142,7 @@ impl JsValueResult {
   pub fn account_err(self) -> StdResult<JsValue, AccountError> {
     self
       .0
-      .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
+      .map_err(|js_value| AccountError::JsError(js_value.as_string().unwrap_or_default()))
   }
 }
 

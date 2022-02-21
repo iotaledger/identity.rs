@@ -30,7 +30,7 @@ impl WasmSignature {
   }
 
   #[wasm_bindgen(getter)]
-  /// Returns the the signature data as a vec of bytes.
+  /// Returns the signature data as a vec of bytes.
   pub fn data(&self) -> Vec<u8> {
     self.0.data().to_vec()
   }

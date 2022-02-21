@@ -60,10 +60,6 @@ impl MemStore {
   pub fn set_expand(&mut self, value: bool) {
     self.expand = value;
   }
-
-  pub fn vaults(&self) -> Result<Vaults> {
-    self.vaults.read().map(|data| data.clone())
-  }
 }
 
 #[cfg_attr(feature = "wasm", async_trait(?Send))]

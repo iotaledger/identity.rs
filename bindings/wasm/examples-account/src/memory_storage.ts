@@ -1,55 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {ChainState, DID, DIDLease, Ed25519, Generation, IdentityState, KeyLocation, KeyPair, KeyType, MethodType, SecretKey, Signature, Storage} from './../../node/identity_wasm.js';
+import {ChainState, DID, Ed25519, Generation, IdentityState, KeyLocation, KeyPair, KeyType, MethodType, PrivateKey, Signature, Storage} from './../../node/identity_wasm.js';
 
 class MemStore implements Storage {
-    private _expand: boolean;
     private _publishedGenerations: Map<DID, Generation>;
-    private _didLeases: Map<DID, DIDLease>;
     private _chainStates: Map<DID, ChainState>;
     private _states: Map<DID, IdentityState>;
     private _vaults: Map<DID, Map<KeyLocation, KeyPair>>;
 
     constructor() {
-        this._expand = false;
         this._publishedGenerations = new Map();
-        this._didLeases = new Map();
         this._chainStates = new Map();
         this._states = new Map();
         this._vaults = new Map();
     }
 
-    public get expand(): boolean {
-        return this._expand;
-    }
-
-    public set expand(value: boolean) {
-        this._expand = value;
-    }
-
-    public get vaults(): Map<DID, Map<KeyLocation, KeyPair>> {
-        return this._vaults
-    }
-
     public async setPassword(_encryptionKey: Uint8Array): Promise<void> {}
 
     public async flushChanges(): Promise<void> {}
-
-    public async leaseDid(did: DID): Promise<DIDLease> {
-        if (this._didLeases.has(did)) {
-            let didLease: DIDLease = this._didLeases.get(did);
-            if (didLease.load()) {
-                throw 'Identity in Use'
-            } 
-            didLease.store(true);
-            return didLease
-        
-        }
-        let didLease = new DIDLease();
-        this._didLeases.set(did, didLease);
-        return didLease
-    }
 
     public async keyNew(did: DID, keyLocation: KeyLocation): Promise<string> {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
@@ -57,11 +26,11 @@ class MemStore implements Storage {
         }
         const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
         const publicKey: string = keyPair.public;
-        if (this.vaults.has(did)) {
-            this.vaults.get(did).set(keyLocation, keyPair);
+        if (this._vaults.has(did)) {
+            this._vaults.get(did).set(keyLocation, keyPair);
         } else {
             let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this.vaults.set(did, newVault);
+            this._vaults.set(did, newVault);
         }
         return publicKey
     }
@@ -70,31 +39,29 @@ class MemStore implements Storage {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
             throw 'Unsuported Method'
         }
-        let secretKey: SecretKey = SecretKey.fromPrivateKey(privateKey);
+        let secretKey: PrivateKey = PrivateKey.fromBase58String(privateKey);
         let publicKey: string = secretKey.publicKey();
-        let keyPair: KeyPair = KeyPair.fromBase58(0, privateKey, publicKey);
-        if (this.vaults.has(did)) {
-            this.vaults.get(did).set(keyLocation, keyPair);
+        let keyPair: KeyPair = KeyPair.fromBase58(KeyType.Ed25519, privateKey, publicKey);
+        if (this._vaults.has(did)) {
+            this._vaults.get(did).set(keyLocation, keyPair);
         } else {
             let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this.vaults.set(did, newVault);
+            this._vaults.set(did, newVault);
         }
         return publicKey
     }
 
     public async keyExists(did: DID, keyLocation: KeyLocation): Promise<boolean> {
-        if (this.vaults.has(did)) {
-            let vault: Map<KeyLocation, KeyPair> = this.vaults.get(did);
-            if (vault.has(keyLocation)) {
-                return true;
-            }
+        if (this._vaults.has(did)) {
+            let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
+            return vault.has(keyLocation)
         }
         return false
     }
 
     public async keyGet(did: DID, keyLocation: KeyLocation): Promise<string> {
-        if (this.vaults.has(did)) {
-            let vault: Map<KeyLocation, KeyPair> = this.vaults.get(did);
+        if (this._vaults.has(did)) {
+            let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
             if (vault.has(keyLocation)) {
                 let keyPair: KeyPair = vault.get(keyLocation);
                 return keyPair.public
@@ -105,16 +72,16 @@ class MemStore implements Storage {
     }
 
     public async keyDel(did: DID, keyLocation: KeyLocation): Promise<void> {
-        if (this.vaults.has(did)) {
-            this.vaults.get(did).delete(keyLocation);
+        if (this._vaults.has(did)) {
+            this._vaults.get(did).delete(keyLocation);
         }
     }
 
     public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
-        if (!this.vaults.has(did)) {
+        if (!this._vaults.has(did)) {
             throw 'DID not found'
         }
-        let vault: Map<KeyLocation, KeyPair> = this.vaults.get(did);
+        let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
         if (!vault.has(keyLocation)) {
             throw 'Key location not found'
         }
