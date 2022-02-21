@@ -19,7 +19,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  /// Sets the controllers of the DID document.
+  /// Sets the `alsoKnownAs` property in the DID document.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
   pub fn set_also_known_as(&mut self, options: &SetAlsoKnownAsOptions) -> Result<PromiseVoid> {
     let urls: Vec<String> = options
