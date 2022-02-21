@@ -69,7 +69,7 @@ jobs:
             target: x86_64-unknown-linux-musl
             architecture: x64
             build: |
-              sudo apt-get install -y musl
+              sudo apt-get install -y musl-tools
               npm run build -- --target=x86_64-unknown-linux-musl && strip *.node
             test: |
               npm run test
