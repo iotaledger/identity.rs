@@ -30,7 +30,8 @@
     "example:stronghold": "ts-node ./examples/src/node.ts",
     "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version",
-    "create-npm-dir": "napi create-npm-dir --target ./ "
+    "create-npm-dir": "napi create-npm-dir --target ./ ",
+    "test": "echo no tests specified"
   },
   "dependencies": {
     "@types/node": "^17.0.18",
