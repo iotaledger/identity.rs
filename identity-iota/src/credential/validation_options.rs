@@ -5,16 +5,17 @@ use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
 
 #[derive(Debug)]
-/// Options to declare validation criteria in [super::CredentialValidator::full_validation()].
+/// Options to declare validation criteria in
+/// [CredentialValidator::full_validation](super::CredentialValidator::full_validation()).
 #[non_exhaustive]
 pub struct CredentialValidationOptions {
-  /// Declares that the [identity_credential::Credential] is **not** considered valid if it expires before this
+  /// Declares that the credential is **not** considered valid if it expires before this
   /// [Timestamp].
   pub earliest_expiry_date: Timestamp,
-  /// Declares that the [identity_credential::Credential] is **not** considered valid if it was issued later than this
+  /// Declares that the credential is **not** considered valid if it was issued later than this
   /// [Timestamp].
   pub latest_issuance_date: Timestamp,
-  /// Declare that the [identity_credential::Credential]'s signature must be verified according to these
+  /// Declare that the credential's signature must be verified according to these
   /// [VerifierOptions].
   pub verifier_options: VerifierOptions,
 }
@@ -35,18 +36,18 @@ impl CredentialValidationOptions {
     Self::default()
   }
 
-  /// Declare that a [identity_credential::Credential] may expire no later than the given `timestamp`.
+  /// Declare that a credential may expire no later than the given `timestamp`.
   pub fn earliest_expiry_date(mut self, timestamp: Timestamp) -> Self {
     self.earliest_expiry_date = timestamp;
     self
   }
-  /// Declare that a [identity_credential::Credential] may expire no later than the given `timestamp`.
+  /// Declare that a credential may expire no later than the given `timestamp`.
   pub fn latest_issuance_date(mut self, timestamp: Timestamp) -> Self {
     self.latest_issuance_date = timestamp;
     self
   }
 
-  /// Declare that the signature of a [identity_credential::Credential] is to be verified according to the given
+  /// Declare that the signature of a credential is to be verified according to the given
   /// `options`.
   pub fn verifier_options(mut self, options: VerifierOptions) -> Self {
     self.verifier_options = options;
@@ -56,12 +57,13 @@ impl CredentialValidationOptions {
 
 #[derive(Debug)]
 #[non_exhaustive]
-/// Options to declare validation criteria for [super::PresentationValidator::full_validation()].
+/// Options to declare validation criteria for
+/// [PresentationValidator::full_validation](super::PresentationValidator::full_validation()).
 pub struct PresentationValidationOptions {
-  /// Declares that the [identity_credential::Credential] of the [identity_credential::Presentation] must all be
+  /// Declares that the credentials of the presentation must all be
   /// validated according to these options.
   pub shared_validation_options: CredentialValidationOptions,
-  /// Declares that the [identity_credential::Presentation]'s signature is to be verified according to these
+  /// Declares that the presentation's signature is to be verified according to these
   /// [VerifierOptions].
   pub presentation_verifier_options: VerifierOptions,
   pub(super) allow_non_transferable_violations: bool, // private as we may change the representation
@@ -86,13 +88,13 @@ impl PresentationValidationOptions {
                                       * (not defined in the spec)) */
     }
   }
-  /// Declare that all the [identity_credential::Presentation]'s credentials are all to be validated according to the
+  /// Declare that all the presentation's credentials are all to be validated according to the
   /// given `options`.
   pub fn shared_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.shared_validation_options = options;
     self
   }
-  /// Declare that the [identity_credential::Presentation]'s signature is to be verified according to the given
+  /// Declare that the presentation's signature is to be verified according to the given
   /// `options`.
   pub fn presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
     self.presentation_verifier_options = options;

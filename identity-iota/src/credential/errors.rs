@@ -37,7 +37,7 @@ pub enum ValidationError {
                                                                  * here? */
   },
 
-  /// Indicates that the credential's issuer could not be parsed as a valid DID.
+  /// Indicates that the presentation's holder could not be parsed as a valid DID.
   #[error("the presentation's holder property could not be parsed to a valid DID")]
   #[non_exhaustive]
   HolderUrl {
@@ -58,11 +58,12 @@ pub enum ValidationError {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
   },
-  /// Indicates that the structure of the [identity_credential::credential::Credential] is not semantically correct.
+  /// Indicates that the structure of the [Credential](identity_credential::credential::Credential) is not semantically
+  /// correct.
   #[error("the credential's structure is not semantically correct")]
   CredentialStructure(#[source] identity_credential::Error),
-  /// Indicates that the structure of the [identity_credential::presentation::Presentation] is not semantically
-  /// correct.
+  /// Indicates that the structure of the [Presentation](identity_credential::presentation::Presentation) is not
+  /// semantically correct.
   #[error("the presentation's structure is not semantically correct")]
   PresentationStructure(#[source] identity_credential::Error),
   /// Indicates that the relationship between the presentation holder and one of the credential subjects is not valid.

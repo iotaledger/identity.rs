@@ -57,7 +57,8 @@ impl PresentationValidator {
   /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
   /// holder.
   ///
-  /// The output of this iterator will always be a subset of [Self::holder_not_subject_iter()].
+  /// The output of this iterator will always be a subset of
+  /// [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
   pub fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
     Self::holder_not_subject_iter_internal(presentation)
       .filter(|(_, credential)| credential.non_transferable.unwrap_or(false))
@@ -70,7 +71,7 @@ impl PresentationValidator {
   /// Returns at the first credential requiring a nonTransferable property that is not met.
   ///
   /// If one needs to find *all* the nonTransferable violations of this presentation, then see
-  /// [Self::non_transferable_violations()].
+  /// [Self::non_transferable_violations](Self::non_transferable_violations()).
   ///
   /// # Terminology
   /// This is a *validation unit*
@@ -92,7 +93,8 @@ impl PresentationValidator {
   /// An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
   /// presentation's holder.
   ///
-  /// The output of this iterator is always a superset of [Self::non_transferable_violations()].
+  /// The output of this iterator is always a superset of
+  /// [Self::non_transferable_violations]([Self::non_transferable_violations()]).
   pub fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
     Self::holder_not_subject_iter_internal(presentation).map(|(position, _)| position)
   }
@@ -159,11 +161,11 @@ impl PresentationValidator {
       .map_err(|error| ValidationError::HolderProof { source: error.into() })
   }
 
-  /// Validate a `Presentation`
+  /// Validate a [Presentation].
   ///
   /// Checks common concerns such as the holder's signature, the nonTransferable property, the semantic structure of the
   /// presentation and common concerns regarding credential validation (see
-  /// [`CredentialValidator::full_validation()`]).
+  /// [`CredentialValidator::full_validation`](CredentialValidator::full_validation())).
   ///
   /// # Errors
   /// Fails if any of the following conditions occur
@@ -172,7 +174,8 @@ impl PresentationValidator {
   ///   the presentation.
   /// - The `holder` parameter does not correspond to the holder property of the presentation
   /// - The holder's signature cannot be verified
-  /// - Validation of any of the presentation's credentials fails (see [CredentialValidator::full_validation()]).
+  /// - Validation of any of the presentation's credentials fails (see
+  ///   [CredentialValidator::full_validation](CredentialValidator::full_validation())).
   // Takes &self in case this method will need some pre-computed state in the future.
   pub fn full_validation<U: Serialize, V: Serialize>(
     &self,

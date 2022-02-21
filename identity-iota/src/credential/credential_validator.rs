@@ -128,7 +128,7 @@ impl CredentialValidator {
     })
   }
 
-  /// Validates the `Credential`.
+  /// Validates a [Credential].
   ///
   /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
   /// structure.
@@ -139,7 +139,7 @@ impl CredentialValidator {
   /// - The structure of the credential is not semantically valid
   /// - The expiration date does not meet the requirement set in `options`
   /// - The issuance date does not meet the requirement set in `options`
-  /// - The issuer has not been specified as trust
+  /// - The `issuer` parameter does not provide a DID corresponding to the URL of the credential's issuer.
   /// - The credential's signature cannot be verified using the issuer's DID Document
   ///
   /// Fails on the first encountered error if `fail_fast` is true, otherwise all
