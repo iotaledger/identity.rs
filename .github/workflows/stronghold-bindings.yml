@@ -70,7 +70,7 @@ jobs:
             architecture: x64
             build: |
               sudo apt-get install -y musl
-              npm run build -- --target=x86_64-unknown-linux-gnu && strip *.node
+              npm run build -- --target=x86_64-unknown-linux-musl && strip *.node
             test: |
               npm run test
           - host: macos-latest
