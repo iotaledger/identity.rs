@@ -15,7 +15,6 @@ base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 hex = { version = "0.4", default-features = false }
 identity-diff = { version = "=0.5.0-dev.4", path = "../identity-diff", default-features = false }
-js-sys = { version = "0.3.55", default-features = false, optional = true }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 roaring = { version = "0.7", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
@@ -34,14 +33,14 @@ version = "0.7"
 default-features = false
 features = ["blake2b", "ed25519", "random", "sha"]
 
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
+js-sys = { version = "0.3.55", default-features = false }
+
 [dev-dependencies]
 proptest = "1.0.0"
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
 rand = { version = "0.8" }
-
-[features]
-wasm = ["js-sys"]
 
 [package.metadata.docs.rs]
 # To build locally:

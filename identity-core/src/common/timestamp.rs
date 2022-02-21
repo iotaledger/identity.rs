@@ -40,7 +40,7 @@ impl Timestamp {
   /// fractional seconds truncated.
   ///
   /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
-  #[cfg(not(all(target_arch = "wasm32", not(target_os = "wasi"), feature = "wasm")))]
+  #[cfg(not(all(target_arch = "wasm32", not(target_os = "wasi"))))]
   pub fn now_utc() -> Self {
     Self(truncate_fractional_seconds(OffsetDateTime::now_utc()))
   }
@@ -49,7 +49,7 @@ impl Timestamp {
   /// fractional seconds truncated.
   ///
   /// See the [`datetime` DID-core specification](https://www.w3.org/TR/did-core/#production).
-  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi"), feature = "wasm"))]
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
   pub fn now_utc() -> Self {
     let milliseconds_since_unix_epoch: i64 = js_sys::Date::now() as i64;
     let seconds: i64 = milliseconds_since_unix_epoch / 1000;

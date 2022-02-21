@@ -23,6 +23,5 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
 uuid = { version = "0.8", features = ["serde", "v4"], default-features = false }
 
-[features]
-# Enables Web Assembly support
-wasm = ["uuid/wasm-bindgen"]
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
+uuid = { version = "*", features = ["wasm-bindgen"], default-features = false }

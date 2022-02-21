@@ -8,7 +8,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Timestamp, inspectable)]
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct WasmTimestamp(pub(crate) Timestamp);
 
 #[wasm_bindgen(js_class = Timestamp)]
