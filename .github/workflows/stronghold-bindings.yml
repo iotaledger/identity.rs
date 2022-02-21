@@ -1,14 +1,14 @@
 name: Stronghold Bindings
 env:
   DEBUG: napi:*
-  APP_NAME: identity-stronghold-nodejs # must match the package name in package.json
+  APP_NAME: stronghold-nodejs # must match the package name in package.json
   MACOSX_DEPLOYMENT_TARGET: '10.13'
-  WORKING_DIRECTORY: bindings/nodejs
+  WORKING_DIRECTORY: bindings/stronghold-nodejs
 on:
   pull_request:
 defaults:
   run:
-    working-directory: bindings/nodejs
+    working-directory: bindings/stronghold-nodejs
     shell: bash
 jobs:
   build:
@@ -35,7 +35,7 @@ jobs:
             # TODO: figure out yarn works, but npm doesn't
             # TODO: figure out how to make the caches work 
             build: |
-              docker run --rm -v $(pwd):/build -w /build/bindings/nodejs builder sh -c 'yarn build && strip *.node'
+              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
           # - host: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
           #   architecture: x64
@@ -46,7 +46,7 @@ jobs:
           #   # TODO: figure out yarn works, but npm doesn't
           #   # TODO: figure out how to make the caches work 
           #   build: |
-          #     docker run --rm -v $(pwd):/build -w /build/bindings/nodejs builder sh -c 'yarn build && strip *.node'
+          #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
