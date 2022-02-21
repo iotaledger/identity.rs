@@ -19,7 +19,7 @@ use super::default_listening_actor;
 use super::default_sending_actor;
 
 #[tokio::test]
-async fn test_unknown_request() -> crate::Result<()> {
+async fn test_unknown_request_returns_error() -> crate::Result<()> {
   let (listening_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut sending_actor = default_sending_actor().await;
