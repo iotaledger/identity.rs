@@ -31,12 +31,12 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "c3c16d14449cb4f4b49cb3362daa12344d6f2aef"
+rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
 default-features = false
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "c3c16d14449cb4f4b49cb3362daa12344d6f2aef"
+rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
 default-features = false
 features = ["wasm"]
 

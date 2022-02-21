@@ -24,4 +24,4 @@ thiserror = { version = "1.0" }
 uuid = { version = "0.8", features = ["serde", "v4"], default-features = false }
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
-uuid = { version = "0.8", features = ["serde", "v4", "wasm-bindgen"], default-features = false }
+uuid = { version = "*", features = ["wasm-bindgen"], default-features = false }
