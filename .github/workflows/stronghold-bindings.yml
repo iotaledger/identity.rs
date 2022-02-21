@@ -12,8 +12,6 @@ defaults:
     shell: bash
 jobs:
   build:
-    env:
-      WORKING_DIRECTORY: bindings/nodejs
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +34,7 @@ jobs:
               docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian builder
             # https://github.com/napi-rs/napi-rs/issues/816
             build: |
-              docker run --rm -v $(pwd):/build -w /build/${{env.WORKING_DIRECTORY}} builder yarn build && strip *.node
+              docker run --rm -v $(pwd):/build -w /build/bindings/nodejs builder yarn build && strip *.node
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             architecture: x64
@@ -44,7 +42,7 @@ jobs:
               docker pull $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-alpine
               docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-alpine builder
             # https://github.com/napi-rs/napi-rs/issues/816
-            build: docker run --rm -v $(pwd):/build -w /build/${{env.WORKING_DIRECTORY}} builder yarn build && strip *.node
+            build: docker run --rm -v $(pwd):/build -w /build/bindings/nodejs builder yarn build && strip *.node
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
