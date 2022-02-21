@@ -9,7 +9,6 @@ use crate::error::WasmResult;
 use crate::tangle::WasmMessageId;
 
 #[wasm_bindgen(js_name = ChainState, inspectable)]
-#[derive(Serialize, Deserialize)]
 pub struct WasmChainState(pub(crate) ChainState);
 
 #[wasm_bindgen(js_class = ChainState)]
@@ -63,7 +62,7 @@ impl WasmChainState {
   /// Deserializes a JSON object as `ChainState`.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json_value: JsValue) -> Result<WasmChainState> {
-    json_value.into_serde().wasm_result()
+    json_value.into_serde().map(Self).wasm_result()
   }
 }
 

@@ -12,7 +12,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Signature, inspectable)]
-#[derive(Deserialize)]
 pub struct WasmSignature(pub(crate) Signature);
 
 #[wasm_bindgen(js_class = Signature)]
@@ -39,7 +38,7 @@ impl WasmSignature {
   /// Deserializes a JSON object as `Signature`.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json_value: JsValue) -> Result<WasmSignature> {
-    json_value.into_serde().wasm_result()
+    json_value.into_serde().map(Self).wasm_result()
   }
 }
 

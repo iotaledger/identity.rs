@@ -8,7 +8,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Generation)]
-#[derive(Deserialize, Serialize)]
 pub struct WasmGeneration(pub(crate) Generation);
 
 #[wasm_bindgen(js_class = Generation)]

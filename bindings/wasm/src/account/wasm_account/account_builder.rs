@@ -154,7 +154,7 @@ export type AccountBuilderOptions = {
     clientConfig?: Config,
 
     /**
-     * A Storage implemantation
+     * The Storage implemantation to use for each account built by this builder.
      */
     storage?: Storage
 };
