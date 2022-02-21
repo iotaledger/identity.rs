@@ -57,7 +57,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_SET_CONTROLLER_OPTION: &'static str = r#"
+const TS_SET_ALSO_KNOWN_AS_OPTIONS: &'static str = r#"
 /**
  * Options for setting the `alsoKnownAs` property.
  */
