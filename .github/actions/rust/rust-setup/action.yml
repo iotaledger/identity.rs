@@ -65,7 +65,7 @@ runs:
 
     - name: Cache build target
       uses: actions/cache@v2.1.7
-      if: target-cache-enabled == 'true'
+      if: inputs.target-cache-enabled == 'true'
       with:
         path: ${{ inputs.target-cache-path }}
         # Add date to the cache to keep it up to date
@@ -77,7 +77,7 @@ runs:
 
     - name: Cache sccache
       uses: actions/cache@v2.1.7
-      if: sccache-enabled == 'true'
+      if: inputs.sccache-enabled == 'true'
       with:
           path: ${{ inputs.sccache-path }}
           key: ${{ inputs.os }}-sccache-${{ inputs.job }}-${{ hashFiles('**/Cargo.lock') }}
