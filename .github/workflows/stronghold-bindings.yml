@@ -89,8 +89,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Build
         run: ${{ matrix.settings.build }}
-        with:
-          working-directory: ${{ matrix.settings.docker && './' || env.WORKING_DIRECTORY }}
+        working-directory: ${{ matrix.settings.docker && './' || env.WORKING_DIRECTORY }}
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
