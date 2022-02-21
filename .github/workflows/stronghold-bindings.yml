@@ -31,18 +31,27 @@ jobs:
               npm run build
             test: |
               npm run test
+          # - host: ubuntu-latest
+          #   target: x86_64-unknown-linux-gnu
+          #   architecture: x64
+          #   docker: |
+          #     docker pull $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian
+          #     docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian builder
+          #   # TODO: figure out why yarn works, but npm doesn't
+          #   # TODO: figure out how to make the caches work 
+          #   build: |
+          #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
+          #   test: |
+          #     docker run --rm -v $(pwd):/build -w /build node:16-slim npm run test
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             architecture: x64
-            docker: |
-              docker pull $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian
-              docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian builder
             # TODO: figure out why yarn works, but npm doesn't
             # TODO: figure out how to make the caches work 
             build: |
-              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
+              npm run build && strip *.node
             test: |
-              docker run --rm -v $(pwd):/build -w /build node:16-slim npm run test
+              npm run test
           # - host: ubuntu-latest
           #   target: x86_64-unknown-linux-musl
           #   architecture: x64
@@ -54,11 +63,23 @@ jobs:
           #   # TODO: figure out how to make the caches work 
           #   build: |
           #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
+          #   test: |
+          #   docker run --rm -v $(pwd):/build -w /build node:16-alpine npm run test
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            architecture: x64
+            build: |
+              sudo apt-get install -y musl
+              npm run build && strip *.node
+            test: |
+              npm run test
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
               npm run build --target=aarch64-apple-darwin
               strip -x *.node
+            test: |
+              npm run test
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
     steps:
