@@ -300,11 +300,14 @@ mod tests {
 
   // setup code shared among many of these tests
   struct Setup {
+    // issuer of credential_foo
     issuer_foo_doc: IotaDocument,
     issuer_foo_key: KeyPair,
+    // subject of credential_foo
     subject_foo_doc: IotaDocument,
     subject_foo_key: KeyPair,
     credential_foo: Credential,
+    // issuer of credential_bar
     issuer_bar_doc: IotaDocument,
     issuer_bar_key: KeyPair,
     credential_bar: Credential,
@@ -684,7 +687,7 @@ mod tests {
 
   #[test]
   fn test_full_validation_multiple_errors_fail_fast() {
-    // create a first credential
+    // create credentials
     let Setup {
       issuer_foo_doc,
       issuer_bar_doc,
@@ -769,7 +772,7 @@ mod tests {
 
   #[test]
   fn test_validate_presentation_multiple_errors_accumulate_errors() {
-    // create a first credential
+    // create credentials
     let Setup {
       issuer_foo_doc,
       issuer_bar_doc,
