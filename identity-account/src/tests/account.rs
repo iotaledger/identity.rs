@@ -12,7 +12,6 @@ use identity_core::crypto::SignatureOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
-use identity_iota::did::IotaDID;
 use identity_iota::diff::DiffMessage;
 use identity_iota::document::IotaDocument;
 use identity_iota::tangle::Client;
@@ -61,27 +60,6 @@ async fn test_account_builder() -> Result<()> {
   std::mem::drop(account1);
 
   assert!(builder.load_identity(did1).await.is_ok());
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_account_did_lease() -> Result<()> {
-  let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
-
-  let did: IotaDID = {
-    let account: Account = builder.create_identity(IdentitySetup::default()).await?;
-    account.did().to_owned()
-  }; // <-- Lease released here.
-
-  // Lease is not in-use
-  let _account = builder.load_identity(did.clone()).await.unwrap();
-
-  // Lease is in-use
-  assert!(matches!(
-    builder.load_identity(did).await.unwrap_err(),
-    crate::Error::IdentityInUse
-  ));
 
   Ok(())
 }

@@ -39,10 +39,10 @@ async fn main() -> Result<()> {
   // Remove the public key that signed the VC from the issuer's DID document
   // - effectively revoking the VC as it will no longer be able to verified.
   let (mut issuer_doc, issuer_key, issuer_receipt) = issuer;
-  issuer_doc.remove_method(issuer_doc.id().to_url().join("#newKey")?)?;
+  issuer_doc.remove_method(&issuer_doc.id().to_url().join("#newKey")?)?;
   issuer_doc.metadata.previous_message_id = *issuer_receipt.message_id();
   issuer_doc.metadata.updated = Timestamp::now_utc();
-  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
+  issuer_doc.sign_self(issuer_key.private(), issuer_doc.default_signing_method()?.id().clone())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
@@ -115,7 +115,7 @@ pub async fn add_new_key(
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
+    IotaVerificationMethod::new(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc
     .insert_method(method, MethodScope::VerificationMethod)
     .is_ok());
@@ -123,7 +123,7 @@ pub async fn add_new_key(
   // Prepare the update
   updated_doc.metadata.previous_message_id = *receipt.message_id();
   updated_doc.metadata.updated = Timestamp::now_utc();
-  updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
+  updated_doc.sign_self(key.private(), updated_doc.default_signing_method()?.id().clone())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

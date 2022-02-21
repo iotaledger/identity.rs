@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5.0-dev.4](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.4) (2022-02-14)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.3...v0.5.0-dev.4)
+
+### Changed
+
+- Remove unused `Account` milestone option [\#645](https://github.com/iotaledger/identity.rs/pull/645)
+- Change document controller type to `OneOrSet` [\#638](https://github.com/iotaledger/identity.rs/pull/638)
+- Rename `MethodQuery` to `DIDUrlQuery`, move `OrderedSet`, `KeyComparable` [\#634](https://github.com/iotaledger/identity.rs/pull/634)
+- Change `also_known_as` type to `OrderedSet` [\#632](https://github.com/iotaledger/identity.rs/pull/632)
+
+### Patch
+
+- Support verification methods with the same fragment [\#623](https://github.com/iotaledger/identity.rs/pull/623)
+
 ## [v0.5.0-dev.3](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.3) (2022-01-25)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.2...v0.5.0-dev.3)

@@ -1,5 +1,18 @@
 # Changelog
 
+## [wasm-v0.5.0-dev.4](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.4) (2022-02-14)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.3...wasm-v0.5.0-dev.4)
+
+### Changed
+
+- Change `also_known_as` type to `OrderedSet` [\#632](https://github.com/iotaledger/identity.rs/pull/632)
+
+### Patch
+
+- Fix Wasm `DID` conversion error names [\#651](https://github.com/iotaledger/identity.rs/pull/651)
+- Support verification methods with the same fragment [\#623](https://github.com/iotaledger/identity.rs/pull/623)
+
 ## [wasm-v0.5.0-dev.3](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.3) (2022-01-25)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.2...wasm-v0.5.0-dev.3)

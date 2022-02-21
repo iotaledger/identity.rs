@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity::account::ChainState;
-use identity::account::DIDLease;
 use identity::account::EncryptionKey;
 use identity::account::Error as AccountError;
 use identity::account::Generation;
@@ -26,7 +25,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
-use crate::account::identity::WasmDIDLease;
 use crate::account::identity::WasmIdentityState;
 use crate::account::types::WasmGeneration;
 use crate::account::types::WasmKeyLocation;
@@ -116,18 +114,6 @@ impl Storage for WasmStorage {
     let promise: Promise = Promise::resolve(&self.flush_changes());
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
-  }
-
-  /// Attempt to obtain the exclusive permission to modify the given `did`.
-  /// The caller is expected to make no more modifications after the lease has been dropped.
-  /// Returns an [`IdentityInUse`][crate::Error::IdentityInUse] error if already leased.
-  async fn lease_did(&self, did: &IotaDID) -> AccountResult<DIDLease> {
-    let promise: Promise = Promise::resolve(&self.lease_did(did.clone().into()));
-    let result: Result<JsValue, JsValue> = JsFuture::from(promise).await;
-    let js_value: JsValue =
-      result.map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))?;
-    let did_lease: WasmDIDLease = downcast_js_value(js_value, "WasmDIDLease")?;
-    Ok(did_lease.into())
   }
 
   /// Creates a new keypair at the specified `location`.
@@ -241,13 +227,6 @@ interface Storage {
   /** Write any unsaved changes to disk.*/
   flushChanges: () => Promise<void>;
 
-  /** 
-   * Attempt to obtain the exclusive permission to modify the given `did`.
-   * The caller is expected to make no more modifications after the lease has been dropped.
-   * Returns an error if already leased.
-  */
-  leaseDid: (did: DID) => Promise<DIDLease>;
-
   /** Creates a new keypair at the specified `location`.*/
   keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;
 
@@ -288,6 +267,7 @@ interface Storage {
   setPublishedGeneration: (did: DID, generation: Generation) => Promise<void>;
 }"#;
 
+#[allow(dead_code)]
 pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(js_value: JsValue, classname: &str) -> Result<T, AccountError> {
   let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
   if constructor_name == classname {

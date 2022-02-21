@@ -3,7 +3,6 @@
 
 import {Client, Config, Document, Service, Timestamp} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
-import {logExplorerUrl, logResolverUrl} from "./utils";
 
 /**
  This example is a basic introduction to creating a diff message and publishing it to the tangle.
@@ -44,8 +43,8 @@ async function createDiff(clientConfig) {
     // Publish diff to the Tangle
     const diffReceipt = await client.publishDiff(receipt.messageId, diff);
     console.log(diffReceipt);
-    logExplorerUrl("Diff Chain Transaction:", clientConfig.explorer, diffReceipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
+    console.log(`Diff Chain Transaction: ${clientConfig.explorer.messageUrl(diffReceipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
 
     return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
 }
