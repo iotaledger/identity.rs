@@ -19,8 +19,8 @@ use wasm_bindgen_futures::future_to_promise;
 impl WasmAccount {
   /// Sets the controllers of the DID document.
   #[wasm_bindgen(js_name = setController)]
-  pub fn set_controller(&mut self, controllers: &SetControllerOptions) -> Result<PromiseVoid> {
-    let controllers: Option<OneOrSet<IotaDID>> = controllers.controllers().into_serde().wasm_result()?;
+  pub fn set_controller(&mut self, options: &SetControllerOptions) -> Result<PromiseVoid> {
+    let controllers: Option<OneOrSet<IotaDID>> = options.controllers().into_serde().wasm_result()?;
     let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
 
     let promise: Promise = future_to_promise(async move {
