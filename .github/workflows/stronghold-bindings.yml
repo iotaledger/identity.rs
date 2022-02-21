@@ -34,7 +34,7 @@ jobs:
               docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian builder
             # https://github.com/napi-rs/napi-rs/issues/816
             build: |
-              docker run --rm -v $(pwd):/build -w /build builder yarn build && strip *.node
+              docker run --rm -v $(pwd):/build -w /build/${{env.WORKING_DIRECTORY}} builder yarn build && strip *.node
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             architecture: x64
@@ -42,7 +42,7 @@ jobs:
               docker pull $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-alpine
               docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-alpine builder
             # https://github.com/napi-rs/napi-rs/issues/816
-            build: docker run --rm -v $(pwd):/build -w /build builder yarn build && strip *.node
+            build: docker run --rm -v $(pwd):/build -w /build/${{env.WORKING_DIRECTORY}} builder yarn build && strip *.node
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
@@ -78,17 +78,19 @@ jobs:
           path: ~/.cargo/git
           key: ${{ matrix.settings.target }}-node@16-cargo-index-trimmed-${{ hashFiles('**/Cargo.lock') }}
       - name: Pull latest image
+        if: ${{ matrix.settings.docker }}
         run: ${{ matrix.settings.docker }}
         env:
           DOCKER_REGISTRY_URL: ghcr.io
-        if: ${{ matrix.settings.docker }}
       - name: Setup toolchain
-        run: ${{ matrix.settings.setup }}
         if: ${{ matrix.settings.setup }}
+        run: ${{ matrix.settings.setup }}
       - name: Install dependencies
         run: npm ci --ignore-scripts
       - name: Build
         run: ${{ matrix.settings.build }}
+        with:
+          working-directory: ${{ matrix.settings.docker && './' || env.WORKING_DIRECTORY }}
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
