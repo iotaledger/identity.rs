@@ -14,6 +14,7 @@ use crate::tangle::WasmNetwork;
 
 /// @typicalname did
 #[wasm_bindgen(js_name = DID, inspectable)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WasmDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = DID)]

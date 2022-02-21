@@ -147,6 +147,7 @@ publishing to the Tangle.
     * [.createSignedCredential(fragment, credential, signature_options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
     * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
+<<<<<<< HEAD
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -154,6 +155,15 @@ publishing to the Tangle.
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+=======
+    * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;any&gt;</code>
+>>>>>>> b8bc524a8569a95a2367f762dba6648fbd3f752d
 
 <a name="Account+deleteMethod"></a>
 
@@ -306,8 +316,13 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+createMethod"></a>
 
+<<<<<<< HEAD
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Adds a new verification method to the DID document.
+=======
+### account.createService(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new Service to the DID Document.
+>>>>>>> b8bc524a8569a95a2367f762dba6648fbd3f752d
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
@@ -317,8 +332,13 @@ Adds a new verification method to the DID document.
 
 <a name="Account+createService"></a>
 
+<<<<<<< HEAD
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
 Adds a new Service to the DID Document.
+=======
+### account.createMethod(options) ⇒ <code>Promise.&lt;any&gt;</code>
+Adds a new verification method to the DID document.
+>>>>>>> b8bc524a8569a95a2367f762dba6648fbd3f752d
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 

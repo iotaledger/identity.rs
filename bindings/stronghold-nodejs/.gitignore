@@ -1,0 +1,12 @@
+# Rust
+target/
+Cargo.lock
+
+# npm / yarn
+node_modules/
+
+*.node
+index.d.ts
+index.js
+
+node_adapter/*.js
