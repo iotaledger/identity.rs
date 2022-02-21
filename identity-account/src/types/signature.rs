@@ -21,7 +21,7 @@ impl Signature {
     &self.pkey
   }
 
-  /// Returns the the signature data as a slice of bytes.
+  /// Returns the signature data as a slice of bytes.
   pub fn data(&self) -> &[u8] {
     &self.data
   }

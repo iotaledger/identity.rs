@@ -116,14 +116,14 @@ impl Storage for WasmStorage {
     result.into()
   }
 
-  /// Creates a new keypair at the specified `location`.
+  /// Creates a new keypair at the specified `location`, and returns its `PublicKey`.
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  /// Inserts a private key at the specified `location`.
+  /// Inserts a private key at the specified `location`, and returns its `PublicKey`.
   async fn key_insert(
     &self,
     did: &IotaDID,
@@ -227,19 +227,21 @@ interface Storage {
   /** Write any unsaved changes to disk.*/
   flushChanges: () => Promise<void>;
 
-  /** Creates a new keypair at the specified `location`.*/
+  /** Creates a new keypair at the specified `location`, 
+   * and returns its public key as a base58 string.*/
   keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;
 
-  /** Inserts a private key at the specified `location`.*/
+  /** Inserts a private key, encoded as a base58 string, at the specified `location`, 
+   * and returns its public key as a base58 string.*/
   keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: string) => Promise<string>;
 
   /** Returns `true` if a keypair exists at the specified `location`.*/
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
-  /** Retrieves the public key at the specified `location`.*/
+  /** Retrieves the public key, encoded as a base58 string, from the specified `location`.*/
   keyGet: (did: DID, keyLocation: KeyLocation) => Promise<string>;
 
-  /** Deletes the keypair specified by `location`.*/
+  /** Deletes the keypair specified by the given `location`. Nothing happens if the key is not found.*/
   keyDel: (did: DID, keyLocation: KeyLocation) => Promise<void>;
 
   /** Signs `data` with the private key at the specified `location`.*/
@@ -267,19 +269,20 @@ interface Storage {
   setPublishedGeneration: (did: DID, generation: Generation) => Promise<void>;
 }"#;
 
+// from https://github.com/rustwasm/wasm-bindgen/issues/2231#issuecomment-656293288
 #[allow(dead_code)]
 pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(js_value: JsValue, classname: &str) -> Result<T, AccountError> {
   let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
   if constructor_name == classname {
     let ptr: JsValue = Reflect::get(&js_value, &JsValue::from_str("ptr"))
-      .map_err(|e| AccountError::PromiseError(format!("Invalid value: {:?} - Get ptr error: {:?}", js_value, e)))?;
+      .map_err(|e| AccountError::JsError(format!("Invalid value: {:?} - Get ptr error: {:?}", js_value, e)))?;
     let ptr_u32: u32 = ptr
       .as_f64()
-      .ok_or_else(|| AccountError::PromiseError(format!("Invalid value: {:?} - Casting error", js_value)))?
+      .ok_or_else(|| AccountError::JsError(format!("Invalid value: {:?} - Casting error", js_value)))?
       as u32;
     unsafe { Ok(T::from_abi(ptr_u32)) }
   } else {
-    Err(AccountError::PromiseError(format!(
+    Err(AccountError::SerializationError(format!(
       "Expected: {} - Found: {}",
       classname, constructor_name
     )))

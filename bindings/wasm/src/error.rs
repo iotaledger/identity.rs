@@ -149,7 +149,7 @@ macro_rules! impl_from_js_value {
       fn from(result: JsValueResult) -> Self {
         result
           .0
-          .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
+          .map_err(|js_value| AccountError::JsError(js_value.as_string().unwrap_or_default()))
           .and_then(|js_value| {
             js_value
               .into_serde()
@@ -173,7 +173,7 @@ impl From<JsValueResult> for AccountResult<()> {
   fn from(result: JsValueResult) -> Self {
     result
       .0
-      .map_err(|js_value| AccountError::PromiseError(js_value.as_string().unwrap_or_default()))
+      .map_err(|js_value| AccountError::JsError(js_value.as_string().unwrap_or_default()))
       .and_then(|js_value| {
         js_value
           .into_serde()
