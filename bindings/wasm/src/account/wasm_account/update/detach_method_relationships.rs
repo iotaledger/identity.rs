@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use js_sys::Promise;
 use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
@@ -12,11 +11,14 @@ use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 use identity::did::MethodRelationship;
+use js_sys::Promise;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -24,7 +26,7 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Detaches the given relationship from the given method, if the method exists.
   #[wasm_bindgen(js_name = detachMethodRelationships)]
-  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<Promise> {
+  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<PromiseVoid> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
@@ -60,7 +62,7 @@ impl WasmAccount {
         .wasm_result()
         .map(|_| JsValue::undefined())
     });
-    Ok(promise)
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 

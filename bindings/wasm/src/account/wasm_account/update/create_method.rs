@@ -14,10 +14,12 @@ use identity::did::MethodScope;
 use identity::did::MethodType;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmMethodSecret;
 use crate::account::wasm_account::WasmAccount;
+use crate::common::PromiseVoid;
 use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 use crate::error::Result;
@@ -27,7 +29,7 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
-  pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<Promise> {
+  pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<PromiseVoid> {
     let method_type: Option<MethodType> = options.methodType().map(|m| m.0);
 
     let fragment: String = options
@@ -60,7 +62,7 @@ impl WasmAccount {
       create_method.apply().await.wasm_result().map(|_| JsValue::undefined())
     });
 
-    Ok(promise)
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 

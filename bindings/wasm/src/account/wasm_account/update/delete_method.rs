@@ -4,9 +4,11 @@
 use identity::account::UpdateError::MissingRequiredField;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::WasmAccount;
+use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -14,7 +16,7 @@ use crate::error::WasmResult;
 impl WasmAccount {
   /// Deletes a verification method if the method exists.
   #[wasm_bindgen(js_name = deleteMethod)]
-  pub fn delete_method(&mut self, options: &DeleteMethodOptions) -> Result<Promise> {
+  pub fn delete_method(&mut self, options: &DeleteMethodOptions) -> Result<PromiseVoid> {
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
@@ -33,7 +35,7 @@ impl WasmAccount {
         .map(|_| JsValue::undefined())
     });
 
-    Ok(promise)
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 
@@ -49,7 +51,7 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 /**
- * Optoins for deleting a method on an identity.
+ * Options for deleting a method on an identity.
  */
 export type DeleteMethodOptions = {
     /**
