@@ -62,25 +62,15 @@ jobs:
           node-version: 16
           check-latest: true
           architecture: ${{ matrix.settings.architecture }}
-      - name: Install
-        uses: actions-rs/toolchain@v1
+
+      # TODO: does 'profile: minimal' matter?
+      - name: Setup Rust and cache
+        uses: './.github/actions/rust/rust-setup'
         with:
-          profile: minimal
-          override: true
-          toolchain: stable
-          target: ${{ matrix.settings.target }}
-      - name: Generate Cargo.lock
-        run: cargo generate-lockfile
-      - name: Cache cargo registry
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/registry
-          key: ${{ matrix.settings.target }}-node@16-cargo-registry-trimmed-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache cargo index
-        uses: actions/cache@v2
-        with:
-          path: ~/.cargo/git
-          key: ${{ matrix.settings.target }}-node@16-cargo-index-trimmed-${{ hashFiles('**/Cargo.lock') }}
+          os: ${{ matrix.settings.host }}
+          job: ${{ github.job }}
+          current-date: 2022-02-21 # TODO use current date
+     
       - name: Pull latest image
         if: ${{ matrix.settings.docker }}
         run: ${{ matrix.settings.docker }}
