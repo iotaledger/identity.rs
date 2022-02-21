@@ -14,7 +14,7 @@ use crate::tangle::WasmNetwork;
 
 /// @typicalname did
 #[wasm_bindgen(js_name = DID, inspectable)]
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WasmDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = DID)]
@@ -111,4 +111,14 @@ impl From<IotaDID> for WasmDID {
 extern "C" {
   #[wasm_bindgen(typescript_type = "DID | string")]
   pub type UWasmDID;
+}
+
+impl TryFrom<UWasmDID> for IotaDID {
+  type Error = JsValue;
+
+  fn try_from(did: UWasmDID) -> std::result::Result<Self, Self::Error> {
+    // Parse rather than going through serde directly to return proper error types.
+    let json: String = did.into_serde().wasm_result()?;
+    IotaDID::parse(&json).wasm_result()
+  }
 }

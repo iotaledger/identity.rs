@@ -9,7 +9,8 @@ use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyType;
-use crate::error::wasm_error;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[derive(Deserialize, Serialize)]
 struct JsonData {
@@ -30,17 +31,23 @@ pub struct KeyPair(pub(crate) KeyPair_);
 impl KeyPair {
   /// Generates a new `KeyPair` object.
   #[wasm_bindgen(constructor)]
-  pub fn new(type_: KeyType) -> Result<KeyPair, JsValue> {
-    KeyPair_::new(type_.into()).map_err(wasm_error).map(Self)
+  pub fn new(type_: KeyType) -> Result<KeyPair> {
+    KeyPair_::new(type_.into()).map(Self).wasm_result()
   }
 
   /// Parses a `KeyPair` object from base58-encoded public/private keys.
   #[wasm_bindgen(js_name = fromBase58)]
-  pub fn from_base58(type_: KeyType, public_key: &str, private_key: &str) -> Result<KeyPair, JsValue> {
-    let public: PublicKey = decode_b58(public_key).map_err(wasm_error)?.into();
-    let private: PrivateKey = decode_b58(private_key).map_err(wasm_error)?.into();
+  pub fn from_base58(type_: KeyType, public_key: &str, private_key: &str) -> Result<KeyPair> {
+    let public: PublicKey = decode_b58(public_key).wasm_result()?.into();
+    let private: PrivateKey = decode_b58(private_key).wasm_result()?.into();
 
     Ok(Self((type_.into(), public, private).into()))
+  }
+
+  /// Returns the private key as a base58-encoded string.
+  #[wasm_bindgen(getter = type)]
+  pub fn type_(&self) -> KeyType {
+    KeyType::from(self.0.type_())
   }
 
   /// Returns the public key as a base58-encoded string.
@@ -57,20 +64,20 @@ impl KeyPair {
 
   /// Serializes a `KeyPair` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue, JsValue> {
+  pub fn to_json(&self) -> Result<JsValue> {
     let data: JsonData = JsonData {
       type_: self.0.type_().into(),
       public: self.public(),
       private: self.private(),
     };
 
-    JsValue::from_serde(&data).map_err(wasm_error)
+    JsValue::from_serde(&data).wasm_result()
   }
 
   /// Deserializes a `KeyPair` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<KeyPair, JsValue> {
-    let data: JsonData = json.into_serde().map_err(wasm_error)?;
+  pub fn from_json(json: &JsValue) -> Result<KeyPair> {
+    let data: JsonData = json.into_serde().wasm_result()?;
 
     Self::from_base58(data.type_, &data.public, &data.private)
   }

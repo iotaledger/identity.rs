@@ -194,6 +194,11 @@ impl AccountBuilder {
 
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured [`Storage`].
+  ///
+  /// # Warning
+  ///
+  /// Callers are expected **not** to load the same [`IotaDID`] into more than one account,
+  /// as that would cause race conditions when updating the identity.
   pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account> {
     let setup: AccountSetup = self.build_setup().await?;
     Account::load_identity(setup, did).await

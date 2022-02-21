@@ -105,6 +105,30 @@ where
     })
   }
 
+  /// Apply a map function to convert this into a new `OneOrSet<S>`.
+  pub fn try_map<S, F, E>(self, mut f: F) -> Result<OneOrSet<S>, E>
+  where
+    S: KeyComparable,
+    F: FnMut(T) -> Result<S, E>,
+  {
+    Ok(OneOrSet(match self.0 {
+      OneOrSetInner::One(item) => OneOrSetInner::One(f(item)?),
+      OneOrSetInner::Set(set_t) => {
+        let set_s: OrderedSet<S> = set_t
+          .into_vec()
+          .into_iter()
+          .map(f)
+          .collect::<Result<OrderedSet<S>, E>>()?;
+        // Key equivalence could differ between T and S.
+        if set_s.len() == 1 {
+          OneOrSetInner::One(set_s.into_vec().pop().expect("OneOrSet::try_map infallible"))
+        } else {
+          OneOrSetInner::Set(set_s)
+        }
+      }
+    }))
+  }
+
   /// Returns the number of elements in the collection.
   #[allow(clippy::len_without_is_empty)]
   pub fn len(&self) -> usize {
@@ -459,6 +483,73 @@ mod tests {
     let set_many: OneOrSet<MockKeyU8> = OneOrSet::new_set([2, 4, 6, 8].into_iter().map(MockKeyU8).collect()).unwrap();
     assert_eq!(set_many.len(), 4);
     let set_bool: OneOrSet<MockKeyBool> = set_many.map(|item| MockKeyBool(item.0 % 2 == 0));
+    assert_eq!(set_bool, OneOrSet::new_one(MockKeyBool(true)));
+    assert_eq!(set_bool.0, OneOrSetInner::One(MockKeyBool(true)));
+    assert_eq!(set_bool.len(), 1);
+  }
+
+  #[test]
+  fn test_try_map() {
+    // One - OK
+    let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
+    let one_add: OneOrSet<MockKeyU8> = one
+      .try_map(|item| {
+        if item.key() == &1 {
+          Ok(MockKeyU8(item.0 + 1))
+        } else {
+          Err(Error::OneOrSetEmpty)
+        }
+      })
+      .unwrap();
+    assert_eq!(one_add, OneOrSet::new_one(MockKeyU8(2)));
+
+    // One - ERROR
+    let one_err: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
+    let result_one: Result<OneOrSet<MockKeyBool>> = one_err.try_map(|item| {
+      if item.key() == &1 {
+        Err(Error::OneOrSetEmpty)
+      } else {
+        Ok(MockKeyBool(false))
+      }
+    });
+    assert!(matches!(result_one, Err(Error::OneOrSetEmpty)));
+
+    // Set - OK
+    let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
+    let set_add: OneOrSet<MockKeyU8> = set
+      .try_map(|item| {
+        if item.key() < &4 {
+          Ok(MockKeyU8(item.0 + 10))
+        } else {
+          Err(Error::OneOrSetEmpty)
+        }
+      })
+      .unwrap();
+    assert_eq!(set_add, OneOrSet::new_set((11..=13).map(MockKeyU8).collect()).unwrap());
+
+    // Set - ERROR
+    let set_err: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
+    let result_set: Result<OneOrSet<MockKeyU8>> = set_err.try_map(|item| {
+      if item.key() < &4 {
+        Err(Error::OneOrSetEmpty)
+      } else {
+        Ok(MockKeyU8(item.0))
+      }
+    });
+    assert!(matches!(result_set, Err(Error::OneOrSetEmpty)));
+
+    // Set reduced to one - OK
+    let set_many: OneOrSet<MockKeyU8> = OneOrSet::new_set([2, 4, 6, 8].into_iter().map(MockKeyU8).collect()).unwrap();
+    assert_eq!(set_many.len(), 4);
+    let set_bool: OneOrSet<MockKeyBool> = set_many
+      .try_map(|item| {
+        if item.key() % 2 == 0 {
+          Ok(MockKeyBool(item.0 % 2 == 0))
+        } else {
+          Err(Error::OneOrSetEmpty)
+        }
+      })
+      .unwrap();
     assert_eq!(set_bool, OneOrSet::new_one(MockKeyBool(true)));
     assert_eq!(set_bool.0, OneOrSetInner::One(MockKeyBool(true)));
     assert_eq!(set_bool.len(), 1);

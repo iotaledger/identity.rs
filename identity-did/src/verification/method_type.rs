@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str::FromStr;
+use std::fmt::Display;
+use std::fmt::Formatter;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -32,6 +34,12 @@ impl MethodType {
       Self::Ed25519VerificationKey2018 => "Ed25519VerificationKey2018",
       Self::MerkleKeyCollection2021 => "MerkleKeyCollection2021",
     }
+  }
+}
+
+impl Display for MethodType {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    f.write_str(self.as_str())
   }
 }
 

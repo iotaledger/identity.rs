@@ -57,38 +57,15 @@ impl IotaDID {
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
 
-  /// Converts a borrowed [`CoreDID`] to a borrowed [`IotaDID`].
+  /// Converts an owned [`CoreDID`] to an [`IotaDID`].
   ///
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn try_from_borrowed(did: &CoreDID) -> Result<&Self> {
-    Self::check_validity(did)?;
-
-    // SAFETY: we performed the necessary validation in `check_validity`.
-    Ok(unsafe { Self::new_unchecked_ref(did) })
-  }
-
-  /// Converts an owned `DID` to an [`IotaDID`].
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn try_from_owned(did: CoreDID) -> Result<Self> {
+  pub fn try_from_core(did: CoreDID) -> Result<Self> {
     Self::check_validity(&did)?;
 
     Ok(Self(Self::normalize(did)))
-  }
-
-  /// Converts a `DID` reference to an [`IotaDID`] reference without performing
-  /// validation checks.
-  ///
-  /// # Safety
-  ///
-  /// This must be guaranteed safe by the caller.
-  pub unsafe fn new_unchecked_ref(did: &CoreDID) -> &Self {
-    // SAFETY: This is guaranteed safe by the caller.
-    &*(did as *const CoreDID as *const IotaDID)
   }
 
   /// Parses an [`IotaDID`] from the given `input`.
@@ -97,7 +74,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_owned)
+    CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_core)
   }
 
   /// Creates a new [`IotaDID`] with a tag derived from the given `public` key.
@@ -125,7 +102,7 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn check_method(did: &CoreDID) -> Result<()> {
+  pub fn check_method<D: DID>(did: &D) -> Result<()> {
     if did.method() != Self::METHOD {
       Err(Error::InvalidDID(DIDError::InvalidMethodName))
     } else {
@@ -138,7 +115,7 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn check_method_id(did: &CoreDID) -> Result<()> {
+  pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
     if segments.is_empty() || segments.len() > 3 {
@@ -162,7 +139,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
   /// See [`NetworkName`] for validation requirements.
-  pub fn check_network(did: &CoreDID) -> Result<()> {
+  pub fn check_network<D: DID>(did: &D) -> Result<()> {
     let network_name = Segments(did.method_id()).network();
     NetworkName::validate_network_name(network_name)
   }
@@ -172,7 +149,7 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`IotaDID`].
-  pub fn check_validity(did: &CoreDID) -> Result<()> {
+  pub fn check_validity<D: DID>(did: &D) -> Result<()> {
     Self::check_method(did)?;
     Self::check_method_id(did)?;
     Self::check_network(did)?;
@@ -319,15 +296,7 @@ impl TryFrom<CoreDID> for IotaDID {
   type Error = Error;
 
   fn try_from(other: CoreDID) -> Result<Self, Self::Error> {
-    Self::try_from_owned(other)
-  }
-}
-
-impl<'a> TryFrom<&'a CoreDID> for &'a IotaDID {
-  type Error = Error;
-
-  fn try_from(other: &'a CoreDID) -> Result<Self, Self::Error> {
-    IotaDID::try_from_borrowed(other)
+    Self::try_from_core(other)
   }
 }
 
@@ -436,15 +405,15 @@ mod tests {
     let key: String = IotaDID::encode_key(b"123");
 
     let did: CoreDID = format!("did:iota:{}", key).parse().unwrap();
-    let iota_did = IotaDID::try_from_owned(did).unwrap();
+    let iota_did = IotaDID::try_from_core(did).unwrap();
     assert_eq!(iota_did.network_str(), "main");
     assert_eq!(iota_did.tag(), key);
 
     let did: CoreDID = "did:iota:123".parse().unwrap();
-    assert!(IotaDID::try_from_owned(did).is_err());
+    assert!(IotaDID::try_from_core(did).is_err());
 
     let did: CoreDID = format!("did:web:{}", key).parse().unwrap();
-    assert!(IotaDID::try_from_owned(did).is_err());
+    assert!(IotaDID::try_from_core(did).is_err());
   }
 
   #[test]

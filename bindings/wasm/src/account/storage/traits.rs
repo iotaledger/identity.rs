@@ -6,7 +6,6 @@ use core::fmt::Formatter;
 use std::result::Result;
 
 use identity::account::ChainState;
-use identity::account::DIDLease;
 use identity::account::EncryptionKey;
 use identity::account::Error as AccountError;
 use identity::account::IdentityState;
@@ -27,7 +26,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
-use crate::account::identity::WasmDIDLease;
 use crate::account::identity::WasmIdentityState;
 use crate::account::types::WasmKeyLocation;
 use crate::account::types::WasmSignature;
@@ -38,8 +36,6 @@ use crate::error::JsValueResult;
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseUnit;
-  #[wasm_bindgen(typescript_type = "Promise<DIDLease>")]
-  pub type PromiseDIDLease;
   #[wasm_bindgen(typescript_type = "Promise<string>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
@@ -60,8 +56,6 @@ extern "C" {
   pub fn set_password(this: &WasmStorage, password: Vec<u8>) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
-  #[wasm_bindgen(method, js_name = leaseDid)]
-  pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseDIDLease;
   #[wasm_bindgen(method, js_name = keyNew)]
   pub fn key_new(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method, js_name = keyInsert)]
@@ -111,17 +105,6 @@ impl Storage for WasmStorage {
     let promise: Promise = Promise::resolve(&self.flush_changes());
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
-  }
-
-  /// Attempt to obtain the exclusive permission to modify the given `did`.
-  /// The caller is expected to make no more modifications after the lease has been dropped.
-  /// Returns an [`IdentityInUse`][crate::Error::IdentityInUse] error if already leased.
-  async fn lease_did(&self, did: &IotaDID) -> AccountResult<DIDLease> {
-    let promise: Promise = Promise::resolve(&self.lease_did(did.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
-    let did_lease: WasmDIDLease = downcast_js_value(js_value, "DIDLease")?;
-    Ok(did_lease.into())
   }
 
   /// Creates a new keypair at the specified `location`.
@@ -247,13 +230,6 @@ interface Storage {
 
   /** Write any unsaved changes to disk.*/
   flushChanges: () => Promise<void>;
-
-  /** 
-   * Attempt to obtain the exclusive permission to modify the given `did`.
-   * The caller is expected to make no more modifications after the lease has been dropped.
-   * Returns an error if already leased.
-  */
-  leaseDid: (did: DID) => Promise<DIDLease>;
 
   /** Creates a new keypair at the specified `location`.*/
   keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;

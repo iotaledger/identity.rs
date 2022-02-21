@@ -8,7 +8,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = IdentityState, inspectable)]
-#[derive(Serialize, Deserialize)]
 pub struct WasmIdentityState(pub(crate) IdentityState);
 
 #[wasm_bindgen(js_class = IdentityState)]
@@ -22,7 +21,7 @@ impl WasmIdentityState {
   /// Deserializes a JSON object as `IdentityState`.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json_value: JsValue) -> Result<WasmIdentityState> {
-    json_value.into_serde().wasm_result()
+    json_value.into_serde().map(Self).wasm_result()
   }
 }
 

@@ -7,8 +7,6 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use crypto::keys::slip10::Chain;
 use futures::executor;
-use hashbrown::hash_map::Entry;
-use hashbrown::HashMap;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PrivateKey;
@@ -18,12 +16,9 @@ use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
-use tokio::sync::Mutex;
 
-use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
-use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
@@ -37,7 +32,6 @@ use crate::utils::EncryptionKey;
 
 #[derive(Debug)]
 pub struct Stronghold {
-  did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
   snapshot: Arc<Snapshot>,
   dropsave: bool,
 }
@@ -55,7 +49,6 @@ impl Stronghold {
     }
 
     Ok(Self {
-      did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
       dropsave: dropsave.unwrap_or(true),
     })
@@ -90,26 +83,6 @@ impl Storage for Stronghold {
 
   async fn flush_changes(&self) -> Result<()> {
     self.snapshot.save().await
-  }
-
-  async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease> {
-    let mut hmap = self.did_leases.lock().await;
-
-    match hmap.entry(did.clone()) {
-      Entry::Occupied(entry) => {
-        if entry.get().load() {
-          Err(Error::IdentityInUse)
-        } else {
-          entry.get().store(true);
-          Ok(entry.get().clone())
-        }
-      }
-      Entry::Vacant(entry) => {
-        let did_lease = DIDLease::new();
-        entry.insert(did_lease.clone());
-        Ok(did_lease)
-      }
-    }
   }
 
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {

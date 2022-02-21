@@ -6,7 +6,6 @@ use std::borrow::Cow;
 use identity_core::crypto::Signature;
 
 use crate::did::CoreDID;
-use crate::did::CoreDIDUrl;
 use crate::did::DIDUrl;
 use crate::did::RelativeDIDUrl;
 use crate::did::DID;
@@ -18,7 +17,10 @@ pub struct DIDUrlQuery<'query>(Cow<'query, str>);
 
 impl<'query> DIDUrlQuery<'query> {
   /// Returns whether this query matches the given DIDUrl.
-  pub(crate) fn matches(&self, did_url: &CoreDIDUrl) -> bool {
+  pub(crate) fn matches<D>(&self, did_url: &DIDUrl<D>) -> bool
+  where
+    D: DID,
+  {
     // Ensure the DID matches if included in the query.
     if let Some(did_str) = self.did_str() {
       if did_str != did_url.did().as_str() {
@@ -111,6 +113,7 @@ impl<'query> From<&'query Signature> for DIDUrlQuery<'query> {
 
 #[cfg(test)]
 mod tests {
+  use crate::did::CoreDIDUrl;
   use std::ops::Not;
 
   use super::*;
