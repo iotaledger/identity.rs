@@ -49,10 +49,10 @@ pub enum Error {
   /// Caused by a single validation unit failing.
   #[error("A validation unit failed")]
   UnsuccessfulValidationUnit(#[from] crate::credential::errors::ValidationError),
-  /// Caused by a failure to resolve a Credential.  
+  /// Caused by a failure to validate a credential.  
   #[error("credential validation failed")]
   UnsuccessfulCredentialValidation(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
-  /// Caused by a failure to validate a Presentation.
+  /// Caused by a failure to validate a presentation.
   #[error("presentation validation failed")]
   UnsuccessfulPresentationValidation(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
 }
