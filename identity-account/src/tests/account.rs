@@ -496,7 +496,7 @@ async fn network_resilient_test(
 
 // Ensure that a future that contains an account is `Send` at compile-time.
 #[tokio::test]
-async fn assert_account_futures_are_send() -> Result<()> {
+async fn test_assert_account_futures_are_send() -> Result<()> {
   fn assert_future_send<T: std::future::Future + Send>(_: T) {}
 
   let mut account: Account = AccountBuilder::default()
