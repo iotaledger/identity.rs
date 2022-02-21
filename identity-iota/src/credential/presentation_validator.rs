@@ -308,7 +308,7 @@ mod tests {
   }
 
   impl Setup {
-    // generate a setup shared among most of the tests in this module
+    // creates unsigned data necessary for many of these tests
     fn new() -> Self {
       let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
       let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
@@ -336,6 +336,7 @@ mod tests {
       }
     }
 
+    // creates signed data necessary for many of these tests
     fn new_with_signed_credentials() -> Self {
       let mut setup = Self::new();
       let Setup {
