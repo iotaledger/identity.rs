@@ -12,6 +12,8 @@ defaults:
     shell: bash
 jobs:
   build:
+    env:
+      WORKING_DIRECTORY: bindings/nodejs
     strategy:
       fail-fast: false
       matrix:
