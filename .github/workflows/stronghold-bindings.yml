@@ -9,6 +9,7 @@ on:
 defaults:
   run:
     working-directory: bindings/nodejs
+    shell: bash
 jobs:
   build:
     strategy:
@@ -84,12 +85,10 @@ jobs:
       - name: Setup toolchain
         run: ${{ matrix.settings.setup }}
         if: ${{ matrix.settings.setup }}
-        shell: bash
       - name: Install dependencies
         run: npm ci --ignore-scripts
       - name: Build
         run: ${{ matrix.settings.build }}
-        shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
@@ -127,7 +126,6 @@ jobs:
           path: .
       - name: List packages
         run: ls -R .
-        shell: bash
       - name: Test bindings
         run: npm run test
   test-linux-x64-gnu-binding:
@@ -158,7 +156,6 @@ jobs:
           path: .
       - name: List packages
         run: ls -R .
-        shell: bash
       - name: Test bindings
         run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim npm run test
   test-linux-x64-musl-binding:
@@ -189,7 +186,6 @@ jobs:
           path: .
       - name: List packages
         run: ls -R .
-        shell: bash
       - name: Test bindings
         run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine npm run test
   publish:
@@ -216,7 +212,6 @@ jobs:
         run: npm run artifacts
       - name: List packages
         run: ls -R ./npm
-        shell: bash
       # - name: Publish
       #   run: |
       #     if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
@@ -231,5 +226,5 @@ jobs:
       #       echo "Not a release, skipping publish"
       #     fi
       #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # TODO: why would this be needed?
       #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
