@@ -8,3 +8,4 @@ mod delete_method;
 mod delete_service;
 mod detach_method_relationships;
 mod set_controller;
+mod set_also_known_as;
