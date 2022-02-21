@@ -302,6 +302,9 @@ mod tests {
     subject_foo_doc: IotaDocument,
     subject_foo_key: KeyPair,
     credential_foo: Credential,
+    issuer_bar_doc: IotaDocument,
+    issuer_bar_key: KeyPair,
+    credential_bar: Credential,
   }
 
   impl Setup {
@@ -311,12 +314,15 @@ mod tests {
       let (subject_foo_doc, subject_foo_key) = test_utils::generate_document_with_keys();
       let issuance_date = Timestamp::parse("2019-01-01T00:00:00Z").unwrap();
       let expiration_date = Timestamp::parse("2024-01-01T00:00:00Z").unwrap();
-      let credential_foo = test_utils::generate_credential(
+      let mut credential_foo = test_utils::generate_credential(
         &issuer_foo_doc,
         std::slice::from_ref(&subject_foo_doc),
         issuance_date,
         expiration_date,
       );
+      let (issuer_bar_doc, issuer_bar_key, credential_bar) = test_utils::credential_setup();
+      // set the nonTransferable option on the first credential
+      credential_foo.non_transferable = Some(true);
 
       Self {
         issuer_foo_doc,
@@ -324,7 +330,42 @@ mod tests {
         subject_foo_doc,
         subject_foo_key,
         credential_foo,
+        issuer_bar_doc,
+        issuer_bar_key,
+        credential_bar,
       }
+    }
+
+    fn new_with_signed_credentials() -> Self {
+      let mut setup = Self::new();
+      let Setup {
+        ref mut credential_foo,
+        ref issuer_foo_doc,
+        ref issuer_foo_key,
+        ref issuer_bar_doc,
+        ref issuer_bar_key,
+        ref mut credential_bar,
+        ..
+      } = setup;
+      // sign the credential
+      issuer_foo_doc
+        .sign_data(
+          credential_foo,
+          issuer_foo_key.private(),
+          issuer_foo_doc.default_signing_method().unwrap().id(),
+          SignatureOptions::default(),
+        )
+        .unwrap();
+
+      issuer_bar_doc
+        .sign_data(
+          credential_bar,
+          issuer_bar_key.private(),
+          issuer_bar_doc.default_signing_method().unwrap().id(),
+          SignatureOptions::default(),
+        )
+        .unwrap();
+      setup
     }
   }
 
@@ -333,35 +374,12 @@ mod tests {
     let Setup {
       subject_foo_doc,
       subject_foo_key,
-      mut credential_foo,
+      credential_foo,
+      credential_bar,
       issuer_foo_doc,
-      issuer_foo_key,
+      issuer_bar_doc,
       ..
-    } = Setup::new();
-
-    // create a first credential
-
-    // set the nonTransferable option on the first credential
-    credential_foo.non_transferable = Some(true);
-    // sign the credential
-    issuer_foo_doc
-      .sign_data(
-        &mut credential_foo,
-        issuer_foo_key.private(),
-        issuer_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-    // create and sign a second credential
-    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
-    issuer_bar_doc
-      .sign_data(
-        &mut credential_bar,
-        issuer_bar_key.private(),
-        issuer_bar_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
+    } = Setup::new_with_signed_credentials();
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
@@ -410,36 +428,15 @@ mod tests {
 
   #[test]
   fn test_full_validation_invalid_holder_signature() {
-    // create a first credential
     let Setup {
       issuer_foo_doc,
-      issuer_foo_key,
+      issuer_bar_doc,
       subject_foo_doc,
       subject_foo_key,
-      mut credential_foo,
+      credential_foo,
+      credential_bar,
       ..
-    } = Setup::new();
-    // set the nonTransferable option on the first credential
-    credential_foo.non_transferable = Some(true);
-    // sign the credential
-    issuer_foo_doc
-      .sign_data(
-        &mut credential_foo,
-        issuer_foo_key.private(),
-        issuer_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-    // create and sign a second credential
-    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
-    issuer_bar_doc
-      .sign_data(
-        &mut credential_bar,
-        issuer_bar_key.private(),
-        issuer_bar_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
+    } = Setup::new_with_signed_credentials();
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
@@ -506,33 +503,13 @@ mod tests {
     // create a first credential
     let Setup {
       issuer_foo_doc,
-      issuer_foo_key,
+      issuer_bar_doc,
       subject_foo_doc,
       subject_foo_key,
-      mut credential_foo,
+      credential_foo,
+      credential_bar,
       ..
-    } = Setup::new();
-    // set the nonTransferable option on the first credential
-    credential_foo.non_transferable = Some(true);
-    // sign the credential
-    issuer_foo_doc
-      .sign_data(
-        &mut credential_foo,
-        issuer_foo_key.private(),
-        issuer_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-    // create and sign a second credential
-    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
-    issuer_bar_doc
-      .sign_data(
-        &mut credential_bar,
-        issuer_bar_key.private(),
-        issuer_bar_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
+    } = Setup::new_with_signed_credentials();
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
     // sign the presentation using subject_foo's document and private key
@@ -594,23 +571,14 @@ mod tests {
     // create a first credential
     let Setup {
       issuer_foo_doc,
-      issuer_foo_key,
       subject_foo_doc,
       subject_foo_key,
-      mut credential_foo,
+      credential_foo,
       ..
-    } = Setup::new();
+    } = Setup::new_with_signed_credentials();
 
-    // sign the credential
-    issuer_foo_doc
-      .sign_data(
-        &mut credential_foo,
-        issuer_foo_key.private(),
-        issuer_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-    // create a second credential
+    // note we only extracted `credential_foo` from the setup routine. This is because we want another `credential_bar`
+    // for this test.
     let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
     // set the nonTransferable property on this credential
     credential_bar.non_transferable = Some(true);
@@ -715,34 +683,13 @@ mod tests {
     // create a first credential
     let Setup {
       issuer_foo_doc,
-      issuer_foo_key,
+      issuer_bar_doc,
       subject_foo_doc,
       subject_foo_key,
-      mut credential_foo,
+      credential_bar,
+      credential_foo,
       ..
-    } = Setup::new();
-
-    // set the nonTransferable option on the first credential
-    credential_foo.non_transferable = Some(true);
-    // sign the credential
-    issuer_foo_doc
-      .sign_data(
-        &mut credential_foo,
-        issuer_foo_key.private(),
-        issuer_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-    // create and sign a second credential
-    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
-    issuer_bar_doc
-      .sign_data(
-        &mut credential_bar,
-        issuer_bar_key.private(),
-        issuer_bar_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
+    } = Setup::new_with_signed_credentials();
 
     // create a presentation where the subject of the second credential is the holder.
     // This violates the non transferable property of the first credential.
@@ -821,34 +768,13 @@ mod tests {
     // create a first credential
     let Setup {
       issuer_foo_doc,
-      issuer_foo_key,
+      issuer_bar_doc,
       subject_foo_doc,
       subject_foo_key,
-      mut credential_foo,
+      credential_foo,
+      credential_bar,
       ..
-    } = Setup::new();
-    // set the nonTransferable option on the first credential
-    credential_foo.non_transferable = Some(true);
-    // sign the credential
-    issuer_foo_doc
-      .sign_data(
-        &mut credential_foo,
-        issuer_foo_key.private(),
-        issuer_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-    // create and sign a second credential
-    let (issuer_bar_doc, issuer_bar_key, mut credential_bar) = test_utils::credential_setup();
-    issuer_bar_doc
-      .sign_data(
-        &mut credential_bar,
-        issuer_bar_key.private(),
-        issuer_bar_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
-      )
-      .unwrap();
-
+    } = Setup::new_with_signed_credentials();
     // create a presentation where the subject of the second credential is the holder.
     // This violates the non transferable property of the first credential.
     let mut presentation: Presentation = PresentationBuilder::default()
