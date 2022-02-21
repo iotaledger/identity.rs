@@ -33,7 +33,7 @@ version = "0.7"
 default-features = false
 features = ["blake2b", "ed25519", "random", "sha"]
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 js-sys = { version = "0.3.55", default-features = false }
 
 [dev-dependencies]
