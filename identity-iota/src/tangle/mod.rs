@@ -11,7 +11,6 @@ pub use iota_client::bee_message::MessageId;
 
 pub use self::client::Client;
 pub use self::client_builder::ClientBuilder;
-pub use self::client_map::ClientMap;
 pub use self::explorer::ExplorerUrl;
 pub(crate) use self::message::pack_did_message;
 pub use self::message::DIDMessageEncoding;
@@ -30,7 +29,6 @@ pub use self::traits::TangleResolve;
 
 mod client;
 mod client_builder;
-mod client_map;
 mod explorer;
 mod message;
 mod network;

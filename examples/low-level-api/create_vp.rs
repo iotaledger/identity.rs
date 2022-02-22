@@ -13,10 +13,10 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
-use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidation;
 use identity::iota::Receipt;
+use identity::iota::Resolver;
 use identity::prelude::*;
 
 mod common;
@@ -64,9 +64,6 @@ pub async fn create_vp() -> Result<Presentation> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
-
   // Issue a Verifiable Presentation with a newly created DID Document.
   let presentation: Presentation = create_vp().await?;
 
@@ -75,7 +72,8 @@ async fn main() -> Result<()> {
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
+  let resolver: Resolver = Resolver::new().await?;
+  let validator: CredentialValidator<Resolver> = CredentialValidator::new(&resolver);
 
   // Validate the presentation and all the credentials included in it.
   //
