@@ -252,7 +252,7 @@ impl Client {
       // validate the credential (using the issuer's DID document to verify the signature)
       let fail_fast: bool = true;
       CredentialValidator::new()
-        .full_validation(&credential, &credential_validation_options, &issuer_doc, fail_fast)
+        .validate(&credential, &credential_validation_options, &issuer_doc, fail_fast)
         .wasm_result()
         .map(|_| JsValue::TRUE)
     });
@@ -274,7 +274,7 @@ impl Client {
         fetch_holder_and_issuers(client, &presentation).await.wasm_result()?;
       let fail_fast: bool = true;
       PresentationValidator::new()
-        .full_validation(
+        .validate(
           &presentation,
           &presentation_validation_options,
           &holder_doc,
@@ -304,7 +304,7 @@ async fn fetch_holder_and_issuers(
   presentation: &Presentation,
 ) -> std::result::Result<(ResolvedIotaDocument, Vec<ResolvedIotaDocument>), identity::iota::Error> {
   let holder_url: &str = presentation.holder.as_ref().map(|holder| holder.as_str()).ok_or(
-    identity::iota::Error::UnsuccessfulValidationUnit(ValidationError::MissingPresentationHolder),
+    identity::iota::Error::IsolatedValidationError(ValidationError::MissingPresentationHolder),
   )?;
 
   let holder_doc: ResolvedIotaDocument = resolve_did(client.clone(), holder_url).await?;

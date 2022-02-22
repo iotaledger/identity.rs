@@ -120,15 +120,15 @@ impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match &self.0 {
       //Todo: simplify some of this with a macro
-      identity::iota::Error::UnsuccessfulCredentialValidation(e) => {
+      identity::iota::Error::CredentialValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
-      identity::iota::Error::UnsuccessfulPresentationValidation(e) => {
+      identity::iota::Error::PresentationValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
-      identity::iota::Error::UnsuccessfulValidationUnit(e) => {
+      identity::iota::Error::IsolatedValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
