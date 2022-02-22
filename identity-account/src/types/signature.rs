@@ -1,10 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::PublicKey;
 
 /// A digital signature and associated public key.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Signature {
   pub(crate) pkey: PublicKey,
   pub(crate) data: Vec<u8>,
@@ -21,7 +21,7 @@ impl Signature {
     &self.pkey
   }
 
-  /// Returns the the signature data as a slice of bytes.
+  /// Returns the signature data as a slice of bytes.
   pub fn data(&self) -> &[u8] {
     &self.data
   }

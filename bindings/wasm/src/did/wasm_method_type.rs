@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::did::MethodType;
@@ -34,5 +34,17 @@ impl WasmMethodType {
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmMethodType> {
     json.into_serde().map(Self).wasm_result()
+  }
+}
+
+impl From<WasmMethodType> for MethodType {
+  fn from(wasm_method_type: WasmMethodType) -> Self {
+    wasm_method_type.0
+  }
+}
+
+impl From<MethodType> for WasmMethodType {
+  fn from(method_type: MethodType) -> Self {
+    WasmMethodType(method_type)
   }
 }

@@ -1,10 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::account::wasm_method_secret::WasmMethodSecret;
-use crate::crypto::KeyType;
 use identity::account::IdentitySetup;
 use wasm_bindgen::prelude::*;
+
+use crate::account::types::WasmMethodSecret;
+use crate::crypto::KeyType;
 
 #[wasm_bindgen]
 extern "C" {

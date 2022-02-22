@@ -1,12 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use js_sys::Promise;
 use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::Account;
 use identity::account::CreateServiceBuilder;
@@ -14,13 +11,15 @@ use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Object;
 use identity::core::Url;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::WasmAccount;
-
 use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
-use wasm_bindgen::JsCast;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {

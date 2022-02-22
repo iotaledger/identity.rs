@@ -1,37 +1,32 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use js_sys::Promise;
 use std::cell::RefCell;
 use std::cell::RefMut;
-
 use std::rc::Rc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::future_to_promise;
 
 use identity::account::Account;
-use identity::account::AttachMethodRelationshipBuilder;
+use identity::account::DetachMethodRelationshipBuilder;
 use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
-
 use identity::did::MethodRelationship;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
 
+use crate::account::types::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
-use crate::account::wasm_method_relationship::WasmMethodRelationship;
 use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
-use wasm_bindgen::JsCast;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
-  /// Attach one or more verification relationships to a method.
-  ///
-  /// Note: the method must exist and be in the set of verification methods;
-  /// it cannot be an embedded method.
-  #[wasm_bindgen(js_name = attachMethodRelationships)]
-  pub fn attach_method_relationships(&mut self, options: &AttachMethodRelationshipOptions) -> Result<PromiseVoid> {
+  /// Detaches the given relationship from the given method, if the method exists.
+  #[wasm_bindgen(js_name = detachMethodRelationships)]
+  pub fn detach_method_relationships(&mut self, options: &DetachMethodRelationshipOptions) -> Result<PromiseVoid> {
     let relationships: Vec<MethodRelationship> = options
       .relationships()
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
@@ -47,55 +42,55 @@ impl WasmAccount {
       .wasm_result()?;
 
     let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
+
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());
       }
       let mut account: RefMut<Account> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_> = account.update_identity();
-      let mut attach_relationship: AttachMethodRelationshipBuilder<'_> =
-        updater.attach_method_relationship().fragment(fragment);
+      let mut detach_relationship: DetachMethodRelationshipBuilder<'_> =
+        updater.detach_method_relationship().fragment(fragment);
 
       for relationship in relationships {
-        attach_relationship = attach_relationship.relationship(relationship);
+        detach_relationship = detach_relationship.relationship(relationship);
       }
 
-      attach_relationship
+      detach_relationship
         .apply()
         .await
         .wasm_result()
         .map(|_| JsValue::undefined())
     });
-
     Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "AttachMethodRelationshipOptions")]
-  pub type AttachMethodRelationshipOptions;
+  #[wasm_bindgen(typescript_type = "DetachMethodRelationshipOptions")]
+  pub type DetachMethodRelationshipOptions;
 
   #[wasm_bindgen(getter, method)]
-  pub fn fragment(this: &AttachMethodRelationshipOptions) -> Option<String>;
+  pub fn fragment(this: &DetachMethodRelationshipOptions) -> Option<String>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn relationships(this: &AttachMethodRelationshipOptions) -> JsValue;
+  pub fn relationships(this: &DetachMethodRelationshipOptions) -> JsValue;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_ATTACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
+const TS_DETACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
 /**
- * Options for attaching one or more verification relationships to a method on an identity.
+ * Options for detaching one or more verification relationships from a method on an identity.
  */
-export type AttachMethodRelationshipOptions = {
+export type DetachMethodRelationshipOptions = {
     /**
      * The identifier of the method in the document.
      */
     fragment: string,
 
     /**
-     * The relationships to add;
+     * The relationships to remove.
      */
     relationships: MethodRelationship | MethodRelationship[]
 };

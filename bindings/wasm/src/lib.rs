@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::upper_case_acronyms)]
@@ -18,6 +18,7 @@ pub mod error;
 pub mod account;
 pub mod chain;
 pub mod common;
+pub mod core;
 pub mod credential;
 pub mod crypto;
 pub mod did;

@@ -1,6 +1,27 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::Ref;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
+
+use identity::account::Account;
+use identity::account::AccountBuilder;
+use identity::account::AccountStorage;
+use identity::account::PublishOptions;
+use identity::account::Storage;
+use identity::crypto::SetSignature;
+use identity::crypto::SignatureOptions;
+use identity::did::verifiable::VerifiableProperties;
+use identity::iota::IotaDID;
+use identity::iota::IotaDocument;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
+
+use crate::account::types::WasmAutoSave;
 use crate::common::PromiseVoid;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -11,28 +32,6 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::account::Account;
-use identity::account::AccountBuilder;
-use identity::account::AccountStorage;
-use identity::account::PublishOptions;
-use identity::account::Storage;
-use std::cell::Ref;
-use std::cell::RefCell;
-
-use identity::crypto::SetSignature;
-use identity::crypto::SignatureOptions;
-use identity::did::verifiable::VerifiableProperties;
-use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
-
-use js_sys::Promise;
-
-use crate::account::wasm_auto_save::WasmAutoSave;
-use std::rc::Rc;
-use std::sync::Arc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
 
 /// An account manages one identity.
 ///

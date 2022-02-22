@@ -459,6 +459,11 @@ impl From<IotaDocument> for WasmDocument {
   }
 }
 
+impl From<WasmDocument> for IotaDocument {
+  fn from(wasm_document: WasmDocument) -> Self {
+    wasm_document.0
+  }
+}
 /// Duck-typed union to pass either a string or WasmDIDUrl as a parameter.
 #[wasm_bindgen]
 extern "C" {

@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::IotaDocumentMetadata;
-
-use crate::common::WasmTimestamp;
 use wasm_bindgen::prelude::*;
 
+use crate::common::WasmTimestamp;
 use crate::error::Result;
 use crate::error::WasmResult;
 

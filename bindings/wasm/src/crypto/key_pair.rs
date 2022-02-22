@@ -82,3 +82,9 @@ impl KeyPair {
     Self::from_base58(data.type_, &data.public, &data.private)
   }
 }
+
+impl From<KeyPair_> for KeyPair {
+  fn from(key_pair: KeyPair_) -> Self {
+    KeyPair(key_pair)
+  }
+}

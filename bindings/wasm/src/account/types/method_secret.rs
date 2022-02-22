@@ -1,13 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::crypto::KeyCollection;
-use crate::error::wasm_error;
-use crate::error::Result;
 use identity::account::MethodSecret;
 use identity::core::decode_b58;
 use identity::crypto::PrivateKey;
 use wasm_bindgen::prelude::*;
+
+use crate::crypto::KeyCollection;
+use crate::error::wasm_error;
+use crate::error::Result;
 
 #[wasm_bindgen(js_name = MethodSecret)]
 pub struct WasmMethodSecret(pub(crate) MethodSecret);

@@ -1,10 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::UpdateError;
 use std::borrow::Cow;
 use std::sync::PoisonError;
 
+use identity::account::Error as AccountError;
+use identity::account::Result as AccountResult;
+use identity::account::UpdateError;
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -128,5 +130,54 @@ impl From<UpdateError> for WasmError<'_> {
       name: Cow::Borrowed("Update::Error"),
       message: Cow::Owned(error.to_string()),
     }
+  }
+}
+
+/// Convenience struct to convert Result<JsValue, JsValue> to an AccountResult<_, AccountError>
+pub struct JsValueResult(pub(crate) Result<JsValue>);
+
+impl From<Result<JsValue>> for JsValueResult {
+  fn from(result: Result<JsValue>) -> Self {
+    JsValueResult(result)
+  }
+}
+
+/// Implement From<JsValueResult> to AccountResult<_, AccountError> for each type
+macro_rules! impl_from_js_value {
+  ( $($t:ty),* ) => {
+    $(impl From<JsValueResult> for AccountResult<$t> {
+      fn from(result: JsValueResult) -> Self {
+        result
+          .0
+          .map_err(|js_value| AccountError::JsError(js_value.as_string().unwrap_or_default()))
+          .and_then(|js_value| {
+            js_value
+              .into_serde()
+              .map_err(|e| AccountError::SerializationError(e.to_string()))
+          })
+      }
+    })*
+  };
+}
+
+impl_from_js_value!(
+  identity::crypto::PublicKey,
+  identity::account::Signature,
+  Option<identity::account::Generation>,
+  Option<identity::account::ChainState>,
+  Option<identity::account::IdentityState>,
+  bool
+);
+
+impl From<JsValueResult> for AccountResult<()> {
+  fn from(result: JsValueResult) -> Self {
+    result
+      .0
+      .map_err(|js_value| AccountError::JsError(js_value.as_string().unwrap_or_default()))
+      .and_then(|js_value| {
+        js_value
+          .into_serde()
+          .map_err(|e| AccountError::SerializationError(e.to_string()))
+      })
   }
 }

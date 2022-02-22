@@ -1,8 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::ClientBuilder;
 use std::time::Duration;
+
+use identity::iota::ClientBuilder;
 use wasm_bindgen::prelude::*;
 
 use crate::error::wasm_error;

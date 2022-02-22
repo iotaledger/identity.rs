@@ -1,27 +1,26 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
+
+use identity::account::AccountBuilder;
+use identity::account::IdentitySetup;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
+
+use crate::account::types::WasmAutoSave;
+use crate::account::types::WasmIdentitySetup;
 use crate::account::wasm_account::PromiseAccount;
 use crate::account::wasm_account::WasmAccount;
-use std::cell::RefCell;
-
 use crate::did::WasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Client as WasmClient;
 use crate::tangle::Config;
-
-use identity::account::AccountBuilder;
-use identity::account::IdentitySetup;
-
-use crate::account::wasm_auto_save::WasmAutoSave;
-use crate::account::wasm_identity_setup::WasmIdentitySetup;
-use js_sys::Promise;
-use std::rc::Rc;
-use std::sync::Arc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
 
 /// An [`Account`] builder for easy account configuration.
 ///

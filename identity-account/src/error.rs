@@ -76,6 +76,12 @@ pub enum Error {
   InvalidPrivateKey(String),
   #[error("method missing fragment")]
   MethodMissingFragment,
+  #[cfg(feature = "wasm")]
+  #[error("JsValue serialization error: {0}")]
+  SerializationError(String),
+  #[cfg(feature = "wasm")]
+  #[error("javascript function threw an exception: {0}")]
+  JsError(String),
 }
 
 #[doc(hidden)]
