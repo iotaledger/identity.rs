@@ -30,7 +30,7 @@ pub enum ValidationError {
   UntrustedIssuer,
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
-  #[error("the credential's issuer property could not be parsed to a valid DID")]
+  #[error("issuer URL is not a valid DID")]
   #[non_exhaustive]
   IssuerUrl {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
