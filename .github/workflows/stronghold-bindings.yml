@@ -31,52 +31,27 @@ jobs:
               npm run build
             test: |
               npm run test
-          # - host: ubuntu-latest
-          #   target: x86_64-unknown-linux-gnu
-          #   architecture: x64
-          #   docker: |
-          #     docker pull $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian
-          #     docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-debian builder
-          #   # TODO: figure out why yarn works, but npm doesn't
-          #   # TODO: figure out how to make the caches work 
-          #   build: |
-          #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
-          #   test: |
-          #     docker run --rm -v $(pwd):/build -w /build node:16-slim npm run test
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             architecture: x64
-            # TODO: figure out why yarn works, but npm doesn't
-            # TODO: figure out how to make the caches work 
             build: |
               npm run build && strip *.node
             test: |
               npm run test
-          # - host: ubuntu-latest
-          #   target: x86_64-unknown-linux-musl
-          #   architecture: x64
-          #   docker: |
-          #     docker pull $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-alpine
-          #     docker tag $DOCKER_REGISTRY_URL/napi-rs/napi-rs/nodejs-rust:lts-alpine builder
-          #   # TODO: figure out why libsodium won't build
-          #   # TODO: figure out why yarn works, but npm doesn't
-          #   # TODO: figure out how to make the caches work 
-          #   build: |
-          #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs builder sh -c 'yarn build && strip *.node'
-          #   test: |
-          #   docker run --rm -v $(pwd):/build -w /build node:16-alpine npm run test
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             architecture: x64
-            build: |
+            setup: |
               sudo apt-get install -y musl-tools
-              npm run build -- --target=x86_64-unknown-linux-musl && strip *.node
-            test: |
-              npm run test
+            build: |
+              npm run build --napi_args=--target=x86_64-unknown-linux-musl && strip *.node
+            test-docker: |
+              docker build -f bindings/stronghold-nodejs/build/Dockerfile.alpine -t tester .
+              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d stronghold-nodejs.linux-x64-musl.node && npm run test"
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
-              npm run build -- --target=aarch64-apple-darwin
+              npm run build --napi_args=--target=aarch64-apple-darwin
               strip -x *.node
             test: |
               npm run test
@@ -84,6 +59,7 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v2
+
       - name: Setup node
         uses: actions/setup-node@v2
         with:
@@ -97,32 +73,44 @@ jobs:
         with:
           os: ${{ matrix.settings.host }}
           job: ${{ github.job }}
-          current-date: 2022-02-21 # TODO use current date
           target: ${{ matrix.settings.target }}
+
+      # TODO: get rid of this
+      - name: Build Wasm bindings
+        run: |
+          npm i
+          npm run build
+        working-directory: ./bindings/wasm
      
-      - name: Pull latest image
-        if: ${{ matrix.settings.docker }}
-        run: ${{ matrix.settings.docker }}
-        env:
-          DOCKER_REGISTRY_URL: ghcr.io
       - name: Setup
         if: ${{ matrix.settings.setup }}
         run: ${{ matrix.settings.setup }}
+
       - name: Install dependencies
         run: npm ci --ignore-scripts
+
       - name: Build
         run: ${{ matrix.settings.build }}
-        working-directory: ${{ matrix.settings.docker && './' || env.WORKING_DIRECTORY }}
+
       - name: List packages
         run: ls -R .
+
       - name: Test bindings
+        if: ${{ matrix.settings.test }}
         run: ${{ matrix.settings.test }}
+
+      - name: Test bindings
+        if: ${{ matrix.settings.test-docker }}
+        run: ${{ matrix.settings.test-docker }}
+        working-directory: ./
+
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: ${{env.APP_NAME}}-bindings-${{ matrix.settings.target }}
           path: ${{ env.WORKING_DIRECTORY }}/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
+
   publish:
     name: Publish
     runs-on: ubuntu-latest

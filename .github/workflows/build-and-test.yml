@@ -82,21 +82,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get current date (Windows)
-        uses: './.github/actions/utils/get-current-date-windows'
-        if: matrix.os == 'windows-latest'
-
-      - name: Get current date (Ubuntu/MacOS)
-        uses: './.github/actions/utils/get-current-date-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          target-cache-enabled: true
+          sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
-          current-date: ${{ env.CURRENT_DATE }}
 
       - name: Setup sccache (Ubuntu)
         uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'     
@@ -188,17 +181,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get current date (Ubuntu/MacOS)
-        uses: './.github/actions/utils/get-current-date-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-
       - uses: './.github/actions/rust/rust-setup'
         name: rust-setup
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          target-cache-enabled: true
+          sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
-          current-date: ${{ env.CURRENT_DATE }}
           target-cache-path: bindings/wasm/target
 
       - name: Install WASM toolchain
