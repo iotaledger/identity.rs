@@ -88,10 +88,10 @@ impl Display for AccumulatedCredentialValidationError {
     // intersperse might become available in the standard library soon: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.intersperse
     let detailed_information: String = itertools::intersperse(
       self.validation_errors.iter().map(|err| err.to_string()),
-      ", ".to_string(),
+      "; ".to_string(),
     )
     .collect();
-    write!(f, "The following errors occurred: {}", detailed_information)
+    write!(f, "[{}]", detailed_information)
   }
 }
 
@@ -108,7 +108,7 @@ impl Display for CompoundPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let credential_error_formatter = |(position, reason): (&usize, &AccumulatedCredentialValidationError)| -> String {
       format!(
-        "could not validate credential at position {}. The following errors occurred {}",
+        "the credential at position {} failed validation for the following reasons: {}",
         position,
         reason.to_string().as_str()
       )
@@ -119,8 +119,8 @@ impl Display for CompoundPresentationValidationError {
       .iter()
       .map(|error| error.to_string())
       .chain(self.credential_errors.iter().map(credential_error_formatter));
-    let detailed_information: String = itertools::intersperse(error_string_iter, ", ".to_string()).collect();
-    write!(f, "the following errors occurred: {}", detailed_information)
+    let detailed_information: String = itertools::intersperse(error_string_iter, "; ".to_string()).collect();
+    write!(f, "[{}]", detailed_information)
   }
 }
 
