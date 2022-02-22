@@ -122,13 +122,13 @@ impl WasmClient {
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   #[wasm_bindgen(js_name = publishJSON)]
-  pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<PromiseReceipt> {
+  pub fn publish_json(&self, index: String, data: &JsValue) -> Result<PromiseReceipt> {
     let value: serde_json::Value = data.into_serde().wasm_result()?;
 
     let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_json(index, &value)
+        .publish_json(&index, &value)
         .await
         .map(WasmReceipt)
         .map(Into::into)
@@ -145,7 +145,7 @@ impl WasmClient {
   #[wasm_bindgen(js_name = publishJsonWithRetry)]
   pub fn publish_json_with_retry(
     &self,
-    index: &str,
+    index: String,
     data: &JsValue,
     interval: Option<u32>,
     max_attempts: Option<u32>,
@@ -156,7 +156,7 @@ impl WasmClient {
     let promise: Promise = future_to_promise(async move {
       client
         .publish_json_with_retry(
-          index,
+          &index,
           &value,
           interval.map(|interval| interval as u64),
           max_attempts.map(|max_attempts| max_attempts as u64),
@@ -264,5 +264,11 @@ impl WasmClient {
     });
 
     Ok(promise)
+  }
+}
+
+impl From<Rc<Client>> for WasmClient {
+  fn from(client: Rc<Client>) -> Self {
+    Self { client }
   }
 }

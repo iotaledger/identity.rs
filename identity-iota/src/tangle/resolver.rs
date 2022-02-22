@@ -82,7 +82,7 @@ impl Resolver {
     self
       .client_map
       .get(network_name)
-      .map(|client_ref| Arc::clone(client_ref.value()))
+      .map(|client_ref| ClientRc::clone(client_ref.value()))
   }
 
   /// Returns the [`Client`] corresponding to the [`NetworkName`] on the given ['IotaDID'].
