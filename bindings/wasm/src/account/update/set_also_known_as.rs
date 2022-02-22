@@ -22,15 +22,13 @@ impl WasmAccount {
   /// Sets the `alsoKnownAs` property in the DID document.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
   pub fn set_also_known_as(&mut self, options: &SetAlsoKnownAsOptions) -> Result<PromiseVoid> {
-    let urls: Vec<String> = options
-      .urls()
-      .into_serde::<OneOrMany<String>>()
-      .map(OneOrMany::into_vec)
-      .wasm_result()?;
+    let urls: Option<OneOrMany<String>> = options.urls().into_serde::<Option<OneOrMany<String>>>().wasm_result()?;
 
     let mut urls_set: OrderedSet<Url> = OrderedSet::new();
-    for url in urls {
-      urls_set.append(Url::parse(url).wasm_result()?);
+    if let Some(urls) = urls {
+      for url in urls.into_vec() {
+        urls_set.append(Url::parse(url).wasm_result()?);
+      }
     }
 
     let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
@@ -68,6 +66,6 @@ const TS_SET_ALSO_KNOWN_AS_OPTIONS: &'static str = r#"
     /**
      * List of URLs for the `alsoKnownAs` property. Duplicates are ignored.
      */
-    urls: string | string[],
+    urls: string | string[] | null,
 };
 "#;

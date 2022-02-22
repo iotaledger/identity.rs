@@ -6,7 +6,9 @@ use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
 use identity::account::Account;
+use identity::core::OneOrMany;
 use identity::core::OneOrSet;
+use identity::core::OrderedSet;
 use identity::iota::IotaDID;
 use js_sys::Promise;
 use std::cell::RefCell;
@@ -20,7 +22,27 @@ impl WasmAccount {
   /// Sets the controllers of the DID document.
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, options: &SetControllerOptions) -> Result<PromiseVoid> {
-    let controllers: Option<OneOrSet<IotaDID>> = options.controllers().into_serde().wasm_result()?;
+    let controllers: Option<OneOrMany<IotaDID>> = options.controllers().into_serde().wasm_result()?;
+
+    let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers {
+      match controllers {
+        OneOrMany::One(controller) => Some(OneOrSet::new_one(controller)),
+        OneOrMany::Many(controllers) => {
+          if controllers.is_empty() {
+            None
+          } else {
+            let mut set: OrderedSet<IotaDID> = OrderedSet::new();
+            for controller in controllers {
+              set.append(controller);
+            }
+            Some(OneOrSet::new_set(set).wasm_result()?)
+          }
+        }
+      }
+    } else {
+      None
+    };
+
     let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
 
     let promise: Promise = future_to_promise(async move {
@@ -28,7 +50,7 @@ impl WasmAccount {
         .borrow_mut()
         .update_identity()
         .set_controller()
-        .controllers(controllers)
+        .controllers(controller_set)
         .apply()
         .await
         .wasm_result()
