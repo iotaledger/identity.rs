@@ -1,6 +1,6 @@
 [package]
 name = "identity-iota"
-version = "0.5.0-dev.2"
+version = "0.5.0-dev.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -17,9 +17,9 @@ brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity-core = { version = "=0.5.0-dev.2", path = "../identity-core" }
-identity-credential = { version = "=0.5.0-dev.2", path = "../identity-credential" }
-identity-did = { version = "=0.5.0-dev.2", path = "../identity-did" }
+identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }
+identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
+identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -31,23 +31,29 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "c7d1cc4bae4ef00f16314239463ce115f8c6b35a"
+rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
+features = ["tls"]
 default-features = false
-features = ["pow-fallback"]
+
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
+default-features = false
+features = ["wasm"]
 
 [dependencies.iota-crypto]
 version = "0.7"
 default-features = false
 features = ["blake2b"]
 
+[dev-dependencies]
+tokio = { version = "1.15", default-features = false, features = ["macros"] }
+
 [features]
 default = ["async"]
 
 # Enables async runtime support (Tokio)
 async = ["iota-client/async"]
-
-# Enables Web Assembly support
-wasm = ["iota-client/wasm"]
 
 [package.metadata.docs.rs]
 # To build locally:

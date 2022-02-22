@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Diff;
@@ -37,7 +37,8 @@ pub enum InnerValue<K, V: Diff> {
   },
 }
 
-/// A `DiffHashMap` type which represents a Diffed `HashMap`.  By default this value is transparent to `serde`.
+/// A `DiffHashMap` type which represents a Diffed `HashMap`.
+/// By default this value is transparent to `serde`.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct DiffHashMap<K: Diff, V: Diff>(
@@ -47,8 +48,8 @@ pub struct DiffHashMap<K: Diff, V: Diff>(
 /// Diff Implementation on a HashMap<K, V>
 impl<K, V> Diff for HashMap<K, V>
 where
-  K: Clone + Debug + PartialEq + Eq + Hash + Diff + for<'de> Deserialize<'de> + Serialize + Default,
-  V: Clone + Debug + PartialEq + Diff + for<'de> Deserialize<'de> + Serialize + Default,
+  K: Clone + Debug + PartialEq + Eq + Hash + Diff + for<'de> Deserialize<'de> + Serialize,
+  V: Clone + Debug + PartialEq + Diff + for<'de> Deserialize<'de> + Serialize,
 {
   /// the Diff type of the HashMap<K, V>
   type Type = DiffHashMap<K, V>;
@@ -166,8 +167,8 @@ where
 /// Default implementation for the `DiffHashMap<K, V>` type.
 impl<K, V> Default for DiffHashMap<K, V>
 where
-  K: Default + Diff,
-  V: Default + Diff,
+  K: Diff,
+  V: Diff,
 {
   fn default() -> Self {
     DiffHashMap(None)

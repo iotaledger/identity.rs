@@ -83,13 +83,6 @@ impl AccountBuilder {
     self
   }
 
-  /// Save a state snapshot every N actions.
-  #[must_use]
-  pub fn milestone(mut self, value: u32) -> Self {
-    self.config = self.config.milestone(value);
-    self
-  }
-
   /// Set whether the account is in testmode or not.
   /// In testmode, the account skips publishing to the tangle.
   #[cfg(test)]
@@ -201,6 +194,11 @@ impl AccountBuilder {
 
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured [`Storage`].
+  ///
+  /// # Warning
+  ///
+  /// Callers are expected **not** to load the same [`IotaDID`] into more than one account,
+  /// as that would cause race conditions when updating the identity.
   pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account> {
     let setup: AccountSetup = self.build_setup().await?;
     Account::load_identity(setup, did).await

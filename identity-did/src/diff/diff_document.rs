@@ -1,63 +1,67 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::common::KeyComparable;
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
-use identity_core::diff::DiffString;
 use identity_core::diff::DiffVec;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
 use crate::did::CoreDID;
+use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::service::Service;
-use crate::utils::OrderedSet;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<T = Object, U = Object, V = Object>
+pub struct DiffDocument<D = CoreDID, T = Object, U = Object, V = Object>
 where
+  D: Diff + DID + KeyComparable + Serialize + for<'__de> Deserialize<'__de>,
   T: Diff + Serialize + for<'__de> Deserialize<'__de>,
   U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
   V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<DiffString>,
+  id: Option<<D as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<Option<DiffString>>,
+  controller: Option<Option<DiffVec<D>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  verification_method: Option<DiffVec<VerificationMethod<U>>>,
+  verification_method: Option<DiffVec<VerificationMethod<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  authentication: Option<DiffVec<MethodRef<U>>>,
+  authentication: Option<DiffVec<MethodRef<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  assertion_method: Option<DiffVec<MethodRef<U>>>,
+  assertion_method: Option<DiffVec<MethodRef<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_agreement: Option<DiffVec<MethodRef<U>>>,
+  key_agreement: Option<DiffVec<MethodRef<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_delegation: Option<DiffVec<MethodRef<U>>>,
+  capability_delegation: Option<DiffVec<MethodRef<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  capability_invocation: Option<DiffVec<MethodRef<U>>>,
+  capability_invocation: Option<DiffVec<MethodRef<D, U>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  service: Option<DiffVec<Service<V>>>,
+  service: Option<DiffVec<Service<D, V>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<T, U, V> Diff for CoreDocument<T, U, V>
+impl<D, T, U, V> Diff for CoreDocument<D, T, U, V>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  D: DID + KeyComparable + Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
   V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
-  type Type = DiffDocument<T, U, V>;
+  type Type = DiffDocument<D, T, U, V>;
 
   fn diff(&self, other: &Self) -> Result<Self::Type> {
     Ok(DiffDocument {
@@ -124,62 +128,67 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: CoreDID = diff
+    let id: D = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: Option<CoreDID> = diff
+    let controller: Option<OneOrSet<D>> = diff
       .controller
-      .flatten()
-      .and_then(|value| self.controller().map(|controller| controller.merge(value)))
+      .map(|value| match value {
+        Some(diff_value) => self
+          .controller()
+          .map(|controller| controller.merge(diff_value))
+          .transpose(),
+        None => Ok(None),
+      })
       .transpose()?
-      .or_else(|| self.controller().cloned());
+      .unwrap_or_else(|| self.controller().cloned());
 
-    let also_known_as: Vec<Url> = diff
+    let also_known_as: OrderedSet<Url> = diff
       .also_known_as
-      .map(|value| self.also_known_as().to_vec().merge(value))
+      .map(|value| self.also_known_as().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.also_known_as().to_vec());
+      .unwrap_or_else(|| self.also_known_as().clone());
 
-    let verification_method: OrderedSet<VerificationMethod<U>> = diff
+    let verification_method: OrderedSet<VerificationMethod<D, U>> = diff
       .verification_method
       .map(|value| self.verification_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.verification_method().clone());
 
-    let authentication: OrderedSet<MethodRef<U>> = diff
+    let authentication: OrderedSet<MethodRef<D, U>> = diff
       .authentication
       .map(|value| self.authentication().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.authentication().clone());
 
-    let assertion_method: OrderedSet<MethodRef<U>> = diff
+    let assertion_method: OrderedSet<MethodRef<D, U>> = diff
       .assertion_method
       .map(|value| self.assertion_method().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.assertion_method().clone());
 
-    let key_agreement: OrderedSet<MethodRef<U>> = diff
+    let key_agreement: OrderedSet<MethodRef<D, U>> = diff
       .key_agreement
       .map(|value| self.key_agreement().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.key_agreement().clone());
 
-    let capability_delegation: OrderedSet<MethodRef<U>> = diff
+    let capability_delegation: OrderedSet<MethodRef<D, U>> = diff
       .capability_delegation
       .map(|value| self.capability_delegation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_delegation().clone());
 
-    let capability_invocation: OrderedSet<MethodRef<U>> = diff
+    let capability_invocation: OrderedSet<MethodRef<D, U>> = diff
       .capability_invocation
       .map(|value| self.capability_invocation().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.capability_invocation().clone());
 
-    let service: OrderedSet<Service<V>> = diff
+    let service: OrderedSet<Service<D, V>> = diff
       .service
       .map(|value| self.service().merge(value))
       .transpose()?
@@ -207,74 +216,70 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: CoreDID = diff
+    let id: D = diff
       .id
-      .map(CoreDID::from_diff)
+      .map(D::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
-    let controller: Option<CoreDID> = diff
+    let controller: Option<OneOrSet<D>> = diff
       .controller
       .map(|diff| match diff {
-        Some(diff) => Some(CoreDID::from_diff(diff)).transpose(),
+        Some(diff) => Some(OneOrSet::from_diff(diff)).transpose(),
         None => Ok(None),
       })
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.controller`"))?;
 
-    let also_known_as: Vec<Url> = diff
+    let also_known_as: OrderedSet<Url> = diff
       .also_known_as
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
 
-    let verification_method: OrderedSet<VerificationMethod<U>> = diff
+    let verification_method: OrderedSet<VerificationMethod<D, U>> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.verification_method`"))?;
 
-    let authentication: OrderedSet<MethodRef<U>> = diff
+    let authentication: OrderedSet<MethodRef<D, U>> = diff
       .authentication
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.authentication`"))?;
 
-    let assertion_method: OrderedSet<MethodRef<U>> = diff
+    let assertion_method: OrderedSet<MethodRef<D, U>> = diff
       .assertion_method
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.assertion_method`"))?;
 
-    let key_agreement: OrderedSet<MethodRef<U>> = diff
+    let key_agreement: OrderedSet<MethodRef<D, U>> = diff
       .key_agreement
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.key_agreement`"))?;
 
-    let capability_delegation: OrderedSet<MethodRef<U>> = diff
+    let capability_delegation: OrderedSet<MethodRef<D, U>> = diff
       .capability_delegation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_delegation`"))?;
 
-    let capability_invocation: OrderedSet<MethodRef<U>> = diff
+    let capability_invocation: OrderedSet<MethodRef<D, U>> = diff
       .capability_invocation
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
 
-    let service: OrderedSet<Service<V>> = diff
+    let service: OrderedSet<Service<D, V>> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.service`"))?;
 
-    let properties: T = diff
-      .properties
-      .map(T::from_diff)
-      .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.properties`"))?;
+    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
     Ok(CoreDocument {
       id,
@@ -293,17 +298,21 @@ where
 
   fn into_diff(self) -> Result<Self::Type> {
     Ok(DiffDocument {
-      id: Some(self.id().clone().into_diff()?),
-      controller: Some(self.controller().cloned().map(|value| value.into_diff()).transpose()?),
-      also_known_as: Some(self.also_known_as().to_vec().into_diff()?),
-      verification_method: Some(self.verification_method().to_vec().into_diff()?),
-      authentication: Some(self.authentication().to_vec().into_diff()?),
-      assertion_method: Some(self.assertion_method().to_vec().into_diff()?),
-      key_agreement: Some(self.key_agreement().to_vec().into_diff()?),
-      capability_delegation: Some(self.capability_delegation().to_vec().into_diff()?),
-      capability_invocation: Some(self.capability_invocation().to_vec().into_diff()?),
-      service: Some(self.service().to_vec().into_diff()?),
-      properties: Some(self.properties().clone().into_diff()?),
+      id: Some(self.id.into_diff()?),
+      controller: Some(self.controller.map(|value| value.into_diff()).transpose()?),
+      also_known_as: Some(self.also_known_as.into_diff()?),
+      verification_method: Some(self.verification_method.into_diff()?),
+      authentication: Some(self.authentication.into_diff()?),
+      assertion_method: Some(self.assertion_method.into_diff()?),
+      key_agreement: Some(self.key_agreement.into_diff()?),
+      capability_delegation: Some(self.capability_delegation.into_diff()?),
+      capability_invocation: Some(self.capability_invocation.into_diff()?),
+      service: Some(self.service.into_diff()?),
+      properties: if self.properties == Default::default() {
+        None
+      } else {
+        Some(self.properties.into_diff()?)
+      },
     })
   }
 }
@@ -312,10 +321,13 @@ where
 mod test {
   use std::collections::BTreeMap;
 
+  use identity_core::common::Value;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
+  use identity_core::diff::DiffString;
+
   use crate::did::CoreDIDUrl;
   use crate::did::DID;
-  use identity_core::common::Value;
-
   use crate::service::ServiceBuilder;
   use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
@@ -384,19 +396,44 @@ mod test {
   }
 
   #[test]
-  fn test_controller() {
-    let doc = document();
-    let mut new = doc.clone();
+  fn test_controller_one() {
+    let doc: CoreDocument = document();
+    let mut new: CoreDocument = doc.clone();
     let new_controller: CoreDID = "did:diff:1234".parse().unwrap();
-    *new.controller_mut().unwrap() = new_controller.clone();
+    *new.controller_mut() = Some(OneOrSet::new_one(new_controller));
     assert_ne!(doc, new);
 
-    let diff = doc.diff(&new).unwrap();
-    assert_eq!(
-      diff.clone().controller.unwrap(),
-      Some(DiffString(Some(new_controller.to_string())))
-    );
-    let merge = doc.merge(diff).unwrap();
+    let diff: DiffDocument = doc.diff(&new).unwrap();
+    let merge: CoreDocument = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_controller_set() {
+    let doc: CoreDocument = document();
+    let mut new: CoreDocument = doc.clone();
+    let new_controllers: Vec<CoreDID> = vec![
+      "did:diff:1234".parse().unwrap(),
+      "did:diff:5678".parse().unwrap(),
+      "did:diff:9012".parse().unwrap(),
+    ];
+    *new.controller_mut() = Some(new_controllers.try_into().unwrap());
+    assert_ne!(doc, new);
+
+    let diff: DiffDocument = doc.diff(&new).unwrap();
+    let merge: CoreDocument = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_controller_unset() {
+    let doc: CoreDocument = document();
+    let mut new: CoreDocument = doc.clone();
+    *new.controller_mut() = None;
+    assert_ne!(doc, new);
+
+    let diff: DiffDocument = doc.diff(&new).unwrap();
+    let merge: CoreDocument = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
 
@@ -404,8 +441,9 @@ mod test {
   fn test_also_known_as() {
     let doc = document();
     let mut new = doc.clone();
-    new.also_known_as_mut().push("diff:diff:1234".parse().unwrap());
+    new.also_known_as_mut().append("diff:diff:1234".parse().unwrap());
     assert_ne!(doc, new);
+
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -417,9 +455,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    assert!(new
-      .verification_method_mut()
-      .append(method(&doc.clone().controller.unwrap(), "#key-diff")));
+    assert!(new.verification_method_mut().append(method(&doc.id, "#key-diff")));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
     let merge = doc.merge(diff).unwrap();
@@ -462,7 +498,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.authentication_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -476,7 +512,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.authentication().first().unwrap().clone();
     new.authentication_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -505,7 +541,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.assertion_method_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -519,7 +555,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.assertion_method().first().unwrap().clone();
     new.assertion_method_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -548,7 +584,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.key_agreement_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -562,7 +598,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.key_agreement().first().unwrap().clone();
     new.key_agreement_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -591,7 +627,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.capability_delegation_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -605,7 +641,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.capability_delegation().first().unwrap().clone();
     new.capability_delegation_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -634,7 +670,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     assert!(new.capability_invocation_mut().append(method_ref));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -648,7 +684,7 @@ mod test {
     let mut new = doc.clone();
 
     // update method
-    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let method_ref: MethodRef = method(&doc.id, "#key-diff").into();
     let first = new.capability_invocation().first().unwrap().clone();
     new.capability_invocation_mut().replace(&first, method_ref);
     assert_ne!(doc, new);
@@ -677,7 +713,7 @@ mod test {
     let mut new = doc.clone();
 
     // Add new service
-    let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
+    let service = service(doc.id.to_url().join("#key-diff").unwrap());
     assert!(new.service_mut().append(service));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -691,7 +727,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new service
-    let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
+    let service = service(doc.id.to_url().join("#key-diff").unwrap());
     let first = new.service().first().unwrap().clone();
     new.service_mut().replace(&first, service);
     assert_ne!(doc, new);
@@ -746,12 +782,18 @@ mod test {
   }
 
   #[test]
-  fn test_from_into_roundtrip() {
-    let doc = document();
+  fn test_from_into_diff() {
+    let doc: CoreDocument = document();
 
-    let diff = doc.clone().into_diff().unwrap();
-    let new = CoreDocument::from_diff(diff).unwrap();
+    let diff: DiffDocument = doc.clone().into_diff().unwrap();
+    let new: CoreDocument = CoreDocument::from_diff(diff.clone()).unwrap();
     assert_eq!(doc, new);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffDocument = DiffDocument::from_json(&ser).unwrap();
+    assert_eq!(de, diff);
+    let from: CoreDocument = CoreDocument::from_diff(de).unwrap();
+    assert_eq!(doc, from);
   }
 
   #[test]
@@ -764,7 +806,7 @@ mod test {
 
     let method_ref: MethodRef = MethodBuilder::default()
       .id(first)
-      .controller(new.controller.clone().unwrap())
+      .controller(new.id.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_multibase(b"key_material"))
       .build()

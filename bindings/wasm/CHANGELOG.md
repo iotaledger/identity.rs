@@ -1,15 +1,46 @@
 # Changelog
 
+## [wasm-v0.5.0-dev.4](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.4) (2022-02-14)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.3...wasm-v0.5.0-dev.4)
+
+### Changed
+
+- Change `also_known_as` type to `OrderedSet` [\#632](https://github.com/iotaledger/identity.rs/pull/632)
+
+### Patch
+
+- Fix Wasm `DID` conversion error names [\#651](https://github.com/iotaledger/identity.rs/pull/651)
+- Support verification methods with the same fragment [\#623](https://github.com/iotaledger/identity.rs/pull/623)
+
+## [wasm-v0.5.0-dev.3](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.3) (2022-01-25)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.2...wasm-v0.5.0-dev.3)
+ 
+This release introduces a breaking change for diff updates created by versions `v0.5.0-dev.1` and `v0.5.0-dev.2` (previous diff updates from `<=v0.4.0` are already incompatible due to breaking changes to the document and message structure in `v0.5.0-dev.1`). To migrate, please publish an integration update containing all diff changes to prevent unexpected changes to resolved DID Documents.
+
+### Changed
+
+- Add union type parameters [\#616](https://github.com/iotaledger/identity.rs/pull/616)
+- Fix dependent diff updates being rejected [\#605](https://github.com/iotaledger/identity.rs/pull/605)
+- Remove JSON string escaping in diff messages [\#598](https://github.com/iotaledger/identity.rs/pull/598)
+
+### Patch
+
+- Use node-fetch \>= 2.6.7 [\#617](https://github.com/iotaledger/identity.rs/pull/617)
+- Fix diff properties \(de\)serialization [\#611](https://github.com/iotaledger/identity.rs/pull/611)
+- Fix incorrect names for `ResolvedDocument.integrationMessageId` & `mergeDiff`  [\#600](https://github.com/iotaledger/identity.rs/pull/600)
+
 ## [wasm-v0.5.0-dev.2](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.2) (2022-01-14)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.1...wasm-v0.5.0-dev.2)
 
-Changed
+### Changed
 
 - Rename Wasm `VerifiableCredential`, `VerifiablePresentation`  [\#551](https://github.com/iotaledger/identity.rs/pull/551)
 - Add signature `created`, `expires`, `challenge`, `domain`, `purpose` [\#548](https://github.com/iotaledger/identity.rs/pull/548)
 
-Patch
+### Patch
 
 - Fix node-fetch conflict when multiple versions are included [\#587](https://github.com/iotaledger/identity.rs/pull/587)
 - Enable local proof-of-work fallback [\#579](https://github.com/iotaledger/identity.rs/pull/579)
@@ -20,7 +51,7 @@ Patch
  
 This release introduces multiple breaking changes to the structure of IOTA DID Documents and their Tangle messages, rendering any identity created with a prior version incompatible and unresolvable. A versioning system has been introduced so any new identities should hopefully be forward compatible with any future breaking changes to the message structure.
 
-Changed
+### Changed
 
 - Refactor document metadata [\#540](https://github.com/iotaledger/identity.rs/pull/540)
 - Replace `chrono` with `time` [\#529](https://github.com/iotaledger/identity.rs/pull/529)
@@ -33,12 +64,12 @@ Changed
 - Add message compression and versioning [\#466](https://github.com/iotaledger/identity.rs/pull/466)
 - Update document signing key constraints and methods [\#458](https://github.com/iotaledger/identity.rs/pull/458)
 
-Added
+### Added
 
 - Filter out DiffMessages updating signing methods [\#519](https://github.com/iotaledger/identity.rs/pull/519)
 - Add publish with retry method [\#455](https://github.com/iotaledger/identity.rs/pull/455)
 
-Patch
+### Patch
 
 - Fix `Timestamp` in the Wasm bindings [\#541](https://github.com/iotaledger/identity.rs/pull/541)
 - Improve client error messages [\#512](https://github.com/iotaledger/identity.rs/pull/512)

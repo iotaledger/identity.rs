@@ -14,7 +14,7 @@ keywords:
 
 # IOTA DID Method Specification
 
-Version 0.4-draft by Jelle Millenaar, IOTA Foundation
+Version 0.5-draft by Jelle Millenaar, IOTA Foundation
 
 ## Abstract
 
@@ -121,23 +121,23 @@ Example of an Integration DID Message:
 ```json
 {
   "doc": {
-    "id": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ",
+    "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
     "capabilityInvocation": [
       {
-        "id": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ#sign-0",
-        "controller": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ",
+        "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#sign-0",
+        "controller": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "zAibEeQAru66yK8TBGvzU2VXGQzQNo3n3DZmnRgTi4Y5c"
+        "publicKeyMultibase": "zCqNmbG7e4GMohTndkStNXUQGHFD5YusnwWpFdpyWFWH3"
       }
     ]
   },
   "meta": {
-    "created": "2021-12-13T16:20:25Z",
-    "updated": "2021-12-13T16:20:25Z",
+    "created": "2022-01-21T09:50:09Z",
+    "updated": "2022-01-21T09:50:09Z",
     "proof": {
       "type": "JcsEd25519Signature2020",
       "verificationMethod": "#sign-0",
-      "signatureValue": "5THVPoHymZMoQi7ZbbQr5ff7VkboiJgcjkDx3X4DAHTEnn3nBFkx6nC5dfwxcT7DuUH63rttAb9e91DQ1rR6ofqP"
+      "signatureValue": "4pzMWzn19oqibHXqEdLr4EEHygs7QF2mMdvEhSMPiCVejEZGL4Vi5BGnmrJjMqKyNr6c6sSd3EXKoYxAuC2YiZNF"
     }
   }
 }
@@ -152,19 +152,32 @@ A Differentiation (Diff) DID message does not contain a valid DID Document. Inst
 * A Diff DID message MUST have at least the following attributes:
     * `id` (REQUIRED): This field helps link the update to a DID. The value of `id` MUST be a string that references the DID that this update applies to. 
     * `previousMessageId` (REQUIRED): This field provides an immutable link to the previous DID document that is updated and is used for basic ordering of the DID messages, creating a chain. The value of `previousMessageId` MUST be a string that contains an IOTA MessageId from the previous DID message it updates, which references either a Diff or Int Chain message. Read the [Previous Message Id](#previous-message-id) section for more information.
-    * `diff` (REQUIRED): A Differentiation object containing all the changes compared to the DID Document it references in the `previousMessageId` field. The value of `diff` MUST be an escaped JSON string following the [Anatomy of the Diff object](#anatomy-of-the-diff-object) definition.
+    * `diff` (REQUIRED): A Differentiation object containing all the changes compared to the DID Document it references in the `previousMessageId` field. The value of `diff` MUST be a JSON object following the [Anatomy of the Diff object](#anatomy-of-the-diff-object) definition.
     * `proof` (REQUIRED): This field provides a cryptographic proof on the message that proves ownership over the DID Document. The value of the `proof` object MUST contain an object as defined by [Anatomy of the Proof object](#anatomy-of-the-proof-object).
 
 Example of a Diff DID message:
 ```json
 {
-  "id": "did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ",
-  "diff": "{\"doc\":{\"service\":[{\"id\":\"did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ#service-1\",\"type_\":\"LinkedDomains\",\"service_endpoint\":\"\\\"https://example.com/\\\"\",\"properties\":null}]},\"meta\":{\"updated\":\"2021-12-13T16:20:43Z\"}}",
-  "previousMessageId": "844dd476cf6f0e7d4db1aae8b18e84d0dba951ac7beaacbf4f5748631929f09e",
+  "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
+  "diff": {
+    "doc": {
+      "service": [
+        {
+          "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#linked-domain-1",
+          "type_": "LinkedDomains",
+          "service_endpoint": "https://example.com/"
+        }
+      ]
+    },
+    "meta": {
+      "updated": "2022-01-21T09:50:28Z"
+    }
+  },
+  "previousMessageId": "5dfff82c34c75b3436e7e03370e220e4693d39026fee315e6db7b7815305df4a",
   "proof": {
     "type": "JcsEd25519Signature2020",
     "verificationMethod": "#sign-0",
-    "signatureValue": "21wWP4prYn2YLvQabCsWT3qc1Q84Am8q6SRLuQfkXqB6Pm3be47kTQD3axdvidntavKk3PoJtV35XusTFyfJCy3m"
+    "signatureValue": "3TG8LiXbWPcH3ecg4is5mswENVuQBakhv8R5TMXopHgPg578oLoczySvZMsEdjRHYgJGihK2VHEqyCHPjQyXW61m"
   }
 }
 ```
@@ -201,13 +214,26 @@ Example `proof` using the `JcsEd25519Signature2020` method:
 
 ### Anatomy of the Diff object
 
-The `diff` object MUST contain all the differences between the current and previous DID Document and its DID Document Metadata. The differentiation is formatted as an escaped JSON object, that includes the differences between the two DID Document objects and the two DID Document Metadata objects. Exact details of how this is generated will be added later. 
+The `diff` object MUST contain all the differences between the current and previous DID Document and its DID Document Metadata. The differentiation is formatted as a JSON object that includes the differences between the two DID Document objects and the two DID Document Metadata objects. Exact details of how this is generated will be added later.
 
 Example `diff` of adding a new service entry to the document and changing the `updated` field in the metadata:
 ```json
 {
-  "diff": "{\"doc\":{\"service\":[{\"id\":\"did:iota:2SDJS9q5ktq73ir8LLtLtF1pWLsmrcSnU67icNzin1oZ#service-1\",\"type_\":\"LinkedDomains\",\"service_endpoint\":\"\\\"https://example.com/\\\"\",\"properties\":null}]},\"meta\":{\"updated\":\"2021-12-13T16:20:43Z\"}}"
-} 
+  "diff": {
+    "doc": {
+      "service": [
+        {
+          "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#linked-domain-1",
+          "type_": "LinkedDomains",
+          "service_endpoint": "https://example.com/"
+        }
+      ]
+    },
+    "meta": {
+      "updated": "2022-01-21T09:50:28Z"
+    }
+  }
+}
 ```
 
 ## CRUD Operations

@@ -1,9 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, Service} from '@iota/identity-wasm';
+import {Client, Config, Document, Service, Timestamp} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
-import {logExplorerUrl, logResolverUrl} from "./utils";
 
 /**
  This example is a basic introduction to creating a diff message and publishing it to the tangle.
@@ -29,22 +28,23 @@ async function createDiff(clientConfig) {
 
     // Add a Service
     let serviceJSON = {
-        id: doc.id + "#new-linked-domain",
+        id: doc.id + "#linked-domain-1",
         type: "LinkedDomains",
-        serviceEndpoint: "https://identity.iota.org",
+        serviceEndpoint: "https://example.com/",
     };
     updatedDoc.insertService(Service.fromJSON(serviceJSON));
+    updatedDoc.metadataUpdated = Timestamp.nowUTC();
     console.log(updatedDoc);
 
     // Create diff
-    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id.toString());
+    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id);
     console.log(diff);
 
     // Publish diff to the Tangle
     const diffReceipt = await client.publishDiff(receipt.messageId, diff);
     console.log(diffReceipt);
-    logExplorerUrl("Diff Chain Transaction:", clientConfig.explorer, diffReceipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
+    console.log(`Diff Chain Transaction: ${clientConfig.explorer.messageUrl(diffReceipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
 
     return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
 }

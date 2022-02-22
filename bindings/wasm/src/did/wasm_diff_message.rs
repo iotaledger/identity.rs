@@ -1,9 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
 use std::str::FromStr;
 
+use identity::core::ToJson;
 use identity::iota::DiffMessage;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
@@ -35,12 +36,12 @@ impl WasmDiffMessage {
     self.id()
   }
 
-  /// Returns the raw contents of the DID Document diff.
+  /// Returns the raw contents of the DID Document diff as a JSON string.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(getter = diff)]
-  pub fn diff(&self) -> String {
-    self.0.diff().to_owned()
+  pub fn diff(&self) -> Result<String> {
+    self.0.diff().to_json().wasm_result()
   }
 
   /// Returns the message_id of the DID Document diff.

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {
@@ -12,7 +12,6 @@ import {
     VerificationMethod
 } from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
-import {logExplorerUrl, logResolverUrl} from "./utils";
 
 /**
  This example shows how to add more to an existing DID Document.
@@ -37,7 +36,7 @@ async function manipulateIdentity(clientConfig) {
 
     // Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
-    const method = VerificationMethod.fromDID(doc.id, newKey, "newKey");
+    const method = new VerificationMethod(doc.id, newKey.type, newKey.public, "newKey");
     doc.insertMethod(method, MethodScope.VerificationMethod());
 
     // Add a new ServiceEndpoint
@@ -57,14 +56,15 @@ async function manipulateIdentity(clientConfig) {
     doc.metadataUpdated = Timestamp.nowUTC();
 
     // Sign the DID Document with the appropriate key.
-    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+    doc.signSelf(key, doc.defaultSigningMethod().id);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const updateReceipt = await client.publishDocument(doc);
 
     // Log the results.
-    logExplorerUrl("DID Document Update Transaction:", clientConfig.explorer, updateReceipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
+    console.log(`DID Document Update Transaction: ${clientConfig.explorer.messageUrl(updateReceipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
+
     return {
         key,
         newKey,

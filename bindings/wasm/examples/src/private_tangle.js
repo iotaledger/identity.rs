@@ -11,7 +11,6 @@ import {
     KeyType,
     Network
 } from '@iota/identity-wasm';
-import {logResolverUrl} from "./utils";
 
 /**
  This example shows how a DID document can be created on a private tangle.
@@ -46,20 +45,20 @@ async function privateTangle(restURL, networkName) {
 
     // Create a DID with the network set explicitly.
     // This will result in a DID prefixed by `did:iota:tangle`.
-    const doc = new Document(key, network.toString());
+    const doc = new Document(key, network.name);
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+    doc.signSelf(key, doc.defaultSigningMethod().id);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc);
 
     // Make sure the DID can be resolved on the private tangle
-    const resolved = await client.resolve(doc.id.toString());
+    const resolved = await client.resolve(doc.id);
 
     console.log(`Published the DID document to the private tangle:`);
     console.log(resolved);
-    logResolverUrl("Explore the DID Document:", explorer, doc.id.toString());
+    console.log(`Explore the DID Document: ${explorer.resolverUrl(doc.id)}`);
 
     // Return the results.
     return {key, resolved, receipt};

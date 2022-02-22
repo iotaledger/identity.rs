@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::decode_b58;
@@ -50,7 +50,7 @@ impl WasmDID {
   }
 
   /// Returns the IOTA tangle network of the `DID`.
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen]
   pub fn network(&self) -> Result<WasmNetwork> {
     self.0.network().map(Into::into).wasm_result()
   }
@@ -91,10 +91,34 @@ impl WasmDID {
   pub fn to_string(&self) -> String {
     self.0.to_string()
   }
+
+  /// Serializes a `DID` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> JsValue {
+    // This must match the serialization of IotaDID for UWasmDID to work.
+    JsValue::from_str(self.0.as_str())
+  }
 }
 
 impl From<IotaDID> for WasmDID {
   fn from(did: IotaDID) -> Self {
     Self(did)
+  }
+}
+
+/// Duck-typed union to pass either a string or WasmDID as a parameter.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "DID | string")]
+  pub type UWasmDID;
+}
+
+impl TryFrom<UWasmDID> for IotaDID {
+  type Error = JsValue;
+
+  fn try_from(did: UWasmDID) -> std::result::Result<Self, Self::Error> {
+    // Parse rather than going through serde directly to return proper error types.
+    let json: String = did.into_serde().wasm_result()?;
+    IotaDID::parse(&json).wasm_result()
   }
 }

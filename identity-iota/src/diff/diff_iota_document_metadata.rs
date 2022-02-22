@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::str::FromStr;
@@ -125,11 +125,7 @@ impl Diff for IotaDocumentMetadata {
       .map_err(identity_core::diff::Error::merge)?
       .ok_or_else(|| Error::convert("Missing field `metadata.previous_message_id`"))?;
 
-    let properties: Object = diff
-      .properties
-      .map(Object::from_diff)
-      .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `metadata.properties`"))?;
+    let properties: Object = diff.properties.map(Object::from_diff).transpose()?.unwrap_or_default();
 
     Ok(IotaDocumentMetadata {
       created,
@@ -145,7 +141,11 @@ impl Diff for IotaDocumentMetadata {
       created: Some(self.created.into_diff()?),
       updated: Some(self.updated.into_diff()?),
       previous_message_id: Some(self.previous_message_id.to_string().into_diff()?),
-      properties: Some(self.properties.into_diff()?),
+      properties: if self.properties == Default::default() {
+        None
+      } else {
+        Some(self.properties.into_diff()?)
+      },
     })
   }
 }
@@ -155,6 +155,8 @@ mod test {
   use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   use super::*;
 
@@ -238,5 +240,35 @@ mod test {
     let diff: DiffIotaDocumentMetadata = original.diff(&updated).unwrap();
     let merged: IotaDocumentMetadata = original.merge(diff).unwrap();
     assert_eq!(merged, updated);
+  }
+
+  #[test]
+  fn test_from_into_diff() {
+    let original: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    let diff: DiffIotaDocumentMetadata = original.clone().into_diff().unwrap();
+    let from: IotaDocumentMetadata = IotaDocumentMetadata::from_diff(diff.clone()).unwrap();
+    assert_eq!(from, original);
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+    let from: IotaDocumentMetadata = IotaDocumentMetadata::from_diff(de).unwrap();
+    assert_eq!(from, original);
+  }
+
+  #[test]
+  fn test_serde() {
+    let original: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    let mut updated: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    updated.previous_message_id = MessageId::new([1; 32]);
+    updated.created = Timestamp::from_unix(1).unwrap();
+    updated.updated = Timestamp::from_unix(100000).unwrap();
+    let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+    let merge: IotaDocumentMetadata = Diff::merge(&original, de).unwrap();
+    assert_eq!(merge, updated);
   }
 }

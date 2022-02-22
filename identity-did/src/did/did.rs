@@ -1,16 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-
 use core::str::FromStr;
 use std::hash::Hash;
 
 use did_url::DID as BaseDIDUrl;
 
+use identity_core::common::KeyComparable;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
@@ -279,6 +279,15 @@ impl PartialEq<&'_ str> for CoreDID {
 impl PartialEq<&CoreDID> for CoreDID {
   fn eq(&self, other: &&CoreDID) -> bool {
     self == other
+  }
+}
+
+impl KeyComparable for CoreDID {
+  type Key = CoreDID;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self
   }
 }
 

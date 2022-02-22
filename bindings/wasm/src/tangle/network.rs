@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::Network;
@@ -27,6 +27,11 @@ impl WasmNetwork {
   #[wasm_bindgen]
   pub fn devnet() -> WasmNetwork {
     Self(Network::Devnet)
+  }
+
+  #[wasm_bindgen(getter)]
+  pub fn name(&self) -> String {
+    self.0.name_str().to_owned()
   }
 
   /// Returns the node URL of the Tangle network.

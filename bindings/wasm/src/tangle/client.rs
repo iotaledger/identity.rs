@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str::FromStr;
@@ -26,6 +26,7 @@ use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
 use crate::did::PromiseResolvedDocument;
+use crate::did::UWasmDID;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
@@ -172,10 +173,10 @@ impl Client {
 
   /// Fetch the DID document specified by the given `DID`.
   #[wasm_bindgen]
-  pub fn resolve(&self, did: &str) -> Result<PromiseResolvedDocument> {
-    let client: Rc<IotaClient> = self.client.clone();
-    let did: IotaDID = did.parse().wasm_result()?;
+  pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
+    let did: IotaDID = IotaDID::try_from(did)?;
 
+    let client: Rc<IotaClient> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .resolve(&did)
@@ -191,10 +192,10 @@ impl Client {
 
   /// Returns the message history of the given DID.
   #[wasm_bindgen(js_name = resolveHistory)]
-  pub fn resolve_history(&self, did: &str) -> Result<PromiseDocumentHistory> {
-    let did: IotaDID = did.parse().wasm_result()?;
-    let client: Rc<IotaClient> = self.client.clone();
+  pub fn resolve_history(&self, did: UWasmDID) -> Result<PromiseDocumentHistory> {
+    let did: IotaDID = IotaDID::try_from(did)?;
 
+    let client: Rc<IotaClient> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .resolve_history(&did)

@@ -1,9 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {Client, Config, Timestamp, VerifierOptions} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
-import {logExplorerUrl, logResolverUrl} from './utils';
 
 /**
  This example shows how to revoke a verifiable credential.
@@ -35,13 +34,13 @@ async function revokeVC(clientConfig) {
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
     issuer.doc.metadataPreviousMessageId = issuer.updatedMessageId;
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
     // This is an integration chain update, so we publish the full document.
     const {messageId} = await client.publishDocument(issuer.doc);
 
     // Log the resulting Identity update
-    logExplorerUrl("Issuer Update Transaction:", clientConfig.explorer, messageId);
-    logResolverUrl("Explore the Issuer DID Document:", clientConfig.explorer, issuer.doc.id.toString());
+    console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(messageId)}`);
+    console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
 
     // Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());

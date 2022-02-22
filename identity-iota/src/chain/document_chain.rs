@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -139,18 +139,11 @@ impl DocumentChain {
   ///
   /// Fails if the diff is invalid.
   pub fn try_push_diff(&mut self, diff: DiffMessage) -> Result<()> {
-    // Use the last integration chain document to validate the signature on the diff.
-    let integration_document: &ResolvedIotaDocument = self.chain_i.current();
-    let expected_prev_message_id: &MessageId = self.diff_message_id();
-    DiffChain::check_valid_addition(&diff, integration_document, expected_prev_message_id)?;
-
-    // Merge the diff into the latest state.
-    let mut document: ResolvedIotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
-    document.merge_diff_message(&diff)?;
+    // Use the latest document state to validate the diff.
+    let integration_document: &ResolvedIotaDocument = self.document.as_ref().unwrap_or_else(|| self.chain_i.current());
 
     // Extend the diff chain and store the merged result.
-    self.chain_d.try_push(diff, &self.chain_i)?;
-    self.document = Some(document);
+    self.document = Some(self.chain_d.try_push_and_merge(diff, integration_document)?);
 
     Ok(())
   }
@@ -169,7 +162,6 @@ mod test {
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::SignatureOptions;
   use identity_core::crypto::TrySignature;
-  use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
@@ -177,7 +169,6 @@ mod test {
   use identity_did::verification::MethodRelationship;
   use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
-  use identity_did::verification::VerificationMethod;
 
   use crate::did::IotaDIDUrl;
   use crate::document::IotaDocument;
@@ -199,7 +190,10 @@ mod test {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
       document
-        .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+        .sign_self(
+          keypair.private(),
+          document.default_signing_method().unwrap().id().clone(),
+        )
         .unwrap();
       let mut resolved: ResolvedIotaDocument = ResolvedIotaDocument::from(document);
       resolved.set_message_id(MessageId::new([1; 32]));
@@ -231,23 +225,20 @@ mod test {
 
       // Replace the capability invocation signing key (one step key rotation).
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-      let signing_method: MethodRef = MethodBuilder::default()
-        .id(CoreDIDUrl::from(chain.id().to_url().join("#key-2").unwrap()))
-        .controller(chain.id().clone().into())
+      let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
+        .id(chain.id().to_url().join("#key-2").unwrap())
+        .controller(chain.id().clone())
         .key_type(MethodType::Ed25519VerificationKey2018)
         .key_data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)
         .unwrap();
-
-      unsafe {
-        new.document.core_document_mut().capability_invocation_mut().clear();
-        new
-          .document
-          .core_document_mut()
-          .capability_invocation_mut()
-          .append(signing_method);
-      }
+      new.document.core_document_mut().capability_invocation_mut().clear();
+      new
+        .document
+        .core_document_mut()
+        .capability_invocation_mut()
+        .append(signing_method);
 
       new.document.metadata.updated = Timestamp::now_utc();
       new.document.metadata.previous_message_id = *chain.integration_message_id();
@@ -318,13 +309,11 @@ mod test {
     // =========================================================================
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
     new_resolved.document.properties_mut().insert("foo".into(), 123.into());
-    unsafe {
-      new_resolved
-        .document
-        .core_document_mut()
-        .capability_invocation_mut()
-        .clear();
-    }
+    new_resolved
+      .document
+      .core_document_mut()
+      .capability_invocation_mut()
+      .clear();
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
@@ -352,7 +341,7 @@ mod test {
     // Create DiffMessage Adding a Capability Invocation Method
     // =========================================================================
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
-    let new_signing_method: IotaVerificationMethod = IotaVerificationMethod::from_did(
+    let new_signing_method: IotaVerificationMethod = IotaVerificationMethod::new(
       new_resolved.did().clone(),
       keypair.type_(),
       keypair.public(),
@@ -392,20 +381,18 @@ mod test {
     // =========================================================================
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
     // Replace the public key data.
-    unsafe {
-      match new_resolved
-        .document
-        .core_document_mut()
-        .capability_invocation_mut()
-        .head_mut()
-        .unwrap()
-      {
-        MethodRef::Embed(method) => {
-          *method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
-        }
-        MethodRef::Refer(_) => unreachable!(),
-      };
-    }
+    match new_resolved
+      .document
+      .core_document_mut()
+      .capability_invocation_mut()
+      .head_mut()
+      .unwrap()
+    {
+      MethodRef::Embed(method) => {
+        *method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
+      }
+      MethodRef::Refer(_) => unreachable!(),
+    };
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
@@ -430,7 +417,7 @@ mod test {
     let (mut resolved, keypair): (ResolvedIotaDocument, KeyPair) = create_initial_document();
 
     let signing_method: IotaVerificationMethod = resolved.document.default_signing_method().unwrap().clone();
-    let signing_method_id: IotaDIDUrl = signing_method.id();
+    let signing_method_id: IotaDIDUrl = signing_method.id().clone();
     resolved.document.remove_method(signing_method.id()).unwrap();
     resolved
       .document
@@ -438,13 +425,13 @@ mod test {
       .unwrap();
     assert!(resolved
       .document
-      .attach_method_relationship(signing_method_id, MethodRelationship::CapabilityInvocation)
+      .attach_method_relationship(&signing_method_id, MethodRelationship::CapabilityInvocation)
       .unwrap());
     resolved
       .document
       .sign_self(
         keypair.private(),
-        &resolved.document.default_signing_method().unwrap().id(),
+        resolved.document.default_signing_method().unwrap().id().clone(),
       )
       .unwrap();
 
@@ -455,15 +442,13 @@ mod test {
     // =======================================================================================================
     let mut new_resolved: ResolvedIotaDocument = resolved.clone();
     // Replace the public key data.
-    unsafe {
-      let updated_method: &mut VerificationMethod = new_resolved
-        .document
-        .core_document_mut()
-        .verification_method_mut()
-        .head_mut()
-        .unwrap();
-      *updated_method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
-    }
+    let updated_method: &mut IotaVerificationMethod = new_resolved
+      .document
+      .core_document_mut()
+      .verification_method_mut()
+      .head_mut()
+      .unwrap();
+    *updated_method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
@@ -484,7 +469,10 @@ mod test {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
-      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .sign_self(
+        keypair.private(),
+        document.default_signing_method().unwrap().id().clone(),
+      )
       .unwrap();
     let mut resolved = ResolvedIotaDocument::from(document);
     resolved.set_message_id(MessageId::new([1; 32]));

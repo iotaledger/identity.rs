@@ -1,8 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {Client, Config, Document, KeyPair, KeyType} from '@iota/identity-wasm';
-import {logExplorerUrl, logResolverUrl} from './utils';
 
 /**
  This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
@@ -17,10 +16,10 @@ async function createIdentity(clientConfig) {
     const key = new KeyPair(KeyType.Ed25519);
 
     // Create a DID Document (an identity) from the generated key pair.
-    const doc = new Document(key, clientConfig.network.toString());
+    const doc = new Document(key, clientConfig.network.name);
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+    doc.signSelf(key, doc.defaultSigningMethod().id);
 
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
@@ -32,8 +31,8 @@ async function createIdentity(clientConfig) {
     const receipt = await client.publishDocument(doc);
 
     // Log the results.
-    logExplorerUrl("DID Document Transaction:", clientConfig.explorer, receipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
+    console.log(`DID Document Transaction: ${clientConfig.explorer.messageUrl(receipt.messageId)}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
 
     // Return the results.
     return {key, doc, receipt};

@@ -1,19 +1,55 @@
 # Changelog
 
+## [v0.5.0-dev.4](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.4) (2022-02-14)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.3...v0.5.0-dev.4)
+
+### Changed
+
+- Remove unused `Account` milestone option [\#645](https://github.com/iotaledger/identity.rs/pull/645)
+- Change document controller type to `OneOrSet` [\#638](https://github.com/iotaledger/identity.rs/pull/638)
+- Rename `MethodQuery` to `DIDUrlQuery`, move `OrderedSet`, `KeyComparable` [\#634](https://github.com/iotaledger/identity.rs/pull/634)
+- Change `also_known_as` type to `OrderedSet` [\#632](https://github.com/iotaledger/identity.rs/pull/632)
+
+### Patch
+
+- Support verification methods with the same fragment [\#623](https://github.com/iotaledger/identity.rs/pull/623)
+
+## [v0.5.0-dev.3](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.3) (2022-01-25)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.2...v0.5.0-dev.3)
+ 
+This release introduces a breaking change for diff updates created by versions `v0.5.0-dev.1` and `v0.5.0-dev.2` (previous diff updates from `<=v0.4.0` are already incompatible due to breaking changes to the document and message structure in `v0.5.0-dev.1`). To migrate, please publish an integration update containing all diff changes to prevent unexpected changes to resolved DID Documents.
+
+### Changed
+
+- Move verification functionality from `DocumentVerifier` to  `CoreDocument`  [\#606](https://github.com/iotaledger/identity.rs/pull/606)
+- Fix dependent diff updates being rejected [\#605](https://github.com/iotaledger/identity.rs/pull/605)
+- Change `Account::state` visibility to `pub(crate)` [\#604](https://github.com/iotaledger/identity.rs/pull/604)
+- Remove JSON string escaping in diff messages [\#598](https://github.com/iotaledger/identity.rs/pull/598)
+
+### Added
+
+- Implement `FromIterator` for `OneOrMany` [\#602](https://github.com/iotaledger/identity.rs/pull/602)
+
+### Patch
+
+- Fix diff properties \(de\)serialization [\#611](https://github.com/iotaledger/identity.rs/pull/611)
+
 ## [v0.5.0-dev.2](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.2) (2022-01-14)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.1...v0.5.0-dev.2)
 
-Changed
+### Changed
 
 - Replace `ClientMap` with `Client` in `Account` [\#582](https://github.com/iotaledger/identity.rs/pull/582)
 - Add signature `created`, `expires`, `challenge`, `domain`, `purpose` [\#548](https://github.com/iotaledger/identity.rs/pull/548)
 
-Added
+### Added
 
 - Add account synchronization method [\#544](https://github.com/iotaledger/identity.rs/pull/544)
 
-Patch
+### Patch
 
 - Enable local proof-of-work fallback [\#579](https://github.com/iotaledger/identity.rs/pull/579)
 
@@ -23,7 +59,7 @@ Patch
  
 This release introduces multiple breaking changes to the structure of IOTA DID Documents and their Tangle messages, rendering any identity created with a prior version incompatible and unresolvable. A versioning system has been introduced so any new identities should hopefully be forward compatible with any future breaking changes to the message structure.
 
-Changed
+### Changed
 
 - Refactor document metadata [\#540](https://github.com/iotaledger/identity.rs/pull/540)
 - Replace `chrono` with `time` [\#529](https://github.com/iotaledger/identity.rs/pull/529)
@@ -40,12 +76,12 @@ Changed
 - Update document signing key constraints and methods [\#458](https://github.com/iotaledger/identity.rs/pull/458)
 - Refactor the `Account`: internal state, one identity [\#453](https://github.com/iotaledger/identity.rs/pull/453)
 
-Added
+### Added
 
 - Filter out DiffMessages updating signing methods [\#519](https://github.com/iotaledger/identity.rs/pull/519)
 - Add publish with retry method [\#455](https://github.com/iotaledger/identity.rs/pull/455)
 
-Patch
+### Patch
 
 - Add `identity-diff` derive feature gate [\#516](https://github.com/iotaledger/identity.rs/pull/516)
 - Improve client error messages [\#512](https://github.com/iotaledger/identity.rs/pull/512)
