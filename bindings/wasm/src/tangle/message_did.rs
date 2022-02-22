@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use identity::iota::MessageId;
 use wasm_bindgen::prelude::*;
 
@@ -14,15 +12,16 @@ pub struct WasmMessageId(pub(crate) MessageId);
 
 #[wasm_bindgen(js_class = MessageId)]
 impl WasmMessageId {
-  #[wasm_bindgen(constructor)]
-  pub fn new(bytes: &str) -> Result<WasmMessageId> {
-    MessageId::from_str(bytes).map(|x| x.into()).wasm_result()
+  // Serializes a `ChainState` object as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Create a null `MessageId`.
-  #[wasm_bindgen]
-  pub fn null() -> Self {
-    WasmMessageId(MessageId::null())
+  /// Deserializes a JSON object as `MessageId`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmMessageId> {
+    json_value.into_serde().map(Self).wasm_result()
   }
 }
 
