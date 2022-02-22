@@ -47,9 +47,9 @@ pub enum ValidationError {
 
   /// Indicates an attempt to verify a presentation's signature with a resolved DID document not corresponding to the
   /// URL of the presentation's holder property.
-  #[error("the provided holder document does not correspond to the presentation's holder property")]
+  #[error("holder does not match provided DID Document")]
   #[non_exhaustive]
-  IncompatibleHolderDocument,
+  MismatchedHolder,
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
   #[error("could not verify the holder's signature")]
