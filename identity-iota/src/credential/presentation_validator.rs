@@ -40,9 +40,6 @@ impl PresentationValidator {
   }
 
   /// Validates the semantic structure of the [Presentation].
-  ///
-  /// # Terminology
-  /// This is a *validation unit*.
   pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
     Self::check_structure_local_error(presentation).map_err(Error::UnsuccessfulValidationUnit)
   }
@@ -72,9 +69,6 @@ impl PresentationValidator {
   ///
   /// If one needs to find *all* the nonTransferable violations of this presentation, then see
   /// [Self::non_transferable_violations](Self::non_transferable_violations()).
-  ///
-  /// # Terminology
-  /// This is a *validation unit*
   pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
     Self::check_non_transferable_local_error(presentation).map_err(Error::UnsuccessfulValidationUnit)
   }
@@ -126,11 +120,8 @@ impl PresentationValidator {
   /// Verify the presentation's signature using the resolved document of the holder
   ///
   /// # Errors
-  /// Fails if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
-  /// property
-  ///
-  /// # Terminology
-  /// This is a *validation unit*.
+  /// Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
+  /// property. Otherwise signature verification will be attempted and an error is returned upon failure.
   pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
     holder: &ResolvedIotaDocument,

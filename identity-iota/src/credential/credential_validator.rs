@@ -36,9 +36,6 @@ impl CredentialValidator {
   }
 
   /// Validates the semantic structure of the [Credential].
-  ///
-  /// # Terminology
-  /// This is a *validation unit*
   pub fn check_structure<T>(credential: &Credential<T>) -> Result<()> {
     Self::check_structure_local_error(credential).map_err(Error::UnsuccessfulValidationUnit)
   }
@@ -50,9 +47,6 @@ impl CredentialValidator {
   }
 
   /// Validate that the [Credential] does not expire before the specified [Timestamp].
-  ///
-  /// # Terminology
-  /// This is a *validation unit*
   pub fn does_not_expire_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
     Self::does_not_expire_before_local_error(credential, timestamp).map_err(Error::UnsuccessfulValidationUnit)
   }
@@ -67,9 +61,6 @@ impl CredentialValidator {
   }
 
   /// Validate that the [Credential] is issued no later than the specified [Timestamp].
-  ///
-  /// # Terminology
-  /// This is a *validation unit*
   pub fn was_not_issued_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
     Self::was_not_issued_after_local_error(credential, timestamp).map_err(Error::UnsuccessfulValidationUnit)
   }
