@@ -1,9 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use dashmap::DashMap;
+
+use identity_core::common::Url;
+use identity_credential::credential::Credential;
+use identity_credential::presentation::Presentation;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
@@ -20,11 +25,13 @@ use crate::tangle::TangleResolve;
 /// TODO: description
 #[derive(Debug)]
 pub struct Resolver {
+  // TODO: use Rc internally for Wasm? Typedef?
   client_map: DashMap<NetworkName, Arc<Client>>,
 }
 
 impl Resolver {
-  /// Constructs a new [`Resolver`] with a default [`Client`] for the [`Mainnet`](crate::tangle::Network::Mainnet).
+  /// Constructs a new [`Resolver`] with a default [`Client`] for
+  /// the [`Mainnet`](crate::tangle::Network::Mainnet).
   ///
   /// See also [`Resolver::builder`].
   pub async fn new() -> Result<Self> {
@@ -37,8 +44,9 @@ impl Resolver {
 
   /// Constructs a new [`Resolver`] with no configured [`Clients`](Client).
   ///
-  /// Use with [`Resolver::client`] and [`Resolver::client_builder`].
-  // TODO: make a proper ResolverBuilder?
+  /// See [`Resolver::client`] and [`Resolver::client_builder`].
+  // TODO: make a proper ResolverBuilder or rename this empty()/new_empty()?
+  #[must_use]
   pub fn builder() -> Self {
     Self {
       client_map: DashMap::new(),
@@ -68,8 +76,8 @@ impl Resolver {
     self.client_map.insert(client.network.name(), client);
   }
 
-  /// Removes the [`Client`] corresponding to the given [`NetworkName`] and if one exists and
-  /// returns it.
+  /// Removes the [`Client`] corresponding to the given [`NetworkName`] and returns it
+  /// if one exists.
   pub fn remove_client(&self, network_name: &NetworkName) -> Option<Arc<Client>> {
     self.client_map.remove(network_name).map(|(_, client)| client)
   }
@@ -82,7 +90,7 @@ impl Resolver {
       .map(|client_ref| Arc::clone(client_ref.value()))
   }
 
-  /// Returns the [`Client`] corresponding to the [`NetworkName`] of the given DID.
+  /// Returns the [`Client`] corresponding to the [`NetworkName`] on the given ['IotaDID'].
   fn get_client_for_did(&self, did: &IotaDID) -> Result<Arc<Client>> {
     self.get_client(&did.network()?.name()).ok_or_else(|| {
       Error::DIDNotFound(format!(
@@ -92,25 +100,64 @@ impl Resolver {
     })
   }
 
-  /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].
+  /// Fetches the [`IotaDocument`] of the given [`IotaDID`].
   pub async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     let client: Arc<Client> = self.get_client_for_did(did)?;
     client.read_document(did).await
   }
 
-  /// Returns the [`DocumentHistory`] of the given [`IotaDID`].
+  /// Fetches the [`DocumentHistory`] of the given [`IotaDID`].
   pub async fn resolve_history(&self, did: &IotaDID) -> Result<DocumentHistory> {
     let client: Arc<Client> = self.get_client_for_did(did)?;
     client.resolve_history(did).await
   }
 
-  /// Returns the [`ChainHistory`] of a diff chain starting from an [`IotaDocument`] on the
+  /// Fetches the [`ChainHistory`] of a diff chain starting from an [`IotaDocument`] on the
   /// integration chain.
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id.
   pub async fn resolve_diff_history(&self, document: &ResolvedIotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let client: Arc<Client> = self.get_client_for_did(document.document.id())?;
     client.resolve_diff_history(document).await
+  }
+
+  /// Fetches the DID Document of the issuer on a [`Credential`].
+  ///
+  /// # Errors
+  ///
+  /// Errors if the issuer URL is not a valid [`IotaDID`] or DID resolution fails.
+  pub async fn resolve_credential_issuer(&self, credential: &Credential) -> Result<ResolvedIotaDocument> {
+    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str())?;
+    self.resolve(&issuer).await
+  }
+
+  /// Fetches all DID Documents of [`Credential`] issuers contained in a [`Presentation`].
+  /// Issuer documents are returned in arbitrary order.
+  ///
+  /// # Errors
+  ///
+  /// Errors if any issuer URL is not a valid [`IotaDID`] or DID resolution fails.
+  pub async fn resolve_presentation_issuers(&self, presentation: &Presentation) -> Result<Vec<ResolvedIotaDocument>> {
+    // Extract unique issuers.
+    let mut issuers: HashSet<IotaDID> = HashSet::new();
+    for credential in presentation.verifiable_credential.iter() {
+      let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str())?;
+      issuers.insert(issuer);
+    }
+
+    // Resolve issuers concurrently.
+    futures::future::try_join_all(issuers.iter().map(|issuer| self.resolve(issuer)).collect::<Vec<_>>()).await
+  }
+
+  /// Fetches the DID Document of the holder of a [`Presentation`].
+  ///
+  /// # Errors
+  ///
+  /// Errors if the holder URL is missing, is not a valid [`IotaDID`], or DID resolution fails.
+  pub async fn resolve_presentation_holder(&self, presentation: &Presentation) -> Result<ResolvedIotaDocument> {
+    let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::InvalidPresentationHolder)?;
+    let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
+    self.resolve(&holder).await
   }
 }
 
