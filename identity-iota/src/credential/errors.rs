@@ -11,10 +11,10 @@ use identity_core::common::OneOrMany;
 /// An error associated with validating credentials and presentations.
 pub enum ValidationError {
   /// Indicates that the expiration date of the credential is not considered valid.
-  #[error("the expiration date is in the past or earlier than required.")]
+  #[error("the expiration date is in the past or earlier than required")]
   ExpirationDate,
   /// Indicates that the issuance date of the credential is not considered valid.
-  #[error("the credential is yet to be active or has not been active for the required period.")]
+  #[error("issuance date is in the future or later than required")]
   IssuanceDate,
   /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
   #[error("could not verify the issuer's signature")]
@@ -25,9 +25,9 @@ pub enum ValidationError {
   },
   /// Indicates a failure to extract a resolved document corresponding to the URL of the credential's issuer upon
   /// signature verification.
-  #[error("None of the supplied issuer documents correspond to the credential's issuer")]
+  #[error("issuer did not match any of the supplied DID Documents")]
   #[non_exhaustive]
-  IncompatibleIssuerDocuments,
+  UntrustedIssuer,
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("the credential's issuer property could not be parsed to a valid DID")]
