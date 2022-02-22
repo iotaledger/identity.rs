@@ -29,7 +29,7 @@
     "artifacts": "napi artifacts",
     "build": "npm run create-npm-dir && npm run build:napi && npm run build:ts",
     "build:ts": "tsc node_adapter/stronghold_storage.ts",
-    "build:napi": "cross-var napi build --platform --release $npm_config_napi_args",
+    "build:napi": "cross-var \"napi build --platform --release $npm_config_napi_args\"",
     "build:napi:debug": "napi build --platform",
     "example:stronghold": "ts-node ./examples/src/node.ts",
     "prepublishOnly": "napi prepublish -t npm",
