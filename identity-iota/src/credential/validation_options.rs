@@ -4,30 +4,20 @@
 use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Options to declare validation criteria in
 /// [CredentialValidator::full_validation](super::CredentialValidator::full_validation()).
 #[non_exhaustive]
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [Timestamp].
-  pub earliest_expiry_date: Timestamp,
+  pub earliest_expiry_date: Option<Timestamp>,
   /// Declares that the credential is **not** considered valid if it was issued later than this
   /// [Timestamp].
-  pub latest_issuance_date: Timestamp,
+  pub latest_issuance_date: Option<Timestamp>,
   /// Declare that the credential's signature must be verified according to these
   /// [VerifierOptions].
   pub verifier_options: VerifierOptions,
-}
-
-impl Default for CredentialValidationOptions {
-  fn default() -> Self {
-    Self {
-      earliest_expiry_date: Timestamp::now_utc(),
-      latest_issuance_date: Timestamp::now_utc(),
-      verifier_options: VerifierOptions::default(),
-    }
-  }
 }
 
 impl CredentialValidationOptions {
@@ -38,12 +28,12 @@ impl CredentialValidationOptions {
 
   /// Declare that a credential may expire no later than the given `timestamp`.
   pub fn earliest_expiry_date(mut self, timestamp: Timestamp) -> Self {
-    self.earliest_expiry_date = timestamp;
+    self.earliest_expiry_date = Some(timestamp);
     self
   }
   /// Declare that a credential may expire no later than the given `timestamp`.
   pub fn latest_issuance_date(mut self, timestamp: Timestamp) -> Self {
-    self.latest_issuance_date = timestamp;
+    self.latest_issuance_date = Some(timestamp);
     self
   }
 

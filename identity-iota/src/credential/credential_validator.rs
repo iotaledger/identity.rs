@@ -156,14 +156,17 @@ impl CredentialValidator {
     issuers: &[ResolvedIotaDocument],
     fail_fast: bool,
   ) -> CredentialValidationResult {
+    // Run all single concern validations in turn and fail immediately if `fail_fast` is true.
     let signature_validation =
       std::iter::once_with(|| Self::verify_signature_local_error(credential, issuers, &options.verifier_options));
 
-    let expiry_date_validation =
-      std::iter::once_with(|| Self::check_not_expired_before_local_error(credential, options.earliest_expiry_date));
+    let expiry_date_validation = std::iter::once_with(|| {
+      Self::check_not_expired_before_local_error(credential, options.earliest_expiry_date.unwrap_or_default())
+    });
 
-    let issuance_date_validation =
-      std::iter::once_with(|| Self::check_not_issued_after_local_error(credential, options.latest_issuance_date));
+    let issuance_date_validation = std::iter::once_with(|| {
+      Self::check_not_issued_after_local_error(credential, options.latest_issuance_date.unwrap_or_default())
+    });
 
     let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(credential));
 
