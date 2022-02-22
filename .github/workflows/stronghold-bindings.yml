@@ -74,6 +74,13 @@ jobs:
           job: ${{ github.job }}
           current-date: 2022-02-21 # TODO use current date
           target: ${{ matrix.settings.target }}
+
+      # TODO: get rid of this
+      - name: Build Wasm bindings
+        run: |
+          npm i
+          npm run build
+        working-directory: ./bindings/wasm
      
       - name: Setup
         if: ${{ matrix.settings.setup }}
