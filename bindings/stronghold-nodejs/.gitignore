@@ -10,3 +10,6 @@ index.d.ts
 index.js
 
 node_adapter/*.js
+
+# used for npm releases, will be created in build step
+npm/

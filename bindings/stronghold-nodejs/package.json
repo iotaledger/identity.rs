@@ -24,14 +24,15 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "napi build --platform --release",
-    "build:ts": "tsc",
-    "build:debug": "napi build --platform",
+    "build": "npm run create-npm-dir && npm run build:napi && npm run build:ts",
+    "build:ts": "tsc node_adapter/stronghold_storage.ts",
+    "build:napi": "napi build --platform --release",
+    "build:napi:debug": "napi build --platform",
     "example:stronghold": "ts-node ./examples/src/node.ts",
     "prepublishOnly": "napi prepublish -t npm",
     "version": "napi version",
     "create-npm-dir": "napi create-npm-dir --target ./ ",
-    "test": "echo no tests specified"
+    "test": "npm run example:stronghold create_did"
   },
   "dependencies": {
     "@types/node": "^17.0.18",
