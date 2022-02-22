@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 #[cfg(not(feature = "arc"))]
 use std::rc::Rc;
@@ -56,42 +57,22 @@ impl Resolver {
     Ok(Self { client_map })
   }
 
-  /// Constructs a new [`Resolver`] with no configured [`Clients`](Client).
-  ///
-  /// See [`Resolver::client`] and [`Resolver::client_builder`].
-  // TODO: make a proper ResolverBuilder or rename this empty()/new_empty()?
-  #[must_use]
-  pub fn builder() -> Self {
-    Self {
-      client_map: DashMap::new(),
-    }
-  }
-
-  /// Inserts a [`Client`]. Use with [`Resolver::builder`].
-  ///
-  /// NOTE: replaces any existing [`Client`] entry with the same [`NetworkName`].
-  #[must_use]
-  pub fn client(self, client: Client) -> Self {
-    self.set_client(Arc::new(client));
-    self
-  }
-
-  /// Creates and inserts a new [`Client`] from the given builder. Use with [`Resolver::builder`].
-  ///
-  /// NOTE: replaces any existing [`Client`] entry with the same [`NetworkName`].
-  pub async fn client_builder(self, builder: ClientBuilder) -> Result<Self> {
-    Client::from_builder(builder).await.map(|client| self.client(client))
+  /// Returns a new [`ResolverBuilder`] with no configured [`Clients`](Client).
+  pub fn builder() -> ResolverBuilder {
+    ResolverBuilder::new()
   }
 
   /// Inserts a [`Client`].
   ///
   /// NOTE: replaces any existing [`Client`] entry with the same [`NetworkName`].
-  pub fn set_client(&self, client: Arc<Client>) {
+  // TODO: remove this?
+  pub fn set_client(&self, client: ClientRc) {
     self.client_map.insert(client.network.name(), client);
   }
 
   /// Removes the [`Client`] corresponding to the given [`NetworkName`] and returns it
   /// if one exists.
+  // TODO: remove this?
   pub fn remove_client(&self, network_name: &NetworkName) -> Option<ClientRc> {
     self.client_map.remove(network_name).map(|(_, client)| client)
   }
@@ -172,6 +153,62 @@ impl Resolver {
     let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::InvalidPresentationHolder)?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
     self.resolve(&holder).await
+  }
+}
+
+/// Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
+#[derive(Default)]
+pub struct ResolverBuilder {
+  clients: HashMap<NetworkName, ClientOrBuilder>,
+}
+
+#[allow(clippy::large_enum_variant)]
+enum ClientOrBuilder {
+  Client(ClientRc),
+  Builder(ClientBuilder),
+}
+
+impl ResolverBuilder {
+  /// Constructs a new [`ResolverBuilder`] with no [`Clients`][Client] configured.
+  pub fn new() -> Self {
+    Self {
+      clients: Default::default(),
+    }
+  }
+
+  /// Inserts a [`Client`].
+  ///
+  /// NOTE: replaces any previous [`Client`] or [`ClientBuilder`] with the same [`NetworkName`].
+  #[must_use]
+  pub fn client(mut self, client: ClientRc) -> Self {
+    self
+      .clients
+      .insert(client.network.name(), ClientOrBuilder::Client(client));
+    self
+  }
+
+  /// Inserts a [`ClientBuilder`].
+  ///
+  /// NOTE: replaces any previous [`Client`] or [`ClientBuilder`] with the same [`NetworkName`].
+  pub fn client_builder(mut self, builder: ClientBuilder) -> Self {
+    self
+      .clients
+      .insert(builder.network.name(), ClientOrBuilder::Builder(builder));
+    self
+  }
+
+  /// Constructs a new [`Resolver`] based on the builder configuration.
+  pub async fn build(self) -> Result<Resolver> {
+    let client_map: DashMap<NetworkName, ClientRc> = DashMap::new();
+    for (network_name, client_or_builder) in self.clients {
+      let client: ClientRc = match client_or_builder {
+        ClientOrBuilder::Client(client) => client,
+        ClientOrBuilder::Builder(builder) => ClientRc::new(builder.build().await?),
+      };
+      client_map.insert(network_name, client);
+    }
+
+    Ok(Resolver { client_map })
   }
 }
 

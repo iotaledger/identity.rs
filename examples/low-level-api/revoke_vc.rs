@@ -58,7 +58,7 @@ async fn main() -> Result<()> {
   );
 
   // Check the verifiable credential
-  let resolver: Resolver = Resolver::builder().client(client);
+  let resolver: Resolver = Resolver::new().await?;
   let validation: CredentialValidation = common::check_credential(&resolver, &signed_vc).await?;
   println!("VC verification result (false = revoked) > {:#?}", validation.verified);
   assert!(!validation.verified);

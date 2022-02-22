@@ -24,6 +24,7 @@ pub use self::network::NetworkName;
 pub use self::publish::PublishType;
 pub use self::receipt::Receipt;
 pub use self::resolver::Resolver;
+pub use self::resolver::ResolverBuilder;
 pub use self::traits::TangleRef;
 pub use self::traits::TangleResolve;
 
