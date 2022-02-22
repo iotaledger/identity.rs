@@ -80,26 +80,6 @@ impl CredentialValidator {
       .ok_or(ValidationError::IssuanceDate)
   }
 
-  // helper method for verifying the signature of a trusted issuer
-  fn extract_corresponding_issuer_helper<'a, T, I: Iterator<Item = &'a ResolvedIotaDocument>>(
-    credential: &Credential<T>,
-    mut issuer_docs: I,
-  ) -> std::result::Result<&'a ResolvedIotaDocument, ValidationError> {
-    let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
-    match issuer_did {
-      Ok(did) => {
-        // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
-        // the signature
-        issuer_docs
-          .find(|issuer_doc| issuer_doc.document.id() == &did)
-          .ok_or(ValidationError::IncompatibleIssuerDocuments)
-      }
-      Err(error) => {
-        // the issuer's url could not be parsed to a valid IotaDID
-        Err(ValidationError::IssuerUrl { source: error.into() })
-      }
-    }
-  }
   /// Verify the signature using the DID Document of a trusted issuer.
   ///
   /// This method will only attempt to verify the credential's signature if
@@ -120,7 +100,25 @@ impl CredentialValidator {
     trusted_issuers: &[ResolvedIotaDocument],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    Self::extract_corresponding_issuer_helper(credential, trusted_issuers.iter()).and_then(|issuer| {
+    // try to extract the corresponding issuer from `trusted_issuers`
+    let extracted_issuer_result: std::result::Result<&ResolvedIotaDocument, ValidationError> = {
+      let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
+      match issuer_did {
+        Ok(did) => {
+          // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
+          // the signature
+          trusted_issuers
+            .iter()
+            .find(|issuer_doc| issuer_doc.document.id() == &did)
+            .ok_or(ValidationError::IncompatibleIssuerDocuments)
+        }
+        Err(error) => {
+          // the issuer's url could not be parsed to a valid IotaDID
+          Err(ValidationError::IssuerUrl { source: error.into() })
+        }
+      }
+    };
+    extracted_issuer_result.and_then(|issuer| {
       issuer
         .document
         .verify_data(credential, options)
