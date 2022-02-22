@@ -118,6 +118,7 @@ impl CredentialValidator {
         }
       }
     };
+    // use the extracted document to verify the signature
     extracted_issuer_result.and_then(|issuer| {
       issuer
         .document
