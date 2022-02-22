@@ -66,7 +66,7 @@ const TS_SET_ALSO_KNOWN_AS_OPTIONS: &'static str = r#"
  export type SetAlsoKnownAsOptions = {
 
     /**
-     * The URLs to add.
+     * List of URLs for the `alsoKnownAs` property. Duplicates are ignored.
      */
     urls: string | string[],
 };
