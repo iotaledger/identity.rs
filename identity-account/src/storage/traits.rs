@@ -33,7 +33,7 @@ macro_rules! storage_trait {
       /// Creates a new keypair at the specified `location` and returns its `PublicKey`.
       async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
 
-      /// Inserts a private key at the specified `location` and returns its `PublicKey`..
+      /// Inserts a private key at the specified `location` and returns its `PublicKey`.
       async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey>;
 
       /// Retrieves the public key at the specified `location`.

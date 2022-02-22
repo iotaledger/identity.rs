@@ -16,7 +16,7 @@ pub struct WasmEd25519(pub(crate) Ed25519);
 
 #[wasm_bindgen(js_class = Ed25519)]
 impl WasmEd25519 {
-  /// Signs the given message with a base58 encoded string.
+  /// Signs the given `message` with a base58 encoded `key`.
   #[wasm_bindgen]
   pub fn sign(message: &[u8], key: &str) -> Result<Vec<u8>> {
     let key: PrivateKey = decode_b58(key).map_err(wasm_error)?.into();

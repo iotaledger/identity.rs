@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use std::result::Result;
 
 use identity::account::ChainState;
 use identity::account::EncryptionKey;
@@ -36,6 +35,8 @@ use crate::error::JsValueResult;
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseUnit;
+  #[wasm_bindgen(typescript_type = "Promise<DIDLease>")]
+  pub type PromiseDIDLease;
   #[wasm_bindgen(typescript_type = "Promise<string>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
@@ -273,10 +274,10 @@ pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(js_value: JsValue, classname
   let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
   if constructor_name == classname {
     let ptr: JsValue = Reflect::get(&js_value, &JsValue::from_str("ptr"))
-      .map_err(|e| AccountError::JsError(format!("Invalid value: {:?} - Get ptr error: {:?}", js_value, e)))?;
+      .map_err(|_| AccountError::JsError("unable to retrieve `ptr` property".to_string()))?;
     let ptr_u32: u32 = ptr
       .as_f64()
-      .ok_or_else(|| AccountError::JsError(format!("Invalid value: {:?} - Casting error", js_value)))?
+      .ok_or_else(|| AccountError::JsError("unable to read `ptr` property of `JsValue` as f64".to_string()))?
       as u32;
     unsafe { Ok(T::from_abi(ptr_u32)) }
   } else {
