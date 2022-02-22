@@ -144,7 +144,7 @@ impl PresentationValidator {
         IotaDID::parse(value.as_str()).map_err(|error| ValidationError::HolderUrl { source: error.into() })
       })?;
     if &did != holder.document.id() {
-      return Err(ValidationError::IncompatibleHolderDocument);
+      return Err(ValidationError::MismatchedHolder);
     }
     holder
       .document
