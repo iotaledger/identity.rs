@@ -46,7 +46,8 @@ jobs:
             build: |
               npm run build --napi_args=--target=x86_64-unknown-linux-musl && strip *.node
             test-docker: |
-              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs node:16-alpine npm run test
+              docker build -f bindings/stronghold-nodejs/build/Dockerfile.alpine -t tester .
+              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester npm run test
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
