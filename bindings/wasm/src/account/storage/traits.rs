@@ -275,10 +275,10 @@ pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(js_value: JsValue, classname
   let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
   if constructor_name == classname {
     let ptr: JsValue = Reflect::get(&js_value, &JsValue::from_str("ptr"))
-      .map_err(|e| AccountError::JsError(format!("unable to retrieve `ptr` property", js_value, e)))?;
+      .map_err(|_| AccountError::JsError("unable to retrieve `ptr` property".to_string()))?;
     let ptr_u32: u32 = ptr
       .as_f64()
-      .ok_or_else(|| AccountError::JsError(format!("unable to read `ptr` property of `JsValue` as f64", js_value)))?
+      .ok_or_else(|| AccountError::JsError("unable to read `ptr` property of `JsValue` as f64".to_string()))?
       as u32;
     unsafe { Ok(T::from_abi(ptr_u32)) }
   } else {
