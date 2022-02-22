@@ -28,7 +28,11 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async"]
+default = ["arc", "async"]
+
+# Changes smart pointers in Resolver from Rc to Arc.
+# TODO: use Rc instead of Arc in Account for the Wasm bindings too.
+arc = ["identity-iota/arc"]
 
 # Enables async runtime support (Tokio)
 async = ["identity-iota/async"]
