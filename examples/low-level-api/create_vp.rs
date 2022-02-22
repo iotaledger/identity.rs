@@ -99,7 +99,7 @@ async fn main() -> Result<()> {
     PresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
   let fail_fast = true;
 
-  let validation_result = validator.full_validation(
+  let validation_result = validator.validate(
     &presentation,
     &presentation_validation_options,
     &resolved_holder_document,

@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
 
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
-  let validation_result = CredentialValidator::new().full_validation(
+  let validation_result = CredentialValidator::new().validate(
     &signed_vc,
     &CredentialValidationOptions::default(),
     &resolved_issuer,

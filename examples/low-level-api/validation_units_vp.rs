@@ -113,7 +113,7 @@ async fn main() -> Result<()> {
   let resolved_issuer_doc: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
   for credential in presentation.verifiable_credential.iter() {
-    CredentialValidator::new().full_validation(
+    CredentialValidator::new().validate(
       credential,
       &CredentialValidationOptions::default(),
       &resolved_issuer_doc,

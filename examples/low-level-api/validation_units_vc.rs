@@ -46,17 +46,17 @@ pub async fn validation_units_vc() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // validate that the credential is valid two weeks from now
-  CredentialValidator::does_not_expire_before(&credential, two_weeks_from_now_timestamp)?;
+  CredentialValidator::check_not_expired_before(&credential, two_weeks_from_now_timestamp)?;
 
   // define a timestamp representing two weeks ago
   let two_weeks_ago_unix: i64 = Timestamp::now_utc().to_unix() - TWO_WEEKS_IN_SECONDS;
   let two_weeks_ago_timestamp: Timestamp = Timestamp::from_unix(two_weeks_ago_unix)?;
 
   // validate that the credential is active now
-  CredentialValidator::was_not_issued_after(&credential, Timestamp::now_utc())?;
+  CredentialValidator::check_not_issued_after(&credential, Timestamp::now_utc())?;
 
   // validate whether the credential has been active for at least two weeks
-  if CredentialValidator::was_not_issued_after(&credential, two_weeks_ago_timestamp).is_err() {
+  if CredentialValidator::check_not_issued_after(&credential, two_weeks_ago_timestamp).is_err() {
     println!("the credential has been active for less than two weeks!");
   }
 

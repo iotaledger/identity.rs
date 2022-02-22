@@ -168,7 +168,7 @@ impl PresentationValidator {
   /// - Validation of any of the presentation's credentials fails (see
   ///   [CredentialValidator::full_validation](CredentialValidator::full_validation())).
   // Takes &self in case this method will need some pre-computed state in the future.
-  pub fn full_validation<U: Serialize, V: Serialize>(
+  pub fn validate<U: Serialize, V: Serialize>(
     &self,
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
@@ -414,7 +414,7 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
     assert!(validator
-      .full_validation(
+      .validate(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
@@ -480,7 +480,7 @@ mod tests {
 
     let fail_fast = true;
     let error = match validator
-      .full_validation(
+      .validate(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
@@ -542,7 +542,7 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
     let error = match validator
-      .full_validation(
+      .validate(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
@@ -631,7 +631,7 @@ mod tests {
     let fail_fast = true;
 
     let error = match validator
-      .full_validation(
+      .validate(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
@@ -654,7 +654,7 @@ mod tests {
     // check that the validation passes if we change the options to allow for nonTransferableViolations
     let options = presentation_validation_options.allow_non_transferable_violations(true);
     assert!(validator
-      .full_validation(
+      .validate(
         &presentation,
         &options,
         &resolved_holder_document,
@@ -666,7 +666,7 @@ mod tests {
     let options = options.holder_must_be_subject(true);
 
     assert!(validator
-      .full_validation(
+      .validate(
         &presentation,
         &options,
         &resolved_holder_document,
@@ -738,7 +738,7 @@ mod tests {
     let fail_fast = true;
 
     let (presentation_validation_errors, credential_errors) = match validator
-      .full_validation(
+      .validate(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,
@@ -823,7 +823,7 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
 
     let (presentation_validation_errors, credential_errors) = match validator
-      .full_validation(
+      .validate(
         &presentation,
         &presentation_validation_options,
         &resolved_holder_document,

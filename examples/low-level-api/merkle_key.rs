@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
   assert!(CredentialValidator::new()
-    .full_validation(
+    .validate(
       &credential,
       &CredentialValidationOptions::default(),
       &resolved_issuer,
@@ -110,7 +110,7 @@ async fn main() -> Result<()> {
 
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   assert!(CredentialValidator::new()
-    .full_validation(
+    .validate(
       &credential,
       &CredentialValidationOptions::default(),
       &resolved_issuer,
