@@ -37,7 +37,7 @@ impl CredentialValidator {
 
   /// Validates the semantic structure of the [Credential].
   pub fn check_structure<T>(credential: &Credential<T>) -> Result<()> {
-    Self::check_structure_local_error(credential).map_err(Error::UnsuccessfulValidationUnit)
+    Self::check_structure_local_error(credential).map_err(Error::IsolatedValidationError)
   }
 
   fn check_structure_local_error<T>(credential: &Credential<T>) -> ValidationUnitResult {
@@ -48,7 +48,7 @@ impl CredentialValidator {
 
   /// Validate that the [Credential] does not expire before the specified [Timestamp].
   pub fn check_not_expired_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
-    Self::check_not_expired_before_local_error(credential, timestamp).map_err(Error::UnsuccessfulValidationUnit)
+    Self::check_not_expired_before_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
   }
 
   fn check_not_expired_before_local_error<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
@@ -62,7 +62,7 @@ impl CredentialValidator {
 
   /// Validate that the [Credential] is issued no later than the specified [Timestamp].
   pub fn check_not_issued_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
-    Self::check_not_issued_after_local_error(credential, timestamp).map_err(Error::UnsuccessfulValidationUnit)
+    Self::check_not_issued_after_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
   }
 
   fn check_not_issued_after_local_error<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
@@ -83,7 +83,7 @@ impl CredentialValidator {
     trusted_issuers: &[ResolvedIotaDocument],
     options: &VerifierOptions,
   ) -> Result<()> {
-    Self::verify_signature_local_error(credential, trusted_issuers, options).map_err(Error::UnsuccessfulValidationUnit)
+    Self::verify_signature_local_error(credential, trusted_issuers, options).map_err(Error::IsolatedValidationError)
   }
 
   fn verify_signature_local_error<T: Serialize>(
@@ -144,7 +144,7 @@ impl CredentialValidator {
   ) -> Result<()> {
     self
       .full_validation_local_error(credential, options, std::slice::from_ref(issuer), fail_fast)
-      .map_err(Error::UnsuccessfulCredentialValidation)
+      .map_err(Error::CredentialValidationError)
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
@@ -307,7 +307,7 @@ mod tests {
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+      Error::CredentialValidationError(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
           _ => unreachable!(),
@@ -385,7 +385,7 @@ mod tests {
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+      Error::CredentialValidationError(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
           _ => unreachable!(),
@@ -441,7 +441,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      Error::UnsuccessfulValidationUnit(ValidationError::IncompatibleIssuerDocuments)
+      Error::IsolatedValidationError(ValidationError::IncompatibleIssuerDocuments)
     ));
 
     // also check that the full validation fails as expected
@@ -458,7 +458,7 @@ mod tests {
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+      Error::CredentialValidationError(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
           _ => unreachable!(),
@@ -489,7 +489,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      Error::UnsuccessfulValidationUnit(ValidationError::IssuerProof { .. })
+      Error::IsolatedValidationError(ValidationError::IssuerProof { .. })
     ));
 
     // check that full_validation also fails as expected
@@ -505,7 +505,7 @@ mod tests {
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+      Error::CredentialValidationError(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
           _ => unreachable!(),
@@ -545,7 +545,7 @@ mod tests {
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
+      Error::CredentialValidationError(accumulated_validation_error) => {
         match accumulated_validation_error.validation_errors {
           OneOrMany::One(validation_error) => validation_error,
           _ => unreachable!(),
@@ -587,9 +587,7 @@ mod tests {
       .validate(&credential, &options, &other_issuer_resolved_doc, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
-        accumulated_validation_error.validation_errors
-      }
+      Error::CredentialValidationError(accumulated_validation_error) => accumulated_validation_error.validation_errors,
       _ => unreachable!(),
     };
 
@@ -625,9 +623,7 @@ mod tests {
       .validate(&credential, &options, &other_issuer_resolved_doc, fail_fast)
       .unwrap_err()
     {
-      Error::UnsuccessfulCredentialValidation(accumulated_validation_error) => {
-        accumulated_validation_error.validation_errors
-      }
+      Error::CredentialValidationError(accumulated_validation_error) => accumulated_validation_error.validation_errors,
       _ => unreachable!(),
     };
 

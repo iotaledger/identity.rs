@@ -46,13 +46,13 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
-  /// Caused by a single validation unit failing.
+  /// Caused by a single concern credential or presentation validation method failing.
   #[error("A validation unit failed")]
-  UnsuccessfulValidationUnit(#[from] crate::credential::errors::ValidationError),
+  IsolatedValidationError(#[from] crate::credential::errors::ValidationError),
   /// Caused by a failure to validate a credential.  
   #[error("credential validation failed")]
-  UnsuccessfulCredentialValidation(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
+  CredentialValidationError(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
   /// Caused by a failure to validate a presentation.
   #[error("presentation validation failed")]
-  UnsuccessfulPresentationValidation(#[source] crate::credential::errors::CompoundPresentationValidationError),
+  PresentationValidationError(#[source] crate::credential::errors::CompoundPresentationValidationError),
 }

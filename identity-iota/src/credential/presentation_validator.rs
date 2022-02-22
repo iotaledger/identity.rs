@@ -41,7 +41,7 @@ impl PresentationValidator {
 
   /// Validates the semantic structure of the [Presentation].
   pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
-    Self::check_structure_local_error(presentation).map_err(Error::UnsuccessfulValidationUnit)
+    Self::check_structure_local_error(presentation).map_err(Error::IsolatedValidationError)
   }
 
   fn check_structure_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
@@ -70,7 +70,7 @@ impl PresentationValidator {
   /// If one needs to find *all* the nonTransferable violations of this presentation, then see
   /// [Self::non_transferable_violations](Self::non_transferable_violations()).
   pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
-    Self::check_non_transferable_local_error(presentation).map_err(Error::UnsuccessfulValidationUnit)
+    Self::check_non_transferable_local_error(presentation).map_err(Error::IsolatedValidationError)
   }
 
   fn check_non_transferable_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
@@ -128,7 +128,7 @@ impl PresentationValidator {
     options: &VerifierOptions,
   ) -> Result<()> {
     Self::verify_presentation_signature_local_error(presentation, holder, options)
-      .map_err(Error::UnsuccessfulValidationUnit)
+      .map_err(Error::IsolatedValidationError)
   }
 
   fn verify_presentation_signature_local_error<U: Serialize, V: Serialize>(
@@ -178,7 +178,7 @@ impl PresentationValidator {
   ) -> Result<()> {
     self
       .full_validation_local_error(presentation, options, holder, issuers, fail_fast)
-      .map_err(Error::UnsuccessfulPresentationValidation)
+      .map_err(Error::PresentationValidationError)
   }
 
   fn full_validation_local_error<U: Serialize, V: Serialize>(
@@ -489,7 +489,7 @@ mod tests {
       )
       .unwrap_err()
     {
-      Error::UnsuccessfulPresentationValidation(mut err) => err.presentation_validation_errors.pop().unwrap(),
+      Error::PresentationValidationError(mut err) => err.presentation_validation_errors.pop().unwrap(),
       _ => unreachable!(),
     };
 
@@ -551,7 +551,7 @@ mod tests {
       )
       .unwrap_err()
     {
-      Error::UnsuccessfulPresentationValidation(err) => {
+      Error::PresentationValidationError(err) => {
         assert!(err.presentation_validation_errors.is_empty());
         err.credential_errors
       }
@@ -640,7 +640,7 @@ mod tests {
       )
       .unwrap_err()
     {
-      Error::UnsuccessfulPresentationValidation(mut err) => err.presentation_validation_errors.pop().unwrap(),
+      Error::PresentationValidationError(mut err) => err.presentation_validation_errors.pop().unwrap(),
       _ => unreachable!(),
     };
 
@@ -747,7 +747,7 @@ mod tests {
       )
       .unwrap_err()
     {
-      Error::UnsuccessfulPresentationValidation(err) => (err.presentation_validation_errors, err.credential_errors),
+      Error::PresentationValidationError(err) => (err.presentation_validation_errors, err.credential_errors),
       _ => unreachable!(),
     };
 
@@ -832,7 +832,7 @@ mod tests {
       )
       .unwrap_err()
     {
-      Error::UnsuccessfulPresentationValidation(err) => (err.presentation_validation_errors, err.credential_errors),
+      Error::PresentationValidationError(err) => (err.presentation_validation_errors, err.credential_errors),
       _ => unreachable!(),
     };
 
