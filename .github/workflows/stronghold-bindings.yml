@@ -44,13 +44,13 @@ jobs:
             setup: |
               sudo apt-get install -y musl-tools
             build: |
-              npm run build -- --target=x86_64-unknown-linux-musl && strip *.node
+              npm run build --napi_args=--target=x86_64-unknown-linux-musl && strip *.node
             test-docker: |
               docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs node:16-alpine npm run test
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
-              npm run build -- --target=aarch64-apple-darwin
+              npm run build --napi_args=--target=aarch64-apple-darwin
               strip -x *.node
             test: |
               npm run test

@@ -24,7 +24,7 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "npm run create-npm-dir && npm run build:napi && npm run build:ts",
+    "build": "npm run create-npm-dir && npm run build:napi -- $npm_config_napi_args && npm run build:ts",
     "build:ts": "tsc node_adapter/stronghold_storage.ts",
     "build:napi": "napi build --platform --release",
     "build:napi:debug": "napi build --platform",
