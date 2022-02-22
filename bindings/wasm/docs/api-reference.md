@@ -117,9 +117,10 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -134,19 +135,9 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -159,16 +150,38 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
-<a name="Account+createService"></a>
+<a name="Account+setAlsoKnownAs"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>CreateServiceOptions</code> | 
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -307,6 +320,17 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
