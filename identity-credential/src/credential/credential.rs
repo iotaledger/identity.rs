@@ -201,7 +201,7 @@ impl<T> TryMethod for Credential<T> {
 mod tests {
   use identity_core::convert::FromJson;
 
-  use super::*;
+  use crate::credential::Credential;
 
   const JSON1: &str = include_str!("../../tests/fixtures/credential-1.json");
   const JSON2: &str = include_str!("../../tests/fixtures/credential-2.json");
@@ -216,17 +216,19 @@ mod tests {
   const JSON11: &str = include_str!("../../tests/fixtures/credential-11.json");
   const JSON12: &str = include_str!("../../tests/fixtures/credential-12.json");
 
-  fn deserialize_credential(credential_str: &str) -> Credential {
-    Credential::from_json(credential_str).unwrap()
-  }
-
   #[test]
   fn test_from_json() {
-    let credentials = [
-      JSON1, JSON2, JSON3, JSON4, JSON5, JSON6, JSON7, JSON8, JSON9, JSON10, JSON11, JSON12,
-    ];
-    for credential_str in credentials {
-      let _ = deserialize_credential(credential_str);
-    }
+    let _credential: Credential = Credential::from_json(JSON1).unwrap();
+    let _credential: Credential = Credential::from_json(JSON2).unwrap();
+    let _credential: Credential = Credential::from_json(JSON3).unwrap();
+    let _credential: Credential = Credential::from_json(JSON4).unwrap();
+    let _credential: Credential = Credential::from_json(JSON5).unwrap();
+    let _credential: Credential = Credential::from_json(JSON6).unwrap();
+    let _credential: Credential = Credential::from_json(JSON7).unwrap();
+    let _credential: Credential = Credential::from_json(JSON8).unwrap();
+    let _credential: Credential = Credential::from_json(JSON9).unwrap();
+    let _credential: Credential = Credential::from_json(JSON10).unwrap();
+    let _credential: Credential = Credential::from_json(JSON11).unwrap();
+    let _credential: Credential = Credential::from_json(JSON12).unwrap();
   }
 }
