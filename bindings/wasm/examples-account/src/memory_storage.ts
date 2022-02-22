@@ -22,7 +22,7 @@ class MemStore implements Storage {
 
     public async keyNew(did: DID, keyLocation: KeyLocation): Promise<string> {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
-            throw 'Unsuported Method'
+            throw new Error('Unsuported Method')
         }
         const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
         const publicKey: string = keyPair.public;
@@ -37,7 +37,7 @@ class MemStore implements Storage {
 
     public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string): Promise<string> {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
-            throw 'Unsuported Method'
+            throw new Error('Unsuported Method')
         }
         let secretKey: PrivateKey = PrivateKey.fromBase58String(privateKey);
         let publicKey: string = secretKey.publicKey();
@@ -66,9 +66,9 @@ class MemStore implements Storage {
                 let keyPair: KeyPair = vault.get(keyLocation);
                 return keyPair.public
             }
-            throw 'Key location not found'
+            throw new Error('Key location not found')
         }
-        throw 'DID not found'
+        throw new Error('DID not found')
     }
 
     public async keyDel(did: DID, keyLocation: KeyLocation): Promise<void> {
@@ -79,15 +79,15 @@ class MemStore implements Storage {
 
     public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
         if (!this._vaults.has(did)) {
-            throw 'DID not found'
+            throw new Error('DID not found')
         }
         let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
         if (!vault.has(keyLocation)) {
-            throw 'Key location not found'
+            throw new Error('Key location not found')
         }
         let keyPair: KeyPair = vault.get(keyLocation);
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
-            throw 'Unsuported Method'
+            throw new Error('Unsuported Method')
         }
         let signature: Uint8Array = Ed25519.sign(data, keyPair.private);
         return new Signature(keyPair.public, signature)
