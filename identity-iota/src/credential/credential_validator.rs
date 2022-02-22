@@ -82,11 +82,11 @@ impl CredentialValidator {
 
   /// Verify the signature using the DID Document of a trusted issuer.
   ///
-  /// This method will only attempt to verify the credential's signature if
-  /// the credential issuer url can be parsed to a DID belonging to one of the trusted issuers.
-  ///
-  /// # Terminology
-  /// This method is a *validation unit*
+  /// # Errors
+  /// This method immediately returns an error if
+  /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
+  /// to verify the credential's signature will be made and an error is returned upon failure.
+
   pub fn verify_signature<T: Serialize>(
     credential: &Credential<T>,
     trusted_issuers: &[ResolvedIotaDocument],
