@@ -41,7 +41,7 @@ default-features = false
 features = ["blake2b"]
 
 [dev-dependencies]
-proptest = "1.0.0"
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.15", default-features = false, features = ["macros"] }
 
 [features]
