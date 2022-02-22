@@ -7,3 +7,5 @@ mod create_service;
 mod delete_method;
 mod delete_service;
 mod detach_method_relationships;
+mod set_also_known_as;
+mod set_controller;
