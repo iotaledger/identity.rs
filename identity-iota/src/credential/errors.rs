@@ -107,11 +107,7 @@ pub struct CompoundPresentationValidationError {
 impl Display for CompoundPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let credential_error_formatter = |(position, reason): (&usize, &AccumulatedCredentialValidationError)| -> String {
-      format!(
-        "the credential at position {} failed validation for the following reasons: {}",
-        position,
-        reason.to_string().as_str()
-      )
+      format!("credential num. {} errors: {}", position, reason.to_string().as_str())
     };
 
     let error_string_iter = self
