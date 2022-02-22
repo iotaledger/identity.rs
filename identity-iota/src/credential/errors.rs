@@ -99,12 +99,12 @@ impl std::error::Error for AccumulatedCredentialValidationError {}
 
 #[derive(Debug)]
 /// An error caused by a failure to validate a Presentation.
-pub struct AccumulatedPresentationValidationError {
+pub struct CompoundPresentationValidationError {
   pub credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError>,
   pub presentation_validation_errors: Vec<ValidationError>,
 }
 
-impl Display for AccumulatedPresentationValidationError {
+impl Display for CompoundPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let credential_error_formatter = |(position, reason): (&usize, &AccumulatedCredentialValidationError)| -> String {
       format!(
@@ -124,4 +124,4 @@ impl Display for AccumulatedPresentationValidationError {
   }
 }
 
-impl std::error::Error for AccumulatedPresentationValidationError {}
+impl std::error::Error for CompoundPresentationValidationError {}

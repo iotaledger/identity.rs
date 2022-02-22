@@ -54,5 +54,5 @@ pub enum Error {
   UnsuccessfulCredentialValidation(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
   /// Caused by a failure to validate a presentation.
   #[error("presentation validation failed")]
-  UnsuccessfulPresentationValidation(#[source] crate::credential::errors::AccumulatedPresentationValidationError),
+  UnsuccessfulPresentationValidation(#[source] crate::credential::errors::CompoundPresentationValidationError),
 }

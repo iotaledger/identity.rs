@@ -10,7 +10,7 @@ use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
 use super::errors::AccumulatedCredentialValidationError;
-use super::errors::AccumulatedPresentationValidationError;
+use super::errors::CompoundPresentationValidationError;
 use super::errors::ValidationError;
 use super::PresentationValidationOptions;
 use crate::credential::credential_validator::CredentialValidator;
@@ -26,7 +26,7 @@ pub struct PresentationValidator;
 // Use the following pattern throughout: for each public method there is corresponding private method returning a more
 // local error.
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
-type PresentationValidationResult = std::result::Result<(), AccumulatedPresentationValidationError>;
+type PresentationValidationResult = std::result::Result<(), CompoundPresentationValidationError>;
 
 impl Default for PresentationValidator {
   fn default() -> Self {
@@ -256,7 +256,7 @@ impl PresentationValidator {
       .collect();
 
     if !presentation_validation_errors.is_empty() || !credential_errors.is_empty() {
-      Err(AccumulatedPresentationValidationError {
+      Err(CompoundPresentationValidationError {
         presentation_validation_errors,
         credential_errors,
       })
