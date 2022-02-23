@@ -16,11 +16,11 @@ use identity::credential::Subject;
 use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
-use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::Resolver;
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
@@ -49,13 +49,13 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
 }
 
 /// Convenience function for checking that a verifiable credential is valid and not revoked.
-pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<CredentialValidation> {
+pub async fn check_credential(resolver: &Resolver, credential: &Credential) -> Result<CredentialValidation> {
   // Convert the Verifiable Credential to JSON to potentially "exchange" with a verifier
   let credential_json = credential.to_json()?;
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(client);
+  let validator: CredentialValidator<Resolver> = CredentialValidator::new(resolver);
 
   // Perform the validation operation.
   let validation: CredentialValidation = validator
@@ -69,7 +69,7 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
 ///
 /// See "manipulate_did" for further explanation.
 pub async fn add_new_key(
-  client: &ClientMap,
+  client: &Client,
   doc: &IotaDocument,
   key: &KeyPair,
   receipt: &Receipt,
