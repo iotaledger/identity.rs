@@ -13,6 +13,7 @@ use super::errors::AccumulatedCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::ValidationError;
 use super::PresentationValidationOptions;
+use super::SubjectHolderRelationship;
 use crate::credential::credential_validator::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -190,25 +191,21 @@ impl PresentationValidator {
     fail_fast: bool,
   ) -> PresentationValidationResult {
     // first run the presentation specific validation units.
-    // We set up an iterator over these functions and collect any encountered errors
+    // we set up an iterator over these functions and collect any encountered errors
     let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(presentation));
     let signature_validation = std::iter::once_with(|| {
       Self::verify_presentation_signature_local_error(presentation, holder, &options.presentation_verifier_options)
     });
 
-    // how the subject holder relationship is validated depends on the settings
-    // if holder_must_be_subject is true then this is what we check for and the presence of the nonTransferable property
-    // is irrelevant. Otherwise this check depends on the value of `allow_non_transferable` parameter.
+    // setup the validator that checks the relationship between the subject and the holder.
     let number_of_credentials = presentation.verifiable_credential.len();
     let subject_holder_relationship_validation = {
-      let (max_holder_not_subject_checks, max_non_transferable_violation_checks) = match (
-        options.holder_must_be_subject,
-        options.allow_non_transferable_violations,
-      ) {
-        (true, _) => (number_of_credentials, 0),
-        (false, false) => (0, number_of_credentials),
-        (false, true) => (0, 0),
-      };
+      let (max_holder_not_subject_checks, max_non_transferable_violation_checks) =
+        match options.subject_holder_relationship {
+          SubjectHolderRelationship::AlwaysSubject => (number_of_credentials, 0),
+          SubjectHolderRelationship::SubjectOnNonTransferable => (0, number_of_credentials),
+          SubjectHolderRelationship::Any => (0, 0),
+        };
       Self::holder_not_subject_iter(presentation)
         .take(max_holder_not_subject_checks)
         .chain(Self::non_transferable_violations(presentation).take(max_non_transferable_violation_checks))
@@ -649,10 +646,9 @@ mod tests {
       ValidationError::InvalidHolderSubjectRelationship { credential_position: 1 }
     ));
 
-    // Todo: Consider moving these last two checks out into separate tests.
-
-    // check that the validation passes if we change the options to allow for nonTransferableViolations
-    let options = presentation_validation_options.allow_non_transferable_violations(true);
+    // check that the validation passes if we change the options to allow any relationship between the subject and
+    // holder.
+    let options = presentation_validation_options.subject_holder_relationship(SubjectHolderRelationship::Any);
     assert!(validator
       .validate(
         &presentation,
@@ -662,8 +658,8 @@ mod tests {
         fail_fast,
       )
       .is_ok());
-    // finally check that full_validation now does not pass if we set holder_must_be_subject = true.
-    let options = options.holder_must_be_subject(true);
+    // finally check that full_validation now does not pass if we declare that the subject must always be the holder.
+    let options = options.subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
     assert!(validator
       .validate(

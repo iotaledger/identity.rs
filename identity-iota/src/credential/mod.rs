@@ -12,3 +12,4 @@ pub use self::credential_validator::CredentialValidator;
 pub use self::presentation_validator::PresentationValidator;
 pub use self::validation_options::CredentialValidationOptions;
 pub use self::validation_options::PresentationValidationOptions;
+pub use self::validation_options::SubjectHolderRelationship;

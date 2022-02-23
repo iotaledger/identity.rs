@@ -47,6 +47,27 @@ impl CredentialValidationOptions {
 
 #[derive(Debug)]
 #[non_exhaustive]
+/// Declares how a credential subject must relate to the presentation holder.
+///
+/// See [PresentationValidationOptions::subject_holder_relationship()].
+pub enum SubjectHolderRelationship {
+  /// Declare that the holder must always match the subject.
+  AlwaysSubject,
+  /// Declare that the holder must match the subject on credentials with the nonTransferable property set.
+  SubjectOnNonTransferable,
+  /// Declares that the subject is not required to have any kind of relationship to the holder.  
+  Any,
+}
+
+impl Default for SubjectHolderRelationship {
+  fn default() -> Self {
+    // TODO: Should the default be the most strict variant? Should there be a default at all?
+    Self::SubjectOnNonTransferable
+  }
+}
+
+#[derive(Debug, Default)]
+#[non_exhaustive]
 /// Options to declare validation criteria for
 /// [PresentationValidator::full_validation](super::PresentationValidator::full_validation()).
 pub struct PresentationValidationOptions {
@@ -56,27 +77,14 @@ pub struct PresentationValidationOptions {
   /// Declares that the presentation's signature is to be verified according to these
   /// [VerifierOptions].
   pub presentation_verifier_options: VerifierOptions,
-  pub(super) allow_non_transferable_violations: bool, // private as we may change the representation
-  pub(super) holder_must_be_subject: bool,            /* private as we may change the representation
-                                                       * note that holder_must_be_subject = true +
-                                                       * allow_non_transferable_violations = true can lead to
-                                                       * confusion
-                                                       * it would be better to introduce an enum
-                                                       * HolderSubjcetRelationShip {AlwaysSubject,
-                                                       * SubjectOnNonTransferable, DoNotValidate}
-                                                       * but it is not clear how we can expose that to javascript. */
+  /// Declares how the presentation's credential subjects must relate to the holder.
+  pub subject_holder_relationship: SubjectHolderRelationship,
 }
 
 impl PresentationValidationOptions {
   /// Constructor that sets all options to their defaults.
   pub fn new() -> Self {
-    Self {
-      shared_validation_options: CredentialValidationOptions::default(),
-      presentation_verifier_options: VerifierOptions::default(),
-      allow_non_transferable_violations: false,
-      holder_must_be_subject: false, /* Todo: should the default be true (more restrictive, but our own invention
-                                      * (not defined in the spec)) */
-    }
+    Self::default()
   }
   /// Declare that all the presentation's credentials are all to be validated according to the
   /// given `options`.
@@ -91,21 +99,9 @@ impl PresentationValidationOptions {
     self
   }
 
-  /// Declare whether a presentation may be considered valid despite there being credentials with the nonTransferable
-  /// property set containing a subject different from the holder.  
-  pub fn allow_non_transferable_violations(mut self, value: bool) -> Self {
-    self.allow_non_transferable_violations = value;
+  /// Declare how the presentation's credential subjects must relate to the holder.
+  pub fn subject_holder_relationship(mut self, options: SubjectHolderRelationship) -> Self {
+    self.subject_holder_relationship = options;
     self
-  }
-  /// Declare whether credential subjects may be different from the holder.
-  pub fn holder_must_be_subject(mut self, value: bool) -> Self {
-    self.holder_must_be_subject = value;
-    self
-  }
-}
-
-impl Default for PresentationValidationOptions {
-  fn default() -> Self {
-    Self::new()
   }
 }
