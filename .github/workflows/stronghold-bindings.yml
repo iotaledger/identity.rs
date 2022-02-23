@@ -137,7 +137,7 @@ jobs:
           path: ${{ env.WORKING_DIRECTORY }}/artifacts
 
       - name: Create npm folder
-        run: npm run create-npm-folder
+        run: npm run create-npm-dir
 
       - name: Move artifacts
         run: npm run artifacts
