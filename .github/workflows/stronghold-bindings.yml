@@ -44,17 +44,19 @@ jobs:
             setup: |
               sudo apt-get install -y musl-tools
             build: |
-              npm run build --napi_args=--target=x86_64-unknown-linux-musl && strip *.node
+              NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+              npm run build && strip *.node
             test-docker: |
               docker build -f bindings/stronghold-nodejs/build/Dockerfile.alpine -t tester .
               docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d stronghold-nodejs.linux-x64-musl.node && npm run test"
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
-              npm run build --napi_args=--target=aarch64-apple-darwin
+              NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
               strip -x *.node
+            # we can't test this properly because the macos-latest runners don't have apple silicon / aarch64
             test: |
-              npm run test
+              echo let's hope for the best
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -142,7 +144,7 @@ jobs:
 
       - name: List packages
         run: ls -R ./npm
-        
+
       # - name: Publish
       #   run: |
       #     if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
