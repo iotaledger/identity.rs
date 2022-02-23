@@ -51,14 +51,14 @@ impl PresentationValidator {
       .map_err(ValidationError::PresentationStructure)
   }
 
-  /// An iterator over the indices corresponding to the credentials that have the
-  /// `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
-  /// holder.
-  ///
-  /// The output of this iterator will always be a subset of
-  /// [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
-  pub fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter_internal(presentation)
+  // An iterator over the indices corresponding to the credentials that have the
+  // `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
+  // holder.
+  //
+  // The output of this iterator will always be a subset of
+  // [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
+  fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
+    Self::holder_not_subject_iter_helper(presentation)
       .filter(|(_, credential)| credential.non_transferable.unwrap_or(false))
       .map(|(position, _)| position)
   }
@@ -66,10 +66,7 @@ impl PresentationValidator {
   /// Validates that the nonTransferable property is met.
   ///
   /// # Errors
-  /// Returns at the first credential requiring a nonTransferable property that is not met.
-  ///
-  /// If one needs to find *all* the nonTransferable violations of this presentation, then see
-  /// [Self::non_transferable_violations](Self::non_transferable_violations()).
+  /// Returns an error at the first credential requiring a nonTransferable property that is not met.
   pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
     Self::check_non_transferable_local_error(presentation).map_err(Error::IsolatedValidationError)
   }
@@ -85,16 +82,31 @@ impl PresentationValidator {
     }
   }
 
-  /// An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
-  /// presentation's holder.
-  ///
-  /// The output of this iterator is always a superset of
-  /// [Self::non_transferable_violations]([Self::non_transferable_violations()]).
-  pub fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter_internal(presentation).map(|(position, _)| position)
+  // An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
+  // presentation's holder.
+  //
+  // The output of this iterator is always a superset of
+  // [Self::non_transferable_violations]([Self::non_transferable_violations()]).
+  fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
+    Self::holder_not_subject_iter_helper(presentation).map(|(position, _)| position)
   }
 
-  fn holder_not_subject_iter_internal<U, V>(
+  /// Validates that the presentation only contains credentials where the credential subject is the holder.
+  ///
+  /// # Errors
+  /// Returns an error at the first credential with a credential subject not corresponding to the holder.
+  pub fn check_holder_is_always_subject<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+    if let Some(position) = Self::holder_not_subject_iter(presentation).next() {
+      let err = ValidationError::InvalidHolderSubjectRelationship {
+        credential_position: position,
+      };
+      Err(err)
+    } else {
+      Ok(())
+    }
+  }
+
+  fn holder_not_subject_iter_helper<U, V>(
     presentation: &Presentation<U, V>,
   ) -> impl Iterator<Item = (usize, &Credential<V>)> + '_ {
     presentation
