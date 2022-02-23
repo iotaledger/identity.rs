@@ -163,11 +163,10 @@ impl WasmResolver {
     //       Would be solved with Rc internal representation, pending memory leak discussions.
 
     // Extract unique issuers.
-    let mut issuers: HashSet<IotaDID> = HashSet::new();
-    for credential in presentation.0.verifiable_credential.iter() {
-      let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str()).wasm_result()?;
-      issuers.insert(issuer);
-    }
+    let issuers: HashSet<IotaDID> = presentation.0.verifiable_credential
+      .iter()
+      .map(|credential| IotaDID::parse(credential.issuer.url().as_str()).wasm_result())
+      .collect::<Result<_>>()?;
 
     let resolver: Rc<Resolver> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {

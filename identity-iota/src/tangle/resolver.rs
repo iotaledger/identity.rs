@@ -134,11 +134,10 @@ impl Resolver {
   /// Errors if any issuer URL is not a valid [`IotaDID`] or DID resolution fails.
   pub async fn resolve_presentation_issuers(&self, presentation: &Presentation) -> Result<Vec<ResolvedIotaDocument>> {
     // Extract unique issuers.
-    let mut issuers: HashSet<IotaDID> = HashSet::new();
-    for credential in presentation.verifiable_credential.iter() {
-      let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str())?;
-      issuers.insert(issuer);
-    }
+    let issuers: HashSet<IotaDID> = presentation.verifiable_credential
+      .iter()
+      .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
+      .collect::<Result<_>>()?;
 
     // Resolve issuers concurrently.
     futures::future::try_join_all(issuers.iter().map(|issuer| self.resolve(issuer)).collect::<Vec<_>>()).await
