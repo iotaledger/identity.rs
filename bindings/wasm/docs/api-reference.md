@@ -2102,8 +2102,8 @@ Deserializes a `Document` object from a JSON object.
     * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
     * [.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
     * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.resolve_presentation_issuers(presentation)](#Resolver+resolve_presentation_issuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
-    * [.resolve_presentation_holder(presentation)](#Resolver+resolve_presentation_holder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 
 <a name="new_Resolver_new"></a>
 
@@ -2173,9 +2173,9 @@ Errors if the issuer URL is not a valid `DID` or document resolution fails.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 
-<a name="Resolver+resolve_presentation_issuers"></a>
+<a name="Resolver+resolvePresentationIssuers"></a>
 
-### resolver.resolve\_presentation\_issuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
@@ -2189,9 +2189,9 @@ Errors if any issuer URL is not a valid `DID` or document resolution fails.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
-<a name="Resolver+resolve_presentation_holder"></a>
+<a name="Resolver+resolvePresentationHolder"></a>
 
-### resolver.resolve\_presentation\_holder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+### resolver.resolvePresentationHolder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Fetches the DID Document of the holder of a `Presentation`.
 
 # Errors

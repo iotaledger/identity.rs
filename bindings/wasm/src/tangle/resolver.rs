@@ -145,6 +145,7 @@ impl WasmResolver {
   /// # Errors
   ///
   /// Errors if any issuer URL is not a valid `DID` or document resolution fails.
+  #[wasm_bindgen(js_name = resolvePresentationIssuers)]
   pub fn resolve_presentation_issuers(&self, presentation: &WasmPresentation) -> Result<PromiseArrayResolvedDocument> {
     // TODO: reimplemented function to avoid cloning the entire presentation.
     //       Would be solved with Rc internal representation, pending memory leak discussions.
@@ -186,6 +187,7 @@ impl WasmResolver {
   /// # Errors
   ///
   /// Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
+  #[wasm_bindgen(js_name = resolvePresentationHolder)]
   pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseResolvedDocument> {
     // TODO: reimplemented function to avoid cloning the entire presentation.
     //       Would be solved with Rc internal representation, pending memory leak discussions.
