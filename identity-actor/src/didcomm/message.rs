@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::ActorRequest;
+use crate::AsyncActorRequest;
 
 use super::thread_id::ThreadId;
 
@@ -44,12 +45,10 @@ impl<T> DidCommPlaintextMessage<T> {
   }
 }
 
-impl<T> ActorRequest for DidCommPlaintextMessage<T>
+impl<T> AsyncActorRequest for DidCommPlaintextMessage<T>
 where
   T: ActorRequest,
 {
-  type Response = ();
-
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     self.body.request_name()
   }

@@ -16,6 +16,8 @@ pub use actor::ActorState;
 pub use actor::HandlerBuilder;
 pub use actor_builder::ActorBuilder;
 pub use actor_request::ActorRequest;
+pub use actor_request::AsyncActorRequest;
+pub use actor_request::RequestMode;
 pub use endpoint::Endpoint;
 pub use errors::Category;
 pub use errors::Error;

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Endpoint;
+use crate::RequestMode;
 use crate::Result;
 
 use serde::Deserialize;
@@ -11,13 +12,15 @@ use std::fmt::Debug;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RequestMessage {
   pub endpoint: Endpoint,
+  pub request_mode: RequestMode,
   pub data: Vec<u8>,
 }
 
 impl RequestMessage {
-  pub fn new(name: impl AsRef<str>, data: Vec<u8>) -> Result<Self> {
+  pub fn new(name: impl AsRef<str>, request_mode: RequestMode, data: Vec<u8>) -> Result<Self> {
     Ok(Self {
       endpoint: Endpoint::new(name)?,
+      request_mode,
       data,
     })
   }

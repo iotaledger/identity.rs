@@ -21,6 +21,7 @@ use crate::Endpoint;
 use crate::Handler;
 use crate::RemoteSendError;
 use crate::RequestContext;
+use crate::RequestMode;
 use crate::Result;
 
 use dashmap::DashMap;
@@ -315,15 +316,19 @@ impl Actor {
     thread_id: &ThreadId,
     message: Request,
   ) -> Result<()> {
-    self.create_thread_channels(thread_id);
+    let request_mode: RequestMode = message.request_mode();
 
-    // let message: serde_json::Value = serde_json::to_value(&message).expect("TODO");
+    // TODO: Only do this after successful hook invocation?
+    if request_mode == RequestMode::Asynchronous {
+      self.create_thread_channels(thread_id);
+    }
+
     let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
 
     let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
     let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
-    let message = RequestMessage::new(name, dcpm_vec)?;
+    let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
 
     log::debug!("Sending `{}` message", name);
 

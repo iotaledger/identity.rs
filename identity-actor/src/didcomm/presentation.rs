@@ -112,7 +112,7 @@ pub async fn presentation_verifier_handler(
 
 use std::borrow::Cow;
 
-use crate::ActorRequest;
+use crate::AsyncActorRequest;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -120,9 +120,7 @@ use serde::Serialize;
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest(u32);
 
-impl ActorRequest for PresentationRequest {
-  type Response = ();
-
+impl AsyncActorRequest for PresentationRequest {
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_request")
   }
@@ -131,9 +129,7 @@ impl ActorRequest for PresentationRequest {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationOffer(u32, u32);
 
-impl ActorRequest for PresentationOffer {
-  type Response = ();
-
+impl AsyncActorRequest for PresentationOffer {
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_offer")
   }
@@ -142,9 +138,7 @@ impl ActorRequest for PresentationOffer {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Presentation(u32, u32, u32);
 
-impl ActorRequest for Presentation {
-  type Response = ();
-
+impl AsyncActorRequest for Presentation {
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation")
   }
@@ -153,9 +147,7 @@ impl ActorRequest for Presentation {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationResult(u32, u32, u32, u32);
 
-impl ActorRequest for PresentationResult {
-  type Response = ();
-
+impl AsyncActorRequest for PresentationResult {
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_result")
   }

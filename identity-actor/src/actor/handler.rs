@@ -86,6 +86,10 @@ where
     Ok(Box::pin(future))
   }
 
+  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
+    crate::traits::request_handler_serialize_response::<REQ>(input)
+  }
+
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
     crate::traits::request_handler_deserialize_request::<REQ>(input)
   }

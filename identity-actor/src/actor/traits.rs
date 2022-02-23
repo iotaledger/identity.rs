@@ -26,6 +26,8 @@ pub trait RequestHandler: Send + Sync {
 
   fn object_type_id(&self) -> TypeId;
 
+  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError>;
+
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError>;
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Box<dyn Any + Send + Sync>;
@@ -35,7 +37,20 @@ pub trait RequestHandler: Send + Sync {
 // the trait itself, because the trait cannot be made generic without losing its type-erasing nature.
 
 #[inline(always)]
-pub fn request_handler_deserialize_request<REQ: ActorRequest + Send + Sync>(
+pub fn request_handler_serialize_response<REQ: ActorRequest>(input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
+  log::debug!(
+    "Attempt serialization into {:?}",
+    std::any::type_name::<REQ::Response>()
+  );
+
+  let input = input.downcast::<REQ::Response>().expect("TODO");
+
+  let response: Vec<u8> = serde_json::to_vec(&input)?;
+  Ok(response)
+}
+
+#[inline(always)]
+pub fn request_handler_deserialize_request<REQ: ActorRequest>(
   input: Vec<u8>,
 ) -> Result<Box<dyn Any + Send>, RemoteSendError> {
   log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
@@ -52,6 +67,7 @@ pub fn request_handler_object_type_id<OBJ: 'static>() -> TypeId {
 pub fn request_handler_clone_object<OBJ: Clone + Send + Sync + 'static>(
   object: &Box<dyn Any + Send + Sync>,
 ) -> Box<dyn Any + Send + Sync> {
+  // TODO: Unwrap?
   // Double indirection is unfortunately required - the downcast fails otherwise.
   Box::new(object.downcast_ref::<OBJ>().unwrap().clone())
 }

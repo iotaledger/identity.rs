@@ -20,6 +20,7 @@ use libp2p::PeerId;
 use libp2p::Swarm;
 
 use crate::Endpoint;
+use crate::RequestMode;
 
 use super::behaviour::DidCommCodec;
 use super::messages::RequestMessage;
@@ -89,6 +90,7 @@ impl EventLoop {
         event_handler(InboundRequest {
           peer_id: peer,
           endpoint: request.endpoint,
+          request_mode: request.request_mode,
           input: request.data,
           response_channel: channel,
           request_id,
@@ -184,6 +186,7 @@ impl EventLoop {
 pub struct InboundRequest {
   pub peer_id: PeerId,
   pub endpoint: Endpoint,
+  pub request_mode: RequestMode,
   pub input: Vec<u8>,
   pub response_channel: ResponseChannel<ResponseMessage>,
   pub request_id: RequestId,

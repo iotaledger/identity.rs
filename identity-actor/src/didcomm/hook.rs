@@ -112,15 +112,23 @@ where
     Ok(Box::pin(future))
   }
 
+  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
+    // TODO: This is never called for hooks, panic instead?
+    crate::traits::request_handler_serialize_response::<REQ>(input)
+  }
+
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
+    // TODO: This is never called for hooks, panic instead?
     crate::traits::request_handler_deserialize_request::<REQ>(input)
   }
 
   fn object_type_id(&self) -> TypeId {
+    // TODO: This is never called for hooks, panic instead?
     crate::traits::request_handler_object_type_id::<OBJ>()
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Box<dyn Any + Send + Sync> {
+    // TODO: This is never called for hooks, panic instead?
     crate::traits::request_handler_clone_object::<OBJ>(object)
   }
 }
