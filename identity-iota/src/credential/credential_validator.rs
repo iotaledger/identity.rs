@@ -143,13 +143,13 @@ impl CredentialValidator {
     fail_fast: bool,
   ) -> Result<()> {
     self
-      .full_validation_local_error(credential, options, std::slice::from_ref(issuer), fail_fast)
+      .validate_local_error(credential, options, std::slice::from_ref(issuer), fail_fast)
       .map_err(Error::CredentialValidationError)
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation.
-  pub(super) fn full_validation_local_error<T: Serialize>(
+  pub(super) fn validate_local_error<T: Serialize>(
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,

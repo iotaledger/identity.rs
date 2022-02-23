@@ -231,7 +231,7 @@ impl PresentationValidator {
       .verifiable_credential
       .iter()
       .map(|credential| {
-        CredentialValidator::new().full_validation_local_error(
+        CredentialValidator::new().validate_local_error(
           credential,
           &options.shared_validation_options,
           issuers,
