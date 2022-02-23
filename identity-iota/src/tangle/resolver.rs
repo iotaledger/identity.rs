@@ -8,8 +8,6 @@ use std::rc::Rc;
 #[cfg(feature = "arc")]
 use std::sync::Arc;
 
-use dashmap::DashMap;
-
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
@@ -39,9 +37,7 @@ type ClientRc = Arc<Client>;
 /// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 #[derive(Debug)]
 pub struct Resolver {
-  // TODO: is DashMap really necessary here?
-  //  We can avoid mutation if we disallow adding/removing Clients post-creation.
-  client_map: DashMap<NetworkName, ClientRc>,
+  client_map: HashMap<NetworkName, ClientRc>,
 }
 
 impl Resolver {
@@ -50,10 +46,10 @@ impl Resolver {
   ///
   /// See also [`Resolver::builder`].
   pub async fn new() -> Result<Self> {
-    let client_map: DashMap<NetworkName, ClientRc> = DashMap::new();
     let client: Client = Client::new().await?;
-    client_map.insert(client.network.name(), ClientRc::new(client));
 
+    let mut client_map: HashMap<NetworkName, ClientRc> = HashMap::new();
+    client_map.insert(client.network.name(), ClientRc::new(client));
     Ok(Self { client_map })
   }
 
@@ -62,31 +58,13 @@ impl Resolver {
     ResolverBuilder::new()
   }
 
-  /// Inserts a [`Client`].
-  ///
-  /// NOTE: replaces any existing [`Client`] entry with the same [`NetworkName`].
-  // TODO: remove this?
-  pub fn set_client(&self, client: ClientRc) {
-    self.client_map.insert(client.network.name(), client);
-  }
-
-  /// Removes the [`Client`] corresponding to the given [`NetworkName`] and returns it
-  /// if one exists.
-  // TODO: remove this?
-  pub fn remove_client(&self, network_name: &NetworkName) -> Option<ClientRc> {
-    self.client_map.remove(network_name).map(|(_, client)| client)
-  }
-
   /// Returns the [`Client`] corresponding to the given [`NetworkName`] if one exists.
-  pub fn get_client(&self, network_name: &NetworkName) -> Option<ClientRc> {
-    self
-      .client_map
-      .get(network_name)
-      .map(|client_ref| ClientRc::clone(client_ref.value()))
+  pub fn get_client(&self, network_name: &NetworkName) -> Option<&ClientRc> {
+    self.client_map.get(network_name)
   }
 
   /// Returns the [`Client`] corresponding to the [`NetworkName`] on the given ['IotaDID'].
-  fn get_client_for_did(&self, did: &IotaDID) -> Result<ClientRc> {
+  fn get_client_for_did(&self, did: &IotaDID) -> Result<&ClientRc> {
     self.get_client(&did.network()?.name()).ok_or_else(|| {
       Error::DIDNotFound(format!(
         "DID network '{}' does not match any resolver client network",
@@ -97,13 +75,13 @@ impl Resolver {
 
   /// Fetches the [`IotaDocument`] of the given [`IotaDID`].
   pub async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
-    let client: ClientRc = self.get_client_for_did(did)?;
+    let client: &ClientRc = self.get_client_for_did(did)?;
     client.read_document(did).await
   }
 
   /// Fetches the [`DocumentHistory`] of the given [`IotaDID`].
   pub async fn resolve_history(&self, did: &IotaDID) -> Result<DocumentHistory> {
-    let client: ClientRc = self.get_client_for_did(did)?;
+    let client: &ClientRc = self.get_client_for_did(did)?;
     client.resolve_history(did).await
   }
 
@@ -112,7 +90,7 @@ impl Resolver {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id.
   pub async fn resolve_diff_history(&self, document: &ResolvedIotaDocument) -> Result<ChainHistory<DiffMessage>> {
-    let client: ClientRc = self.get_client_for_did(document.document.id())?;
+    let client: &ClientRc = self.get_client_for_did(document.document.id())?;
     client.resolve_diff_history(document).await
   }
 
@@ -134,7 +112,8 @@ impl Resolver {
   /// Errors if any issuer URL is not a valid [`IotaDID`] or DID resolution fails.
   pub async fn resolve_presentation_issuers(&self, presentation: &Presentation) -> Result<Vec<ResolvedIotaDocument>> {
     // Extract unique issuers.
-    let issuers: HashSet<IotaDID> = presentation.verifiable_credential
+    let issuers: HashSet<IotaDID> = presentation
+      .verifiable_credential
       .iter()
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
       .collect::<Result<_>>()?;
@@ -198,7 +177,7 @@ impl ResolverBuilder {
 
   /// Constructs a new [`Resolver`] based on the builder configuration.
   pub async fn build(self) -> Result<Resolver> {
-    let client_map: DashMap<NetworkName, ClientRc> = DashMap::new();
+    let mut client_map: HashMap<NetworkName, ClientRc> = HashMap::new();
     for (network_name, client_or_builder) in self.clients {
       let client: ClientRc = match client_or_builder {
         ClientOrBuilder::Client(client) => client,

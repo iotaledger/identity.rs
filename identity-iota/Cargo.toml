@@ -14,7 +14,6 @@ description = "An IOTA Tangle intergration for the identity-rs library."
 async-trait = { version = "0.1", default-features = false }
 bee-rest-api = { version = "0.1.7", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
-dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }

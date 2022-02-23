@@ -10,6 +10,7 @@ use identity::iota::IotaDID;
 use identity::iota::NetworkName;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
+use identity::iota::ResolverBuilder;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -27,6 +28,7 @@ use crate::did::UWasmDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::tangle::Config;
 use crate::tangle::WasmClient;
 
 #[wasm_bindgen(js_name = Resolver)]
@@ -42,29 +44,11 @@ impl WasmResolver {
     executor::block_on(Resolver::new()).map(Self::from).wasm_result()
   }
 
-  /// Inserts a `Client`.
-  ///
-  /// NOTE: replaces any existing `Client` entry with the same network name.
-  // TODO: remove this?
-  #[wasm_bindgen(js_name = setClient)]
-  pub fn set_client(&self, client: &WasmClient) {
-    self.0.set_client(Rc::clone(&client.client));
-  }
-
-  /// Removes the `Client` corresponding to the given network name and returns it
-  /// if one exists.
-  // TODO: remove this?
-  #[wasm_bindgen(js_name = removeClient)]
-  pub fn remove_client(&self, network_name: String) -> Option<WasmClient> {
-    let network_name: NetworkName = NetworkName::try_from(network_name).ok()?;
-    self.0.remove_client(&network_name).map(WasmClient::from)
-  }
-
   /// Returns the `Client` corresponding to the given network name if one exists.
   #[wasm_bindgen(js_name = getClient)]
   pub fn get_client(&self, network_name: String) -> Option<WasmClient> {
     let network_name: NetworkName = NetworkName::try_from(network_name).ok()?;
-    self.0.get_client(&network_name).map(WasmClient::from)
+    self.0.get_client(&network_name).cloned().map(WasmClient::from)
   }
 
   /// Fetches the `Document` of the given `DID`.
@@ -163,7 +147,9 @@ impl WasmResolver {
     //       Would be solved with Rc internal representation, pending memory leak discussions.
 
     // Extract unique issuers.
-    let issuers: HashSet<IotaDID> = presentation.0.verifiable_credential
+    let issuers: HashSet<IotaDID> = presentation
+      .0
+      .verifiable_credential
       .iter()
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()).wasm_result())
       .collect::<Result<_>>()?;
@@ -227,4 +213,65 @@ impl From<Resolver> for WasmResolver {
   fn from(resolver: Resolver) -> Self {
     WasmResolver(Rc::new(resolver))
   }
+}
+
+/// Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
+#[derive(Default)]
+#[wasm_bindgen(js_name = ResolverBuilder)]
+pub struct WasmResolverBuilder(ResolverBuilder);
+
+#[wasm_bindgen(js_class = ResolverBuilder)]
+impl WasmResolverBuilder {
+  /// Constructs a new `ResolverBuilder` with no `Clients` configured.
+  #[wasm_bindgen(constructor)]
+  pub fn new() -> WasmResolverBuilder {
+    WasmResolverBuilder(ResolverBuilder::new())
+  }
+
+  /// Inserts a `Client`.
+  ///
+  /// NOTE: replaces any previous `Client` or `Config` with the same network name.
+  #[wasm_bindgen]
+  pub fn client(mut self, client: &WasmClient) -> WasmResolverBuilder {
+    self.0 = self.0.client(Rc::clone(&client.client));
+    self
+  }
+
+  /// Inserts a `Config` used to create a `Client`.
+  ///
+  /// NOTE: replaces any previous `Client` or `Config` with the same network name.
+  #[wasm_bindgen(js_name = clientConfig)]
+  pub fn client_config(mut self, mut config: Config) -> Result<WasmResolverBuilder> {
+    self.0 = self.0.client_builder(config.take_builder()?);
+    Ok(self)
+  }
+
+  /// Constructs a new [`Resolver`] based on the builder configuration.
+  #[wasm_bindgen]
+  pub fn build(self) -> PromiseResolver {
+    // WARNING: this does not validate the return type. Check carefully.
+    future_to_promise(async move {
+      self
+        .0
+        .build()
+        .await
+        .map(WasmResolver::from)
+        .map(Into::into)
+        .wasm_result()
+    })
+    .unchecked_into::<PromiseResolver>()
+  }
+}
+
+impl From<ResolverBuilder> for WasmResolverBuilder {
+  fn from(builder: ResolverBuilder) -> Self {
+    Self(builder)
+  }
+}
+
+// Workaround for Typescript type annotations on async function returns.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Resolver>")]
+  pub type PromiseResolver;
 }
