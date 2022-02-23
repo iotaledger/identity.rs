@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use futures::executor;
 use identity::core::Url;
+use identity::iota::Client;
 use identity::iota::IotaDID;
 use identity::iota::NetworkName;
 use identity::iota::ResolvedIotaDocument;
@@ -32,7 +33,7 @@ use crate::tangle::Config;
 use crate::tangle::WasmClient;
 
 #[wasm_bindgen(js_name = Resolver)]
-pub struct WasmResolver(pub(crate) Rc<Resolver>);
+pub struct WasmResolver(pub(crate) Rc<Resolver<Rc<Client>>>);
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
@@ -41,7 +42,9 @@ impl WasmResolver {
   #[wasm_bindgen(constructor)]
   pub fn new() -> Result<WasmResolver> {
     // TODO: any way to avoid blocking? WasmClient does this too...
-    executor::block_on(Resolver::new()).map(Self::from).wasm_result()
+    executor::block_on(Resolver::<Rc<Client>>::new())
+      .map(Self::from)
+      .wasm_result()
   }
 
   /// Returns the `Client` corresponding to the given network name if one exists.
@@ -56,7 +59,7 @@ impl WasmResolver {
   pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
-    let resolver: Rc<Resolver> = Rc::clone(&self.0);
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       resolver
         .resolve(&did)
@@ -75,7 +78,7 @@ impl WasmResolver {
   pub fn resolve_history(&self, did: UWasmDID) -> Result<PromiseDocumentHistory> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
-    let resolver: Rc<Resolver> = Rc::clone(&self.0);
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       resolver
         .resolve_history(&did)
@@ -97,7 +100,7 @@ impl WasmResolver {
   pub fn resolve_diff_history(&self, document: &WasmResolvedDocument) -> Result<PromiseDiffChainHistory> {
     let resolved_document: ResolvedIotaDocument = document.0.clone();
 
-    let resolver: Rc<Resolver> = Rc::clone(&self.0);
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       resolver
         .resolve_diff_history(&resolved_document)
@@ -122,7 +125,7 @@ impl WasmResolver {
     //       Would be solved with Rc internal representation, pending memory leak discussions.
     let issuer: IotaDID = IotaDID::parse(credential.0.issuer.url().as_str()).wasm_result()?;
 
-    let resolver: Rc<Resolver> = Rc::clone(&self.0);
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       resolver
         .resolve(&issuer)
@@ -154,7 +157,7 @@ impl WasmResolver {
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()).wasm_result())
       .collect::<Result<_>>()?;
 
-    let resolver: Rc<Resolver> = Rc::clone(&self.0);
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       // Resolve issuers concurrently.
       Ok(
@@ -194,7 +197,7 @@ impl WasmResolver {
       .wasm_result()?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str()).wasm_result()?;
 
-    let resolver: Rc<Resolver> = Rc::clone(&self.0);
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       resolver
         .resolve(&holder)
@@ -209,23 +212,22 @@ impl WasmResolver {
   }
 }
 
-impl From<Resolver> for WasmResolver {
-  fn from(resolver: Resolver) -> Self {
+impl From<Resolver<Rc<Client>>> for WasmResolver {
+  fn from(resolver: Resolver<Rc<Client>>) -> Self {
     WasmResolver(Rc::new(resolver))
   }
 }
 
 /// Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
-#[derive(Default)]
 #[wasm_bindgen(js_name = ResolverBuilder)]
-pub struct WasmResolverBuilder(ResolverBuilder);
+pub struct WasmResolverBuilder(ResolverBuilder<Rc<Client>>);
 
 #[wasm_bindgen(js_class = ResolverBuilder)]
 impl WasmResolverBuilder {
   /// Constructs a new `ResolverBuilder` with no `Clients` configured.
   #[wasm_bindgen(constructor)]
   pub fn new() -> WasmResolverBuilder {
-    WasmResolverBuilder(ResolverBuilder::new())
+    WasmResolverBuilder(ResolverBuilder::<Rc<Client>>::new())
   }
 
   /// Inserts a `Client`.
@@ -263,8 +265,14 @@ impl WasmResolverBuilder {
   }
 }
 
-impl From<ResolverBuilder> for WasmResolverBuilder {
-  fn from(builder: ResolverBuilder) -> Self {
+impl Default for WasmResolverBuilder {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
+impl From<ResolverBuilder<Rc<Client>>> for WasmResolverBuilder {
+  fn from(builder: ResolverBuilder<Rc<Client>>) -> Self {
     Self(builder)
   }
 }

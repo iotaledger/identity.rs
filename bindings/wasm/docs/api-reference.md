@@ -54,6 +54,9 @@ merged with one or more <code>DiffMessages</code>.</p>
 </dd>
 <dt><a href="#Resolver">Resolver</a></dt>
 <dd></dd>
+<dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
+<dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
@@ -2094,8 +2097,6 @@ Deserializes a `Document` object from a JSON object.
 
 * [Resolver](#Resolver)
     * [new Resolver()](#new_Resolver_new)
-    * [.setClient(client)](#Resolver+setClient)
-    * [.removeClient(network_name)](#Resolver+removeClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
     * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
     * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
@@ -2109,31 +2110,6 @@ Deserializes a `Document` object from a JSON object.
 ### new Resolver()
 Constructs a new `Resolver` with a default `Client` for
 the `Mainnet`.
-
-<a name="Resolver+setClient"></a>
-
-### resolver.setClient(client)
-Inserts a `Client`.
-
-NOTE: replaces any existing `Client` entry with the same network name.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| client | [<code>Client</code>](#Client) | 
-
-<a name="Resolver+removeClient"></a>
-
-### resolver.removeClient(network_name) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
-Removes the `Client` corresponding to the given network name and returns it
-if one exists.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| network_name | <code>string</code> | 
 
 <a name="Resolver+getClient"></a>
 
@@ -2228,6 +2204,56 @@ Errors if the holder URL is missing, is not a valid `DID`, or document resolutio
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
+<a name="ResolverBuilder"></a>
+
+## ResolverBuilder
+Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
+
+**Kind**: global class  
+
+* [ResolverBuilder](#ResolverBuilder)
+    * [new ResolverBuilder()](#new_ResolverBuilder_new)
+    * [.client(client)](#ResolverBuilder+client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [.clientConfig(config)](#ResolverBuilder+clientConfig) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [.build()](#ResolverBuilder+build) ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
+
+<a name="new_ResolverBuilder_new"></a>
+
+### new ResolverBuilder()
+Constructs a new `ResolverBuilder` with no `Clients` configured.
+
+<a name="ResolverBuilder+client"></a>
+
+### resolverBuilder.client(client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Inserts a `Client`.
+
+NOTE: replaces any previous `Client` or `Config` with the same network name.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+
+| Param | Type |
+| --- | --- |
+| client | [<code>Client</code>](#Client) | 
+
+<a name="ResolverBuilder+clientConfig"></a>
+
+### resolverBuilder.clientConfig(config) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Inserts a `Config` used to create a `Client`.
+
+NOTE: replaces any previous `Client` or `Config` with the same network name.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+
+| Param | Type |
+| --- | --- |
+| config | [<code>Config</code>](#Config) | 
+
+<a name="ResolverBuilder+build"></a>
+
+### resolverBuilder.build() ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
+Constructs a new [`Resolver`] based on the builder configuration.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
 <a name="Service"></a>
 
 ## Service

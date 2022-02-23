@@ -49,10 +49,7 @@ features = ["blake2b"]
 tokio = { version = "1.15", default-features = false, features = ["macros"] }
 
 [features]
-default = ["arc", "async"]
-
-# Changes smart pointers in Resolver from Rc to Arc.
-arc = []
+default = ["async"]
 
 # Enables async runtime support (Tokio)
 async = ["iota-client/async"]

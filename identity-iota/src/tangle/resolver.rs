@@ -3,9 +3,6 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-#[cfg(not(feature = "arc"))]
-use std::rc::Rc;
-#[cfg(feature = "arc")]
 use std::sync::Arc;
 
 use identity_core::common::Url;
@@ -24,23 +21,23 @@ use crate::tangle::ClientBuilder;
 use crate::tangle::NetworkName;
 use crate::tangle::TangleResolve;
 
-#[cfg(not(feature = "arc"))]
-type ClientRc = Rc<Client>;
-
-#[cfg(feature = "arc")]
-type ClientRc = Arc<Client>;
-
 /// A `Resolver` supports resolving DID Documents across different Tangle networks using
 /// multiple [`Clients`][Client].
 ///
 /// Also provides convenience functions for resolving DID Documents associated with
 /// verifiable [`Credentials`][Credential] and [`Presentations`][Presentation].
 #[derive(Debug)]
-pub struct Resolver {
-  client_map: HashMap<NetworkName, ClientRc>,
+pub struct Resolver<T = Arc<Client>>
+where
+  T: Clone + AsRef<Client> + From<Client>,
+{
+  client_map: HashMap<NetworkName, T>,
 }
 
-impl Resolver {
+impl<T> Resolver<T>
+where
+  T: Clone + AsRef<Client> + From<Client>,
+{
   /// Constructs a new [`Resolver`] with a default [`Client`] for
   /// the [`Mainnet`](crate::tangle::Network::Mainnet).
   ///
@@ -48,8 +45,8 @@ impl Resolver {
   pub async fn new() -> Result<Self> {
     let client: Client = Client::new().await?;
 
-    let mut client_map: HashMap<NetworkName, ClientRc> = HashMap::new();
-    client_map.insert(client.network.name(), ClientRc::new(client));
+    let mut client_map: HashMap<NetworkName, T> = HashMap::new();
+    client_map.insert(client.network.name(), T::from(client));
     Ok(Self { client_map })
   }
 
@@ -59,12 +56,12 @@ impl Resolver {
   }
 
   /// Returns the [`Client`] corresponding to the given [`NetworkName`] if one exists.
-  pub fn get_client(&self, network_name: &NetworkName) -> Option<&ClientRc> {
+  pub fn get_client(&self, network_name: &NetworkName) -> Option<&T> {
     self.client_map.get(network_name)
   }
 
   /// Returns the [`Client`] corresponding to the [`NetworkName`] on the given ['IotaDID'].
-  fn get_client_for_did(&self, did: &IotaDID) -> Result<&ClientRc> {
+  fn get_client_for_did(&self, did: &IotaDID) -> Result<&T> {
     self.get_client(&did.network()?.name()).ok_or_else(|| {
       Error::DIDNotFound(format!(
         "DID network '{}' does not match any resolver client network",
@@ -75,13 +72,13 @@ impl Resolver {
 
   /// Fetches the [`IotaDocument`] of the given [`IotaDID`].
   pub async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
-    let client: &ClientRc = self.get_client_for_did(did)?;
+    let client: &Client = self.get_client_for_did(did)?.as_ref();
     client.read_document(did).await
   }
 
   /// Fetches the [`DocumentHistory`] of the given [`IotaDID`].
   pub async fn resolve_history(&self, did: &IotaDID) -> Result<DocumentHistory> {
-    let client: &ClientRc = self.get_client_for_did(did)?;
+    let client: &Client = self.get_client_for_did(did)?.as_ref();
     client.resolve_history(did).await
   }
 
@@ -90,7 +87,7 @@ impl Resolver {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id.
   pub async fn resolve_diff_history(&self, document: &ResolvedIotaDocument) -> Result<ChainHistory<DiffMessage>> {
-    let client: &ClientRc = self.get_client_for_did(document.document.id())?;
+    let client: &Client = self.get_client_for_did(document.document.id())?.as_ref();
     client.resolve_diff_history(document).await
   }
 
@@ -136,17 +133,23 @@ impl Resolver {
 
 /// Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
 #[derive(Default)]
-pub struct ResolverBuilder {
-  clients: HashMap<NetworkName, ClientOrBuilder>,
+pub struct ResolverBuilder<T = Arc<Client>>
+where
+  T: Clone + AsRef<Client> + From<Client>,
+{
+  clients: HashMap<NetworkName, ClientOrBuilder<T>>,
 }
 
 #[allow(clippy::large_enum_variant)]
-enum ClientOrBuilder {
-  Client(ClientRc),
+enum ClientOrBuilder<T> {
+  Client(T),
   Builder(ClientBuilder),
 }
 
-impl ResolverBuilder {
+impl<T> ResolverBuilder<T>
+where
+  T: Clone + AsRef<Client> + From<Client>,
+{
   /// Constructs a new [`ResolverBuilder`] with no [`Clients`][Client] configured.
   pub fn new() -> Self {
     Self {
@@ -158,10 +161,10 @@ impl ResolverBuilder {
   ///
   /// NOTE: replaces any previous [`Client`] or [`ClientBuilder`] with the same [`NetworkName`].
   #[must_use]
-  pub fn client(mut self, client: ClientRc) -> Self {
+  pub fn client(mut self, client: T) -> Self {
     self
       .clients
-      .insert(client.network.name(), ClientOrBuilder::Client(client));
+      .insert(client.as_ref().network.name(), ClientOrBuilder::Client(client));
     self
   }
 
@@ -176,12 +179,12 @@ impl ResolverBuilder {
   }
 
   /// Constructs a new [`Resolver`] based on the builder configuration.
-  pub async fn build(self) -> Result<Resolver> {
-    let mut client_map: HashMap<NetworkName, ClientRc> = HashMap::new();
+  pub async fn build(self) -> Result<Resolver<T>> {
+    let mut client_map: HashMap<NetworkName, T> = HashMap::new();
     for (network_name, client_or_builder) in self.clients {
-      let client: ClientRc = match client_or_builder {
+      let client: T = match client_or_builder {
         ClientOrBuilder::Client(client) => client,
-        ClientOrBuilder::Builder(builder) => ClientRc::new(builder.build().await?),
+        ClientOrBuilder::Builder(builder) => T::from(builder.build().await?),
       };
       client_map.insert(network_name, client);
     }
