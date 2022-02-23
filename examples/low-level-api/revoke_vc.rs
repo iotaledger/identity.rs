@@ -25,10 +25,6 @@ use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
 
-use identity::iota::ExplorerUrl;
-use identity::iota::IotaVerificationMethod;
-use identity::iota::Receipt;
-use identity::iota::Resolver;
 use identity::iota::Result;
 use identity::iota::TangleResolve;
 use identity::prelude::*;

@@ -125,7 +125,9 @@ where
   ///
   /// Errors if the holder URL is missing, is not a valid [`IotaDID`], or DID resolution fails.
   pub async fn resolve_presentation_holder(&self, presentation: &Presentation) -> Result<ResolvedIotaDocument> {
-    let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::InvalidPresentationHolder)?;
+    let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
+      crate::credential::errors::ValidationError::MissingPresentationHolder,
+    ))?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
     self.resolve(&holder).await
   }

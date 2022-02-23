@@ -20,10 +20,6 @@ use identity::did::DID;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
-use identity::iota::CredentialValidator;
-use identity::iota::IotaVerificationMethod;
-use identity::iota::Receipt;
 use identity::iota::Resolver;
 use identity::prelude::*;
 
@@ -55,7 +51,7 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
 /// Helper method to resolve documents.
 // Todo: Remove this when the new Resolver becomes available.
 pub async fn resolve_documents(documents: &[IotaDocument]) -> Result<Vec<ResolvedIotaDocument>> {
-  let resolver: Resolver = Resolver::new().await; 
+  let resolver: Resolver = Resolver::new().await?;
   let mut resolved_documents: Vec<ResolvedIotaDocument> = Vec::new();
   for doc in documents {
     let resolved_document: ResolvedIotaDocument = resolver.resolve(doc.id()).await?;

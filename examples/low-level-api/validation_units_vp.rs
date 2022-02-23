@@ -10,13 +10,12 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
-use identity::iota::ClientMap;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidator;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
+use identity::iota::Resolver;
 use identity::prelude::IotaDocument;
 
 use identity::prelude::*;
@@ -80,7 +79,7 @@ pub async fn create_invalid_vp() -> Result<(Presentation, IotaDocument, IotaDocu
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let resolver: Resolver = Resolver::new().await?;
 
   // Issue a Verifiable Presentation with a newly created DID Document.
   let (presentation, issuer_doc, holder_doc): (Presentation, IotaDocument, IotaDocument) = create_invalid_vp().await?;
@@ -99,7 +98,7 @@ async fn main() -> Result<()> {
   // Verify the signature
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
-  let resolved_holder_document: ResolvedIotaDocument = client.resolve(holder_doc.id()).await?;
+  let resolved_holder_document: ResolvedIotaDocument = resolver.resolve(holder_doc.id()).await?;
   PresentationValidator::verify_presentation_signature(
     &presentation,
     &resolved_holder_document,
@@ -110,7 +109,7 @@ async fn main() -> Result<()> {
   println!("verified the holder's signature");
 
   // extract and validate the presentation's credentials
-  let resolved_issuer_doc: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
   for credential in presentation.verifiable_credential.iter() {
     CredentialValidator::new().validate(

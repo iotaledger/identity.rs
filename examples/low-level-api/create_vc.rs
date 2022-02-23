@@ -13,8 +13,6 @@ use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
-use identity::iota::Receipt;
 use identity::iota::Resolver;
 use identity::prelude::*;
 

@@ -15,15 +15,10 @@ use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 
-
 use identity::iota::PresentationValidationOptions;
 use identity::iota::PresentationValidator;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
-use identity::iota::CredentialValidator;
-
-use identity::iota::Receipt;
 use identity::iota::Resolver;
 use identity::prelude::*;
 
@@ -92,7 +87,7 @@ async fn main() -> Result<()> {
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let resolved_holder_document: ResolvedIotaDocument = resolver.resolve(holder_doc.id()).await?;
-  let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let trusted_issuer: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
   let trusted_issuers = &[trusted_issuer];
 
   let validator = PresentationValidator::new();
