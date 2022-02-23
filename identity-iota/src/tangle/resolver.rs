@@ -212,7 +212,7 @@ impl ResolverBuilder {
   }
 }
 
-#[async_trait::async_trait(? Send)]
+#[async_trait::async_trait(?Send)]
 impl TangleResolve for Resolver {
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     self.resolve(did).await
