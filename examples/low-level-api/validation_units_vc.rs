@@ -46,7 +46,7 @@ pub async fn validation_units_vc() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // validate that the credential is valid two weeks from now
-  CredentialValidator::check_is_valid_at(&credential, two_weeks_from_now_timestamp)?;
+  CredentialValidator::check_expires_on_or_after(&credential, two_weeks_from_now_timestamp)?;
 
   // define a timestamp representing two weeks ago
   let two_weeks_ago_unix: i64 = Timestamp::now_utc().to_unix() - TWO_WEEKS_IN_SECONDS;

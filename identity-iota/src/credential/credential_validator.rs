@@ -46,12 +46,15 @@ impl CredentialValidator {
       .map_err(ValidationError::CredentialStructure)
   }
 
-  /// Validate that the [Credential] does not expire before the specified [Timestamp].
-  pub fn check_is_valid_at<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
-    Self::check_is_valid_at_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
+  /// Validate that the [Credential] expires on or after the specified [Timestamp].
+  pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
+    Self::check_expires_on_or_after_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
   }
 
-  fn check_is_valid_at_local_error<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
+  fn check_expires_on_or_after_local_error<T>(
+    credential: &Credential<T>,
+    timestamp: Timestamp,
+  ) -> ValidationUnitResult {
     let is_ok = if let Some(expiration_date) = credential.expiration_date {
       expiration_date >= timestamp
     } else {
@@ -60,7 +63,7 @@ impl CredentialValidator {
     is_ok.then(|| ()).ok_or(ValidationError::ExpirationDate)
   }
 
-  /// Validate that the [Credential] is issued no later than the specified [Timestamp].
+  /// Validate that the [Credential] is issued on or before specified [Timestamp].
   pub fn check_is_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
     Self::check_is_issued_on_or_before_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
   }
@@ -164,7 +167,7 @@ impl CredentialValidator {
       std::iter::once_with(|| Self::verify_signature_local_error(credential, issuers, &options.verifier_options));
 
     let expiry_date_validation = std::iter::once_with(|| {
-      Self::check_is_valid_at_local_error(credential, options.earliest_expiry_date.unwrap_or_default())
+      Self::check_expires_on_or_after_local_error(credential, options.earliest_expiry_date.unwrap_or_default())
     });
 
     let issuance_date_validation = std::iter::once_with(|| {
@@ -255,10 +258,10 @@ mod tests {
     // now that we are sure that our parsed credential has the expected expiration date set we can start testing the
     // expires_after method with a later date
     let later_date = Timestamp::parse("2020-02-01T15:10:21Z").unwrap();
-    assert!(CredentialValidator::check_is_valid_at(&credential, later_date).is_err());
+    assert!(CredentialValidator::check_expires_on_or_after(&credential, later_date).is_err());
     // and now with an earlier date
     let earlier_date = Timestamp::parse("2019-12-27T11:35:30Z").unwrap();
-    assert!(CredentialValidator::check_is_valid_at(&credential, earlier_date).is_ok());
+    assert!(CredentialValidator::check_expires_on_or_after(&credential, earlier_date).is_ok());
   }
 
   // test with a few timestamps that should be RFC3339 compatible
@@ -271,8 +274,8 @@ mod tests {
       assert_eq!(credential.expiration_date.unwrap(), expected_expiration_date, "the expiration date of the parsed credential does not match our expectation");
       let after_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() + seconds).unwrap();
       let before_expiration_date = Timestamp::from_unix(expected_expiration_date.to_unix() - seconds).unwrap();
-      assert!(CredentialValidator::check_is_valid_at(&credential, after_expiration_date).is_err());
-      assert!(CredentialValidator::check_is_valid_at(&credential, before_expiration_date).is_ok());
+      assert!(CredentialValidator::check_expires_on_or_after(&credential, after_expiration_date).is_err());
+      assert!(CredentialValidator::check_expires_on_or_after(&credential, before_expiration_date).is_ok());
     }
   }
 
@@ -282,7 +285,7 @@ mod tests {
       let mut credential = deserialize_credential(SIMPLE_CREDENTIAL_JSON);
       credential.expiration_date = None;
       // expires after whatever the timestamp may be because the expires_after field is None.
-      assert!(CredentialValidator::check_is_valid_at(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
+      assert!(CredentialValidator::check_expires_on_or_after(&credential, Timestamp::from_unix(seconds).unwrap()).is_ok());
     }
   }
 
