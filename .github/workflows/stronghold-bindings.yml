@@ -99,7 +99,7 @@ jobs:
         if: ${{ matrix.settings.test }}
         run: ${{ matrix.settings.test }}
 
-      - name: Test bindings
+      - name: Test bindings in docker
         if: ${{ matrix.settings.test-docker }}
         run: ${{ matrix.settings.test-docker }}
         working-directory: ./
@@ -117,22 +117,32 @@ jobs:
     needs:
       - build-stronghold-nodejs
     steps:
+
       - uses: actions/checkout@v2
+
       - name: Setup node
         uses: actions/setup-node@v2
         with:
           node-version: 16
           check-latest: true
+
       - name: Install dependencies
         run: npm ci --ignore-scripts
+
       - name: Download all artifacts
         uses: actions/download-artifact@v2
         with:
           path: ${{ env.WORKING_DIRECTORY }}/artifacts
+
+      - name: Create npm folder
+        run: npm run create-npm-folder
+
       - name: Move artifacts
         run: npm run artifacts
+
       - name: List packages
         run: ls -R ./npm
+        
       # - name: Publish
       #   run: |
       #     if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
