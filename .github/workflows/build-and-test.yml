@@ -98,17 +98,10 @@ jobs:
           sccache-path: ${{ matrix.sccache-path }}
           current-date: ${{ env.CURRENT_DATE }}
 
-      - name: Setup sccache (Ubuntu)
-        uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'     
-        if: matrix.os == 'ubuntu-latest'
-        
-      - name: Setup sccache (Windows)
-        uses: './.github/actions/rust/sccache/setup-sccache-windows'        
-        if: matrix.os == 'windows-latest'
-
-      - name: Setup sccache (MacOS)
-        uses: './.github/actions/rust/sccache/setup-sccache-macos'
-        if: matrix.os == 'macos-latest'
+      - name: Setup sccache
+        uses: './.github/actions/rust/sccache/setup-sccache' 
+        with:    
+          os: matrix.os
      
       - name: Build
         uses: actions-rs/cargo@v1
@@ -130,13 +123,11 @@ jobs:
           cargo read-manifest --manifest-path ./examples/Cargo.toml | \
           jq -r '.targets[].name' | \
           parallel -k -j 4 --retries 3 cargo run --example {} --release
-      - name: Stop sccache (Windows)
-        uses: './.github/actions/rust/sccache/stop-sccache-windows'
-        if: matrix.os == 'windows-latest'
 
-      - name: Stop sccache (Ubuntu/MacOS)
-        uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+      - name: Stop sccache
+        uses: './.github/actions/rust/sccache/stop-sccache'
+        with:    
+          os: matrix.os
 
   build-and-test-libjose:
     needs: check-for-run-condition
@@ -207,9 +198,10 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
         
-      - name: Setup sccache (Ubuntu)
-        uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'
-        if: matrix.os == 'ubuntu-latest'
+      - name: Setup sccache
+        uses: './.github/actions/rust/sccache/setup-sccache' 
+        with:    
+          os: matrix.os
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
@@ -232,6 +224,7 @@ jobs:
         run: npm run test
         working-directory: bindings/wasm
 
-      - name: Stop sccache (Ubuntu/MacOS) 
-        uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+      - name: Stop sccache
+        uses: './.github/actions/rust/sccache/stop-sccache'
+        with:    
+          os: matrix.os
