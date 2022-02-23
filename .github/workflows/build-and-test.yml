@@ -101,7 +101,7 @@ jobs:
       - name: Setup sccache
         uses: './.github/actions/rust/sccache/setup-sccache' 
         with:    
-          os: matrix.os
+          os: ${{matrix.os}}
      
       - name: Build
         uses: actions-rs/cargo@v1
@@ -127,7 +127,7 @@ jobs:
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:    
-          os: matrix.os
+          os: ${{matrix.os}}
 
   build-and-test-libjose:
     needs: check-for-run-condition
@@ -201,7 +201,7 @@ jobs:
       - name: Setup sccache
         uses: './.github/actions/rust/sccache/setup-sccache' 
         with:    
-          os: matrix.os
+          os: ${{matrix.os}}
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
@@ -227,4 +227,4 @@ jobs:
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:    
-          os: matrix.os
+          os: ${{matrix.os}}
