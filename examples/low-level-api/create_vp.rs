@@ -15,12 +15,16 @@ use identity::credential::PresentationBuilder;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 
-use identity::iota::ClientMap;
+
 use identity::iota::PresentationValidationOptions;
 use identity::iota::PresentationValidator;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
+use identity::iota::CredentialValidator;
+
+use identity::iota::Receipt;
+use identity::iota::Resolver;
 use identity::prelude::*;
 
 mod common;
@@ -69,14 +73,15 @@ pub async fn create_vp() -> Result<(Presentation, IotaDocument, IotaDocument)> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
-
   // Issue a Verifiable Presentation with a newly created DID Document.
   let (presentation, issuer_doc, holder_doc): (Presentation, IotaDocument, IotaDocument) = create_vp().await?;
 
   // Convert the Verifiable Presentation to JSON and "exchange" with a verifier
   let presentation_json: String = presentation.to_json()?;
+
+  // Create a `CredentialValidator` instance to fetch and validate all
+  // associated DID Documents from the Tangle.
+  let resolver: Resolver = Resolver::new().await?;
 
   // Validate the presentation and all the credentials included in it.
   //
@@ -86,7 +91,7 @@ async fn main() -> Result<()> {
   let presentation: Presentation = Presentation::from_json(&presentation_json)?;
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
-  let resolved_holder_document: ResolvedIotaDocument = client.resolve(holder_doc.id()).await?;
+  let resolved_holder_document: ResolvedIotaDocument = resolver.resolve(holder_doc.id()).await?;
   let trusted_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
   let trusted_issuers = &[trusted_issuer];
 

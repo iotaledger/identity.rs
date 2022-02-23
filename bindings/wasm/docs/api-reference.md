@@ -52,6 +52,11 @@
 <dd><p>An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 merged with one or more <code>DiffMessages</code>.</p>
 </dd>
+<dt><a href="#Resolver">Resolver</a></dt>
+<dd></dd>
+<dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
+<dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
@@ -2085,6 +2090,170 @@ Deserializes a `Document` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Resolver"></a>
+
+## Resolver
+**Kind**: global class  
+
+* [Resolver](#Resolver)
+    * [new Resolver()](#new_Resolver_new)
+    * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+    * [.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+    * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+
+<a name="new_Resolver_new"></a>
+
+### new Resolver()
+Constructs a new `Resolver` with a default `Client` for
+the `Mainnet`.
+
+<a name="Resolver+getClient"></a>
+
+### resolver.getClient(network_name) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
+Returns the `Client` corresponding to the given network name if one exists.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| network_name | <code>string</code> | 
+
+<a name="Resolver+resolve"></a>
+
+### resolver.resolve(did) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetches the `Document` of the given `DID`.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+
+<a name="Resolver+resolveHistory"></a>
+
+### resolver.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+Fetches the `DocumentHistory` of the given `DID`.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+
+<a name="Resolver+resolveDiffHistory"></a>
+
+### resolver.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+Returns the `DiffChainHistory` of a diff chain starting from a `Document` on the
+integration chain.
+
+NOTE: the document must have been published to the Tangle and have a valid message id.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+
+<a name="Resolver+resolveCredentialIssuer"></a>
+
+### resolver.resolveCredentialIssuer(credential) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetches the DID Document of the issuer on a `Credential`.
+
+# Errors
+
+Errors if the issuer URL is not a valid `DID` or document resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
+<a name="Resolver+resolvePresentationIssuers"></a>
+
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
+Issuer documents are returned in arbitrary order.
+
+# Errors
+
+Errors if any issuer URL is not a valid `DID` or document resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="Resolver+resolvePresentationHolder"></a>
+
+### resolver.resolvePresentationHolder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetches the DID Document of the holder of a `Presentation`.
+
+# Errors
+
+Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="ResolverBuilder"></a>
+
+## ResolverBuilder
+Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
+
+**Kind**: global class  
+
+* [ResolverBuilder](#ResolverBuilder)
+    * [new ResolverBuilder()](#new_ResolverBuilder_new)
+    * [.client(client)](#ResolverBuilder+client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [.clientConfig(config)](#ResolverBuilder+clientConfig) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [.build()](#ResolverBuilder+build) ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
+
+<a name="new_ResolverBuilder_new"></a>
+
+### new ResolverBuilder()
+Constructs a new `ResolverBuilder` with no `Clients` configured.
+
+<a name="ResolverBuilder+client"></a>
+
+### resolverBuilder.client(client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Inserts a `Client`.
+
+NOTE: replaces any previous `Client` or `Config` with the same network name.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+
+| Param | Type |
+| --- | --- |
+| client | [<code>Client</code>](#Client) | 
+
+<a name="ResolverBuilder+clientConfig"></a>
+
+### resolverBuilder.clientConfig(config) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Inserts a `Config` used to create a `Client`.
+
+NOTE: replaces any previous `Client` or `Config` with the same network name.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+
+| Param | Type |
+| --- | --- |
+| config | [<code>Config</code>](#Config) | 
+
+<a name="ResolverBuilder+build"></a>
+
+### resolverBuilder.build() ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
+Constructs a new [`Resolver`] based on the builder configuration.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
 <a name="Service"></a>
 
 ## Service

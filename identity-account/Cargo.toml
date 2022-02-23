@@ -57,6 +57,5 @@ stronghold = [
   "actix",
   "tokio/rt-multi-thread",
 ]
-wasm = ["identity-iota/wasm"]
 async = ["identity-iota/async"]
 default = ["stronghold", "async"]

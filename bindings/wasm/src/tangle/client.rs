@@ -12,6 +12,7 @@ use identity::credential::Presentation;
 use identity::iota::errors::ValidationError;
 use identity::iota::Client as IotaClient;
 use identity::iota::CredentialValidationOptions;
+use identity::iota::Client;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -42,15 +43,15 @@ use crate::tangle::PromiseReceipt;
 use crate::tangle::WasmNetwork;
 use crate::tangle::WasmReceipt;
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = Client)]
 #[derive(Debug)]
-pub struct Client {
-  pub(crate) client: Rc<IotaClient>,
+pub struct WasmClient {
+  pub(crate) client: Rc<Client>,
 }
 
-#[wasm_bindgen]
-impl Client {
-  fn from_client(client: IotaClient) -> Client {
+#[wasm_bindgen(js_class = Client)]
+impl WasmClient {
+  fn from_client(client: Client) -> WasmClient {
     Self {
       client: Rc::new(client),
     }
@@ -58,13 +59,13 @@ impl Client {
 
   /// Creates a new `Client` with default settings.
   #[wasm_bindgen(constructor)]
-  pub fn new() -> Result<Client> {
+  pub fn new() -> Result<WasmClient> {
     Self::from_config(&mut Config::new())
   }
 
   /// Creates a new `Client` with settings from the given `Config`.
   #[wasm_bindgen(js_name = fromConfig)]
-  pub fn from_config(config: &mut Config) -> Result<Client> {
+  pub fn from_config(config: &mut Config) -> Result<WasmClient> {
     let future = config.take_builder()?.build();
     let output = executor::block_on(future).wasm_result();
 
@@ -73,8 +74,8 @@ impl Client {
 
   /// Creates a new `Client` with default settings for the given `Network`.
   #[wasm_bindgen(js_name = fromNetwork)]
-  pub fn from_network(network: WasmNetwork) -> Result<Client> {
-    let future = IotaClient::from_network(network.into());
+  pub fn from_network(network: WasmNetwork) -> Result<WasmClient> {
+    let future = Client::from_network(network.into());
     let output = executor::block_on(future).wasm_result();
 
     output.map(Self::from_client)
@@ -90,7 +91,7 @@ impl Client {
   #[wasm_bindgen(js_name = publishDocument)]
   pub fn publish_document(&self, document: &WasmDocument) -> Result<PromiseReceipt> {
     let document: IotaDocument = document.0.clone();
-    let client: Rc<IotaClient> = self.client.clone();
+    let client: Rc<Client> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
@@ -109,7 +110,7 @@ impl Client {
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, diff: WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
-    let client: Rc<IotaClient> = self.client.clone();
+    let client: Rc<Client> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
@@ -126,11 +127,10 @@ impl Client {
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   #[wasm_bindgen(js_name = publishJSON)]
-  pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<PromiseReceipt> {
-    let client: Rc<IotaClient> = self.client.clone();
-
-    let index = index.to_owned();
+  pub fn publish_json(&self, index: String, data: &JsValue) -> Result<PromiseReceipt> {
     let value: serde_json::Value = data.into_serde().wasm_result()?;
+
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .publish_json(&index, &value)
@@ -150,15 +150,14 @@ impl Client {
   #[wasm_bindgen(js_name = publishJsonWithRetry)]
   pub fn publish_json_with_retry(
     &self,
-    index: &str,
+    index: String,
     data: &JsValue,
     interval: Option<u32>,
     max_attempts: Option<u32>,
   ) -> Result<Promise> {
-    let client: Rc<IotaClient> = self.client.clone();
-
-    let index = index.to_owned();
     let value: serde_json::Value = data.into_serde().wasm_result()?;
+
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .publish_json_with_retry(
@@ -180,7 +179,7 @@ impl Client {
   pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
-    let client: Rc<IotaClient> = self.client.clone();
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .resolve(&did)
@@ -199,7 +198,7 @@ impl Client {
   pub fn resolve_history(&self, did: UWasmDID) -> Result<PromiseDocumentHistory> {
     let did: IotaDID = IotaDID::try_from(did)?;
 
-    let client: Rc<IotaClient> = self.client.clone();
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .resolve_history(&did)
@@ -220,9 +219,9 @@ impl Client {
   /// capability invocation method.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
   pub fn resolve_diff_history(&self, document: &WasmResolvedDocument) -> Result<PromiseDiffChainHistory> {
-    let client: Rc<IotaClient> = self.client.clone();
     let resolved_document: ResolvedIotaDocument = document.0.clone();
 
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       client
         .resolve_diff_history(&resolved_document)
@@ -243,7 +242,9 @@ impl Client {
     let client: Rc<IotaClient> = self.client.clone();
     let credential: Credential = Credential::from_json(&data).wasm_result()?;
     let credential_validation_options = CredentialValidationOptions::default().verifier_options(options.0);
+    let data: Credential = Credential::from_json(&data).wasm_result()?;
 
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       // extract the issuer's DID
       let issuer_url: &str = credential.issuer.url().as_str();
@@ -268,6 +269,7 @@ impl Client {
     let presentation: Presentation = Presentation::from_json(&data).wasm_result()?;
     let presentation_validation_options =
       PresentationValidationOptions::default().presentation_verifier_options(options.0);
+    let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
       // resolve the holder's DID Document and also the DID Documents of the credential issuers.
       let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) =
@@ -316,4 +318,8 @@ async fn fetch_holder_and_issuers(
   }
 
   Ok((holder_doc, issuer_docs))
+impl From<Rc<Client>> for WasmClient {
+  fn from(client: Rc<Client>) -> Self {
+    Self { client }
+  }
 }

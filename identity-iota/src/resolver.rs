@@ -13,8 +13,6 @@ use identity_did::resolution::ResolverMethod;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::tangle::Client;
-use crate::tangle::ClientMap;
-use crate::tangle::Network;
 use crate::tangle::TangleResolve;
 
 #[async_trait(?Send)]
@@ -38,24 +36,5 @@ impl ResolverMethod for Client {
       data: resolved.document.document.map(CoreDID::from, |properties| properties),
       meta: metadata,
     }))
-  }
-}
-
-#[async_trait(?Send)]
-impl ResolverMethod for ClientMap {
-  fn is_supported(&self, did: &CoreDID) -> bool {
-    IotaDID::check_validity(did).is_ok()
-  }
-
-  async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let iota_did: IotaDID = IotaDID::try_from_core(did.clone()).map_err(|_| Error::MissingResolutionDID)?;
-    let network: Network = iota_did.network().map_err(|_| Error::MissingResolutionDID)?;
-
-    self
-      .client(network)
-      .await
-      .map_err(|_| Error::MissingResolutionDocument)?
-      .read(did, input)
-      .await
   }
 }

@@ -16,7 +16,6 @@ use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
 use identity::did::CoreDID;
 use identity::did::DID;
-use identity::iota::ClientMap;
 use identity::iota::IotaDID;
 use identity::iota::IotaDIDUrl;
 use identity::iota::Receipt;
@@ -27,7 +26,7 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let client: Client = Client::new().await?;
 
   // Create a signed DID Document and KeyPair (see create_did.rs).
   let (document, _, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;

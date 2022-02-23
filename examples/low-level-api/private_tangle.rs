@@ -37,7 +37,7 @@ pub async fn main() -> Result<()> {
   // Use DIDMessageEncoding::Json instead to publish plaintext messages to the Tangle for debugging.
   let encoding = DIDMessageEncoding::JsonBrotli;
 
-  let client = ClientBuilder::new()
+  let client: Client = ClientBuilder::new()
     .network(network.clone())
     .encoding(encoding)
     .primary_node(private_node_url, None, None)?

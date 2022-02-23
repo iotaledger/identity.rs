@@ -22,6 +22,9 @@ pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<ResolvedDocument>")]
   pub type PromiseResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "Promise<Array<ResolvedDocument>>")]
+  pub type PromiseArrayResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = ResolvedDocument)]

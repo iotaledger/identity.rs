@@ -9,25 +9,23 @@
 
 use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
-use identity::iota::ClientMap;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
+use identity::iota::Receipt;
+use identity::iota::Resolver;
 use identity::prelude::*;
 
 mod common;
 mod create_did;
 
 pub async fn create_vc() -> Result<()> {
-  // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
-
-  // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
+  // Create a DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (issuer_doc, issuer_key, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
-  // Create a signed DID Document/KeyPair for the credential subject (see create_did.rs).
+  // Create a DID Document/KeyPair for the credential subject (see create_did.rs).
   let (subject_doc, _, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
@@ -46,8 +44,9 @@ pub async fn create_vc() -> Result<()> {
   // Validate the verifiable credential
   //Todo: Use the new resolver to get the necessary DID documents once that becomes available.
   let validator = CredentialValidator::new();
+  let resolver: Resolver = Resolver::new().await?;
   let validation_options = CredentialValidationOptions::default();
-  let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
+  let resolved_issuer: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
   validator.validate(&credential, &validation_options, &resolved_issuer, fail_fast)
 }

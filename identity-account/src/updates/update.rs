@@ -5,8 +5,10 @@ use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
@@ -28,7 +30,6 @@ use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
@@ -43,7 +44,7 @@ pub(crate) async fn create_identity(
   setup: IdentitySetup,
   network: NetworkName,
   store: &dyn Storage,
-) -> Result<(DIDLease, IdentityState)> {
+) -> Result<IdentityState> {
   let method_type = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
   };
@@ -82,8 +83,6 @@ pub(crate) async fn create_identity(
     UpdateError::DocumentAlreadyExists
   );
 
-  let did_lease = store.lease_did(&did).await?;
-
   let private_key = keypair.private().to_owned();
   std::mem::drop(keypair);
 
@@ -102,7 +101,7 @@ pub(crate) async fn create_identity(
   // Store the generations at which the method was added
   state.store_method_generations(method_fragment);
 
-  Ok((did_lease, state))
+  Ok(state)
 }
 
 #[derive(Clone, Debug)]
@@ -132,6 +131,12 @@ pub(crate) enum Update {
   },
   DeleteService {
     fragment: String,
+  },
+  SetController {
+    controllers: Option<OneOrSet<IotaDID>>,
+  },
+  SetAlsoKnownAs {
+    urls: OrderedSet<Url>,
   },
 }
 
@@ -271,6 +276,13 @@ impl Update {
 
         state.document_mut().remove_service(&service_url)?;
       }
+      Self::SetController { controllers } => {
+        *state.document_mut().controller_mut() = controllers;
+      }
+
+      Self::SetAlsoKnownAs { urls } => {
+        *state.document_mut().also_known_as_mut() = urls;
+      }
     }
 
     state.document_mut().metadata.updated = Timestamp::now_utc();
@@ -407,4 +419,14 @@ impl_update_builder!(
 /// - `fragment`: the identifier of the service in the document, required.
 DeleteService {
   @required fragment String,
+});
+
+impl_update_builder!(
+SetController {
+    @required controllers Option<OneOrSet<IotaDID>>,
+});
+
+impl_update_builder!(
+SetAlsoKnownAs {
+    @required urls OrderedSet<Url>,
 });
