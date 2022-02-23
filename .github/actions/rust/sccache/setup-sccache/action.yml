@@ -46,7 +46,15 @@ runs:
         brew install sccache
         
     - name: Start sccache
-      shell: ${{ (inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest') && 'sh' || 'pwsh' }}
+      if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
+      shell: sh
+      run: |
+        sccache --start-server
+        sccache -s
+
+    - name: Start sccache
+      if: inputs.os == 'windows-latest'
+      shell: 'pwsh'
       run: |
         sccache --start-server
         sccache -s
