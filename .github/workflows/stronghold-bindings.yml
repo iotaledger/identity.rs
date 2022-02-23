@@ -44,7 +44,7 @@ jobs:
             setup: |
               sudo apt-get install -y musl-tools
             build: |
-              NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+              export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
               npm run build && strip *.node
             test-docker: |
               docker build -f bindings/stronghold-nodejs/build/Dockerfile.alpine -t tester .
@@ -52,8 +52,8 @@ jobs:
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
-              NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
-              strip -x *.node
+              export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
+              npm run build && strip -x *.node
             # we can't test this properly because the macos-latest runners don't have apple silicon / aarch64
             test: |
               echo let's hope for the best
