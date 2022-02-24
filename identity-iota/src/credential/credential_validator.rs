@@ -104,7 +104,7 @@ impl CredentialValidator {
           trusted_issuers
             .iter()
             .find(|issuer_doc| issuer_doc.document.id() == &did)
-            .ok_or(ValidationError::DocumentMismatch)
+            .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
         }
         Err(error) => {
           // the issuer's url could not be parsed to a valid IotaDID
@@ -419,7 +419,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      ValidationError::DocumentMismatch
+      ValidationError::DocumentMismatch { .. }
     ));
 
     // also check that the full validation fails as expected
@@ -442,7 +442,7 @@ mod tests {
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::DocumentMismatch));
+    assert!(matches!(error, ValidationError::DocumentMismatch { .. }));
   }
 
   #[test]

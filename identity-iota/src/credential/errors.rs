@@ -32,11 +32,11 @@ pub enum ValidationError {
     signer_ctx: SignerContext,
   },
 
-  /// Indicates an attempt to verify a signature of a credential or presentation using a DID Document not matching the
-  /// signer's id.
-  #[error("the signer's id does not match any of the provided DID Documents")]
+  /// Indicates an attempt to verify a signature of a credential (resp. presentation) using a DID Document not matching
+  /// the issuer's (resp. holder's) id.
+  #[error("the {0}'s id does not match the provided DID Document(s)")]
   #[non_exhaustive]
-  DocumentMismatch,
+  DocumentMismatch(SignerContext),
 
   /// Indicates that the structure of the [Credential](identity_credential::credential::Credential) is not semantically
   /// correct.

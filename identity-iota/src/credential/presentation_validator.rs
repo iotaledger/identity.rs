@@ -154,7 +154,7 @@ impl PresentationValidator {
         })
       })?;
     if &did != holder.document.id() {
-      return Err(ValidationError::DocumentMismatch);
+      return Err(ValidationError::DocumentMismatch(SignerContext::Holder));
     }
     holder
       .document
