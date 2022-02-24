@@ -36,114 +36,6 @@ impl PresentationValidator {
     Self {}
   }
 
-  /// Validates the semantic structure of the [Presentation].
-  pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
-    presentation
-      .check_structure()
-      .map_err(ValidationError::PresentationStructure)
-  }
-
-  // An iterator over the indices corresponding to the credentials that have the
-  // `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
-  // holder.
-  //
-  // The output of this iterator will always be a subset of
-  // [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
-  fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter_helper(presentation)
-      .filter(|(_, credential)| credential.non_transferable.unwrap_or(false))
-      .map(|(position, _)| position)
-  }
-
-  /// Validates that the nonTransferable property is met.
-  ///
-  /// # Errors
-  /// Returns an error at the first credential requiring a nonTransferable property that is not met.
-  pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
-    if let Some(position) = Self::non_transferable_violations(presentation).next() {
-      let err = ValidationError::InvalidHolderSubjectRelationship {
-        credential_position: position,
-      };
-      Err(err)
-    } else {
-      Ok(())
-    }
-  }
-
-  // An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
-  // presentation's holder.
-  //
-  // The output of this iterator is always a superset of
-  // [Self::non_transferable_violations]([Self::non_transferable_violations()]).
-  fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter_helper(presentation).map(|(position, _)| position)
-  }
-
-  /// Validates that the presentation only contains credentials where the credential subject is the holder.
-  ///
-  /// # Errors
-  /// Returns an error at the first credential with a credential subject not corresponding to the holder.
-  pub fn check_holder_is_always_subject<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
-    if let Some(position) = Self::holder_not_subject_iter(presentation).next() {
-      let err = ValidationError::InvalidHolderSubjectRelationship {
-        credential_position: position,
-      };
-      Err(err)
-    } else {
-      Ok(())
-    }
-  }
-
-  fn holder_not_subject_iter_helper<U, V>(
-    presentation: &Presentation<U, V>,
-  ) -> impl Iterator<Item = (usize, &Credential<V>)> + '_ {
-    presentation
-      .verifiable_credential
-      .as_ref()
-      .iter()
-      .enumerate()
-      .filter(|(_, credential)| {
-        match &credential.credential_subject {
-          OneOrMany::One(ref credential_subject) => credential_subject.id != presentation.holder,
-          OneOrMany::Many(subjects) => {
-            // need to check the case where the Many variant holds a vector of exactly one subject
-            if let &[ref credential_subject] = subjects.as_slice() {
-              credential_subject.id != presentation.holder
-            } else {
-              // zero or > 1 subjects means that the holder is not the subject
-              true
-            }
-          }
-        }
-      })
-  }
-
-  /// Verify the presentation's signature using the resolved document of the holder
-  ///
-  /// # Errors
-  /// Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
-  /// property. Otherwise signature verification will be attempted and an error is returned upon failure.
-  pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
-    presentation: &Presentation<U, V>,
-    holder: &ResolvedIotaDocument,
-    options: &VerifierOptions,
-  ) -> ValidationUnitResult {
-    let did: IotaDID = presentation
-      .holder
-      .as_ref()
-      .ok_or(ValidationError::MissingPresentationHolder)
-      .and_then(|value| {
-        IotaDID::parse(value.as_str()).map_err(|error| ValidationError::HolderUrl { source: error.into() })
-      })?;
-    if &did != holder.document.id() {
-      return Err(ValidationError::MismatchedHolder);
-    }
-    holder
-      .document
-      .verify_data(&presentation, options)
-      .map_err(|error| ValidationError::HolderProof { source: error.into() })
-  }
-
   /// Validate a [Presentation].
   ///
   /// Checks common concerns such as the holder's signature, the nonTransferable property, the semantic structure of the
@@ -238,6 +130,114 @@ impl PresentationValidator {
     } else {
       Ok(())
     }
+  }
+
+  /// Verify the presentation's signature using the resolved document of the holder
+  ///
+  /// # Errors
+  /// Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
+  /// property. Otherwise signature verification will be attempted and an error is returned upon failure.
+  pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
+    presentation: &Presentation<U, V>,
+    holder: &ResolvedIotaDocument,
+    options: &VerifierOptions,
+  ) -> ValidationUnitResult {
+    let did: IotaDID = presentation
+      .holder
+      .as_ref()
+      .ok_or(ValidationError::MissingPresentationHolder)
+      .and_then(|value| {
+        IotaDID::parse(value.as_str()).map_err(|error| ValidationError::HolderUrl { source: error.into() })
+      })?;
+    if &did != holder.document.id() {
+      return Err(ValidationError::MismatchedHolder);
+    }
+    holder
+      .document
+      .verify_data(&presentation, options)
+      .map_err(|error| ValidationError::HolderProof { source: error.into() })
+  }
+
+  /// Validates the semantic structure of the [Presentation].
+  pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+    presentation
+      .check_structure()
+      .map_err(ValidationError::PresentationStructure)
+  }
+
+  /// Validates that the nonTransferable property is met.
+  ///
+  /// # Errors
+  /// Returns an error at the first credential requiring a nonTransferable property that is not met.
+  pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+    if let Some(position) = Self::non_transferable_violations(presentation).next() {
+      let err = ValidationError::InvalidHolderSubjectRelationship {
+        credential_position: position,
+      };
+      Err(err)
+    } else {
+      Ok(())
+    }
+  }
+
+  /// Validates that the presentation only contains credentials where the credential subject is the holder.
+  ///
+  /// # Errors
+  /// Returns an error at the first credential with a credential subject not corresponding to the holder.
+  pub fn check_holder_is_always_subject<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+    if let Some(position) = Self::holder_not_subject_iter(presentation).next() {
+      let err = ValidationError::InvalidHolderSubjectRelationship {
+        credential_position: position,
+      };
+      Err(err)
+    } else {
+      Ok(())
+    }
+  }
+
+  // An iterator over the indices corresponding to the credentials that have the
+  // `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
+  // holder.
+  //
+  // The output of this iterator will always be a subset of
+  // [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
+  fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
+    Self::holder_not_subject_iter_helper(presentation)
+      .filter(|(_, credential)| credential.non_transferable.unwrap_or(false))
+      .map(|(position, _)| position)
+  }
+
+  // An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
+  // presentation's holder.
+  //
+  // The output of this iterator is always a superset of
+  // [Self::non_transferable_violations]([Self::non_transferable_violations()]).
+  fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
+    Self::holder_not_subject_iter_helper(presentation).map(|(position, _)| position)
+  }
+
+  fn holder_not_subject_iter_helper<U, V>(
+    presentation: &Presentation<U, V>,
+  ) -> impl Iterator<Item = (usize, &Credential<V>)> + '_ {
+    presentation
+      .verifiable_credential
+      .as_ref()
+      .iter()
+      .enumerate()
+      .filter(|(_, credential)| {
+        match &credential.credential_subject {
+          OneOrMany::One(ref credential_subject) => credential_subject.id != presentation.holder,
+          OneOrMany::Many(subjects) => {
+            // need to check the case where the Many variant holds a vector of exactly one subject
+            if let &[ref credential_subject] = subjects.as_slice() {
+              credential_subject.id != presentation.holder
+            } else {
+              // zero or > 1 subjects means that the holder is not the subject
+              true
+            }
+          }
+        }
+      })
   }
 }
 
