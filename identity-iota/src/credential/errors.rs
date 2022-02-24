@@ -17,15 +17,10 @@ pub enum ValidationError {
   /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
   #[error("could not verify the issuer's signature")]
   #[non_exhaustive]
-  IssuerProof {
+  IssuerSignature {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * * here? */
   },
-  /// Indicates a failure to extract a resolved document corresponding to the URL of the credential's issuer upon
-  /// signature verification.
-  #[error("issuer did not match any of the supplied DID Documents")]
-  #[non_exhaustive]
-  UntrustedIssuer,
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("issuer URL is not a valid DID")]
@@ -43,16 +38,16 @@ pub enum ValidationError {
                                                                  * here? */
   },
 
-  /// Indicates an attempt to verify a presentation's signature with a resolved DID document not corresponding to the
-  /// URL of the presentation's holder property.
-  #[error("holder does not match provided DID Document")]
+  /// Indicates an attempt to verify a signature of a credential or presentation using a DID Document not matching the
+  /// signer's id.
+  #[error("the signer's id does not match any of the provided DID Documents")]
   #[non_exhaustive]
-  MismatchedHolder,
+  DocumentMismatch,
 
   /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
   #[error("could not verify the holder's signature")]
   #[non_exhaustive]
-  HolderProof {
+  HolderSignature {
     source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
                                                                  * here? */
   },

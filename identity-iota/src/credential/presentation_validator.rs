@@ -150,12 +150,12 @@ impl PresentationValidator {
         IotaDID::parse(value.as_str()).map_err(|error| ValidationError::HolderUrl { source: error.into() })
       })?;
     if &did != holder.document.id() {
-      return Err(ValidationError::MismatchedHolder);
+      return Err(ValidationError::DocumentMismatch);
     }
     holder
       .document
       .verify_data(&presentation, options)
-      .map_err(|error| ValidationError::HolderProof { source: error.into() })
+      .map_err(|error| ValidationError::HolderSignature { source: error.into() })
   }
 
   /// Validates the semantic structure of the [Presentation].
@@ -469,7 +469,7 @@ mod tests {
 
     assert!(matches!(
       error.presentation_validation_errors.get(0).unwrap(),
-      &ValidationError::HolderProof { .. }
+      &ValidationError::HolderSignature { .. }
     ));
   }
 

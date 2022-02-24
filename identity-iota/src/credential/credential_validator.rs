@@ -103,7 +103,7 @@ impl CredentialValidator {
           trusted_issuers
             .iter()
             .find(|issuer_doc| issuer_doc.document.id() == &did)
-            .ok_or(ValidationError::UntrustedIssuer)
+            .ok_or(ValidationError::DocumentMismatch)
         }
         Err(error) => {
           // the issuer's url could not be parsed to a valid IotaDID
@@ -116,7 +116,7 @@ impl CredentialValidator {
       issuer
         .document
         .verify_data(credential, options)
-        .map_err(|error| ValidationError::IssuerProof { source: error.into() })
+        .map_err(|error| ValidationError::IssuerSignature { source: error.into() })
     })
   }
 
@@ -412,7 +412,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      ValidationError::UntrustedIssuer
+      ValidationError::DocumentMismatch
     ));
 
     // also check that the full validation fails as expected
@@ -435,7 +435,7 @@ mod tests {
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::UntrustedIssuer));
+    assert!(matches!(error, ValidationError::DocumentMismatch));
   }
 
   #[test]
@@ -457,7 +457,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      ValidationError::IssuerProof { .. }
+      ValidationError::IssuerSignature { .. }
     ));
 
     // check that full_validation also fails as expected
@@ -479,7 +479,7 @@ mod tests {
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, &ValidationError::IssuerProof { .. }));
+    assert!(matches!(error, &ValidationError::IssuerSignature { .. }));
   }
 
   #[test]
