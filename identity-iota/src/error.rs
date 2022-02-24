@@ -51,7 +51,7 @@ pub enum Error {
   IsolatedValidationError(#[from] crate::credential::errors::ValidationError),
   /// Caused by a failure to validate a credential.  
   #[error("credential validation failed")]
-  CredentialValidationError(#[source] crate::credential::errors::AccumulatedCredentialValidationError),
+  CredentialValidationError(#[from] crate::credential::errors::AccumulatedCredentialValidationError),
   /// Caused by a failure to validate a presentation.
   #[error("presentation validation failed")]
   PresentationValidationError(#[source] crate::credential::errors::CompoundPresentationValidationError),

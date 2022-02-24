@@ -4,7 +4,6 @@
 use crate::credential::errors::AccumulatedCredentialValidationError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
-use crate::Error;
 use crate::Result;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
@@ -19,8 +18,6 @@ use super::CredentialValidationOptions;
 #[non_exhaustive]
 pub struct CredentialValidator;
 
-// Use the following pattern throughout: for each public method there is corresponding private method returning a more
-// local error.
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type CredentialValidationResult = std::result::Result<(), AccumulatedCredentialValidationError>;
 
@@ -36,25 +33,14 @@ impl CredentialValidator {
   }
 
   /// Validates the semantic structure of the [Credential].
-  pub fn check_structure<T>(credential: &Credential<T>) -> Result<()> {
-    Self::check_structure_local_error(credential).map_err(Error::IsolatedValidationError)
-  }
-
-  fn check_structure_local_error<T>(credential: &Credential<T>) -> ValidationUnitResult {
+  pub fn check_structure<T>(credential: &Credential<T>) -> ValidationUnitResult {
     credential
       .check_structure()
       .map_err(ValidationError::CredentialStructure)
   }
 
   /// Validate that the [Credential] expires on or after the specified [Timestamp].
-  pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
-    Self::check_expires_on_or_after_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
-  }
-
-  fn check_expires_on_or_after_local_error<T>(
-    credential: &Credential<T>,
-    timestamp: Timestamp,
-  ) -> ValidationUnitResult {
+  pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
     let is_ok = if let Some(expiration_date) = credential.expiration_date {
       expiration_date >= timestamp
     } else {
@@ -64,14 +50,7 @@ impl CredentialValidator {
   }
 
   /// Validate that the [Credential] is issued on or before specified [Timestamp].
-  pub fn check_is_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> Result<()> {
-    Self::check_is_issued_on_or_before_local_error(credential, timestamp).map_err(Error::IsolatedValidationError)
-  }
-
-  fn check_is_issued_on_or_before_local_error<T>(
-    credential: &Credential<T>,
-    timestamp: Timestamp,
-  ) -> ValidationUnitResult {
+  pub fn check_is_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
     (credential.issuance_date <= timestamp)
       .then(|| ())
       .ok_or(ValidationError::IssuanceDate)
@@ -83,16 +62,7 @@ impl CredentialValidator {
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-
   pub fn verify_signature<T: Serialize>(
-    credential: &Credential<T>,
-    trusted_issuers: &[ResolvedIotaDocument],
-    options: &VerifierOptions,
-  ) -> Result<()> {
-    Self::verify_signature_local_error(credential, trusted_issuers, options).map_err(Error::IsolatedValidationError)
-  }
-
-  fn verify_signature_local_error<T: Serialize>(
     credential: &Credential<T>,
     trusted_issuers: &[ResolvedIotaDocument],
     options: &VerifierOptions,
@@ -147,15 +117,13 @@ impl CredentialValidator {
     options: &CredentialValidationOptions,
     issuer: &ResolvedIotaDocument,
     fail_fast: bool,
-  ) -> Result<()> {
-    self
-      .validate_local_error(credential, options, std::slice::from_ref(issuer), fail_fast)
-      .map_err(Error::CredentialValidationError)
+  ) -> CredentialValidationResult {
+    self.validate_issuer_list(credential, options, std::slice::from_ref(issuer), fail_fast)
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation.
-  pub(super) fn validate_local_error<T: Serialize>(
+  pub(super) fn validate_issuer_list<T: Serialize>(
     &self,
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
@@ -164,17 +132,17 @@ impl CredentialValidator {
   ) -> CredentialValidationResult {
     // Run all single concern validations in turn and fail immediately if `fail_fast` is true.
     let signature_validation =
-      std::iter::once_with(|| Self::verify_signature_local_error(credential, issuers, &options.verifier_options));
+      std::iter::once_with(|| Self::verify_signature(credential, issuers, &options.verifier_options));
 
     let expiry_date_validation = std::iter::once_with(|| {
-      Self::check_expires_on_or_after_local_error(credential, options.earliest_expiry_date.unwrap_or_default())
+      Self::check_expires_on_or_after(credential, options.earliest_expiry_date.unwrap_or_default())
     });
 
     let issuance_date_validation = std::iter::once_with(|| {
-      Self::check_is_issued_on_or_before_local_error(credential, options.latest_issuance_date.unwrap_or_default())
+      Self::check_is_issued_on_or_before(credential, options.latest_issuance_date.unwrap_or_default())
     });
 
-    let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(credential));
+    let structure_validation = std::iter::once_with(|| Self::check_structure(credential));
 
     let validation_units_error_iter = issuance_date_validation
       .chain(expiry_date_validation)
@@ -315,13 +283,9 @@ mod tests {
     let error = match validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
+      .validation_errors
     {
-      Error::CredentialValidationError(accumulated_validation_error) => {
-        match accumulated_validation_error.validation_errors {
-          OneOrMany::One(validation_error) => validation_error,
-          _ => unreachable!(),
-        }
-      }
+      OneOrMany::One(validation_error) => validation_error,
       _ => unreachable!(),
     };
 
@@ -393,13 +357,9 @@ mod tests {
     let error = match validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
+      .validation_errors
     {
-      Error::CredentialValidationError(accumulated_validation_error) => {
-        match accumulated_validation_error.validation_errors {
-          OneOrMany::One(validation_error) => validation_error,
-          _ => unreachable!(),
-        }
-      }
+      OneOrMany::One(validation_error) => validation_error,
       _ => unreachable!(),
     };
 
@@ -450,7 +410,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      Error::IsolatedValidationError(ValidationError::UntrustedIssuer)
+      ValidationError::UntrustedIssuer
     ));
 
     // also check that the full validation fails as expected
@@ -466,13 +426,9 @@ mod tests {
     let error = match validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
+      .validation_errors
     {
-      Error::CredentialValidationError(accumulated_validation_error) => {
-        match accumulated_validation_error.validation_errors {
-          OneOrMany::One(validation_error) => validation_error,
-          _ => unreachable!(),
-        }
-      }
+      OneOrMany::One(validation_error) => validation_error,
       _ => unreachable!(),
     };
 
@@ -498,7 +454,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      Error::IsolatedValidationError(ValidationError::IssuerProof { .. })
+      ValidationError::IssuerProof { .. }
     ));
 
     // check that full_validation also fails as expected
@@ -513,13 +469,9 @@ mod tests {
     let error = match validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
+      .validation_errors
     {
-      Error::CredentialValidationError(accumulated_validation_error) => {
-        match accumulated_validation_error.validation_errors {
-          OneOrMany::One(validation_error) => validation_error,
-          _ => unreachable!(),
-        }
-      }
+      OneOrMany::One(validation_error) => validation_error,
       _ => unreachable!(),
     };
 
@@ -553,13 +505,9 @@ mod tests {
     let error = match validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
+      .validation_errors
     {
-      Error::CredentialValidationError(accumulated_validation_error) => {
-        match accumulated_validation_error.validation_errors {
-          OneOrMany::One(validation_error) => validation_error,
-          _ => unreachable!(),
-        }
-      }
+      OneOrMany::One(validation_error) => validation_error,
       _ => unreachable!(),
     };
 
@@ -592,15 +540,12 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let fail_fast = true;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &other_issuer_resolved_doc, fail_fast)
       .unwrap_err()
-    {
-      Error::CredentialValidationError(accumulated_validation_error) => accumulated_validation_error.validation_errors,
-      _ => unreachable!(),
-    };
+      .validation_errors;
 
-    assert!(error.len() == 1);
+    assert!(validation_errors.len() == 1);
   }
 
   #[test]
@@ -628,14 +573,11 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let fail_fast = false;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &other_issuer_resolved_doc, fail_fast)
       .unwrap_err()
-    {
-      Error::CredentialValidationError(accumulated_validation_error) => accumulated_validation_error.validation_errors,
-      _ => unreachable!(),
-    };
+      .validation_errors;
 
-    assert!(error.len() >= 4);
+    assert!(validation_errors.len() >= 4);
   }
 }

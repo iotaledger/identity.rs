@@ -240,7 +240,7 @@ impl PresentationValidator {
       .verifiable_credential
       .iter()
       .map(|credential| {
-        CredentialValidator::new().validate_local_error(
+        CredentialValidator::new().validate_issuer_list(
           credential,
           &options.shared_validation_options,
           issuers,

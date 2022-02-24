@@ -46,7 +46,8 @@ pub async fn create_vc() -> Result<()> {
   let validation_options = CredentialValidationOptions::default();
   let resolved_issuer: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
-  validator.validate(&credential, &validation_options, &resolved_issuer, fail_fast)
+  validator.validate(&credential, &validation_options, &resolved_issuer, fail_fast)?;
+  Ok(())
 }
 
 #[tokio::main]
