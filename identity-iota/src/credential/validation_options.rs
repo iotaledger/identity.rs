@@ -68,6 +68,15 @@ impl Default for SubjectHolderRelationship {
   }
 }
 
+/// Declares when validation should return with an error.
+#[derive(Clone, Copy, Debug)]
+pub enum FailFast {
+  /// Declare that validation must fail upon the first error is found
+  Yes,
+  /// Declare that validation should fail after all errors have been found
+  No,
+}
+
 #[derive(Debug, Default)]
 #[non_exhaustive]
 /// Options to declare validation criteria for validation methods such as

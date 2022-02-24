@@ -80,12 +80,11 @@ async fn main() -> Result<()> {
   //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
 
   let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  let fail_fast = true;
   assert!(CredentialValidator::validate(
     &credential,
     &CredentialValidationOptions::default(),
     &resolved_issuer,
-    fail_fast
+    identity::iota::FailFast::Yes
   )
   .is_ok());
 
@@ -111,7 +110,7 @@ async fn main() -> Result<()> {
     &credential,
     &CredentialValidationOptions::default(),
     &resolved_issuer,
-    true
+    identity::iota::FailFast::Yes
   )
   .is_err());
 

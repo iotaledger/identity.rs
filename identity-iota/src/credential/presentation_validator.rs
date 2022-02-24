@@ -13,6 +13,7 @@ use super::errors::AccumulatedCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+use super::FailFast;
 use super::PresentationValidationOptions;
 use super::SubjectHolderRelationship;
 use crate::credential::credential_validator::CredentialValidator;
@@ -42,21 +43,14 @@ impl PresentationValidator {
   /// refreshService **and more**.
   ///
   /// # Errors
-  /// Fails if any of the following conditions occur
-  /// - The structure of the presentation is not semantically valid
-  /// - The nonTransferable property is set in one of the credentials, but the credential's subject is not the holder of
-  ///   the presentation.
-  /// - The `holder` parameter does not correspond to the holder property of the presentation
-  /// - The holder's signature cannot be verified
-  /// - Validation of any of the presentation's credentials fails (see
-  ///   [`CredentialValidator::full_validation`](CredentialValidator::full_validation())).
-  // Takes &self in case this method will need some pre-computed state in the future.
+  /// Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
+  /// errors will be accumulated in the returned error.
   pub fn validate<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     holder: &ResolvedIotaDocument,
     issuers: &[ResolvedIotaDocument],
-    fail_fast: bool,
+    fail_fast: FailFast,
   ) -> PresentationValidationResult {
     // first run the presentation specific validation units.
     // we set up an iterator over these functions and collect any encountered errors
@@ -85,10 +79,9 @@ impl PresentationValidator {
       .chain(signature_validation)
       .filter_map(|result| result.err());
 
-    let presentation_validation_errors: Vec<ValidationError> = if fail_fast {
-      presentation_validation_errors_iter.take(1).collect()
-    } else {
-      presentation_validation_errors_iter.collect()
+    let presentation_validation_errors: Vec<ValidationError> = match fail_fast {
+      FailFast::Yes => presentation_validation_errors_iter.take(1).collect(),
+      FailFast::No => presentation_validation_errors_iter.collect(),
     };
 
     // now run full validations on the credentials and collect any encountered errors
@@ -107,16 +100,22 @@ impl PresentationValidator {
       .filter_map(|(position, result)| result.err().map(|error| (position, error)));
 
     let credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError> = credential_errors_iter
-      .take(if (!presentation_validation_errors.is_empty()) && fail_fast {
-        // we already encountered validation errors and we are supposed to fail fast so don't collect any more errors
-        0
-      } else if fail_fast {
-        // we did not encounter any validation errors yet, but we are supposed to fail fast so collect at most one
-        // credential error
-        1
-      } else {
-        // we are supposed to collect all errors (if any) so collect all credential errors
-        number_of_credentials
+      .take(match fail_fast {
+        FailFast::Yes => {
+          if !presentation_validation_errors.is_empty() {
+            // we already encountered validation errors and we are supposed to fail fast so don't collect any more
+            // errors
+            0
+          } else {
+            // we did not encounter any validation errors yet, but we are supposed to fail fast so collect at most one
+            // credential error
+            1
+          }
+        }
+        FailFast::No => {
+          // we are supposed to collect all errors (if any) so collect all credential errors
+          number_of_credentials
+        }
       })
       .collect();
 
@@ -388,13 +387,12 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
-    let fail_fast = true;
     assert!(PresentationValidator::validate(
       &presentation,
       &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast
+      FailFast::Yes
     )
     .is_ok());
   }
@@ -452,13 +450,12 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let fail_fast = true;
     let error = PresentationValidator::validate(
       &presentation,
       &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::Yes,
     )
     .unwrap_err();
 
@@ -513,13 +510,12 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
-    let fail_fast = true;
     let error = PresentationValidator::validate(
       &presentation,
       &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::Yes,
     )
     .unwrap_err();
     assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
@@ -592,14 +588,13 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
-    let fail_fast = true;
 
     let error = PresentationValidator::validate(
       &presentation,
       &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::Yes,
     )
     .unwrap_err();
 
@@ -618,7 +613,7 @@ mod tests {
       &options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::Yes,
     )
     .is_ok());
     // finally check that full_validation now does not pass if we declare that the subject must always be the holder.
@@ -629,7 +624,7 @@ mod tests {
       &options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::Yes,
     )
     .is_err());
   }
@@ -691,7 +686,6 @@ mod tests {
     ];
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
-    let fail_fast = true;
 
     let CompoundPresentationValidationError {
       presentation_validation_errors,
@@ -701,7 +695,7 @@ mod tests {
       &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::Yes,
     )
     .unwrap_err();
 
@@ -765,7 +759,6 @@ mod tests {
     let presentation_validation_options = PresentationValidationOptions::default()
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
-    let fail_fast = false;
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -782,7 +775,7 @@ mod tests {
       &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
-      fail_fast,
+      FailFast::No,
     )
     .unwrap_err();
 

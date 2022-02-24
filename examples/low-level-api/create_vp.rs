@@ -95,14 +95,13 @@ async fn main() -> Result<()> {
 
   let presentation_validation_options =
     PresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
-  let fail_fast = true;
 
   PresentationValidator::validate(
     &presentation,
     &presentation_validation_options,
     &resolved_holder_document,
     trusted_issuers,
-    fail_fast,
+    identity::iota::FailFast::Yes,
   )?;
 
   println!("successfully validated presentation!");

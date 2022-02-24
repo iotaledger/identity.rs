@@ -110,13 +110,12 @@ async fn main() -> Result<()> {
 
   // extract and validate the presentation's credentials
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
-  let fail_fast = true;
   for credential in presentation.verifiable_credential.iter() {
     CredentialValidator::validate(
       credential,
       &CredentialValidationOptions::default(),
       &resolved_issuer_doc,
-      fail_fast,
+      identity::iota::FailFast::Yes,
     )?;
   }
   println!("validated all credentials of the presentation");

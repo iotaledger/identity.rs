@@ -44,8 +44,12 @@ pub async fn create_vc() -> Result<()> {
   let resolver: Resolver = Resolver::new().await?;
   let validation_options = CredentialValidationOptions::default();
   let resolved_issuer: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
-  let fail_fast = true;
-  CredentialValidator::validate(&credential, &validation_options, &resolved_issuer, fail_fast)?;
+  CredentialValidator::validate(
+    &credential,
+    &validation_options,
+    &resolved_issuer,
+    identity::iota::FailFast::Yes,
+  )?;
   Ok(())
 }
 

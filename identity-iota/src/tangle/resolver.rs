@@ -14,6 +14,7 @@ use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
 use crate::credential::CredentialValidationOptions;
 use crate::credential::CredentialValidator;
+use crate::credential::FailFast;
 use crate::credential::PresentationValidationOptions;
 use crate::credential::PresentationValidator;
 use crate::did::IotaDID;
@@ -165,14 +166,14 @@ where
   ///
   /// # Errors
   /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-  /// an attempt will be made to validate the credential. If the `fail_fast` parameter is `true` an error will be
+  /// an attempt will be made to validate the credential. If the `fail_fast` parameter is "Yes" an error will be
   /// returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
   /// the returned error.
   pub async fn verify_credential<U: Serialize>(
     &self,
     credential: &Credential<U>,
     options: &CredentialValidationOptions,
-    fail_fast: bool,
+    fail_fast: FailFast,
   ) -> Result<()> {
     let issuer = self.resolve_credential_issuer(credential).await?;
     CredentialValidator::validate(credential, options, &issuer, fail_fast).map_err(Into::into)
@@ -200,7 +201,7 @@ where
   /// # Errors
   /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
   /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
-  /// parameter is `true` an error will be returned upon the first encountered validation failure, otherwise all
+  /// parameter is `Yes` an error will be returned upon the first encountered validation failure, otherwise all
   /// validation errors will be accumulated in the returned error.
   pub async fn verify_presentation<U: Serialize, V: Serialize>(
     &self,
@@ -208,7 +209,7 @@ where
     options: &PresentationValidationOptions,
     holder: Option<&ResolvedIotaDocument>,
     issuers: Option<&[ResolvedIotaDocument]>,
-    fail_fast: bool,
+    fail_fast: FailFast,
   ) -> Result<()> {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
