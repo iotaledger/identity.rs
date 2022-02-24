@@ -3,6 +3,8 @@
 
 use std::iter;
 
+use crate::invocation::AsynchronousInvocationStrategy;
+use crate::invocation::SynchronousInvocationStrategy;
 use crate::p2p::behaviour::DidCommCodec;
 use crate::p2p::behaviour::DidCommProtocol;
 use crate::p2p::event_loop::EventLoop;
@@ -10,6 +12,7 @@ use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
 use crate::Error;
+use crate::RequestMode;
 use crate::Result;
 use dashmap::DashMap;
 use futures::channel::mpsc;
@@ -129,7 +132,13 @@ impl ActorBuilder {
     let actor_clone = actor.clone();
 
     let event_handler = move |event: InboundRequest| {
-      actor_clone.clone().handle_request(event);
+      let actor = actor_clone.clone();
+
+      if event.request_mode == RequestMode::Asynchronous {
+        actor.handle_request(AsynchronousInvocationStrategy::new(), event);
+      } else {
+        actor.handle_request(SynchronousInvocationStrategy::new(), event);
+      };
     };
 
     executor.exec(event_loop.run(event_handler).boxed());

@@ -13,7 +13,7 @@ use crate::RemoteSendError;
 use crate::RequestContext;
 
 /// A future whose output is an `Any` trait object.
-pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'me>>;
+pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;
 
 pub trait RequestHandler: Send + Sync {
   fn invoke(

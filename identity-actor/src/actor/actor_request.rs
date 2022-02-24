@@ -14,6 +14,7 @@ pub enum RequestMode {
   Asynchronous,
 }
 
+// TODO: Use ActorRequest for sync, and ActorMessage for Async, and introduce a supertrait?
 /// A request that can be sent to an actor with the expected response being of type `Response`.
 ///
 /// A request can be sync or async. [`RequestMode::Synchronous`] means to invoke the remote handler and wait for

@@ -88,13 +88,15 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 
   actor1.add_address(actor2.peer_id(), addr).await;
 
+  let req = Dummy(42);
   actor1
-    .send_message(actor2.peer_id(), &ThreadId::new(), Dummy(42))
+    .send_named_request(actor2.peer_id(), req.request_name().as_ref(), req)
     .await
     .unwrap();
 
+  let req = Dummy(43);
   actor2
-    .send_message(actor1.peer_id(), &ThreadId::new(), Dummy(43))
+    .send_named_request(actor1.peer_id(), req.request_name().as_ref(), req)
     .await
     .unwrap();
 
@@ -143,8 +145,9 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 
   sender.add_address(receiver_peer_id, receiver_addr).await;
 
+  let req = Dummy(42);
   sender
-    .send_message(receiver_peer_id, &ThreadId::new(), Dummy(42))
+    .send_named_request(receiver_peer_id, req.request_name().as_ref(), req)
     .await
     .unwrap();
 

@@ -8,11 +8,11 @@ mod actor_request;
 mod endpoint;
 mod errors;
 mod handler;
+pub(crate) mod invocation;
 mod request_context;
 pub(crate) mod traits;
 
 pub use actor::Actor;
-pub use actor::ActorState;
 pub use actor::HandlerBuilder;
 pub use actor_builder::ActorBuilder;
 pub use actor_request::ActorRequest;

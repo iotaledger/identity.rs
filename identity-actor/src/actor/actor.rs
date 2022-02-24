@@ -10,10 +10,10 @@ use std::sync::Arc;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::thread_id::ThreadId;
+use crate::invocation::InvocationStrategy;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::messages::RequestMessage;
-use crate::p2p::messages::ResponseMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::traits::RequestHandler;
 use crate::ActorRequest;
@@ -29,10 +29,6 @@ use futures::channel::oneshot;
 use futures::Future;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-
-use libp2p::request_response::InboundFailure;
-use libp2p::request_response::RequestId;
-use libp2p::request_response::ResponseChannel;
 use libp2p::TransportError;
 use serde::de::DeserializeOwned;
 use uuid::Uuid;
@@ -66,6 +62,7 @@ where
   pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
   where
     REQ: ActorRequest + Send + Sync + 'static,
+    REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   {
@@ -78,7 +75,7 @@ where
   }
 }
 
-pub struct ActorState {
+pub(crate) struct ActorState {
   pub(crate) handlers: HandlerMap,
   pub(crate) objects: ObjectMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
@@ -89,7 +86,7 @@ pub struct ActorState {
 #[derive(Clone)]
 pub struct Actor {
   pub commander: NetCommander,
-  state: Arc<ActorState>,
+  pub(crate) state: Arc<ActorState>,
 }
 
 impl Actor {
@@ -143,113 +140,55 @@ impl Actor {
   }
 
   #[inline(always)]
-  pub(crate) fn handle_request(mut self, request: InboundRequest) {
+  pub(crate) fn handle_request<S: InvocationStrategy + Send + Sync + 'static>(
+    mut self,
+    strategy: S,
+    request: InboundRequest,
+  ) {
     let _ = tokio::spawn(async move {
       if self.state.handlers.contains_key(&request.endpoint) {
-        self.invoke_handler(request).await;
-      } else {
-        let result: StdResult<(), RemoteSendError> =
-          match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
-            Err(error) => Err(RemoteSendError::DeserializationFailure(error.to_string())),
-            Ok(plaintext_msg) => {
-              let thread_id = plaintext_msg.thread_id();
+        let mut actor = self.clone();
 
-              match self.state.threads_sender.remove(thread_id) {
-                Some(sender) => {
-                  let thread_request = ThreadRequest {
-                    peer_id: request.peer_id,
-                    endpoint: request.endpoint,
-                    input: request.input,
-                  };
+        match self.get_handler(&request.endpoint).and_then(|handler| {
+          let input = handler.0 .1.deserialize_request(request.input)?;
+          Ok((handler.0, handler.1, input))
+        }) {
+          Ok((handler, object, input)) => {
+            let handler: &dyn RequestHandler = handler.1.as_ref();
 
-                  sender.1.send(thread_request).expect("TODO");
+            let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
 
-                  Ok(())
-                }
-                None => {
-                  log::info!(
-                    "no handler or thread found for the received message `{}`",
-                    request.endpoint
-                  );
-                  // TODO: Should this be a more generic error name, including unknown endpoint + unknown thread?
-                  Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()))
-                }
-              }
+            strategy
+              .invoke_handler(
+                handler,
+                actor,
+                request_context,
+                object,
+                input,
+                request.response_channel,
+                request.request_id,
+              )
+              .await;
+          }
+          Err(error) => {
+            log::debug!("handler error: {error:?}");
+
+            let result = strategy
+              .handler_deserialization_failure(&mut actor, request.response_channel, request.request_id, error)
+              .await;
+
+            if let Err(err) = result {
+              log::error!(
+                "could not send error for request on endpoint `{}` due o: {err:?}",
+                request.endpoint
+              );
             }
-          };
-
-        let send_result = Self::send_response(
-          &mut self.commander,
-          result,
-          request.response_channel,
-          request.request_id,
-        )
-        .await;
-
-        if let Err(err) = send_result {
-          log::error!("could not acknowledge request due to: {err:?}",);
+          }
         }
+      } else {
+        strategy.endpoint_not_found(&mut self, request).await;
       }
     });
-  }
-
-  #[inline(always)]
-  async fn invoke_handler(self, inbound_request: InboundRequest) {
-    let input: Vec<u8> = inbound_request.input;
-    let endpoint: Endpoint = inbound_request.endpoint;
-    let peer_id: PeerId = inbound_request.peer_id;
-    let response_channel: ResponseChannel<_> = inbound_request.response_channel;
-    let request_id: RequestId = inbound_request.request_id;
-
-    log::debug!("request for endpoint {endpoint}");
-
-    let handler_object_tuple: StdResult<_, RemoteSendError> = self.get_handler(&endpoint);
-
-    // TODO: Would be nice if we didn't have to clone again. Passing a &mut ref would be nice, but
-    // introduces lifetimes in lots of places.
-    let actor = self.clone();
-
-    let mut commander = self.commander.clone();
-
-    match handler_object_tuple {
-      Ok((handler, object)) => {
-        // Send actor-level acknowledgment that the message was received and a handler exists.
-        let send_result = Self::send_response(&mut commander, Ok(()), response_channel, request_id).await;
-
-        // TODO: If error, should we abort handling this request?
-        if let Err(err) = send_result {
-          log::error!("could not acknowledge request on endpoint `{endpoint}` due to: {err:?}");
-        }
-
-        let request_context: RequestContext<()> = RequestContext::new((), peer_id, endpoint);
-
-        let input = handler.value().1.deserialize_request(input).unwrap();
-        match handler.value().1.invoke(actor, request_context, object, input) {
-          Ok(invocation) => {
-            invocation.await;
-          }
-          Err(err) => {
-            log::error!("{}", err);
-          }
-        }
-      }
-      Err(error) => {
-        log::debug!("handler error: {error:?}");
-
-        let err_response: StdResult<(), RemoteSendError> = Err(error);
-        let send_result = Self::send_response(
-          &mut commander,
-          err_response,
-          response_channel,
-          inbound_request.request_id,
-        )
-        .await;
-
-        if let Err(err) = send_result {
-          log::error!("could not send error for request on endpoint `{endpoint}` due o: {err:?}");
-        }
-      }
-    }
   }
 
   fn get_handler(&self, endpoint: &Endpoint) -> std::result::Result<HandlerObjectTuple<'_>, RemoteSendError> {
@@ -269,17 +208,6 @@ impl Actor {
       }
       None => Err(RemoteSendError::UnknownRequest(endpoint.to_string())),
     }
-  }
-
-  async fn send_response(
-    commander: &mut NetCommander,
-    response: StdResult<(), RemoteSendError>,
-    channel: ResponseChannel<ResponseMessage>,
-    request_id: RequestId,
-  ) -> StdResult<(), InboundFailure> {
-    log::debug!("responding with {:?}", response);
-    let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
-    commander.send_response(response, channel, request_id).await
   }
 
   pub async fn shutdown(mut self) -> Result<()> {
@@ -342,6 +270,36 @@ impl Actor {
     serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).expect("TODO")?;
 
     Ok(())
+  }
+
+  pub async fn send_named_request<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    name: &str,
+    message: Request,
+  ) -> Result<Request::Response> {
+    let request_mode: RequestMode = message.request_mode();
+
+    // TODO: Can this not be a DCPM?
+    let dcpm = DidCommPlaintextMessage::new(ThreadId::new(), name.to_owned(), message);
+
+    // TODO: Remove this? There is no await hook, so the hook concept for sync requests is broken.
+    let dcpm = self.call_send_message_hook(peer, dcpm).await?;
+
+    let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
+    let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
+
+    log::debug!("Sending `{}` message", name);
+
+    let response = self.commander.send_request(peer, message).await?;
+
+    log::debug!(
+      "ack was: {:#?}",
+      serde_json::from_slice::<serde_json::Value>(&response.0).expect("TODO")
+    );
+
+    let response = serde_json::from_slice::<StdResult<Vec<u8>, RemoteSendError>>(&response.0).expect("TODO")?;
+    Ok(serde_json::from_slice::<Request::Response>(&response).expect("TODO"))
   }
 
   #[inline(always)]

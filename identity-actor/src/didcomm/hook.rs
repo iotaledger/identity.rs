@@ -26,6 +26,7 @@ where
   pub fn add_hook<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> ActorResult<Self>
   where
     REQ: ActorRequest + Send + Sync + 'static,
+    REQ::Response: Send,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   {
@@ -75,6 +76,7 @@ impl<OBJ, REQ, FUT, FUN> RequestHandler for Hook<OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
+  REQ::Response: Send,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
@@ -105,7 +107,7 @@ where
 
     let future = async move {
       let response: Result<REQ, DidCommTermination> = (self.func)(*boxed_object, actor, request).await;
-      let type_erased: Box<dyn Any> = Box::new(response);
+      let type_erased: Box<dyn Any + Send> = Box::new(response);
       type_erased
     };
 

@@ -51,6 +51,7 @@ impl<OBJ, REQ, FUT, FUN> RequestHandler for Handler<OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
+  REQ::Response: Send,
   FUT: Future<Output = REQ::Response> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
@@ -80,7 +81,7 @@ where
     })?;
     let future = async move {
       let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
-      let type_erased: Box<dyn Any> = Box::new(response);
+      let type_erased: Box<dyn Any + Send> = Box::new(response);
       type_erased
     };
     Ok(Box::pin(future))
