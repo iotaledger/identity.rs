@@ -41,12 +41,11 @@ pub async fn create_vc() -> Result<()> {
 
   // Validate the verifiable credential
   //Todo: Use the new resolver to get the necessary DID documents once that becomes available.
-  let validator = CredentialValidator::new();
   let resolver: Resolver = Resolver::new().await?;
   let validation_options = CredentialValidationOptions::default();
   let resolved_issuer: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
   let fail_fast = true;
-  validator.validate(&credential, &validation_options, &resolved_issuer, fail_fast)?;
+  CredentialValidator::validate(&credential, &validation_options, &resolved_issuer, fail_fast)?;
   Ok(())
 }
 

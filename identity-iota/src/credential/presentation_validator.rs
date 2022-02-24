@@ -98,12 +98,7 @@ impl PresentationValidator {
       .verifiable_credential
       .iter()
       .map(|credential| {
-        CredentialValidator::new().validate_issuer_list(
-          credential,
-          &options.shared_validation_options,
-          issuers,
-          fail_fast,
-        )
+        CredentialValidator::validate_issuer_list(credential, &options.shared_validation_options, issuers, fail_fast)
       })
       .enumerate()
       .filter_map(|(position, result)| result.err().map(|error| (position, error)));
