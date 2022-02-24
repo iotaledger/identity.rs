@@ -14,7 +14,7 @@ use super::errors::SignerContext;
 use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 
-/// A struct for validating [Credential]s.
+/// A struct for validating [`Credential`]s.
 #[non_exhaustive]
 pub struct CredentialValidator;
 
@@ -27,12 +27,12 @@ impl Default for CredentialValidator {
   }
 }
 impl CredentialValidator {
-  /// Constructs a new [CredentialValidator]
+  /// Constructs a new [`CredentialValidator`]
   pub fn new() -> Self {
     Self {}
   }
 
-  /// Validates a [Credential].
+  /// Validates a [`Credential`].
   ///
   /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
   /// structure.

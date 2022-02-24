@@ -72,7 +72,6 @@ impl Display for SignerContext {
   }
 }
 
-// AccumulatedCredentialValidationError
 #[derive(Debug)]
 /// An error caused by a failure to validate a Credential.  
 pub struct AccumulatedCredentialValidationError {

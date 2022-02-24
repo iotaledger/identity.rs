@@ -19,7 +19,7 @@ use crate::credential::credential_validator::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 
-/// A struct for validating [Presentation]s.
+/// A struct for validating [`Presentation`]s.
 #[non_exhaustive]
 pub struct PresentationValidator;
 
@@ -32,7 +32,7 @@ impl Default for PresentationValidator {
   }
 }
 impl PresentationValidator {
-  /// Constructs a new [PresentationValidator].
+  /// Constructs a new [`PresentationValidator`].
   pub fn new() -> Self {
     Self {}
   }
@@ -51,7 +51,7 @@ impl PresentationValidator {
   /// - The `holder` parameter does not correspond to the holder property of the presentation
   /// - The holder's signature cannot be verified
   /// - Validation of any of the presentation's credentials fails (see
-  ///   [CredentialValidator::full_validation](CredentialValidator::full_validation())).
+  ///   [`CredentialValidator::full_validation`](CredentialValidator::full_validation())).
   // Takes &self in case this method will need some pre-computed state in the future.
   pub fn validate<U: Serialize, V: Serialize>(
     &self,
@@ -263,7 +263,7 @@ mod tests {
 
   fn build_presentation(holder: &IotaDocument, credentials: Vec<Credential>) -> Presentation {
     let mut builder = PresentationBuilder::default()
-      .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").unwrap())
+      .id(Url::parse("http://example.org/credentials/3732").unwrap())
       .holder(Url::parse(holder.id().as_ref()).unwrap());
     for credential in credentials {
       builder = builder.credential(credential);

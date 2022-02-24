@@ -6,14 +6,14 @@ use identity_did::verifiable::VerifierOptions;
 
 #[derive(Debug, Default)]
 /// Options to declare validation criteria in
-/// [CredentialValidator::full_validation](super::CredentialValidator::full_validation()).
+/// [`CredentialValidator::full_validation`](super::CredentialValidator::full_validation()).
 #[non_exhaustive]
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
-  /// [Timestamp].
+  /// [`Timestamp`].
   pub earliest_expiry_date: Option<Timestamp>,
   /// Declares that the credential is **not** considered valid if it was issued later than this
-  /// [Timestamp].
+  /// [`Timestamp`].
   pub latest_issuance_date: Option<Timestamp>,
   /// Declare that the credential's signature must be verified according to these
   /// [VerifierOptions].
@@ -49,7 +49,8 @@ impl CredentialValidationOptions {
 #[non_exhaustive]
 /// Declares how a credential subject must relate to the presentation holder.
 ///
-/// See [PresentationValidationOptions::subject_holder_relationship()].
+/// See [`PresentationValidationOptions::subject_holder_relationship`](PresentationValidationOptions::
+/// subject_holder_relationship()).
 pub enum SubjectHolderRelationship {
   /// Declare that the holder must always match the subject.
   AlwaysSubject,
@@ -61,7 +62,7 @@ pub enum SubjectHolderRelationship {
 
 impl Default for SubjectHolderRelationship {
   fn default() -> Self {
-    // TODO: Should the default be the most strict variant? Should there be a default at all?
+    // TODO: Should the default be the most strict variant?
     Self::SubjectOnNonTransferable
   }
 }
@@ -69,7 +70,7 @@ impl Default for SubjectHolderRelationship {
 #[derive(Debug, Default)]
 #[non_exhaustive]
 /// Options to declare validation criteria for
-/// [PresentationValidator::full_validation](super::PresentationValidator::full_validation()).
+/// [`PresentationValidator::full_validation`](super::PresentationValidator::full_validation()).
 pub struct PresentationValidationOptions {
   /// Declares that the credentials of the presentation must all be
   /// validated according to these options.
