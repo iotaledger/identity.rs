@@ -21,7 +21,7 @@ jobs:
             architecture: x64
             build: |
               npm run build
-              strip -x *.node
+              strip -x dist/*.node
             test: |
               npm run test
           - host: windows-latest
