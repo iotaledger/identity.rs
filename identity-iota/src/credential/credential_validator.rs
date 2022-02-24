@@ -25,9 +25,16 @@ type CredentialValidationResult = std::result::Result<(), AccumulatedCredentialV
 impl CredentialValidator {
   /// Validates a [`Credential`].
   ///
-  /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
-  /// structure.
+  /// The following properties are validated:
+  /// - The issuer's signature,
+  /// - The expiration date,
+  /// - The issuance date
+  /// - The semantic structure.
   ///
+  /// # Warning
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+  /// refreshService **and more**.
   ///
   /// # Errors
   /// Fails if any of the following conditions occur

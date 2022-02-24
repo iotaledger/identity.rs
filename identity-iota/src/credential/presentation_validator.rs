@@ -33,6 +33,11 @@ impl PresentationValidator {
   /// presentation and common concerns regarding credential validation (see
   /// [`CredentialValidator::full_validation`](CredentialValidator::full_validation())).
   ///
+  /// # Warning
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+  /// refreshService **and more**.
+  ///
   /// # Errors
   /// Fails if any of the following conditions occur
   /// - The structure of the presentation is not semantically valid

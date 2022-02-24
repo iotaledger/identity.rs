@@ -158,6 +158,11 @@ where
   /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
   /// [`CredentialValidator::validate`](CredentialValidator::validate()) in order to avoid an unnecessary resolution.
   ///
+  /// # Warning
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+  /// refreshService **and more**.
+  ///
   /// # Errors
   /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
   /// an attempt will be made to validate the credential. If the `fail_fast` parameter is `true` an error will be
@@ -181,6 +186,11 @@ where
   /// - The semantic structure of the presentation,
   /// - The presentation's credentials (see [`CredentialValidator::validate`](CredentialValidator::validate())).
   ///  
+  /// # Warning
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+  /// refreshService **and more**.
+  ///
   /// # Resolution
   /// If `holder` and/or `issuers` is None then this/these DID Document(s) will be resolved. If you already have up to
   /// date versions of all of these DID Documents you may want to instead use

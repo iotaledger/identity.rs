@@ -5,8 +5,9 @@ use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
 
 #[derive(Debug, Default)]
-/// Options to declare validation criteria in
-/// [`CredentialValidator::full_validation`](super::CredentialValidator::full_validation()).
+/// Options to declare validation criteria in validation methods such as
+/// [`CredentialValidator::full_validation`](super::CredentialValidator::full_validation()) and
+/// [`Resolver::verify_credential`](crate::tangle::Resolver::verify_credential())..
 #[non_exhaustive]
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
@@ -69,8 +70,9 @@ impl Default for SubjectHolderRelationship {
 
 #[derive(Debug, Default)]
 #[non_exhaustive]
-/// Options to declare validation criteria for
-/// [`PresentationValidator::full_validation`](super::PresentationValidator::full_validation()).
+/// Options to declare validation criteria for validation methods such as
+/// [`PresentationValidator::full_validation`](super::PresentationValidator::full_validation()) and
+/// [`Resolver::verify_presentation`](crate::tangle::Resolver::verify_presentation()).
 pub struct PresentationValidationOptions {
   /// Declares that the credentials of the presentation must all be
   /// validated according to these options.
