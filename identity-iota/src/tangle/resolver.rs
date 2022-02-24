@@ -184,7 +184,8 @@ where
   /// - The holder's signature,
   /// - The relationship between the holder and the credential subjects,
   /// - The semantic structure of the presentation,
-  /// - The presentation's credentials (see [`CredentialValidator::validate`](CredentialValidator::validate())).
+  /// - Some properties of the credentials (see [`CredentialValidator::validate` for more
+  ///   information](CredentialValidator::validate())).
   ///  
   /// # Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.

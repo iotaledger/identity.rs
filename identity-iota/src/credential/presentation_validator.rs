@@ -29,9 +29,12 @@ type PresentationValidationResult = std::result::Result<(), CompoundPresentation
 impl PresentationValidator {
   /// Validate a [Presentation].
   ///
-  /// Checks common concerns such as the holder's signature, the nonTransferable property, the semantic structure of the
-  /// presentation and common concerns regarding credential validation (see
-  /// [`CredentialValidator::full_validation`](CredentialValidator::full_validation())).
+  /// The following properties are validated according to `options`:
+  /// - The holder's signature,
+  /// - The relationship between the subject and the holder,
+  /// - The semantic structure
+  /// - Some properties of the credentials  (see
+  /// [`CredentialValidator::validate` for more information](CredentialValidator::validate())).
   ///
   /// # Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
