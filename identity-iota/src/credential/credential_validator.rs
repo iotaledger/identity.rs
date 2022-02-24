@@ -10,6 +10,7 @@ use identity_credential::credential::Credential;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
+use super::errors::SignerContext;
 use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 
@@ -107,7 +108,10 @@ impl CredentialValidator {
         }
         Err(error) => {
           // the issuer's url could not be parsed to a valid IotaDID
-          Err(ValidationError::IssuerUrl { source: error.into() })
+          Err(ValidationError::SignerUrl {
+            source: error.into(),
+            signer_ctx: SignerContext::Issuer,
+          })
         }
       }
     };
@@ -116,7 +120,10 @@ impl CredentialValidator {
       issuer
         .document
         .verify_data(credential, options)
-        .map_err(|error| ValidationError::IssuerSignature { source: error.into() })
+        .map_err(|error| ValidationError::Signature {
+          source: error.into(),
+          signer_ctx: SignerContext::Issuer,
+        })
     })
   }
 
@@ -457,7 +464,7 @@ mod tests {
     assert!(matches!(
       CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
         .unwrap_err(),
-      ValidationError::IssuerSignature { .. }
+      ValidationError::Signature { .. }
     ));
 
     // check that full_validation also fails as expected
@@ -479,7 +486,7 @@ mod tests {
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, &ValidationError::IssuerSignature { .. }));
+    assert!(matches!(error, &ValidationError::Signature { .. }));
   }
 
   #[test]

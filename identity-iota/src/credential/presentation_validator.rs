@@ -11,6 +11,7 @@ use serde::Serialize;
 
 use super::errors::AccumulatedCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
+use super::errors::SignerContext;
 use super::errors::ValidationError;
 use super::PresentationValidationOptions;
 use super::SubjectHolderRelationship;
@@ -147,7 +148,10 @@ impl PresentationValidator {
       .as_ref()
       .ok_or(ValidationError::MissingPresentationHolder)
       .and_then(|value| {
-        IotaDID::parse(value.as_str()).map_err(|error| ValidationError::HolderUrl { source: error.into() })
+        IotaDID::parse(value.as_str()).map_err(|error| ValidationError::SignerUrl {
+          source: error.into(),
+          signer_ctx: SignerContext::Holder,
+        })
       })?;
     if &did != holder.document.id() {
       return Err(ValidationError::DocumentMismatch);
@@ -155,7 +159,10 @@ impl PresentationValidator {
     holder
       .document
       .verify_data(&presentation, options)
-      .map_err(|error| ValidationError::HolderSignature { source: error.into() })
+      .map_err(|error| ValidationError::Signature {
+        source: error.into(),
+        signer_ctx: SignerContext::Holder,
+      })
   }
 
   /// Validates the semantic structure of the [Presentation].
@@ -469,7 +476,7 @@ mod tests {
 
     assert!(matches!(
       error.presentation_validation_errors.get(0).unwrap(),
-      &ValidationError::HolderSignature { .. }
+      &ValidationError::Signature { .. }
     ));
   }
 

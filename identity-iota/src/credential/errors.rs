@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Display;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
 pub enum ValidationError {
@@ -14,25 +14,22 @@ pub enum ValidationError {
   /// Indicates that the issuance date of the credential is not considered valid.
   #[error("issuance date is in the future or later than required")]
   IssuanceDate,
-  /// Indicates that the credential's signature could not be verified using the issuer's DID Document.
-  #[error("could not verify the issuer's signature")]
+  /// Indicates that the credential's (resp. presentation's) signature could not be verified using the issuer's (resp.
+  /// holder's) DID Document.
+  #[error("could not verify the {signer_ctx}'s signature")]
   #[non_exhaustive]
-  IssuerSignature {
+  Signature {
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    signer_ctx: SignerContext,
   },
 
-  /// Indicates that the credential's issuer could not be parsed as a valid DID.
-  #[error("issuer URL is not a valid DID")]
+  /// Indicates that the credential's (resp. presentation's) issuer's (resp. holder's) URL could not be parsed as a
+  /// valid DID.
+  #[error("{signer_ctx} URL is not a valid DID")]
   #[non_exhaustive]
-  IssuerUrl {
+  SignerUrl {
     source: Box<dyn std::error::Error + Send + Sync + 'static>,
-  },
-
-  /// Indicates that the presentation's holder could not be parsed as a valid DID.
-  #[error("the presentation's holder property could not be parsed to a valid DID")]
-  #[non_exhaustive]
-  HolderUrl {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    signer_ctx: SignerContext,
   },
 
   /// Indicates an attempt to verify a signature of a credential or presentation using a DID Document not matching the
@@ -41,12 +38,6 @@ pub enum ValidationError {
   #[non_exhaustive]
   DocumentMismatch,
 
-  /// Indicates that the presentation's signature could not be verified using the holder's DID Document.
-  #[error("could not verify the holder's signature")]
-  #[non_exhaustive]
-  HolderSignature {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>,
-  },
   /// Indicates that the structure of the [Credential](identity_credential::credential::Credential) is not semantically
   /// correct.
   #[error("the credential's structure is not semantically correct")]
@@ -62,6 +53,23 @@ pub enum ValidationError {
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
+}
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum SignerContext {
+  Issuer,
+  Holder,
+}
+
+impl Display for SignerContext {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let context = match *self {
+      Self::Issuer => "issuer",
+      Self::Holder => "holder",
+    };
+    write!(f, "{}", context)
+  }
 }
 
 // AccumulatedCredentialValidationError
