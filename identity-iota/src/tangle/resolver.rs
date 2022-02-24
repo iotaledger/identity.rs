@@ -8,6 +8,7 @@ use std::sync::Arc;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use serde::Serialize;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
@@ -96,7 +97,10 @@ where
   /// # Errors
   ///
   /// Errors if the issuer URL is not a valid [`IotaDID`] or DID resolution fails.
-  pub async fn resolve_credential_issuer(&self, credential: &Credential) -> Result<ResolvedIotaDocument> {
+  pub async fn resolve_credential_issuer<U: Serialize>(
+    &self,
+    credential: &Credential<U>,
+  ) -> Result<ResolvedIotaDocument> {
     let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str())?;
     self.resolve(&issuer).await
   }
@@ -107,7 +111,10 @@ where
   /// # Errors
   ///
   /// Errors if any issuer URL is not a valid [`IotaDID`] or DID resolution fails.
-  pub async fn resolve_presentation_issuers(&self, presentation: &Presentation) -> Result<Vec<ResolvedIotaDocument>> {
+  pub async fn resolve_presentation_issuers<U, V: Serialize>(
+    &self,
+    presentation: &Presentation<U, V>,
+  ) -> Result<Vec<ResolvedIotaDocument>> {
     // Extract unique issuers.
     let issuers: HashSet<IotaDID> = presentation
       .verifiable_credential

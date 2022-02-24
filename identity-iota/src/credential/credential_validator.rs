@@ -1,9 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Borrow;
+
 use crate::credential::errors::AccumulatedCredentialValidationError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
+use crate::tangle::Resolver;
 use crate::Result;
 use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
@@ -16,22 +19,48 @@ use super::CredentialValidationOptions;
 
 /// A struct for validating [`Credential`]s.
 #[non_exhaustive]
-pub struct CredentialValidator;
+pub struct CredentialValidator<R = Resolver>
+where
+  R: Borrow<Resolver>,
+{
+  resolver: R,
+}
 
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type CredentialValidationResult = std::result::Result<(), AccumulatedCredentialValidationError>;
 
-impl Default for CredentialValidator {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-impl CredentialValidator {
-  /// Constructs a new [`CredentialValidator`]
-  pub fn new() -> Self {
-    Self {}
+impl<R: Borrow<Resolver>> CredentialValidator<R> {
+  /// Construct a new [`CredentialValidator`].
+  pub fn new(resolver: R) -> Self {
+    Self { resolver }
   }
 
+  /// Validate a [`Credential`].
+  ///
+  /// If `trusted_issuers` is `None` the verifier will try to resolve the DID Document of the credential issuer.
+  pub async fn verify_credential<T: Serialize>(
+    &self,
+    credential: &Credential<T>,
+    trusted_issuers: Option<&[ResolvedIotaDocument]>,
+    options: &CredentialValidationOptions,
+    fail_fast: bool,
+  ) -> Result<()> {
+    match trusted_issuers {
+      Some(issuers) => {
+        CredentialValidator::validate_issuer_list(credential, options, issuers, fail_fast).map_err(Into::into)
+      }
+      None => {
+        async {
+          let issuer = self.resolver.borrow().resolve_credential_issuer(credential).await?;
+          CredentialValidator::validate(credential, options, &issuer, fail_fast).map_err(Into::into)
+        }
+        .await
+      }
+    }
+  }
+}
+
+impl CredentialValidator {
   /// Validates a [`Credential`].
   ///
   /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic

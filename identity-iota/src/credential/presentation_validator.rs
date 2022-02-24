@@ -26,17 +26,7 @@ pub struct PresentationValidator;
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type PresentationValidationResult = std::result::Result<(), CompoundPresentationValidationError>;
 
-impl Default for PresentationValidator {
-  fn default() -> Self {
-    Self::new()
-  }
-}
 impl PresentationValidator {
-  /// Constructs a new [`PresentationValidator`].
-  pub fn new() -> Self {
-    Self {}
-  }
-
   /// Validate a [Presentation].
   ///
   /// Checks common concerns such as the holder's signature, the nonTransferable property, the semantic structure of the
