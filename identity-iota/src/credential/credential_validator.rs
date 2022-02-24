@@ -5,7 +5,6 @@ use crate::credential::errors::AccumulatedCredentialValidationError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::Result;
-use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
 use identity_did::verifiable::VerifierOptions;
@@ -149,7 +148,7 @@ impl CredentialValidator {
       .chain(structure_validation)
       .chain(signature_validation)
       .filter_map(|result| result.err());
-    let validation_errors: OneOrMany<ValidationError> = if fail_fast {
+    let validation_errors: Vec<ValidationError> = if fail_fast {
       validation_units_error_iter.take(1).collect()
     } else {
       validation_units_error_iter.collect()
@@ -165,6 +164,7 @@ impl CredentialValidator {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use identity_core::common::OneOrMany;
   use proptest::proptest;
 
   use identity_core::common::Timestamp;
@@ -280,16 +280,17 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let fail_fast = true;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
-      .validation_errors
-    {
-      OneOrMany::One(validation_error) => validation_error,
+      .validation_errors;
+
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::ExpirationDate));
+    assert!(matches!(error, &ValidationError::ExpirationDate));
   }
 
   #[test]
@@ -354,16 +355,17 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let fail_fast = true;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
-      .validation_errors
-    {
-      OneOrMany::One(validation_error) => validation_error,
+      .validation_errors;
+
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::IssuanceDate));
+    assert!(matches!(error, &ValidationError::IssuanceDate));
   }
 
   #[test]
@@ -423,12 +425,13 @@ mod tests {
 
     // validate and extract the nested error according to our expectations
     let fail_fast = true;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
-      .validation_errors
-    {
-      OneOrMany::One(validation_error) => validation_error,
+      .validation_errors;
+
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
       _ => unreachable!(),
     };
 
@@ -466,16 +469,17 @@ mod tests {
       .earliest_expiry_date(expires_after);
     // validate and extract the nested error according to our expectations
     let fail_fast = true;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
-      .validation_errors
-    {
-      OneOrMany::One(validation_error) => validation_error,
+      .validation_errors;
+
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::IssuerProof { .. }));
+    assert!(matches!(error, &ValidationError::IssuerProof { .. }));
   }
 
   #[test]
@@ -502,16 +506,17 @@ mod tests {
     let validator = CredentialValidator::new();
     // validate and extract the nested error according to our expectations
     let fail_fast = true;
-    let error = match validator
+    let validation_errors = validator
       .validate(&credential, &options, &issuer, fail_fast)
       .unwrap_err()
-      .validation_errors
-    {
-      OneOrMany::One(validation_error) => validation_error,
+      .validation_errors;
+
+    let error = match validation_errors.as_slice() {
+      [validation_error] => validation_error,
       _ => unreachable!(),
     };
 
-    assert!(matches!(error, ValidationError::CredentialStructure(_)));
+    assert!(matches!(error, &ValidationError::CredentialStructure(_)));
   }
 
   #[test]

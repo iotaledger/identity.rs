@@ -4,8 +4,6 @@
 use std::collections::BTreeMap;
 use std::fmt::Display;
 
-use identity_core::common::OneOrMany;
-
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 /// An error associated with validating credentials and presentations.
@@ -75,12 +73,11 @@ pub enum ValidationError {
   MissingPresentationHolder,
 }
 
-// Todo: Consider implementing Error for OneOrMany<E: std::error::Error> to avoid wrapping it in
 // AccumulatedCredentialValidationError
 #[derive(Debug)]
 /// An error caused by a failure to validate a Credential.  
 pub struct AccumulatedCredentialValidationError {
-  pub validation_errors: OneOrMany<ValidationError>,
+  pub validation_errors: Vec<ValidationError>,
 }
 
 impl Display for AccumulatedCredentialValidationError {
