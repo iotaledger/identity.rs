@@ -18,24 +18,21 @@ pub enum ValidationError {
   #[error("could not verify the issuer's signature")]
   #[non_exhaustive]
   IssuerSignature {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
-                                                                 * * here? */
+    source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
 
   /// Indicates that the credential's issuer could not be parsed as a valid DID.
   #[error("issuer URL is not a valid DID")]
   #[non_exhaustive]
   IssuerUrl {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
-                                                                 * here? */
+    source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
 
   /// Indicates that the presentation's holder could not be parsed as a valid DID.
   #[error("the presentation's holder property could not be parsed to a valid DID")]
   #[non_exhaustive]
   HolderUrl {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
-                                                                 * here? */
+    source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
 
   /// Indicates an attempt to verify a signature of a credential or presentation using a DID Document not matching the
@@ -48,8 +45,7 @@ pub enum ValidationError {
   #[error("could not verify the holder's signature")]
   #[non_exhaustive]
   HolderSignature {
-    source: Box<dyn std::error::Error + Send + Sync + 'static>, /* Todo: Would it be better to use a specific type
-                                                                 * here? */
+    source: Box<dyn std::error::Error + Send + Sync + 'static>,
   },
   /// Indicates that the structure of the [Credential](identity_credential::credential::Credential) is not semantically
   /// correct.
