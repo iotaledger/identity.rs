@@ -1101,8 +1101,9 @@ Signs another DID document using the verification method specified by `method_qu
 The `method_query` may be the full `DIDUrl` of the method or just its fragment,
 e.g. "#sign-0".
 
-`Document.signSelf` should be used in general. This is intended for signing updates to a
-document where a sole capability invocation method is rotated or replaced entirely.
+`Document.signSelf` should be used in general, this throws an error if trying to operate
+on the same document. This is intended for signing updates to a document where a sole
+capability invocation method is rotated or replaced entirely.
 
 NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
 verification method. See `Document::verifyDocument`.
