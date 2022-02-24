@@ -18,12 +18,10 @@ use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 
-// TODO: Make functions static.
 #[async_trait::async_trait]
 pub trait InvocationStrategy {
   #[allow(clippy::too_many_arguments)]
   async fn invoke_handler(
-    &self,
     handler: &dyn RequestHandler,
     actor: Actor,
     context: RequestContext<()>,
@@ -34,14 +32,13 @@ pub trait InvocationStrategy {
   );
 
   async fn handler_deserialization_failure(
-    &self,
     actor: &mut Actor,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
   ) -> StdResult<(), InboundFailure>;
 
-  async fn endpoint_not_found(&self, actor: &mut Actor, request: InboundRequest);
+  async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest);
 }
 
 async fn send_response<T: serde::Serialize>(
@@ -56,17 +53,11 @@ async fn send_response<T: serde::Serialize>(
   commander.send_response(response, channel, request_id).await
 }
 
-pub struct SynchronousInvocationStrategy {}
-
-impl SynchronousInvocationStrategy {
-  pub fn new() -> Self {
-    Self {}
-  }
-}
+pub struct SynchronousInvocationStrategy;
 
 #[async_trait::async_trait]
 impl InvocationStrategy for SynchronousInvocationStrategy {
-  async fn endpoint_not_found(&self, actor: &mut Actor, request: InboundRequest) {
+  async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest) {
     let response: StdResult<Vec<u8>, RemoteSendError> =
       Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()));
 
@@ -84,7 +75,6 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
   }
 
   async fn handler_deserialization_failure(
-    &self,
     actor: &mut Actor,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
@@ -100,7 +90,6 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
   }
 
   async fn invoke_handler(
-    &self,
     handler: &dyn RequestHandler,
     actor: Actor,
     context: RequestContext<()>,
@@ -133,17 +122,11 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
   }
 }
 
-pub struct AsynchronousInvocationStrategy {}
-
-impl AsynchronousInvocationStrategy {
-  pub fn new() -> Self {
-    Self {}
-  }
-}
+pub struct AsynchronousInvocationStrategy;
 
 #[async_trait::async_trait]
 impl InvocationStrategy for AsynchronousInvocationStrategy {
-  async fn endpoint_not_found(&self, actor: &mut Actor, request: InboundRequest) {
+  async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest) {
     let result: StdResult<(), RemoteSendError> =
       match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
         Err(error) => Err(RemoteSendError::DeserializationFailure(error.to_string())),
@@ -188,7 +171,6 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
   }
 
   async fn handler_deserialization_failure(
-    &self,
     actor: &mut Actor,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
@@ -204,7 +186,6 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
   }
 
   async fn invoke_handler(
-    &self,
     handler: &dyn RequestHandler,
     mut actor: Actor,
     context: RequestContext<()>,

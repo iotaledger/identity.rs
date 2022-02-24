@@ -135,9 +135,9 @@ impl ActorBuilder {
       let actor = actor_clone.clone();
 
       if event.request_mode == RequestMode::Asynchronous {
-        actor.handle_request(AsynchronousInvocationStrategy::new(), event);
+        actor.handle_request::<AsynchronousInvocationStrategy>(event);
       } else {
-        actor.handle_request(SynchronousInvocationStrategy::new(), event);
+        actor.handle_request::<SynchronousInvocationStrategy>(event);
       };
     };
 

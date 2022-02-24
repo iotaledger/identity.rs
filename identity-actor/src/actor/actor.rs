@@ -140,11 +140,7 @@ impl Actor {
   }
 
   #[inline(always)]
-  pub(crate) fn handle_request<S: InvocationStrategy + Send + Sync + 'static>(
-    mut self,
-    strategy: S,
-    request: InboundRequest,
-  ) {
+  pub(crate) fn handle_request<STR: InvocationStrategy + Send + Sync + 'static>(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
       if self.state.handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
@@ -158,24 +154,23 @@ impl Actor {
 
             let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
 
-            strategy
-              .invoke_handler(
-                handler,
-                actor,
-                request_context,
-                object,
-                input,
-                request.response_channel,
-                request.request_id,
-              )
-              .await;
+            STR::invoke_handler(
+              handler,
+              actor,
+              request_context,
+              object,
+              input,
+              request.response_channel,
+              request.request_id,
+            )
+            .await;
           }
           Err(error) => {
             log::debug!("handler error: {error:?}");
 
-            let result = strategy
-              .handler_deserialization_failure(&mut actor, request.response_channel, request.request_id, error)
-              .await;
+            let result =
+              STR::handler_deserialization_failure(&mut actor, request.response_channel, request.request_id, error)
+                .await;
 
             if let Err(err) = result {
               log::error!(
@@ -186,7 +181,7 @@ impl Actor {
           }
         }
       } else {
-        strategy.endpoint_not_found(&mut self, request).await;
+        STR::endpoint_not_found(&mut self, request).await;
       }
     });
   }
