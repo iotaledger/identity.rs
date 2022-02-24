@@ -4,7 +4,7 @@
 import {
     ExplorerUrl, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions
 } from "../../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../../node_adapter/stronghold_storage.js'
+import { Stronghold } from '../../dist'
 
 /**
  * This example demonstrates how to issue and sign Verifiable Credentials using the account.

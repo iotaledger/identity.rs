@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountBuilder, ExplorerUrl } from "../../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../../node_adapter/stronghold_storage.js'
+import { Stronghold } from '../../dist'
+
 /**
  * This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle
  * using the Account.

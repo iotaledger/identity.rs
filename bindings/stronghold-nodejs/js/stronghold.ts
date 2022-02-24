@@ -1,5 +1,5 @@
-import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../index.js'
-import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm.js";
+import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../dist/napi'
+import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;

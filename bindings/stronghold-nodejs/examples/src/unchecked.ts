@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountBuilder, Timestamp, ExplorerUrl, Document } from "../../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../../node_adapter/stronghold_storage.js'
+import { Stronghold } from '../../dist'
 /**
  * This example demonstrates how to update the custom properties of a DID document directly 
  * and publish it without performing validation.
