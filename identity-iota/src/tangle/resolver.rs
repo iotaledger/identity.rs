@@ -12,6 +12,10 @@ use serde::Serialize;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
+use crate::credential::CredentialValidationOptions;
+use crate::credential::CredentialValidator;
+use crate::credential::PresentationValidationOptions;
+use crate::credential::PresentationValidator;
 use crate::did::IotaDID;
 use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
@@ -131,12 +135,89 @@ where
   /// # Errors
   ///
   /// Errors if the holder URL is missing, is not a valid [`IotaDID`], or DID resolution fails.
-  pub async fn resolve_presentation_holder(&self, presentation: &Presentation) -> Result<ResolvedIotaDocument> {
+  pub async fn resolve_presentation_holder<U, V>(
+    &self,
+    presentation: &Presentation<U, V>,
+  ) -> Result<ResolvedIotaDocument> {
     let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
       crate::credential::errors::ValidationError::MissingPresentationHolder,
     ))?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
     self.resolve(&holder).await
+  }
+
+  /// Verifies a [`Credential`].
+  ///
+  /// This method resolves the issuer's DID Document and validates the following properties in accordance with
+  /// `options`:
+  /// - The issuer's signature
+  /// - The expiration date
+  /// - The issuance date
+  /// - The credential's semantic structure.
+  ///
+  /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
+  /// [`CredentialValidator::validate`](CredentialValidator::validate()) in order to avoid an unnecessary resolution.
+  ///
+  /// # Errors
+  /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
+  /// an attempt will be made to validate the credential. If the `fail_fast` parameter is `true` an error will be
+  /// returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
+  /// the returned error.
+  pub async fn verify_credential<U: Serialize>(
+    &self,
+    credential: &Credential<U>,
+    options: &CredentialValidationOptions,
+    fail_fast: bool,
+  ) -> Result<()> {
+    let issuer = self.resolve_credential_issuer(credential).await?;
+    CredentialValidator::validate(credential, options, &issuer, fail_fast).map_err(Into::into)
+  }
+
+  /// Verifies a [`Presentation`].
+  ///
+  /// This method validates the following properties in accordance with `options`
+  /// - The holder's signature,
+  /// - The relationship between the holder and the credential subjects,
+  /// - The semantic structure of the presentation,
+  /// - The presentation's credentials (see [`CredentialValidator::validate`](CredentialValidator::validate())).
+  ///  
+  /// # Resolution
+  /// If `holder` and/or `issuers` is None then this/these DID Document(s) will be resolved. If you already have up to
+  /// date versions of all of these DID Documents you may want to instead use
+  /// [`PresentationValidator::validate`](PresentationValidator::validate()).
+  ///
+  /// # Errors
+  /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
+  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
+  /// parameter is `true` an error will be returned upon the first encountered validation failure, otherwise all
+  /// validation errors will be accumulated in the returned error.
+  pub async fn verify_presentation<U: Serialize, V: Serialize>(
+    &self,
+    presentation: &Presentation<U, V>,
+    options: &PresentationValidationOptions,
+    holder: Option<&ResolvedIotaDocument>,
+    issuers: Option<&[ResolvedIotaDocument]>,
+    fail_fast: bool,
+  ) -> Result<()> {
+    match (holder, issuers) {
+      (Some(holder), Some(issuers)) => {
+        PresentationValidator::validate(presentation, options, holder, issuers, fail_fast)
+      }
+      (Some(holder), None) => {
+        let issuers = self.resolve_presentation_issuers(presentation).await?;
+        PresentationValidator::validate(presentation, options, holder, &issuers, fail_fast)
+      }
+      (None, Some(issuers)) => {
+        let holder = self.resolve_presentation_holder(presentation).await?;
+        PresentationValidator::validate(presentation, options, &holder, issuers, fail_fast)
+      }
+      (None, None) => {
+        let holder = self.resolve_presentation_holder(presentation).await?;
+        let issuers = self.resolve_presentation_issuers(presentation).await?;
+        PresentationValidator::validate(presentation, options, &holder, &issuers, fail_fast)
+      }
+    }
+    .map_err(Into::into)
   }
 }
 

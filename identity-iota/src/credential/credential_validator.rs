@@ -1,12 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Borrow;
-
 use crate::credential::errors::AccumulatedCredentialValidationError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
-use crate::tangle::Resolver;
+
 use crate::Result;
 use identity_core::common::Timestamp;
 use identity_credential::credential::Credential;
@@ -19,46 +17,10 @@ use super::CredentialValidationOptions;
 
 /// A struct for validating [`Credential`]s.
 #[non_exhaustive]
-pub struct CredentialValidator<R = Resolver>
-where
-  R: Borrow<Resolver>,
-{
-  resolver: R,
-}
+pub struct CredentialValidator;
 
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type CredentialValidationResult = std::result::Result<(), AccumulatedCredentialValidationError>;
-
-impl<R: Borrow<Resolver>> CredentialValidator<R> {
-  /// Construct a new [`CredentialValidator`].
-  pub fn new(resolver: R) -> Self {
-    Self { resolver }
-  }
-
-  /// Validate a [`Credential`].
-  ///
-  /// If `trusted_issuers` is `None` the verifier will try to resolve the DID Document of the credential issuer.
-  pub async fn verify_credential<T: Serialize>(
-    &self,
-    credential: &Credential<T>,
-    trusted_issuers: Option<&[ResolvedIotaDocument]>,
-    options: &CredentialValidationOptions,
-    fail_fast: bool,
-  ) -> Result<()> {
-    match trusted_issuers {
-      Some(issuers) => {
-        CredentialValidator::validate_issuer_list(credential, options, issuers, fail_fast).map_err(Into::into)
-      }
-      None => {
-        async {
-          let issuer = self.resolver.borrow().resolve_credential_issuer(credential).await?;
-          CredentialValidator::validate(credential, options, &issuer, fail_fast).map_err(Into::into)
-        }
-        .await
-      }
-    }
-  }
-}
 
 impl CredentialValidator {
   /// Validates a [`Credential`].
@@ -84,7 +46,7 @@ impl CredentialValidator {
     issuer: &ResolvedIotaDocument,
     fail_fast: bool,
   ) -> CredentialValidationResult {
-    Self::validate_issuer_list(credential, options, std::slice::from_ref(issuer), fail_fast)
+    Self::validate_with_trusted_issuers(credential, options, std::slice::from_ref(issuer), fail_fast)
   }
 
   /// Validates the semantic structure of the [Credential].
@@ -157,7 +119,7 @@ impl CredentialValidator {
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation.
-  pub(super) fn validate_issuer_list<T: Serialize>(
+  pub(crate) fn validate_with_trusted_issuers<T: Serialize>(
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
     issuers: &[ResolvedIotaDocument],
