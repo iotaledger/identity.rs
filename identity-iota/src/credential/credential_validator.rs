@@ -32,6 +32,33 @@ impl CredentialValidator {
     Self {}
   }
 
+  /// Validates a [Credential].
+  ///
+  /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
+  /// structure.
+  ///
+  ///
+  /// # Errors
+  /// Fails if any of the following conditions occur
+  /// - The structure of the credential is not semantically valid
+  /// - The expiration date does not meet the requirement set in `options`
+  /// - The issuance date does not meet the requirement set in `options`
+  /// - The `issuer` parameter does not provide a DID corresponding to the URL of the credential's issuer.
+  /// - The credential's signature cannot be verified using the issuer's DID Document
+  ///
+  /// Fails on the first encountered error if `fail_fast` is true, otherwise all
+  /// errors will be accumulated in the returned error.
+  // Takes &self in case this method will need some pre-computed state in the future.
+  pub fn validate<T: Serialize>(
+    &self,
+    credential: &Credential<T>,
+    options: &CredentialValidationOptions,
+    issuer: &ResolvedIotaDocument,
+    fail_fast: bool,
+  ) -> CredentialValidationResult {
+    self.validate_issuer_list(credential, options, std::slice::from_ref(issuer), fail_fast)
+  }
+
   /// Validates the semantic structure of the [Credential].
   pub fn check_structure<T>(credential: &Credential<T>) -> ValidationUnitResult {
     credential
@@ -92,33 +119,6 @@ impl CredentialValidator {
         .verify_data(credential, options)
         .map_err(|error| ValidationError::IssuerProof { source: error.into() })
     })
-  }
-
-  /// Validates a [Credential].
-  ///
-  /// Common concerns are checked such as the credential's signature, expiration date, issuance date and semantic
-  /// structure.
-  ///
-  ///
-  /// # Errors
-  /// Fails if any of the following conditions occur
-  /// - The structure of the credential is not semantically valid
-  /// - The expiration date does not meet the requirement set in `options`
-  /// - The issuance date does not meet the requirement set in `options`
-  /// - The `issuer` parameter does not provide a DID corresponding to the URL of the credential's issuer.
-  /// - The credential's signature cannot be verified using the issuer's DID Document
-  ///
-  /// Fails on the first encountered error if `fail_fast` is true, otherwise all
-  /// errors will be accumulated in the returned error.
-  // Takes &self in case this method will need some pre-computed state in the future.
-  pub fn validate<T: Serialize>(
-    &self,
-    credential: &Credential<T>,
-    options: &CredentialValidationOptions,
-    issuer: &ResolvedIotaDocument,
-    fail_fast: bool,
-  ) -> CredentialValidationResult {
-    self.validate_issuer_list(credential, options, std::slice::from_ref(issuer), fail_fast)
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
