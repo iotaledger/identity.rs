@@ -17,15 +17,11 @@ use super::SubjectHolderRelationship;
 use crate::credential::credential_validator::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
-use crate::Error;
-use crate::Result;
 
 /// A struct for validating [Presentation]s.
 #[non_exhaustive]
 pub struct PresentationValidator;
 
-// Use the following pattern throughout: for each public method there is corresponding private method returning a more
-// local error.
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type PresentationValidationResult = std::result::Result<(), CompoundPresentationValidationError>;
 
@@ -41,11 +37,7 @@ impl PresentationValidator {
   }
 
   /// Validates the semantic structure of the [Presentation].
-  pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
-    Self::check_structure_local_error(presentation).map_err(Error::IsolatedValidationError)
-  }
-
-  fn check_structure_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+  pub fn check_structure<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
     presentation
       .check_structure()
       .map_err(ValidationError::PresentationStructure)
@@ -67,11 +59,7 @@ impl PresentationValidator {
   ///
   /// # Errors
   /// Returns an error at the first credential requiring a nonTransferable property that is not met.
-  pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> Result<()> {
-    Self::check_non_transferable_local_error(presentation).map_err(Error::IsolatedValidationError)
-  }
-
-  fn check_non_transferable_local_error<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
+  pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
     if let Some(position) = Self::non_transferable_violations(presentation).next() {
       let err = ValidationError::InvalidHolderSubjectRelationship {
         credential_position: position,
@@ -139,15 +127,6 @@ impl PresentationValidator {
     presentation: &Presentation<U, V>,
     holder: &ResolvedIotaDocument,
     options: &VerifierOptions,
-  ) -> Result<()> {
-    Self::verify_presentation_signature_local_error(presentation, holder, options)
-      .map_err(Error::IsolatedValidationError)
-  }
-
-  fn verify_presentation_signature_local_error<U: Serialize, V: Serialize>(
-    presentation: &Presentation<U, V>,
-    holder: &ResolvedIotaDocument,
-    options: &VerifierOptions,
   ) -> ValidationUnitResult {
     let did: IotaDID = presentation
       .holder
@@ -188,25 +167,12 @@ impl PresentationValidator {
     holder: &ResolvedIotaDocument,
     issuers: &[ResolvedIotaDocument],
     fail_fast: bool,
-  ) -> Result<()> {
-    self
-      .full_validation_local_error(presentation, options, holder, issuers, fail_fast)
-      .map_err(Error::PresentationValidationError)
-  }
-
-  fn full_validation_local_error<U: Serialize, V: Serialize>(
-    &self,
-    presentation: &Presentation<U, V>,
-    options: &PresentationValidationOptions,
-    holder: &ResolvedIotaDocument,
-    issuers: &[ResolvedIotaDocument],
-    fail_fast: bool,
   ) -> PresentationValidationResult {
     // first run the presentation specific validation units.
     // we set up an iterator over these functions and collect any encountered errors
-    let structure_validation = std::iter::once_with(|| Self::check_structure_local_error(presentation));
+    let structure_validation = std::iter::once_with(|| Self::check_structure(presentation));
     let signature_validation = std::iter::once_with(|| {
-      Self::verify_presentation_signature_local_error(presentation, holder, &options.presentation_verifier_options)
+      Self::verify_presentation_signature(presentation, holder, &options.presentation_verifier_options)
     });
 
     // setup the validator that checks the relationship between the subject and the holder.
@@ -488,7 +454,7 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options);
 
     let fail_fast = true;
-    let error = match validator
+    let error = validator
       .validate(
         &presentation,
         &presentation_validation_options,
@@ -496,13 +462,15 @@ mod tests {
         &trusted_issuers,
         fail_fast,
       )
-      .unwrap_err()
-    {
-      Error::PresentationValidationError(mut err) => err.presentation_validation_errors.pop().unwrap(),
-      _ => unreachable!(),
-    };
+      .unwrap_err();
 
-    assert!(matches!(error, ValidationError::HolderProof { .. }));
+    assert_eq!(error.presentation_validation_errors.len(), 1);
+    assert!(error.credential_errors.is_empty());
+
+    assert!(matches!(
+      error.presentation_validation_errors.get(0).unwrap(),
+      &ValidationError::HolderProof { .. }
+    ));
   }
 
   #[test]
@@ -550,7 +518,7 @@ mod tests {
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
-    let error = match validator
+    let error = validator
       .validate(
         &presentation,
         &presentation_validation_options,
@@ -558,17 +526,10 @@ mod tests {
         &trusted_issuers,
         fail_fast,
       )
-      .unwrap_err()
-    {
-      Error::PresentationValidationError(err) => {
-        assert!(err.presentation_validation_errors.is_empty());
-        err.credential_errors
-      }
-      _ => unreachable!(),
-    };
-
+      .unwrap_err();
+    assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
     assert!(matches!(
-      error.get(&1),
+      error.credential_errors.get(&1),
       Some(_) // the credential at position 1 fails validation
     ));
   }
@@ -639,7 +600,7 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
 
-    let error = match validator
+    let error = validator
       .validate(
         &presentation,
         &presentation_validation_options,
@@ -647,15 +608,13 @@ mod tests {
         &trusted_issuers,
         fail_fast,
       )
-      .unwrap_err()
-    {
-      Error::PresentationValidationError(mut err) => err.presentation_validation_errors.pop().unwrap(),
-      _ => unreachable!(),
-    };
+      .unwrap_err();
+
+    assert!(error.presentation_validation_errors.len() == 1 && error.credential_errors.is_empty());
 
     assert!(matches!(
-      error,
-      ValidationError::InvalidHolderSubjectRelationship { credential_position: 1 }
+      error.presentation_validation_errors.get(0).unwrap(),
+      &ValidationError::InvalidHolderSubjectRelationship { credential_position: 1 }
     ));
 
     // check that the validation passes if we change the options to allow any relationship between the subject and
@@ -745,7 +704,10 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
 
-    let (presentation_validation_errors, credential_errors) = match validator
+    let CompoundPresentationValidationError {
+      presentation_validation_errors,
+      credential_errors,
+    } = validator
       .validate(
         &presentation,
         &presentation_validation_options,
@@ -753,11 +715,7 @@ mod tests {
         &trusted_issuers,
         fail_fast,
       )
-      .unwrap_err()
-    {
-      Error::PresentationValidationError(err) => (err.presentation_validation_errors, err.credential_errors),
-      _ => unreachable!(),
-    };
+      .unwrap_err();
 
     assert!(
       presentation_validation_errors.len()
@@ -830,7 +788,10 @@ mod tests {
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
 
-    let (presentation_validation_errors, credential_errors) = match validator
+    let CompoundPresentationValidationError {
+      presentation_validation_errors,
+      credential_errors,
+    } = validator
       .validate(
         &presentation,
         &presentation_validation_options,
@@ -838,11 +799,7 @@ mod tests {
         &trusted_issuers,
         fail_fast,
       )
-      .unwrap_err()
-    {
-      Error::PresentationValidationError(err) => (err.presentation_validation_errors, err.credential_errors),
-      _ => unreachable!(),
-    };
+      .unwrap_err();
 
     assert!(
       presentation_validation_errors.len()
