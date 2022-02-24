@@ -267,7 +267,17 @@ impl Actor {
     Ok(())
   }
 
-  pub async fn send_named_request<Request: ActorRequest>(
+  pub async fn send_request<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    message: Request,
+  ) -> Result<Request::Response> {
+    self
+      .send_named_request(peer, message.request_name().as_ref(), message)
+      .await
+  }
+
+  async fn send_named_request<Request: ActorRequest>(
     &mut self,
     peer: PeerId,
     name: &str,
