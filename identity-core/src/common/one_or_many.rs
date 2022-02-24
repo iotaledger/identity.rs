@@ -28,10 +28,6 @@ impl<T> OneOrMany<T> {
     }
   }
 
-  /// Constructs an empty collection
-  pub fn empty() -> Self {
-    Self::Many(Vec::<T>::new())
-  }
   /// Returns `true` if the collection is empty
   pub fn is_empty(&self) -> bool {
     match self {
