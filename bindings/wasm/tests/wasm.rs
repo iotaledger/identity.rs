@@ -267,12 +267,28 @@ fn test_sign_document() {
   // Replace the default signing method.
   let mut document2: WasmDocument = document1.clone();
   let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let method: WasmVerificationMethod = WasmVerificationMethod::new(&document2.id(), keypair2.type_(), keypair2.public(), "#method-2".to_owned()).unwrap();
-  document2.insert_method(&method, WasmMethodScope::capability_invocation()).unwrap();
-  document2.remove_method(document1.default_signing_method().unwrap().id()).unwrap();
+  let method: WasmVerificationMethod = WasmVerificationMethod::new(
+    &document2.id(),
+    keypair2.type_(),
+    keypair2.public(),
+    "#method-2".to_owned(),
+  )
+  .unwrap();
+  document2
+    .insert_method(&method, WasmMethodScope::capability_invocation())
+    .unwrap();
+  document2
+    .remove_method(document1.default_signing_method().unwrap().id())
+    .unwrap();
 
   // Sign update using original document.
   assert!(WasmDocument::verify_document(&document2, &document1).is_err());
-  document1.sign_document(&mut document2, &keypair1, &JsValue::from(document1.default_signing_method().unwrap().id()).unchecked_into()).unwrap();
+  document1
+    .sign_document(
+      &mut document2,
+      &keypair1,
+      &JsValue::from(document1.default_signing_method().unwrap().id()).unchecked_into(),
+    )
+    .unwrap();
   WasmDocument::verify_document(&document2, &document1).unwrap();
 }

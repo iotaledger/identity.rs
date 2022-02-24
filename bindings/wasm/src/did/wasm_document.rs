@@ -8,8 +8,9 @@ use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
-use identity::crypto::{PrivateKey, SignatureOptions};
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
+use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
@@ -179,9 +180,22 @@ impl WasmDocument {
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifyDocument`.
   #[wasm_bindgen(js_name = signDocument)]
-  pub fn sign_document(&self, document: &mut WasmDocument, key_pair: &KeyPair, method_query: &UDIDUrlQuery) -> Result<()> {
+  pub fn sign_document(
+    &self,
+    document: &mut WasmDocument,
+    key_pair: &KeyPair,
+    method_query: &UDIDUrlQuery,
+  ) -> Result<()> {
     let method_query: String = method_query.into_serde().wasm_result()?;
-    self.0.sign_data(&mut document.0, key_pair.0.private(), &method_query, SignatureOptions::default()).wasm_result()
+    self
+      .0
+      .sign_data(
+        &mut document.0,
+        key_pair.0.private(),
+        &method_query,
+        SignatureOptions::default(),
+      )
+      .wasm_result()
   }
 
   #[wasm_bindgen(js_name = signCredential)]
