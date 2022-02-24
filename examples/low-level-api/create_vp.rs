@@ -90,8 +90,6 @@ async fn main() -> Result<()> {
   let trusted_issuer: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
   let trusted_issuers = &[trusted_issuer];
 
-  let validator = PresentationValidator::new();
-
   let presentation_verifier_options =
     VerifierOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned());
 
@@ -99,7 +97,7 @@ async fn main() -> Result<()> {
     PresentationValidationOptions::default().presentation_verifier_options(presentation_verifier_options);
   let fail_fast = true;
 
-  validator.validate(
+  PresentationValidator::validate(
     &presentation,
     &presentation_validation_options,
     &resolved_holder_document,

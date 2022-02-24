@@ -54,7 +54,6 @@ impl PresentationValidator {
   ///   [`CredentialValidator::full_validation`](CredentialValidator::full_validation())).
   // Takes &self in case this method will need some pre-computed state in the future.
   pub fn validate<U: Serialize, V: Serialize>(
-    &self,
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     holder: &ResolvedIotaDocument,
@@ -203,8 +202,7 @@ impl PresentationValidator {
   }
 
   // An iterator over the indices corresponding to the credentials that have the
-  // `nonTransferable` property set, but the credential subject id does not correspond to URL of the presentation's
-  // holder.
+  // `nonTransferable` property set, but where the credential subject id is not the same as the presentation's holder.
   //
   // The output of this iterator will always be a subset of
   // [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
@@ -386,8 +384,6 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let validator = PresentationValidator::new();
-
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
       test_utils::mock_resolved_document(issuer_bar_doc),
@@ -395,15 +391,14 @@ mod tests {
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
-    assert!(validator
-      .validate(
-        &presentation,
-        &presentation_validation_options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast
-      )
-      .is_ok());
+    assert!(PresentationValidator::validate(
+      &presentation,
+      &presentation_validation_options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast
+    )
+    .is_ok());
   }
 
   #[test]
@@ -449,7 +444,6 @@ mod tests {
     .is_err());
 
     // now check that full_validation also fails
-    let validator = PresentationValidator::new();
     let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
@@ -461,15 +455,14 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options);
 
     let fail_fast = true;
-    let error = validator
-      .validate(
-        &presentation,
-        &presentation_validation_options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .unwrap_err();
+    let error = PresentationValidator::validate(
+      &presentation,
+      &presentation_validation_options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .unwrap_err();
 
     assert_eq!(error.presentation_validation_errors.len(), 1);
     assert!(error.credential_errors.is_empty());
@@ -516,8 +509,6 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let validator = PresentationValidator::new();
-
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
       test_utils::mock_resolved_document(issuer_bar_doc),
@@ -525,15 +516,14 @@ mod tests {
 
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
-    let error = validator
-      .validate(
-        &presentation,
-        &presentation_validation_options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .unwrap_err();
+    let error = PresentationValidator::validate(
+      &presentation,
+      &presentation_validation_options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .unwrap_err();
     assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
     assert!(matches!(
       error.credential_errors.get(&1),
@@ -588,7 +578,6 @@ mod tests {
       .unwrap();
 
     // validate the presentation
-    let validator = PresentationValidator::new();
     let issued_before = Timestamp::parse("2020-02-02T00:00:00Z").unwrap();
     let expires_after = Timestamp::parse("2021-01-01T00:00:00Z").unwrap();
     let credential_validation_options = CredentialValidationOptions::default()
@@ -607,15 +596,14 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let fail_fast = true;
 
-    let error = validator
-      .validate(
-        &presentation,
-        &presentation_validation_options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .unwrap_err();
+    let error = PresentationValidator::validate(
+      &presentation,
+      &presentation_validation_options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .unwrap_err();
 
     assert!(error.presentation_validation_errors.len() == 1 && error.credential_errors.is_empty());
 
@@ -627,27 +615,25 @@ mod tests {
     // check that the validation passes if we change the options to allow any relationship between the subject and
     // holder.
     let options = presentation_validation_options.subject_holder_relationship(SubjectHolderRelationship::Any);
-    assert!(validator
-      .validate(
-        &presentation,
-        &options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .is_ok());
+    assert!(PresentationValidator::validate(
+      &presentation,
+      &options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .is_ok());
     // finally check that full_validation now does not pass if we declare that the subject must always be the holder.
     let options = options.subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
-    assert!(validator
-      .validate(
-        &presentation,
-        &options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .is_err());
+    assert!(PresentationValidator::validate(
+      &presentation,
+      &options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .is_err());
   }
 
   #[test]
@@ -701,8 +687,6 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let validator = PresentationValidator::new();
-
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
       test_utils::mock_resolved_document(issuer_bar_doc),
@@ -714,15 +698,14 @@ mod tests {
     let CompoundPresentationValidationError {
       presentation_validation_errors,
       credential_errors,
-    } = validator
-      .validate(
-        &presentation,
-        &presentation_validation_options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .unwrap_err();
+    } = PresentationValidator::validate(
+      &presentation,
+      &presentation_validation_options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .unwrap_err();
 
     assert!(
       presentation_validation_errors.len()
@@ -786,8 +769,6 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options);
     let fail_fast = false;
 
-    let validator = PresentationValidator::new();
-
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
       test_utils::mock_resolved_document(issuer_bar_doc),
@@ -798,15 +779,14 @@ mod tests {
     let CompoundPresentationValidationError {
       presentation_validation_errors,
       credential_errors,
-    } = validator
-      .validate(
-        &presentation,
-        &presentation_validation_options,
-        &resolved_holder_document,
-        &trusted_issuers,
-        fail_fast,
-      )
-      .unwrap_err();
+    } = PresentationValidator::validate(
+      &presentation,
+      &presentation_validation_options,
+      &resolved_holder_document,
+      &trusted_issuers,
+      fail_fast,
+    )
+    .unwrap_err();
 
     assert!(
       presentation_validation_errors.len()
