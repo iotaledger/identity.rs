@@ -190,8 +190,8 @@ impl IntegrationChain {
       });
     }
 
-    // Verify the next document was signed by a valid method from the previous document.
-    if IotaDocument::verify_document(&document.document, &self.current.document).is_err() {
+    // Verify the next document was signed by a valid method from the previous "current" document.
+    if self.current.document.verify_document(&document.document).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });

@@ -141,7 +141,7 @@ fn test_document_sign_self() {
         &JsValue::from(document.default_signing_method().unwrap().id()).unchecked_into(),
       )
       .unwrap();
-    assert!(WasmDocument::verify_document(&document, &document).is_ok());
+    assert!(document.verify_document(&document).is_ok());
   }
 
   // Sign with string method query.
@@ -153,7 +153,7 @@ fn test_document_sign_self() {
         &JsValue::from_str(&document.default_signing_method().unwrap().id().to_string()).unchecked_into(),
       )
       .unwrap();
-    assert!(WasmDocument::verify_document(&document, &document).is_ok());
+    assert!(document.verify_document(&document).is_ok());
   }
 }
 
