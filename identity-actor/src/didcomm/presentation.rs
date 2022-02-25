@@ -6,6 +6,8 @@ use libp2p::PeerId;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
 use crate::Actor;
+use crate::ActorRequest;
+use crate::Asynchronous;
 use crate::RequestContext;
 
 #[derive(Clone)]
@@ -112,15 +114,14 @@ pub async fn presentation_verifier_handler(
 
 use std::borrow::Cow;
 
-use crate::AsyncActorRequest;
-
 use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest(u32);
 
-impl AsyncActorRequest for PresentationRequest {
+impl ActorRequest<Asynchronous> for PresentationRequest {
+  type Response = ();
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_request")
   }
@@ -129,7 +130,8 @@ impl AsyncActorRequest for PresentationRequest {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationOffer(u32, u32);
 
-impl AsyncActorRequest for PresentationOffer {
+impl ActorRequest<Asynchronous> for PresentationOffer {
+  type Response = ();
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_offer")
   }
@@ -138,7 +140,8 @@ impl AsyncActorRequest for PresentationOffer {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Presentation(u32, u32, u32);
 
-impl AsyncActorRequest for Presentation {
+impl ActorRequest<Asynchronous> for Presentation {
+  type Response = ();
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation")
   }
@@ -147,7 +150,8 @@ impl AsyncActorRequest for Presentation {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationResult(u32, u32, u32, u32);
 
-impl AsyncActorRequest for PresentationResult {
+impl ActorRequest<Asynchronous> for PresentationResult {
+  type Response = ();
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_result")
   }

@@ -18,17 +18,19 @@ use crate::RequestContext;
 use crate::Result as ActorResult;
 
 use super::termination::DidCommTermination;
+use crate::actor::actor_request::private::SyncMode;
 
-impl<OBJ> HandlerBuilder<OBJ>
+impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
   pub fn add_hook<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> ActorResult<Self>
   where
-    REQ: ActorRequest + Send + Sync + 'static,
+    REQ: ActorRequest<MOD> + Send + Sync + 'static,
     REQ::Response: Send,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+    MOD: Send + Sync + 'static,
   {
     let handler = Hook::new(handler);
     self
@@ -40,12 +42,13 @@ where
 }
 
 #[derive(Clone)]
-pub struct Hook<OBJ, REQ, FUT, FUN>
+pub struct Hook<MOD: SyncMode, OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
-  REQ: ActorRequest,
+  REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
   FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  MOD: 'static,
 {
   func: FUN,
   // Need to use the types that appear in the closure's arguments here,
@@ -54,12 +57,13 @@ where
   // See also the drop check section in the PhantomData doc.
   _marker_obj: PhantomData<&'static OBJ>,
   _marker_req: PhantomData<&'static REQ>,
+  _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<OBJ, REQ, FUT, FUN> Hook<OBJ, REQ, FUT, FUN>
+impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> Hook<MOD, OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
-  REQ: ActorRequest,
+  REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
   FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
@@ -68,17 +72,19 @@ where
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
+      _marker_mod: PhantomData,
     }
   }
 }
 
-impl<OBJ, REQ, FUT, FUN> RequestHandler for Hook<OBJ, REQ, FUT, FUN>
+impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> RequestHandler for Hook<MOD, OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest + Send + Sync,
+  REQ: ActorRequest<MOD> + Send + Sync,
   REQ::Response: Send,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  MOD: Send + Sync + 'static,
 {
   fn invoke(
     &self,
@@ -116,12 +122,12 @@ where
 
   fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
     // TODO: This is never called for hooks, panic instead?
-    crate::traits::request_handler_serialize_response::<REQ>(input)
+    crate::traits::request_handler_serialize_response::<MOD, REQ>(input)
   }
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
     // TODO: This is never called for hooks, panic instead?
-    crate::traits::request_handler_deserialize_request::<REQ>(input)
+    crate::traits::request_handler_deserialize_request::<MOD, REQ>(input)
   }
 
   fn object_type_id(&self) -> TypeId {

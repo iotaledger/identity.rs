@@ -10,10 +10,11 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::ActorRequest;
+use crate::Synchronous;
 
 use super::StorageError;
 
-impl ActorRequest for IdentitySetup {
+impl ActorRequest<Synchronous> for IdentitySetup {
   type Response = Result<IotaDocument, StorageError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
@@ -24,7 +25,7 @@ impl ActorRequest for IdentitySetup {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IdentityList;
 
-impl ActorRequest for IdentityList {
+impl ActorRequest<Synchronous> for IdentityList {
   type Response = Vec<IotaDID>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
@@ -43,7 +44,7 @@ impl IdentityResolve {
   }
 }
 
-impl ActorRequest for IdentityResolve {
+impl ActorRequest<Synchronous> for IdentityResolve {
   type Response = Result<IotaDocument, StorageError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {

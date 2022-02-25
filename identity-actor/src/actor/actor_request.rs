@@ -8,45 +8,51 @@ use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Serialize;
 
+use self::private::SyncMode;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RequestMode {
   Synchronous,
   Asynchronous,
 }
 
-// TODO: Use ActorRequest for sync, and ActorMessage for Async, and introduce a supertrait?
-/// A request that can be sent to an actor with the expected response being of type `Response`.
-///
-/// A request can be sync or async. [`RequestMode::Synchronous`] means to invoke the remote handler and wait for
-/// the result of that invocation. [`RequestMode::Asynchronous`] means to only wait for an acknowledgement that the
-/// request has been received and that a handler exists, but not for the remote handler to finish execution.
-///
-/// If [`Self::request_mode`] is `Async`, the `Response` field is ignored.
-/// Prefer to implement `AsyncActorRequest` for convenience in that case.
-pub trait ActorRequest: Debug + Serialize + DeserializeOwned + Send + 'static {
-  /// The type of the response that this request returns.
+pub struct Synchronous;
+pub struct Asynchronous;
+
+pub(crate) mod private {
+  use crate::RequestMode;
+
+  use super::Asynchronous;
+  use super::Synchronous;
+
+  pub trait SyncMode {
+    fn request_mode() -> RequestMode;
+  }
+
+  impl SyncMode for Synchronous {
+    fn request_mode() -> RequestMode {
+      RequestMode::Synchronous
+    }
+  }
+
+  impl SyncMode for Asynchronous {
+    fn request_mode() -> RequestMode {
+      RequestMode::Asynchronous
+    }
+  }
+}
+
+// A request that can be sent to an actor with the expected response being of type `Response`.
+//
+// A request can be sync or async. [`Synchronous`] means to invoke the remote handler and wait for
+// the result of that invocation. [`Asynchronous`] means to only wait for an acknowledgement that the
+// request has been received and that a handler exists, but not for the remote handler to finish execution.
+pub trait ActorRequest<T: SyncMode>: Debug + Serialize + DeserializeOwned + Send + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
   fn request_name<'cow>(&self) -> Cow<'cow, str>;
 
   fn request_mode(&self) -> RequestMode {
-    RequestMode::Synchronous
-  }
-}
-
-/// An `ActorRequest` whose [`RequestMode`] is `Async`.
-pub trait AsyncActorRequest: Debug + Serialize + DeserializeOwned + Send + 'static {
-  fn request_name<'cow>(&self) -> Cow<'cow, str>;
-}
-
-impl<T: AsyncActorRequest> ActorRequest for T {
-  type Response = ();
-
-  fn request_name<'cow>(&self) -> Cow<'cow, str> {
-    self.request_name()
-  }
-
-  fn request_mode(&self) -> RequestMode {
-    RequestMode::Asynchronous
+    T::request_mode()
   }
 }

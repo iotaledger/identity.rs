@@ -6,13 +6,13 @@ use std::sync::Arc;
 
 use libp2p::Multiaddr;
 
-use crate::didcomm::thread_id::ThreadId;
 use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
 use crate::Error;
 use crate::IdentityResolve;
 use crate::RequestContext;
+use crate::Synchronous;
 
 use super::default_listening_actor;
 use super::default_sending_actor;
@@ -25,10 +25,9 @@ async fn test_unknown_request_returns_error() -> crate::Result<()> {
   sending_actor.add_address(peer_id, addr).await;
 
   let result = sending_actor
-    .send_named_message(
+    .send_named_request(
       peer_id,
       "unknown/request",
-      &ThreadId::new(),
       IdentityResolve::new("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
     )
     .await;
@@ -55,7 +54,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
-  impl ActorRequest for Dummy {
+  impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
     fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
@@ -108,7 +107,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
-  impl ActorRequest for Dummy {
+  impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
     fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
@@ -161,7 +160,7 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   #[derive(Debug, serde::Serialize, serde::Deserialize)]
   pub struct MessageRequest(String);
 
-  impl ActorRequest for MessageRequest {
+  impl ActorRequest<Synchronous> for MessageRequest {
     type Response = MessageResponse;
 
     fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {

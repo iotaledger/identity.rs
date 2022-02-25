@@ -17,12 +17,14 @@ use crate::p2p::messages::RequestMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::traits::RequestHandler;
 use crate::ActorRequest;
+use crate::Asynchronous;
 use crate::Endpoint;
 use crate::Handler;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestMode;
 use crate::Result;
+use crate::Synchronous;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
@@ -32,6 +34,8 @@ use libp2p::PeerId;
 use libp2p::TransportError;
 use serde::de::DeserializeOwned;
 use uuid::Uuid;
+
+use super::actor_request::private::SyncMode;
 
 /// A map from an identifier to an object that contains the
 /// shared state of the associated handler functions.
@@ -46,25 +50,28 @@ type HandlerObjectTuple<'a> = (
   Box<dyn Any + Send + Sync>,
 );
 
-pub struct HandlerBuilder<OBJ>
+pub struct HandlerBuilder<MOD: SyncMode, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
+  MOD: 'static,
 {
   pub(crate) object_id: Uuid,
   pub(crate) actor_state: Arc<ActorState>,
   _marker_obj: PhantomData<&'static OBJ>,
+  _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<OBJ> HandlerBuilder<OBJ>
+impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
   pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
   where
-    REQ: ActorRequest + Send + Sync + 'static,
+    REQ: ActorRequest<MOD> + Send + Sync + 'static,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+    MOD: 'static + Send + Sync,
   {
     let handler = Handler::new(handler);
     self
@@ -110,7 +117,7 @@ impl Actor {
     Ok(actor)
   }
 
-  pub fn add_state<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder<OBJ>
+  pub fn add_state<MOD: SyncMode, OBJ>(&mut self, handler: OBJ) -> HandlerBuilder<MOD, OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
   {
@@ -120,6 +127,7 @@ impl Actor {
       object_id,
       actor_state: Arc::clone(&self.state),
       _marker_obj: PhantomData,
+      _marker_mod: PhantomData,
     }
   }
 
@@ -221,7 +229,7 @@ impl Actor {
     self.commander.add_address(peer, addr).await;
   }
 
-  pub async fn send_message<Request: ActorRequest>(
+  pub async fn send_message<Request: ActorRequest<Asynchronous>>(
     &mut self,
     peer: PeerId,
     thread_id: &ThreadId,
@@ -232,7 +240,7 @@ impl Actor {
       .await
   }
 
-  pub async fn send_named_message<Request: ActorRequest>(
+  pub async fn send_named_message<Request: ActorRequest<Asynchronous>>(
     &mut self,
     peer: PeerId,
     name: &str,
@@ -267,7 +275,7 @@ impl Actor {
     Ok(())
   }
 
-  pub async fn send_request<Request: ActorRequest>(
+  pub async fn send_request<Request: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
     message: Request,
@@ -277,7 +285,7 @@ impl Actor {
       .await
   }
 
-  async fn send_named_request<Request: ActorRequest>(
+  pub(crate) async fn send_named_request<Request: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
     name: &str,
@@ -302,7 +310,11 @@ impl Actor {
   }
 
   #[inline(always)]
-  async fn call_send_message_hook<REQ: ActorRequest>(&self, peer: PeerId, input: REQ) -> Result<REQ> {
+  async fn call_send_message_hook<MOD: SyncMode, REQ: ActorRequest<MOD>>(
+    &self,
+    peer: PeerId,
+    input: REQ,
+  ) -> Result<REQ> {
     let endpoint = Endpoint::new_hook(input.request_name())?;
 
     if self.handlers().contains_key(&endpoint) {

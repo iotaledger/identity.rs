@@ -14,46 +14,53 @@ use crate::ActorRequest;
 use crate::RemoteSendError;
 use crate::RequestContext;
 
+use super::actor_request::private::SyncMode;
+
 #[derive(Clone)]
-pub struct Handler<OBJ, REQ, FUT, FUN>
+pub struct Handler<MOD: SyncMode, OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
-  REQ: ActorRequest,
-  FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  REQ: ActorRequest<MOD>,
+  FUT: std::future::Future<Output = REQ::Response>,
+  FUN: Fn(OBJ, crate::Actor, crate::RequestContext<REQ>) -> FUT,
+  MOD: 'static,
 {
   func: FUN,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
   // See also the drop check section in the PhantomData doc.
-  _marker_obj: PhantomData<&'static OBJ>,
-  _marker_req: PhantomData<&'static REQ>,
+  _marker_obj: std::marker::PhantomData<&'static OBJ>,
+  _marker_req: std::marker::PhantomData<&'static REQ>,
+  _marker_sync: std::marker::PhantomData<&'static MOD>,
 }
 
-impl<OBJ, REQ, FUT, FUN> Handler<OBJ, REQ, FUT, FUN>
+impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> Handler<MOD, OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
-  REQ: ActorRequest,
+  REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
   FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  MOD: 'static,
 {
   pub fn new(func: FUN) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
+      _marker_sync: PhantomData,
     }
   }
 }
 
-impl<OBJ, REQ, FUT, FUN> RequestHandler for Handler<OBJ, REQ, FUT, FUN>
+impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> RequestHandler for Handler<MOD, OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest + Send + Sync,
+  REQ: ActorRequest<MOD> + Send + Sync,
   REQ::Response: Send,
   FUT: Future<Output = REQ::Response> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  MOD: Send + Sync + 'static,
 {
   fn invoke(
     &self,
@@ -88,11 +95,11 @@ where
   }
 
   fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
-    crate::traits::request_handler_serialize_response::<REQ>(input)
+    crate::traits::request_handler_serialize_response::<MOD, REQ>(input)
   }
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
-    crate::traits::request_handler_deserialize_request::<REQ>(input)
+    crate::traits::request_handler_deserialize_request::<MOD, REQ>(input)
   }
 
   fn object_type_id(&self) -> TypeId {

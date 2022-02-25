@@ -12,6 +12,8 @@ use crate::ActorRequest;
 use crate::RemoteSendError;
 use crate::RequestContext;
 
+use super::actor_request::private::SyncMode;
+
 /// A future whose output is an `Any` trait object.
 pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;
 
@@ -37,7 +39,9 @@ pub trait RequestHandler: Send + Sync {
 // the trait itself, because the trait cannot be made generic without losing its type-erasing nature.
 
 #[inline(always)]
-pub fn request_handler_serialize_response<REQ: ActorRequest>(input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
+pub fn request_handler_serialize_response<MOD: SyncMode, REQ: ActorRequest<MOD>>(
+  input: Box<dyn Any>,
+) -> Result<Vec<u8>, RemoteSendError> {
   log::debug!(
     "Attempt serialization into {:?}",
     std::any::type_name::<REQ::Response>()
@@ -50,7 +54,7 @@ pub fn request_handler_serialize_response<REQ: ActorRequest>(input: Box<dyn Any>
 }
 
 #[inline(always)]
-pub fn request_handler_deserialize_request<REQ: ActorRequest>(
+pub fn request_handler_deserialize_request<MOD: SyncMode, REQ: ActorRequest<MOD>>(
   input: Vec<u8>,
 ) -> Result<Box<dyn Any + Send>, RemoteSendError> {
   log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());

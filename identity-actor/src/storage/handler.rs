@@ -12,25 +12,24 @@ use identity_account::identity::IdentitySetup;
 use identity_iota::did::IotaDID;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::ResolvedIotaDocument;
+use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::Network;
-use identity_iota::tangle::TangleResolve;
 
 use super::requests::IdentityResolve;
 use super::StorageError;
 
 #[derive(Clone)]
 pub struct StorageHandler {
-  client: Arc<ClientMap>,
+  client: Arc<Client>,
 }
 
 impl StorageHandler {
   pub async fn new() -> identity_account::Result<Self> {
-    let builder = ClientBuilder::new().network(Network::Mainnet);
+    let client = ClientBuilder::new().network(Network::Mainnet).build().await?;
 
     Ok(Self {
-      client: Arc::new(ClientMap::from_builder(builder).await?),
+      client: Arc::new(client),
     })
   }
 
@@ -56,7 +55,7 @@ impl StorageHandler {
   ) -> Result<ResolvedIotaDocument, StorageError> {
     log::info!("Resolving {:?}", request.input.did);
 
-    let res = self.client.resolve(&request.input.did).await?;
+    let res = self.client.read_document(&request.input.did).await?;
 
     log::info!("Resolved into: {:?}", res);
 
