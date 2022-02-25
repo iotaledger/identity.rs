@@ -884,6 +884,7 @@ with the given Document.
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
+        * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
         * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
@@ -1093,6 +1094,28 @@ verification method. See `Document::verifySelfSigned`.
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
 | method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
+<a name="Document+signDocument"></a>
+
+### document.signDocument(document, key_pair, method_query)
+Signs another DID document using the verification method specified by `method_query`.
+The `method_query` may be the full `DIDUrl` of the method or just its fragment,
+e.g. "#sign-0".
+
+`Document.signSelf` should be used in general, this throws an error if trying to operate
+on the same document. This is intended for signing updates to a document where a sole
+capability invocation method is rotated or replaced entirely.
+
+NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+verification method. See [Document.verifyDocument](Document.verifyDocument).
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+| key_pair | [<code>KeyPair</code>](#KeyPair) | 
+| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
+
 <a name="Document+signCredential"></a>
 
 ### document.signCredential(data, args, options) ⇒ [<code>Credential</code>](#Credential)
@@ -1123,6 +1146,8 @@ Verification Method.
 
 An additional `proof` property is required if using a Merkle Key
 Collection verification Method.
+
+NOTE: use `signSelf` or `signDocument` for DID Documents.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
