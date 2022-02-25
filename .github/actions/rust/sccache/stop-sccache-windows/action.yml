@@ -1,8 +1,0 @@
-name: 'stop-sccache-windows'
-description: 'Stop sccache on windows.'
-runs:
-  using: "composite"
-  steps:
-    - name: Stop sccache server
-      shell: pwsh
-      run: sccache --stop-server || true
