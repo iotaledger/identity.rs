@@ -282,7 +282,7 @@ fn test_sign_document() {
     .unwrap();
 
   // Sign update using original document.
-  assert!(WasmDocument::verify_document(&document2, &document1).is_err());
+  assert!(document1.verify_document(&document2).is_err());
   document1
     .sign_document(
       &mut document2,
@@ -290,5 +290,5 @@ fn test_sign_document() {
       &JsValue::from(document1.default_signing_method().unwrap().id()).unchecked_into(),
     )
     .unwrap();
-  WasmDocument::verify_document(&document2, &document1).unwrap();
+  document1.verify_document(&document2).unwrap();
 }
