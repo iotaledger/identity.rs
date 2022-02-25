@@ -258,3 +258,37 @@ fn test_did_serde() {
     assert_eq!(de, expected);
   }
 }
+
+#[wasm_bindgen_test]
+fn test_sign_document() {
+  let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let document1: WasmDocument = WasmDocument::new(&keypair1, None, None).unwrap();
+
+  // Replace the default signing method.
+  let mut document2: WasmDocument = document1.clone();
+  let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let method: WasmVerificationMethod = WasmVerificationMethod::new(
+    &document2.id(),
+    keypair2.type_(),
+    keypair2.public(),
+    "#method-2".to_owned(),
+  )
+  .unwrap();
+  document2
+    .insert_method(&method, WasmMethodScope::capability_invocation())
+    .unwrap();
+  document2
+    .remove_method(document1.default_signing_method().unwrap().id())
+    .unwrap();
+
+  // Sign update using original document.
+  assert!(document1.verify_document(&document2).is_err());
+  document1
+    .sign_document(
+      &mut document2,
+      &keypair1,
+      &JsValue::from(document1.default_signing_method().unwrap().id()).unchecked_into(),
+    )
+    .unwrap();
+  document1.verify_document(&document2).unwrap();
+}
