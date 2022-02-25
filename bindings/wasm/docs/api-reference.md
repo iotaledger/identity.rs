@@ -1106,7 +1106,7 @@ on the same document. This is intended for signing updates to a document where a
 capability invocation method is rotated or replaced entirely.
 
 NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-verification method. See [verifyDocument](#Document.verifyDocument).
+verification method. See [Document.verifyDocument](Document.verifyDocument).
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
