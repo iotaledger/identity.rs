@@ -11,8 +11,8 @@ use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::iota::errors::ValidationError;
 use identity::iota::Client as IotaClient;
-use identity::iota::CredentialValidationOptions;
 use identity::iota::Client;
+use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -318,6 +318,8 @@ async fn fetch_holder_and_issuers(
   }
 
   Ok((holder_doc, issuer_docs))
+}
+
 impl From<Rc<Client>> for WasmClient {
   fn from(client: Rc<Client>) -> Self {
     Self { client }
