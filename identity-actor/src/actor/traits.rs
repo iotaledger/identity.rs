@@ -47,9 +47,21 @@ pub fn request_handler_serialize_response<MOD: SyncMode, REQ: ActorRequest<MOD>>
     std::any::type_name::<REQ::Response>()
   );
 
-  let input = input.downcast::<REQ::Response>().expect("TODO");
+  // Note: The error here is impossible unless there's an actor logic bug.
+  let input = input.downcast::<REQ::Response>().map_err(|_| {
+    RemoteSendError::HandlerInvocationError(format!(
+      "could not downcast response to: {}",
+      std::any::type_name::<REQ::Response>()
+    ))
+  })?;
 
-  let response: Vec<u8> = serde_json::to_vec(&input)?;
+  let response: Vec<u8> = serde_json::to_vec(&input).map_err(|_| {
+    RemoteSendError::SerializationFailure(format!(
+      "failed to serialize response into {}",
+      std::any::type_name::<REQ::Response>()
+    ))
+  })?;
+
   Ok(response)
 }
 
@@ -58,7 +70,14 @@ pub fn request_handler_deserialize_request<MOD: SyncMode, REQ: ActorRequest<MOD>
   input: Vec<u8>,
 ) -> Result<Box<dyn Any + Send>, RemoteSendError> {
   log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
-  let request: REQ = serde_json::from_slice(&input)?;
+
+  let request: REQ = serde_json::from_slice(&input).map_err(|_| {
+    RemoteSendError::DeserializationFailure(format!(
+      "failed to deserialize request into {}",
+      std::any::type_name::<REQ>()
+    ))
+  })?;
+
   Ok(Box::new(request))
 }
 

@@ -19,6 +19,7 @@ use crate::traits::RequestHandler;
 use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::Endpoint;
+use crate::Error;
 use crate::Handler;
 use crate::RemoteSendError;
 use crate::RequestContext;
@@ -229,36 +230,38 @@ impl Actor {
     self.commander.add_address(peer, addr).await;
   }
 
-  pub async fn send_message<Request: ActorRequest<Asynchronous>>(
+  pub async fn send_message<REQ: ActorRequest<Asynchronous>>(
     &mut self,
     peer: PeerId,
     thread_id: &ThreadId,
-    command: Request,
+    command: REQ,
   ) -> Result<()> {
     self
       .send_named_message(peer, &command.request_name(), thread_id, command)
       .await
   }
 
-  pub async fn send_named_message<Request: ActorRequest<Asynchronous>>(
+  pub async fn send_named_message<REQ: ActorRequest<Asynchronous>>(
     &mut self,
     peer: PeerId,
     name: &str,
     thread_id: &ThreadId,
-    message: Request,
+    message: REQ,
   ) -> Result<()> {
     let request_mode: RequestMode = message.request_mode();
-
-    // TODO: Only do this after successful hook invocation?
-    if request_mode == RequestMode::Asynchronous {
-      self.create_thread_channels(thread_id);
-    }
 
     let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
 
     let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
-    let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
+    self.create_thread_channels(thread_id);
+
+    let dcpm_vec = serde_json::to_vec(&dcpm).map_err(|err| Error::SerializationFailure {
+      // TODO: Could use `function_name` crate for these errors. Necessary?
+      location: "[send_named_message]".to_owned(),
+      source: err,
+    })?;
+
     let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
 
     log::debug!("Sending `{}` message", name);
@@ -275,22 +278,22 @@ impl Actor {
     Ok(())
   }
 
-  pub async fn send_request<Request: ActorRequest<Synchronous>>(
+  pub async fn send_request<REQ: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
-    message: Request,
-  ) -> Result<Request::Response> {
+    message: REQ,
+  ) -> Result<REQ::Response> {
     self
       .send_named_request(peer, message.request_name().as_ref(), message)
       .await
   }
 
-  pub(crate) async fn send_named_request<Request: ActorRequest<Synchronous>>(
+  pub(crate) async fn send_named_request<REQ: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
     name: &str,
-    request: Request,
-  ) -> Result<Request::Response> {
+    request: REQ,
+  ) -> Result<REQ::Response> {
     let request_mode: RequestMode = request.request_mode();
 
     let request_vec = serde_json::to_vec(&request).expect("TODO");
@@ -306,7 +309,7 @@ impl Actor {
     );
 
     let response = serde_json::from_slice::<StdResult<Vec<u8>, RemoteSendError>>(&response.0).expect("TODO")?;
-    Ok(serde_json::from_slice::<Request::Response>(&response).expect("TODO"))
+    Ok(serde_json::from_slice::<REQ::Response>(&response).expect("TODO"))
   }
 
   #[inline(always)]
@@ -345,8 +348,11 @@ impl Actor {
       // Receival + Deserialization
       let inbound_request = receiver.1.await.expect("TODO: (?) channel closed");
 
-      let message: DidCommPlaintextMessage<T> = serde_json::from_slice(inbound_request.input.as_ref())
-        .map_err(|err| crate::Error::DeserializationFailure(err.to_string()))?;
+      let message: DidCommPlaintextMessage<T> =
+        serde_json::from_slice(inbound_request.input.as_ref()).map_err(|err| Error::DeserializationFailure {
+          location: "[await_message]".to_owned(),
+          source: err,
+        })?;
 
       log::debug!("awaited message {}", inbound_request.endpoint);
 
@@ -372,7 +378,7 @@ impl Actor {
       }
     } else {
       log::warn!("attempted to wait for a message on thread {thread_id:?}, which does not exist");
-      Err(crate::Error::ThreadNotFound(thread_id.to_owned()))
+      Err(Error::ThreadNotFound(thread_id.to_owned()))
     }
   }
 

@@ -27,8 +27,18 @@ pub enum Error {
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
-  #[error("failed to deserialize: {0}")]
-  DeserializationFailure(String),
+  #[non_exhaustive]
+  #[error("serialization failed in {location} due to: {source}")]
+  SerializationFailure {
+    location: String,
+    source: serde_json::Error,
+  },
+  #[non_exhaustive]
+  #[error("deserialization failed in {location} due to: {source}")]
+  DeserializationFailure {
+    location: String,
+    source: serde_json::Error,
+  },
   #[error("thread with id `{0}` not found")]
   ThreadNotFound(ThreadId),
 }
@@ -43,6 +53,8 @@ pub enum RemoteSendError {
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
+  #[error("failed to serialize: {0}")]
+  SerializationFailure(String),
   #[error("failed to deserialize: {0}")]
   DeserializationFailure(String),
 }
@@ -53,14 +65,9 @@ impl From<RemoteSendError> for Error {
       RemoteSendError::UnknownRequest(req) => Error::UnknownRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
       RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
-      RemoteSendError::DeserializationFailure(err) => Error::DeserializationFailure(err),
+      RemoteSendError::DeserializationFailure(_err) => todo!(), //Error::DeserializationFailure(err),
+      _ => todo!(),
     }
-  }
-}
-
-impl From<serde_json::Error> for RemoteSendError {
-  fn from(err: serde_json::Error) -> Self {
-    Self::DeserializationFailure(err.to_string())
   }
 }
 
