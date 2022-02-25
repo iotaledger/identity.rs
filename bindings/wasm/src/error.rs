@@ -90,8 +90,24 @@ impl_wasm_error_from!(
   identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
-  identity::did::DIDError
+  identity::did::DIDError,
+  identity::iota::ValidationError
 );
+
+// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
+#[macro_export]
+macro_rules! impl_wasm_error_from_with_struct_name {
+  ( $($t:ty),* ) => {
+  $(impl From<$t> for WasmError<'_> {
+    fn from(error: $t) -> Self {
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(stringify!($t)),
+      }
+    }
+  })*
+  }
+}
 
 // identity::iota now has some errors where the error message does not include the source error's error message.
 // This is in compliance with the Rust error handling project group's recommendation:
@@ -119,7 +135,6 @@ struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match &self.0 {
-      //Todo: simplify some of this with a macro
       identity::iota::Error::CredentialValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)

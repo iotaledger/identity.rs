@@ -48,11 +48,11 @@ pub enum Error {
   InvalidMessageFlags,
   /// Caused by a single concern credential or presentation validation method failing.
   #[error("A validation unit failed")]
-  IsolatedValidationError(#[from] crate::credential::errors::ValidationError),
+  IsolatedValidationError(#[from] crate::credential::ValidationError),
   /// Caused by a failure to validate a credential.  
   #[error("credential validation failed")]
-  CredentialValidationError(#[from] crate::credential::errors::AccumulatedCredentialValidationError),
+  CredentialValidationError(#[from] crate::credential::AccumulatedCredentialValidationError),
   /// Caused by a failure to validate a presentation.
   #[error("presentation validation failed")]
-  PresentationValidationError(#[from] crate::credential::errors::CompoundPresentationValidationError),
+  PresentationValidationError(#[from] crate::credential::CompoundPresentationValidationError),
 }

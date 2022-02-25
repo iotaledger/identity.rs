@@ -195,7 +195,8 @@ impl WasmResolver {
       .0
       .holder
       .as_ref()
-      .ok_or(identity::iota::Error::InvalidPresentationHolder)
+      .ok_or(identity::iota::ValidationError::MissingPresentationHolder)
+      .map_err(identity::iota::Error::from)
       .wasm_result()?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str()).wasm_result()?;
 

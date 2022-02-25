@@ -9,11 +9,11 @@ use futures::executor;
 use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
-use identity::iota::errors::ValidationError;
 use identity::iota::Client as IotaClient;
 use identity::iota::Client;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
+use identity::iota::FailFast;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
@@ -21,6 +21,7 @@ use identity::iota::PresentationValidationOptions;
 use identity::iota::PresentationValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
+use identity::iota::ValidationError;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -239,10 +240,8 @@ impl WasmClient {
   // TODO: move out of client to dedicated verifier
   #[wasm_bindgen(js_name = checkCredential)]
   pub fn check_credential(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
-    let client: Rc<IotaClient> = self.client.clone();
     let credential: Credential = Credential::from_json(&data).wasm_result()?;
     let credential_validation_options = CredentialValidationOptions::default().verifier_options(options.0);
-    let data: Credential = Credential::from_json(&data).wasm_result()?;
 
     let client: Rc<Client> = self.client.clone();
     let promise: Promise = future_to_promise(async move {
@@ -251,9 +250,8 @@ impl WasmClient {
       // resolve the issuer's DID Document
       let issuer_doc: ResolvedIotaDocument = resolve_did(client, issuer_url).await.wasm_result()?;
       // validate the credential (using the issuer's DID document to verify the signature)
-      let fail_fast: bool = true;
-      CredentialValidator::new()
-        .validate(&credential, &credential_validation_options, &issuer_doc, fail_fast)
+      CredentialValidator::validate(&credential, &credential_validation_options, &issuer_doc, FailFast::Yes)
+        .map_err(identity::iota::Error::from)
         .wasm_result()
         .map(|_| JsValue::TRUE)
     });
@@ -265,7 +263,6 @@ impl WasmClient {
   // TODO: move out of client to dedicated verifier
   #[wasm_bindgen(js_name = checkPresentation)]
   pub fn check_presentation(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
-    let client: Rc<IotaClient> = self.client.clone();
     let presentation: Presentation = Presentation::from_json(&data).wasm_result()?;
     let presentation_validation_options =
       PresentationValidationOptions::default().presentation_verifier_options(options.0);
@@ -274,17 +271,17 @@ impl WasmClient {
       // resolve the holder's DID Document and also the DID Documents of the credential issuers.
       let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) =
         fetch_holder_and_issuers(client, &presentation).await.wasm_result()?;
-      let fail_fast: bool = true;
-      PresentationValidator::new()
-        .validate(
-          &presentation,
-          &presentation_validation_options,
-          &holder_doc,
-          issuer_docs.as_slice(),
-          fail_fast,
-        )
-        .wasm_result()
-        .map(|_| JsValue::TRUE)
+
+      PresentationValidator::validate(
+        &presentation,
+        &presentation_validation_options,
+        &holder_doc,
+        issuer_docs.as_slice(),
+        FailFast::Yes,
+      )
+      .map_err(identity::iota::Error::from)
+      .wasm_result()
+      .map(|_| JsValue::TRUE)
     });
 
     Ok(promise)

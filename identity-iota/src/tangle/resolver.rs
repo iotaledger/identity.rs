@@ -141,7 +141,7 @@ where
     presentation: &Presentation<U, V>,
   ) -> Result<ResolvedIotaDocument> {
     let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
-      crate::credential::errors::ValidationError::MissingPresentationHolder,
+      crate::credential::ValidationError::MissingPresentationHolder,
     ))?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
     self.resolve(&holder).await
