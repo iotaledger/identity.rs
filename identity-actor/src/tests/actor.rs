@@ -6,7 +6,6 @@ use std::sync::Arc;
 
 use libp2p::Multiaddr;
 
-use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
 use crate::Actor;
 use crate::ActorBuilder;
@@ -68,7 +67,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   pub struct State(pub Arc<AtomicBool>);
 
   impl State {
-    async fn handler(self, _actor: Actor, _req: RequestContext<DidCommPlaintextMessage<Dummy>>) {
+    async fn handler(self, _actor: Actor, _req: RequestContext<Dummy>) {
       self.0.store(true, std::sync::atomic::Ordering::SeqCst);
     }
   }
@@ -121,8 +120,8 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   pub struct State(pub Arc<AtomicBool>);
 
   impl State {
-    async fn handler(self, _actor: Actor, req: RequestContext<DidCommPlaintextMessage<Dummy>>) {
-      if let Dummy(42) = req.input.body {
+    async fn handler(self, _actor: Actor, req: RequestContext<Dummy>) {
+      if let Dummy(42) = req.input {
         self.0.store(true, std::sync::atomic::Ordering::SeqCst);
       }
     }
@@ -143,6 +142,52 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   receiver.shutdown().await.unwrap();
 
   assert!(state.0.load(std::sync::atomic::Ordering::SeqCst));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_synchronous_handler_invocation() -> crate::Result<()> {
+  pretty_env_logger::init();
+
+  let (mut listening_actor, addr, peer_id) = default_listening_actor().await;
+
+  let mut sending_actor = default_sending_actor().await;
+  sending_actor.add_address(peer_id, addr).await;
+
+  #[derive(Debug, serde::Serialize, serde::Deserialize)]
+  pub struct MessageResponse(String);
+
+  #[derive(Debug, serde::Serialize, serde::Deserialize)]
+  pub struct MessageRequest(String);
+
+  impl ActorRequest for MessageRequest {
+    type Response = MessageResponse;
+
+    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+      std::borrow::Cow::Borrowed("test/message")
+    }
+  }
+
+  listening_actor
+    .add_state(())
+    .add_handler(
+      "test/message",
+      |_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
+        println!("invoked");
+        MessageResponse(message.input.0)
+      },
+    )
+    .unwrap();
+
+  let result = sending_actor
+    .send_request(peer_id, MessageRequest("test".to_owned()))
+    .await;
+
+  assert_eq!(result.unwrap().0, "test".to_owned());
+
+  listening_actor.shutdown().await.unwrap();
+  sending_actor.shutdown().await.unwrap();
 
   Ok(())
 }

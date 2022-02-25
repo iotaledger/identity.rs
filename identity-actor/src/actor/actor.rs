@@ -281,18 +281,12 @@ impl Actor {
     &mut self,
     peer: PeerId,
     name: &str,
-    message: Request,
+    request: Request,
   ) -> Result<Request::Response> {
-    let request_mode: RequestMode = message.request_mode();
+    let request_mode: RequestMode = request.request_mode();
 
-    // TODO: Can this not be a DCPM?
-    let dcpm = DidCommPlaintextMessage::new(ThreadId::new(), name.to_owned(), message);
-
-    // TODO: Remove this? There is no await hook, so the hook concept for sync requests is broken.
-    let dcpm = self.call_send_message_hook(peer, dcpm).await?;
-
-    let dcpm_vec = serde_json::to_vec(&dcpm).expect("TODO");
-    let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
+    let request_vec = serde_json::to_vec(&request).expect("TODO");
+    let message = RequestMessage::new(name, request_mode, request_vec)?;
 
     log::debug!("Sending `{}` message", name);
 
