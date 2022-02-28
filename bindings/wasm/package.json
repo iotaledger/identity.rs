@@ -19,7 +19,6 @@
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "build-dev": "npm run build-dev:web && npm run build-dev:nodejs && npm run build:docs",
     "prepublishOnly": "npm run build",
-    "serve": "webpack serve",
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "test": "npm run test:unit && concurrently -g --timings \"npm:test:node\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
