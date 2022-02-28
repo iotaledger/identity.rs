@@ -1,14 +1,14 @@
 [package]
-edition = "2021"
 name = "stronghold-nodejs"
 version = "0.0.0"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-identity = { version = "=0.5.0-dev.4", path = "../../identity", default-features = false, features = ["account", "stronghold", "async", "send-sync-storage"] }
 futures = { version = "0.3" }
+identity = { version = "=0.5.0-dev.4", path = "../../identity", default-features = false, features = ["account", "stronghold", "async", "send-sync-storage"] }
 napi = { version = "2.0.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
 napi-derive = "2.0.7"
 serde = { version = "1.0", features = ["derive"] }

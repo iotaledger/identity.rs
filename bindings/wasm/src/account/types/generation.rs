@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(js_name = Generation)]
 pub struct WasmGeneration(pub(crate) Generation);
 
+#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = Generation)]
 impl WasmGeneration {
   /// Creates a new `WasmGeneration`.
