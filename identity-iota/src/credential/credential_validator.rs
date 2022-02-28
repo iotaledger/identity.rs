@@ -17,6 +17,7 @@ use super::CredentialValidationOptions;
 use super::FailFast;
 
 /// A struct for validating [`Credential`]s.
+#[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct CredentialValidator;
 

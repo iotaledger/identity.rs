@@ -21,6 +21,7 @@ use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 
 /// A struct for validating [`Presentation`]s.
+#[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct PresentationValidator;
 
@@ -28,7 +29,7 @@ type ValidationUnitResult = std::result::Result<(), ValidationError>;
 type PresentationValidationResult = std::result::Result<(), CompoundPresentationValidationError>;
 
 impl PresentationValidator {
-  /// Validate a [Presentation].
+  /// Validate a [`Presentation`].
   ///
   /// The following properties are validated according to `options`:
   /// - The holder's signature,

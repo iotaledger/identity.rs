@@ -3,12 +3,14 @@
 
 use identity_core::common::Timestamp;
 use identity_did::verifiable::VerifierOptions;
+use serde::Deserialize;
+use serde::Serialize;
 
-#[derive(Debug, Default)]
 /// Options to declare validation criteria in validation methods such as
 /// [`CredentialValidator::full_validation`](super::CredentialValidator::full_validation()) and
-/// [`Resolver::verify_credential`](crate::tangle::Resolver::verify_credential())..
+/// [`Resolver::verify_credential`](crate::tangle::Resolver::verify_credential()).
 #[non_exhaustive]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [`Timestamp`].
@@ -18,6 +20,7 @@ pub struct CredentialValidationOptions {
   pub latest_issuance_date: Option<Timestamp>,
   /// Declare that the credential's signature must be verified according to these
   /// [VerifierOptions].
+  #[serde(default)]
   pub verifier_options: VerifierOptions,
 }
 
@@ -46,12 +49,12 @@ impl CredentialValidationOptions {
   }
 }
 
-#[derive(Debug)]
-#[non_exhaustive]
 /// Declares how a credential subject must relate to the presentation holder.
 ///
 /// See [`PresentationValidationOptions::subject_holder_relationship`](PresentationValidationOptions::
 /// subject_holder_relationship()).
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum SubjectHolderRelationship {
   /// Declare that the holder must always match the subject.
   AlwaysSubject,
@@ -69,27 +72,30 @@ impl Default for SubjectHolderRelationship {
 }
 
 /// Declares when validation should return with an error.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum FailFast {
-  /// Declare that validation must fail upon the first error is found
-  Yes,
   /// Declare that validation should fail after all errors have been found
   No,
+  /// Declare that validation must fail upon the first error is found
+  Yes,
 }
 
-#[derive(Debug, Default)]
-#[non_exhaustive]
 /// Options to declare validation criteria for validation methods such as
 /// [`PresentationValidator::full_validation`](super::PresentationValidator::full_validation()) and
 /// [`Resolver::verify_presentation`](crate::tangle::Resolver::verify_presentation()).
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct PresentationValidationOptions {
   /// Declares that the credentials of the presentation must all be
-  /// validated according to these options.
+  /// validated according to these [`CredentialValidationOptions`].
+  #[serde(default)]
   pub shared_validation_options: CredentialValidationOptions,
   /// Declares that the presentation's signature is to be verified according to these
-  /// [VerifierOptions].
+  /// [`VerifierOptions`].
+  #[serde(default)]
   pub presentation_verifier_options: VerifierOptions,
   /// Declares how the presentation's credential subjects must relate to the holder.
+  #[serde(default)]
   pub subject_holder_relationship: SubjectHolderRelationship,
 }
 

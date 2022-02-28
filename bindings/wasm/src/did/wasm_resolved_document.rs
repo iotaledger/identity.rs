@@ -17,14 +17,17 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone, Debug)]
 pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
 
-// Workaround for Typescript type annotations on async function returns.
 #[wasm_bindgen]
 extern "C" {
+  // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<ResolvedDocument>")]
   pub type PromiseResolvedDocument;
 
   #[wasm_bindgen(typescript_type = "Promise<Array<ResolvedDocument>>")]
   pub type PromiseArrayResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
+  pub type ArrayResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = ResolvedDocument)]

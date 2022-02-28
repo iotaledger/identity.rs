@@ -22,7 +22,11 @@ use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
 use crate::credential::WasmCredential;
+use crate::credential::WasmCredentialValidationOptions;
+use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
+use crate::credential::WasmPresentationValidationOptions;
+use crate::did::ArrayResolvedDocument;
 use crate::did::PromiseArrayResolvedDocument;
 use crate::did::PromiseResolvedDocument;
 use crate::did::UWasmDID;
@@ -34,6 +38,13 @@ use crate::tangle::WasmClient;
 
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(pub(crate) Rc<Resolver<Rc<Client>>>);
+
+#[wasm_bindgen]
+extern "C" {
+  // Workaround for Typescript type annotations on async function returns.
+  #[wasm_bindgen(typescript_type = "Promise<void>")]
+  pub type PromiseVoid;
+}
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
@@ -212,6 +223,117 @@ impl WasmResolver {
 
     // WARNING: this does not validate the return type. Check carefully.
     Ok(promise.unchecked_into::<PromiseResolvedDocument>())
+  }
+
+  /// Verifies a `Credential`.
+  ///
+  /// This method resolves the issuer's DID Document and validates the following properties in accordance with
+  /// `options`:
+  /// - The issuer's signature
+  /// - The expiration date
+  /// - The issuance date
+  /// - The credential's semantic structure.
+  ///
+  /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
+  /// `CredentialValidator::validate` in order to avoid an unnecessary resolution.
+  ///
+  /// # Warning
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+  /// refreshService **and more**.
+  ///
+  /// # Errors
+  /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
+  /// an attempt will be made to validate the credential. If the `fail_fast` parameter is "Yes" an error will be
+  /// returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
+  /// the returned error.
+  #[wasm_bindgen(js_name = verifyCredential)]
+  pub fn verify_credential(
+    &self,
+    credential: &WasmCredential,
+    options: &WasmCredentialValidationOptions,
+    fail_fast: WasmFailFast,
+  ) -> Result<PromiseVoid> {
+    // TODO: reimplemented function to avoid cloning the entire credential and validation options.
+    //       Would be solved with Rc internal representation, pending memory leak discussions.
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
+    let credential: WasmCredential = credential.clone();
+    let options: WasmCredentialValidationOptions = options.clone();
+
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .verify_credential(&credential.0, &options.0, fail_fast.into())
+        .await
+        .map(|_| JsValue::UNDEFINED)
+        .wasm_result()
+    });
+
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseVoid>())
+  }
+
+  /// Verifies a `Presentation`.
+  ///
+  /// This method validates the following properties in accordance with `options`
+  /// - The holder's signature,
+  /// - The relationship between the holder and the credential subjects,
+  /// - The semantic structure of the presentation,
+  /// - Some properties of the credentials (see `CredentialValidator::validate` for more information).
+  ///  
+  /// # Warning
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+  /// refreshService **and more**.
+  ///
+  /// # Resolution
+  /// If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
+  /// date versions of all of these DID Documents you may want to instead use
+  /// `PresentationValidator::validate`.
+  ///
+  /// # Errors
+  /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
+  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
+  /// parameter is `Yes` an error will be returned upon the first encountered validation failure, otherwise all
+  /// validation errors will be accumulated in the returned error.
+  #[wasm_bindgen(js_name = verifyPresentation)]
+  pub fn verify_presentation(
+    &self,
+    presentation: &WasmPresentation,
+    options: &WasmPresentationValidationOptions,
+    // &Option<T>/Option<&T> is (currently) not compatible with wasm-bindgen so we have to pass owned values
+    // unfortunately this nulls out pointers on the JS side.
+    holder: Option<WasmResolvedDocument>,
+    issuers: Option<ArrayResolvedDocument>,
+    fail_fast: WasmFailFast,
+  ) -> Result<PromiseVoid> {
+    // TODO: reimplemented function to avoid cloning the entire presentation, holder and validation options.
+    // Would be solved with Rc internal representation, pending memory leak discussions.
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
+    let presentation: WasmPresentation = presentation.clone();
+    let options: WasmPresentationValidationOptions = options.clone();
+    let issuers: Option<Vec<ResolvedIotaDocument>> = if let Some(array) = issuers {
+      let issuers: Vec<ResolvedIotaDocument> = array.into_serde().wasm_result()?;
+      Some(issuers)
+    } else {
+      None
+    };
+
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .verify_presentation(
+          &presentation.0,
+          &options.0,
+          holder.map(|value| value.0).as_ref(),
+          issuers.as_deref(),
+          fail_fast.into(),
+        )
+        .await
+        .map(|_| JsValue::UNDEFINED)
+        .wasm_result()
+    });
+
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 }
 
