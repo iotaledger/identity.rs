@@ -10,14 +10,14 @@ use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// An immutable DID Document Service used to enable trusted interactions associated
+/// A DID Document Service used to enable trusted interactions associated
 /// with a DID subject.
 ///
 /// See: https://www.w3.org/TR/did-core/#services
 #[wasm_bindgen(js_name = Service, inspectable)]
 pub struct WasmService(pub(crate) IotaService);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Service)]
 impl WasmService {
   #[wasm_bindgen(constructor)]
   pub fn new(service: IService) -> Result<WasmService> {
@@ -99,7 +99,7 @@ impl From<IotaService> for WasmService {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "string | [string] | Map<string, [string]>")]
+  #[wasm_bindgen(typescript_type = "string | string[] | Map<string, string[]>")]
   pub type UServiceEndpoint;
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
@@ -132,7 +132,7 @@ interface IService {
     *
     * NOTE: throws an error if any entry is not a valid URL string. List entries must be unique.
     */
-    readonly serviceEndpoint: string | [string] | Map<string, [string]>;
+    readonly serviceEndpoint: string | string[] | Map<string, string[]>;
 
     /** Additional custom properties to embed in the service.
     *

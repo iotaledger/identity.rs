@@ -40,12 +40,12 @@ async function manipulateIdentity(clientConfig) {
     doc.insertMethod(method, MethodScope.VerificationMethod());
 
     // Add a new ServiceEndpoint
-    const serviceJSON = {
-        id: doc.id + "#linked-domain",
+    const service = new Service({
+        id: doc.id.toUrl().join("#linked-domain"),
         type: "LinkedDomains",
         serviceEndpoint: "https://iota.org",
-    };
-    doc.insertService(Service.fromJSON(serviceJSON));
+    });
+    doc.insertService(service);
 
     /*
         Add the messageId of the previous message in the chain.
