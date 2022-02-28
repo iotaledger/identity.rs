@@ -30,8 +30,8 @@ use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
 
 /// Client for performing IOTA Identity operations on the Tangle.
-#[cfg_attr(feature = "wasm", derive(Debug, Clone))]
-#[cfg_attr(not(feature = "wasm"), derive(Debug))]
+#[cfg_attr(all(target_arch = "wasm32", not(target_os = "wasi")), derive(Debug, Clone))]
+#[cfg_attr(not(all(target_arch = "wasm32", not(target_os = "wasi"))), derive(Debug))]
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
@@ -216,7 +216,7 @@ impl Client {
     DocumentChain::new_with_diff_chain(integration_chain, diff_chain)
   }
 
-  /// Returns the [`MessageHistory`] of the given [`IotaDID`].
+  /// Returns the [`DocumentHistory`] of the given [`IotaDID`].
   pub async fn resolve_history(&self, did: &IotaDID) -> Result<DocumentHistory> {
     DocumentHistory::read(self, did).await
   }

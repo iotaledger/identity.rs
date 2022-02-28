@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
   let account1: Account = builder.create_identity(IdentitySetup::default()).await?;
 
   // Create a second identity which uses the same storage.
-  let _account2: Account = builder.create_identity(IdentitySetup::default()).await?;
+  let mut account2: Account = builder.create_identity(IdentitySetup::default()).await?;
 
   // Retrieve the did of the identity that account1 manages.
   let iota_did1: IotaDID = account1.did().to_owned();
@@ -46,20 +46,37 @@ async fn main() -> Result<()> {
   // We can load the identity from storage into an account using the builder.
   let mut account1: Account = builder.load_identity(iota_did1).await?;
 
-  // Now we can modify the identity.
-  account1
-    .update_identity()
-    .create_method()
-    .fragment("my-key")
-    .apply()
-    .await?;
+  let account1_did: IotaDID = account1.did().clone();
+
+  // Now we can make modifications to the identity.
+  // We can even do so concurrently by spawning tasks.
+  let task1 = tokio::spawn(async move {
+    account1
+      .update_identity()
+      .create_method()
+      .fragment("my-key")
+      .apply()
+      .await
+  });
+
+  let task2 = tokio::spawn(async move {
+    account2
+      .update_identity()
+      .create_method()
+      .fragment("my-other-key")
+      .apply()
+      .await
+  });
+
+  task1.await.expect("task1 failed to execute to completion")?;
+  task2.await.expect("task2 failed to execute to completion")?;
 
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
   let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
     "[Example] Explore the DID Document = {}",
-    explorer.resolver_url(account1.did())?
+    explorer.resolver_url(&account1_did)?
   );
 
   Ok(())

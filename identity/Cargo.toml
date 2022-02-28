@@ -33,9 +33,6 @@ default = ["async"]
 # Enables async runtime support (Tokio)
 async = ["identity-iota/async"]
 
-# Enables Web Assembly support
-wasm = ["identity-iota/wasm", "identity-comm/wasm", "identity-core/wasm", "identity-account/wasm"]
-
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]
 

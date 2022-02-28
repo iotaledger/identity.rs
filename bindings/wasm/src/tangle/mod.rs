@@ -7,6 +7,7 @@ pub use self::explorer::*;
 pub use self::message::*;
 pub use self::network::*;
 pub use self::receipt::*;
+pub use self::resolver::*;
 
 mod client;
 mod config;
@@ -14,3 +15,4 @@ mod explorer;
 mod message;
 mod network;
 mod receipt;
+mod resolver;

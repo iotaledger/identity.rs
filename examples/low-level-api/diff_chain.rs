@@ -12,7 +12,6 @@ use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::did::Service;
 use identity::did::DID;
-use identity::iota::ClientMap;
 use identity::iota::DiffMessage;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaService;
@@ -24,7 +23,7 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let client: Client = Client::new().await?;
 
   // Create a signed DID Document and KeyPair (see create_did.rs).
   let (document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;

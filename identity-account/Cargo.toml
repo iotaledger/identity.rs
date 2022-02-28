@@ -58,6 +58,5 @@ stronghold = [
   "actix",
   "tokio/rt-multi-thread",
 ]
-wasm = ["identity-iota/wasm"]
 async = ["identity-iota/async"]
 send-sync-storage = []
