@@ -2331,7 +2331,7 @@ Returns a copy of the `Service` endpoint.
 <a name="Service+properties"></a>
 
 ### service.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns a copy of the custom `Service` properties.
+Returns a copy of the custom properties on the `Service`.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+toJSON"></a>

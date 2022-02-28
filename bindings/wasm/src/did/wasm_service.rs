@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::did::ServiceEndpoint;
+use identity::iota::IotaDIDUrl;
 use identity::iota::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -21,7 +22,18 @@ pub struct WasmService(pub(crate) IotaService);
 impl WasmService {
   #[wasm_bindgen(constructor)]
   pub fn new(service: IService) -> Result<WasmService> {
-    service.into_serde::<IotaService>().map(WasmService::from).wasm_result()
+    let id: IotaDIDUrl = service.id().into_serde().wasm_result()?;
+    let type_: String = service.type_();
+    let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&service.service_endpoint())?;
+    let properties: Option<identity::core::Object> = deserialize_map_or_any(&service.properties())?;
+
+    IotaService::builder(properties.unwrap_or_default())
+      .id(id)
+      .type_(type_)
+      .service_endpoint(service_endpoint)
+      .build()
+      .map(WasmService::from)
+      .wasm_result()
   }
 
   /// Returns a copy of the `Service` id.
@@ -65,17 +77,17 @@ impl WasmService {
     }
   }
 
-  /// Returns a copy of the custom `Service` properties.
+  /// Returns a copy of the custom properties on the `Service`.
   #[wasm_bindgen(js_name = properties)]
   pub fn properties(&self) -> Result<MapStringAny> {
-    let js_map: js_sys::Map = js_sys::Map::new();
+    let map: js_sys::Map = js_sys::Map::new();
     for (key, value) in self.0.properties().iter() {
-      js_map.set(
+      map.set(
         &JsValue::from_str(key.as_str()),
         &JsValue::from_serde(&value).wasm_result()?,
       );
     }
-    Ok(js_map.unchecked_into::<MapStringAny>())
+    Ok(map.unchecked_into::<MapStringAny>())
   }
 
   /// Serializes a `Service` object as a JSON object.
@@ -97,6 +109,22 @@ impl From<IotaService> for WasmService {
   }
 }
 
+/// Special-case for deserializing [`js_sys::Map`], which otherwise serializes to JSON as an empty
+/// object `{}`. This uses a [`js_sys::Object`] as an intermediate representation to convert
+/// to the required struct via JSON.
+fn deserialize_map_or_any<T>(value: &JsValue) -> Result<T>
+where
+  T: for<'a> serde::de::Deserialize<'a>,
+{
+  if let Some(map) = JsCast::dyn_ref::<js_sys::Map>(value) {
+    // Map<string, string[]>
+    js_sys::Object::from_entries(map).and_then(|object| JsValue::into_serde(&object).wasm_result())
+  } else {
+    // any
+    value.into_serde().wasm_result()
+  }
+}
+
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "string | string[] | Map<string, string[]>")]
@@ -110,6 +138,18 @@ extern "C" {
 extern "C" {
   #[wasm_bindgen(typescript_type = "IService")]
   pub type IService;
+
+  #[wasm_bindgen(method, getter)]
+  pub fn id(this: &IService) -> JsValue;
+
+  #[wasm_bindgen(method, getter, js_name = type)]
+  pub fn type_(this: &IService) -> String;
+
+  #[wasm_bindgen(method, getter, js_name = serviceEndpoint)]
+  pub fn service_endpoint(this: &IService) -> JsValue;
+
+  #[wasm_bindgen(method, getter)]
+  pub fn properties(this: &IService) -> JsValue;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -132,11 +172,11 @@ interface IService {
     *
     * NOTE: throws an error if any entry is not a valid URL string. List entries must be unique.
     */
-    readonly serviceEndpoint: string | string[] | Map<string, string[]>;
+    readonly serviceEndpoint: string | string[] | Map<string, string[]> | Record<string, string[]>;
 
     /** Additional custom properties to embed in the service.
     *
     * WARNING: entries may overwrite existing fields and result in invalid documents.
     */
-    readonly properties?: Map<string, any>;
+    readonly properties?: Map<string, any> | Record<string, any>;
 }"#;
