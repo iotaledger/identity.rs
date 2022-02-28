@@ -22,8 +22,8 @@ macro_rules! storage_trait {
     /// An interface for Identity Account storage implementations.
     ///
     /// See [MemStore][crate::storage::MemStore] for a test/example implementation.
-    #[cfg_attr(not(feature = "wasm"), async_trait)]
-    #[cfg_attr(feature = "wasm", async_trait(?Send))]
+    #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+    #[cfg_attr(feature = "send-sync-storage", async_trait)]
     pub trait Storage: $($x + )* Debug + 'static {
       /// Sets the account password.
       async fn set_password(&self, password: EncryptionKey) -> Result<()>;
@@ -73,8 +73,8 @@ macro_rules! storage_trait {
   };
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(not(feature = "send-sync-storage"))]
 storage_trait!();
 
-#[cfg(not(feature = "wasm"))]
+#[cfg(feature = "send-sync-storage")]
 storage_trait!(Send, Sync);

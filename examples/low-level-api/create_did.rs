@@ -6,14 +6,13 @@
 //!
 //! cargo run --example create_did
 
-use identity::iota::ClientMap;
 use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let client: Client = Client::new().await?;
 
   // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;

@@ -81,6 +81,11 @@ the configuration of previously built accounts.</p>
 <dd><p>An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 merged with one or more <code>DiffMessages</code>.</p>
 </dd>
+<dt><a href="#Resolver">Resolver</a></dt>
+<dd></dd>
+<dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
+<dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#Signature">Signature</a></dt>
@@ -104,9 +109,9 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -131,6 +136,7 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -146,12 +152,22 @@ publishing to the Tangle.
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -301,17 +317,6 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -1279,10 +1284,12 @@ with the given Document.
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
+        * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
         * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
+        * [.verifyDocument(signed)](#Document+verifyDocument)
         * [.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.mergeDiff(diff)](#Document+mergeDiff)
@@ -1290,7 +1297,6 @@ with the given Document.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
-        * [.verifyDocument(signed, signer)](#Document.verifyDocument)
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
@@ -1488,6 +1494,28 @@ verification method. See `Document::verifySelfSigned`.
 | key_pair | [<code>KeyPair</code>](#KeyPair) | 
 | method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
+<a name="Document+signDocument"></a>
+
+### document.signDocument(document, key_pair, method_query)
+Signs another DID document using the verification method specified by `method_query`.
+The `method_query` may be the full `DIDUrl` of the method or just its fragment,
+e.g. "#sign-0".
+
+`Document.signSelf` should be used in general, this throws an error if trying to operate
+on the same document. This is intended for signing updates to a document where a sole
+capability invocation method is rotated or replaced entirely.
+
+NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+verification method. See [Document.verifyDocument](Document.verifyDocument).
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+| key_pair | [<code>KeyPair</code>](#KeyPair) | 
+| method_query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
+
 <a name="Document+signCredential"></a>
 
 ### document.signCredential(data, args, options) ⇒ [<code>Credential</code>](#Credential)
@@ -1519,6 +1547,8 @@ Verification Method.
 An additional `proof` property is required if using a Merkle Key
 Collection verification Method.
 
+NOTE: use `signSelf` or `signDocument` for DID Documents.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1538,6 +1568,26 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="Document+verifyDocument"></a>
+
+### document.verifyDocument(signed)
+Verifies that the signature on the DID document `signed` was generated by a valid method from
+this DID document.
+
+# Errors
+
+Fails if:
+- The signature proof section is missing in the `signed` document.
+- The method is not found in this document.
+- An unsupported verification method is used.
+- The signature verification operation fails.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| signed | [<code>Document</code>](#Document) | 
 
 <a name="Document+diff"></a>
 
@@ -1610,27 +1660,6 @@ NOTE: the generated document is unsigned, see `Document::signSelf`.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
-
-<a name="Document.verifyDocument"></a>
-
-### Document.verifyDocument(signed, signer)
-Verifies that the signature on the DID document `signed` was generated by a valid method from
-the `signer` DID document.
-
-# Errors
-
-Fails if:
-- The signature proof section is missing in the `signed` document.
-- The method is not found in the `signer` document.
-- An unsupported verification method is used.
-- The signature verification operation fails.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| signed | [<code>Document</code>](#Document) | 
-| signer | [<code>Document</code>](#Document) | 
 
 <a name="Document.verifyRootDocument"></a>
 
@@ -2702,6 +2731,170 @@ Deserializes a `Document` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Resolver"></a>
+
+## Resolver
+**Kind**: global class  
+
+* [Resolver](#Resolver)
+    * [new Resolver()](#new_Resolver_new)
+    * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
+    * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+    * [.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+    * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+
+<a name="new_Resolver_new"></a>
+
+### new Resolver()
+Constructs a new `Resolver` with a default `Client` for
+the `Mainnet`.
+
+<a name="Resolver+getClient"></a>
+
+### resolver.getClient(network_name) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
+Returns the `Client` corresponding to the given network name if one exists.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| network_name | <code>string</code> | 
+
+<a name="Resolver+resolve"></a>
+
+### resolver.resolve(did) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetches the `Document` of the given `DID`.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+
+<a name="Resolver+resolveHistory"></a>
+
+### resolver.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+Fetches the `DocumentHistory` of the given `DID`.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) \| <code>string</code> | 
+
+<a name="Resolver+resolveDiffHistory"></a>
+
+### resolver.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+Returns the `DiffChainHistory` of a diff chain starting from a `Document` on the
+integration chain.
+
+NOTE: the document must have been published to the Tangle and have a valid message id.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+
+<a name="Resolver+resolveCredentialIssuer"></a>
+
+### resolver.resolveCredentialIssuer(credential) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetches the DID Document of the issuer on a `Credential`.
+
+# Errors
+
+Errors if the issuer URL is not a valid `DID` or document resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
+<a name="Resolver+resolvePresentationIssuers"></a>
+
+### resolver.resolvePresentationIssuers(presentation) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
+Issuer documents are returned in arbitrary order.
+
+# Errors
+
+Errors if any issuer URL is not a valid `DID` or document resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="Resolver+resolvePresentationHolder"></a>
+
+### resolver.resolvePresentationHolder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+Fetches the DID Document of the holder of a `Presentation`.
+
+# Errors
+
+Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="ResolverBuilder"></a>
+
+## ResolverBuilder
+Builder for configuring [`Clients`][Client] when constructing a [`Resolver`].
+
+**Kind**: global class  
+
+* [ResolverBuilder](#ResolverBuilder)
+    * [new ResolverBuilder()](#new_ResolverBuilder_new)
+    * [.client(client)](#ResolverBuilder+client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [.clientConfig(config)](#ResolverBuilder+clientConfig) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+    * [.build()](#ResolverBuilder+build) ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
+
+<a name="new_ResolverBuilder_new"></a>
+
+### new ResolverBuilder()
+Constructs a new `ResolverBuilder` with no `Clients` configured.
+
+<a name="ResolverBuilder+client"></a>
+
+### resolverBuilder.client(client) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Inserts a `Client`.
+
+NOTE: replaces any previous `Client` or `Config` with the same network name.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+
+| Param | Type |
+| --- | --- |
+| client | [<code>Client</code>](#Client) | 
+
+<a name="ResolverBuilder+clientConfig"></a>
+
+### resolverBuilder.clientConfig(config) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Inserts a `Config` used to create a `Client`.
+
+NOTE: replaces any previous `Client` or `Config` with the same network name.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+
+| Param | Type |
+| --- | --- |
+| config | [<code>Config</code>](#Config) | 
+
+<a name="ResolverBuilder+build"></a>
+
+### resolverBuilder.build() ⇒ [<code>Promise.&lt;Resolver&gt;</code>](#Resolver)
+Constructs a new [`Resolver`] based on the builder configuration.
+
+**Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
 <a name="Service"></a>
 
 ## Service
@@ -2960,13 +3153,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## DIDMessageEncoding
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="Digest"></a>
 

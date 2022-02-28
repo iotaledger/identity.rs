@@ -19,8 +19,8 @@ use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Client as WasmClient;
 use crate::tangle::Config;
+use crate::tangle::WasmClient;
 
 /// An [`Account`] builder for easy account configuration.
 ///

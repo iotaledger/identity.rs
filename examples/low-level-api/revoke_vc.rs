@@ -17,11 +17,11 @@ use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
-use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::Resolver;
 use identity::iota::Result;
 use identity::prelude::*;
 
@@ -31,7 +31,7 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let client: Client = Client::new().await?;
 
   // Create a signed VC
   let (issuer, signed_vc) = create_vc_helper(&client).await?;
@@ -58,7 +58,8 @@ async fn main() -> Result<()> {
   );
 
   // Check the verifiable credential
-  let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
+  let resolver: Resolver = Resolver::new().await?;
+  let validation: CredentialValidation = common::check_credential(&resolver, &signed_vc).await?;
   println!("VC verification result (false = revoked) > {:#?}", validation.verified);
   assert!(!validation.verified);
   Ok(())
@@ -69,7 +70,7 @@ async fn main() -> Result<()> {
 ///
 /// See "create_vc" example for explanation.
 async fn create_vc_helper(
-  client: &ClientMap,
+  client: &Client,
 ) -> Result<(
   (IotaDocument, KeyPair, Receipt), // issuer
   Credential,                       // signed verifiable credential
@@ -105,7 +106,7 @@ async fn create_vc_helper(
 ///
 /// See "manipulate_did" for further explanation.
 pub async fn add_new_key(
-  client: &ClientMap,
+  client: &Client,
   doc: &IotaDocument,
   key: &KeyPair,
   receipt: &Receipt,
