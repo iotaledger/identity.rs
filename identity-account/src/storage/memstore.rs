@@ -62,8 +62,8 @@ impl MemStore {
   }
 }
 
-#[cfg_attr(feature = "wasm", async_trait(?Send))]
-#[cfg_attr(not(feature = "wasm"), async_trait)]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
   async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
     Ok(())

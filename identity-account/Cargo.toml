@@ -60,3 +60,4 @@ stronghold = [
 ]
 wasm = ["identity-iota/wasm"]
 async = ["identity-iota/async"]
+send-sync-storage = []
