@@ -48,6 +48,12 @@ impl WasmKeyLocation {
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
+
+  /// Deserializes a JSON object as `KeyLocation`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmKeyLocation> {
+    json_value.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<WasmKeyLocation> for KeyLocation {

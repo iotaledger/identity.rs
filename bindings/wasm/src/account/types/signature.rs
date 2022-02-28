@@ -24,7 +24,7 @@ impl WasmSignature {
   }
 
   #[wasm_bindgen(getter)]
-  /// Returns the public key used to verify this signature.
+  /// Returns the public key, encoded as a base58 string, used to verify this signature.
   pub fn pkey(&self) -> String {
     encode_b58(self.0.pkey())
   }
@@ -33,6 +33,12 @@ impl WasmSignature {
   /// Returns the signature data as a vec of bytes.
   pub fn data(&self) -> Vec<u8> {
     self.0.data().to_vec()
+  }
+
+  // Serializes a `Signature` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 
   /// Deserializes a JSON object as `Signature`.
