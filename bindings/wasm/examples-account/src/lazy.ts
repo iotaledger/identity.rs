@@ -1,19 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl } from './../../node/identity_wasm.js';
+import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates how to take control over publishing DID updates manually, 
  * instead of the default automated behavior. 
  */
-async function lazy() {
+async function lazy(storage?: Storage) {
 
     // Create a new Account with auto publishing set to false.
     // This means updates are not pushed to the tangle automatically.
     // Rather, when we publish, multiple updates are batched together.
     let builder = new AccountBuilder({
-        autopublish: false
+        autopublish: false,
+        storage,
     });
     let account = await builder.createIdentity();
 

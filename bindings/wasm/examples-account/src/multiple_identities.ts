@@ -1,17 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl } from './../../node/identity_wasm.js';
+import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates how to create multiple identities from a builder 
  * and how to load existing identities into an account.
  */
-async function multipleIdentities() {
+async function multipleIdentities(storage?: Storage) {
 
     // Create an AccountBuilder to make it easier to create multiple identities.
     // Every account created from the builder will use the same storage - the default memory storage in this case.
-    let builder = new AccountBuilder();
+    let builder = new AccountBuilder({
+        storage,
+    });
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
