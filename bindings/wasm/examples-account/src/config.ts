@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave } from './../../node/identity_wasm.js';
+import { AccountBuilder, Client, Network, ExplorerUrl, Config, DIDMessageEncoding, AutoSave, Storage } from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates some of the configuration options for the account.
  */
-async function config() {
+async function config(storage?: Storage) {
 
     // Set-up for a private Tangle
     // You can use https://github.com/iotaledger/one-click-tangle for a local setup.
@@ -39,8 +39,8 @@ async function config() {
         // `AutoSave.every()` saves immediately after every action,
         autosave: AutoSave.batch(10), // saves after every 10 actions.
         autopublish: true, // publish to the tangle automatically on every update
-        clientConfig: config // set the client configuration.
-        //TODO configure storage.
+        clientConfig: config, // set the client configuration.
+        storage,
     });
 
     // Create an identity and publish it.

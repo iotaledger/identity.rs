@@ -1,20 +1,22 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExplorerUrl, AccountBuilder, MethodRelationship } from './../../node/identity_wasm.js';
+import { ExplorerUrl, AccountBuilder, MethodRelationship, Storage } from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates how to manipulate a DID Document by adding/removing 
  * Verification Methods and Services.
  */
-async function manipulateIdentity() {
+async function manipulateIdentity(storage?: Storage) {
 
     // ===========================================================================
     // Create Identity - Similar to create_did example
     // ===========================================================================
 
     // Create a new Account with the default configuration.
-    let builder = new AccountBuilder();
+    let builder = new AccountBuilder({
+        storage,
+    });
     let account = await builder.createIdentity();
 
     // ===========================================================================
