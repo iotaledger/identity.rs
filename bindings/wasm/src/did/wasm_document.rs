@@ -29,11 +29,11 @@ use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
 use crate::did::WasmMethodScope;
+use crate::did::WasmService;
 use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::service::Service;
 
 // =============================================================================
 // =============================================================================
@@ -93,7 +93,7 @@ impl WasmDocument {
 
   /// Add a new `Service` to the document.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &Service) -> Result<bool> {
+  pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
     Ok(self.0.insert_service(service.0.clone()))
   }
 
