@@ -1,8 +1,8 @@
 {
   "name": "stronghold-nodejs",
   "version": "0.0.0",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "napi": {
     "name": "stronghold-nodejs",
     "triples": {
@@ -19,8 +19,7 @@
   "devDependencies": {
     "@napi-rs/cli": "^2.4.2",
     "@types/node": "^17.0.19",
-    "cross-var": "^1.1.0",
-    "npm-run-all": "^4.1.5",
+    "cross-env": "^7.0.3",
     "ts-node": "^10.5.0"
   },
   "engines": {
@@ -28,9 +27,9 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "build": "cross-var \"npm-run-all create-npm-dir build:napi build:ts\"",
-    "build:ts": "tsc node_adapter/stronghold_storage.ts",
-    "build:napi": "cross-var \"napi build --platform --release $npm_config_napi_args\"",
+    "build": "npm run build:napi && npm run build:ts",
+    "build:ts": "tsc",
+    "build:napi": "cross-env-shell napi build --platform --release --js dist/napi.js --dts napi.d.ts $NPM_BUILD_NAPI_ARGS dist",
     "build:napi:debug": "napi build --platform",
     "example:stronghold": "ts-node ./examples/src/node.ts",
     "prepublishOnly": "napi prepublish -t npm",

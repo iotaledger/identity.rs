@@ -5,11 +5,8 @@ Cargo.lock
 # npm / yarn
 node_modules/
 
-*.node
-index.d.ts
-index.js
-
-node_adapter/*.js
-
 # used for npm releases, will be created in build step
 npm/
+
+# compiled files from napi and ts
+dist/

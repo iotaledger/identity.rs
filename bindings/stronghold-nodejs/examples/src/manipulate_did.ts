@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExplorerUrl, AccountBuilder, MethodRelationship } from "../../../wasm/node/identity_wasm.js";
-import { Stronghold } from '../../node_adapter/stronghold_storage.js'
+import { Stronghold } from '../../dist'
 
 /**
  * This example demonstrates how to manipulate a DID Document by adding/removing 

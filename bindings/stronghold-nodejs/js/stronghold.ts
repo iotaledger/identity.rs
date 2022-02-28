@@ -1,5 +1,5 @@
-import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../index.js'
-import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm.js";
+import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../dist/napi'
+import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
@@ -8,76 +8,76 @@ export class Stronghold implements Storage {
         this.napiStronghold = NapiStronghold.create(snapshot, password, dropsave);
     }
 
-    public async setPassword(encryptionKey: Uint8Array): Promise<void> {
+    public async setPassword(encryptionKey: Uint8Array) {
         return this.napiStronghold.setPassword(Array.from(encryptionKey))
     }
 
-    public async flushChanges(): Promise<void> {
+    public async flushChanges() {
         return this.napiStronghold.flushChanges()
     }
 
-    public async keyNew(did: DID, keyLocation: KeyLocation): Promise<string> {
+    public async keyNew(did: DID, keyLocation: KeyLocation) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyNew(napiDID, napiKeyLocation)
     }
 
-    public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string): Promise<string> {
+    public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyInsert(napiDID, napiKeyLocation, privateKey)
     }
 
-    public async keyExists(did: DID, keyLocation: KeyLocation): Promise<boolean> {
+    public async keyExists(did: DID, keyLocation: KeyLocation) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyExists(napiDID, napiKeyLocation)
     }
 
-    public async keyGet(did: DID, keyLocation: KeyLocation): Promise<string> {
+    public async keyGet(did: DID, keyLocation: KeyLocation) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyGet(napiDID, napiKeyLocation)
     }
 
-    public async keyDel(did: DID, keyLocation: KeyLocation): Promise<void> {
+    public async keyDel(did: DID, keyLocation: KeyLocation) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyDel(napiDID, napiKeyLocation)
     }
 
-    public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
+    public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         let napiSignature = await this.napiStronghold.keySign(napiDID, napiKeyLocation, Array.from(data));
         return Signature.fromJSON(napiSignature.toJSON())
     }
 
-    public async chainState(did: DID): Promise<ChainState> {
+    public async chainState(did: DID) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiChainState = await this.napiStronghold.chainState(napiDID);
         return ChainState.fromJSON(napiChainState.toJSON())
     }
 
-    public async setChainState(did: DID, chainState: ChainState): Promise<void> {
+    public async setChainState(did: DID, chainState: ChainState) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiChainState = NapiChainState.fromJSON(chainState.toJSON());
         return this.napiStronghold.setChainState(napiDID, napiChainState);
     }
 
-    public async state(did: DID): Promise<IdentityState> {
+    public async state(did: DID) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiIdentityState = await this.napiStronghold.state(napiDID);
         return IdentityState.fromJSON(napiIdentityState.toJSON())
     }
 
-    public async setState(did: DID, identityState: IdentityState): Promise<void> {
+    public async setState(did: DID, identityState: IdentityState) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiIdentityState = NapiIdentityState.fromJSON(identityState.toJSON());
         return this.napiStronghold.setState(napiDID, napiIdentityState);
     }
 
-    public async purge(did: DID): Promise<void> {
+    public async purge(did: DID) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         return this.napiStronghold.purge(napiDID);
     }

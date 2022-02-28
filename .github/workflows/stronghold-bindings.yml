@@ -21,7 +21,7 @@ jobs:
             architecture: x64
             build: |
               npm run build
-              strip -x *.node
+              strip -x dist/*.node
             test: |
               npm run test
           - host: windows-latest
@@ -35,7 +35,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             architecture: x64
             build: |
-              npm run build && strip *.node
+              npm run build && strip dist/*.node
             test: |
               npm run test
           - host: ubuntu-latest
@@ -44,17 +44,19 @@ jobs:
             setup: |
               sudo apt-get install -y musl-tools
             build: |
-              npm run build --napi_args=--target=x86_64-unknown-linux-musl && strip *.node
+              export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+              npm run build && strip dist/*.node
             test-docker: |
               docker build -f bindings/stronghold-nodejs/build/Dockerfile.alpine -t tester .
-              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d stronghold-nodejs.linux-x64-musl.node && npm run test"
+              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/stronghold-nodejs.linux-x64-musl.node && npm run test"
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
-              npm run build --napi_args=--target=aarch64-apple-darwin
-              strip -x *.node
+              export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
+              npm run build && strip -x dist/*.node
+            # we can't test this properly because the macos-latest runners don't have apple silicon / aarch64
             test: |
-              npm run test
+              echo "let's hope for the best"
     name: stable - ${{ matrix.settings.target }} - node@16
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -99,7 +101,7 @@ jobs:
         if: ${{ matrix.settings.test }}
         run: ${{ matrix.settings.test }}
 
-      - name: Test bindings
+      - name: Test bindings in docker
         if: ${{ matrix.settings.test-docker }}
         run: ${{ matrix.settings.test-docker }}
         working-directory: ./
@@ -108,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{env.APP_NAME}}-bindings-${{ matrix.settings.target }}
-          path: ${{ env.WORKING_DIRECTORY }}/${{ env.APP_NAME }}.*.node
+          path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
 
   publish:
@@ -117,22 +119,32 @@ jobs:
     needs:
       - build-stronghold-nodejs
     steps:
+
       - uses: actions/checkout@v2
+
       - name: Setup node
         uses: actions/setup-node@v2
         with:
           node-version: 16
           check-latest: true
+
       - name: Install dependencies
         run: npm ci --ignore-scripts
+
       - name: Download all artifacts
         uses: actions/download-artifact@v2
         with:
           path: ${{ env.WORKING_DIRECTORY }}/artifacts
+
+      - name: Create npm folder
+        run: npm run create-npm-dir
+
       - name: Move artifacts
         run: npm run artifacts
+
       - name: List packages
         run: ls -R ./npm
+
       # - name: Publish
       #   run: |
       #     if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
