@@ -154,29 +154,35 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_SERVICE: &'static str = r#"
-/** Holds options to create a new `Service`. */
+/**
+ * Holds options to create a new `Service`.
+ */
 interface IService {
-    /** Identifier of the service.
-    *
-    * Must be a valid DIDUrl with a fragment.
-    */
+    /**
+     * Identifier of the service.
+     *
+     * Must be a valid DIDUrl with a fragment.
+     */
     readonly id: DIDUrl | string;
 
-    /** Type of service.
-    *
-    * E.g. "LinkedDomains" or "DIDCommMessaging".
-    */
+    /**
+     * Type of service.
+     *
+     * E.g. "LinkedDomains" or "DIDCommMessaging".
+     */
     readonly type: string;
 
-    /** A URL, set of URLs, or map of URL sets.
-    *
-    * NOTE: throws an error if any entry is not a valid URL string. List entries must be unique.
-    */
+    /**
+     * A URL, set of URLs, or map of URL sets.
+     *
+     * NOTE: throws an error if any entry is not a valid URL string. List entries must be unique.
+     */
     readonly serviceEndpoint: string | string[] | Map<string, string[]> | Record<string, string[]>;
 
-    /** Additional custom properties to embed in the service.
-    *
-    * WARNING: entries may overwrite existing fields and result in invalid documents.
-    */
+    /**
+     * Additional custom properties to embed in the service.
+     *
+     * WARNING: entries may overwrite existing fields and result in invalid documents.
+     */
     readonly properties?: Map<string, any> | Record<string, any>;
 }"#;
