@@ -100,7 +100,7 @@ impl WasmDocument {
 
   /// Returns a list of the document controllers.
   #[wasm_bindgen(js_name = controller)]
-  pub fn controller(&self) -> ControllerArray {
+  pub fn controller(&self) -> DIDArray {
     match self.0.controller() {
       Some(controllers) => controllers
         .iter()
@@ -108,14 +108,14 @@ impl WasmDocument {
         .map(WasmDID::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
-        .unchecked_into::<ControllerArray>(),
-      None => js_sys::Array::new().unchecked_into::<ControllerArray>(),
+        .unchecked_into::<DIDArray>(),
+      None => js_sys::Array::new().unchecked_into::<DIDArray>(),
     }
   }
 
   /// Returns a set of the document's `alsoKnownAs`.
   #[wasm_bindgen(js_name = alsoKnownAs)]
-  pub fn also_known_as(&self) -> ArrayString {
+  pub fn also_known_as(&self) -> DIDArray {
     self
       .0
       .also_known_as()
@@ -124,7 +124,7 @@ impl WasmDocument {
       .map(|url| url.to_string())
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayString>()
+      .unchecked_into::<DIDArray>()
   }
 
   /// Adds a custom property to the DID Document.
@@ -138,7 +138,7 @@ impl WasmDocument {
     let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
     match value {
       Some(value) => {
-        self.0.properties_mut().insert(key, value); //todo
+        self.0.properties_mut().insert(key, value);
       }
       None => {
         self.0.properties_mut().remove(&key);
@@ -664,13 +664,7 @@ extern "C" {
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "DID[]")]
-  pub type ControllerArray;
-}
-
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "DID[]")]
-  pub type ArrayString;
+  pub type DIDArray;
 }
 
 #[wasm_bindgen]
