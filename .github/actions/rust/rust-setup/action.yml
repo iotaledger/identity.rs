@@ -11,7 +11,7 @@ inputs:
     description: 'Name of the job, used for cache key construction.'
     required: true
   target-cache-enabled:
-    description: 'If sccache should be setup'
+    description: 'Cache build artifacts from the target path. Default: false.'
     required: false
     default: ''
   target-cache-path:
