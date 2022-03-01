@@ -18,7 +18,6 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
-use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
@@ -32,7 +31,7 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let client: Client = Client::new().await?;
 
   // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (mut issuer_doc, issuer_key, issuer_receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
@@ -80,7 +79,7 @@ async fn main() -> Result<()> {
   let credential_json: String = credential.to_json()?;
 
   // Check the verifiable credential is valid
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
+  let validator: CredentialValidator<Client> = CredentialValidator::new(&client);
   let validation: CredentialValidation = validator
     .check_credential(&credential_json, VerifierOptions::default())
     .await?;

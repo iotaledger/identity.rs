@@ -27,12 +27,11 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "=0.5.0-dev.4"
 path = "../../identity"
 default-features = false
-features = ["wasm"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
 parking_lot = { version = "0.11.2", features = ["wasm-bindgen"] }
 
