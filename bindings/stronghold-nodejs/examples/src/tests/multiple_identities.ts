@@ -2,7 +2,7 @@ import {multipleIdentities} from "../../../../wasm/examples-account/src/multiple
 import { stronghold } from '../stronghold';
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
-describe("Test node examples", function () {
+describe("Test Stronghold Node.js examples", function () {
     it("Create Verifiable Credential", async () => {
         await multipleIdentities(stronghold);
     });
