@@ -109,7 +109,7 @@ pub async fn low_level_validation(
   PresentationValidator::verify_presentation_signature(&presentation, &holder_doc, holder_verifier_options)?;
   // Verify the issuer's signatures
   for credential in presentation.verifiable_credential.iter() {
-    CredentialValidator::verify_signature(credential, &issuer_docs.as_slice(), issuer_verifier_options)?;
+    CredentialValidator::verify_signature(credential, issuer_docs.as_slice(), issuer_verifier_options)?;
   }
   Ok(())
 }
