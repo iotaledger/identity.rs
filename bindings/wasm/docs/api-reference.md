@@ -139,8 +139,6 @@ See <code>IVerifierOptions</code>.</p>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
-        * [.checkCredential(data, options)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.checkPresentation(data, options)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
         * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
         * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
@@ -243,30 +241,6 @@ capability invocation method.
 | Param | Type |
 | --- | --- |
 | document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
-
-<a name="Client+checkCredential"></a>
-
-### client.checkCredential(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
-Validates a credential with the DID Document from the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="Client+checkPresentation"></a>
-
-### client.checkPresentation(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
-Validates a presentation with the DID Document from the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="Client.fromConfig"></a>
 

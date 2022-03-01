@@ -12,7 +12,9 @@ import {
     SignatureOptions,
     Timestamp,
     VerificationMethod,
-    VerifierOptions
+    Resolver,
+    CredentialValidationOptions,
+    FailFast
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 
@@ -77,9 +79,16 @@ async function merkleKey(clientConfig) {
     }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC validation result: ${result}`);
-    if (!result) throw new Error("VC not valid");
+    const resolver = await new Resolver(); 
+
+    const result = await resolver.verifyCredential(
+        signedVc, 
+        CredentialValidationOptions.default(),
+        FailFast.Yes
+        ); 
+
+    console.log(`Credential successfully validated!"`);
+  
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
@@ -92,9 +101,14 @@ async function merkleKey(clientConfig) {
     // Check the verifiable credential is revoked
     let vc_revoked = false; 
     try {
-        const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
+        await resolver.verifyCredential(
+            signedVc, 
+            CredentialValidationOptions.default(),
+            FailFast.Yes
+            ); 
     } catch (exception)  {
-        console.log(`VC validation. The credential was revoked. Error message: ${exception.message}`);
+        console.log(`${exception.message}`)
+        console.log(`Credential successfully revoked!`);
         vc_revoked = true;
     }
     

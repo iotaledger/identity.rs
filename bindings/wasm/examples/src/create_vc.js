@@ -54,9 +54,10 @@ async function createVC(clientConfig) {
     // Since the issuer wants to issue and verify several credentials without publishing updates to their DID Document
     // the issuer decides to resolve their DID Document up front now so they can re-use it.
 
-    // Check if the credential is validated.
     const resolver = await new Resolver(); 
     const issuerDoc = await resolver.resolve(issuer.doc.id.toString()); 
+    // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure
+    // that the issuance date is not in the future and that the expiration date is not in the past:
     const result = CredentialValidator.validate(
         signedVc,
         CredentialValidationOptions.default(),

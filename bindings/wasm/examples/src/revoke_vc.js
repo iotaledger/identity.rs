@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, VerifierOptions} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, Resolver, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -44,10 +44,15 @@ async function revokeVC(clientConfig) {
 
     // Check the verifiable credential
     try {
-        const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
+        const resolver = await new Resolver();
+        await resolver.verifyCredential(
+            signedVc, 
+            CredentialValidationOptions.default(),
+            FailFast.Yes
+            ); 
     } catch (exception) {
-    console.log(`VC validation result (false = revoked): ${exception}`);
     console.log(`${exception.message}`)
+    console.log(`Credential successfully revoked!`);
     }
 }
 
