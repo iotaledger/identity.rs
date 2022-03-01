@@ -6,8 +6,8 @@
 //! cargo run --example merkle_key
 
 use identity::iota::CredentialValidationOptions;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
+use identity::iota::Resolver;
+
 use rand::rngs::OsRng;
 use rand::Rng;
 
@@ -19,7 +19,7 @@ use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::did::MethodScope;
-use identity::iota::CredentialValidator;
+
 use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -77,18 +77,16 @@ async fn main() -> Result<()> {
   println!("Credential JSON > {:#}", credential);
 
   // Check the verifiable credential is valid
-  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
+  let resolver: Resolver = Resolver::new().await?;
+  resolver
+    .verify_credential(
+      &credential,
+      &CredentialValidationOptions::default(),
+      identity::iota::FailFast::Yes,
+    )
+    .await?;
 
-  let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  assert!(CredentialValidator::validate(
-    &credential,
-    &CredentialValidationOptions::default(),
-    &resolved_issuer,
-    identity::iota::FailFast::Yes
-  )
-  .is_ok());
-
-  println!("the credential was successfully validated as expected");
+  println!("Credential successfully validated!");
 
   // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
   issuer_doc
@@ -103,18 +101,17 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Check the verifiable credential is revoked
-  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
-
-  let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  assert!(CredentialValidator::validate(
-    &credential,
-    &CredentialValidationOptions::default(),
-    &resolved_issuer,
-    identity::iota::FailFast::Yes
-  )
-  .is_err());
-
-  println!("credential validation returned an error after the issuer revoked their keys as expected");
+  if resolver
+    .verify_credential(
+      &credential,
+      &CredentialValidationOptions::default(),
+      identity::iota::FailFast::Yes,
+    )
+    .await
+    .is_err()
+  {
+    println!("Credential successfully revoked!");
+  }
 
   Ok(())
 }

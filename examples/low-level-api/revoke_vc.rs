@@ -19,14 +19,12 @@ use identity::did::MethodScope;
 use identity::did::DID;
 
 use identity::iota::CredentialValidationOptions;
-use identity::iota::CredentialValidator;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::ResolvedIotaDocument;
 
+use identity::iota::Resolver;
 use identity::iota::Result;
-use identity::iota::TangleResolve;
 use identity::prelude::*;
 
 mod common;
@@ -62,19 +60,18 @@ async fn main() -> Result<()> {
   );
 
   // Check the verifiable credential
-  //Todo: Use the new Resolver to get the necessary DID documents once that becomes available.
-
-  let resolved_issuer: ResolvedIotaDocument = client.resolve(issuer_doc.id()).await?;
-  let validation_result = CredentialValidator::validate(
-    &signed_vc,
-    &CredentialValidationOptions::default(),
-    &resolved_issuer,
-    identity::iota::FailFast::Yes,
-  );
+  let resolver: Resolver = Resolver::new().await?;
+  let validation_result: Result<()> = resolver
+    .verify_credential(
+      &signed_vc,
+      &CredentialValidationOptions::default(),
+      identity::iota::FailFast::Yes,
+    )
+    .await;
 
   println!("VC validation result: {:?}", validation_result);
   assert!(validation_result.is_err());
-  println!("VC validation failed as expected");
+  println!("Credential successfully revoked!");
 
   Ok(())
 }
