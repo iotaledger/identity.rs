@@ -26,7 +26,6 @@ use crate::credential::WasmCredentialValidationOptions;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayResolvedDocument;
 use crate::did::PromiseArrayResolvedDocument;
 use crate::did::PromiseResolvedDocument;
 use crate::did::UWasmDID;
@@ -44,6 +43,12 @@ extern "C" {
   // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseVoid;
+
+  #[wasm_bindgen(typescript_type = "ResolvedDocument | null")]
+  pub type OptionResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "ResolvedDocument[] | null")]
+  pub type OptionArrayResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = Resolver)]
@@ -300,30 +305,24 @@ impl WasmResolver {
     &self,
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
-    // &Option<T>/Option<&T> is (currently) not compatible with wasm-bindgen so we have to pass owned values
-    // unfortunately this nulls out pointers on the JS side.
-    holder: Option<WasmResolvedDocument>,
-    issuers: Option<ArrayResolvedDocument>,
+    holder: OptionResolvedDocument,
+    issuers: OptionArrayResolvedDocument,
     fail_fast: WasmFailFast,
   ) -> Result<PromiseVoid> {
-    // TODO: reimplemented function to avoid cloning the entire presentation, holder and validation options.
+    // TODO: reimplemented function to avoid cloning the entire presentation and validation options.
     // Would be solved with Rc internal representation, pending memory leak discussions.
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let presentation: WasmPresentation = presentation.clone();
     let options: WasmPresentationValidationOptions = options.clone();
-    let issuers: Option<Vec<ResolvedIotaDocument>> = if let Some(array) = issuers {
-      let issuers: Vec<ResolvedIotaDocument> = array.into_serde().wasm_result()?;
-      Some(issuers)
-    } else {
-      None
-    };
+    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.into_serde().wasm_result()?;
+    let holder: Option<ResolvedIotaDocument> = holder.into_serde().wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       resolver
         .verify_presentation(
           &presentation.0,
           &options.0,
-          holder.map(|value| value.0).as_ref(),
+          holder.as_ref(),
           issuers.as_deref(),
           fail_fast.into(),
         )
