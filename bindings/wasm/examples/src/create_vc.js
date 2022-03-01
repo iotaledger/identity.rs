@@ -1,7 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Credential, SignatureOptions, VerifierOptions} from '@iota/identity-wasm';
+import {Client, Config, Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, Resolver, FailFast} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -48,8 +48,21 @@ async function createVC(clientConfig) {
         private: issuer.newKey.private,
     }, SignatureOptions.default());
 
+    // Before passing this credential on the issuer wants to validate that some properties
+    // of the credential satisfy their expectations.
+    // In order to validate a credential the issuer's DID Document needs to be resolved.
+    // Since the issuer wants to issue and verify several credentials without publishing updates to their DID Document
+    // the issuer decides to resolve their DID Document up front now so they can re-use it.
+
     // Check if the credential is validated.
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
+    const resolver = await new Resolver(); 
+    const issuerDoc = await resolver.resolve(issuer.doc.id.toString()); 
+    const result = CredentialValidator.validate(
+        signedVc,
+        CredentialValidationOptions.default(),
+        issuerDoc,
+        FailFast.Yes
+    );
 
     console.log(`VC validated: ${result}`);
 

@@ -7,6 +7,11 @@
 <dd></dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
+<dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating credentials.</p>
+</dd>
+<dt><a href="#CredentialValidator">CredentialValidator</a></dt>
+<dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
@@ -41,6 +46,11 @@
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
+<dd></dd>
+<dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating presentation.</p>
+</dd>
+<dt><a href="#PresentationValidator">PresentationValidator</a></dt>
 <dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <code>Signature</code>.</p>
@@ -82,6 +92,27 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how a credential subject must relate to the presentation holder.</p>
+</dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>Declare that the holder must always match the subject.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>Declare that the holder must match the subject on credentials with the nonTransferable property set.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>Declares that the subject is not required to have any kind of relationship to the holder.</p>
+</dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return with an error.</p>
+</dd>
+<dt><a href="#No">No</a></dt>
+<dd><p>Declare that validation should fail after all errors have been found</p>
+</dd>
+<dt><a href="#Yes">Yes</a></dt>
+<dd><p>Declare that validation must fail upon the first error is found</p>
+</dd>
 </dl>
 
 ## Functions
@@ -485,6 +516,130 @@ Deserializes a `Credential` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="CredentialValidationOptions"></a>
+
+## CredentialValidationOptions
+Options to declare validation criteria when validating credentials.
+
+**Kind**: global class  
+
+* [CredentialValidationOptions](#CredentialValidationOptions)
+    * [.new(options)](#CredentialValidationOptions.new) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+    * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+
+<a name="CredentialValidationOptions.new"></a>
+
+### CredentialValidationOptions.new(options) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+Creates a new `CredentialValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>ICredentialValidationOptions</code> | 
+
+<a name="CredentialValidationOptions.default"></a>
+
+### CredentialValidationOptions.default() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+Creates a new `CredentialValidationOptions` with defaults.
+
+**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+<a name="CredentialValidator"></a>
+
+## CredentialValidator
+**Kind**: global class  
+
+* [CredentialValidator](#CredentialValidator)
+    * [.validate(credential, options, issuer, fail_fast)](#CredentialValidator.validate)
+    * [.check_structure(credential)](#CredentialValidator.check_structure)
+    * [.check_expires_on_or_after(credential, timestamp)](#CredentialValidator.check_expires_on_or_after)
+    * [.check_is_issued_on_or_before(credential, timestamp)](#CredentialValidator.check_is_issued_on_or_before)
+    * [.verify_signature(credential, trusted_issuers, options)](#CredentialValidator.verify_signature)
+
+<a name="CredentialValidator.validate"></a>
+
+### CredentialValidator.validate(credential, options, issuer, fail_fast)
+Validates a `Credential`.
+
+The following properties are validated according to `options`:
+- The issuer's signature,
+- The expiration date,
+- The issuance date
+- The semantic structure.
+
+# Warning
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+ Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+refreshService **and more**.
+
+# Errors
+Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
+errors will be accumulated in the returned error.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
+| issuer | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| fail_fast | <code>number</code> | 
+
+<a name="CredentialValidator.check_structure"></a>
+
+### CredentialValidator.check\_structure(credential)
+Validates the semantic structure of the `Credential`.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
+<a name="CredentialValidator.check_expires_on_or_after"></a>
+
+### CredentialValidator.check\_expires\_on\_or\_after(credential, timestamp)
+Validate that the [Credential] expires on or after the specified `Timestamp`.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="CredentialValidator.check_is_issued_on_or_before"></a>
+
+### CredentialValidator.check\_is\_issued\_on\_or\_before(credential, timestamp)
+Validate that the [Credential] is issued on or before specified `Timestamp`.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="CredentialValidator.verify_signature"></a>
+
+### CredentialValidator.verify\_signature(credential, trusted_issuers, options)
+Verify the signature using the DID Document of a trusted issuer.
+
+# Errors
+This method immediately returns an error if
+the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
+to verify the credential's signature will be made and an error is returned upon failure.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| trusted_issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="DID"></a>
 
@@ -1901,6 +2056,135 @@ Deserializes a `Presentation` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="PresentationValidationOptions"></a>
+
+## PresentationValidationOptions
+Options to declare validation criteria when validating presentation.
+
+**Kind**: global class  
+
+* [PresentationValidationOptions](#PresentationValidationOptions)
+    * [.new(options)](#PresentationValidationOptions.new) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+    * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+
+<a name="PresentationValidationOptions.new"></a>
+
+### PresentationValidationOptions.new(options) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+Creates a new `PresentationValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>IPresentationValidationOptions</code> | 
+
+<a name="PresentationValidationOptions.default"></a>
+
+### PresentationValidationOptions.default() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+Creates a new `PresentationValidationOptions` with defaults.
+
+**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+<a name="PresentationValidator"></a>
+
+## PresentationValidator
+**Kind**: global class  
+
+* [PresentationValidator](#PresentationValidator)
+    * [.validate(presentation, options, holder, issuers, fail_fast)](#PresentationValidator.validate)
+    * [.verify_presentation_signature(presentation, holder, options)](#PresentationValidator.verify_presentation_signature)
+    * [.check_structure(presentation)](#PresentationValidator.check_structure)
+    * [.check_non_transferable(presentation)](#PresentationValidator.check_non_transferable)
+    * [.check_holder_is_always_subject(presentation)](#PresentationValidator.check_holder_is_always_subject)
+
+<a name="PresentationValidator.validate"></a>
+
+### PresentationValidator.validate(presentation, options, holder, issuers, fail_fast)
+Validate a `Presentation`.
+
+The following properties are validated according to `options`:
+- The holder's signature,
+- The relationship between the subject and the holder,
+- The semantic structure
+- Some properties of the credentials  (see
+`CredentialValidator::validate` for more information).
+
+# Warning
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+ Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+refreshService **and more**.
+
+# Errors
+Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
+errors will be accumulated in the returned error.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| fail_fast | <code>number</code> | 
+
+<a name="PresentationValidator.verify_presentation_signature"></a>
+
+### PresentationValidator.verify\_presentation\_signature(presentation, holder, options)
+Verify the presentation's signature using the resolved document of the holder
+
+# Errors
+Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
+property. Otherwise signature verification will be attempted and an error is returned upon failure.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="PresentationValidator.check_structure"></a>
+
+### PresentationValidator.check\_structure(presentation)
+Validates the semantic structure of the [Presentation].
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="PresentationValidator.check_non_transferable"></a>
+
+### PresentationValidator.check\_non\_transferable(presentation)
+Validates that the nonTransferable property is met.
+
+# Errors
+Returns an error at the first credential requiring a nonTransferable property that is not met.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="PresentationValidator.check_holder_is_always_subject"></a>
+
+### PresentationValidator.check\_holder\_is\_always\_subject(presentation)
+Validates that the presentation only contains credentials where the credential subject is the holder.
+
+# Errors
+Returns an error at the first credential with a credential subject not corresponding to the holder.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
@@ -2128,6 +2412,8 @@ Deserializes a `Document` object from a JSON object.
     * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
     * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.verifyCredential(credential, options, fail_fast)](#Resolver+verifyCredential) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.verifyPresentation(presentation, options, holder, issuers, fail_fast)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -2227,6 +2513,77 @@ Errors if the holder URL is missing, is not a valid `DID`, or document resolutio
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="Resolver+verifyCredential"></a>
+
+### resolver.verifyCredential(credential, options, fail_fast) ⇒ <code>Promise.&lt;void&gt;</code>
+Verifies a `Credential`.
+
+This method resolves the issuer's DID Document and validates the following properties in accordance with
+`options`:
+- The issuer's signature
+- The expiration date
+- The issuance date
+- The credential's semantic structure.
+
+If you already have an up to date version of the issuer's resolved DID Document you may want to use
+`CredentialValidator::validate` in order to avoid an unnecessary resolution.
+
+# Warning
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+ Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+refreshService **and more**.
+
+# Errors
+If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
+an attempt will be made to validate the credential. If the `fail_fast` parameter is "Yes" an error will be
+returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
+the returned error.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
+| fail_fast | <code>number</code> | 
+
+<a name="Resolver+verifyPresentation"></a>
+
+### resolver.verifyPresentation(presentation, options, holder, issuers, fail_fast) ⇒ <code>Promise.&lt;void&gt;</code>
+Verifies a `Presentation`.
+
+This method validates the following properties in accordance with `options`
+- The holder's signature,
+- The relationship between the holder and the credential subjects,
+- The semantic structure of the presentation,
+- Some properties of the credentials (see `CredentialValidator::validate` for more information).
+
+# Warning
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
+ Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
+refreshService **and more**.
+
+# Resolution
+If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
+date versions of all of these DID Documents you may want to instead use
+`PresentationValidator::validate`.
+
+# Errors
+If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
+immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
+parameter is `Yes` an error will be returned upon the first encountered validation failure, otherwise all
+validation errors will be accumulated in the returned error.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>null</code> | 
+| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>null</code> | 
+| fail_fast | <code>number</code> | 
 
 <a name="ResolverBuilder"></a>
 
@@ -2510,6 +2867,48 @@ Creates a new `VerifierOptions` with default options.
 <a name="Digest"></a>
 
 ## Digest
+**Kind**: global variable  
+<a name="SubjectHolderRelationship"></a>
+
+## SubjectHolderRelationship
+Declares how a credential subject must relate to the presentation holder.
+
+**Kind**: global variable  
+<a name="AlwaysSubject"></a>
+
+## AlwaysSubject
+Declare that the holder must always match the subject.
+
+**Kind**: global variable  
+<a name="SubjectOnNonTransferable"></a>
+
+## SubjectOnNonTransferable
+Declare that the holder must match the subject on credentials with the nonTransferable property set.
+
+**Kind**: global variable  
+<a name="Any"></a>
+
+## Any
+Declares that the subject is not required to have any kind of relationship to the holder.
+
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return with an error.
+
+**Kind**: global variable  
+<a name="No"></a>
+
+## No
+Declare that validation should fail after all errors have been found
+
+**Kind**: global variable  
+<a name="Yes"></a>
+
+## Yes
+Declare that validation must fail upon the first error is found
+
 **Kind**: global variable  
 <a name="start"></a>
 

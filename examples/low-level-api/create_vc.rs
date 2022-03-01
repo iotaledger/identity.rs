@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
   let resolver: Resolver = Resolver::new().await?;
   // We use FailFast::No so all errors get accumulated if there are any. Then we can later inform the issuer about
   // everything that is wrong with the credential they issued to us and they will hopefully send us a new correct
-  // credential :)
+  // credential 
   resolver
     .verify_credential(&credential, &CredentialValidationOptions::default(), FailFast::No)
     .await?;
