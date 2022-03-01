@@ -4,6 +4,7 @@
 use std::str::FromStr;
 
 use identity::core::decode_b58;
+use identity::core::OneOrMany;
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
@@ -12,6 +13,7 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
+use identity::did::MethodRelationship;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
@@ -24,16 +26,19 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::KeyPair;
 use crate::crypto::WasmSignatureOptions;
+use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
 use crate::did::WasmMethodScope;
+use crate::did::WasmMethodType;
 use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::service::Service;
+use wasm_bindgen::JsCast;
 
 // =============================================================================
 // =============================================================================
@@ -77,6 +82,12 @@ impl WasmDocument {
       .wasm_result()
   }
 
+  /// Returns whether the given {@link MethodType} can be used to sign document updates.
+  #[wasm_bindgen(js_name = isSigningMethodType)]
+  pub fn is_signing_method_type(method_type: &WasmMethodType) -> bool {
+    IotaDocument::is_signing_method_type(method_type.0)
+  }
+
   // ===========================================================================
   // Properties
   // ===========================================================================
@@ -87,9 +98,83 @@ impl WasmDocument {
     WasmDID(self.0.id().clone())
   }
 
+  /// Returns a list of the document controllers.
+  #[wasm_bindgen(js_name = controller)]
+  pub fn controller(&self) -> ControllerArray {
+    match self.0.controller() {
+      Some(controllers) => controllers
+        .iter()
+        .cloned()
+        .map(WasmDID::from)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ControllerArray>(),
+      None => js_sys::Array::new().unchecked_into::<ControllerArray>(),
+    }
+  }
+
+  /// Returns a set of the document's `alsoKnownAs`.
+  #[wasm_bindgen(js_name = alsoKnownAs)]
+  pub fn also_known_as(&self) -> ArrayString {
+    self
+      .0
+      .also_known_as()
+      .iter()
+      .cloned()
+      .map(|url| url.to_string())
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
+  }
+
+  /// Adds a custom property to the DID Document.
+  /// If the Document already has this key, the value will be overwritten.
+  /// If the value is set to `null`, the property will be removed.
+  ///
+  /// ### WARNING
+  /// This method can overwrite existing properties like `id`.
+  #[wasm_bindgen(js_name = setPropertyUnchecked)]
+  pub fn set_property(&mut self, key: String, value: &JsValue) -> Result<()> {
+    let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
+    match value {
+      Some(value) => {
+        self.0.properties_mut().insert(key, value); //todo
+      }
+      None => {
+        self.0.properties_mut().remove(&key);
+      }
+    }
+    Ok(())
+  }
+
+  /// Returns the custom DID Document properties.
+  #[wasm_bindgen(js_name = properties)]
+  pub fn properties(&mut self) -> Result<JSMap> {
+    let properties = self.0.properties();
+    let properties_map = js_sys::Map::new();
+    for (key, value) in properties.iter() {
+      properties_map.set(&JsValue::from(key), &JsValue::from_serde(&value).wasm_result()?);
+    }
+    Ok(properties_map.unchecked_into::<JSMap>())
+  }
+
   // ===========================================================================
   // Services
   // ===========================================================================
+
+  /// Return a set of all `Service`s in the document.
+  #[wasm_bindgen(js_name = service)]
+  pub fn service(&self) -> ArrayService {
+    self
+      .0
+      .service()
+      .iter()
+      .cloned()
+      .map(Service)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayService>()
+  }
 
   /// Add a new `Service` to the document.
   #[wasm_bindgen(js_name = insertService)]
@@ -107,6 +192,20 @@ impl WasmDocument {
   // Verification Methods
   // ===========================================================================
 
+  /// Returns a list of all {@link VerificationMethod} in the DID Document.
+  #[wasm_bindgen(js_name = methods)]
+  pub fn methods(&self) -> ArrayMethods {
+    self
+      .0
+      .methods()
+      .collect::<Vec<&IotaVerificationMethod>>()
+      .into_iter()
+      .cloned()
+      .map(WasmVerificationMethod::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayMethods>()
+  }
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: WasmMethodScope) -> Result<()> {
@@ -139,10 +238,29 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: Option<WasmMethodScope>) -> Result<WasmVerificationMethod> {
     let method_query: String = query.into_serde().wasm_result()?;
+    if let Some(scope) = scope {
+      return Ok(WasmVerificationMethod(
+        self
+          .0
+          .resolve_method_with_scope(&method_query, scope.0)
+          .ok_or(identity::did::Error::MethodNotFound)
+          .wasm_result()?
+          .clone(),
+      ));
+    }
     Ok(WasmVerificationMethod(
       self.0.try_resolve_method(&method_query).wasm_result()?.clone(),
+    ))
+  }
+
+  /// Attempts to resolve the given method query into a method capable of signing a document update.
+  #[wasm_bindgen(js_name = resolveSigningMethod)]
+  pub fn resolve_signing_method(&mut self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
+    let method_query: String = query.into_serde().wasm_result()?;
+    Ok(WasmVerificationMethod(
+      self.0.try_resolve_signing_method(&method_query).wasm_result()?.clone(),
     ))
   }
 
@@ -151,6 +269,51 @@ impl WasmDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
     method.revoke_merkle_key(index).wasm_result()
+  }
+
+  /// Attaches the relationship to the given method, if the method exists.
+  ///
+  /// Note: The method needs to be in the set of verification methods,
+  /// so it cannot be an embedded one.
+  #[wasm_bindgen(js_name = attachMethodRelationShips)]
+  pub fn attach_method_relationships(&mut self, options: &MethodRelationshipOptions) -> Result<()> {
+    let relationships: Vec<MethodRelationship> = options
+      .relationships()
+      .into_serde::<OneOrMany<WasmMethodRelationship>>()
+      .map(OneOrMany::into_vec)
+      .wasm_result()?
+      .into_iter()
+      .map(MethodRelationship::from)
+      .collect();
+
+    for relationship in relationships {
+      self
+        .0
+        .attach_method_relationship(&options.did_url().0, relationship)
+        .wasm_result()?;
+    }
+    Ok(())
+  }
+
+  /// Detaches the given relationship from the given method, if the method exists.
+  #[wasm_bindgen(js_name = detachMethodRelationShips)]
+  pub fn detach_method_relationships(&mut self, options: &MethodRelationshipOptions) -> Result<()> {
+    let relationships: Vec<MethodRelationship> = options
+      .relationships()
+      .into_serde::<OneOrMany<WasmMethodRelationship>>()
+      .map(OneOrMany::into_vec)
+      .wasm_result()?
+      .into_iter()
+      .map(MethodRelationship::from)
+      .collect();
+
+    for relationship in relationships {
+      self
+        .0
+        .detach_method_relationship(&options.did_url().0, relationship)
+        .wasm_result()?;
+    }
+    Ok(())
   }
 
   // ===========================================================================
@@ -497,3 +660,63 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UDIDUrlQuery;
 }
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "DID[]")]
+  pub type ControllerArray;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "DID[]")]
+  pub type ArrayString;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Service[]")]
+  pub type ArrayService;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
+  pub type ArrayMethods;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Map<string, any>")]
+  pub type JSMap;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "AttachRelationshipOptions")]
+  pub type MethodRelationshipOptions;
+
+  #[wasm_bindgen(getter, method)]
+  pub fn did_url(this: &MethodRelationshipOptions) -> WasmDIDUrl;
+
+  #[wasm_bindgen(getter, method)]
+  pub fn relationships(this: &MethodRelationshipOptions) -> JsValue;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_ATTACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
+/**
+ * Options for attaching one or more verification relationships to a method on an identity.
+ */
+export type AttachRelationshipOptions = {
+    /**
+     * The identifier of the method in the document.
+     */
+    did_url: DIDUrl,
+
+    /**
+     * The relationships to add;
+     */
+    relationships: MethodRelationship | MethodRelationship[]
+};
+"#;

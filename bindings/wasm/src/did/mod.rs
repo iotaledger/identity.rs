@@ -20,6 +20,7 @@ mod wasm_did_url;
 mod wasm_diff_message;
 mod wasm_document;
 mod wasm_document_metadata;
+mod wasm_method_relationship;
 mod wasm_method_scope;
 mod wasm_method_type;
 mod wasm_resolved_document;
