@@ -47,7 +47,7 @@ jobs:
               export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
               npm run build && strip dist/*.node
             test-docker: |
-              docker build -f bindings/stronghold-nodejs/build/Dockerfile.alpine -t tester .
+              docker build -f .github/Dockerfile.alpine -t tester .
               docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/stronghold-nodejs.linux-x64-musl.node && npm run test"
           - host: macos-latest
             target: aarch64-apple-darwin
