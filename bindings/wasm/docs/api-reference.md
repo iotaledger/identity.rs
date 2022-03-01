@@ -58,7 +58,10 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
 </dd>
 <dt><a href="#Service">Service</a></dt>
-<dd></dd>
+<dd><p>A DID Document Service used to enable trusted interactions associated
+with a DID subject.</p>
+<p>See: <a href="https://www.w3.org/TR/did-core/#services">https://www.w3.org/TR/did-core/#services</a></p>
+</dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
 <dd><p>Holds additional options for creating signatures.
 See <code>ISignatureOptions</code>.</p>
@@ -76,9 +79,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -2281,14 +2284,56 @@ Constructs a new [`Resolver`] based on the builder configuration.
 <a name="Service"></a>
 
 ## Service
+A DID Document Service used to enable trusted interactions associated
+with a DID subject.
+
+See: https://www.w3.org/TR/did-core/#services
+
 **Kind**: global class  
 
 * [Service](#Service)
+    * [new Service(service)](#new_Service_new)
     * _instance_
+        * [.id](#Service+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.type](#Service+type) ⇒ <code>string</code>
+        * [.serviceEndpoint](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+        * [.properties()](#Service+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(value)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
 
+<a name="new_Service_new"></a>
+
+### new Service(service)
+
+| Param | Type |
+| --- | --- |
+| service | <code>IService</code> | 
+
+<a name="Service+id"></a>
+
+### service.id ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Returns a copy of the `Service` id.
+
+**Kind**: instance property of [<code>Service</code>](#Service)  
+<a name="Service+type"></a>
+
+### service.type ⇒ <code>string</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance property of [<code>Service</code>](#Service)  
+<a name="Service+serviceEndpoint"></a>
+
+### service.serviceEndpoint ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `Service` endpoint.
+
+**Kind**: instance property of [<code>Service</code>](#Service)  
+<a name="Service+properties"></a>
+
+### service.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom properties on the `Service`.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+toJSON"></a>
 
 ### service.toJSON() ⇒ <code>any</code>
@@ -2499,13 +2544,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 

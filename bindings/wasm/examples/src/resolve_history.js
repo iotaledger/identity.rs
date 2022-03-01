@@ -84,12 +84,12 @@ async function resolveHistory(clientConfig) {
     const diffDoc1 = Document.fromJSON(intDoc1.toJSON()); // clone the Document
 
     // Add a new Service with the tag "linked-domain-1"
-    let serviceJSON1 = {
-        id: diffDoc1.id + "#linked-domain-1",
+    const service1 = new Service({
+        id: diffDoc1.id.toUrl().join("#linked-domain-1"),
         type: "LinkedDomains",
         serviceEndpoint: "https://iota.org",
-    };
-    diffDoc1.insertService(Service.fromJSON(serviceJSON1));
+    });
+    diffDoc1.insertService(service1);
     diffDoc1.metadataUpdated = Timestamp.nowUTC();
 
     // Create a signed diff update.
@@ -110,14 +110,14 @@ async function resolveHistory(clientConfig) {
     const diffDoc2 = Document.fromJSON(diffDoc1.toJSON());
 
     // Add a second Service with the tag "linked-domain-2"
-    let serviceJSON2 = {
-        id: diffDoc2.id + "#linked-domain-2",
+    const service2 = new Service({
+        id: diffDoc2.id.toUrl().join("#linked-domain-2"),
         type: "LinkedDomains",
         serviceEndpoint: {
             "origins": ["https://iota.org/", "https://example.com/"]
         },
-    };
-    diffDoc2.insertService(Service.fromJSON(serviceJSON2));
+    });
+    diffDoc2.insertService(service2);
     diffDoc2.metadataUpdated = Timestamp.nowUTC();
 
     // This is the second diff therefore its `previousMessageId` property is
