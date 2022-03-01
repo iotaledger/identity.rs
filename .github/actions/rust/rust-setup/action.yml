@@ -19,11 +19,11 @@ inputs:
     required: false
     default: target
   sccache-enabled:
-    description: 'If sccache should be setup'
+    description: 'Install and use sccache. Default: false.'
     required: false
     default: ''
   sccache-path:
-    description: 'Path of the sccache.'
+    description: 'The sccache directory. E.g. "/home/runner/.cache/sccache"'
     required: false
 runs:
   using: "composite"
