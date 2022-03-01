@@ -224,8 +224,11 @@ where
         PresentationValidator::validate(presentation, options, &holder, issuers, fail_fast)
       }
       (None, None) => {
-        let holder = self.resolve_presentation_holder(presentation).await?;
-        let issuers = self.resolve_presentation_issuers(presentation).await?;
+        let (holder, issuers) = futures::future::try_join(
+          self.resolve_presentation_holder(presentation),
+          self.resolve_presentation_issuers(presentation),
+        )
+        .await?;
         PresentationValidator::validate(presentation, options, &holder, &issuers, fail_fast)
       }
     }
