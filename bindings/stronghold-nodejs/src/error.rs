@@ -9,7 +9,7 @@ use serde_json::Result as SerdeResult;
 
 /// Convenience trait to simplify `result.map_err(account_error)` to `result.napi_result()`
 pub trait NapiResult<T> {
-  fn napi_result(&self) -> Result<T>;
+  fn napi_result(self) -> Result<T>;
 }
 
 impl<T> NapiResult<T> for AccountResult<T> {
