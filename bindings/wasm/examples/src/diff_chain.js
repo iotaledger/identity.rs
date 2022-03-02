@@ -27,12 +27,12 @@ async function createDiff(clientConfig) {
     const updatedDoc = Document.fromJSON(doc.toJSON());
 
     // Add a Service
-    let serviceJSON = {
-        id: doc.id + "#linked-domain-1",
+    const service = new Service({
+        id: doc.id.toUrl().join("#linked-domain-1"),
         type: "LinkedDomains",
         serviceEndpoint: "https://example.com/",
-    };
-    updatedDoc.insertService(Service.fromJSON(serviceJSON));
+    });
+    updatedDoc.insertService(service);
     updatedDoc.metadataUpdated = Timestamp.nowUTC();
     console.log(updatedDoc);
 

@@ -222,7 +222,7 @@ impl WasmDocument {
 
   /// Add a new `Service` to the document.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &Service) -> Result<bool> {
+  pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
     Ok(self.0.insert_service(service.0.clone()))
   }
 
