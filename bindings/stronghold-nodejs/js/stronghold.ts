@@ -4,8 +4,10 @@ import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
 
-    constructor(snapshot: string, password: string, dropsave: boolean) {
-        this.napiStronghold = NapiStronghold.create(snapshot, password, dropsave);
+    constructor() {}
+
+    public async init(snapshot: string, password: string, dropsave?: boolean) {
+        this.napiStronghold = await NapiStronghold.new(snapshot, password, dropsave);
     }
 
     public async setPassword(encryptionKey: Uint8Array) {

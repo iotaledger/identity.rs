@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use futures::executor;
 use identity::account::Storage;
 use identity::account::Stronghold;
 use identity::core::decode_b58;
@@ -10,6 +9,7 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use napi::bindgen_prelude::Error;
 use napi::Result;
+use napi_derive::napi;
 
 use crate::account::NapiChainState;
 use crate::account::NapiIdentityState;
@@ -24,15 +24,11 @@ pub struct NapiStronghold(pub(crate) Stronghold);
 
 #[napi]
 impl NapiStronghold {
-  /// Creates an instance of `Stronghold`.
-  /// Prefer to use Stronghold.new(snapshot, password, dropsave)
+  /// Workaround for Napi not generating code when no factory or constructor is present, and
+  /// async constructors are not possible.
   #[napi(factory)]
-  pub fn create(snapshot: String, password: String, dropsave: Option<bool>) -> NapiStronghold {
-    let stronghold_result = executor::block_on(NapiStronghold::new(snapshot, password, dropsave));
-    match stronghold_result {
-      Ok(stronghold) => stronghold,
-      Err(e) => panic!("Unable to create Stronghold: {:?}", e),
-    }
+  pub fn _f() -> Result<NapiStronghold> {
+    Err(Error::from_reason("use NapiStronghold.new to instantiate instances".to_owned()))
   }
 
   /// Creates an instance of `Stronghold`.

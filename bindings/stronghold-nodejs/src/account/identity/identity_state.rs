@@ -3,6 +3,7 @@
 
 use identity::account::IdentityState;
 use napi::Result;
+use napi_derive::napi;
 
 use crate::error::NapiResult;
 
