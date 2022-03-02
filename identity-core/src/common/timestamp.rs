@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
@@ -88,24 +88,27 @@ impl Timestamp {
   }
 
   /// Computes `self + duration`
-  /// 
-  /// # Errors 
+  ///
+  /// # Errors
   /// Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
-  #[must_use]
   pub fn try_add(self, duration: Duration) -> Result<Self> {
-    self.0.checked_add(duration.0).ok_or(
-      time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into()
-    ).and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()))
+    self
+      .0
+      .checked_add(duration.0)
+      .ok_or_else(|| time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into())
+      .and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()))
   }
 
   /// Computes `self - duration`
-  /// 
-  /// # Errors 
+  ///
+  /// # Errors
   /// Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
   pub fn try_sub(self, duration: Duration) -> Result<Self> {
-    self.0.checked_sub(duration.0).ok_or(
-      time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into()
-    ).and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()))
+    self
+      .0
+      .checked_sub(duration.0)
+      .ok_or_else(|| time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into())
+      .and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()))
   }
 }
 
@@ -185,49 +188,48 @@ impl Diff for Timestamp {
   }
 }
 
-/// A span of time with second precision. 
-/// 
-/// This type is typically used to increment or decrement a [`Timestamp`]. 
+/// A span of time with second precision.
+///
+/// This type is typically used to increment or decrement a [`Timestamp`].
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct Duration(time::Duration);
 
-// copy a small subset of the functionality offered by time::Duration. By not copying everything it will be easier 
-// to migrate to another implementation if that will be necessary in the future. 
-// Do not allow negative Durations hence all constructors take u32 instead of i64, this makes it possible for us to 
-// switch to relying on (for instance) std::time::Duration if we want to.  
+// copy a small subset of the functionality offered by time::Duration. By not copying everything it will be easier
+// to migrate to another implementation if that will be necessary in the future.
+// Do not allow negative Durations hence all constructors take u32 instead of i64, this makes it possible for us to
+// switch to relying on (for instance) std::time::Duration if we want to.
 impl Duration {
   /// A second
   pub const SECOND: Self = Self(time::Duration::SECOND);
-  /// A minute 
-  pub const MINUTE: Self = Self(time::Duration::MINUTE); 
+  /// A minute
+  pub const MINUTE: Self = Self(time::Duration::MINUTE);
   /// An hour
   pub const HOUR: Self = Self(time::Duration::HOUR);
-  /// A week
+  /// A day
   pub const DAY: Self = Self(time::Duration::DAY);
-  /// A day 
+  /// A week
   pub const WEEK: Self = Self(time::Duration::WEEK);
 
-  /// Create a new [`Duration`] with the given amount of seconds. 
+  /// Create a new [`Duration`] with the given amount of seconds.
   pub const fn seconds(seconds: u32) -> Self {
     Self(time::Duration::seconds(seconds as i64))
   }
-  /// Create a new [`Duration`] with the given amount of minutes. 
+  /// Create a new [`Duration`] with the given amount of minutes.
   pub const fn minutes(minutes: u32) -> Self {
     Self(time::Duration::minutes(minutes as i64))
   }
 
-  /// Create a new [`Duration`] with the given amount of hours. 
+  /// Create a new [`Duration`] with the given amount of hours.
   pub const fn hours(hours: u32) -> Self {
     Self(time::Duration::hours(hours as i64))
   }
 
-  /// Create a new [`Duration`] with the given amount of weeks. 
+  /// Create a new [`Duration`] with the given amount of weeks.
   pub const fn weeks(weeks: u32) -> Self {
     Self(time::Duration::weeks(weeks as i64))
   }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -241,7 +243,7 @@ mod tests {
   use crate::convert::FromJson;
   use crate::convert::ToJson;
 
-use super::Duration;
+  use super::Duration;
 
   #[test]
   fn test_parse_valid() {
@@ -286,8 +288,11 @@ use super::Duration;
     let week_later = timestamp.try_add(Duration::WEEK).unwrap();
     assert_eq!(week_later.to_rfc3339(), "1980-01-08T12:34:56Z");
 
-    // check overflow 
-    assert!(Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP).unwrap().try_add(Duration::SECOND).is_err());
+    // check overflow
+    assert!(Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP)
+      .unwrap()
+      .try_add(Duration::SECOND)
+      .is_err());
   }
 
   #[test]
@@ -302,8 +307,11 @@ use super::Duration;
     let week_earlier = timestamp.try_sub(Duration::WEEK).unwrap();
     assert_eq!(week_earlier.to_rfc3339(), "1979-12-25T12:34:56Z");
 
-    // check underflow 
-    assert!(Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP).unwrap().try_sub(Duration::SECOND).is_err());
+    // check underflow
+    assert!(Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP)
+      .unwrap()
+      .try_sub(Duration::SECOND)
+      .is_err());
   }
 
   #[test]
