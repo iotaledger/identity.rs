@@ -62,25 +62,30 @@ pub struct WasmDuration(pub(crate) Duration);
 #[wasm_bindgen(js_class = Duration)]
 impl WasmDuration {
   /// Create a new `Duration` with the given number of seconds.
+  #[wasm_bindgen]
   pub fn seconds(seconds: u32) -> WasmDuration {
     Self(Duration::seconds(seconds))
   }
   /// Create a new `Duration` with the given number of minutes.
+  #[wasm_bindgen]
   pub fn minutes(minutes: u32) -> WasmDuration {
     Self(Duration::minutes(minutes))
   }
 
   /// Create a new `Duration` with the given number of hours.
+  #[wasm_bindgen]
   pub fn hours(hours: u32) -> WasmDuration {
     Self(Duration::hours(hours))
   }
 
   /// Create a new `Duration` with the given number of days.
+  #[wasm_bindgen]
   pub fn days(days: u32) -> WasmDuration {
     Self(Duration::days(days))
   }
 
   /// Create a new `Duration` with the given number of weeks.
+  #[wasm_bindgen]
   pub fn weeks(weeks: u32) -> WasmDuration {
     Self(Duration::weeks(weeks))
   }
