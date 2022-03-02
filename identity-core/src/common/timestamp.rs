@@ -11,7 +11,6 @@ use core::str::FromStr;
 use identity_diff::Diff;
 use identity_diff::DiffString;
 use time::format_description::well_known::Rfc3339;
-use time::Duration;
 use time::OffsetDateTime;
 use time::UtcOffset;
 
@@ -87,6 +86,27 @@ impl Timestamp {
     }
     Ok(Self(offset_date_time))
   }
+
+  /// Computes `self + duration`
+  /// 
+  /// # Errors 
+  /// Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  #[must_use]
+  pub fn try_add(self, duration: Duration) -> Result<Self> {
+    self.0.checked_add(duration.0).ok_or(
+      time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into()
+    ).and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()))
+  }
+
+  /// Computes `self - duration`
+  /// 
+  /// # Errors 
+  /// Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  pub fn try_sub(self, duration: Duration) -> Result<Self> {
+    self.0.checked_sub(duration.0).ok_or(
+      time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into()
+    ).and_then(|offset_date_time| Self::from_unix(offset_date_time.unix_timestamp()))
+  }
 }
 
 impl Default for Timestamp {
@@ -139,7 +159,7 @@ impl FromStr for Timestamp {
 
 /// Truncates an `OffsetDateTime` to the second.
 fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTime {
-  offset_date_time - Duration::nanoseconds(offset_date_time.nanosecond() as i64)
+  offset_date_time - time::Duration::nanoseconds(offset_date_time.nanosecond() as i64)
 }
 
 impl Diff for Timestamp {
@@ -165,6 +185,50 @@ impl Diff for Timestamp {
   }
 }
 
+/// A span of time with second precision. 
+/// 
+/// This type is typically used to increment or decrement a [`Timestamp`]. 
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[repr(transparent)]
+pub struct Duration(time::Duration);
+
+// copy a small subset of the functionality offered by time::Duration. By not copying everything it will be easier 
+// to migrate to another implementation if that will be necessary in the future. 
+// Do not allow negative Durations hence all constructors take u32 instead of i64, this makes it possible for us to 
+// switch to relying on (for instance) std::time::Duration if we want to.  
+impl Duration {
+  /// A second
+  pub const SECOND: Self = Self(time::Duration::SECOND);
+  /// A minute 
+  pub const MINUTE: Self = Self(time::Duration::MINUTE); 
+  /// An hour
+  pub const HOUR: Self = Self(time::Duration::HOUR);
+  /// A week
+  pub const DAY: Self = Self(time::Duration::DAY);
+  /// A day 
+  pub const WEEK: Self = Self(time::Duration::WEEK);
+
+  /// Create a new [`Duration`] with the given amount of seconds. 
+  pub const fn seconds(seconds: u32) -> Self {
+    Self(time::Duration::seconds(seconds as i64))
+  }
+  /// Create a new [`Duration`] with the given amount of minutes. 
+  pub const fn minutes(minutes: u32) -> Self {
+    Self(time::Duration::minutes(minutes as i64))
+  }
+
+  /// Create a new [`Duration`] with the given amount of hours. 
+  pub const fn hours(hours: u32) -> Self {
+    Self(time::Duration::hours(hours as i64))
+  }
+
+  /// Create a new [`Duration`] with the given amount of weeks. 
+  pub const fn weeks(weeks: u32) -> Self {
+    Self(time::Duration::weeks(weeks as i64))
+  }
+}
+
+
 #[cfg(test)]
 mod tests {
   use identity_diff::Diff;
@@ -176,6 +240,8 @@ mod tests {
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
+
+use super::Duration;
 
   #[test]
   fn test_parse_valid() {
@@ -206,6 +272,38 @@ mod tests {
     let timestamp = Timestamp::parse(original).unwrap();
 
     assert_eq!(timestamp.to_rfc3339(), expected);
+  }
+
+  #[test]
+  fn test_try_add() {
+    let timestamp = Timestamp::parse("1980-01-01T12:34:56Z").unwrap();
+    let second_later = timestamp.try_add(Duration::SECOND).unwrap();
+    assert_eq!(second_later.to_rfc3339(), "1980-01-01T12:34:57Z");
+    let minute_later = timestamp.try_add(Duration::MINUTE).unwrap();
+    assert_eq!(minute_later.to_rfc3339(), "1980-01-01T12:35:56Z");
+    let hour_later = timestamp.try_add(Duration::HOUR).unwrap();
+    assert_eq!(hour_later.to_rfc3339(), "1980-01-01T13:34:56Z");
+    let week_later = timestamp.try_add(Duration::WEEK).unwrap();
+    assert_eq!(week_later.to_rfc3339(), "1980-01-08T12:34:56Z");
+
+    // check overflow 
+    assert!(Timestamp::from_unix(LAST_VALID_UNIX_TIMESTAMP).unwrap().try_add(Duration::SECOND).is_err());
+  }
+
+  #[test]
+  fn test_try_sub() {
+    let timestamp = Timestamp::parse("1980-01-01T12:34:56Z").unwrap();
+    let second_earlier = timestamp.try_sub(Duration::SECOND).unwrap();
+    assert_eq!(second_earlier.to_rfc3339(), "1980-01-01T12:34:55Z");
+    let minute_earlier = timestamp.try_sub(Duration::MINUTE).unwrap();
+    assert_eq!(minute_earlier.to_rfc3339(), "1980-01-01T12:33:56Z");
+    let hour_earlier = timestamp.try_sub(Duration::HOUR).unwrap();
+    assert_eq!(hour_earlier.to_rfc3339(), "1980-01-01T11:34:56Z");
+    let week_earlier = timestamp.try_sub(Duration::WEEK).unwrap();
+    assert_eq!(week_earlier.to_rfc3339(), "1979-12-25T12:34:56Z");
+
+    // check underflow 
+    assert!(Timestamp::from_unix(FIRST_VALID_UNIX_TIMESTAMP).unwrap().try_sub(Duration::SECOND).is_err());
   }
 
   #[test]
