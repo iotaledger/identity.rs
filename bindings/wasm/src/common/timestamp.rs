@@ -57,6 +57,7 @@ impl From<Timestamp> for WasmTimestamp {
   }
 }
 
+/// A span of time.
 #[wasm_bindgen(js_name = Duration, inspectable)]
 pub struct WasmDuration(pub(crate) Duration);
 
