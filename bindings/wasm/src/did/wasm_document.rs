@@ -196,7 +196,7 @@ impl WasmDocument {
   }
 
   /// Returns the custom DID Document properties.
-  #[wasm_bindgen(js_name = properties)]
+  #[wasm_bindgen]
   pub fn properties(&mut self) -> Result<MapStringAny> {
     let properties_map = js_sys::Map::new();
     for (key, value) in self.0.properties().iter() {
@@ -240,7 +240,7 @@ impl WasmDocument {
   // ===========================================================================
 
   /// Returns a list of all {@link VerificationMethod} in the DID Document.
-  #[wasm_bindgen(js_name = methods)]
+  #[wasm_bindgen]
   pub fn methods(&self) -> ArrayMethods {
     self
       .0
@@ -317,8 +317,8 @@ impl WasmDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
-  #[wasm_bindgen(js_name = attachMethodRelationships)]
-  pub fn attach_method_relationships(
+  #[wasm_bindgen(js_name = attachMethodRelationship)]
+  pub fn attach_method_relationship(
     &mut self,
     did_url: &WasmDIDUrl,
     relationship: &MethodRelationshipType,
@@ -332,8 +332,8 @@ impl WasmDocument {
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
-  #[wasm_bindgen(js_name = detachMethodRelationships)]
-  pub fn detach_method_relationships(
+  #[wasm_bindgen(js_name = detachMethodRelationship)]
+  pub fn detach_method_relationship(
     &mut self,
     did_url: &WasmDIDUrl,
     relationship: &MethodRelationshipType,
@@ -694,13 +694,13 @@ extern "C" {
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "string | string[] | null")]
-  pub type UUrl;
+  pub type UOneOrManyUrl;
 }
 
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
-  pub type UDID;
+  pub type UOneOrManyDID;
 }
 
 #[wasm_bindgen]
