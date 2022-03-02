@@ -99,6 +99,9 @@ impl WasmDocument {
   }
 
   /// Sets the controllers of the DID Document.
+  ///
+  /// Note: Duplicates will be ignored.
+  /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = setController)]
   pub fn set_controller(&mut self, controllers: &UDID) -> Result<()> {
     let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
@@ -125,7 +128,10 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a list of the document controllers.
+  /// Returns a list of document controllers.
+  ///
+  /// Note: Duplicates will be ignored.
+  /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = controller)]
   pub fn controller(&self) -> ArrayDID {
     match self.0.controller() {
