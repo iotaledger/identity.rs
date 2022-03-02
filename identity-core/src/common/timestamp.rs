@@ -267,7 +267,7 @@ mod tests {
   }
 
   #[test]
-  fn test_try_add() {
+  fn test_checked_add() {
     let timestamp = Timestamp::parse("1980-01-01T12:34:56Z").unwrap();
     let second_later = timestamp.checked_add(Duration::seconds(1)).unwrap();
     assert_eq!(second_later.to_rfc3339(), "1980-01-01T12:34:57Z");
@@ -288,7 +288,7 @@ mod tests {
   }
 
   #[test]
-  fn test_try_sub() {
+  fn test_checked_sub() {
     let timestamp = Timestamp::parse("1980-01-01T12:34:56Z").unwrap();
     let second_earlier = timestamp.checked_sub(Duration::seconds(1)).unwrap();
     assert_eq!(second_earlier.to_rfc3339(), "1980-01-01T12:34:55Z");
