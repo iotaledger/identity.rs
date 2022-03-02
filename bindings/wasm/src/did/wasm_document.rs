@@ -16,8 +16,7 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
-use identity::did::MethodRelationship;
-use identity::did::Service;
+use identity::did::{MethodRelationship};
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
@@ -41,7 +40,6 @@ use crate::did::WasmVerifierOptions;
 use crate::did::{WasmDID, WasmService};
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::service::Service;
 use wasm_bindgen::JsCast;
 
 // =============================================================================
@@ -218,7 +216,7 @@ impl WasmDocument {
       .service()
       .iter()
       .cloned()
-      .map(Service)
+      .map(WasmService)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
       .unchecked_into::<ArrayService>()
