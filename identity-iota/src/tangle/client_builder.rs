@@ -131,10 +131,19 @@ impl ClientBuilder {
 
   /// Sets whether proof-of-work (PoW) is performed locally or remotely.
   ///
-  /// NOTE: the client will always fallback to local PoW if no nodes support remote PoW.
+  /// Default: false.
   #[must_use]
   pub fn local_pow(mut self, value: bool) -> Self {
     self.builder = self.builder.with_local_pow(value);
+    self
+  }
+
+  /// Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
+  ///
+  /// Default: true.
+  #[must_use]
+  pub fn fallback_to_local_pow(mut self, value: bool) -> Self {
+    self.builder = self.builder.with_fallback_to_local_pow(value);
     self
   }
 
