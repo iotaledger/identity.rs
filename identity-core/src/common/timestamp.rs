@@ -188,7 +188,7 @@ impl Diff for Timestamp {
   }
 }
 
-/// A span of time with second precision.
+/// A span of time.
 ///
 /// This type is typically used to increment or decrement a [`Timestamp`].
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
