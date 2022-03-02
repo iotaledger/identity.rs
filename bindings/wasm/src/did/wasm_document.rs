@@ -3,8 +3,8 @@
 
 use std::str::FromStr;
 
-use identity::core::decode_b58;
-use identity::core::OneOrMany;
+use identity::core::{decode_b58, OrderedSet, Url};
+use identity::core::{OneOrMany, OneOrSet};
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
@@ -14,11 +14,11 @@ use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodRelationship;
-use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
 use identity::iota::NetworkName;
+use identity::iota::{Error, IotaDID};
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
@@ -98,9 +98,36 @@ impl WasmDocument {
     WasmDID(self.0.id().clone())
   }
 
+  /// Sets the controllers of the DID Document.
+  #[wasm_bindgen(js_name = setController)]
+  pub fn set_controller(&mut self, controllers: &UDID) -> Result<()> {
+    let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
+
+    let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers {
+      match controllers {
+        OneOrMany::One(controller) => Some(OneOrSet::new_one(controller)),
+        OneOrMany::Many(controllers) => {
+          if controllers.is_empty() {
+            None
+          } else {
+            let mut set: OrderedSet<IotaDID> = OrderedSet::new();
+            for controller in controllers {
+              set.append(controller);
+            }
+            Some(OneOrSet::new_set(set).wasm_result()?)
+          }
+        }
+      }
+    } else {
+      None
+    };
+    *self.0.controller_mut() = controller_set;
+    Ok(())
+  }
+
   /// Returns a list of the document controllers.
   #[wasm_bindgen(js_name = controller)]
-  pub fn controller(&self) -> DIDArray {
+  pub fn controller(&self) -> ArrayDID {
     match self.0.controller() {
       Some(controllers) => controllers
         .iter()
@@ -108,14 +135,28 @@ impl WasmDocument {
         .map(WasmDID::from)
         .map(JsValue::from)
         .collect::<js_sys::Array>()
-        .unchecked_into::<DIDArray>(),
-      None => js_sys::Array::new().unchecked_into::<DIDArray>(),
+        .unchecked_into::<ArrayDID>(),
+      None => js_sys::Array::new().unchecked_into::<ArrayDID>(),
     }
+  }
+
+  /// Sets the `alsoKnownAs` property in the DID document.
+  #[wasm_bindgen(js_name = setAlsoKnownAs)]
+  pub fn set_also_known_as(&mut self, urls: &UUrl) -> Result<()> {
+    let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
+    let mut urls_set: OrderedSet<Url> = OrderedSet::new();
+    if let Some(urls) = urls {
+      for url in urls.into_vec() {
+        urls_set.append(Url::parse(url).wasm_result()?);
+      }
+    }
+    *self.0.also_known_as_mut() = urls_set;
+    Ok(())
   }
 
   /// Returns a set of the document's `alsoKnownAs`.
   #[wasm_bindgen(js_name = alsoKnownAs)]
-  pub fn also_known_as(&self) -> DIDArray {
+  pub fn also_known_as(&self) -> ArrayString {
     self
       .0
       .also_known_as()
@@ -123,7 +164,7 @@ impl WasmDocument {
       .map(|url| url.to_string())
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<DIDArray>()
+      .unchecked_into::<ArrayString>()
   }
 
   /// Adds a custom property to the DID Document.
@@ -147,13 +188,12 @@ impl WasmDocument {
 
   /// Returns the custom DID Document properties.
   #[wasm_bindgen(js_name = properties)]
-  pub fn properties(&mut self) -> Result<JSMap> {
-    let properties = self.0.properties();
+  pub fn properties(&mut self) -> Result<MapStringAny> {
     let properties_map = js_sys::Map::new();
-    for (key, value) in properties.iter() {
+    for (key, value) in self.0.properties().iter() {
       properties_map.set(&JsValue::from(key), &JsValue::from_serde(&value).wasm_result()?);
     }
-    Ok(properties_map.unchecked_into::<JSMap>())
+    Ok(properties_map.unchecked_into::<MapStringAny>())
   }
 
   // ===========================================================================
@@ -269,9 +309,12 @@ impl WasmDocument {
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
   #[wasm_bindgen(js_name = attachMethodRelationships)]
-  pub fn attach_method_relationships(&mut self, options: &MethodRelationshipOptions) -> Result<()> {
-    let relationships: Vec<MethodRelationship> = options
-      .relationships()
+  pub fn attach_method_relationships(
+    &mut self,
+    did_url: &WasmDIDUrl,
+    relationships: &UMethodRelationships,
+  ) -> Result<()> {
+    let relationships: Vec<MethodRelationship> = relationships
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
       .map(OneOrMany::into_vec)
       .wasm_result()?
@@ -282,17 +325,20 @@ impl WasmDocument {
     for relationship in relationships {
       self
         .0
-        .attach_method_relationship(&options.did_url().0, relationship)
+        .attach_method_relationship(&did_url.0, relationship)
         .wasm_result()?;
     }
     Ok(())
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
-  #[wasm_bindgen(js_name = detachMethodRelationShips)]
-  pub fn detach_method_relationships(&mut self, options: &MethodRelationshipOptions) -> Result<()> {
-    let relationships: Vec<MethodRelationship> = options
-      .relationships()
+  #[wasm_bindgen(js_name = detachMethodRelationships)]
+  pub fn detach_method_relationships(
+    &mut self,
+    did_url: &WasmDIDUrl,
+    relationships: &UMethodRelationships,
+  ) -> Result<()> {
+    let relationships: Vec<MethodRelationship> = relationships
       .into_serde::<OneOrMany<WasmMethodRelationship>>()
       .map(OneOrMany::into_vec)
       .wasm_result()?
@@ -303,7 +349,7 @@ impl WasmDocument {
     for relationship in relationships {
       self
         .0
-        .detach_method_relationship(&options.did_url().0, relationship)
+        .detach_method_relationship(&did_url.0, relationship)
         .wasm_result()?;
     }
     Ok(())
@@ -656,6 +702,18 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
+  #[wasm_bindgen(typescript_type = "string | string[] | null")]
+  pub type UUrl;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
+  pub type UDID;
+}
+
+#[wasm_bindgen]
+extern "C" {
   #[wasm_bindgen(typescript_type = "DID[]")]
   pub type ArrayDID;
 }
@@ -666,6 +724,11 @@ extern "C" {
   pub type ArrayService;
 }
 
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Array<string>")]
+  pub type ArrayString;
+}
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
@@ -680,30 +743,6 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "AttachRelationshipOptions")]
-  pub type MethodRelationshipOptions;
-
-  #[wasm_bindgen(getter, method)]
-  pub fn did_url(this: &MethodRelationshipOptions) -> WasmDIDUrl;
-
-  #[wasm_bindgen(getter, method)]
-  pub fn relationships(this: &MethodRelationshipOptions) -> JsValue;
+  #[wasm_bindgen(typescript_type = "MethodRelationship | MethodRelationship[]")]
+  pub type UMethodRelationships;
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_ATTACH_METHOD_RELATIONSHIP_OPTIONS: &'static str = r#"
-/**
- * Options for attaching one or more verification relationships to a method on an identity.
- */
-export type AttachRelationshipOptions = {
-    /**
-     * The identifier of the method in the document.
-     */
-    did_url: DIDUrl,
-
-    /**
-     * The relationships to add;
-     */
-    relationships: MethodRelationship | MethodRelationship[]
-};
-"#;

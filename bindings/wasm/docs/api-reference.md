@@ -878,8 +878,10 @@ with the given Document.
         * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId)
         * [.metadataProof](#Document+metadataProof) ⇒ <code>any</code>
+        * [.setController(controllers)](#Document+setController)
         * [.controller()](#Document+controller) ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
-        * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+        * [.setAlsoKnownAs(urls)](#Document+setAlsoKnownAs)
+        * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
         * [.setPropertyUnchecked(key, value)](#Document+setPropertyUnchecked)
         * [.properties()](#Document+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
@@ -892,8 +894,8 @@ with the given Document.
         * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.attachMethodRelationShips(options)](#Document+attachMethodRelationShips)
-        * [.detachMethodRelationShips(options)](#Document+detachMethodRelationShips)
+        * [.attachMethodRelationships(did_url, relationships)](#Document+attachMethodRelationships)
+        * [.detachMethodRelationships(did_url, relationships)](#Document+detachMethodRelationships)
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -1011,15 +1013,37 @@ Sets the previous integration chain message id.
 Returns the `proof` object.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+setController"></a>
+
+### document.setController(controllers)
+Sets the controllers of the DID Document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| controllers | [<code>DID</code>](#DID) \| [<code>Array.&lt;DID&gt;</code>](#DID) \| <code>null</code> | 
+
 <a name="Document+controller"></a>
 
 ### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
 Returns a list of the document controllers.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+setAlsoKnownAs"></a>
+
+### document.setAlsoKnownAs(urls)
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
+
 <a name="Document+alsoKnownAs"></a>
 
-### document.alsoKnownAs() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+### document.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
 Returns a set of the document's `alsoKnownAs`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1027,11 +1051,10 @@ Returns a set of the document's `alsoKnownAs`.
 
 ### document.setPropertyUnchecked(key, value)
 Adds a custom property to the DID Document.
-If the Document already has this key, the value will be overwritten.
-If the value is set to `null`, the property will be removed.
+If the value is set to `null`, the custom property will be removed.
 
 ### WARNING
-This method can overwrite existing properties like `id`.
+This method can overwrite existing properties like `id` and result in an invalid document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1148,9 +1171,9 @@ Attempts to resolve the given method query into a method capable of signing a do
 | query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | index | <code>number</code> | 
 
-<a name="Document+attachMethodRelationShips"></a>
+<a name="Document+attachMethodRelationships"></a>
 
-### document.attachMethodRelationShips(options)
+### document.attachMethodRelationships(did_url, relationships)
 Attaches the relationship to the given method, if the method exists.
 
 Note: The method needs to be in the set of verification methods,
@@ -1160,18 +1183,20 @@ so it cannot be an embedded one.
 
 | Param | Type |
 | --- | --- |
-| options | <code>AttachRelationshipOptions</code> | 
+| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| relationships | [<code>MethodRelationship</code>](#MethodRelationship) \| [<code>Array.&lt;MethodRelationship&gt;</code>](#MethodRelationship) | 
 
-<a name="Document+detachMethodRelationShips"></a>
+<a name="Document+detachMethodRelationships"></a>
 
-### document.detachMethodRelationShips(options)
+### document.detachMethodRelationships(did_url, relationships)
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>AttachRelationshipOptions</code> | 
+| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| relationships | [<code>MethodRelationship</code>](#MethodRelationship) \| [<code>Array.&lt;MethodRelationship&gt;</code>](#MethodRelationship) | 
 
 <a name="Document+signSelf"></a>
 
