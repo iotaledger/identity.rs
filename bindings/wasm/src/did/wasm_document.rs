@@ -312,12 +312,11 @@ impl WasmDocument {
     &mut self,
     did_url: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
-  ) -> Result<()> {
+  ) -> Result<bool> {
     self
       .0
       .attach_method_relationship(&did_url.0, relationship.into())
-      .wasm_result()?;
-    Ok(())
+      .wasm_result()
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
@@ -326,12 +325,11 @@ impl WasmDocument {
     &mut self,
     did_url: &WasmDIDUrl,
     relationship: WasmMethodRelationship,
-  ) -> Result<()> {
+  ) -> Result<bool> {
     self
       .0
-      .attach_method_relationship(&did_url.0, relationship.into())
-      .wasm_result()?;
-    Ok(())
+      .detach_method_relationship(&did_url.0, relationship.into())
+      .wasm_result()
   }
 
   // ===========================================================================

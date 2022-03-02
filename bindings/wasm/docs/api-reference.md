@@ -897,8 +897,8 @@ with the given Document.
         * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship)
-        * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship)
+        * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -1182,7 +1182,7 @@ Attempts to resolve the given method query into a method capable of signing a do
 
 <a name="Document+attachMethodRelationship"></a>
 
-### document.attachMethodRelationship(did_url, relationship)
+### document.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
 Attaches the relationship to the given method, if the method exists.
 
 Note: The method needs to be in the set of verification methods,
@@ -1197,7 +1197,7 @@ so it cannot be an embedded one.
 
 <a name="Document+detachMethodRelationship"></a>
 
-### document.detachMethodRelationship(did_url, relationship)
+### document.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
