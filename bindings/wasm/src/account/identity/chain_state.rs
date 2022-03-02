@@ -30,3 +30,9 @@ impl From<ChainState> for WasmChainState {
     WasmChainState(chain_state)
   }
 }
+
+impl From<WasmChainState> for ChainState {
+  fn from(wasm_chain_state: WasmChainState) -> Self {
+    wasm_chain_state.0
+  }
+}

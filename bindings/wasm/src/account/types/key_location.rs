@@ -6,6 +6,8 @@ use wasm_bindgen::prelude::*;
 
 use crate::account::types::WasmGeneration;
 use crate::did::WasmMethodType;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
@@ -39,6 +41,18 @@ impl WasmKeyLocation {
   #[wasm_bindgen(getter)]
   pub fn generation(&self) -> WasmGeneration {
     self.0.generation().into()
+  }
+
+  /// Serializes `Signature` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a JSON object as `KeyLocation`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmKeyLocation> {
+    json_value.into_serde().map(Self).wasm_result()
   }
 }
 

@@ -1,0 +1,13 @@
+# Rust
+target/
+Cargo.lock
+
+# npm / yarn
+node_modules/
+
+# used for npm releases, will be created in build step
+npm/
+
+# compiled files from napi and ts
+napi-dist/
+dist/

@@ -92,6 +92,12 @@ impl WasmDID {
     self.0.to_string()
   }
 
+  /// Deserializes a JSON object as `DID`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmDID> {
+    json_value.into_serde().map(Self).wasm_result()
+  }
+
   /// Serializes a `DID` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> JsValue {

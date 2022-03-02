@@ -30,3 +30,9 @@ impl From<IdentityState> for WasmIdentityState {
     WasmIdentityState(identity_state)
   }
 }
+
+impl From<WasmIdentityState> for IdentityState {
+  fn from(wasm_identity_state: WasmIdentityState) -> Self {
+    wasm_identity_state.0
+  }
+}

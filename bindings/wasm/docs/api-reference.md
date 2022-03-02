@@ -109,9 +109,9 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -136,7 +136,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -152,22 +151,12 @@ publishing to the Tangle.
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -317,6 +306,17 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -905,6 +905,7 @@ Deserializes a `Credential` object from a JSON object.
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
+        * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
@@ -992,6 +993,17 @@ Parses a `DID` from the input string.
 | Param | Type |
 | --- | --- |
 | input | <code>string</code> | 
+
+<a name="DID.fromJSON"></a>
+
+### DID.fromJSON(json_value) ⇒ [<code>DID</code>](#DID)
+Deserializes a JSON object as `DID`.
+
+**Kind**: static method of [<code>DID</code>](#DID)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
 
 <a name="DIDUrl"></a>
 
@@ -1900,12 +1912,8 @@ Returns the Tangle explorer URL for the devnet.
     * [new Generation()](#new_Generation_new)
     * _instance_
         * [.toUnsignedInteger()](#Generation+toUnsignedInteger) ⇒ <code>number</code>
-        * [.tryIncrement()](#Generation+tryIncrement) ⇒ [<code>Generation</code>](#Generation)
-        * [.tryDecrement()](#Generation+tryDecrement) ⇒ [<code>Generation</code>](#Generation)
     * _static_
         * [.fromUnsignedInteger(value)](#Generation.fromUnsignedInteger) ⇒ [<code>Generation</code>](#Generation)
-        * [.min()](#Generation.min) ⇒ [<code>Generation</code>](#Generation)
-        * [.max()](#Generation.max) ⇒ [<code>Generation</code>](#Generation)
 
 <a name="new_Generation_new"></a>
 
@@ -1916,26 +1924,6 @@ Creates a new `WasmGeneration`.
 
 ### generation.toUnsignedInteger() ⇒ <code>number</code>
 Returns the `WasmGeneration` as a 32-bit integer.
-
-**Kind**: instance method of [<code>Generation</code>](#Generation)  
-<a name="Generation+tryIncrement"></a>
-
-### generation.tryIncrement() ⇒ [<code>Generation</code>](#Generation)
-Increments the `WasmGeneration`.
-
-# Errors
-
-Fails in case of overflows.
-
-**Kind**: instance method of [<code>Generation</code>](#Generation)  
-<a name="Generation+tryDecrement"></a>
-
-### generation.tryDecrement() ⇒ [<code>Generation</code>](#Generation)
-Decrements the `WasmGeneration`.
-
-# Errors
-
-Fails in case of underflow.
 
 **Kind**: instance method of [<code>Generation</code>](#Generation)  
 <a name="Generation.fromUnsignedInteger"></a>
@@ -1949,18 +1937,6 @@ Creates a new `WasmGeneration` from a 32-bit integer.
 | --- | --- |
 | value | <code>number</code> | 
 
-<a name="Generation.min"></a>
-
-### Generation.min() ⇒ [<code>Generation</code>](#Generation)
-Returns a `WasmGeneration` of minimum value.
-
-**Kind**: static method of [<code>Generation</code>](#Generation)  
-<a name="Generation.max"></a>
-
-### Generation.max() ⇒ [<code>Generation</code>](#Generation)
-Returns a `WasmGeneration` of maximum value.
-
-**Kind**: static method of [<code>Generation</code>](#Generation)  
 <a name="IdentityState"></a>
 
 ## IdentityState
@@ -2151,10 +2127,14 @@ Deserializes a `KeyCollection` object from a JSON object.
 
 * [KeyLocation](#KeyLocation)
     * [new KeyLocation(method, fragment, generation)](#new_KeyLocation_new)
-    * [.method](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
-    * [.fragment](#KeyLocation+fragment) ⇒ <code>string</code>
-    * [.fragmentName](#KeyLocation+fragmentName) ⇒ <code>string</code>
-    * [.generation](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
+    * _instance_
+        * [.method](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.fragment](#KeyLocation+fragment) ⇒ <code>string</code>
+        * [.fragmentName](#KeyLocation+fragmentName) ⇒ <code>string</code>
+        * [.generation](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
+        * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
 
 <a name="new_KeyLocation_new"></a>
 
@@ -2190,6 +2170,23 @@ Returns the fragment name of the key location.
 Returns the integration generation when this key was created.
 
 **Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+toJSON"></a>
+
+### keyLocation.toJSON() ⇒ <code>any</code>
+Serializes `Signature` as a JSON object.
+
+**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation.fromJSON"></a>
+
+### KeyLocation.fromJSON(json_value) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+Deserializes a JSON object as `KeyLocation`.
+
+**Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -2930,8 +2927,12 @@ Deserializes a `Service` object from a JSON object.
 
 * [Signature](#Signature)
     * [new Signature(pkey, data)](#new_Signature_new)
-    * [.pkey](#Signature+pkey) ⇒ <code>string</code>
-    * [.data](#Signature+data) ⇒ <code>Uint8Array</code>
+    * _instance_
+        * [.pkey](#Signature+pkey) ⇒ <code>string</code>
+        * [.data](#Signature+data) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
 
 <a name="new_Signature_new"></a>
 
@@ -2947,7 +2948,7 @@ Creates a new `Signature`.
 <a name="Signature+pkey"></a>
 
 ### signature.pkey ⇒ <code>string</code>
-Returns the public key used to verify this signature.
+Returns the public key, encoded as a base58 string, used to verify this signature.
 
 **Kind**: instance property of [<code>Signature</code>](#Signature)  
 <a name="Signature+data"></a>
@@ -2956,6 +2957,21 @@ Returns the public key used to verify this signature.
 Returns the signature data as a vec of bytes.
 
 **Kind**: instance property of [<code>Signature</code>](#Signature)  
+<a name="Signature+toJSON"></a>
+
+### signature.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>Signature</code>](#Signature)  
+<a name="Signature.fromJSON"></a>
+
+### Signature.fromJSON(json_value) ⇒ [<code>Signature</code>](#Signature)
+Deserializes a JSON object as `Signature`.
+
+**Kind**: static method of [<code>Signature</code>](#Signature)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="SignatureOptions"></a>
 
 ## SignatureOptions
@@ -3153,13 +3169,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## DIDMessageEncoding
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 

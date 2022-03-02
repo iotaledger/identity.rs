@@ -1,0 +1,20 @@
+[package]
+name = "stronghold-nodejs"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+identity = { version = "=0.5.0-dev.4", path = "../../identity", default-features = false, features = ["account", "stronghold", "async", "send-sync-storage"] }
+napi = { version = "2.0.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
+napi-derive = { version = "2.0.7" }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false }
+
+[build-dependencies]
+napi-build = "1.2.1"
+
+[profile.release]
+lto = true

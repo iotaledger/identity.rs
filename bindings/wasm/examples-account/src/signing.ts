@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    ExplorerUrl, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions
+    ExplorerUrl, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions, Storage
 } from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates how to issue and sign Verifiable Credentials using the account.
  */
-async function signing() {
+async function signing(storage?: Storage) {
 
     // ===========================================================================
     // Create Identity - Similar to create_did example
@@ -16,7 +16,9 @@ async function signing() {
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
-    let builder = new AccountBuilder();
+    let builder = new AccountBuilder({
+        storage,
+    });
     let account = await builder.createIdentity();
 
     //ToDo: Add Stronghold storage.

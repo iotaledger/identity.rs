@@ -6,12 +6,14 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use identity::account::AccountBuilder;
+use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
+use crate::account::storage::WasmStorage;
 use crate::account::types::WasmAutoSave;
 use crate::account::types::WasmIdentitySetup;
 use crate::account::wasm_account::PromiseAccount;
@@ -54,7 +56,9 @@ impl WasmAccountBuilder {
         builder = builder.client(Arc::new(client.client.as_ref().clone()));
       };
 
-      //todo storage
+      if let Some(storage) = builder_options.storage() {
+        builder = builder.storage(AccountStorage::Custom(Arc::new(storage)));
+      }
     }
 
     Ok(Self(Rc::new(RefCell::new(builder))))
@@ -121,6 +125,9 @@ extern "C" {
 
   #[wasm_bindgen(getter, method)]
   pub fn autosave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
+
+  #[wasm_bindgen(getter, method)]
+  pub fn storage(this: &AccountBuilderOptions) -> Option<WasmStorage>;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -144,6 +151,11 @@ export type AccountBuilderOptions = {
     /**
      * Client for tangle requests.
      */
-    clientConfig?: Config
+    clientConfig?: Config,
+
+    /**
+     * The Storage implemantation to use for each account built by this builder.
+     */
+    storage?: Storage
 };
 "#;

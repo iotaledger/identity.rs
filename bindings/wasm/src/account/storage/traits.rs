@@ -7,12 +7,12 @@ use core::fmt::Formatter;
 use identity::account::ChainState;
 use identity::account::EncryptionKey;
 use identity::account::Error as AccountError;
-use identity::account::Generation;
 use identity::account::IdentityState;
 use identity::account::KeyLocation;
 use identity::account::Result as AccountResult;
 use identity::account::Signature;
 use identity::account::Storage;
+use identity::core::decode_b58;
 use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
@@ -26,8 +26,8 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::identity::WasmIdentityState;
-use crate::account::types::WasmGeneration;
 use crate::account::types::WasmKeyLocation;
+use crate::account::types::WasmSignature;
 use crate::did::WasmDID;
 use crate::error::JsValueResult;
 
@@ -43,11 +43,9 @@ extern "C" {
   pub type PromiseSignature;
   #[wasm_bindgen(typescript_type = "Promise<boolean>")]
   pub type PromiseBool;
-  #[wasm_bindgen(typescript_type = "Promise<Generation>")]
-  pub type PromiseOptionGeneration;
-  #[wasm_bindgen(typescript_type = "Promise<ChainState>")]
+  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined | null>")]
   pub type PromiseOptionChainState;
-  #[wasm_bindgen(typescript_type = "Promise<IdentityState>")]
+  #[wasm_bindgen(typescript_type = "Promise<IdentityState | undefined | null>")]
   pub type PromiseOptionIdentityState;
 }
 
@@ -55,40 +53,34 @@ extern "C" {
 extern "C" {
   pub type WasmStorage;
 
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = setPassword)]
   pub fn set_password(this: &WasmStorage, password: Vec<u8>) -> PromiseUnit;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
-  #[wasm_bindgen(method)]
-  pub fn lease_did(this: &WasmStorage, did: WasmDID) -> PromiseDIDLease;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = keyNew)]
   pub fn key_new(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = keyInsert)]
   pub fn key_insert(
     this: &WasmStorage,
     did: WasmDID,
     location: WasmKeyLocation,
     private_key: String,
   ) -> PromisePublicKey;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = keyGet)]
   pub fn key_get(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = keyDel)]
   pub fn key_del(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseUnit;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = keySign)]
   pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = keyExists)]
   pub fn key_exists(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseBool;
-  #[wasm_bindgen(method)]
-  pub fn published_generation(this: &WasmStorage, did: WasmDID) -> PromiseOptionGeneration;
-  #[wasm_bindgen(method)]
-  pub fn set_published_generation(this: &WasmStorage, did: WasmDID, index: WasmGeneration) -> PromiseUnit;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = chainState)]
   pub fn chain_state(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = setChainState)]
   pub fn set_chain_state(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn state(this: &WasmStorage, did: WasmDID) -> PromiseOptionIdentityState;
-  #[wasm_bindgen(method)]
+  #[wasm_bindgen(method, js_name = setState)]
   pub fn set_state(this: &WasmStorage, did: WasmDID, state: WasmIdentityState) -> PromiseUnit;
   #[wasm_bindgen(method)]
   pub fn purge(this: &WasmStorage, did: WasmDID) -> PromiseUnit;
@@ -120,7 +112,12 @@ impl Storage for WasmStorage {
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    let public_key: String = result
+      .account_err()?
+      .as_string()
+      .ok_or_else(|| AccountError::SerializationError("Expected string".to_string()))?;
+    let public_key: PublicKey = decode_b58(&public_key)?.into();
+    Ok(public_key)
   }
 
   /// Inserts a private key at the specified `location`, and returns its `PublicKey`.
@@ -136,14 +133,24 @@ impl Storage for WasmStorage {
       encode_b58(private_key.as_ref()),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    let public_key: String = result
+      .account_err()?
+      .as_string()
+      .ok_or_else(|| AccountError::SerializationError("Expected string".to_string()))?;
+    let public_key: PublicKey = decode_b58(&public_key)?.into();
+    Ok(public_key)
   }
 
   /// Retrieves the public key at the specified `location`.
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_get(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    let public_key: String = result
+      .account_err()?
+      .as_string()
+      .ok_or_else(|| AccountError::SerializationError("Expected string".to_string()))?;
+    let public_key: PublicKey = decode_b58(&public_key)?.into();
+    Ok(public_key)
   }
 
   /// Deletes the keypair specified by `location`.
@@ -157,7 +164,9 @@ impl Storage for WasmStorage {
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountResult<Signature> {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    let js_value: JsValue = result.account_err()?;
+    let signature: WasmSignature = downcast_js_value(js_value, "Signature")?;
+    Ok(signature.into())
   }
 
   /// Returns `true` if a keypair exists at the specified `location`.
@@ -167,25 +176,16 @@ impl Storage for WasmStorage {
     result.into()
   }
 
-  /// Returns the last generation that has been published to the tangle for the given `did`.
-  async fn published_generation(&self, did: &IotaDID) -> AccountResult<Option<Generation>> {
-    let promise: Promise = Promise::resolve(&self.published_generation(did.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
-
-  /// Sets the last generation that has been published to the tangle for the given `did`.
-  async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> AccountResult<()> {
-    let promise: Promise = Promise::resolve(&self.set_published_generation(did.clone().into(), index.into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
-
   /// Returns the chain state of the identity specified by `did`.
   async fn chain_state(&self, did: &IotaDID) -> AccountResult<Option<ChainState>> {
     let promise: Promise = Promise::resolve(&self.chain_state(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    let js_value: JsValue = result.account_err()?;
+    if js_value.is_null() || js_value.is_undefined() {
+      return Ok(None);
+    }
+    let chain_state: WasmChainState = downcast_js_value(js_value, "ChainState")?;
+    Ok(Some(chain_state.into()))
   }
 
   /// Set the chain state of the identity specified by `did`.
@@ -199,7 +199,12 @@ impl Storage for WasmStorage {
   async fn state(&self, did: &IotaDID) -> AccountResult<Option<IdentityState>> {
     let promise: Promise = Promise::resolve(&self.state(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
+    let js_value: JsValue = result.account_err()?;
+    if js_value.is_null() || js_value.is_undefined() {
+      return Ok(None);
+    }
+    let state: WasmIdentityState = downcast_js_value(js_value, "IdentityState")?;
+    Ok(Some(state.into()))
   }
 
   /// Sets a new state for the identity specified by `did`.
@@ -248,25 +253,19 @@ interface Storage {
   keySign: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
 
   /** Returns the chain state of the identity specified by `did`.*/
-  chainState: (did: DID) => Promise<ChainState>;
+  chainState: (did: DID) => Promise<ChainState | undefined | null>;
 
   /** Set the chain state of the identity specified by `did`.*/
   setChainState: (did: DID, chainState: ChainState) => Promise<void>;
 
   /** Returns the state of the identity specified by `did`.*/
-  state: (did: DID) => Promise<IdentityState>;
+  state: (did: DID) => Promise<IdentityState | undefined | null>;
 
   /** Sets a new state for the identity specified by `did`.*/
   setState: (did: DID, identityState: IdentityState) => Promise<void>;
 
   /** Removes the keys and any state for the identity specified by `did`.*/
   purge: (did: DID) => Promise<void>;
-
-  /** Returns the last generation that has been published to the tangle for the given `did`.*/
-  publishedGeneration: (did: DID) => Promise<Generation>;
-
-  /** Sets the last generation that has been published to the tangle for the given `did`.*/
-  setPublishedGeneration: (did: DID, generation: Generation) => Promise<void>;
 }"#;
 
 // from https://github.com/rustwasm/wasm-bindgen/issues/2231#issuecomment-656293288

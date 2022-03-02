@@ -12,7 +12,6 @@ use identity_iota::did::IotaDID;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::identity::IdentityState;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
@@ -34,7 +33,7 @@ macro_rules! storage_trait {
       /// Creates a new keypair at the specified `location` and returns its `PublicKey`.
       async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
 
-      /// Inserts a private key at the specified `location` and returns its `PublicKey`..
+      /// Inserts a private key at the specified `location` and returns its `PublicKey`.
       async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey>;
 
       /// Retrieves the public key at the specified `location`.
@@ -48,12 +47,6 @@ macro_rules! storage_trait {
 
       /// Returns `true` if a keypair exists at the specified `location`.
       async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
-
-      /// Returns the last generation that has been published to the tangle for the given `did`.
-      async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>>;
-
-      /// Sets the last generation that has been published to the tangle for the given `did`.
-      async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()>;
 
       /// Returns the chain state of the identity specified by `did`.
       async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>>;

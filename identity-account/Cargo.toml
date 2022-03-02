@@ -50,7 +50,7 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.14", features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-default = ["stronghold", "async"]
+default = ["stronghold", "async", "send-sync-storage"]
 mem-client = []
 stronghold = [
   "iota_stronghold",
