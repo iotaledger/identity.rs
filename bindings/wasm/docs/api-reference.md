@@ -25,7 +25,8 @@
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
 <dt><a href="#Duration">Duration</a></dt>
-<dd></dd>
+<dd><p>A span of time.</p>
+</dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -81,9 +82,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -1412,18 +1413,21 @@ Returns a reference to the `proof`.
 <a name="Duration"></a>
 
 ## Duration
+A span of time.
+
 **Kind**: global class  
 
 * [Duration](#Duration)
     * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
     * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
     * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
+    * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
     * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
 
 <a name="Duration.seconds"></a>
 
 ### Duration.seconds(seconds) ⇒ [<code>Duration</code>](#Duration)
-Create a new `Duration` with the given amount of seconds.
+Create a new `Duration` with the given number of seconds.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1434,7 +1438,7 @@ Create a new `Duration` with the given amount of seconds.
 <a name="Duration.minutes"></a>
 
 ### Duration.minutes(minutes) ⇒ [<code>Duration</code>](#Duration)
-Create a new `Duration` with the given amount of minutes.
+Create a new `Duration` with the given number of minutes.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1445,7 +1449,7 @@ Create a new `Duration` with the given amount of minutes.
 <a name="Duration.hours"></a>
 
 ### Duration.hours(hours) ⇒ [<code>Duration</code>](#Duration)
-Create a new `Duration` with the given amount of hours.
+Create a new `Duration` with the given number of hours.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -1453,10 +1457,21 @@ Create a new `Duration` with the given amount of hours.
 | --- | --- |
 | hours | <code>number</code> | 
 
+<a name="Duration.days"></a>
+
+### Duration.days(days) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of days.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| days | <code>number</code> | 
+
 <a name="Duration.weeks"></a>
 
 ### Duration.weeks(weeks) ⇒ [<code>Duration</code>](#Duration)
-Create a new `Duration` with the given amount of weeks.
+Create a new `Duration` with the given number of weeks.
 
 **Kind**: static method of [<code>Duration</code>](#Duration)  
 
@@ -2446,8 +2461,8 @@ Creates a new `SignatureOptions` with default options.
 * [Timestamp](#Timestamp)
     * _instance_
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
-        * [.tryAdd(duration)](#Timestamp+tryAdd) ⇒ [<code>Timestamp</code>](#Timestamp)
-        * [.trySub(duration)](#Timestamp+trySub) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.checkedAdd(duration)](#Timestamp+checkedAdd) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.checkedSub(duration)](#Timestamp+checkedSub) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * _static_
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -2458,13 +2473,12 @@ Creates a new `SignatureOptions` with default options.
 Returns the `Timestamp` as an RFC 3339 `String`.
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
-<a name="Timestamp+tryAdd"></a>
+<a name="Timestamp+checkedAdd"></a>
 
-### timestamp.tryAdd(duration) ⇒ [<code>Timestamp</code>](#Timestamp)
+### timestamp.checkedAdd(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Computes `self + duration`
 
-# Errors
-Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 
@@ -2472,13 +2486,12 @@ Errors if the operation leads to a timestamp not in the valid range for [RFC 333
 | --- | --- |
 | duration | [<code>Duration</code>](#Duration) | 
 
-<a name="Timestamp+trySub"></a>
+<a name="Timestamp+checkedSub"></a>
 
-### timestamp.trySub(duration) ⇒ [<code>Timestamp</code>](#Timestamp)
+### timestamp.checkedSub(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Computes `self - duration`
 
-# Errors
-Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 
@@ -2631,13 +2644,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 
