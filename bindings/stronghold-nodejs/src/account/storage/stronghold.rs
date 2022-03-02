@@ -28,7 +28,9 @@ impl NapiStronghold {
   /// async constructors are not possible.
   #[napi(factory)]
   pub fn _f() -> Result<NapiStronghold> {
-    Err(Error::from_reason("use NapiStronghold.new to instantiate instances".to_owned()))
+    Err(Error::from_reason(
+      "use NapiStronghold.new to instantiate instances".to_owned(),
+    ))
   }
 
   /// Creates an instance of `Stronghold`.
