@@ -322,22 +322,13 @@ impl WasmDocument {
   pub fn attach_method_relationships(
     &mut self,
     did_url: &WasmDIDUrl,
-    relationships: &UMethodRelationships,
+    relationships: &MethodRelationshipType,
   ) -> Result<()> {
-    let relationships: Vec<MethodRelationship> = relationships
-      .into_serde::<OneOrMany<WasmMethodRelationship>>()
-      .map(OneOrMany::into_vec)
-      .wasm_result()?
-      .into_iter()
-      .map(MethodRelationship::from)
-      .collect();
-
-    for relationship in relationships {
-      self
-        .0
-        .attach_method_relationship(&did_url.0, relationship)
-        .wasm_result()?;
-    }
+    let relationship: WasmMethodRelationship = relationships.into_serde().wasm_result()?;
+    self
+      .0
+      .attach_method_relationship(&did_url.0, relationship.into())
+      .wasm_result()?;
     Ok(())
   }
 
@@ -346,22 +337,13 @@ impl WasmDocument {
   pub fn detach_method_relationships(
     &mut self,
     did_url: &WasmDIDUrl,
-    relationships: &UMethodRelationships,
+    relationships: &MethodRelationshipType,
   ) -> Result<()> {
-    let relationships: Vec<MethodRelationship> = relationships
-      .into_serde::<OneOrMany<WasmMethodRelationship>>()
-      .map(OneOrMany::into_vec)
-      .wasm_result()?
-      .into_iter()
-      .map(MethodRelationship::from)
-      .collect();
-
-    for relationship in relationships {
-      self
-        .0
-        .detach_method_relationship(&did_url.0, relationship)
-        .wasm_result()?;
-    }
+    let relationship: WasmMethodRelationship = relationships.into_serde().wasm_result()?;
+    self
+      .0
+      .attach_method_relationship(&did_url.0, relationship.into())
+      .wasm_result()?;
     Ok(())
   }
 
@@ -753,6 +735,6 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "MethodRelationship | MethodRelationship[]")]
-  pub type UMethodRelationships;
+  #[wasm_bindgen(typescript_type = "MethodRelationship")]
+  pub type MethodRelationshipType;
 }

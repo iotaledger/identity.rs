@@ -81,9 +81,9 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -1193,7 +1193,7 @@ so it cannot be an embedded one.
 | Param | Type |
 | --- | --- |
 | did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationships | [<code>MethodRelationship</code>](#MethodRelationship) \| [<code>Array.&lt;MethodRelationship&gt;</code>](#MethodRelationship) | 
+| relationships | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="Document+detachMethodRelationships"></a>
 
@@ -1205,7 +1205,7 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationships | [<code>MethodRelationship</code>](#MethodRelationship) \| [<code>Array.&lt;MethodRelationship&gt;</code>](#MethodRelationship) | 
+| relationships | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="Document+signSelf"></a>
 
@@ -2686,13 +2686,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## KeyType
 **Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 
