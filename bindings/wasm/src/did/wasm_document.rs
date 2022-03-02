@@ -106,23 +106,13 @@ impl WasmDocument {
   /// Note: Duplicates will be ignored.
   /// Use `null` to remove all controllers.
   #[wasm_bindgen(js_name = setController)]
-  pub fn set_controller(&mut self, controllers: &UDID) -> Result<()> {
+  pub fn set_controller(&mut self, controllers: &UOneOrManyDID) -> Result<()> {
     let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
-
-    let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers {
-      match controllers {
-        OneOrMany::One(controller) => Some(OneOrSet::new_one(controller)),
-        OneOrMany::Many(controllers) => {
-          if controllers.is_empty() {
-            None
-          } else {
-            let mut set: OrderedSet<IotaDID> = OrderedSet::new();
-            for controller in controllers {
-              set.append(controller);
-            }
-            Some(OneOrSet::new_set(set).wasm_result()?)
-          }
-        }
+    let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers.map(OneOrMany::into_vec) {
+      if controllers.is_empty() {
+        None
+      } else {
+        Some(OneOrSet::try_from(OrderedSet::from_iter(controllers)).wasm_result()?)
       }
     } else {
       None
@@ -135,7 +125,7 @@ impl WasmDocument {
   ///
   /// Note: Duplicates will be ignored.
   /// Use `null` to remove all controllers.
-  #[wasm_bindgen(js_name = controller)]
+  #[wasm_bindgen]
   pub fn controller(&self) -> ArrayDID {
     match self.0.controller() {
       Some(controllers) => controllers
@@ -151,7 +141,7 @@ impl WasmDocument {
 
   /// Sets the `alsoKnownAs` property in the DID document.
   #[wasm_bindgen(js_name = setAlsoKnownAs)]
-  pub fn set_also_known_as(&mut self, urls: &UUrl) -> Result<()> {
+  pub fn set_also_known_as(&mut self, urls: &UOneOrManyUrl) -> Result<()> {
     let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
     let mut urls_set: OrderedSet<Url> = OrderedSet::new();
     if let Some(urls) = urls {
@@ -689,51 +679,28 @@ impl From<IotaDocument> for WasmDocument {
 extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UDIDUrlQuery;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "string | string[] | null")]
   pub type UOneOrManyUrl;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
   pub type UOneOrManyDID;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "DID[]")]
   pub type ArrayDID;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "Service[]")]
   pub type ArrayService;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "Array<string>")]
   pub type ArrayString;
-}
-#[wasm_bindgen]
-extern "C" {
+
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayMethods;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
-}
 
-#[wasm_bindgen]
-extern "C" {
   #[wasm_bindgen(typescript_type = "MethodRelationship")]
   pub type MethodRelationshipType;
 }
