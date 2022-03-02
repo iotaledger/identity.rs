@@ -9,4 +9,5 @@ node_modules/
 npm/
 
 # compiled files from napi and ts
+napi-dist/
 dist/
