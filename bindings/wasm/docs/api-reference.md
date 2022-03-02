@@ -24,6 +24,9 @@
 <dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
 </dd>
+<dt><a href="#Duration">Duration</a></dt>
+<dd><p>A span of time.</p>
+</dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -1407,6 +1410,75 @@ Returns the timestamp of the last DID document update.
 Returns a reference to the `proof`.
 
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="Duration"></a>
+
+## Duration
+A span of time.
+
+**Kind**: global class  
+
+* [Duration](#Duration)
+    * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
+    * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
+    * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
+    * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
+    * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
+
+<a name="Duration.seconds"></a>
+
+### Duration.seconds(seconds) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of seconds.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| seconds | <code>number</code> | 
+
+<a name="Duration.minutes"></a>
+
+### Duration.minutes(minutes) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of minutes.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| minutes | <code>number</code> | 
+
+<a name="Duration.hours"></a>
+
+### Duration.hours(hours) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of hours.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| hours | <code>number</code> | 
+
+<a name="Duration.days"></a>
+
+### Duration.days(days) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of days.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| days | <code>number</code> | 
+
+<a name="Duration.weeks"></a>
+
+### Duration.weeks(weeks) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of weeks.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| weeks | <code>number</code> | 
+
 <a name="ExplorerUrl"></a>
 
 ## ExplorerUrl
@@ -2389,6 +2461,8 @@ Creates a new `SignatureOptions` with default options.
 * [Timestamp](#Timestamp)
     * _instance_
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
+        * [.checkedAdd(duration)](#Timestamp+checkedAdd) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.checkedSub(duration)](#Timestamp+checkedSub) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * _static_
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -2399,6 +2473,32 @@ Creates a new `SignatureOptions` with default options.
 Returns the `Timestamp` as an RFC 3339 `String`.
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp+checkedAdd"></a>
+
+### timestamp.checkedAdd(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Computes `self + duration`
+
+Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| duration | [<code>Duration</code>](#Duration) | 
+
+<a name="Timestamp+checkedSub"></a>
+
+### timestamp.checkedSub(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Computes `self - duration`
+
+Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| duration | [<code>Duration</code>](#Duration) | 
+
 <a name="Timestamp.parse"></a>
 
 ### Timestamp.parse(input) ⇒ [<code>Timestamp</code>](#Timestamp)
