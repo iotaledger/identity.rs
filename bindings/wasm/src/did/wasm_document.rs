@@ -321,9 +321,9 @@ impl WasmDocument {
   pub fn attach_method_relationships(
     &mut self,
     did_url: &WasmDIDUrl,
-    relationships: &MethodRelationshipType,
+    relationship: &MethodRelationshipType,
   ) -> Result<()> {
-    let relationship: WasmMethodRelationship = relationships.into_serde().wasm_result()?;
+    let relationship: WasmMethodRelationship = relationship.into_serde().wasm_result()?;
     self
       .0
       .attach_method_relationship(&did_url.0, relationship.into())
@@ -336,9 +336,9 @@ impl WasmDocument {
   pub fn detach_method_relationships(
     &mut self,
     did_url: &WasmDIDUrl,
-    relationships: &MethodRelationshipType,
+    relationship: &MethodRelationshipType,
   ) -> Result<()> {
-    let relationship: WasmMethodRelationship = relationships.into_serde().wasm_result()?;
+    let relationship: WasmMethodRelationship = relationship.into_serde().wasm_result()?;
     self
       .0
       .attach_method_relationship(&did_url.0, relationship.into())

@@ -897,8 +897,8 @@ with the given Document.
         * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.attachMethodRelationships(did_url, relationships)](#Document+attachMethodRelationships)
-        * [.detachMethodRelationships(did_url, relationships)](#Document+detachMethodRelationships)
+        * [.attachMethodRelationships(did_url, relationship)](#Document+attachMethodRelationships)
+        * [.detachMethodRelationships(did_url, relationship)](#Document+detachMethodRelationships)
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -1182,7 +1182,7 @@ Attempts to resolve the given method query into a method capable of signing a do
 
 <a name="Document+attachMethodRelationships"></a>
 
-### document.attachMethodRelationships(did_url, relationships)
+### document.attachMethodRelationships(did_url, relationship)
 Attaches the relationship to the given method, if the method exists.
 
 Note: The method needs to be in the set of verification methods,
@@ -1193,11 +1193,11 @@ so it cannot be an embedded one.
 | Param | Type |
 | --- | --- |
 | did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationships | [<code>MethodRelationship</code>](#MethodRelationship) | 
+| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="Document+detachMethodRelationships"></a>
 
-### document.detachMethodRelationships(did_url, relationships)
+### document.detachMethodRelationships(did_url, relationship)
 Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1205,7 +1205,7 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationships | [<code>MethodRelationship</code>](#MethodRelationship) | 
+| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
 
 <a name="Document+signSelf"></a>
 
