@@ -34,20 +34,18 @@ impl WasmTimestamp {
 
   /// Computes `self + duration`
   ///
-  /// # Errors
-  /// Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
-  #[wasm_bindgen(js_name = tryAdd)]
-  pub fn try_add(self, duration: WasmDuration) -> Result<WasmTimestamp> {
-    self.0.try_add(duration.0).map(WasmTimestamp).wasm_result()
+  /// Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  #[wasm_bindgen(js_name = checkedAdd)]
+  pub fn checked_add(self, duration: WasmDuration) -> Option<WasmTimestamp> {
+    self.0.checked_add(duration.0).map(WasmTimestamp)
   }
 
   /// Computes `self - duration`
   ///
-  /// # Errors
-  /// Errors if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
-  #[wasm_bindgen(js_name = trySub)]
-  pub fn try_sub(self, duration: WasmDuration) -> Result<WasmTimestamp> {
-    self.0.try_sub(duration.0).map(WasmTimestamp).wasm_result()
+  /// Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  #[wasm_bindgen(js_name = checkedSub)]
+  pub fn checked_sub(self, duration: WasmDuration) -> Option<WasmTimestamp> {
+    self.0.checked_sub(duration.0).map(WasmTimestamp)
   }
 }
 
@@ -63,21 +61,26 @@ pub struct WasmDuration(pub(crate) Duration);
 
 #[wasm_bindgen(js_class = Duration)]
 impl WasmDuration {
-  /// Create a new `Duration` with the given amount of seconds.
+  /// Create a new `Duration` with the given number of seconds.
   pub fn seconds(seconds: u32) -> WasmDuration {
     Self(Duration::seconds(seconds))
   }
-  /// Create a new `Duration` with the given amount of minutes.
+  /// Create a new `Duration` with the given number of minutes.
   pub fn minutes(minutes: u32) -> WasmDuration {
     Self(Duration::minutes(minutes))
   }
 
-  /// Create a new `Duration` with the given amount of hours.
+  /// Create a new `Duration` with the given number of hours.
   pub fn hours(hours: u32) -> WasmDuration {
     Self(Duration::hours(hours))
   }
 
-  /// Create a new `Duration` with the given amount of weeks.
+  /// Create a new `Duration` with the given number of days.
+  pub fn days(days: u32) -> WasmDuration {
+    Self(Duration::days(days))
+  }
+
+  /// Create a new `Duration` with the given number of weeks.
   pub fn weeks(weeks: u32) -> WasmDuration {
     Self(Duration::weeks(weeks))
   }
