@@ -34,7 +34,7 @@ impl WasmTimestamp {
 
   /// Computes `self + duration`
   ///
-  /// Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  /// Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
   #[wasm_bindgen(js_name = checkedAdd)]
   pub fn checked_add(self, duration: WasmDuration) -> Option<WasmTimestamp> {
     self.0.checked_add(duration.0).map(WasmTimestamp)
@@ -42,7 +42,7 @@ impl WasmTimestamp {
 
   /// Computes `self - duration`
   ///
-  /// Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  /// Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
   #[wasm_bindgen(js_name = checkedSub)]
   pub fn checked_sub(self, duration: WasmDuration) -> Option<WasmTimestamp> {
     self.0.checked_sub(duration.0).map(WasmTimestamp)

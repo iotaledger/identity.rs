@@ -2478,7 +2478,7 @@ Returns the `Timestamp` as an RFC 3339 `String`.
 ### timestamp.checkedAdd(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Computes `self + duration`
 
-Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 
@@ -2491,7 +2491,7 @@ Returns `None` if the operation leads to a timestamp not in the valid range for 
 ### timestamp.checkedSub(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Computes `self - duration`
 
-Returns `None` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 
