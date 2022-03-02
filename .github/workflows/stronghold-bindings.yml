@@ -82,6 +82,7 @@ jobs:
         run: |
           npm i
           npm run build
+          npm link
         working-directory: ./bindings/wasm
      
       - name: Setup
@@ -89,7 +90,7 @@ jobs:
         run: ${{ matrix.settings.setup }}
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: npm ci --ignore-scripts && npm link @iota/identity-wasm
 
       - name: Build
         run: ${{ matrix.settings.build }}

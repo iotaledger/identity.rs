@@ -1,5 +1,5 @@
-import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../dist/napi'
-import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "../../wasm/node/identity_wasm";
+import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiIdentityState } from '../napi-dist/napi';
+import { DID, KeyLocation, Signature, ChainState, IdentityState, Storage } from "@iota/identity-wasm/node";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
