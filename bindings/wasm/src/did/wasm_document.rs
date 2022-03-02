@@ -16,7 +16,6 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
-use identity::did::MethodRelationship;
 use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
