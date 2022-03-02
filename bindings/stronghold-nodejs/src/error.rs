@@ -12,6 +12,12 @@ pub trait NapiResult<T> {
   fn napi_result(self) -> Result<T>;
 }
 
+//impl<T> NapiResult<T> for impl std::error::Error {
+//  fn napi_result(self) -> Result<T> {
+//    self.map_err(|account_error| Error::from_reason(account_error.to_string()))
+//  }
+//}
+
 impl<T> NapiResult<T> for AccountResult<T> {
   fn napi_result(self) -> Result<T> {
     self.map_err(|account_error| Error::from_reason(account_error.to_string()))

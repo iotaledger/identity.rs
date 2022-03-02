@@ -4,9 +4,6 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
 
-#[macro_use]
-extern crate napi_derive;
-
 pub mod account;
 pub mod did;
 pub mod error;
