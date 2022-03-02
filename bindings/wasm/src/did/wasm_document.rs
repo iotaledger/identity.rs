@@ -3,8 +3,11 @@
 
 use std::str::FromStr;
 
-use identity::core::{decode_b58, OrderedSet, Url};
-use identity::core::{OneOrMany, OneOrSet};
+use identity::core::decode_b58;
+use identity::core::OneOrMany;
+use identity::core::OneOrSet;
+use identity::core::OrderedSet;
+use identity::core::Url;
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
@@ -14,6 +17,7 @@ use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodRelationship;
+use identity::did::Service;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
@@ -27,7 +31,6 @@ use crate::credential::WasmPresentation;
 use crate::crypto::KeyPair;
 use crate::crypto::WasmSignatureOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
-use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
@@ -35,6 +38,7 @@ use crate::did::WasmMethodScope;
 use crate::did::WasmMethodType;
 use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
+use crate::did::{WasmDID, WasmService};
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::service::Service;
