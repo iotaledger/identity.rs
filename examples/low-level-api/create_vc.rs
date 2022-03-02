@@ -50,7 +50,7 @@ pub async fn create_vc() -> Result<String> {
 
   let resolver: Resolver = Resolver::new().await?;
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
-  // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure
+  // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
   CredentialValidator::validate(
     &credential,

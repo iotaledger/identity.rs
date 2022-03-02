@@ -56,18 +56,25 @@ async function createVC(clientConfig) {
 
     const resolver = await new Resolver(); 
     const issuerDoc = await resolver.resolve(issuer.doc.id.toString()); 
-    // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure
-    // that the issuance date is not in the future and that the expiration date is not in the past:
+
+    // Validate the credential's signature, the credential's semantic structure, 
+    // check that the issuance date is not in the future and that the expiration date is not in the past. We use `FailFast.No`
+    // to ensure that if validation fails then the error message will contain information about every unsuccessful validation.  
     const result = CredentialValidator.validate(
         signedVc,
         CredentialValidationOptions.default(),
         issuerDoc,
-        FailFast.Yes
+        FailFast.No
     );
 
     console.log(`VC validated: ${result}`);
 
-    return {alice, issuer, signedVc};
+    // The issuer is now sure that the credential they are about to issue satisfies their expectations
+    // hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
+    // This means that the credential is NOT published to the tangle where it can be accessed by anyone.
+
+    const credentialJSON = signedVc.toString();
+    return {alice, issuer, credentialJSON};
 }
 
 export {createVC};

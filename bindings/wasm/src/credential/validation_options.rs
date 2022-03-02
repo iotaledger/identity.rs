@@ -20,6 +20,7 @@ impl WasmCredentialValidationOptions {
   /// Creates a new `CredentialValidationOptions` from the given fields.
   ///
   /// Throws an error if any of the options are invalid.
+  #[wasm_bindgen(constructor)]
   pub fn new(options: ICredentialValidationOptions) -> Result<WasmCredentialValidationOptions> {
     let options: CredentialValidationOptions = options.into_serde().wasm_result()?;
     Ok(WasmCredentialValidationOptions::from(options))
@@ -54,6 +55,7 @@ impl WasmPresentationValidationOptions {
   /// Creates a new `PresentationValidationOptions` from the given fields.
   ///
   /// Throws an error if any of the options are invalid.
+  #[wasm_bindgen(constructor)]
   pub fn new(options: IPresentationValidationOptions) -> Result<WasmPresentationValidationOptions> {
     let options: PresentationValidationOptions = options.into_serde().wasm_result()?;
     Ok(WasmPresentationValidationOptions::from(options))
@@ -116,13 +118,13 @@ const I_CREDENTIAL_VALIDATION_OPTIONS: &'static str = r#"
 /** Holds options to create a new `CredentialValidationOptions`. */
 interface ICredentialValidationOptions {
     /** Declare that the credential is **not** considered valid if it expires before this */
-    readonly earliest_expiry_date?: Timestamp;
+    readonly earliestExpiryDate?: Timestamp;
 
     /** Declare that the credential is **not** considered valid if it was issued later than this */
-    readonly latest_issuance_date?: Timestamp;
+    readonly latestIssuanceDate?: Timestamp;
 
     /** Declare that the credential's signature must be verified according to these `VerifierOptions`. */
-    readonly verifier_options?: VerifierOptions;
+    readonly verifierOptions?: VerifierOptions;
 
 }"#;
 
@@ -131,13 +133,13 @@ const I_PRESENTATION_VALIDATION_OPTIONS: &'static str = r#"
 /** Holds options to create a new `PresentationValidationOptions`. */
 interface IPresentationValidationOptions {
     /** Declare that the credentials of the presentation must all be validated according to these `CredentialValidationOptions`. */
-    readonly shared_validation_options?: CredentialValidationOptions;
+    readonly sharedValidationOptions?: CredentialValidationOptions;
 
     /** Declare that the presentation's signature is to be verified according to these `VerifierOptions`. */
-    readonly presentation_verifier_options?: VerifierOptions;
+    readonly presentationVerifierOptions?: VerifierOptions;
 
     /** Declare how the presentation's credential subjects must relate to the holder. */
-    readonly subject_holder_relationship?: SubjectHolderRelationship;
+    readonly subjectHolderRelationship?: SubjectHolderRelationship;
 
 }"#;
 

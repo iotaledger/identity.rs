@@ -11,6 +11,7 @@ use serde::Serialize;
 /// [`Resolver::verify_credential`](crate::tangle::Resolver::verify_credential()).
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [`Timestamp`].
@@ -85,6 +86,7 @@ pub enum FailFast {
 /// [`Resolver::verify_presentation`](crate::tangle::Resolver::verify_presentation()).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
+#[serde(rename_all = "camelCase")]
 pub struct PresentationValidationOptions {
   /// Declares that the credentials of the presentation must all be
   /// validated according to these [`CredentialValidationOptions`].
