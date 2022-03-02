@@ -311,9 +311,8 @@ impl WasmDocument {
   pub fn attach_method_relationship(
     &mut self,
     did_url: &WasmDIDUrl,
-    relationship: &MethodRelationshipType,
+    relationship: WasmMethodRelationship,
   ) -> Result<()> {
-    let relationship: WasmMethodRelationship = relationship.into_serde().wasm_result()?;
     self
       .0
       .attach_method_relationship(&did_url.0, relationship.into())
@@ -326,9 +325,8 @@ impl WasmDocument {
   pub fn detach_method_relationship(
     &mut self,
     did_url: &WasmDIDUrl,
-    relationship: &MethodRelationshipType,
+    relationship: WasmMethodRelationship,
   ) -> Result<()> {
-    let relationship: WasmMethodRelationship = relationship.into_serde().wasm_result()?;
     self
       .0
       .attach_method_relationship(&did_url.0, relationship.into())
@@ -700,7 +698,4 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
-
-  #[wasm_bindgen(typescript_type = "MethodRelationship")]
-  pub type MethodRelationshipType;
 }

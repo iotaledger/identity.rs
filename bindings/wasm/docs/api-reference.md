@@ -79,9 +79,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
@@ -1193,7 +1193,7 @@ so it cannot be an embedded one.
 | Param | Type |
 | --- | --- |
 | did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
+| relationship | <code>number</code> | 
 
 <a name="Document+detachMethodRelationship"></a>
 
@@ -1205,7 +1205,7 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | did_url | [<code>DIDUrl</code>](#DIDUrl) | 
-| relationship | [<code>MethodRelationship</code>](#MethodRelationship) | 
+| relationship | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
 
@@ -2682,13 +2682,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
