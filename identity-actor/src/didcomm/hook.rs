@@ -13,6 +13,7 @@ use crate::traits::RequestHandler;
 use crate::Actor;
 use crate::ActorRequest;
 use crate::Endpoint;
+use crate::HandlerObject;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::Result as ActorResult;
@@ -33,10 +34,10 @@ where
     MOD: Send + Sync + 'static,
   {
     let handler = Hook::new(handler);
-    self
-      .actor_state
-      .handlers
-      .insert(Endpoint::new(cmd)?, (self.object_id, Box::new(handler)));
+    self.actor_state.handlers.insert(
+      Endpoint::new(cmd)?,
+      HandlerObject::new(self.object_id, Box::new(handler)),
+    );
     Ok(self)
   }
 }

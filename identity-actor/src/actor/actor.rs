@@ -38,53 +38,6 @@ use uuid::Uuid;
 
 use super::actor_request::private::SyncMode;
 
-/// A map from an identifier to an object that contains the
-/// shared state of the associated handler functions.
-type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
-
-// TODO: Define a struct for the tuple, as it is unwieldy to read/work with.
-// TODO: Also define a type alias for `ObjectId` to `Uuid`.
-/// A map from a request name to the identifier of the shared state object
-/// and the method that handles that particular request.
-type HandlerMap = DashMap<Endpoint, (Uuid, Box<dyn RequestHandler>)>;
-
-type HandlerObjectTuple<'a> = (
-  dashmap::mapref::one::Ref<'a, Endpoint, (Uuid, Box<dyn RequestHandler>)>,
-  Box<dyn Any + Send + Sync>,
-);
-
-pub struct HandlerBuilder<MOD: SyncMode, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-  MOD: 'static,
-{
-  pub(crate) object_id: Uuid,
-  pub(crate) actor_state: Arc<ActorState>,
-  _marker_obj: PhantomData<&'static OBJ>,
-  _marker_mod: PhantomData<&'static MOD>,
-}
-
-impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
-  where
-    REQ: ActorRequest<MOD> + Send + Sync + 'static,
-    REQ::Response: Send,
-    FUT: Future<Output = REQ::Response> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-    MOD: 'static + Send + Sync,
-  {
-    let handler = Handler::new(handler);
-    self
-      .actor_state
-      .handlers
-      .insert(Endpoint::new(cmd)?, (self.object_id, Box::new(handler)));
-    Ok(self)
-  }
-}
-
 pub(crate) struct ActorState {
   pub(crate) handlers: HandlerMap,
   pub(crate) objects: ObjectMap,
@@ -124,7 +77,7 @@ impl Actor {
   where
     OBJ: Clone + Send + Sync + 'static,
   {
-    let object_id = Uuid::new_v4();
+    let object_id: ObjectId = Uuid::new_v4();
     self.state.objects.insert(object_id, Box::new(handler));
     HandlerBuilder {
       object_id,
@@ -156,12 +109,12 @@ impl Actor {
       if self.state.handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
 
-        match self.get_handler(&request.endpoint).and_then(|handler| {
-          let input = handler.0 .1.deserialize_request(request.input)?;
-          Ok((handler.0, handler.1, input))
+        match self.get_handler(&request.endpoint).and_then(|handler_ref| {
+          let input = handler_ref.0.handler.deserialize_request(request.input)?;
+          Ok((handler_ref.0, handler_ref.1, input))
         }) {
-          Ok((handler, object, input)) => {
-            let handler: &dyn RequestHandler = handler.1.as_ref();
+          Ok((handler_ref, object, input)) => {
+            let handler: &dyn RequestHandler = handler_ref.handler.as_ref();
 
             let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
 
@@ -199,12 +152,12 @@ impl Actor {
 
   fn get_handler(&self, endpoint: &Endpoint) -> std::result::Result<HandlerObjectTuple<'_>, RemoteSendError> {
     match self.state.handlers.get(endpoint) {
-      Some(handler_tuple) => {
-        let object_id = handler_tuple.0;
+      Some(handler_object) => {
+        let object_id = handler_object.object_id;
 
         if let Some(object) = self.state.objects.get(&object_id) {
-          let object_clone = handler_tuple.1.clone_object(object.deref())?;
-          Ok((handler_tuple, object_clone))
+          let object_clone = handler_object.handler.clone_object(object.deref())?;
+          Ok((handler_object, object_clone))
         } else {
           Err(RemoteSendError::HandlerInvocationError(format!(
             "no state set for {}",
@@ -438,8 +391,8 @@ impl Actor {
   {
     match self.get_handler(&endpoint) {
       Ok(handler_object) => {
-        let handler = &handler_object.0.value().1;
-        let state = handler_object.1;
+        let handler: &dyn RequestHandler = handler_object.0.value().handler.as_ref();
+        let state: Box<dyn Any + Send + Sync> = handler_object.1;
         let type_erased_input: Box<dyn Any + Send> = Box::new(input);
         let request_context = RequestContext::new((), peer, endpoint);
 
@@ -463,3 +416,63 @@ impl Actor {
     }
   }
 }
+
+pub struct HandlerBuilder<MOD: SyncMode, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+  MOD: 'static,
+{
+  pub(crate) object_id: ObjectId,
+  pub(crate) actor_state: Arc<ActorState>,
+  _marker_obj: PhantomData<&'static OBJ>,
+  _marker_mod: PhantomData<&'static MOD>,
+}
+
+impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
+  pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
+  where
+    REQ: ActorRequest<MOD> + Send + Sync + 'static,
+    REQ::Response: Send,
+    FUT: Future<Output = REQ::Response> + Send + 'static,
+    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+    MOD: 'static + Send + Sync,
+  {
+    let handler = Handler::new(handler);
+    self.actor_state.handlers.insert(
+      Endpoint::new(cmd)?,
+      HandlerObject::new(self.object_id, Box::new(handler)),
+    );
+    Ok(self)
+  }
+}
+
+/// A map from an identifier to an object that contains the
+/// shared state of the associated handler functions.
+type ObjectMap = DashMap<ObjectId, Box<dyn Any + Send + Sync>>;
+
+/// An actor-internal identifier for the object representing the shared state of a handler.
+type ObjectId = Uuid;
+
+/// A [`RequestHandler`] and the id of its associated shared state object.
+pub(crate) struct HandlerObject {
+  handler: Box<dyn RequestHandler>,
+  object_id: ObjectId,
+}
+
+impl HandlerObject {
+  pub(crate) fn new(object_id: ObjectId, handler: Box<dyn RequestHandler>) -> Self {
+    Self { object_id, handler }
+  }
+}
+
+/// A map from a request name to the identifier of the shared state object
+/// and the method that handles that particular request.
+type HandlerMap = DashMap<Endpoint, HandlerObject>;
+
+type HandlerObjectTuple<'a> = (
+  dashmap::mapref::one::Ref<'a, Endpoint, HandlerObject>,
+  Box<dyn Any + Send + Sync>,
+);
