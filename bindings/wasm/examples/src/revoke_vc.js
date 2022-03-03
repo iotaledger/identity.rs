@@ -28,8 +28,8 @@ async function revokeVC(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Creates new identities and a VC (see "create_vc" example)
-    const {alice, issuer, signedVcJSON} = await createVC(clientConfig);
-    const signedVC = Credential.fromJSON(signedVcJSON);
+    const {alice, issuer, credentialJSON} = await createVC(clientConfig);
+    const signedVC = Credential.fromJSON(credentialJSON);
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
