@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, Presentation, Credential, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, Presentation, Credential, FailFast, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -47,33 +47,48 @@ async function createVP(clientConfig) {
     // ===========================================================================
 
     // Deserialize the presentation
-    const signedVp = Presentation.fromJSON(signedVpJSON); 
+    const presentation = Presentation.fromJSON(signedVpJSON); 
 
-    // In order to validate presentations and credentials one needs to resolve the DID Documents of 
-    // the presentation holder and of credential issuers. The `Resolver` provides a high level API 
-    // that takes care of this for us. 
-    const resolver = await new Resolver();
 
-    // We now define validation options: 
 
-    // To verify that the challenge matches: 
+    // Define validation options: 
+
+    // Declare that the challenge must match our expectation: 
     const presentationVerifierOptions = new VerifierOptions( {
         challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440", 
     });
 
     // Declare that any credential contained in the presentation are not allowed to expire within the next 10 hours:
+    const earliestAllowedExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
+    const credentialValidationOptions = new CredentialValidationOptions( {
+        earliestExpiryDate: earliestAllowedExpiryDate
+    });
 
-    /*
+    // Declare that the presentation's holder must always be the subject of a credential in the presentation. 
+    const subjectHolderRelationship = SubjectHolderRelationship.AlwaysSubject; 
 
-    // Validate the presentation and all the credentials included in it.
-    //
-    // Also verify the challenge matches.
-    const result = await client.checkPresentation(signedVp.toString(), new VerifierOptions({
-        challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440"
-    }));
+    const presentationValidationOptions = new PresentationValidationOptions( {
+        sharedValidationOptions = credentialValidationOptions,
+        presentationVerifierOptions: presentationVerifierOptions,
+        subjectHolderRelationship: subjectHolderRelationship,
+    });
 
-    console.log(`VP validation result: ${result}`);
-    */
+    // In order to validate presentations and credentials one needs to resolve the DID Documents of 
+    // the presentation holder and of credential issuers. The `Resolver` provides a high level API 
+    // that takes care of this for us. 
+    const resolver = await new Resolver();
+    
+
+    // Validate the presentation and all the credentials included in it according to the validation options 
+
+    const result = await resolver.verifyPresentation(
+        presentation,
+        presentationValidationOptions,
+        FailFast.Yes
+    );
+
+    console.log(`Successful VP validation`);
+
 }
 
 export {createVP};
