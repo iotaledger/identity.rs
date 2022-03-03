@@ -67,13 +67,14 @@ async function createVC(clientConfig) {
         FailFast.No
     );
 
-    console.log(`VC validated: ${result}`);
+    // Since `validate` did not throw any errors we know that the credential was successfully validated
+    console.log(`VC successfully validated`);
 
     // The issuer is now sure that the credential they are about to issue satisfies their expectations
     // hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
-    // This means that the credential is NOT published to the tangle where it can be accessed by anyone.
+    // This means that the credential is NOT published to the tangle where it can be accessed by anyone
 
-    const credentialJSON = signedVc.toString();
+    const credentialJSON = signedVc.toJSON();
     return {alice, issuer, credentialJSON};
 }
 

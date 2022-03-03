@@ -15,9 +15,11 @@ use serde::Serialize;
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [`Timestamp`].
+  #[serde(default)]
   pub earliest_expiry_date: Option<Timestamp>,
   /// Declares that the credential is **not** considered valid if it was issued later than this
   /// [`Timestamp`].
+  #[serde(default)]
   pub latest_issuance_date: Option<Timestamp>,
   /// Declare that the credential's signature must be verified according to these
   /// [VerifierOptions].

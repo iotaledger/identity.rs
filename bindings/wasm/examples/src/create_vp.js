@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, Presentation, Credential, FailFast, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, Duration, Presentation, Credential, FailFast, Resolver, PresentationValidator, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -19,8 +19,8 @@ async function createVP(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Creates new identities (See "createVC" example)
-    const {alice, signedVcJSON} = await createVC(clientConfig);
-    const signedVc = Credential.fromJSON(signedVcJSON);
+    const {alice, credentialJSON} = await createVC(clientConfig);
+    const signedVc = Credential.fromJSON(credentialJSON);
 
     // Create a Verifiable Presentation from the Credential
     const unsignedVp = new Presentation(alice.doc, signedVc.toJSON())
@@ -37,21 +37,38 @@ async function createVP(clientConfig) {
         challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440"
     }))
 
-    // Convert the Verifiable Presentation to JSON before "exchanging" with a verifier.
-    const signedVpJSON = signedVp.toString();
+    // Convert the Verifiable Presentation to JSON before "exchanging" with a verifier
+    const signedVpJSON = signedVp.toJSON();
+    console.log(`serialized presentation`);
 
-    // Let us now look at a couple of ways that a verifier can validate the presentation. 
 
-    // ===========================================================================
-    // Validation through the high level API 
-    // ===========================================================================
-
-    // Deserialize the presentation
+    // A Verifier deserializes the received presentation before verifying it 
     const presentation = Presentation.fromJSON(signedVpJSON); 
+    console.log(`deserialized presentation`);
+
+    // In order to validate presentations and credentials one needs to resolve the DID Documents of 
+    // the presentation holder and of credential issuers. This is something the `Resolver` can help with.  
+
+    const resolver = await new Resolver();
 
 
+    // Let us now look at a couple of ways that a verifier can validate the presentation 
 
-    // Define validation options: 
+    // ===========================================================================
+    // Validation using the Resolver directly  
+    // ===========================================================================
+    
+    // The Resolver can conveniently validate presentations. By default it checks
+    // the following:
+    // the holder's signature (with default options)
+    // The signatures on the credentials in the presentation and that their expiry date is not in the past
+    // and their issuance dates are not in the future. 
+    
+    // There are however situations where one would like to tweak these settings somewhat however.
+    // Suppose for instance that  the verifier wants to check that the challenge matches, 
+    // that the holder is always the subject of any credentials in the presentation 
+    // and that said credentials do not expire within the next 10 hours. This can be done using 
+    // `PresentationValidationOptions` as follows: 
 
     // Declare that the challenge must match our expectation: 
     const presentationVerifierOptions = new VerifierOptions( {
@@ -59,35 +76,78 @@ async function createVP(clientConfig) {
     });
 
     // Declare that any credential contained in the presentation are not allowed to expire within the next 10 hours:
-    const earliestAllowedExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
+    const earliestExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
+    console.log(earliestExpiryDate);
+    console.log(`attempting to create credential validation options`);
     const credentialValidationOptions = new CredentialValidationOptions( {
-        earliestExpiryDate: earliestAllowedExpiryDate
+        earliestExpiryDate: earliestExpiryDate,
     });
 
     // Declare that the presentation's holder must always be the subject of a credential in the presentation. 
     const subjectHolderRelationship = SubjectHolderRelationship.AlwaysSubject; 
 
+    console.log(`attempting to create presentation validation options`);
     const presentationValidationOptions = new PresentationValidationOptions( {
-        sharedValidationOptions = credentialValidationOptions,
+        sharedValidationOptions: credentialValidationOptions,
         presentationVerifierOptions: presentationVerifierOptions,
         subjectHolderRelationship: subjectHolderRelationship,
     });
 
-    // In order to validate presentations and credentials one needs to resolve the DID Documents of 
-    // the presentation holder and of credential issuers. The `Resolver` provides a high level API 
-    // that takes care of this for us. 
-    const resolver = await new Resolver();
-    
 
+    console.log(`attemtping to verify presentation`);
     // Validate the presentation and all the credentials included in it according to the validation options 
-
-    const result = await resolver.verifyPresentation(
+    await resolver.verifyPresentation(
         presentation,
         presentationValidationOptions,
         FailFast.Yes
     );
+    // Since no errors were thrown by `verifyPresentation` we know that the validation was successful. 
+    console.log(`Successful VP validation using the Resolver`);
 
-    console.log(`Successful VP validation`);
+    // Note that the `verifyPresentation` method we called automatically resolved all DID Documents that are necessary to validate the presentation. 
+    // It is also possible to supply extra arguments to avoid some resolutions if one already has up to date resolved documents of 
+    // either the holder or issuers (see the method's documentation). 
+
+
+    // ===========================================================================
+    // More customized validation
+    // ===========================================================================
+
+    // Suppose that the verifier does not want to validate the issuance date and expiry dates of credentials in the presentation at all.
+    // The verifier is only interested in confirming that the holder is always the credential subject and that the signatures are correct.
+    // This can be done as follows:   
+
+    // Verify that the presentation does not contain credentials where the holder is not the subject 
+    PresentationValidator.checkHolderIsAlwaysSubject(presentation);
+
+    // To verify the holder's signature and also the signature's of each credential issuer, one needs to resolve 
+    // their DID Documents. 
+
+    // Resolve the holder's DID Document
+    const resolvedHolderDoc = await resolver.resolvePresentationHolder(presentation);
+    
+    // Resolve the DID Documents of all credential issuers contained in the presentation 
+    const resolvedIssuerDocs = await resolver.resolvePresentationIssuers(presentation);
+
+    // Verify the signature of the holder 
+    PresentationValidator.verifyPresentationSignature(
+        presentation, 
+        resolvedHolderDoc,
+        new VerifierOptions({
+            challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440"
+        })
+        );
+    // Verify the issuer's signatures 
+    for (credential in presentation.verifiableCredential()) {
+        CredentialValidator.verifySignature(
+            credential,
+            resolvedIssuerDocs, 
+            VerifierOptions.default() 
+        );
+    }
+
+    // Since no errors were thrown by `verifyPresentation` we know that the validation was successful. 
+    console.log(`Successful custom VP validation`);
 
 }
 

@@ -76,7 +76,7 @@ pub async fn create_presentation(challenge: String) -> Result<Presentation> {
 }
 
 /// Executes high level validation logic.
-pub async fn high_level_validation(presentation_json: &str, options: &PresentationValidationOptions) -> Result<()> {
+pub async fn resolver_based_validation(presentation_json: &str, options: &PresentationValidationOptions) -> Result<()> {
   // Deserialize the presentation:
   let presentation: Presentation = Presentation::from_json(&presentation_json)?;
   // Validate the presentation and all the credentials included in it.
@@ -87,7 +87,7 @@ pub async fn high_level_validation(presentation_json: &str, options: &Presentati
 }
 
 /// Verifies signatures and that the credential subject is the holder. Nothing else gets verified.
-pub async fn low_level_validation(
+pub async fn validator_based_validation(
   presentation_json: &str,
   holder_verifier_options: &VerifierOptions,
   issuer_verifier_options: &VerifierOptions,
@@ -149,10 +149,10 @@ async fn main() -> anyhow::Result<()> {
     .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
   // Conveniently validate the presentation
-  high_level_validation(presentation_json.as_str(), &presentation_validation_options).await?;
+  resolver_based_validation(presentation_json.as_str(), &presentation_validation_options).await?;
 
-  // If the verifier instead wanted certain validations to be skipped they could do so with the low level API:
-  low_level_validation(
+  // If the verifier instead wanted certain validations to be skipped they could do so using the PresentationValidator:
+  validator_based_validation(
     presentation_json.as_str(),
     &presentation_verifier_options,
     &VerifierOptions::default(),

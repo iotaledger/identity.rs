@@ -37,6 +37,7 @@ impl WasmCredentialValidator {
   /// # Errors
   /// Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
   /// errors will be accumulated in the returned error.
+  #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
     options: &WasmCredentialValidationOptions,
@@ -47,6 +48,7 @@ impl WasmCredentialValidator {
   }
 
   /// Validates the semantic structure of the `Credential`.
+  #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(credential: &WasmCredential) -> Result<()> {
     credential
       .0
@@ -56,11 +58,13 @@ impl WasmCredentialValidator {
   }
 
   /// Validate that the [Credential] expires on or after the specified `Timestamp`.
+  #[wasm_bindgen(js_name = checkExpiresOnOrAfter)]
   pub fn check_expires_on_or_after(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
     CredentialValidator::check_expires_on_or_after(&credential.0, timestamp.0).wasm_result()
   }
 
   /// Validate that the [Credential] is issued on or before specified `Timestamp`.
+  #[wasm_bindgen(js_name = checkIsIssuedOnOrBefore)]
   pub fn check_is_issued_on_or_before(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
     CredentialValidator::check_is_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
   }
@@ -71,6 +75,7 @@ impl WasmCredentialValidator {
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
+  #[wasm_bindgen(js_name = verifySignature)]
   pub fn verify_signature(
     credential: &WasmCredential,
     trusted_issuers: &ArrayResolvedDocument,

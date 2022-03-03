@@ -36,6 +36,7 @@ impl WasmPresentationValidator {
   /// # Errors
   /// Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
   /// errors will be accumulated in the returned error.
+  #[wasm_bindgen]
   pub fn validate(
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
@@ -52,6 +53,7 @@ impl WasmPresentationValidator {
   /// # Errors
   /// Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
   /// property. Otherwise signature verification will be attempted and an error is returned upon failure.
+  #[wasm_bindgen(js_name = verifyPresentationSignature)]
   pub fn verify_presentation_signature(
     presentation: &WasmPresentation,
     holder: &WasmResolvedDocument,
@@ -61,6 +63,7 @@ impl WasmPresentationValidator {
   }
 
   /// Validates the semantic structure of the [Presentation].
+  #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     PresentationValidator::check_structure(&presentation.0).wasm_result()
   }
@@ -69,6 +72,7 @@ impl WasmPresentationValidator {
   ///
   /// # Errors
   /// Returns an error at the first credential requiring a nonTransferable property that is not met.
+  #[wasm_bindgen(js_name = checkNonTransferable)]
   pub fn check_non_transferable(presentation: &WasmPresentation) -> Result<()> {
     PresentationValidator::check_non_transferable(&presentation.0).wasm_result()
   }
@@ -77,6 +81,7 @@ impl WasmPresentationValidator {
   ///
   /// # Errors
   /// Returns an error at the first credential with a credential subject not corresponding to the holder.
+  #[wasm_bindgen(js_name = checkHolderIsAlwaysSubject)]
   pub fn check_holder_is_always_subject(presentation: &WasmPresentation) -> Result<()> {
     PresentationValidator::check_holder_is_always_subject(&presentation.0).wasm_result()
   }

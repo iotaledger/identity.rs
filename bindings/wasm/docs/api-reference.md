@@ -93,9 +93,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -562,17 +562,16 @@ Options to declare validation criteria when validating credentials.
 **Kind**: global class  
 
 * [CredentialValidationOptions](#CredentialValidationOptions)
-    * [.new(options)](#CredentialValidationOptions.new) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+    * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
     * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
 
-<a name="CredentialValidationOptions.new"></a>
+<a name="new_CredentialValidationOptions_new"></a>
 
-### CredentialValidationOptions.new(options) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+### new CredentialValidationOptions(options)
 Creates a new `CredentialValidationOptions` from the given fields.
 
 Throws an error if any of the options are invalid.
 
-**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 
 | Param | Type |
 | --- | --- |
@@ -591,10 +590,10 @@ Creates a new `CredentialValidationOptions` with defaults.
 
 * [CredentialValidator](#CredentialValidator)
     * [.validate(credential, options, issuer, fail_fast)](#CredentialValidator.validate)
-    * [.check_structure(credential)](#CredentialValidator.check_structure)
-    * [.check_expires_on_or_after(credential, timestamp)](#CredentialValidator.check_expires_on_or_after)
-    * [.check_is_issued_on_or_before(credential, timestamp)](#CredentialValidator.check_is_issued_on_or_before)
-    * [.verify_signature(credential, trusted_issuers, options)](#CredentialValidator.verify_signature)
+    * [.checkStructure(credential)](#CredentialValidator.checkStructure)
+    * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
+    * [.checkIsIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIsIssuedOnOrBefore)
+    * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -625,9 +624,9 @@ errors will be accumulated in the returned error.
 | issuer | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 | fail_fast | <code>number</code> | 
 
-<a name="CredentialValidator.check_structure"></a>
+<a name="CredentialValidator.checkStructure"></a>
 
-### CredentialValidator.check\_structure(credential)
+### CredentialValidator.checkStructure(credential)
 Validates the semantic structure of the `Credential`.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
@@ -636,9 +635,9 @@ Validates the semantic structure of the `Credential`.
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
 
-<a name="CredentialValidator.check_expires_on_or_after"></a>
+<a name="CredentialValidator.checkExpiresOnOrAfter"></a>
 
-### CredentialValidator.check\_expires\_on\_or\_after(credential, timestamp)
+### CredentialValidator.checkExpiresOnOrAfter(credential, timestamp)
 Validate that the [Credential] expires on or after the specified `Timestamp`.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
@@ -648,9 +647,9 @@ Validate that the [Credential] expires on or after the specified `Timestamp`.
 | credential | [<code>Credential</code>](#Credential) | 
 | timestamp | [<code>Timestamp</code>](#Timestamp) | 
 
-<a name="CredentialValidator.check_is_issued_on_or_before"></a>
+<a name="CredentialValidator.checkIsIssuedOnOrBefore"></a>
 
-### CredentialValidator.check\_is\_issued\_on\_or\_before(credential, timestamp)
+### CredentialValidator.checkIsIssuedOnOrBefore(credential, timestamp)
 Validate that the [Credential] is issued on or before specified `Timestamp`.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
@@ -660,9 +659,9 @@ Validate that the [Credential] is issued on or before specified `Timestamp`.
 | credential | [<code>Credential</code>](#Credential) | 
 | timestamp | [<code>Timestamp</code>](#Timestamp) | 
 
-<a name="CredentialValidator.verify_signature"></a>
+<a name="CredentialValidator.verifySignature"></a>
 
-### CredentialValidator.verify\_signature(credential, trusted_issuers, options)
+### CredentialValidator.verifySignature(credential, trusted_issuers, options)
 Verify the signature using the DID Document of a trusted issuer.
 
 # Errors
@@ -2131,6 +2130,7 @@ Parses the provided string to a `Network`.
     * [new Presentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_Presentation_new)
     * _instance_
         * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
+        * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
     * _static_
         * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
 
@@ -2149,6 +2149,12 @@ Parses the provided string to a `Network`.
 
 ### presentation.toJSON() ⇒ <code>any</code>
 Serializes a `Presentation` object as a JSON object.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+verifiableCredential"></a>
+
+### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+Get a copy of the credentials contained in the presentation
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
@@ -2170,17 +2176,16 @@ Options to declare validation criteria when validating presentation.
 **Kind**: global class  
 
 * [PresentationValidationOptions](#PresentationValidationOptions)
-    * [.new(options)](#PresentationValidationOptions.new) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+    * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
     * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
 
-<a name="PresentationValidationOptions.new"></a>
+<a name="new_PresentationValidationOptions_new"></a>
 
-### PresentationValidationOptions.new(options) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+### new PresentationValidationOptions(options)
 Creates a new `PresentationValidationOptions` from the given fields.
 
 Throws an error if any of the options are invalid.
 
-**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 
 | Param | Type |
 | --- | --- |
@@ -2199,10 +2204,10 @@ Creates a new `PresentationValidationOptions` with defaults.
 
 * [PresentationValidator](#PresentationValidator)
     * [.validate(presentation, options, holder, issuers, fail_fast)](#PresentationValidator.validate)
-    * [.verify_presentation_signature(presentation, holder, options)](#PresentationValidator.verify_presentation_signature)
-    * [.check_structure(presentation)](#PresentationValidator.check_structure)
-    * [.check_non_transferable(presentation)](#PresentationValidator.check_non_transferable)
-    * [.check_holder_is_always_subject(presentation)](#PresentationValidator.check_holder_is_always_subject)
+    * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
+    * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
+    * [.checkNonTransferable(presentation)](#PresentationValidator.checkNonTransferable)
+    * [.checkHolderIsAlwaysSubject(presentation)](#PresentationValidator.checkHolderIsAlwaysSubject)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -2235,9 +2240,9 @@ errors will be accumulated in the returned error.
 | issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
 | fail_fast | <code>number</code> | 
 
-<a name="PresentationValidator.verify_presentation_signature"></a>
+<a name="PresentationValidator.verifyPresentationSignature"></a>
 
-### PresentationValidator.verify\_presentation\_signature(presentation, holder, options)
+### PresentationValidator.verifyPresentationSignature(presentation, holder, options)
 Verify the presentation's signature using the resolved document of the holder
 
 # Errors
@@ -2252,9 +2257,9 @@ property. Otherwise signature verification will be attempted and an error is ret
 | holder | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
-<a name="PresentationValidator.check_structure"></a>
+<a name="PresentationValidator.checkStructure"></a>
 
-### PresentationValidator.check\_structure(presentation)
+### PresentationValidator.checkStructure(presentation)
 Validates the semantic structure of the [Presentation].
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
@@ -2263,9 +2268,9 @@ Validates the semantic structure of the [Presentation].
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
-<a name="PresentationValidator.check_non_transferable"></a>
+<a name="PresentationValidator.checkNonTransferable"></a>
 
-### PresentationValidator.check\_non\_transferable(presentation)
+### PresentationValidator.checkNonTransferable(presentation)
 Validates that the nonTransferable property is met.
 
 # Errors
@@ -2277,9 +2282,9 @@ Returns an error at the first credential requiring a nonTransferable property th
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
-<a name="PresentationValidator.check_holder_is_always_subject"></a>
+<a name="PresentationValidator.checkHolderIsAlwaysSubject"></a>
 
-### PresentationValidator.check\_holder\_is\_always\_subject(presentation)
+### PresentationValidator.checkHolderIsAlwaysSubject(presentation)
 Validates that the presentation only contains credentials where the credential subject is the holder.
 
 # Errors
@@ -3032,13 +3037,13 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 
