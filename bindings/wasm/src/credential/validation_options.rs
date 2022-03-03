@@ -1,13 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::error::Result;
+use crate::error::WasmResult;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::FailFast;
 use identity::iota::PresentationValidationOptions;
 use identity::iota::SubjectHolderRelationship;
-//use identity::iota::PresentationValidationOptions;
-use crate::error::Result;
-use crate::error::WasmResult;
+use serde_repr::Deserialize_repr;
+use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = CredentialValidationOptions)]
@@ -30,6 +31,18 @@ impl WasmCredentialValidationOptions {
   #[wasm_bindgen]
   pub fn default() -> WasmCredentialValidationOptions {
     WasmCredentialValidationOptions::from(CredentialValidationOptions::default())
+  }
+
+  /// Serializes a `CredentialValidationOptions` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `CredentialValidationOptions` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmCredentialValidationOptions> {
+    json.into_serde().map(Self).wasm_result()
   }
 }
 
@@ -66,6 +79,18 @@ impl WasmPresentationValidationOptions {
   pub fn default() -> WasmPresentationValidationOptions {
     WasmPresentationValidationOptions::from(PresentationValidationOptions::default())
   }
+
+  /// Serializes a `PresentationValidationOptions` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `PresentationValidationOptions` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmPresentationValidationOptions> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<PresentationValidationOptions> for WasmPresentationValidationOptions {
@@ -81,9 +106,9 @@ impl From<WasmPresentationValidationOptions> for PresentationValidationOptions {
 }
 
 /// Declares how a credential subject must relate to the presentation holder.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = SubjectHolderRelationship)]
-#[non_exhaustive]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
 pub enum WasmSubjectHolderRelationship {
   /// Declare that the holder must always match the subject.
   AlwaysSubject = 0,

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, Duration, Presentation, Credential, FailFast, Resolver, PresentationValidator, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, Duration, Presentation, Credential, FailFast, Resolver, PresentationValidator, CredentialValidator, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -39,12 +39,10 @@ async function createVP(clientConfig) {
 
     // Convert the Verifiable Presentation to JSON before "exchanging" with a verifier
     const signedVpJSON = signedVp.toJSON();
-    console.log(`serialized presentation`);
 
 
     // A Verifier deserializes the received presentation before verifying it 
     const presentation = Presentation.fromJSON(signedVpJSON); 
-    console.log(`deserialized presentation`);
 
     // In order to validate presentations and credentials one needs to resolve the DID Documents of 
     // the presentation holder and of credential issuers. This is something the `Resolver` can help with.  
@@ -77,8 +75,6 @@ async function createVP(clientConfig) {
 
     // Declare that any credential contained in the presentation are not allowed to expire within the next 10 hours:
     const earliestExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
-    console.log(earliestExpiryDate);
-    console.log(`attempting to create credential validation options`);
     const credentialValidationOptions = new CredentialValidationOptions( {
         earliestExpiryDate: earliestExpiryDate,
     });
@@ -86,7 +82,6 @@ async function createVP(clientConfig) {
     // Declare that the presentation's holder must always be the subject of a credential in the presentation. 
     const subjectHolderRelationship = SubjectHolderRelationship.AlwaysSubject; 
 
-    console.log(`attempting to create presentation validation options`);
     const presentationValidationOptions = new PresentationValidationOptions( {
         sharedValidationOptions: credentialValidationOptions,
         presentationVerifierOptions: presentationVerifierOptions,
@@ -94,7 +89,6 @@ async function createVP(clientConfig) {
     });
 
 
-    console.log(`attemtping to verify presentation`);
     // Validate the presentation and all the credentials included in it according to the validation options 
     await resolver.verifyPresentation(
         presentation,
@@ -138,7 +132,9 @@ async function createVP(clientConfig) {
         })
         );
     // Verify the issuer's signatures 
-    for (credential in presentation.verifiableCredential()) {
+
+    const credentials = presentation.verifiableCredential(); 
+    for (let credential of credentials){
         CredentialValidator.verifySignature(
             credential,
             resolvedIssuerDocs, 
@@ -146,7 +142,7 @@ async function createVP(clientConfig) {
         );
     }
 
-    // Since no errors were thrown by `verifyPresentation` we know that the validation was successful. 
+    // Since no errors were thrown by the validators we know that the validation was successful. 
     console.log(`Successful custom VP validation`);
 
 }

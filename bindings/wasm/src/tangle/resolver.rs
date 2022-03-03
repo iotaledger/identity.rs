@@ -305,9 +305,9 @@ impl WasmResolver {
     &self,
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
+    fail_fast: WasmFailFast,
     holder: OptionResolvedDocument,
     issuers: OptionArrayResolvedDocument,
-    fail_fast: WasmFailFast,
   ) -> Result<PromiseVoid> {
     // TODO: reimplemented function to avoid cloning the entire presentation and validation options.
     // Would be solved with Rc internal representation, pending memory leak discussions.

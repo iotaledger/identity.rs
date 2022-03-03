@@ -56,15 +56,16 @@ impl CredentialValidationOptions {
 ///
 /// See [`PresentationValidationOptions::subject_holder_relationship`](PresentationValidationOptions::
 /// subject_holder_relationship()).
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[non_exhaustive]
+// Need to use serde_repr to make this work with duck typed interfaces in the Wasm bindings.
+#[derive(Debug, Clone, Copy, serde_repr::Serialize_repr, serde_repr::Deserialize_repr)]
+#[repr(u8)]
 pub enum SubjectHolderRelationship {
   /// Declare that the holder must always match the subject.
-  AlwaysSubject,
+  AlwaysSubject = 0,
   /// Declare that the holder must match the subject on credentials with the nonTransferable property set.
-  SubjectOnNonTransferable,
+  SubjectOnNonTransferable = 1,
   /// Declares that the subject is not required to have any kind of relationship to the holder.  
-  Any,
+  Any = 2,
 }
 
 impl Default for SubjectHolderRelationship {

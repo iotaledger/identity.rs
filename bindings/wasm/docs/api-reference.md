@@ -563,7 +563,11 @@ Options to declare validation criteria when validating credentials.
 
 * [CredentialValidationOptions](#CredentialValidationOptions)
     * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
-    * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+    * _instance_
+        * [.toJSON()](#CredentialValidationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+        * [.fromJSON(json)](#CredentialValidationOptions.fromJSON) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
 
 <a name="new_CredentialValidationOptions_new"></a>
 
@@ -577,12 +581,29 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>ICredentialValidationOptions</code> | 
 
+<a name="CredentialValidationOptions+toJSON"></a>
+
+### credentialValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes a `CredentialValidationOptions` as a JSON object.
+
+**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 <a name="CredentialValidationOptions.default"></a>
 
 ### CredentialValidationOptions.default() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
 Creates a new `CredentialValidationOptions` with defaults.
 
 **Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+<a name="CredentialValidationOptions.fromJSON"></a>
+
+### CredentialValidationOptions.fromJSON(json) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+Deserializes a `CredentialValidationOptions` from a JSON object.
+
+**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="CredentialValidator"></a>
 
 ## CredentialValidator
@@ -2177,7 +2198,11 @@ Options to declare validation criteria when validating presentation.
 
 * [PresentationValidationOptions](#PresentationValidationOptions)
     * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
-    * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+    * _instance_
+        * [.toJSON()](#PresentationValidationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+        * [.fromJSON(json)](#PresentationValidationOptions.fromJSON) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
 
 <a name="new_PresentationValidationOptions_new"></a>
 
@@ -2191,12 +2216,29 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>IPresentationValidationOptions</code> | 
 
+<a name="PresentationValidationOptions+toJSON"></a>
+
+### presentationValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes a `PresentationValidationOptions` as a JSON object.
+
+**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 <a name="PresentationValidationOptions.default"></a>
 
 ### PresentationValidationOptions.default() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
 Creates a new `PresentationValidationOptions` with defaults.
 
 **Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+<a name="PresentationValidationOptions.fromJSON"></a>
+
+### PresentationValidationOptions.fromJSON(json) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+Deserializes a `PresentationValidationOptions` from a JSON object.
+
+**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="PresentationValidator"></a>
 
 ## PresentationValidator
@@ -2524,7 +2566,7 @@ Deserializes a `Document` object from a JSON object.
     * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
     * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.verifyCredential(credential, options, fail_fast)](#Resolver+verifyCredential) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.verifyPresentation(presentation, options, holder, issuers, fail_fast)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -2661,7 +2703,7 @@ the returned error.
 
 <a name="Resolver+verifyPresentation"></a>
 
-### resolver.verifyPresentation(presentation, options, holder, issuers, fail_fast) ⇒ <code>Promise.&lt;void&gt;</code>
+### resolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
 Verifies a `Presentation`.
 
 This method validates the following properties in accordance with `options`
@@ -2692,9 +2734,9 @@ validation errors will be accumulated in the returned error.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| fail_fast | <code>number</code> | 
 | holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>null</code> | 
 | issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>null</code> | 
-| fail_fast | <code>number</code> | 
 
 <a name="ResolverBuilder"></a>
 
@@ -3036,7 +3078,11 @@ See `IVerifierOptions`.
 
 * [VerifierOptions](#VerifierOptions)
     * [new VerifierOptions(options)](#new_VerifierOptions_new)
-    * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+    * _instance_
+        * [.toJSON()](#VerifierOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+        * [.fromJSON(json)](#VerifierOptions.fromJSON) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
 
 <a name="new_VerifierOptions_new"></a>
 
@@ -3050,12 +3096,29 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>IVerifierOptions</code> | 
 
+<a name="VerifierOptions+toJSON"></a>
+
+### verifierOptions.toJSON() ⇒ <code>any</code>
+Serializes a `VerifierOptions` as a JSON object.
+
+**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="VerifierOptions.default"></a>
 
 ### VerifierOptions.default() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
+<a name="VerifierOptions.fromJSON"></a>
+
+### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+Deserializes a `VerifierOptions` from a JSON object.
+
+**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
