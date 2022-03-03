@@ -6,6 +6,7 @@
 //!
 //! cargo run --example create_vp
 
+use identity::core::Duration;
 use identity::core::FromJson;
 use identity::core::Timestamp;
 use identity::core::ToJson;
@@ -115,7 +116,7 @@ pub async fn low_level_validation(
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
   // Issue a Verifiable Presentation with a newly created DID Document
   // signed with a challenge from the requester:
   let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
@@ -134,7 +135,13 @@ async fn main() -> Result<()> {
 
   // Do not allow credentials that expire within the next 10 hours
   let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
-    .earliest_expiry_date(Timestamp::from_unix(Timestamp::now_utc().to_unix() + 10 * 60 * 60)?);
+    .earliest_expiry_date(
+      Timestamp::now_utc()
+        .checked_add(Duration::hours(10))
+        .ok_or(anyhow::anyhow!(
+          "10 hours later than UTC_now was evaluated to be later than 9999AD"
+        ))?,
+    );
 
   let presentation_validation_options = PresentationValidationOptions::default()
     .presentation_verifier_options(presentation_verifier_options.clone())
