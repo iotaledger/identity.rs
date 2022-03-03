@@ -47,6 +47,18 @@ impl WasmTimestamp {
   pub fn checked_sub(self, duration: WasmDuration) -> Option<WasmTimestamp> {
     self.0.checked_sub(duration.0).map(WasmTimestamp)
   }
+
+  /// Serializes a `Timestamp` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `Timestamp` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmTimestamp> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<Timestamp> for WasmTimestamp {
