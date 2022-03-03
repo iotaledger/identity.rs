@@ -112,11 +112,33 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
               log::error!("unable to respond to synchronous request on endpoint `{endpoint}` due to: {error}");
             }
           }
-          Err(_) => todo!(),
+          Err(err) => {
+            if let Err(error) = send_response(
+              &mut commander,
+              StdResult::<(), RemoteSendError>::Err(err),
+              channel,
+              request_id,
+            )
+            .await
+            {
+              log::error!("unable to respond to synchronous request on endpoint `{endpoint}` due to: {error}");
+            }
+          }
         }
       }
       Err(err) => {
         log::error!("{}", err);
+
+        if let Err(error) = send_response(
+          &mut commander,
+          StdResult::<(), RemoteSendError>::Err(err),
+          channel,
+          request_id,
+        )
+        .await
+        {
+          log::error!("unable to respond to synchronous request on endpoint `{endpoint}` due to: {error}");
+        }
       }
     }
   }
@@ -129,7 +151,10 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest) {
     let result: StdResult<(), RemoteSendError> =
       match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
-        Err(error) => Err(RemoteSendError::DeserializationFailure(error.to_string())),
+        Err(error) => Err(RemoteSendError::DeserializationFailure {
+          location: "[generic DCPM deserialization]".to_owned(),
+          message: error.to_string(),
+        }),
         Ok(plaintext_msg) => {
           let thread_id = plaintext_msg.thread_id();
 

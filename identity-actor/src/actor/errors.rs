@@ -28,17 +28,11 @@ pub enum Error {
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
   #[non_exhaustive]
-  #[error("serialization failed in {location} due to: {source}")]
-  SerializationFailure {
-    location: String,
-    source: serde_json::Error,
-  },
+  #[error("serialization failed in {location} due to: {message}")]
+  SerializationFailure { location: String, message: String },
   #[non_exhaustive]
-  #[error("deserialization failed in {location} due to: {source}")]
-  DeserializationFailure {
-    location: String,
-    source: serde_json::Error,
-  },
+  #[error("deserialization failed in {location} due to: {message}")]
+  DeserializationFailure { location: String, message: String },
   #[error("thread with id `{0}` not found")]
   ThreadNotFound(ThreadId),
 }
@@ -53,10 +47,10 @@ pub enum RemoteSendError {
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
-  #[error("failed to serialize: {0}")]
-  SerializationFailure(String),
-  #[error("failed to deserialize: {0}")]
-  DeserializationFailure(String),
+  #[error("serialization failed in {location} due to: {message}")]
+  SerializationFailure { location: String, message: String },
+  #[error("deserialization failed in {location} due to: {message}")]
+  DeserializationFailure { location: String, message: String },
 }
 
 impl From<RemoteSendError> for Error {
@@ -65,8 +59,10 @@ impl From<RemoteSendError> for Error {
       RemoteSendError::UnknownRequest(req) => Error::UnknownRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
       RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
-      RemoteSendError::DeserializationFailure(_err) => todo!(), //Error::DeserializationFailure(err),
-      _ => todo!(),
+      RemoteSendError::DeserializationFailure { location, message } => {
+        Error::DeserializationFailure { location, message }
+      }
+      RemoteSendError::SerializationFailure { location, message } => Error::SerializationFailure { location, message },
     }
   }
 }

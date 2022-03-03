@@ -259,7 +259,7 @@ impl Actor {
     let dcpm_vec = serde_json::to_vec(&dcpm).map_err(|err| Error::SerializationFailure {
       // TODO: Could use `function_name` crate for these errors. Necessary?
       location: "[send_named_message]".to_owned(),
-      source: err,
+      message: err.to_string(),
     })?;
 
     let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
@@ -273,7 +273,12 @@ impl Actor {
       serde_json::from_slice::<serde_json::Value>(&response.0).expect("TODO")
     );
 
-    serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).expect("TODO")?;
+    serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).map_err(|err| {
+      Error::DeserializationFailure {
+        location: "[send_named_message]".to_owned(),
+        message: err.to_string(),
+      }
+    })??;
 
     Ok(())
   }
@@ -296,7 +301,11 @@ impl Actor {
   ) -> Result<REQ::Response> {
     let request_mode: RequestMode = request.request_mode();
 
-    let request_vec = serde_json::to_vec(&request).expect("TODO");
+    let request_vec = serde_json::to_vec(&request).map_err(|err| Error::SerializationFailure {
+      location: "[send_named_request]".to_owned(),
+      message: err.to_string(),
+    })?;
+
     let message = RequestMessage::new(name, request_mode, request_vec)?;
 
     log::debug!("Sending `{}` message", name);
@@ -308,8 +317,18 @@ impl Actor {
       serde_json::from_slice::<serde_json::Value>(&response.0).expect("TODO")
     );
 
-    let response = serde_json::from_slice::<StdResult<Vec<u8>, RemoteSendError>>(&response.0).expect("TODO")?;
-    Ok(serde_json::from_slice::<REQ::Response>(&response).expect("TODO"))
+    let response: Vec<u8> =
+      serde_json::from_slice::<StdResult<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {
+        Error::DeserializationFailure {
+          location: "[send_named_request]".to_owned(),
+          message: err.to_string(),
+        }
+      })??;
+
+    serde_json::from_slice::<REQ::Response>(&response).map_err(|err| Error::DeserializationFailure {
+      location: "[send_named_request]".to_owned(),
+      message: err.to_string(),
+    })
   }
 
   #[inline(always)]
@@ -338,8 +357,6 @@ impl Actor {
     }
   }
 
-  // TODO: This should take a T: DeserializeOwned to deserialize into and
-  // return a DidCommPlaintextMessage<T> (which requires changing that type)
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
@@ -351,7 +368,7 @@ impl Actor {
       let message: DidCommPlaintextMessage<T> =
         serde_json::from_slice(inbound_request.input.as_ref()).map_err(|err| Error::DeserializationFailure {
           location: "[await_message]".to_owned(),
-          source: err,
+          message: err.to_string(),
         })?;
 
       log::debug!("awaited message {}", inbound_request.endpoint);
