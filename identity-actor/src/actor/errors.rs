@@ -35,6 +35,8 @@ pub enum Error {
   DeserializationFailure { location: String, message: String },
   #[error("thread with id `{0}` not found")]
   ThreadNotFound(ThreadId),
+  #[error("awaiting message timed out on thread `{0}`")]
+  AwaitTimeout(ThreadId),
 }
 
 /// Errors that can occur on the remote actor while sending requests.

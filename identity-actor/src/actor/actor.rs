@@ -362,8 +362,20 @@ impl Actor {
     thread_id: &ThreadId,
   ) -> Result<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
+      // TODO: Make timeout configurable. Question is, should this be a per-actor setting or a method parameter?
+      // For convenience, the paramter can be the millis in u64, but still it could be annoying having to
+      // pass the same value on each invocation, thus a more global setting might make more sense?
+      // This could also be more easily tied to the timeout of the underlying RequestResponse protocol then,
+      // so they are equal, which they probably should be.
+      // https://docs.rs/libp2p/latest/libp2p/request_response/struct.RequestResponseConfig.html#method.set_request_timeout
+      // If custom await_message timeouts are deemed useful enough, then this underlying timeout could be set to a
+      // fairly high value.
+
       // Receival + Deserialization
-      let inbound_request = receiver.1.await.expect("TODO: (?) channel closed");
+      let inbound_request = tokio::time::timeout(std::time::Duration::from_millis(10_000), receiver.1)
+        .await
+        .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
+        .map_err(|_| Error::ThreadNotFound(receiver.0))?;
 
       let message: DidCommPlaintextMessage<T> =
         serde_json::from_slice(inbound_request.input.as_ref()).map_err(|err| Error::DeserializationFailure {
