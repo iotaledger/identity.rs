@@ -135,7 +135,7 @@ where
     crate::traits::request_handler_object_type_id::<OBJ>()
   }
 
-  fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Box<dyn Any + Send + Sync> {
+  fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
     // TODO: This is never called for hooks, panic instead?
     crate::traits::request_handler_clone_object::<OBJ>(object)
   }

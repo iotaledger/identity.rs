@@ -42,6 +42,8 @@ use super::actor_request::private::SyncMode;
 /// shared state of the associated handler functions.
 type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
 
+// TODO: Define a struct for the tuple, as it is unwieldy to read/work with.
+// TODO: Also define a type alias for `ObjectId` to `Uuid`.
 /// A map from a request name to the identifier of the shared state object
 /// and the method that handles that particular request.
 type HandlerMap = DashMap<Endpoint, (Uuid, Box<dyn RequestHandler>)>;
@@ -201,7 +203,7 @@ impl Actor {
         let object_id = handler_tuple.0;
 
         if let Some(object) = self.state.objects.get(&object_id) {
-          let object_clone = handler_tuple.1.clone_object(object.deref());
+          let object_clone = handler_tuple.1.clone_object(object.deref())?;
           Ok((handler_tuple, object_clone))
         } else {
           Err(RemoteSendError::HandlerInvocationError(format!(

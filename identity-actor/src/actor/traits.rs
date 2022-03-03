@@ -32,7 +32,7 @@ pub trait RequestHandler: Send + Sync {
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError>;
 
-  fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Box<dyn Any + Send + Sync>;
+  fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError>;
 }
 
 // Default implementations of some RequestHandler methods. These cannot be implemented on
@@ -88,8 +88,14 @@ pub fn request_handler_object_type_id<OBJ: 'static>() -> TypeId {
 #[inline(always)]
 pub fn request_handler_clone_object<OBJ: Clone + Send + Sync + 'static>(
   object: &Box<dyn Any + Send + Sync>,
-) -> Box<dyn Any + Send + Sync> {
-  // TODO: Unwrap?
+) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
   // Double indirection is unfortunately required - the downcast fails otherwise.
-  Box::new(object.downcast_ref::<OBJ>().unwrap().clone())
+  let object: &OBJ = object.downcast_ref::<OBJ>().ok_or_else(|| {
+    crate::RemoteSendError::HandlerInvocationError(format!(
+      "unable to downcast to type {} in order to clone the object",
+      std::any::type_name::<OBJ>()
+    ))
+  })?;
+
+  Ok(Box::new(object.clone()))
 }
