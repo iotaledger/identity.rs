@@ -2520,9 +2520,11 @@ Creates a new `SignatureOptions` with default options.
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
         * [.checkedAdd(duration)](#Timestamp+checkedAdd) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.checkedSub(duration)](#Timestamp+checkedSub) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.toJSON()](#Timestamp+toJSON) ⇒ <code>any</code>
     * _static_
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.fromJSON(json)](#Timestamp.fromJSON) ⇒ [<code>Timestamp</code>](#Timestamp)
 
 <a name="Timestamp+toRFC3339"></a>
 
@@ -2556,6 +2558,12 @@ Returns `null` if the operation leads to a timestamp not in the valid range for 
 | --- | --- |
 | duration | [<code>Duration</code>](#Duration) | 
 
+<a name="Timestamp+toJSON"></a>
+
+### timestamp.toJSON() ⇒ <code>any</code>
+Serializes a `Timestamp` as a JSON object.
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp.parse"></a>
 
 ### Timestamp.parse(input) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -2573,6 +2581,17 @@ Parses a `Timestamp` from the provided input string.
 Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp.fromJSON"></a>
+
+### Timestamp.fromJSON(json) ⇒ [<code>Timestamp</code>](#Timestamp)
+Deserializes a `Timestamp` from a JSON object.
+
+**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod
