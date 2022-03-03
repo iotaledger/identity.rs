@@ -1,6 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::Duration;
 use identity::core::Timestamp;
 use wasm_bindgen::prelude::*;
 
@@ -31,33 +32,73 @@ impl WasmTimestamp {
     self.0.to_rfc3339()
   }
 
-  /// Returns the `Timestamp` as a Unix timestamp.
-  #[wasm_bindgen(js_name = toUnix)]
-  #[allow(clippy::wrong_self_convention)]
-  pub fn to_unix(&self) -> i64 {
-    self.0.unix_timestamp()
+  /// Computes `self + duration`
+  ///
+  /// Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  #[wasm_bindgen(js_name = checkedAdd)]
+  pub fn checked_add(self, duration: WasmDuration) -> Option<WasmTimestamp> {
+    self.0.checked_add(duration.0).map(WasmTimestamp)
   }
 
-  /// Creates a new `Timestamp` from the given Unix timestamp.
+  /// Computes `self - duration`
   ///
-  /// The timestamp must be in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
-  ///
-  /// # Errors
-  /// [`Error::InvalidTimestamp`] if `seconds` is outside of the interval [-62167219200,253402300799].
-  pub fn from_unix(seconds: i64) -> Result<Self> {
-    let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds).map_err(time::error::Error::from)?;
-    // Reject years outside of the range 0000AD - 9999AD per Rfc3339
-    // upfront to prevent conversion errors in to_rfc3339().
-    // https://datatracker.ietf.org/doc/html/rfc3339#section-1
-    if !(0..10_000).contains(&offset_date_time.year()) {
-      return Err(time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into());
-    }
-    Ok(Self(offset_date_time))
+  /// Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+  #[wasm_bindgen(js_name = checkedSub)]
+  pub fn checked_sub(self, duration: WasmDuration) -> Option<WasmTimestamp> {
+    self.0.checked_sub(duration.0).map(WasmTimestamp)
   }
 }
 
 impl From<Timestamp> for WasmTimestamp {
   fn from(timestamp: Timestamp) -> Self {
     Self(timestamp)
+  }
+}
+
+/// A span of time.
+#[wasm_bindgen(js_name = Duration, inspectable)]
+pub struct WasmDuration(pub(crate) Duration);
+
+#[wasm_bindgen(js_class = Duration)]
+impl WasmDuration {
+  /// Create a new `Duration` with the given number of seconds.
+  #[wasm_bindgen]
+  pub fn seconds(seconds: u32) -> WasmDuration {
+    Self(Duration::seconds(seconds))
+  }
+  /// Create a new `Duration` with the given number of minutes.
+  #[wasm_bindgen]
+  pub fn minutes(minutes: u32) -> WasmDuration {
+    Self(Duration::minutes(minutes))
+  }
+
+  /// Create a new `Duration` with the given number of hours.
+  #[wasm_bindgen]
+  pub fn hours(hours: u32) -> WasmDuration {
+    Self(Duration::hours(hours))
+  }
+
+  /// Create a new `Duration` with the given number of days.
+  #[wasm_bindgen]
+  pub fn days(days: u32) -> WasmDuration {
+    Self(Duration::days(days))
+  }
+
+  /// Create a new `Duration` with the given number of weeks.
+  #[wasm_bindgen]
+  pub fn weeks(weeks: u32) -> WasmDuration {
+    Self(Duration::weeks(weeks))
+  }
+}
+
+impl From<Duration> for WasmDuration {
+  fn from(duration: Duration) -> Self {
+    Self(duration)
+  }
+}
+
+impl From<WasmDuration> for Duration {
+  fn from(duration: WasmDuration) -> Self {
+    duration.0
   }
 }
