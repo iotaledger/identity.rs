@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::borrow::Cow;
-use identity::core::Timestamp;
 
+use identity::core::Timestamp;
 use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
-use identity_wasm::common::WasmTimestamp;
 
+use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
