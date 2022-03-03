@@ -139,7 +139,7 @@ async fn main() -> anyhow::Result<()> {
       Timestamp::now_utc()
         .checked_add(Duration::hours(10))
         .ok_or(anyhow::anyhow!(
-          "10 hours later than UTC_now was evaluated to be later than 9999AD"
+          "10 hours later than UTC::now was evaluated to be later than 9999AD"
         ))?,
     );
 
