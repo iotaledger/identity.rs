@@ -19,7 +19,7 @@ use crate::RequestContext;
 use crate::Result as ActorResult;
 
 use super::termination::DidCommTermination;
-use crate::actor::actor_request::private::SyncMode;
+use crate::SyncMode;
 
 impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
 where

@@ -4,13 +4,12 @@
 #[allow(clippy::module_inception)]
 mod actor;
 mod actor_builder;
-pub(crate) mod actor_request;
+mod actor_request;
+mod config;
 mod endpoint;
 mod errors;
 mod handler;
-// TODO: Make all mods private, and pub(crate)-export the types instead?
-mod config;
-pub(crate) mod invocation;
+mod invocation;
 mod request_context;
 pub(crate) mod traits;
 
@@ -18,6 +17,7 @@ pub use actor::Actor;
 pub use actor::HandlerBuilder;
 pub(crate) use actor::HandlerObject;
 pub use actor_builder::ActorBuilder;
+pub(crate) use actor_request::private::SyncMode;
 pub use actor_request::ActorRequest;
 pub use actor_request::Asynchronous;
 pub use actor_request::RequestMode;
@@ -29,4 +29,8 @@ pub use errors::Error;
 pub use errors::RemoteSendError;
 pub use errors::Result;
 pub use handler::Handler;
+pub(crate) use invocation::AsynchronousInvocationStrategy;
+pub(crate) use invocation::InvocationStrategy;
+pub(crate) use invocation::SynchronousInvocationStrategy;
 pub use request_context::RequestContext;
+pub(crate) use traits::RequestHandler;

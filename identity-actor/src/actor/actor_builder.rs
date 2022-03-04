@@ -4,8 +4,6 @@
 use std::iter;
 use std::time::Duration;
 
-use crate::invocation::AsynchronousInvocationStrategy;
-use crate::invocation::SynchronousInvocationStrategy;
 use crate::p2p::behaviour::DidCommCodec;
 use crate::p2p::behaviour::DidCommProtocol;
 use crate::p2p::event_loop::EventLoop;
@@ -13,9 +11,11 @@ use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
 use crate::ActorConfig;
+use crate::AsynchronousInvocationStrategy;
 use crate::Error;
 use crate::RequestMode;
 use crate::Result;
+use crate::SynchronousInvocationStrategy;
 use dashmap::DashMap;
 use futures::channel::mpsc;
 use futures::AsyncRead;
