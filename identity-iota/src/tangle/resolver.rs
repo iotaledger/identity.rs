@@ -167,12 +167,12 @@ where
 
   /// Verifies a [`Credential`].
   ///
-  /// This method resolves the issuer's DID Document and validates the following properties in accordance with
-  /// `options`:
-  /// - The issuer's signature
-  /// - The expiration date
-  /// - The issuance date
-  /// - The credential's semantic structure.
+  /// This method resolves the issuer's DID Document and validates the following properties in accordance
+  /// with the given `options`:
+  /// - the semantic structure of the credential,
+  /// - the issuer's signature,
+  /// - the expiration date,
+  /// - the issuance date.
   ///
   /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
   /// [`CredentialValidator::validate`](CredentialValidator::validate()) in order to avoid an unnecessary resolution.
@@ -183,14 +183,13 @@ where
   /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Resolution
-  /// If `issuer` is None then this  DID Document will be resolved. If you already have up to
-  /// an up to date version of this document you may want to instead use
+  /// The issuer's DID Document is optionally resolved if not given.
+  /// If you already have an up-to-date version of this document you may alternatively use
   /// [`CredentialValidator::validate`](CredentialValidator::validate()).
   ///
   /// # Errors
-  /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-  /// an attempt will be made to validate the credential. If any validated condition is not satisfied
-  /// an error will be returned.
+  /// Errors from resolving the issuer DID Document will be returned immediately.
+  /// Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
   pub async fn verify_credential<U: Serialize>(
     &self,
     credential: &Credential<U>,
@@ -208,12 +207,11 @@ where
 
   /// Verifies a [`Presentation`].
   ///
-  /// This method validates the following properties in accordance with `options`
-  /// - The holder's signature,
-  /// - The relationship between the holder and the credential subjects,
-  /// - The semantic structure of the presentation,
-  /// - Some properties of the credentials (see [`CredentialValidator::validate` for more
-  ///   information](CredentialValidator::validate())).
+  /// This method validates the following properties in accordance with the given `options`:
+  /// - the semantic structure of the presentation,
+  /// - the holder's signature,
+  /// - the relationship between the holder and the credential subjects,
+  /// - the signatures and some properties of the constituent credentials (see [`CredentialValidator::validate`]).
   ///  
   /// # Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
@@ -221,20 +219,21 @@ where
   /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Resolution
-  /// If `holder` and/or `issuers` is None then this/these DID Document(s) will be resolved. If you already have up to
-  /// date versions of all of these DID Documents you may want to instead use
-  /// [`PresentationValidator::validate`](PresentationValidator::validate()).
+  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+  /// If you already have up-to-date versions of these DID Documents, you may want
+  /// to use [`PresentationValidator::validate`].
+  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`].
   ///
   /// # Errors
-  /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
-  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If any validated
-  /// condition is not satisfied an error will be returned.
+  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+  /// Otherwise, errors from validating the presentation and its credentials will be returned
+  /// according to the `fail_fast` parameter.
   pub async fn verify_presentation<U: Serialize, V: Serialize>(
     &self,
     presentation: &Presentation<U, V>,
-    options: &PresentationValidationOptions,
     holder: Option<&ResolvedIotaDocument>,
     issuers: Option<&[ResolvedIotaDocument]>,
+    options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> Result<()> {
     match (holder, issuers) {

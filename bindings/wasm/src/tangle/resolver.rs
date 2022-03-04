@@ -232,12 +232,12 @@ impl WasmResolver {
 
   /// Verifies a `Credential`.
   ///
-  /// This method resolves the issuer's DID Document and validates the following properties in accordance with
-  /// `options`:
-  /// - The issuer's signature
-  /// - The expiration date
-  /// - The issuance date
-  /// - The credential's semantic structure.
+  /// This method resolves the issuer's DID Document and validates the following properties in accordance
+  /// with the given `options`:
+  /// - the semantic structure of the credential,
+  /// - the issuer's signature,
+  /// - the expiration date,
+  /// - the issuance date.
   ///
   /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
   /// `CredentialValidator::validate` in order to avoid an unnecessary resolution.
@@ -252,9 +252,8 @@ impl WasmResolver {
   /// an up to date version of this document you may want to instead use `CredentialValidator::validate`.
   ///
   /// # Errors
-  /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-  /// an attempt will be made to validate the credential. If any validated condition is not satisfied
-  /// an error will be returned.
+  /// Errors from resolving the issuer DID Document will be returned immediately.
+  /// Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
   #[wasm_bindgen(js_name = verifyCredential)]
   pub fn verify_credential(
     &self,
@@ -301,9 +300,9 @@ impl WasmResolver {
   /// `PresentationValidator::validate`.
   ///
   /// # Errors
-  /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
-  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If any validated
-  /// condition is not satisfied an error will be returned.
+  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+  /// Otherwise, errors from validating the presentation and its credentials will be returned
+  /// according to the `fail_fast` parameter.
   #[wasm_bindgen(js_name = verifyPresentation)]
   pub fn verify_presentation(
     &self,
@@ -325,9 +324,9 @@ impl WasmResolver {
       resolver
         .verify_presentation(
           &presentation.0,
-          &options.0,
           holder.as_ref(),
           issuers.as_deref(),
+          &options.0,
           fail_fast.into(),
         )
         .await

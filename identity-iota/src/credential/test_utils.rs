@@ -19,12 +19,8 @@ use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 
 pub(super) fn generate_document_with_keys() -> (IotaDocument, KeyPair) {
-  // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-
-  // Create a DID Document (an identity) from the generated key pair.
   let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-
   (document, keypair)
 }
 

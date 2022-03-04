@@ -49,10 +49,10 @@ pub enum Error {
   /// Caused by a single concern credential or presentation validation method failing.
   #[error("A validation unit failed")]
   IsolatedValidationError(#[from] crate::credential::ValidationError),
-  /// Caused by a failure to validate a credential.  
+  /// Caused by one or more failures when validating a credential.  
   #[error("credential validation failed")]
-  CredentialValidationError(#[from] crate::credential::AccumulatedCredentialValidationError),
-  /// Caused by a failure to validate a presentation.
+  CredentialValidationError(#[from] crate::credential::CompoundCredentialValidationError),
+  /// Caused by one or more failures when validating a presentation.
   #[error("presentation validation failed")]
   PresentationValidationError(#[from] crate::credential::CompoundPresentationValidationError),
 }

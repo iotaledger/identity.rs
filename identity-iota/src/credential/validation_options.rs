@@ -6,23 +6,23 @@ use identity_did::verifiable::VerifierOptions;
 use serde::Deserialize;
 use serde::Serialize;
 
-/// Options to declare validation criteria in validation methods such as
-/// [`CredentialValidator::full_validation`](super::CredentialValidator::full_validation()) and
-/// [`Resolver::verify_credential`](crate::tangle::Resolver::verify_credential()).
+/// Options to declare validation criteria for credentials.
 #[non_exhaustive]
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CredentialValidationOptions {
   /// Declares that the credential is **not** considered valid if it expires before this
   /// [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
   #[serde(default)]
   pub earliest_expiry_date: Option<Timestamp>,
   /// Declares that the credential is **not** considered valid if it was issued later than this
   /// [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
   #[serde(default)]
   pub latest_issuance_date: Option<Timestamp>,
-  /// Declare that the credential's signature must be verified according to these
-  /// [VerifierOptions].
+
+  /// Options which affect the verification of the signature on the credential.
   #[serde(default)]
   pub verifier_options: VerifierOptions,
 }
@@ -33,36 +33,40 @@ impl CredentialValidationOptions {
     Self::default()
   }
 
-  /// Declare that a credential may expire no later than the given `timestamp`.
+  /// Declare that the credential is **not** considered valid if it expires before this [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
   pub fn earliest_expiry_date(mut self, timestamp: Timestamp) -> Self {
     self.earliest_expiry_date = Some(timestamp);
     self
   }
-  /// Declare that a credential may expire no later than the given `timestamp`.
+
+  /// Declare that the credential is **not** considered valid if it was issued later than this [`Timestamp`].
+  /// Uses the current datetime during validation if not set.
   pub fn latest_issuance_date(mut self, timestamp: Timestamp) -> Self {
     self.latest_issuance_date = Some(timestamp);
     self
   }
 
-  /// Declare that the signature of a credential is to be verified according to the given
-  /// `options`.
+  /// Set options which affect the verification of the signature on the credential.
   pub fn verifier_options(mut self, options: VerifierOptions) -> Self {
     self.verifier_options = options;
     self
   }
 }
 
-/// Declares how a credential subject must relate to the presentation holder.
+/// Declares how credential subjects must relate to the presentation holder during validation.
+/// See [`PresentationValidationOptions::subject_holder_relationship()`].
 ///
-/// See [`PresentationValidationOptions::subject_holder_relationship`](PresentationValidationOptions::
-/// subject_holder_relationship()).
+/// See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 // Need to use serde_repr to make this work with duck typed interfaces in the Wasm bindings.
 #[derive(Debug, Clone, Copy, serde_repr::Serialize_repr, serde_repr::Deserialize_repr)]
 #[repr(u8)]
 pub enum SubjectHolderRelationship {
-  /// Declare that the holder must always match the subject.
+  /// The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+  /// This is the variant returned by [Self::default](Self::default()) and the default used in
+  /// [`PresentationValidationOptions`].
   AlwaysSubject = 0,
-  /// Declare that the holder must match the subject on credentials with the nonTransferable property set.
+  /// The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
   SubjectOnNonTransferable = 1,
   /// Declares that the subject is not required to have any kind of relationship to the holder.  
   Any = 2,
@@ -90,12 +94,10 @@ pub enum FailFast {
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]
 pub struct PresentationValidationOptions {
-  /// Declares that the credentials of the presentation must all be
-  /// validated according to these [`CredentialValidationOptions`].
+  /// Options which affect the validation of *all* credentials in the presentation.
   #[serde(default)]
   pub shared_validation_options: CredentialValidationOptions,
-  /// Declares that the presentation's signature is to be verified according to these
-  /// [`VerifierOptions`].
+  /// Options which affect the verification of the signature on the presentation.
   #[serde(default)]
   pub presentation_verifier_options: VerifierOptions,
   /// Declares how the presentation's credential subjects must relate to the holder.
@@ -108,20 +110,19 @@ impl PresentationValidationOptions {
   pub fn new() -> Self {
     Self::default()
   }
-  /// Declare that all the presentation's credentials are all to be validated according to the
-  /// given `options`.
+
+  /// Set options which affect the validation of *all* credentials in the presentation.
   pub fn shared_validation_options(mut self, options: CredentialValidationOptions) -> Self {
     self.shared_validation_options = options;
     self
   }
-  /// Declare that the presentation's signature is to be verified according to the given
-  /// `options`.
+  /// Set options which affect the verification of the signature on the presentation.
   pub fn presentation_verifier_options(mut self, options: VerifierOptions) -> Self {
     self.presentation_verifier_options = options;
     self
   }
 
-  /// Declare how the presentation's credential subjects must relate to the holder.
+  /// Declares how the presentation's holder must relate to the credential subjects.
   pub fn subject_holder_relationship(mut self, options: SubjectHolderRelationship) -> Self {
     self.subject_holder_relationship = options;
     self

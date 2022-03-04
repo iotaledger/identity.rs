@@ -105,16 +105,21 @@ impl From<WasmPresentationValidationOptions> for PresentationValidationOptions {
   }
 }
 
-/// Declares how a credential subject must relate to the presentation holder.
+/// Declares how credential subjects must relate to the presentation holder during validation.
+/// See `PresentationValidationOptions::subject_holder_relationship`.
+///
+/// See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 #[wasm_bindgen(js_name = SubjectHolderRelationship)]
 #[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr)]
 #[repr(u8)]
 pub enum WasmSubjectHolderRelationship {
-  /// Declare that the holder must always match the subject.
+  /// The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+  /// This variant is the default used if no other variant is specified when constructing a new
+  /// `PresentationValidationOptions`.
   AlwaysSubject = 0,
-  /// Declare that the holder must match the subject on credentials with the nonTransferable property set.
+  /// The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
   SubjectOnNonTransferable = 1,
-  /// Declares that the subject is not required to have any kind of relationship to the holder.  
+  /// The holder is not required to have any kind of relationship to any credential subject.
   Any = 2,
 }
 
@@ -142,13 +147,15 @@ extern "C" {
 const I_CREDENTIAL_VALIDATION_OPTIONS: &'static str = r#"
 /** Holds options to create a new `CredentialValidationOptions`. */
 interface ICredentialValidationOptions {
-    /** Declare that the credential is **not** considered valid if it expires before this */
+    /**  Declare that the credential is **not** considered valid if it expires before this `Timestamp`.
+     * Uses the current datetime during validation if not set. */
     readonly earliestExpiryDate?: Timestamp;
 
-    /** Declare that the credential is **not** considered valid if it was issued later than this */
+    /** Declare that the credential is **not** considered valid if it was issued later than this `Timestamp`.
+     * Uses the current datetime during validation if not set. */
     readonly latestIssuanceDate?: Timestamp;
 
-    /** Declare that the credential's signature must be verified according to these `VerifierOptions`. */
+    /** Options which affect the verification of the signature on the credential. */
     readonly verifierOptions?: VerifierOptions;
 
 }"#;
@@ -160,7 +167,7 @@ interface IPresentationValidationOptions {
     /** Declare that the credentials of the presentation must all be validated according to these `CredentialValidationOptions`. */
     readonly sharedValidationOptions?: CredentialValidationOptions;
 
-    /** Declare that the presentation's signature is to be verified according to these `VerifierOptions`. */
+    /** Options which affect the verification of the signature on the presentation. */
     readonly presentationVerifierOptions?: VerifierOptions;
 
     /** Declare how the presentation's credential subjects must relate to the holder. */

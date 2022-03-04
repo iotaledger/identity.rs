@@ -9,7 +9,7 @@ use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
 
-use super::errors::AccumulatedCredentialValidationError;
+use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
@@ -32,11 +32,11 @@ impl PresentationValidator {
   /// Validate a [`Presentation`].
   ///
   /// The following properties are validated according to `options`:
-  /// - The holder's signature,
-  /// - The relationship between the subject and the holder,
-  /// - The semantic structure
-  /// - Some properties of the credentials  (see
-  /// [`CredentialValidator::validate` for more information](CredentialValidator::validate())).
+  /// - the semantic structure of the presentation,
+  /// - the holder's signature,
+  /// - the relationship between the holder and the credential subjects,
+  /// - the signatures and some properties of the constituent credentials (see
+  /// [`CredentialValidator::validate`]).
   ///
   /// # Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
@@ -103,7 +103,7 @@ impl PresentationValidator {
       .enumerate()
       .filter_map(|(position, result)| result.err().map(|error| (position, error)));
 
-    let credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError> = credential_errors_iter
+    let credential_errors: BTreeMap<usize, CompoundCredentialValidationError> = credential_errors_iter
       .take(match fail_fast {
         FailFast::FirstError => {
           if !presentation_validation_errors.is_empty() {
@@ -133,11 +133,11 @@ impl PresentationValidator {
     }
   }
 
-  /// Verify the presentation's signature using the resolved document of the holder
+  /// Verify the presentation's signature using the resolved document of the holder.
   ///
   /// # Errors
-  /// Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
-  /// property. Otherwise signature verification will be attempted and an error is returned upon failure.
+  /// Fails if the `holder` does not match the `presentation`'s holder property.
+  /// Fails if signature verification against the holder document fails.
   pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
     holder: &ResolvedIotaDocument,
@@ -271,8 +271,8 @@ mod tests {
     builder.build().unwrap()
   }
 
-  // setup code shared among many of these tests
-  struct Setup {
+  // Convenience struct for setting up tests.
+  struct TestSetup {
     // issuer of credential_foo
     issuer_foo_doc: IotaDocument,
     issuer_foo_key: KeyPair,
@@ -286,7 +286,7 @@ mod tests {
     credential_bar: Credential,
   }
 
-  impl Setup {
+  impl TestSetup {
     // creates unsigned data necessary for many of these tests
     fn new() -> Self {
       let (issuer_foo_doc, issuer_foo_key) = test_utils::generate_document_with_keys();
@@ -318,7 +318,7 @@ mod tests {
     // creates signed data necessary for many of these tests
     fn new_with_signed_credentials() -> Self {
       let mut setup = Self::new();
-      let Setup {
+      let TestSetup {
         ref mut credential_foo,
         ref issuer_foo_doc,
         ref issuer_foo_key,
@@ -351,7 +351,7 @@ mod tests {
 
   #[test]
   fn test_full_validation() {
-    let Setup {
+    let TestSetup {
       subject_foo_doc,
       subject_foo_key,
       credential_foo,
@@ -359,7 +359,7 @@ mod tests {
       issuer_foo_doc,
       issuer_bar_doc,
       ..
-    } = Setup::new_with_signed_credentials();
+    } = TestSetup::new_with_signed_credentials();
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
@@ -405,7 +405,7 @@ mod tests {
 
   #[test]
   fn test_full_validation_invalid_holder_signature() {
-    let Setup {
+    let TestSetup {
       issuer_foo_doc,
       issuer_bar_doc,
       subject_foo_doc,
@@ -413,7 +413,7 @@ mod tests {
       credential_foo,
       credential_bar,
       ..
-    } = Setup::new_with_signed_credentials();
+    } = TestSetup::new_with_signed_credentials();
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
@@ -478,7 +478,7 @@ mod tests {
   #[test]
   fn test_full_validation_invalid_credential() {
     // create a first credential
-    let Setup {
+    let TestSetup {
       issuer_foo_doc,
       issuer_bar_doc,
       subject_foo_doc,
@@ -486,7 +486,7 @@ mod tests {
       credential_foo,
       credential_bar,
       ..
-    } = Setup::new_with_signed_credentials();
+    } = TestSetup::new_with_signed_credentials();
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
     // sign the presentation using subject_foo's document and private key
@@ -536,13 +536,13 @@ mod tests {
   #[test]
   fn test_subject_holder_relationship_check() {
     // create a first credential
-    let Setup {
+    let TestSetup {
       issuer_foo_doc,
       subject_foo_doc,
       subject_foo_key,
       credential_foo,
       ..
-    } = Setup::new_with_signed_credentials();
+    } = TestSetup::new_with_signed_credentials();
 
     // note we only extracted `credential_foo` from the setup routine. This is because we want another `credential_bar`
     // for this test.
@@ -652,7 +652,7 @@ mod tests {
   #[test]
   fn test_full_validation_multiple_errors_fail_fast() {
     // create credentials
-    let Setup {
+    let TestSetup {
       issuer_foo_doc,
       issuer_bar_doc,
       subject_foo_doc,
@@ -660,7 +660,7 @@ mod tests {
       credential_bar,
       credential_foo,
       ..
-    } = Setup::new_with_signed_credentials();
+    } = TestSetup::new_with_signed_credentials();
 
     // create a presentation where the subject of the second credential is the holder.
     // This violates the non transferable property of the first credential.
@@ -732,7 +732,7 @@ mod tests {
   #[test]
   fn test_validate_presentation_multiple_errors_accumulate_errors() {
     // create credentials
-    let Setup {
+    let TestSetup {
       issuer_foo_doc,
       issuer_bar_doc,
       subject_foo_doc,
@@ -740,7 +740,7 @@ mod tests {
       credential_foo,
       credential_bar,
       ..
-    } = Setup::new_with_signed_credentials();
+    } = TestSetup::new_with_signed_credentials();
     // create a presentation where the subject of the second credential is the holder.
     // This violates the non transferable property of the first credential.
     let mut presentation: Presentation = PresentationBuilder::default()

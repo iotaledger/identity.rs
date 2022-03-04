@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::credential::errors::AccumulatedCredentialValidationError;
+use crate::credential::errors::CompoundCredentialValidationError;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 
@@ -22,7 +22,7 @@ use super::FailFast;
 pub struct CredentialValidator;
 
 type ValidationUnitResult = std::result::Result<(), ValidationError>;
-type CredentialValidationResult = std::result::Result<(), AccumulatedCredentialValidationError>;
+type CredentialValidationResult = std::result::Result<(), CompoundCredentialValidationError>;
 
 impl CredentialValidator {
   /// Validates a [`Credential`].
@@ -49,7 +49,7 @@ impl CredentialValidator {
     Self::validate_with_trusted_issuers(credential, options, std::slice::from_ref(issuer), fail_fast)
   }
 
-  /// Validates the semantic structure of the [Credential].
+  /// Validates the semantic structure of the [`Credential`].
   ///
   /// # Warning
   /// This does not validate against the credential's schema nor the structure of the subject claims.
@@ -59,7 +59,7 @@ impl CredentialValidator {
       .map_err(ValidationError::CredentialStructure)
   }
 
-  /// Validate that the [Credential] expires on or after the specified [Timestamp].
+  /// Validate that the [`Credential`] expires on or after the specified [`Timestamp`].
   pub fn check_expires_on_or_after<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
     let is_ok = if let Some(expiration_date) = credential.expiration_date {
       expiration_date >= timestamp
@@ -69,7 +69,7 @@ impl CredentialValidator {
     is_ok.then(|| ()).ok_or(ValidationError::ExpirationDate)
   }
 
-  /// Validate that the [Credential] is issued on or before specified [Timestamp].
+  /// Validate that the [`Credential`] is issued on or before specified [`Timestamp`].
   pub fn check_is_issued_on_or_before<T>(credential: &Credential<T>, timestamp: Timestamp) -> ValidationUnitResult {
     (credential.issuance_date <= timestamp)
       .then(|| ())
@@ -155,7 +155,7 @@ impl CredentialValidator {
     if validation_errors.is_empty() {
       Ok(())
     } else {
-      Err(AccumulatedCredentialValidationError { validation_errors })
+      Err(CompoundCredentialValidationError { validation_errors })
     }
   }
 }

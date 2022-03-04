@@ -9,7 +9,7 @@ mod test_utils;
 mod validation_options;
 
 pub use self::credential_validator::CredentialValidator;
-pub use self::errors::AccumulatedCredentialValidationError;
+pub use self::errors::CompoundCredentialValidationError;
 pub use self::errors::CompoundPresentationValidationError;
 pub use self::errors::SignerContext;
 pub use self::errors::ValidationError;

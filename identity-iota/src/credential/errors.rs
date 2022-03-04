@@ -74,11 +74,11 @@ impl Display for SignerContext {
 
 #[derive(Debug)]
 /// An error caused by a failure to validate a Credential.  
-pub struct AccumulatedCredentialValidationError {
+pub struct CompoundCredentialValidationError {
   pub validation_errors: Vec<ValidationError>,
 }
 
-impl Display for AccumulatedCredentialValidationError {
+impl Display for CompoundCredentialValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     // intersperse might become available in the standard library soon: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.intersperse
     let detailed_information: String = itertools::intersperse(
@@ -90,18 +90,18 @@ impl Display for AccumulatedCredentialValidationError {
   }
 }
 
-impl std::error::Error for AccumulatedCredentialValidationError {}
+impl std::error::Error for CompoundCredentialValidationError {}
 
 #[derive(Debug)]
 /// An error caused by a failure to validate a Presentation.
 pub struct CompoundPresentationValidationError {
-  pub credential_errors: BTreeMap<usize, AccumulatedCredentialValidationError>,
+  pub credential_errors: BTreeMap<usize, CompoundCredentialValidationError>,
   pub presentation_validation_errors: Vec<ValidationError>,
 }
 
 impl Display for CompoundPresentationValidationError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let credential_error_formatter = |(position, reason): (&usize, &AccumulatedCredentialValidationError)| -> String {
+    let credential_error_formatter = |(position, reason): (&usize, &CompoundCredentialValidationError)| -> String {
       format!("credential num. {} errors: {}", position, reason.to_string().as_str())
     };
 

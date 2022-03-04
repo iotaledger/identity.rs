@@ -180,8 +180,8 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
   }
 }
 
-impl From<identity::iota::AccumulatedCredentialValidationError> for WasmError<'_> {
-  fn from(error: identity::iota::AccumulatedCredentialValidationError) -> Self {
+impl From<identity::iota::CompoundCredentialValidationError> for WasmError<'_> {
+  fn from(error: identity::iota::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("AccumulatedCredentialValidationError"),
       message: Cow::Owned(error.to_string()),
