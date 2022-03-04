@@ -16,6 +16,7 @@ use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::messages::RequestMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::traits::RequestHandler;
+use crate::ActorConfig;
 use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::Endpoint;
@@ -44,6 +45,7 @@ pub(crate) struct ActorState {
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   pub(crate) peer_id: PeerId,
+  pub(crate) config: ActorConfig,
 }
 
 #[derive(Clone)]
@@ -58,6 +60,7 @@ impl Actor {
     handlers: HandlerMap,
     objects: ObjectMap,
     peer_id: PeerId,
+    config: ActorConfig,
   ) -> Result<Self> {
     let actor = Self {
       commander,
@@ -67,6 +70,7 @@ impl Actor {
         threads_receiver: DashMap::new(),
         threads_sender: DashMap::new(),
         peer_id,
+        config,
       }),
     };
 
@@ -324,17 +328,8 @@ impl Actor {
     thread_id: &ThreadId,
   ) -> Result<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
-      // TODO: Make timeout configurable. Question is, should this be a per-actor setting or a method parameter?
-      // For convenience, the paramter can be the millis in u64, but still it could be annoying having to
-      // pass the same value on each invocation, thus a more global setting might make more sense?
-      // This could also be more easily tied to the timeout of the underlying RequestResponse protocol then,
-      // so they are equal, which they probably should be.
-      // https://docs.rs/libp2p/latest/libp2p/request_response/struct.RequestResponseConfig.html#method.set_request_timeout
-      // If custom await_message timeouts are deemed useful enough, then this underlying timeout could be set to a
-      // fairly high value.
-
       // Receival + Deserialization
-      let inbound_request = tokio::time::timeout(std::time::Duration::from_millis(10_000), receiver.1)
+      let inbound_request = tokio::time::timeout(self.state.config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
         .map_err(|_| Error::ThreadNotFound(receiver.0))?;

@@ -9,6 +9,7 @@ mod endpoint;
 mod errors;
 mod handler;
 // TODO: Make all mods private, and pub(crate)-export the types instead?
+mod config;
 pub(crate) mod invocation;
 mod request_context;
 pub(crate) mod traits;
@@ -21,6 +22,7 @@ pub use actor_request::ActorRequest;
 pub use actor_request::Asynchronous;
 pub use actor_request::RequestMode;
 pub use actor_request::Synchronous;
+pub(crate) use config::ActorConfig;
 pub use endpoint::Endpoint;
 pub use errors::Category;
 pub use errors::Error;

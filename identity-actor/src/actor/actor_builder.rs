@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::iter;
+use std::time::Duration;
 
 use crate::invocation::AsynchronousInvocationStrategy;
 use crate::invocation::SynchronousInvocationStrategy;
@@ -11,6 +12,7 @@ use crate::p2p::event_loop::EventLoop;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
+use crate::ActorConfig;
 use crate::Error;
 use crate::RequestMode;
 use crate::Result;
@@ -29,6 +31,7 @@ use libp2p::noise::NoiseConfig;
 use libp2p::noise::X25519Spec;
 use libp2p::request_response::ProtocolSupport;
 use libp2p::request_response::RequestResponse;
+use libp2p::request_response::RequestResponseConfig;
 use libp2p::swarm::SwarmBuilder;
 use libp2p::tcp::TokioTcpConfig;
 use libp2p::websocket::WsConfig;
@@ -40,6 +43,7 @@ use libp2p::Swarm;
 pub struct ActorBuilder {
   listening_addresses: Vec<Multiaddr>,
   keypair: Option<Keypair>,
+  config: ActorConfig,
 }
 
 impl ActorBuilder {
@@ -48,6 +52,7 @@ impl ActorBuilder {
     Self {
       listening_addresses: vec![],
       keypair: None,
+      config: ActorConfig::default(),
     }
   }
 
@@ -64,6 +69,13 @@ impl ActorBuilder {
   #[must_use]
   pub fn listen_on(mut self, address: Multiaddr) -> Self {
     self.listening_addresses.push(address);
+    self
+  }
+
+  /// Sets the timeout for [`Actor::await_message`] and the underlying libp2p protocol timeout.
+  #[must_use]
+  pub fn timeout(mut self, timeout: Duration) -> Self {
+    self.config.timeout = timeout;
     self
   }
 
@@ -98,10 +110,13 @@ impl ActorBuilder {
     });
 
     let mut swarm: Swarm<RequestResponse<DidCommCodec>> = {
+      let mut config: RequestResponseConfig = RequestResponseConfig::default();
+      config.set_request_timeout(self.config.timeout);
+
       let behaviour = RequestResponse::new(
         DidCommCodec(),
         iter::once((DidCommProtocol(), ProtocolSupport::Full)),
-        Default::default(),
+        config,
       );
 
       let transport = transport
@@ -127,7 +142,7 @@ impl ActorBuilder {
     let handlers = DashMap::new();
     let objects = DashMap::new();
 
-    let actor = Actor::from_builder(swarm_commander.clone(), handlers, objects, peer_id).await?;
+    let actor = Actor::from_builder(swarm_commander.clone(), handlers, objects, peer_id, self.config).await?;
 
     let actor_clone = actor.clone();
 
