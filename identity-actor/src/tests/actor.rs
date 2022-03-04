@@ -6,10 +6,12 @@ use std::sync::Arc;
 
 use libp2p::Multiaddr;
 
+use crate::didcomm::thread_id::ThreadId;
 use crate::tests::try_init_logger;
 use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
+use crate::Asynchronous;
 use crate::Error;
 use crate::IdentityGet;
 use crate::RequestContext;
@@ -35,7 +37,24 @@ async fn test_unknown_request_returns_error() -> crate::Result<()> {
     )
     .await;
 
-  assert!(matches!(result.unwrap_err(), Error::UnknownRequest(_)));
+  assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
+
+  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+  pub struct AsyncDummy(u16);
+
+  impl ActorRequest<Asynchronous> for AsyncDummy {
+    type Response = ();
+
+    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+      std::borrow::Cow::Borrowed("unknown/thread")
+    }
+  }
+
+  let result = sending_actor
+    .send_named_message(peer_id, "unknown/thread", &ThreadId::new(), AsyncDummy(42))
+    .await;
+
+  assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
 
   listening_actor.shutdown().await.unwrap();
   sending_actor.shutdown().await.unwrap();

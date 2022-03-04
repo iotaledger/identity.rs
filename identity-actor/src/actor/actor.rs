@@ -176,7 +176,7 @@ impl Actor {
           )))
         }
       }
-      None => Err(RemoteSendError::UnknownRequest(endpoint.to_string())),
+      None => Err(RemoteSendError::UnexpectedRequest(endpoint.to_string())),
     }
   }
 

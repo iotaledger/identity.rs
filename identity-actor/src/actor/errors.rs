@@ -20,9 +20,9 @@ pub enum Error {
   InvalidEndpoint,
   #[error("{0}")]
   OutboundFailure(#[from] OutboundFailure),
-  /// No handler was set on the receiver and thus we cannot process this request.
-  #[error("unknown request `{0}`")]
-  UnknownRequest(String),
+  /// The remote has no handler for this request or the DIDComm thread does not exist.
+  #[error("unexpected request `{0}`")]
+  UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
@@ -42,11 +42,9 @@ pub enum Error {
 /// Errors that can occur on the remote actor while sending requests.
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
-  /// No handler was set on the receiver and thus this request is not processable.
-  #[error("unknown request `{0}`")]
-  UnknownRequest(String),
-  #[error("thread with id `{0}` not found")]
-  ThreadNotFound(ThreadId),
+  /// The remote has no handler for this request or the DIDComm thread does not exist.
+  #[error("unexpected request: {0}")]
+  UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
@@ -60,14 +58,13 @@ pub enum RemoteSendError {
 impl From<RemoteSendError> for Error {
   fn from(err: RemoteSendError) -> Self {
     match err {
-      RemoteSendError::UnknownRequest(req) => Error::UnknownRequest(req),
+      RemoteSendError::UnexpectedRequest(req) => Error::UnexpectedRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
       RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
       RemoteSendError::DeserializationFailure { location, message } => {
         Error::DeserializationFailure { location, message }
       }
       RemoteSendError::SerializationFailure { location, message } => Error::SerializationFailure { location, message },
-      RemoteSendError::ThreadNotFound(thread_id) => Error::ThreadNotFound(thread_id),
     }
   }
 }

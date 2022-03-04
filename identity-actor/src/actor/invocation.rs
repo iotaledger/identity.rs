@@ -59,7 +59,7 @@ pub struct SynchronousInvocationStrategy;
 impl InvocationStrategy for SynchronousInvocationStrategy {
   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest) {
     let response: StdResult<Vec<u8>, RemoteSendError> =
-      Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()));
+      Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
 
     let send_result = send_response(
       &mut actor.commander,
@@ -179,7 +179,10 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
               );
               // The assumption is that DID authentication is done before this point, so this is not
               // considered an information leak, e.g. to enumerate thread ids.
-              Err(RemoteSendError::ThreadNotFound(thread_id.to_owned()))
+              Err(RemoteSendError::UnexpectedRequest(format!(
+                "thread id `{}` not found",
+                thread_id
+              )))
             }
           }
         }
