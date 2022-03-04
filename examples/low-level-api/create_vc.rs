@@ -56,7 +56,7 @@ pub async fn create_vc() -> Result<String> {
     &credential,
     &CredentialValidationOptions::default(),
     &resolved_issuer_doc,
-    FailFast::Yes,
+    FailFast::FirstError,
   )?;
   // The issuer is now sure that the credential they are about to issue satisfies their expectations.
   // Hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
@@ -81,7 +81,12 @@ async fn main() -> Result<()> {
   // everything that is wrong with the credential they issued to us and they will hopefully send us a new correct
   // credential
   resolver
-    .verify_credential(&credential, &CredentialValidationOptions::default(), FailFast::No)
+    .verify_credential(
+      &credential,
+      &CredentialValidationOptions::default(),
+      None,
+      FailFast::AllErrors,
+    )
     .await?;
   Ok(())
 }

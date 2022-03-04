@@ -65,7 +65,8 @@ async fn main() -> Result<()> {
     .verify_credential(
       &signed_vc,
       &CredentialValidationOptions::default(),
-      identity::iota::FailFast::Yes,
+      None,
+      identity::iota::FailFast::FirstError,
     )
     .await;
 

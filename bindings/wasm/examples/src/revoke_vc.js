@@ -45,11 +45,13 @@ async function revokeVC(clientConfig) {
 
     // Check the verifiable credential
     try {
-        const resolver = await new Resolver();
+        const resolver = await new ResolverBuilder()
+        .clientConfig(Config.fromNetwork(clientConfig.network))
+        .build();
         await resolver.verifyCredential(
             signedVc, 
             CredentialValidationOptions.default(),
-            FailFast.Yes
+            FailFast.FirstError
             ); 
     } catch (exception) {
     console.log(`${exception.message}`)

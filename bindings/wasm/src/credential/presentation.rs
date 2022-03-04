@@ -67,7 +67,7 @@ impl WasmPresentation {
     json.into_serde().map(Self).wasm_result()
   }
 
-  /// Get a copy of the credentials contained in the presentation
+  /// Returns a copy of the credentials contained in the presentation.
   #[wasm_bindgen(js_name = verifiableCredential)]
   pub fn verifiable_credential(&self) -> ArrayCredential {
     self

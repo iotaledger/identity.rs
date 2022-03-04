@@ -40,7 +40,9 @@ async function createVP(clientConfig) {
     // In order to validate presentations and credentials one needs to resolve the DID Documents of 
     // the presentation holder and of credential issuers. This is something the `Resolver` can help with.  
     
-    const resolver = await new Resolver();
+    const resolver = await new ResolverBuilder()
+    .clientConfig(Config.fromNetwork(clientConfig.network))
+    .build();
 
 
     // Let us now look at a couple of ways that a verifier can validate the presentation 
@@ -86,7 +88,7 @@ async function createVP(clientConfig) {
     await resolver.verifyPresentation(
         presentation,
         presentationValidationOptions,
-        FailFast.Yes
+        FailFast.FirstError
     );
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful. 
     console.log(`Successful VP validation using the Resolver`);

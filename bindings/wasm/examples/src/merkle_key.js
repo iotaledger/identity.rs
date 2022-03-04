@@ -79,12 +79,14 @@ async function merkleKey(clientConfig) {
     }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const resolver = await new Resolver(); 
+    const resolver = await new ResolverBuilder()
+    .clientConfig(Config.fromNetwork(clientConfig.network))
+    .build();
 
     const result = await resolver.verifyCredential(
         signedVc, 
         CredentialValidationOptions.default(),
-        FailFast.Yes
+        FailFast.FirstError
         ); 
 
     console.log(`Credential successfully validated!"`);
@@ -104,7 +106,7 @@ async function merkleKey(clientConfig) {
         await resolver.verifyCredential(
             signedVc, 
             CredentialValidationOptions.default(),
-            FailFast.Yes
+            FailFast.FirstError
             ); 
     } catch (exception)  {
         console.log(`${exception.message}`)

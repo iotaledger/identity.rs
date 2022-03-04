@@ -243,31 +243,36 @@ impl WasmResolver {
   /// `CredentialValidator::validate` in order to avoid an unnecessary resolution.
   ///
   /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
-  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-  /// refreshService **and more**.
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
+  ///
+  /// # Resolution
+  /// If `issuer` is null then this  DID Document will be resolved. If you already have up to
+  /// an up to date version of this document you may want to instead use `CredentialValidator::validate`.
   ///
   /// # Errors
   /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-  /// an attempt will be made to validate the credential. If the `fail_fast` parameter is "Yes" an error will be
-  /// returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
-  /// the returned error.
+  /// an attempt will be made to validate the credential. If any validated condition is not satisfied
+  /// an error will be returned.
   #[wasm_bindgen(js_name = verifyCredential)]
   pub fn verify_credential(
     &self,
     credential: &WasmCredential,
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
+    issuer: OptionResolvedDocument,
   ) -> Result<PromiseVoid> {
     // TODO: reimplemented function to avoid cloning the entire credential and validation options.
     //       Would be solved with Rc internal representation, pending memory leak discussions.
+    let issuer: Option<ResolvedIotaDocument> = issuer.into_serde().wasm_result()?;
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let credential: WasmCredential = credential.clone();
     let options: WasmCredentialValidationOptions = options.clone();
 
     let promise: Promise = future_to_promise(async move {
       resolver
-        .verify_credential(&credential.0, &options.0, fail_fast.into())
+        .verify_credential(&credential.0, &options.0, issuer.as_ref(), fail_fast.into())
         .await
         .map(|_| JsValue::UNDEFINED)
         .wasm_result()
@@ -286,9 +291,9 @@ impl WasmResolver {
   /// - Some properties of the credentials (see `CredentialValidator::validate` for more information).
   ///  
   /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
-  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-  /// refreshService **and more**.
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Resolution
   /// If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
@@ -297,9 +302,8 @@ impl WasmResolver {
   ///
   /// # Errors
   /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
-  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
-  /// parameter is `Yes` an error will be returned upon the first encountered validation failure, otherwise all
-  /// validation errors will be accumulated in the returned error.
+  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If any validated
+  /// condition is not satisfied an error will be returned.
   #[wasm_bindgen(js_name = verifyPresentation)]
   pub fn verify_presentation(
     &self,
@@ -311,11 +315,11 @@ impl WasmResolver {
   ) -> Result<PromiseVoid> {
     // TODO: reimplemented function to avoid cloning the entire presentation and validation options.
     // Would be solved with Rc internal representation, pending memory leak discussions.
+    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.into_serde().wasm_result()?;
+    let holder: Option<ResolvedIotaDocument> = holder.into_serde().wasm_result()?;
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let presentation: WasmPresentation = presentation.clone();
     let options: WasmPresentationValidationOptions = options.clone();
-    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.into_serde().wasm_result()?;
-    let holder: Option<ResolvedIotaDocument> = holder.into_serde().wasm_result()?;
 
     let promise: Promise = future_to_promise(async move {
       resolver

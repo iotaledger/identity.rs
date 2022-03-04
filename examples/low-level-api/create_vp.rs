@@ -82,7 +82,7 @@ pub async fn resolver_based_validation(presentation_json: &str, options: &Presen
   // Validate the presentation and all the credentials included in it.
   let resolver: Resolver = Resolver::new().await?;
   resolver
-    .verify_presentation(&presentation, options, None, None, FailFast::Yes)
+    .verify_presentation(&presentation, options, None, None, FailFast::FirstError)
     .await
 }
 

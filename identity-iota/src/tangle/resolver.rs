@@ -106,7 +106,12 @@ where
     &self,
     credential: &Credential<U>,
   ) -> Result<ResolvedIotaDocument> {
-    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str())?;
+    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str()).map_err(|error| {
+      Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
+        signer_ctx: crate::credential::SignerContext::Issuer,
+        source: error.into(),
+      })
+    })?;
     self.resolve(&issuer).await
   }
 
@@ -125,6 +130,14 @@ where
       .verifiable_credential
       .iter()
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
+      .map(|url_result| {
+        url_result.map_err(|error| {
+          Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
+            signer_ctx: crate::credential::SignerContext::Issuer,
+            source: error.into(),
+          })
+        })
+      })
       .collect::<Result<_>>()?;
 
     // Resolve issuers concurrently.
@@ -143,7 +156,12 @@ where
     let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
       crate::credential::ValidationError::MissingPresentationHolder,
     ))?;
-    let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
+    let holder: IotaDID = IotaDID::parse(holder_url.as_str()).map_err(|error| {
+      Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
+        signer_ctx: crate::credential::SignerContext::Holder,
+        source: error.into(),
+      })
+    })?;
     self.resolve(&holder).await
   }
 
@@ -160,23 +178,32 @@ where
   /// [`CredentialValidator::validate`](CredentialValidator::validate()) in order to avoid an unnecessary resolution.
   ///
   /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
-  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-  /// refreshService **and more**.
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
+  ///
+  /// # Resolution
+  /// If `issuer` is None then this  DID Document will be resolved. If you already have up to
+  /// an up to date version of this document you may want to instead use
+  /// [`CredentialValidator::validate`](CredentialValidator::validate()).
   ///
   /// # Errors
   /// If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-  /// an attempt will be made to validate the credential. If the `fail_fast` parameter is "Yes" an error will be
-  /// returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
-  /// the returned error.
+  /// an attempt will be made to validate the credential. If any validated condition is not satisfied
+  /// an error will be returned.
   pub async fn verify_credential<U: Serialize>(
     &self,
     credential: &Credential<U>,
     options: &CredentialValidationOptions,
+    issuer: Option<&ResolvedIotaDocument>,
     fail_fast: FailFast,
   ) -> Result<()> {
-    let issuer = self.resolve_credential_issuer(credential).await?;
-    CredentialValidator::validate(credential, options, &issuer, fail_fast).map_err(Into::into)
+    if let Some(issuer) = issuer {
+      CredentialValidator::validate(credential, options, issuer, fail_fast).map_err(Into::into)
+    } else {
+      let issuer = self.resolve_credential_issuer(credential).await?;
+      CredentialValidator::validate(credential, options, &issuer, fail_fast).map_err(Into::into)
+    }
   }
 
   /// Verifies a [`Presentation`].
@@ -189,9 +216,9 @@ where
   ///   information](CredentialValidator::validate())).
   ///  
   /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
-  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-  /// refreshService **and more**.
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Resolution
   /// If `holder` and/or `issuers` is None then this/these DID Document(s) will be resolved. If you already have up to
@@ -200,9 +227,8 @@ where
   ///
   /// # Errors
   /// If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
-  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
-  /// parameter is `Yes` an error will be returned upon the first encountered validation failure, otherwise all
-  /// validation errors will be accumulated in the returned error.
+  /// immediately be returned. Otherwise an attempt will be made to validate the presentation. If any validated
+  /// condition is not satisfied an error will be returned.
   pub async fn verify_presentation<U: Serialize, V: Serialize>(
     &self,
     presentation: &Presentation<U, V>,
@@ -216,15 +242,15 @@ where
         PresentationValidator::validate(presentation, options, holder, issuers, fail_fast)
       }
       (Some(holder), None) => {
-        let issuers = self.resolve_presentation_issuers(presentation).await?;
+        let issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
         PresentationValidator::validate(presentation, options, holder, &issuers, fail_fast)
       }
       (None, Some(issuers)) => {
-        let holder = self.resolve_presentation_holder(presentation).await?;
+        let holder: ResolvedIotaDocument = self.resolve_presentation_holder(presentation).await?;
         PresentationValidator::validate(presentation, options, &holder, issuers, fail_fast)
       }
       (None, None) => {
-        let (holder, issuers) = futures::future::try_join(
+        let (holder, issuers): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) = futures::future::try_join(
           self.resolve_presentation_holder(presentation),
           self.resolve_presentation_issuers(presentation),
         )

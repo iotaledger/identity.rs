@@ -34,13 +34,12 @@ impl CredentialValidator {
   /// - The semantic structure.
   ///
   /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
-  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-  /// refreshService **and more**.
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Errors
-  /// Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
-  /// errors will be accumulated in the returned error.
+  /// An error is returned whenever a validated condition is not satisfied.
   pub fn validate<T: Serialize>(
     credential: &Credential<T>,
     options: &CredentialValidationOptions,
@@ -51,6 +50,9 @@ impl CredentialValidator {
   }
 
   /// Validates the semantic structure of the [Credential].
+  ///
+  /// # Warning
+  /// This does not validate against the credential's schema nor the structure of the subject claims.
   pub fn check_structure<T>(credential: &Credential<T>) -> ValidationUnitResult {
     credential
       .check_structure()
@@ -146,8 +148,8 @@ impl CredentialValidator {
       .chain(signature_validation)
       .filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
-      FailFast::Yes => validation_units_error_iter.take(1).collect(),
-      FailFast::No => validation_units_error_iter.collect(),
+      FailFast::FirstError => validation_units_error_iter.take(1).collect(),
+      FailFast::AllErrors => validation_units_error_iter.collect(),
     };
 
     if validation_errors.is_empty() {
@@ -291,7 +293,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
 
-    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::Yes)
+    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -363,7 +365,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::Yes)
+    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -399,7 +401,7 @@ mod tests {
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
-    assert!(CredentialValidator::validate(&credential, &options, &issuer, FailFast::Yes).is_ok());
+    assert!(CredentialValidator::validate(&credential, &options, &issuer, FailFast::FirstError).is_ok());
   }
 
   #[test]
@@ -439,7 +441,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::Yes)
+    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -486,7 +488,7 @@ mod tests {
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::Yes)
+    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -527,7 +529,7 @@ mod tests {
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::Yes)
+    let validation_errors = CredentialValidator::validate(&credential, &options, &issuer, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -574,7 +576,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
     let validation_errors =
-      CredentialValidator::validate(&credential, &options, &other_issuer_resolved_doc, FailFast::Yes)
+      CredentialValidator::validate(&credential, &options, &other_issuer_resolved_doc, FailFast::FirstError)
         .unwrap_err()
         .validation_errors;
 
@@ -617,7 +619,7 @@ mod tests {
 
     // validate and extract the nested error according to our expectations
     let validation_errors =
-      CredentialValidator::validate(&credential, &options, &other_issuer_resolved_doc, FailFast::No)
+      CredentialValidator::validate(&credential, &options, &other_issuer_resolved_doc, FailFast::AllErrors)
         .unwrap_err()
         .validation_errors;
 

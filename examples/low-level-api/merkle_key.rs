@@ -82,7 +82,8 @@ async fn main() -> Result<()> {
     .verify_credential(
       &credential,
       &CredentialValidationOptions::default(),
-      identity::iota::FailFast::Yes,
+      None,
+      identity::iota::FailFast::FirstError,
     )
     .await?;
 
@@ -105,7 +106,8 @@ async fn main() -> Result<()> {
     .verify_credential(
       &credential,
       &CredentialValidationOptions::default(),
-      identity::iota::FailFast::Yes,
+      None,
+      identity::iota::FailFast::FirstError,
     )
     .await
     .is_err()

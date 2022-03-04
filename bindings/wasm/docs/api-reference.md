@@ -112,13 +112,13 @@ See <code>IVerifierOptions</code>.</p>
 <dd><p>Declares that the subject is not required to have any kind of relationship to the holder.</p>
 </dd>
 <dt><a href="#FailFast">FailFast</a></dt>
-<dd><p>Declares when validation should return with an error.</p>
+<dd><p>Declares when validation should return if an error occurs.</p>
 </dd>
-<dt><a href="#No">No</a></dt>
-<dd><p>Declare that validation should fail after all errors have been found</p>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
 </dd>
-<dt><a href="#Yes">Yes</a></dt>
-<dd><p>Declare that validation must fail upon the first error is found</p>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
 </dd>
 </dl>
 
@@ -3158,19 +3158,19 @@ Declares that the subject is not required to have any kind of relationship to th
 <a name="FailFast"></a>
 
 ## FailFast
-Declares when validation should return with an error.
+Declares when validation should return if an error occurs.
 
 **Kind**: global variable  
-<a name="No"></a>
+<a name="AllErrors"></a>
 
-## No
-Declare that validation should fail after all errors have been found
+## AllErrors
+Return all errors that occur during validation.
 
 **Kind**: global variable  
-<a name="Yes"></a>
+<a name="FirstError"></a>
 
-## Yes
-Declare that validation must fail upon the first error is found
+## FirstError
+Return after the first error occurs.
 
 **Kind**: global variable  
 <a name="start"></a>

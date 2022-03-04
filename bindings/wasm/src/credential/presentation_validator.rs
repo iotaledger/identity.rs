@@ -29,13 +29,12 @@ impl WasmPresentationValidator {
   /// `CredentialValidator::validate` for more information).
   ///
   /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
-  ///  Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-  /// refreshService **and more**.
+  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+  /// These should be manually checked after validation, according to your requirements.
   ///
   /// # Errors
-  /// Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
-  /// errors will be accumulated in the returned error.
+  /// An error is returned whenever a validated condition is not satisfied.
   #[wasm_bindgen]
   pub fn validate(
     presentation: &WasmPresentation,
@@ -62,7 +61,7 @@ impl WasmPresentationValidator {
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder.0, &options.0).wasm_result()
   }
 
-  /// Validates the semantic structure of the [Presentation].
+  /// Validates the semantic structure of the `Presentation`.
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     PresentationValidator::check_structure(&presentation.0).wasm_result()

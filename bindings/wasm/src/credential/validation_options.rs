@@ -11,9 +11,9 @@ use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 
+/// Options to declare validation criteria when validating credentials.
 #[wasm_bindgen(js_name = CredentialValidationOptions)]
 #[derive(Clone, Debug)]
-/// Options to declare validation criteria when validating credentials.
 pub struct WasmCredentialValidationOptions(pub(crate) CredentialValidationOptions);
 
 #[wasm_bindgen(js_class = CredentialValidationOptions)]
@@ -168,21 +168,21 @@ interface IPresentationValidationOptions {
 
 }"#;
 
-/// Declares when validation should return with an error.
+/// Declares when validation should return if an error occurs.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = FailFast)]
 pub enum WasmFailFast {
-  /// Declare that validation should fail after all errors have been found
-  No = 0,
-  /// Declare that validation must fail upon the first error is found
-  Yes = 1,
+  /// Return all errors that occur during validation.
+  AllErrors = 0,
+  /// Return after the first error occurs.
+  FirstError = 1,
 }
 
 impl From<WasmFailFast> for FailFast {
   fn from(fail_fast: WasmFailFast) -> Self {
     match fail_fast {
-      WasmFailFast::No => Self::No,
-      WasmFailFast::Yes => Self::Yes,
+      WasmFailFast::AllErrors => Self::AllErrors,
+      WasmFailFast::FirstError => Self::FirstError,
     }
   }
 }

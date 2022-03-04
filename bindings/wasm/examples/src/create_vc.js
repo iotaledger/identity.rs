@@ -47,18 +47,20 @@ async function createVC(clientConfig) {
     // In order to validate a credential the issuer's DID Document needs to be resolved.
     // Since the issuer wants to issue and verify several credentials without publishing updates to their DID Document
     // the issuer decides to resolve their DID Document up front now so they can re-use it.
-
-    const resolver = await new Resolver(); 
+ 
+    const resolver = await new ResolverBuilder()
+        .clientConfig(Config.fromNetwork(clientConfig.network))
+        .build();
     const issuerDoc = await resolver.resolve(issuer.doc.id.toString()); 
 
     // Validate the credential's signature, the credential's semantic structure, 
-    // check that the issuance date is not in the future and that the expiration date is not in the past. We use `FailFast.No`
+    // check that the issuance date is not in the future and that the expiration date is not in the past. We use `FailFast.AllErrors`
     // to ensure that if validation fails then the error message will contain information about every unsuccessful validation.  
-    const result = CredentialValidator.validate(
+    CredentialValidator.validate(
         signedVc,
         CredentialValidationOptions.default(),
         issuerDoc,
-        FailFast.No
+        FailFast.AllErrors
     );
 
     // Since `validate` did not throw any errors we know that the credential was successfully validated
