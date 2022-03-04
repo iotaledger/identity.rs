@@ -3,19 +3,17 @@
 
 use crate::Category;
 
-#[cfg(feature = "account")]
 pub mod handler;
 pub mod requests;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]
-pub enum StorageError {
+pub enum RemoteAccountError {
   IdentityNotFound,
-  IotaError(String),
   AccountError(String),
 }
 
-impl StorageError {
+impl RemoteAccountError {
   pub fn classify(&self) -> Category {
     match self {
       Self::IdentityNotFound => Category::Client,
@@ -24,13 +22,7 @@ impl StorageError {
   }
 }
 
-impl From<identity_iota::Error> for StorageError {
-  fn from(err: identity_iota::Error) -> Self {
-    Self::IotaError(err.to_string())
-  }
-}
-
-impl From<identity_account::Error> for StorageError {
+impl From<identity_account::Error> for RemoteAccountError {
   fn from(err: identity_account::Error) -> Self {
     Self::AccountError(err.to_string())
   }

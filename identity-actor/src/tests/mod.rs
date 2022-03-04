@@ -3,6 +3,8 @@
 
 mod actor;
 mod didcomm;
+#[cfg(feature = "account")]
+mod remote_account;
 
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;

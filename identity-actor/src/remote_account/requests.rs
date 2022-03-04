@@ -12,13 +12,16 @@ use serde::Serialize;
 use crate::ActorRequest;
 use crate::Synchronous;
 
-use super::StorageError;
+use super::RemoteAccountError;
 
-impl ActorRequest<Synchronous> for IdentitySetup {
-  type Response = Result<IotaDocument, StorageError>;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IdentityCreate(pub IdentitySetup);
+
+impl ActorRequest<Synchronous> for IdentityCreate {
+  type Response = Result<IotaDocument, RemoteAccountError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-    Cow::Borrowed("storage/create")
+    Cow::Borrowed("remote_account/create")
   }
 }
 
@@ -29,25 +32,17 @@ impl ActorRequest<Synchronous> for IdentityList {
   type Response = Vec<IotaDID>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-    Cow::Borrowed("storage/list")
+    Cow::Borrowed("remote_account/list")
   }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IdentityResolve {
-  pub did: IotaDID,
-}
+pub struct IdentityGet(pub IotaDID);
 
-impl IdentityResolve {
-  pub fn new(did: IotaDID) -> Self {
-    Self { did }
-  }
-}
-
-impl ActorRequest<Synchronous> for IdentityResolve {
-  type Response = Result<IotaDocument, StorageError>;
+impl ActorRequest<Synchronous> for IdentityGet {
+  type Response = Result<IotaDocument, RemoteAccountError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-    Cow::Borrowed("storage/resolve")
+    Cow::Borrowed("remote_account/get")
   }
 }

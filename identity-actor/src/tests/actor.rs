@@ -11,7 +11,7 @@ use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
 use crate::Error;
-use crate::IdentityResolve;
+use crate::IdentityGet;
 use crate::RequestContext;
 use crate::Synchronous;
 
@@ -31,7 +31,7 @@ async fn test_unknown_request_returns_error() -> crate::Result<()> {
     .send_named_request(
       peer_id,
       "unknown/request",
-      IdentityResolve::new("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
+      IdentityGet("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
     )
     .await;
 
