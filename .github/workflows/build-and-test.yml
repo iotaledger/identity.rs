@@ -305,9 +305,10 @@ jobs:
           job: ${{ github.job }}
           target: ${{ matrix.settings.target }}
 
-      - name: Download all artifacts
+      - name: Download bindings/wasm artifacts
         uses: actions/download-artifact@v2
         with:
+          name: identity-wasm-bindings-node
           path: bindings/wasm/node
 
       - name: Prepare Wasm bindings link
