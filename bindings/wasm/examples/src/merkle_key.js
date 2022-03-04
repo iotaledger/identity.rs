@@ -12,7 +12,7 @@ import {
     SignatureOptions,
     Timestamp,
     VerificationMethod,
-    Resolver,
+    ResolverBuilder,
     CredentialValidationOptions,
     FailFast
 } from '@iota/identity-wasm';

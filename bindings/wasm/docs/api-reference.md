@@ -628,13 +628,12 @@ The following properties are validated according to `options`:
 - The semantic structure.
 
 # Warning
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
- Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-refreshService **and more**.
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+These should be manually checked after validation, according to your requirements.
 
 # Errors
-Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
-errors will be accumulated in the returned error.
+An error is returned whenever a validated condition is not satisfied.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
@@ -649,6 +648,9 @@ errors will be accumulated in the returned error.
 
 ### CredentialValidator.checkStructure(credential)
 Validates the semantic structure of the `Credential`.
+
+# Warning
+This does not validate against the credential's schema nor the structure of the subject claims.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
@@ -2175,7 +2177,7 @@ Serializes a `Presentation` object as a JSON object.
 <a name="Presentation+verifiableCredential"></a>
 
 ### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-Get a copy of the credentials contained in the presentation
+Returns a copy of the credentials contained in the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
@@ -2264,13 +2266,12 @@ The following properties are validated according to `options`:
 `CredentialValidator::validate` for more information).
 
 # Warning
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
- Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-refreshService **and more**.
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+These should be manually checked after validation, according to your requirements.
 
 # Errors
-Fails on the first encountered validation error if `fail_fast` is "Yes", otherwise all
-errors will be accumulated in the returned error.
+An error is returned whenever a validated condition is not satisfied.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -2302,7 +2303,7 @@ property. Otherwise signature verification will be attempted and an error is ret
 <a name="PresentationValidator.checkStructure"></a>
 
 ### PresentationValidator.checkStructure(presentation)
-Validates the semantic structure of the [Presentation].
+Validates the semantic structure of the `Presentation`.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -2565,7 +2566,7 @@ Deserializes a `Document` object from a JSON object.
     * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
     * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.verifyCredential(credential, options, fail_fast)](#Resolver+verifyCredential) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.verifyCredential(credential, options, fail_fast, issuer)](#Resolver+verifyCredential) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="new_Resolver_new"></a>
@@ -2669,7 +2670,7 @@ Errors if the holder URL is missing, is not a valid `DID`, or document resolutio
 
 <a name="Resolver+verifyCredential"></a>
 
-### resolver.verifyCredential(credential, options, fail_fast) ⇒ <code>Promise.&lt;void&gt;</code>
+### resolver.verifyCredential(credential, options, fail_fast, issuer) ⇒ <code>Promise.&lt;void&gt;</code>
 Verifies a `Credential`.
 
 This method resolves the issuer's DID Document and validates the following properties in accordance with
@@ -2683,15 +2684,18 @@ If you already have an up to date version of the issuer's resolved DID Document 
 `CredentialValidator::validate` in order to avoid an unnecessary resolution.
 
 # Warning
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
- Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-refreshService **and more**.
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+These should be manually checked after validation, according to your requirements.
+
+# Resolution
+If `issuer` is null then this  DID Document will be resolved. If you already have up to
+an up to date version of this document you may want to instead use `CredentialValidator::validate`.
 
 # Errors
 If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-an attempt will be made to validate the credential. If the `fail_fast` parameter is "Yes" an error will be
-returned upon the first encountered validation failure, otherwise all validation errors will be accumulated in
-the returned error.
+an attempt will be made to validate the credential. If any validated condition is not satisfied
+an error will be returned.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
@@ -2700,6 +2704,7 @@ the returned error.
 | credential | [<code>Credential</code>](#Credential) | 
 | options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
+| issuer | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>null</code> | 
 
 <a name="Resolver+verifyPresentation"></a>
 
@@ -2713,9 +2718,9 @@ This method validates the following properties in accordance with `options`
 - Some properties of the credentials (see `CredentialValidator::validate` for more information).
 
 # Warning
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated.
- Examples of properties **not** validated by this method includes: credentialStatus, types, credentialSchema,
-refreshService **and more**.
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+These should be manually checked after validation, according to your requirements.
 
 # Resolution
 If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
@@ -2724,9 +2729,8 @@ date versions of all of these DID Documents you may want to instead use
 
 # Errors
 If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
-immediately be returned. Otherwise an attempt will be made to validate the presentation. If the `fail_fast`
-parameter is `Yes` an error will be returned upon the first encountered validation failure, otherwise all
-validation errors will be accumulated in the returned error.
+immediately be returned. Otherwise an attempt will be made to validate the presentation. If any validated
+condition is not satisfied an error will be returned.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 

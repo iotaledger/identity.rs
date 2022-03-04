@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, Duration, Presentation, Credential, FailFast, Resolver, PresentationValidator, CredentialValidator, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
+import {ResolverBuilder, Config, Timestamp, Duration, Presentation, Credential, FailFast, PresentationValidator, CredentialValidator, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
