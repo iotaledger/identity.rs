@@ -8,17 +8,18 @@ use std::sync::Arc;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::error::Result as IotaCoreResult;
+use identity_iota_core::types::NetworkName;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::ClientBuilder;
-use crate::tangle::NetworkName;
 use crate::tangle::TangleResolve;
 
 /// A `Resolver` supports resolving DID Documents across different Tangle networks using
@@ -113,7 +114,7 @@ where
       .verifiable_credential
       .iter()
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
-      .collect::<Result<_>>()?;
+      .collect::<IotaCoreResult<_>>()?;
 
     // Resolve issuers concurrently.
     futures::future::try_join_all(issuers.iter().map(|issuer| self.resolve(issuer)).collect::<Vec<_>>()).await

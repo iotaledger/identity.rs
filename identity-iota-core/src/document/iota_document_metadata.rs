@@ -14,8 +14,8 @@ use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Signature;
 
-use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
+use crate::message::MessageId;
+use crate::message::MessageIdExt;
 
 /// Additional attributes related to an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

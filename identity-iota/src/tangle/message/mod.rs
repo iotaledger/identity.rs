@@ -4,7 +4,6 @@
 pub use self::message_encoding::DIDMessageEncoding;
 pub(crate) use self::message_ext::pack_did_message;
 pub use self::message_ext::MessageExt;
-pub use self::message_ext::MessageIdExt;
 pub use self::message_ext::TryFromMessage;
 pub use self::message_index::MessageIndex;
 pub use self::message_version::DIDMessageVersion;

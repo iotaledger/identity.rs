@@ -21,10 +21,10 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
-mod resolver;
-
-pub mod chain;
-pub mod credential;
+pub mod did;
+pub mod diff;
 pub mod document;
 pub mod error;
+pub mod message;
 pub mod tangle;
+pub mod types;

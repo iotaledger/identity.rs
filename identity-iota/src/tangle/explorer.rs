@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
@@ -6,16 +6,15 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use std::str::FromStr;
 
+use identity_core::common::Url;
+use identity_did::did::DID;
+use identity_iota_core::message::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::common::Url;
-use identity_did::did::DID;
-
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::MessageId;
 
 lazy_static::lazy_static! {
   static ref EXPLORER_MAIN: ExplorerUrl =
@@ -153,7 +152,7 @@ impl Display for ExplorerUrl {
 
 #[cfg(test)]
 mod tests {
-  use crate::did::IotaDID;
+  use identity_iota_core::did::IotaDID;
 
   use super::*;
 

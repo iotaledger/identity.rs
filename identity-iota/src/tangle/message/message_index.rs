@@ -8,8 +8,8 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use std::collections::HashMap;
 
-use crate::tangle::MessageId;
-use crate::tangle::TangleRef;
+use identity_iota_core::message::MessageId;
+use identity_iota_core::tangle::TangleRef;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;
 
@@ -114,7 +114,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::IotaDID;
+  use identity_iota_core::did::IotaDID;
 
   use super::*;
 

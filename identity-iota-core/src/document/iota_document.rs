@@ -5,10 +5,6 @@ use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
 
-use serde;
-use serde::Deserialize;
-use serde::Serialize;
-
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -37,6 +33,9 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::did::IotaDID;
 use crate::did::IotaDIDUrl;
@@ -44,9 +43,9 @@ use crate::diff::DiffMessage;
 use crate::document::IotaDocumentMetadata;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
-use crate::tangle::NetworkName;
+use crate::message::MessageId;
+use crate::message::MessageIdExt;
+use crate::types::NetworkName;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
 pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
@@ -591,7 +590,7 @@ impl IotaDocument {
     Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
   }
 
-  pub(crate) fn extract_signing_keys(&self) -> Vec<Option<&IotaVerificationMethod>> {
+  pub fn extract_signing_keys(&self) -> Vec<Option<&IotaVerificationMethod>> {
     self
       .core_document()
       .capability_invocation()
@@ -669,7 +668,7 @@ mod tests {
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
 
-  use crate::tangle::Network;
+  use crate::types::Network;
 
   use super::*;
 

@@ -17,8 +17,8 @@ use crate::did::IotaDID;
 use crate::diff::DiffIotaDocument;
 use crate::document::IotaDocument;
 use crate::error::Result;
-use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
+use crate::message::MessageId;
+use crate::message::MessageIdExt;
 use crate::tangle::TangleRef;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
@@ -63,6 +63,11 @@ impl DiffMessage {
   /// Returns the raw contents of the DID Document diff.
   pub fn diff(&self) -> &DiffIotaDocument {
     &self.diff
+  }
+
+  /// Returns the DID of associated DID Document.
+  pub fn message_id(&self) -> &MessageId {
+    &self.message_id
   }
 
   /// Returns the Tangle message id of the previous DID Document diff.

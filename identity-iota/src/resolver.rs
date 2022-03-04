@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
@@ -9,8 +9,8 @@ use identity_did::resolution::DocumentMetadata;
 use identity_did::resolution::InputMetadata;
 use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
+use identity_iota_core::did::IotaDID;
 
-use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::tangle::Client;
 use crate::tangle::TangleResolve;
@@ -33,7 +33,11 @@ impl ResolverMethod for Client {
     metadata.updated = Some(resolved.document.metadata.updated);
 
     Ok(Some(MetaDocument {
-      data: resolved.document.document.map(CoreDID::from, |properties| properties),
+      data: resolved
+        .document
+        .core_document()
+        .clone()
+        .map(CoreDID::from, |properties| properties),
       meta: metadata,
     }))
   }

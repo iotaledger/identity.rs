@@ -3,16 +3,15 @@
 
 use std::collections::BTreeMap;
 
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
+use identity_iota_core::did::IotaDID;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
-use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;

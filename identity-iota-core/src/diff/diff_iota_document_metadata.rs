@@ -3,18 +3,17 @@
 
 use std::str::FromStr;
 
-use serde::Deserialize;
-use serde::Serialize;
-
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::document::IotaDocumentMetadata;
-use crate::tangle::MessageId;
+use crate::message::MessageId;
 
 /// NOTE: excludes the `proof` [`Signature`] from the diff to save space on the Tangle and because
 /// a merged signature will be invalid in general.
