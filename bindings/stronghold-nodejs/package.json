@@ -1,5 +1,5 @@
 {
-  "name": "stronghold-nodejs",
+  "name": "identity-stronghold-nodejs",
   "version": "0.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -7,7 +7,7 @@
     "dist/*"
   ],
   "napi": {
-    "name": "stronghold-nodejs",
+    "name": "identity-stronghold-nodejs",
     "triples": {
       "additional": [
         "aarch64-apple-darwin",
@@ -18,7 +18,7 @@
       ]
     }
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@napi-rs/cli": "^2.4.2",
     "@rollup/plugin-commonjs": "^21.0.2",
