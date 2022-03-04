@@ -3,11 +3,13 @@
 
 use std::borrow::Cow;
 
+use identity::core::Timestamp;
 use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
 
+use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
@@ -257,6 +259,20 @@ fn test_did_serde() {
     let de: IotaDID = js_string.into_serde().unwrap();
     assert_eq!(de, expected);
   }
+}
+
+#[wasm_bindgen_test]
+fn test_timestamp_serde() {
+  let expected_str: &str = "2022-12-25T13:58:03Z";
+  let timestamp: Timestamp = Timestamp::parse(expected_str).unwrap();
+  let wasm_timestamp: WasmTimestamp = WasmTimestamp::from(timestamp);
+
+  let ser: String = wasm_timestamp.to_json().unwrap().into_serde().unwrap();
+  assert_eq!(ser, expected_str);
+  let de: Timestamp = JsValue::from_str(&ser).into_serde().unwrap();
+  assert_eq!(de, timestamp);
+  let wasm_de: WasmTimestamp = WasmTimestamp::from_json(&JsValue::from_str(&ser)).unwrap();
+  assert_eq!(wasm_de.to_rfc3339(), expected_str);
 }
 
 #[wasm_bindgen_test]

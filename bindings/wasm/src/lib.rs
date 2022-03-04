@@ -22,7 +22,6 @@ pub mod core;
 pub mod credential;
 pub mod crypto;
 pub mod did;
-pub mod service;
 pub mod tangle;
 
 /// Initializes the console error panic hook for better error messages

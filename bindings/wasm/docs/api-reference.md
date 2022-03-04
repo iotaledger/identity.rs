@@ -21,7 +21,8 @@ the configuration of previously built accounts.</p>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#Config">Config</a></dt>
-<dd></dd>
+<dd><p>Options to configure a new <a href="#Client">Client</a>.</p>
+</dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
@@ -40,6 +41,9 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#DocumentMetadata">DocumentMetadata</a></dt>
 <dd><p>Additional attributes related to an IOTA DID Document.</p>
+</dd>
+<dt><a href="#Duration">Duration</a></dt>
+<dd><p>A span of time.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
@@ -87,7 +91,10 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
 </dd>
 <dt><a href="#Service">Service</a></dt>
-<dd></dd>
+<dd><p>A DID Document Service used to enable trusted interactions associated
+with a DID subject.</p>
+<p>See: <a href="https://www.w3.org/TR/did-core/#services">https://www.w3.org/TR/did-core/#services</a></p>
+</dd>
 <dt><a href="#Signature">Signature</a></dt>
 <dd></dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
@@ -107,13 +114,13 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -136,6 +143,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -150,13 +160,43 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -295,39 +335,6 @@ Deletes a verification method if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -662,13 +669,16 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config"></a>
 
 ## Config
+Options to configure a new [Client](#Client).
+
 **Kind**: global class  
 
 * [Config](#Config)
+    * [new Config()](#new_Config_new)
     * _instance_
         * [.setNetwork(network)](#Config+setNetwork)
-        * [.setNode(url)](#Config+setNode)
         * [.setEncoding(encoding)](#Config+setEncoding)
+        * [.setNode(url)](#Config+setNode)
         * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
         * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
         * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
@@ -679,41 +689,55 @@ Creates a new `Client` with default settings for the given `Network`.
         * [.setQuorumSize(value)](#Config+setQuorumSize)
         * [.setQuorumThreshold(value)](#Config+setQuorumThreshold)
         * [.setLocalPoW(value)](#Config+setLocalPoW)
+        * [.setFallbackToLocalPoW(value)](#Config+setFallbackToLocalPoW)
         * [.setTipsInterval(value)](#Config+setTipsInterval)
         * [.setRequestTimeout(value)](#Config+setRequestTimeout)
     * _static_
         * [.fromNetwork(network)](#Config.fromNetwork) ⇒ [<code>Config</code>](#Config)
 
+<a name="new_Config_new"></a>
+
+### new Config()
+Creates a new `Config`.
+
 <a name="Config+setNetwork"></a>
 
 ### config.setNetwork(network)
+Sets the IOTA Tangle network.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
 | network | [<code>Network</code>](#Network) | 
 
-<a name="Config+setNode"></a>
-
-### config.setNode(url)
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-
 <a name="Config+setEncoding"></a>
 
 ### config.setEncoding(encoding)
+Sets the DID message encoding used when publishing to the Tangle.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
 | encoding | <code>number</code> | 
 
+<a name="Config+setNode"></a>
+
+### config.setNode(url)
+Adds an IOTA node by its URL.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+
 <a name="Config+setPrimaryNode"></a>
 
 ### config.setPrimaryNode(url, jwt, username, password)
+Adds an IOTA node by its URL to be used as primary node.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -726,6 +750,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setPrimaryPoWNode"></a>
 
 ### config.setPrimaryPoWNode(url, jwt, username, password)
+Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -738,6 +764,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setPermanode"></a>
 
 ### config.setPermanode(url, jwt, username, password)
+Adds a permanode by its URL.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -750,6 +778,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setNodeAuth"></a>
 
 ### config.setNodeAuth(url, jwt, username, password)
+Adds an IOTA node by its URL.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -762,6 +792,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setNodeSyncInterval"></a>
 
 ### config.setNodeSyncInterval(value)
+Sets the node sync interval.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -771,10 +803,14 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setNodeSyncDisabled"></a>
 
 ### config.setNodeSyncDisabled()
+Disables the node sync process.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 <a name="Config+setQuorum"></a>
 
 ### config.setQuorum(value)
+Enables/disables quorum.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -784,6 +820,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setQuorumSize"></a>
 
 ### config.setQuorumSize(value)
+Sets the number of nodes used for quorum.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -793,6 +831,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setQuorumThreshold"></a>
 
 ### config.setQuorumThreshold(value)
+Sets the quorum threshold.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -802,6 +842,23 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setLocalPoW"></a>
 
 ### config.setLocalPoW(value)
+Sets whether proof-of-work (PoW) is performed locally or remotely.
+
+Default: false.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="Config+setFallbackToLocalPoW"></a>
+
+### config.setFallbackToLocalPoW(value)
+Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
+
+Default: true.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -811,6 +868,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setTipsInterval"></a>
 
 ### config.setTipsInterval(value)
+Sets the number of seconds that new tips will be requested during PoW.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -820,6 +879,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setRequestTimeout"></a>
 
 ### config.setRequestTimeout(value)
+Sets the default request timeout.
+
 **Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -829,6 +890,8 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config.fromNetwork"></a>
 
 ### Config.fromNetwork(network) ⇒ [<code>Config</code>](#Config)
+Creates a new `Config` for the given IOTA Tangle network.
+
 **Kind**: static method of [<code>Config</code>](#Config)  
 
 | Param | Type |
@@ -1816,6 +1879,75 @@ Returns the timestamp of the last DID document update.
 Returns a reference to the `proof`.
 
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="Duration"></a>
+
+## Duration
+A span of time.
+
+**Kind**: global class  
+
+* [Duration](#Duration)
+    * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
+    * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
+    * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
+    * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
+    * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
+
+<a name="Duration.seconds"></a>
+
+### Duration.seconds(seconds) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of seconds.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| seconds | <code>number</code> | 
+
+<a name="Duration.minutes"></a>
+
+### Duration.minutes(minutes) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of minutes.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| minutes | <code>number</code> | 
+
+<a name="Duration.hours"></a>
+
+### Duration.hours(hours) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of hours.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| hours | <code>number</code> | 
+
+<a name="Duration.days"></a>
+
+### Duration.days(days) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of days.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| days | <code>number</code> | 
+
+<a name="Duration.weeks"></a>
+
+### Duration.weeks(weeks) ⇒ [<code>Duration</code>](#Duration)
+Create a new `Duration` with the given number of weeks.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| weeks | <code>number</code> | 
+
 <a name="Ed25519"></a>
 
 ## Ed25519
@@ -2895,14 +3027,56 @@ Constructs a new [`Resolver`] based on the builder configuration.
 <a name="Service"></a>
 
 ## Service
+A DID Document Service used to enable trusted interactions associated
+with a DID subject.
+
+See: https://www.w3.org/TR/did-core/#services
+
 **Kind**: global class  
 
 * [Service](#Service)
+    * [new Service(service)](#new_Service_new)
     * _instance_
+        * [.id](#Service+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.type](#Service+type) ⇒ <code>string</code>
+        * [.serviceEndpoint](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+        * [.properties()](#Service+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(value)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
 
+<a name="new_Service_new"></a>
+
+### new Service(service)
+
+| Param | Type |
+| --- | --- |
+| service | <code>IService</code> | 
+
+<a name="Service+id"></a>
+
+### service.id ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Returns a copy of the `Service` id.
+
+**Kind**: instance property of [<code>Service</code>](#Service)  
+<a name="Service+type"></a>
+
+### service.type ⇒ <code>string</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance property of [<code>Service</code>](#Service)  
+<a name="Service+serviceEndpoint"></a>
+
+### service.serviceEndpoint ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `Service` endpoint.
+
+**Kind**: instance property of [<code>Service</code>](#Service)  
+<a name="Service+properties"></a>
+
+### service.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom properties on the `Service`.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+toJSON"></a>
 
 ### service.toJSON() ⇒ <code>any</code>
@@ -3010,14 +3184,50 @@ Creates a new `SignatureOptions` with default options.
 * [Timestamp](#Timestamp)
     * _instance_
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
+        * [.checkedAdd(duration)](#Timestamp+checkedAdd) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.checkedSub(duration)](#Timestamp+checkedSub) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.toJSON()](#Timestamp+toJSON) ⇒ <code>any</code>
     * _static_
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.fromJSON(json)](#Timestamp.fromJSON) ⇒ [<code>Timestamp</code>](#Timestamp)
 
 <a name="Timestamp+toRFC3339"></a>
 
 ### timestamp.toRFC3339() ⇒ <code>string</code>
 Returns the `Timestamp` as an RFC 3339 `String`.
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp+checkedAdd"></a>
+
+### timestamp.checkedAdd(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Computes `self + duration`
+
+Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| duration | [<code>Duration</code>](#Duration) | 
+
+<a name="Timestamp+checkedSub"></a>
+
+### timestamp.checkedSub(duration) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Computes `self - duration`
+
+Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| duration | [<code>Duration</code>](#Duration) | 
+
+<a name="Timestamp+toJSON"></a>
+
+### timestamp.toJSON() ⇒ <code>any</code>
+Serializes a `Timestamp` as a JSON object.
 
 **Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp.parse"></a>
@@ -3037,6 +3247,17 @@ Parses a `Timestamp` from the provided input string.
 Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp.fromJSON"></a>
+
+### Timestamp.fromJSON(json) ⇒ [<code>Timestamp</code>](#Timestamp)
+Deserializes a `Timestamp` from a JSON object.
+
+**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod
@@ -3165,9 +3386,9 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="DIDMessageEncoding"></a>
+<a name="Digest"></a>
 
-## DIDMessageEncoding
+## Digest
 **Kind**: global variable  
 <a name="MethodRelationship"></a>
 
@@ -3177,9 +3398,9 @@ Creates a new `VerifierOptions` with default options.
 
 ## KeyType
 **Kind**: global variable  
-<a name="Digest"></a>
+<a name="DIDMessageEncoding"></a>
 
-## Digest
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
