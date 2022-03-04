@@ -21,7 +21,7 @@ pub enum Error {
   #[error("{0}")]
   OutboundFailure(#[from] OutboundFailure),
   /// No handler was set on the receiver and thus we cannot process this request.
-  #[error("unkown request `{0}`")]
+  #[error("unknown request `{0}`")]
   UnknownRequest(String),
   #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
@@ -43,8 +43,10 @@ pub enum Error {
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
   /// No handler was set on the receiver and thus this request is not processable.
-  #[error("unkown request `{0}`")]
+  #[error("unknown request `{0}`")]
   UnknownRequest(String),
+  #[error("thread with id `{0}` not found")]
+  ThreadNotFound(ThreadId),
   #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
@@ -65,6 +67,7 @@ impl From<RemoteSendError> for Error {
         Error::DeserializationFailure { location, message }
       }
       RemoteSendError::SerializationFailure { location, message } => Error::SerializationFailure { location, message },
+      RemoteSendError::ThreadNotFound(thread_id) => Error::ThreadNotFound(thread_id),
     }
   }
 }

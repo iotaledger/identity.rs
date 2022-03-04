@@ -5,6 +5,7 @@ use std::any::Any;
 use std::result::Result as StdResult;
 
 use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::didcomm::thread_id;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::messages::ResponseMessage;
@@ -166,7 +167,9 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
                 input: request.input,
               };
 
-              sender.1.send(thread_request).expect("TODO");
+              if let Err(_) = sender.1.send(thread_request) {
+                log::warn!("unable to send request for thread id `{thread_id}`");
+              }
 
               Ok(())
             }
@@ -175,8 +178,9 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
                 "no handler or thread found for the received message `{}`",
                 request.endpoint
               );
-              // TODO: Should this be a more generic error name, including unknown endpoint + unknown thread?
-              Err(RemoteSendError::UnknownRequest(request.endpoint.to_string()))
+              // The assumption is that DID authentication is done before this point, so this is not
+              // considered an information leak, e.g. to enumerate thread ids.
+              Err(RemoteSendError::ThreadNotFound(thread_id.to_owned()))
             }
           }
         }
