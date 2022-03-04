@@ -10,6 +10,7 @@ use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::presentation::PresentationRequest;
 use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::thread_id::ThreadId;
+use crate::tests::try_init_logger;
 use crate::Actor;
 use crate::RequestContext;
 use crate::Result;
@@ -36,6 +37,8 @@ impl TestFunctionState {
 
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
+  try_init_logger();
+
   let mut holder_actor = default_sending_actor().await;
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
@@ -61,6 +64,8 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 
 #[tokio::test]
 async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
+  try_init_logger();
+
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
   let mut verifier_actor = default_sending_actor().await;
 
@@ -85,6 +90,8 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 
 #[tokio::test]
 async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> Result<()> {
+  try_init_logger();
+
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut verifier_actor = default_sending_actor().await;
@@ -128,6 +135,8 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> Result<()> {
+  try_init_logger();
+
   let mut holder_actor = default_sending_actor().await;
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
@@ -171,6 +180,8 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
 
 #[tokio::test]
 async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result<()> {
+  try_init_logger();
+
   let mut verifier_actor = default_sending_actor().await;
 
   async fn presentation_request_hook(
@@ -203,6 +214,8 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
 
 #[tokio::test]
 async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Result<()> {
+  try_init_logger();
+
   let mut holder_actor = default_sending_actor().await;
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;

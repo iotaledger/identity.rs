@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use libp2p::Multiaddr;
 
+use crate::tests::try_init_logger;
 use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
@@ -19,6 +20,8 @@ use super::default_sending_actor;
 
 #[tokio::test]
 async fn test_unknown_request_returns_error() -> crate::Result<()> {
+  try_init_logger();
+
   let (listening_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut sending_actor = default_sending_actor().await;
@@ -42,6 +45,8 @@ async fn test_unknown_request_returns_error() -> crate::Result<()> {
 
 #[tokio::test]
 async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
+  try_init_logger();
+
   let mut actor1 = ActorBuilder::new().build().await.unwrap();
   let mut actor2 = ActorBuilder::new().build().await.unwrap();
 
@@ -102,6 +107,8 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 
 #[tokio::test]
 async fn test_actor_handler_is_invoked() -> crate::Result<()> {
+  try_init_logger();
+
   let (mut receiver, receiver_addr, receiver_peer_id) = default_listening_actor().await;
   let mut sender = default_sending_actor().await;
 
@@ -148,7 +155,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 
 #[tokio::test]
 async fn test_synchronous_handler_invocation() -> crate::Result<()> {
-  pretty_env_logger::init();
+  try_init_logger();
 
   let (mut listening_actor, addr, peer_id) = default_listening_actor().await;
 
@@ -195,6 +202,8 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
 #[should_panic]
 #[tokio::test]
 async fn test_interacting_with_shutdown_actor_panics() {
+  try_init_logger();
+
   let (listening_actor, _, _) = default_listening_actor().await;
 
   let mut commander_copy = listening_actor.commander.clone();

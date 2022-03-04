@@ -5,7 +5,6 @@ use std::any::Any;
 use std::result::Result as StdResult;
 
 use crate::didcomm::message::DidCommPlaintextMessage;
-use crate::didcomm::thread_id;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
 use crate::p2p::messages::ResponseMessage;
@@ -167,7 +166,7 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
                 input: request.input,
               };
 
-              if let Err(_) = sender.1.send(thread_request) {
+              if sender.1.send(thread_request).is_err() {
                 log::warn!("unable to send request for thread id `{thread_id}`");
               }
 

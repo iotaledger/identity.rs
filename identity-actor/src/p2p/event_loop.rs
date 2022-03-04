@@ -177,7 +177,7 @@ impl EventLoop {
       }
       SwarmCommand::GetAddresses { response_channel } => {
         response_channel
-          .send(self.swarm.listeners().map(|addr| addr.to_owned()).collect())
+          .send(self.swarm.listeners().map(ToOwned::to_owned).collect())
           .expect("receiver was dropped");
       }
       SwarmCommand::Shutdown { response_channel } => {
