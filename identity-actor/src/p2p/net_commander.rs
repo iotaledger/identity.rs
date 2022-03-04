@@ -58,7 +58,7 @@ impl NetCommander {
     receiver.await.expect("sender was dropped")
   }
 
-  pub async fn start_listening(&mut self, address: Multiaddr) -> Result<(), TransportError<std::io::Error>> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> Result<Multiaddr, TransportError<std::io::Error>> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::StartListening {
       address,
@@ -82,10 +82,10 @@ impl NetCommander {
     receiver.await.expect("sender was dropped")
   }
 
-  pub async fn stop_listening(&mut self) {
+  pub async fn shutdown(&mut self) {
     let (sender, receiver) = oneshot::channel();
     self
-      .send_command(SwarmCommand::StopListening {
+      .send_command(SwarmCommand::Shutdown {
         response_channel: sender,
       })
       .await;
@@ -112,7 +112,7 @@ pub enum SwarmCommand {
   },
   StartListening {
     address: Multiaddr,
-    response_channel: oneshot::Sender<Result<(), TransportError<std::io::Error>>>,
+    response_channel: oneshot::Sender<Result<Multiaddr, TransportError<std::io::Error>>>,
   },
   AddAddress {
     peer: PeerId,
@@ -121,7 +121,7 @@ pub enum SwarmCommand {
   GetAddresses {
     response_channel: oneshot::Sender<Vec<Multiaddr>>,
   },
-  StopListening {
+  Shutdown {
     response_channel: oneshot::Sender<()>,
   },
 }

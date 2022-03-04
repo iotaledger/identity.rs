@@ -50,13 +50,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
     .await
     .unwrap();
 
-  // TODO: Get rid of this.
-  tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-
-  let addrs = actor2.addresses().await;
-  println!("addrs: {:?}", addrs);
-
-  let addr: Multiaddr = addrs.into_iter().next().unwrap();
+  let addr: Multiaddr = actor2.addresses().await.into_iter().next().unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);

@@ -91,7 +91,13 @@ impl Actor {
     &self.state.as_ref().handlers
   }
 
-  pub async fn start_listening(&mut self, address: Multiaddr) -> StdResult<(), TransportError<std::io::Error>> {
+  // TODO: Return crate::Result?
+  /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
+  /// be different from `address` itself, e.g. when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when passing a
+  /// single address, multiple addresses may end up being listened on. To obtain all those addresses, use
+  /// [`Actor::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
+  /// and should thus not be relied upon.
+  pub async fn start_listening(&mut self, address: Multiaddr) -> StdResult<Multiaddr, TransportError<std::io::Error>> {
     self.commander.start_listening(address).await
   }
 
@@ -99,6 +105,7 @@ impl Actor {
     self.state.peer_id
   }
 
+  /// Return all addresses that are currently being listened on.
   pub async fn addresses(&mut self) -> Vec<Multiaddr> {
     self.commander.get_addresses().await
   }
@@ -170,7 +177,7 @@ impl Actor {
   }
 
   pub async fn shutdown(mut self) -> Result<()> {
-    self.commander.stop_listening().await;
+    self.commander.shutdown().await;
     // TODO: This implicitly drops the commander. If this is the last copy of the commander,
     // the event loop will shut down as a result. However, if copies exist, this will return while
     // the event loop keeps running. Ideally we could join on the background task

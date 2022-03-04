@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
+use std::ops::ControlFlow;
 
 use futures::channel::mpsc;
 use futures::channel::oneshot;
@@ -16,8 +17,10 @@ use libp2p::request_response::RequestResponseEvent;
 use libp2p::request_response::RequestResponseMessage;
 use libp2p::request_response::ResponseChannel;
 use libp2p::swarm::SwarmEvent;
+use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::Swarm;
+use libp2p::TransportError;
 
 use crate::Endpoint;
 use crate::RequestMode;
@@ -30,9 +33,9 @@ use super::net_commander::SwarmCommand;
 pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
-  listener_ids: Vec<ListenerId>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<ResponseMessage, OutboundFailure>>>,
   await_response_sent: HashMap<RequestId, oneshot::Sender<Result<(), InboundFailure>>>,
+  await_listen: HashMap<ListenerId, oneshot::Sender<Result<Multiaddr, TransportError<std::io::Error>>>>,
 }
 
 impl EventLoop {
@@ -40,9 +43,9 @@ impl EventLoop {
     EventLoop {
       swarm,
       command_channel,
-      listener_ids: Vec::new(),
       await_response: HashMap::new(),
       await_response_sent: HashMap::new(),
+      await_listen: HashMap::new(),
     }
   }
 
@@ -55,15 +58,15 @@ impl EventLoop {
           event = self.swarm.select_next_some() => self.handle_swarm_event(event, &event_handler).await,
           command = self.command_channel.next().fuse() => {
               if let Some(c) = command {
-                  self.handle_command(c)
+                  if let ControlFlow::Break(_) = self.handle_command(c) {
+                    break;
+                  }
               } else {
                   break;
               }
           },
       }
     }
-
-    // self.shutdown();
   }
 
   // This is where events coming from all peers are handled.
@@ -100,7 +103,6 @@ impl EventLoop {
         message: RequestResponseMessage::Response { request_id, response },
         ..
       }) => {
-        println!("received response");
         // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
         if let Some(response_channel) = self.await_response.remove(&request_id) {
           let _ = response_channel.send(Ok(response));
@@ -121,11 +123,16 @@ impl EventLoop {
           let _ = response_channel.send(Ok(()));
         }
       }
+      SwarmEvent::NewListenAddr { listener_id, address } => {
+        if let Some(response_channel) = self.await_listen.remove(&listener_id) {
+          let _ = response_channel.send(Ok(address));
+        }
+      }
       _ => (),
     }
   }
 
-  fn handle_command(&mut self, command: SwarmCommand) {
+  fn handle_command(&mut self, command: SwarmCommand) -> ControlFlow<()> {
     match command {
       SwarmCommand::SendRequest {
         peer,
@@ -157,13 +164,14 @@ impl EventLoop {
       SwarmCommand::StartListening {
         address,
         response_channel,
-      } => {
-        let result: Result<(), _> = self.swarm.listen_on(address).map(|listener_id| {
-          self.listener_ids.push(listener_id);
-        });
-
-        response_channel.send(result).expect("receiver was dropped");
-      }
+      } => match self.swarm.listen_on(address) {
+        Ok(listener_id) => {
+          self.await_listen.insert(listener_id, response_channel);
+        }
+        Err(err) => {
+          response_channel.send(Err(err)).expect("receiver was dropped");
+        }
+      },
       SwarmCommand::AddAddress { peer, address } => {
         self.swarm.behaviour_mut().add_address(&peer, address);
       }
@@ -172,13 +180,22 @@ impl EventLoop {
           .send(self.swarm.listeners().map(|addr| addr.to_owned()).collect())
           .expect("receiver was dropped");
       }
-      SwarmCommand::StopListening { response_channel } => {
-        for listener in std::mem::take(&mut self.listener_ids).into_iter() {
+      SwarmCommand::Shutdown { response_channel } => {
+        for (listener, channel) in std::mem::take(&mut self.await_listen).into_iter() {
           let _ = self.swarm.remove_listener(listener);
+          let err = TransportError::Other(std::io::Error::new(
+            std::io::ErrorKind::Interrupted,
+            "actor was shut down",
+          ));
+
+          let _ = channel.send(Err(err));
         }
         response_channel.send(()).expect("receiver was dropped");
+
+        return ControlFlow::Break(());
       }
     }
+    ControlFlow::Continue(())
   }
 }
 
