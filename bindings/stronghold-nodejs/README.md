@@ -21,7 +21,7 @@ Alternatively, you can build the bindings if you have Rust installed. If not, re
 npm install
 ```
 
-To use the latest local changes from the Wasm bindings follow the build instructions from the [IOTA Identity Wasm build section](../wasm#build) and then link the result with:
+To use the latest local changes from the Wasm bindings follow the build instructions from the [IOTA Identity Wasm build section](https://github.com/iotaledger/identity.rs/tree/main/bindings/#build) and then link the result with:
 
 ```bash
 cd ../wasm
