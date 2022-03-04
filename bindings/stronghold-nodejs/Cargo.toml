@@ -1,8 +1,8 @@
 [package]
-name = "stronghold-nodejs"
+name = "identity-stronghold-nodejs"
 version = "0.0.0"
 edition = "2021"
-
+publish = false
 [lib]
 crate-type = ["cdylib"]
 
