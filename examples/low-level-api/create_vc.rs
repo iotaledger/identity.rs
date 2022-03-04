@@ -58,8 +58,8 @@ pub async fn create_vc() -> Result<String> {
     &resolved_issuer_doc,
     FailFast::Yes,
   )?;
-  // The issuer is now sure that the credential they are about to issue satisfies their expectations
-  // hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
+  // The issuer is now sure that the credential they are about to issue satisfies their expectations.
+  // Hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
   // This means that the credential is NOT published to the tangle where it can be accessed by anyone.
   let credential_json: String = credential.to_json()?;
 
@@ -70,7 +70,10 @@ pub async fn create_vc() -> Result<String> {
 async fn main() -> Result<()> {
   // Obtain a JSON representation of a credential issued to us
   let credential_json: String = create_vc().await?;
-  // Run some basic validations on this credential so we can immediately contact the issuer if something is not right
+  // Perform a default validation on the credential. This default validation checks the issuer's signature, the
+  // credential's semantic structure, that the expiration date is not in the past and the issuance date is not in the
+  // future.
+
   let credential: Credential = Credential::from_json(credential_json.as_str())?;
   // We can use the Resolver to conveniently validate basic properties of the credential.
   let resolver: Resolver = Resolver::new().await?;

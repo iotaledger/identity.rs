@@ -14,12 +14,6 @@ import {manipulateIdentity} from './manipulate_did';
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createVC(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
-
     // Creates new identities (See "create_did" and "manipulate_did" examples)
     const alice = await createIdentity(clientConfig);
     const issuer = await manipulateIdentity(clientConfig);

@@ -72,7 +72,11 @@ impl PresentationValidator {
       Self::holder_not_subject_iter(presentation)
         .take(max_holder_not_subject_checks)
         .chain(Self::non_transferable_violations(presentation).take(max_non_transferable_violation_checks))
-        .map(|credential_position| Err(ValidationError::HolderSubjectRelationship { credential_position }))
+        .map(|credential_position| {
+          Err(ValidationError::HolderSubjectRelationship {
+            credential_index: credential_position,
+          })
+        })
     };
 
     let presentation_validation_errors_iter = structure_validation
@@ -176,7 +180,7 @@ impl PresentationValidator {
   pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
     if let Some(position) = Self::non_transferable_violations(presentation).next() {
       let err = ValidationError::HolderSubjectRelationship {
-        credential_position: position,
+        credential_index: position,
       };
       Err(err)
     } else {
@@ -191,7 +195,7 @@ impl PresentationValidator {
   pub fn check_holder_is_always_subject<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
     if let Some(position) = Self::holder_not_subject_iter(presentation).next() {
       let err = ValidationError::HolderSubjectRelationship {
-        credential_position: position,
+        credential_index: position,
       };
       Err(err)
     } else {
@@ -559,18 +563,18 @@ mod tests {
     // check that `check_non_transferable` fails
     assert!(matches!(
       PresentationValidator::check_non_transferable(&presentation).unwrap_err(),
-      ValidationError::HolderSubjectRelationship { credential_position: 1 }
+      ValidationError::HolderSubjectRelationship { credential_index: 1 }
     ));
 
     // check that `check_non_transferable` fails
     assert!(matches!(
       PresentationValidator::check_holder_is_always_subject(&presentation).unwrap_err(),
-      ValidationError::HolderSubjectRelationship { credential_position: 1 }
+      ValidationError::HolderSubjectRelationship { credential_index: 1 }
     ));
 
     assert!(matches!(
       PresentationValidator::check_non_transferable(&presentation).unwrap_err(),
-      ValidationError::HolderSubjectRelationship { credential_position: 1 }
+      ValidationError::HolderSubjectRelationship { credential_index: 1 }
     ));
     // check that full_validation also fails with the expected error
     // sign the presentation using subject_foo's document and private key.
@@ -615,7 +619,7 @@ mod tests {
 
     assert!(matches!(
       error.presentation_validation_errors.get(0).unwrap(),
-      &ValidationError::HolderSubjectRelationship { credential_position: 1 }
+      &ValidationError::HolderSubjectRelationship { credential_index: 1 }
     ));
 
     // check that the validation passes if we change the options to allow any relationship between the subject and

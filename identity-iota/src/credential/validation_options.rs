@@ -70,17 +70,16 @@ pub enum SubjectHolderRelationship {
 
 impl Default for SubjectHolderRelationship {
   fn default() -> Self {
-    // TODO: Should the default be the most strict variant?
-    Self::SubjectOnNonTransferable
+    Self::AlwaysSubject
   }
 }
 
 /// Declares when validation should return with an error.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum FailFast {
-  /// Declare that validation should fail after all errors have been found
+  /// Declare that validation should fail after all errors have been found.
   No,
-  /// Declare that validation must fail upon the first error is found
+  /// Declare that validation must fail when the first error is found.
   Yes,
 }
 
