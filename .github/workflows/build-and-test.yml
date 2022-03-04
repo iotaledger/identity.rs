@@ -309,7 +309,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: bindings/wasm/node
-     
+
+      - name: Prepare Wasm bindings link
+        run: |
+          npm link
+        working-directory: ./bindings/wasm
+
       - name: Setup
         if: ${{ matrix.settings.setup }}
         run: ${{ matrix.settings.setup }}
