@@ -1,6 +1,6 @@
 # IOTA Identity Stronghold Node.js
 
-> This is the beta version of the official Stronghold Node.js plugin for [IOTA Identity Wasm](../wasm).
+This is the beta version of the official Stronghold Account Storage plugin for Node.js with [IOTA Identity Wasm](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm).
 
 ## Install the plugin:
 
