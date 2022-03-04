@@ -13,9 +13,9 @@ use identity::did::MethodScope;
 use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaService;
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota_core::IotaService;
+use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
 
 mod create_did;

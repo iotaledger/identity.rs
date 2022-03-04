@@ -10,7 +10,7 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::MessageIdExt;
-use identity_iota_core::tangle::TangleRef;
+use identity_iota_core::message::TangleRef;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;

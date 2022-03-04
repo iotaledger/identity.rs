@@ -3,8 +3,8 @@
 
 use serde::Serialize;
 
-use identity_iota::tangle::MessageId;
-use identity_iota::tangle::MessageIdExt;
+use identity_iota_core::message::MessageId;
+use identity_iota_core::message::MessageIdExt;
 
 /// Holds the last published message ids of the integration and diff chains.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

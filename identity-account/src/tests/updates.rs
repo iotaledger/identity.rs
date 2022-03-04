@@ -17,9 +17,9 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
 use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::Network;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::types::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -414,7 +414,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaError(identity_iota::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -498,7 +498,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaError(identity_iota::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -629,7 +629,9 @@ async fn test_delete_method() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+      identity_did::Error::MethodNotFound
+    ))
   ));
 
   Ok(())

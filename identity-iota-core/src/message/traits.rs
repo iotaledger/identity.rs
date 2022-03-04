@@ -4,6 +4,7 @@
 use iota_client::bee_message::MessageId;
 use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
+use crate::did::IotaDID;
 use crate::error::Result;
 
 // TODO: Use MessageId when it has a const ctor
@@ -29,4 +30,16 @@ impl MessageIdExt for MessageId {
   fn decode_hex(hex: &str) -> Result<Self> {
     hex.parse().map_err(Into::into)
   }
+}
+
+pub trait TangleRef {
+  fn did(&self) -> &IotaDID;
+
+  fn message_id(&self) -> &MessageId;
+
+  fn set_message_id(&mut self, message_id: MessageId);
+
+  fn previous_message_id(&self) -> &MessageId;
+
+  fn set_previous_message_id(&mut self, message_id: MessageId);
 }

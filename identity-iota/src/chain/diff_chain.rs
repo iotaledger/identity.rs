@@ -10,7 +10,7 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::MessageIdExt;
-use identity_iota_core::tangle::TangleRef;
+use identity_iota_core::message::TangleRef;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -277,7 +277,7 @@ mod tests {
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaService;
   use identity_iota_core::message::MessageId;
-  use identity_iota_core::tangle::TangleRef;
+  use identity_iota_core::message::TangleRef;
 
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::ClientBuilder;
@@ -391,7 +391,7 @@ mod tests {
     }))
     .unwrap();
     updated2
-      .core_document()
+      .core_document_mut()
       .service_mut()
       .replace(&service, service_updated.clone());
     let mut diff_edit: DiffMessage = updated1

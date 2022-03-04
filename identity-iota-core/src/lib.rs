@@ -26,5 +26,4 @@ pub mod diff;
 pub mod document;
 pub mod error;
 pub mod message;
-pub mod tangle;
 pub mod types;

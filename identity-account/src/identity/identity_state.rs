@@ -9,9 +9,9 @@ use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDIDUrl;
-use identity_iota::document::IotaDocument;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::did::IotaDIDUrl;
+use identity_iota_core::document::IotaDocument;
 
 use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;

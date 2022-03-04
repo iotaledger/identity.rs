@@ -18,6 +18,7 @@ identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-f
 identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
 identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
 identity-iota = { version = "=0.5.0-dev.4", path = "../identity-iota", default-features = false }
+identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
@@ -31,7 +32,7 @@ harness = false
 default = ["async"]
 
 # Enables async runtime support (Tokio)
-async = ["identity-iota/async"]
+async = ["identity-iota/async", "identity-iota-core/async"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]

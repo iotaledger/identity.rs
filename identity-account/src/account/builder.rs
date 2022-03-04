@@ -8,9 +8,9 @@ use std::sync::Arc;
 #[cfg(feature = "stronghold")]
 use zeroize::Zeroize;
 
-use identity_iota::did::IotaDID;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota_core::did::IotaDID;
 
 use crate::account::Account;
 use crate::error::Result;

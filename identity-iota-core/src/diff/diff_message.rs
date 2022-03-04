@@ -19,7 +19,7 @@ use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::message::MessageId;
 use crate::message::MessageIdExt;
-use crate::tangle::TangleRef;
+use crate::message::TangleRef;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

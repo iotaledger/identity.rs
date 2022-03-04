@@ -89,7 +89,7 @@ impl IotaDocument {
   ///
   /// ```
   /// # use identity_core::crypto::KeyPair;
-  /// # use identity_iota::document::IotaDocument;
+  /// # use identity_iota_core::document::IotaDocument;
   /// #
   /// // Create a DID Document from a new Ed25519 keypair.
   /// let keypair = KeyPair::new_ed25519().unwrap();
@@ -114,8 +114,8 @@ impl IotaDocument {
   ///
   /// ```
   /// # use identity_core::crypto::KeyPair;
-  /// # use identity_iota::document::IotaDocument;
-  /// # use identity_iota::tangle::Network;
+  /// # use identity_iota_core::document::IotaDocument;
+  /// # use identity_iota_core::types::Network;
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
   /// let keypair = KeyPair::new_ed25519().unwrap();

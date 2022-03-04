@@ -29,7 +29,7 @@ lazy_static::lazy_static! {
 /// # Example
 ///
 /// ```
-/// # use identity_iota::did::IotaDID;
+/// # use identity_iota_core::did::IotaDID;
 /// # use identity_iota::tangle::ExplorerUrl;
 /// let explorer = ExplorerUrl::mainnet();
 /// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")?;

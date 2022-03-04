@@ -24,6 +24,9 @@ pub enum Error {
   /// Caused by errors from the [identity_iota] crate.
   #[error(transparent)]
   IotaError(#[from] identity_iota::Error),
+  /// Caused by errors from the [identity_iota_core] crate.
+  #[error(transparent)]
+  IotaCoreError(#[from] identity_iota_core::Error),
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),

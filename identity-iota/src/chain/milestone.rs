@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 
 use futures::stream::FuturesUnordered;
 use futures::TryStreamExt;
-use identity_iota_core::tangle::TangleRef;
+use identity_iota_core::message::TangleRef;
 use itertools::Itertools;
 
 use crate::error::Result;
@@ -67,7 +67,7 @@ fn sort_by_milestone_index<T: TangleRef>(messages_milestones: Vec<(Option<u32>, 
 
 #[cfg(test)]
 mod tests {
-  use crate::did::IotaDID;
+  use identity_iota_core::did::IotaDID;
   use identity_iota_core::message::MessageId;
 
   use super::*;

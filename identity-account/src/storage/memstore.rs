@@ -13,7 +13,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
+use identity_iota_core::did::IotaDID;
 use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;

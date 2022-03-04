@@ -20,9 +20,9 @@ use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
-use identity::iota::IotaDID;
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
 
 mod common;

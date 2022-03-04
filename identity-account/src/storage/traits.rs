@@ -4,7 +4,7 @@
 use core::fmt::Debug;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_iota::did::IotaDID;
+use identity_iota_core::did::IotaDID;
 
 use crate::error::Result;
 use crate::identity::ChainState;

@@ -19,6 +19,7 @@ identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }
 identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
 identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
 identity-iota = { version = "=0.5.0-dev.4", path = "../identity-iota", default-features = false }
+identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
 itoa = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
@@ -57,5 +58,5 @@ stronghold = [
   "actix",
   "tokio/rt-multi-thread",
 ]
-async = ["identity-iota/async"]
+async = ["identity-iota/async", "identity-iota-core/async"]
 default = ["stronghold", "async"]

@@ -11,7 +11,7 @@ use identity_did::did::DID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::message::MessageId;
-use identity_iota_core::tangle::TangleRef;
+use identity_iota_core::message::TangleRef;
 
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;

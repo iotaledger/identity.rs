@@ -21,12 +21,12 @@ use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDIDUrl;
-use identity_iota::document::IotaDocument;
-use identity_iota::document::IotaService;
-use identity_iota::document::IotaVerificationMethod;
-use identity_iota::tangle::NetworkName;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::did::IotaDIDUrl;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::document::IotaService;
+use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core::types::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;

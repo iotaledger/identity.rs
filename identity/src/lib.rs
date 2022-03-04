@@ -71,14 +71,23 @@ pub mod iota {
 
   pub use identity_iota::chain::*;
   pub use identity_iota::credential::*;
-  pub use identity_iota::did::*;
-  pub use identity_iota::diff::*;
   pub use identity_iota::document::*;
   pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;
+}
+
+pub mod iota_core {
+  //! IOTA Core Traits and Types
+
+  pub use identity_iota_core::did::*;
+  pub use identity_iota_core::diff::*;
+  pub use identity_iota_core::document::*;
+  pub use identity_iota_core::error::*;
+  pub use identity_iota_core::message::*;
+  pub use identity_iota_core::types::*;
 
   #[doc(inline)]
-  pub use identity_iota::try_construct_did;
+  pub use identity_iota_core::try_construct_did;
 }
 
 #[cfg(feature = "account")]
@@ -113,7 +122,7 @@ pub mod prelude {
   //! Prelude of commonly used types
 
   pub use identity_core::crypto::KeyPair;
-  pub use identity_iota::document::IotaDocument;
   pub use identity_iota::tangle::Client;
   pub use identity_iota::Result;
+  pub use identity_iota_core::document::IotaDocument;
 }

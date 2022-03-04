@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::marker::PhantomData;
@@ -14,7 +14,7 @@ use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
-use identity_iota::did::IotaDID;
+use identity_iota_core::did::IotaDID;
 
 use crate::storage::Storage;
 use crate::types::KeyLocation;
