@@ -1,7 +1,7 @@
 name: Stronghold Bindings
 env:
   DEBUG: napi:*
-  APP_NAME: stronghold-nodejs # must match the package name in package.json
+  APP_NAME: identity-stronghold-nodejs # must match the package name in package.json
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   WORKING_DIRECTORY: bindings/stronghold-nodejs
 defaults:
@@ -46,7 +46,7 @@ jobs:
               npm run build && strip dist/*.node
             test-docker: |
               docker build -f .github/Dockerfile.alpine -t tester .
-              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/stronghold-nodejs.linux-x64-musl.node && npm run test"
+              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/identity-stronghold-nodejs.linux-x64-musl.node && npm run test"
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
