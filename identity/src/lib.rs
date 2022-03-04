@@ -118,6 +118,7 @@ pub mod prelude {
   pub use identity_iota::Result;
 }
 
+#[cfg(feature = "actor")]
 pub mod actor {
   //! Identity actor types
 
