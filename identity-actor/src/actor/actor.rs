@@ -177,6 +177,8 @@ impl Actor {
     // to let all tasks finish gracefully. However, not all spawn functions return a JoinHandle,
     // such as wasm_bindgen_futures::spawn_local. Alternatively, we can use a non-graceful exit and
     // make shutdown explicit by sending a command that breaks the event loop immediately?
+    // TODO: We'll need some kind of shutdown for the event loop in order to drain the potential
+    // channels that have not yet been "answered".
 
     Ok(())
   }

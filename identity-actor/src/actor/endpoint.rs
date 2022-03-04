@@ -22,9 +22,13 @@ impl Endpoint {
 
     let name = split.next().unwrap().to_owned();
     let handler = split.next().ok_or(Error::InvalidEndpoint)?.to_owned();
-    let hook = split.next().map(ToOwned::to_owned);
+    let hook = split.next();
 
-    if name.is_empty() || handler.is_empty() {
+    if name.is_empty()
+      || handler.is_empty()
+      || !name.chars().all(|c| c.is_ascii_alphabetic() || c == '_')
+      || !handler.chars().all(|c| c.is_ascii_alphabetic() || c == '_')
+    {
       return Err(Error::InvalidEndpoint);
     }
 
@@ -55,15 +59,6 @@ impl Endpoint {
   pub fn is_hook(&self) -> bool {
     self.is_hook
   }
-
-  // TODO: Since this is called on every didcomm endpoint, it'd be nice to
-  // get rid of the allocation and use a static string instead.
-  pub fn to_catch_all(self) -> Self {
-    Self {
-      handler: "*".to_owned(),
-      ..self
-    }
-  }
 }
 
 impl Display for Endpoint {
@@ -90,12 +85,20 @@ mod tests {
     assert!(matches!(Endpoint::new("/b").unwrap_err(), Error::InvalidEndpoint));
     assert!(matches!(Endpoint::new("a/b/c").unwrap_err(), Error::InvalidEndpoint));
     assert!(matches!(Endpoint::new("a/b/c/d").unwrap_err(), Error::InvalidEndpoint));
+    assert!(matches!(Endpoint::new("1a/b").unwrap_err(), Error::InvalidEndpoint));
+    assert!(matches!(Endpoint::new("a/b2").unwrap_err(), Error::InvalidEndpoint));
+    assert!(matches!(Endpoint::new("a/b/钩").unwrap_err(), Error::InvalidEndpoint));
+    assert!(matches!(
+      Endpoint::new("longer/hyphenated-word").unwrap_err(),
+      Error::InvalidEndpoint
+    ));
   }
 
   #[test]
   fn valid_endpoints() {
     assert!(!Endpoint::new("a/b").unwrap().is_hook());
     assert!(Endpoint::new("a/b/hook").unwrap().is_hook());
-    assert!(!Endpoint::new("a/*").unwrap().is_hook());
+    assert!(!Endpoint::new("longer/word").unwrap().is_hook());
+    assert!(!Endpoint::new("longer/underscored_word").unwrap().is_hook());
   }
 }
