@@ -218,3 +218,124 @@ jobs:
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:    
           os: ${{matrix.os}}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: identity-wasm-bindings-node
+          path: bindings/wasm/node
+          if-no-files-found: error
+
+  build-stronghold-nodejs:
+    needs: 
+      - check-for-run-condition
+      - build-and-test-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    defaults:
+      run:
+        working-directory: bindings/stronghold-nodejs
+        shell: bash
+    env:
+      DEBUG: napi:*
+      APP_NAME: stronghold-nodejs # must match the package name in package.json
+      MACOSX_DEPLOYMENT_TARGET: '10.13'
+      WORKING_DIRECTORY: bindings/stronghold-nodejs
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            architecture: x64
+            build: |
+              npm run build
+              strip -x dist/*.node
+            test: |
+              npm run test
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            architecture: x64
+            build: |
+              npm run build
+            test: |
+              npm run test
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            architecture: x64
+            build: |
+              npm run build && strip dist/*.node
+            test: |
+              npm run test
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            architecture: x64
+            setup: |
+              sudo apt-get install -y musl-tools
+            build: |
+              export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+              npm run build && strip dist/*.node
+            test-docker: |
+              docker build -f .github/Dockerfile.alpine -t tester .
+              docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/stronghold-nodejs.linux-x64-musl.node && npm run test"
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            build: |
+              export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
+              npm run build && strip -x dist/*.node
+            # we can't test this properly because the macos-latest runners don't have apple silicon / aarch64
+            test: |
+              echo "let's hope for the best"
+    name: stable - ${{ matrix.settings.target }} - node@16
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          check-latest: true
+          architecture: ${{ matrix.settings.architecture }}
+
+      # TODO: does 'profile: minimal' matter?
+      - name: Setup Rust and cache
+        uses: './.github/actions/rust/rust-setup'
+        with:
+          os: ${{ matrix.settings.host }}
+          job: ${{ github.job }}
+          target: ${{ matrix.settings.target }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: bindings/wasm/node
+     
+      - name: Setup
+        if: ${{ matrix.settings.setup }}
+        run: ${{ matrix.settings.setup }}
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts && npm link @iota/identity-wasm
+
+      - name: Build
+        run: ${{ matrix.settings.build }}
+
+      - name: List packages
+        run: ls -R .
+
+      - name: Test bindings
+        if: ${{ matrix.settings.test }}
+        run: ${{ matrix.settings.test }}
+
+      - name: Test bindings in docker
+        if: ${{ matrix.settings.test-docker }}
+        run: ${{ matrix.settings.test-docker }}
+        working-directory: ./
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{env.APP_NAME}}-bindings-${{ matrix.settings.target }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
+

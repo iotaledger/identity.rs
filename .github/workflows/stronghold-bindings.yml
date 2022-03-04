@@ -4,8 +4,6 @@ env:
   APP_NAME: stronghold-nodejs # must match the package name in package.json
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   WORKING_DIRECTORY: bindings/stronghold-nodejs
-on:
-  pull_request:
 defaults:
   run:
     working-directory: bindings/stronghold-nodejs
