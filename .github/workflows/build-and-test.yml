@@ -313,6 +313,7 @@ jobs:
 
       - name: Prepare Wasm bindings link
         run: |
+          npm ci
           npm link
         working-directory: ./bindings/wasm
 
