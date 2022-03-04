@@ -190,6 +190,15 @@ impl EventLoop {
 
           let _ = channel.send(Err(err));
         }
+
+        for (_, channel) in std::mem::take(&mut self.await_response) {
+          let _ = channel.send(Err(OutboundFailure::ConnectionClosed));
+        }
+
+        for (_, channel) in std::mem::take(&mut self.await_response_sent) {
+          let _ = channel.send(Err(InboundFailure::ConnectionClosed));
+        }
+
         response_channel.send(()).expect("receiver was dropped");
 
         return ControlFlow::Break(());

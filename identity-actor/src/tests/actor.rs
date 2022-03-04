@@ -191,3 +191,15 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
 
   Ok(())
 }
+
+#[should_panic]
+#[tokio::test]
+async fn test_interacting_with_shutdown_actor_panics() {
+  let (listening_actor, _, _) = default_listening_actor().await;
+
+  let mut commander_copy = listening_actor.commander.clone();
+
+  listening_actor.shutdown().await.unwrap();
+
+  commander_copy.get_addresses().await;
+}

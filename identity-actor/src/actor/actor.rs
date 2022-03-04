@@ -178,14 +178,12 @@ impl Actor {
 
   pub async fn shutdown(mut self) -> Result<()> {
     self.commander.shutdown().await;
-    // TODO: This implicitly drops the commander. If this is the last copy of the commander,
-    // the event loop will shut down as a result. However, if copies exist, this will return while
-    // the event loop keeps running. Ideally we could join on the background task
-    // to let all tasks finish gracefully. However, not all spawn functions return a JoinHandle,
-    // such as wasm_bindgen_futures::spawn_local. Alternatively, we can use a non-graceful exit and
-    // make shutdown explicit by sending a command that breaks the event loop immediately?
-    // TODO: We'll need some kind of shutdown for the event loop in order to drain the potential
-    // channels that have not yet been "answered".
+    // Consuming self drops the internal commander. If this is the last copy of the commander,
+    // the event loop will break as a result. However, if copies exist, such as in running handlers,
+    // this will return while the event loop keeps running. Ideally we could then join on the background task
+    // to wait for all handlers to finish gracefully. However, not all spawn functions return a JoinHandle,
+    // such as wasm_bindgen_futures::spawn_local. The current alternative is to use a non-graceful exit,
+    // which breaks the event loop immediately and returns an error through all open channels that require a result.
 
     Ok(())
   }
