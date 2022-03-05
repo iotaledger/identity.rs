@@ -10,13 +10,16 @@ use serde::Serialize;
 
 use self::private::SyncMode;
 
+/// Used to represent the synchronicity of a request at runtime.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RequestMode {
   Synchronous,
   Asynchronous,
 }
 
+/// A marker to indicate that an [`ActorRequest`] type is handled synchronously.
 pub struct Synchronous;
+/// A marker to indicate that an [`ActorRequest`] type is handled asynchronously.
 pub struct Asynchronous;
 
 pub(crate) mod private {
@@ -25,6 +28,7 @@ pub(crate) mod private {
   use super::Asynchronous;
   use super::Synchronous;
 
+  /// Used to represent the synchronicity of a request at compile-time.
   pub trait SyncMode {
     fn request_mode() -> RequestMode;
   }

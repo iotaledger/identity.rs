@@ -66,9 +66,9 @@ where
     actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
-    request: Box<dyn Any + Send>,
+    input: Box<dyn Any + Send>,
   ) -> Result<AnyFuture<'_>, RemoteSendError> {
-    let input: Box<REQ> = request.downcast().map_err(|_| {
+    let input: Box<REQ> = input.downcast().map_err(|_| {
       RemoteSendError::HandlerInvocationError(format!(
         "{}: could not downcast request to: {}",
         context.endpoint,

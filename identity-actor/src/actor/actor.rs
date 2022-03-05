@@ -44,6 +44,8 @@ pub(crate) struct ActorState {
   pub(crate) config: ActorConfig,
 }
 
+/// The main type of the actor crate, used to send messages to remote actors.
+/// Cloning an actor produces a shallow copy and is a relatively cheap operation.
 #[derive(Clone)]
 pub struct Actor {
   pub commander: NetCommander,
@@ -87,6 +89,7 @@ impl Actor {
     self.commander.start_listening(address).await
   }
 
+  /// Returns the [`PeerId`] that other peers can securely identify this actor with.
   pub fn peer_id(&mut self) -> PeerId {
     self.state.peer_id
   }
@@ -143,7 +146,7 @@ impl Actor {
     });
   }
 
-  fn get_handler(&self, endpoint: &Endpoint) -> std::result::Result<HandlerObjectTuple<'_>, RemoteSendError> {
+  fn get_handler(&self, endpoint: &Endpoint) -> StdResult<HandlerObjectTuple<'_>, RemoteSendError> {
     match self.state.handlers.get(endpoint) {
       Some(handler_object) => {
         let object_id = handler_object.object_id;
@@ -162,6 +165,9 @@ impl Actor {
     }
   }
 
+  /// Shutdown this actor. The actor will stop listening on all addresses.
+  /// This will break the event loop in the background immediately, returning an error
+  /// for all current handlers that interact with their copy of the actor or those waiting on messages.
   pub async fn shutdown(mut self) -> Result<()> {
     self.commander.shutdown().await;
     // Consuming self drops the internal commander. If this is the last copy of the commander,
@@ -174,10 +180,14 @@ impl Actor {
     Ok(())
   }
 
-  pub async fn add_address(&mut self, peer: PeerId, addr: Multiaddr) {
-    self.commander.add_address(peer, addr).await;
+  /// Associate the given `peer_id` with an `address`. This needs to be called before sending a
+  /// request to some [`PeerId`].
+  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) {
+    self.commander.add_address(peer_id, address).await;
   }
 
+  /// Sends an asynchronous message to a peer. To receive a potential response, use [`Actor::await_message`],
+  /// with the same `thread_id`.
   pub async fn send_message<REQ: ActorRequest<Asynchronous>>(
     &mut self,
     peer: PeerId,
@@ -189,7 +199,9 @@ impl Actor {
       .await
   }
 
-  pub async fn send_named_message<REQ: ActorRequest<Asynchronous>>(
+  #[doc(hidden)]
+  /// Helper function for bindings, prefer [`Actor::send_message`] whenever possible.
+  pub(crate) async fn send_named_message<REQ: ActorRequest<Asynchronous>>(
     &mut self,
     peer: PeerId,
     name: &str,
@@ -226,6 +238,7 @@ impl Actor {
     Ok(())
   }
 
+  /// Sends a synchronous request to a peer and returns its response.
   pub async fn send_request<REQ: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
@@ -236,6 +249,8 @@ impl Actor {
       .await
   }
 
+  #[doc(hidden)]
+  /// Helper function for bindings, prefer [`Actor::send_request`] whenever possible.
   pub(crate) async fn send_named_request<REQ: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
@@ -296,6 +311,9 @@ impl Actor {
     }
   }
 
+  /// Wait for a message on a given `thread_id`. This can only be called successfully if
+  /// [`Actor::send_message`] was used previously. This will return a timeout error if no message
+  /// is received within the duration passed to [`ActorBuilder::timeout`](crate::ActorBuilder::timeout).
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
@@ -341,7 +359,7 @@ impl Actor {
     }
   }
 
-  // Creates the channels used to await a message on a thread.
+  /// Creates the channels used to await a message on a thread.
   fn create_thread_channels(&mut self, thread_id: &ThreadId) {
     let (sender, receiver) = oneshot::channel();
 
@@ -353,13 +371,8 @@ impl Actor {
     self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
   }
 
-  /// Call the hook identified by the given `endpoint`.
-  pub async fn call_hook<I, O>(
-    &self,
-    endpoint: Endpoint,
-    peer: PeerId,
-    input: I,
-  ) -> std::result::Result<O, RemoteSendError>
+  /// Call the hook identified by the given `endpoint` with some `input`.
+  pub async fn call_hook<I, O>(&self, endpoint: Endpoint, peer: PeerId, input: I) -> StdResult<O, RemoteSendError>
   where
     I: Send + 'static,
     O: 'static,
@@ -396,7 +409,7 @@ impl Actor {
 /// shared state of the associated handler functions.
 pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
 
-/// An actor-internal identifier for the object representing the shared state of a handler.
+/// An actor-internal identifier for the object representing the shared state of one or more handlers.
 pub(crate) type ObjectId = Uuid;
 
 /// A [`RequestHandler`] and the id of its associated shared state object.
@@ -411,7 +424,7 @@ impl HandlerObject {
   }
 }
 
-/// A map from a request name to the identifier of the shared state object
+/// A map from an endpoint to the identifier of the shared state object
 /// and the method that handles that particular request.
 pub(crate) type HandlerMap = HashMap<Endpoint, HandlerObject>;
 

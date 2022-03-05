@@ -10,7 +10,13 @@ use std::str::FromStr;
 use serde::Deserialize;
 use serde::Serialize;
 
-// TODO: Deserialization skips endpoint validation, but that is okay at present.
+// TODO: Deserialization skips endpoint validation, but that is okay-ish at present.
+/// A path-like identifier for a handler function. As an example, `identity/create`
+/// could be an endpoint of the "identity" namespace and the concrete action "create".
+///
+/// An endpoint can also represent a `hook` function, indicated by a `/hook` postfix.
+///
+/// Endpoints are separated by slashes and only allow alphabetic ascii characters and `_`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Endpoint {
   name: String,
@@ -19,6 +25,8 @@ pub struct Endpoint {
 }
 
 impl Endpoint {
+  /// Creates a new endpoint from a string. Returns an [`Error::InvalidEndpoint`]
+  /// if disallowed characters are encountered.
   pub fn new(string: impl AsRef<str>) -> Result<Self> {
     let mut is_hook = false;
     let mut split = string.as_ref().split('/');

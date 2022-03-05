@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::iter;
 use std::marker::PhantomData;
 use std::time::Duration;
@@ -51,7 +52,7 @@ use super::actor::HandlerMap;
 use super::actor::ObjectId;
 use super::actor::ObjectMap;
 
-/// An [`Actor`] builder for easy configuration.
+/// An [`Actor`] builder for easy configuration and building of handler and hook functions.
 pub struct ActorBuilder {
   listening_addresses: Vec<Multiaddr>,
   keypair: Option<Keypair>,
@@ -61,7 +62,7 @@ pub struct ActorBuilder {
 }
 
 impl ActorBuilder {
-  /// Create a new `ActorBuilder`.
+  /// Creates a new `ActorBuilder`.
   pub fn new() -> Self {
     Self {
       listening_addresses: vec![],
@@ -76,8 +77,8 @@ impl ActorBuilder {
   ///
   /// If unset, a new keypair is generated.
   #[must_use]
-  pub fn keypair(mut self, keys: Keypair) -> Self {
-    self.keypair = Some(keys);
+  pub fn keypair(mut self, keypair: Keypair) -> Self {
+    self.keypair = Some(keypair);
     self
   }
 
@@ -95,6 +96,8 @@ impl ActorBuilder {
     self
   }
 
+  /// Add a new shared state object and returns a [`HandlerBuilder`] which can be used to
+  /// attach handlers and hooks that operate on that object.
   pub fn add_state<MOD: SyncMode, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
@@ -202,6 +205,7 @@ impl Default for ActorBuilder {
   }
 }
 
+/// Used to attach handlers and hooks to an [`ActorBuilder`].
 pub struct HandlerBuilder<'builder, MOD: SyncMode, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
@@ -217,17 +221,20 @@ impl<'builder, MOD: SyncMode, OBJ> HandlerBuilder<'builder, MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
-  pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
+  /// Add a handler function that operates on a shared state object and some
+  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// on the given `endpoint` and can deserialize it into `REQ`.
+  pub fn add_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
   where
     REQ: ActorRequest<MOD> + Send + Sync + 'static,
     REQ::Response: Send,
-    FUT: std::future::Future<Output = REQ::Response> + Send + 'static,
+    FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
     MOD: 'static + Send + Sync,
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(
-      Endpoint::new(cmd)?,
+      Endpoint::new(endpoint)?,
       HandlerObject::new(self.object_id, Box::new(handler)),
     );
     Ok(self)

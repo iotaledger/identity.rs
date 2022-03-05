@@ -39,7 +39,7 @@ pub enum Error {
   AwaitTimeout(ThreadId),
 }
 
-/// Errors that can occur on the remote actor while sending requests.
+/// Errors that can occur on the remote actor.
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
   /// The remote has no handler for this request or the DIDComm thread does not exist.

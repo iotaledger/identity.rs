@@ -24,7 +24,7 @@ impl<'builder, MOD: SyncMode, OBJ> HandlerBuilder<'builder, MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
-  pub fn add_hook<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> ActorResult<Self>
+  pub fn add_hook<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> ActorResult<Self>
   where
     REQ: ActorRequest<MOD> + Send + Sync + 'static,
     REQ::Response: Send,
@@ -34,7 +34,7 @@ where
   {
     let handler = Hook::new(handler);
     self.handler_map.insert(
-      Endpoint::new(cmd)?,
+      Endpoint::new(endpoint)?,
       HandlerObject::new(self.object_id, Box::new(handler)),
     );
     Ok(self)
@@ -91,9 +91,9 @@ where
     actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
-    request: Box<dyn Any + Send>,
+    input: Box<dyn Any + Send>,
   ) -> Result<AnyFuture<'_>, RemoteSendError> {
-    let input: Box<REQ> = request.downcast().map_err(|_| {
+    let input: Box<REQ> = input.downcast().map_err(|_| {
       RemoteSendError::HookInvocationError(format!(
         "{}: could not downcast request to: {}",
         context.endpoint,
