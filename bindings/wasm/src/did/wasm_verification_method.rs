@@ -5,8 +5,8 @@ use identity::core::decode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::PublicKey;
-use identity::iota::IotaDID;
-use identity::iota::IotaVerificationMethod;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
