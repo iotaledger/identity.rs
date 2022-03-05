@@ -1,0 +1,79 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use criterion::criterion_group;
+use criterion::criterion_main;
+use criterion::BenchmarkId;
+use criterion::Criterion;
+use identity_account::identity::IdentitySetup;
+use identity_actor::remote_account::requests::IdentityCreate;
+use identity_actor::Actor;
+use identity_actor::ActorBuilder;
+use identity_actor::Multiaddr;
+use identity_actor::PeerId;
+use identity_actor::RemoteAccount;
+
+async fn setup() -> (Actor, PeerId, Actor) {
+  let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
+  let mut builder = ActorBuilder::new();
+
+  builder
+    .add_state(RemoteAccount::new().unwrap())
+    .add_handler("remote_account/create", RemoteAccount::create)
+    .unwrap()
+    .add_handler("remote_account/list", RemoteAccount::list)
+    .unwrap()
+    .add_handler("remote_account/get", RemoteAccount::get)
+    .unwrap();
+
+  let mut receiver = builder.build().await.unwrap();
+
+  let addr = receiver.start_listening(addr).await.unwrap();
+  let receiver_peer_id = receiver.peer_id();
+
+  let mut sender = ActorBuilder::new().build().await.unwrap();
+
+  sender.add_address(receiver_peer_id, addr).await;
+
+  (receiver, receiver_peer_id, sender)
+}
+
+fn bench_create_remote_account(c: &mut Criterion) {
+  static ITERATIONS: &[usize] = &[100, 10_000, 100_000];
+
+  let runtime = tokio::runtime::Builder::new_multi_thread()
+    .enable_all()
+    .build()
+    .unwrap();
+
+  let (receiver, receiver_peer_id, sender) = runtime.block_on(setup());
+
+  let mut group = c.benchmark_group("create remote account");
+
+  for size in ITERATIONS.iter() {
+    group.bench_function(BenchmarkId::from_parameter(size), |bencher| {
+      bencher.to_async(&runtime).iter(|| {
+        let mut sender_clone: Actor = sender.clone();
+
+        async move {
+          sender_clone
+            .send_request(receiver_peer_id, IdentityCreate(IdentitySetup::new()))
+            .await
+            .unwrap()
+            .unwrap();
+        }
+      });
+    });
+  }
+
+  group.finish();
+
+  runtime.block_on(async move {
+    sender.shutdown().await.unwrap();
+    receiver.shutdown().await.unwrap();
+  });
+}
+
+criterion_group!(benches, bench_create_remote_account);
+
+criterion_main!(benches);
