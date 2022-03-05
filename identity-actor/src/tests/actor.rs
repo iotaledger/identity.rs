@@ -24,9 +24,9 @@ use super::default_sending_actor;
 async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
   try_init_logger();
 
-  let (listening_actor, addr, peer_id) = default_listening_actor().await;
+  let (listening_actor, addr, peer_id) = default_listening_actor(|_| {}).await;
 
-  let mut sending_actor = default_sending_actor().await;
+  let mut sending_actor = default_sending_actor(|_| {}).await;
   sending_actor.add_address(peer_id, addr).await;
 
   let result = sending_actor
@@ -66,16 +66,6 @@ async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
 async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   try_init_logger();
 
-  let mut actor1 = ActorBuilder::new().build().await.unwrap();
-  let mut actor2 = ActorBuilder::new().build().await.unwrap();
-
-  actor2
-    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
-    .await
-    .unwrap();
-
-  let addr: Multiaddr = actor2.addresses().await.into_iter().next().unwrap();
-
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
@@ -99,15 +89,26 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   let actor1_state = State(Arc::new(AtomicBool::new(false)));
   let actor2_state = State(Arc::new(AtomicBool::new(false)));
 
-  actor1
+  let mut actor1_builder = ActorBuilder::new();
+  actor1_builder
     .add_state(actor1_state.clone())
     .add_handler("request/test", State::handler)
     .unwrap();
+  let mut actor1 = actor1_builder.build().await.unwrap();
 
-  actor2
+  let mut actor2_builder = ActorBuilder::new();
+  actor2_builder
     .add_state(actor2_state.clone())
     .add_handler("request/test", State::handler)
     .unwrap();
+  let mut actor2 = actor2_builder.build().await.unwrap();
+
+  actor2
+    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
+    .await
+    .unwrap();
+
+  let addr: Multiaddr = actor2.addresses().await.into_iter().next().unwrap();
 
   actor1.add_address(actor2.peer_id(), addr).await;
 
@@ -127,9 +128,6 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 #[tokio::test]
 async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   try_init_logger();
-
-  let (mut receiver, receiver_addr, receiver_peer_id) = default_listening_actor().await;
-  let mut sender = default_sending_actor().await;
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
@@ -155,10 +153,14 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 
   let state = State(Arc::new(AtomicBool::new(false)));
 
-  receiver
-    .add_state(state.clone())
-    .add_handler("request/test", State::handler)
-    .unwrap();
+  let (receiver, receiver_addr, receiver_peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(state.clone())
+      .add_handler("request/test", State::handler)
+      .unwrap();
+  })
+  .await;
+  let mut sender = default_sending_actor(|_| {}).await;
 
   sender.add_address(receiver_peer_id, receiver_addr).await;
 
@@ -176,11 +178,6 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   try_init_logger();
 
-  let (mut listening_actor, addr, peer_id) = default_listening_actor().await;
-
-  let mut sending_actor = default_sending_actor().await;
-  sending_actor.add_address(peer_id, addr).await;
-
   #[derive(Debug, serde::Serialize, serde::Deserialize)]
   pub struct MessageResponse(String);
 
@@ -195,16 +192,22 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
     }
   }
 
-  listening_actor
-    .add_state(())
-    .add_handler(
-      "test/message",
-      |_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
-        println!("invoked");
-        MessageResponse(message.input.0)
-      },
-    )
-    .unwrap();
+  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(())
+      .add_handler(
+        "test/message",
+        |_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
+          println!("invoked");
+          MessageResponse(message.input.0)
+        },
+      )
+      .unwrap();
+  })
+  .await;
+
+  let mut sending_actor = default_sending_actor(|_| {}).await;
+  sending_actor.add_address(peer_id, addr).await;
 
   let result = sending_actor
     .send_request(peer_id, MessageRequest("test".to_owned()))
@@ -223,7 +226,7 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
 async fn test_interacting_with_shutdown_actor_panics() {
   try_init_logger();
 
-  let (listening_actor, _, _) = default_listening_actor().await;
+  let (listening_actor, _, _) = default_listening_actor(|_| {}).await;
 
   let mut commander_copy = listening_actor.commander.clone();
 

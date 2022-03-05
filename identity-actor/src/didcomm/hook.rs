@@ -20,7 +20,7 @@ use crate::Result as ActorResult;
 use super::termination::DidCommTermination;
 use crate::SyncMode;
 
-impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
+impl<'builder, MOD: SyncMode, OBJ> HandlerBuilder<'builder, MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
@@ -33,7 +33,7 @@ where
     MOD: Send + Sync + 'static,
   {
     let handler = Hook::new(handler);
-    self.actor_state.handlers.insert(
+    self.handler_map.insert(
       Endpoint::new(cmd)?,
       HandlerObject::new(self.object_id, Box::new(handler)),
     );

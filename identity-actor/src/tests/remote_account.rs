@@ -16,14 +16,18 @@ use crate::RemoteAccount;
 async fn test_remote_account() -> crate::Result<()> {
   try_init_logger();
 
-  let (mut receiver, receiver_addr, receiver_peer_id) = default_listening_actor().await;
-  let mut sender = default_sending_actor().await;
-
-  receiver
-    .add_state(RemoteAccount::new().unwrap())
-    .add_handler("remote_account/create", RemoteAccount::create)?
-    .add_handler("remote_account/list", RemoteAccount::list)?
-    .add_handler("remote_account/get", RemoteAccount::get)?;
+  let (receiver, receiver_addr, receiver_peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(RemoteAccount::new().unwrap())
+      .add_handler("remote_account/create", RemoteAccount::create)
+      .unwrap()
+      .add_handler("remote_account/list", RemoteAccount::list)
+      .unwrap()
+      .add_handler("remote_account/get", RemoteAccount::get)
+      .unwrap();
+  })
+  .await;
+  let mut sender = default_sending_actor(|_| {}).await;
 
   sender.add_address(receiver_peer_id, receiver_addr).await;
 

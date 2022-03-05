@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
 use std::iter;
+use std::marker::PhantomData;
 use std::time::Duration;
 
 use crate::p2p::behaviour::DidCommCodec;
@@ -11,12 +13,17 @@ use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::net_commander::NetCommander;
 use crate::Actor;
 use crate::ActorConfig;
+use crate::ActorRequest;
 use crate::AsynchronousInvocationStrategy;
+use crate::Endpoint;
 use crate::Error;
+use crate::Handler;
+use crate::HandlerObject;
+use crate::RequestContext;
 use crate::RequestMode;
 use crate::Result;
+use crate::SyncMode;
 use crate::SynchronousInvocationStrategy;
-use dashmap::DashMap;
 use futures::channel::mpsc;
 use futures::AsyncRead;
 use futures::AsyncWrite;
@@ -38,12 +45,19 @@ use libp2p::websocket::WsConfig;
 use libp2p::yamux::YamuxConfig;
 use libp2p::Multiaddr;
 use libp2p::Swarm;
+use uuid::Uuid;
+
+use super::actor::HandlerMap;
+use super::actor::ObjectId;
+use super::actor::ObjectMap;
 
 /// An [`Actor`] builder for easy configuration.
 pub struct ActorBuilder {
   listening_addresses: Vec<Multiaddr>,
   keypair: Option<Keypair>,
   config: ActorConfig,
+  handler_map: HandlerMap,
+  object_map: ObjectMap,
 }
 
 impl ActorBuilder {
@@ -53,6 +67,8 @@ impl ActorBuilder {
       listening_addresses: vec![],
       keypair: None,
       config: ActorConfig::default(),
+      handler_map: HashMap::new(),
+      object_map: HashMap::new(),
     }
   }
 
@@ -77,6 +93,20 @@ impl ActorBuilder {
   pub fn timeout(mut self, timeout: Duration) -> Self {
     self.config.timeout = timeout;
     self
+  }
+
+  pub fn add_state<MOD: SyncMode, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
+  where
+    OBJ: Clone + Send + Sync + 'static,
+  {
+    let object_id: ObjectId = Uuid::new_v4();
+    self.object_map.insert(object_id, Box::new(state_object));
+    HandlerBuilder {
+      object_id,
+      handler_map: &mut self.handler_map,
+      _marker_obj: PhantomData,
+      _marker_mod: PhantomData,
+    }
   }
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
@@ -139,10 +169,14 @@ impl ActorBuilder {
     let event_loop = EventLoop::new(swarm, cmd_receiver);
     let swarm_commander = NetCommander::new(cmd_sender);
 
-    let handlers = DashMap::new();
-    let objects = DashMap::new();
-
-    let actor = Actor::from_builder(swarm_commander.clone(), handlers, objects, peer_id, self.config).await?;
+    let actor = Actor::from_builder(
+      swarm_commander.clone(),
+      self.handler_map,
+      self.object_map,
+      peer_id,
+      self.config,
+    )
+    .await?;
 
     let actor_clone = actor.clone();
 
@@ -165,5 +199,37 @@ impl ActorBuilder {
 impl Default for ActorBuilder {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+pub struct HandlerBuilder<'builder, MOD: SyncMode, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+  MOD: 'static,
+{
+  pub(crate) object_id: ObjectId,
+  pub(crate) handler_map: &'builder mut HandlerMap,
+  _marker_obj: PhantomData<&'static OBJ>,
+  _marker_mod: PhantomData<&'static MOD>,
+}
+
+impl<'builder, MOD: SyncMode, OBJ> HandlerBuilder<'builder, MOD, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
+  pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
+  where
+    REQ: ActorRequest<MOD> + Send + Sync + 'static,
+    REQ::Response: Send,
+    FUT: std::future::Future<Output = REQ::Response> + Send + 'static,
+    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+    MOD: 'static + Send + Sync,
+  {
+    let handler = Handler::new(handler);
+    self.handler_map.insert(
+      Endpoint::new(cmd)?,
+      HandlerObject::new(self.object_id, Box::new(handler)),
+    );
+    Ok(self)
   }
 }

@@ -38,17 +38,20 @@ impl TestFunctionState {
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   try_init_logger();
-
-  let mut holder_actor = default_sending_actor().await;
-
-  let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
-
   let handler = DidCommHandler::new().await;
 
-  verifier_actor.add_state(handler).add_handler(
-    "didcomm/presentation_offer",
-    DidCommHandler::presentation_verifier_actor_handler,
-  )?;
+  let mut holder_actor = default_sending_actor(|_| {}).await;
+
+  let (verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(handler)
+      .add_handler(
+        "didcomm/presentation_offer",
+        DidCommHandler::presentation_verifier_actor_handler,
+      )
+      .unwrap();
+  })
+  .await;
 
   holder_actor.add_address(peer_id, addr.clone()).await;
 
@@ -66,15 +69,19 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   try_init_logger();
 
-  let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
-  let mut verifier_actor = default_sending_actor().await;
-
   let handler = DidCommHandler::new().await;
 
-  holder_actor.add_state(handler).add_handler(
-    "didcomm/presentation_request",
-    DidCommHandler::presentation_holder_actor_handler,
-  )?;
+  let (holder_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(handler)
+      .add_handler(
+        "didcomm/presentation_request",
+        DidCommHandler::presentation_holder_actor_handler,
+      )
+      .unwrap();
+  })
+  .await;
+  let mut verifier_actor = default_sending_actor(|_| {}).await;
 
   verifier_actor.add_address(peer_id, addr.clone()).await;
 
@@ -92,16 +99,18 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> Result<()> {
   try_init_logger();
 
-  let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
-
-  let mut verifier_actor = default_sending_actor().await;
-
   let handler = DidCommHandler::new().await;
 
-  holder_actor.add_state(handler).add_handler(
-    "didcomm/presentation_request",
-    DidCommHandler::presentation_holder_actor_handler,
-  )?;
+  let (holder_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(handler)
+      .add_handler(
+        "didcomm/presentation_request",
+        DidCommHandler::presentation_holder_actor_handler,
+      )
+      .unwrap();
+  })
+  .await;
 
   let function_state = TestFunctionState::new();
 
@@ -114,10 +123,13 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
     Ok(request.input)
   }
 
-  verifier_actor
-    .add_state(function_state.clone())
-    .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
-    .unwrap();
+  let mut verifier_actor = default_sending_actor(|builder| {
+    builder
+      .add_state(function_state.clone())
+      .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
+      .unwrap();
+  })
+  .await;
 
   verifier_actor.add_address(peer_id, addr.clone()).await;
 
@@ -137,16 +149,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> Result<()> {
   try_init_logger();
 
-  let mut holder_actor = default_sending_actor().await;
-
-  let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
-
   let handler = DidCommHandler::new().await;
-
-  verifier_actor.add_state(handler).add_handler(
-    "didcomm/presentation_offer",
-    DidCommHandler::presentation_verifier_actor_handler,
-  )?;
 
   let function_state = TestFunctionState::new();
 
@@ -159,10 +162,23 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
     Ok(req.input)
   }
 
-  verifier_actor
-    .add_state(function_state.clone())
-    .add_hook("didcomm/presentation/hook", receive_presentation_hook)
-    .unwrap();
+  let mut holder_actor = default_sending_actor(|_| {}).await;
+
+  let (verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(handler)
+      .add_handler(
+        "didcomm/presentation_offer",
+        DidCommHandler::presentation_verifier_actor_handler,
+      )
+      .unwrap();
+
+    builder
+      .add_state(function_state.clone())
+      .add_hook("didcomm/presentation/hook", receive_presentation_hook)
+      .unwrap();
+  })
+  .await;
 
   holder_actor.add_address(peer_id, addr.clone()).await;
 
@@ -182,8 +198,6 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
 async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result<()> {
   try_init_logger();
 
-  let mut verifier_actor = default_sending_actor().await;
-
   async fn presentation_request_hook(
     _: (),
     _: Actor,
@@ -192,11 +206,14 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
     Ok(req.input)
   }
 
-  // Register a hook that has the wrong type: PresentationOffer instead of PresentationRequest
-  verifier_actor
-    .add_state(())
-    .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
-    .unwrap();
+  let mut verifier_actor = default_sending_actor(|builder| {
+    // Register a hook that has the wrong type: PresentationOffer instead of PresentationRequest
+    builder
+      .add_state(())
+      .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
+      .unwrap();
+  })
+  .await;
 
   let peer_id = verifier_actor.peer_id();
   let thread_id = ThreadId::new();
@@ -216,10 +233,6 @@ async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result
 async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Result<()> {
   try_init_logger();
 
-  let mut holder_actor = default_sending_actor().await;
-
-  let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
-
   async fn presentation_request_hook(
     _: (),
     _: Actor,
@@ -228,19 +241,25 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
     Ok(req.input)
   }
 
-  verifier_actor
-    .add_state(DidCommHandler)
-    .add_handler(
-      "didcomm/presentation_offer",
-      DidCommHandler::presentation_verifier_actor_handler,
-    )
-    .unwrap();
+  let mut holder_actor = default_sending_actor(|builder| {
+    // Register a hook that has the wrong type: Presentation instead of PresentationRequest
+    builder
+      .add_state(())
+      .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
+      .unwrap();
+  })
+  .await;
 
-  // Register a hook that has the wrong type: Presentation instead of PresentationRequest
-  holder_actor
-    .add_state(())
-    .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
-    .unwrap();
+  let (mut verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(DidCommHandler)
+      .add_handler(
+        "didcomm/presentation_offer",
+        DidCommHandler::presentation_verifier_actor_handler,
+      )
+      .unwrap();
+  })
+  .await;
 
   let verifier_peer_id = verifier_actor.peer_id();
 

@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
-use std::marker::PhantomData;
-use std::ops::Deref;
+use std::collections::HashMap;
 use std::result::Result as StdResult;
 use std::sync::Arc;
 
@@ -19,25 +18,22 @@ use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::Endpoint;
 use crate::Error;
-use crate::Handler;
 use crate::InvocationStrategy;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
 use crate::RequestMode;
 use crate::Result;
+use crate::SyncMode;
 use crate::Synchronous;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
-use futures::Future;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
 use serde::de::DeserializeOwned;
 use uuid::Uuid;
-
-use super::actor_request::private::SyncMode;
 
 pub(crate) struct ActorState {
   pub(crate) handlers: HandlerMap,
@@ -75,20 +71,6 @@ impl Actor {
     };
 
     Ok(actor)
-  }
-
-  pub fn add_state<MOD: SyncMode, OBJ>(&mut self, handler: OBJ) -> HandlerBuilder<MOD, OBJ>
-  where
-    OBJ: Clone + Send + Sync + 'static,
-  {
-    let object_id: ObjectId = Uuid::new_v4();
-    self.state.objects.insert(object_id, Box::new(handler));
-    HandlerBuilder {
-      object_id,
-      actor_state: Arc::clone(&self.state),
-      _marker_obj: PhantomData,
-      _marker_mod: PhantomData,
-    }
   }
 
   fn handlers(&self) -> &HandlerMap {
@@ -167,7 +149,7 @@ impl Actor {
         let object_id = handler_object.object_id;
 
         if let Some(object) = self.state.objects.get(&object_id) {
-          let object_clone = handler_object.handler.clone_object(object.deref())?;
+          let object_clone = handler_object.handler.clone_object(object)?;
           Ok((handler_object, object_clone))
         } else {
           Err(RemoteSendError::HandlerInvocationError(format!(
@@ -384,7 +366,7 @@ impl Actor {
   {
     match self.get_handler(&endpoint) {
       Ok(handler_object) => {
-        let handler: &dyn RequestHandler = handler_object.0.value().handler.as_ref();
+        let handler: &dyn RequestHandler = handler_object.0.handler.as_ref();
         let state: Box<dyn Any + Send + Sync> = handler_object.1;
         let type_erased_input: Box<dyn Any + Send> = Box::new(input);
         let request_context = RequestContext::new((), peer, endpoint);
@@ -410,45 +392,12 @@ impl Actor {
   }
 }
 
-// TODO: Only allow adding handlers during actor build phase?
-pub struct HandlerBuilder<MOD: SyncMode, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-  MOD: 'static,
-{
-  pub(crate) object_id: ObjectId,
-  pub(crate) actor_state: Arc<ActorState>,
-  _marker_obj: PhantomData<&'static OBJ>,
-  _marker_mod: PhantomData<&'static MOD>,
-}
-
-impl<MOD: SyncMode, OBJ> HandlerBuilder<MOD, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  pub fn add_handler<REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
-  where
-    REQ: ActorRequest<MOD> + Send + Sync + 'static,
-    REQ::Response: Send,
-    FUT: Future<Output = REQ::Response> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-    MOD: 'static + Send + Sync,
-  {
-    let handler = Handler::new(handler);
-    self.actor_state.handlers.insert(
-      Endpoint::new(cmd)?,
-      HandlerObject::new(self.object_id, Box::new(handler)),
-    );
-    Ok(self)
-  }
-}
-
 /// A map from an identifier to an object that contains the
 /// shared state of the associated handler functions.
-type ObjectMap = DashMap<ObjectId, Box<dyn Any + Send + Sync>>;
+pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
 
 /// An actor-internal identifier for the object representing the shared state of a handler.
-type ObjectId = Uuid;
+pub(crate) type ObjectId = Uuid;
 
 /// A [`RequestHandler`] and the id of its associated shared state object.
 pub(crate) struct HandlerObject {
@@ -464,9 +413,6 @@ impl HandlerObject {
 
 /// A map from a request name to the identifier of the shared state object
 /// and the method that handles that particular request.
-type HandlerMap = DashMap<Endpoint, HandlerObject>;
+pub(crate) type HandlerMap = HashMap<Endpoint, HandlerObject>;
 
-type HandlerObjectTuple<'a> = (
-  dashmap::mapref::one::Ref<'a, Endpoint, HandlerObject>,
-  Box<dyn Any + Send + Sync>,
-);
+pub(crate) type HandlerObjectTuple<'a> = (&'a HandlerObject, Box<dyn Any + Send + Sync>);
