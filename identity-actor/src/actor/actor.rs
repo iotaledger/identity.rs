@@ -409,6 +409,7 @@ impl Actor {
   }
 }
 
+// TODO: Only allow adding handlers during actor build phase?
 pub struct HandlerBuilder<MOD: SyncMode, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,

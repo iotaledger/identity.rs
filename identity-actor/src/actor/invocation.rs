@@ -55,6 +55,7 @@ pub struct SynchronousInvocationStrategy;
 
 #[async_trait::async_trait]
 impl InvocationStrategy for SynchronousInvocationStrategy {
+  #[inline(always)]
   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest) {
     let response: StdResult<Vec<u8>, RemoteSendError> =
       Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
@@ -72,6 +73,7 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
     }
   }
 
+  #[inline(always)]
   async fn handler_deserialization_failure(
     actor: &mut Actor,
     channel: ResponseChannel<ResponseMessage>,
@@ -87,6 +89,7 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
     .await
   }
 
+  #[inline(always)]
   async fn invoke_handler(
     handler: &dyn RequestHandler,
     actor: Actor,
@@ -146,6 +149,7 @@ pub struct AsynchronousInvocationStrategy;
 
 #[async_trait::async_trait]
 impl InvocationStrategy for AsynchronousInvocationStrategy {
+  #[inline(always)]
   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest) {
     let result: StdResult<(), RemoteSendError> =
       match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
@@ -199,6 +203,7 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
     }
   }
 
+  #[inline(always)]
   async fn handler_deserialization_failure(
     actor: &mut Actor,
     channel: ResponseChannel<ResponseMessage>,
@@ -214,6 +219,7 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
     .await
   }
 
+  #[inline(always)]
   async fn invoke_handler(
     handler: &dyn RequestHandler,
     mut actor: Actor,
