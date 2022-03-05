@@ -231,12 +231,14 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
   ) {
     let send_result = send_response(&mut actor.commander, Ok(()), channel, request_id).await;
 
-    // TODO: If error, should we abort handling this request?
     if let Err(err) = send_result {
       log::error!(
         "could not acknowledge request on endpoint `{}` due to: {err:?}",
         context.endpoint
       );
+
+      // Peer seems to be unresponsive, so we do not continue handling this request.
+      return;
     }
 
     match handler.invoke(actor, context, object, input) {

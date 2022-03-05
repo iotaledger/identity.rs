@@ -103,7 +103,6 @@ impl EventLoop {
         message: RequestResponseMessage::Response { request_id, response },
         ..
       }) => {
-        // TODO: Decrypt/Deserialize response and return potential error or OutboundFailure?
         if let Some(response_channel) = self.await_response.remove(&request_id) {
           let _ = response_channel.send(Ok(response));
         }
