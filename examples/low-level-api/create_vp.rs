@@ -32,7 +32,7 @@ mod common;
 mod create_did;
 
 /// Returns a Presentation signed using the supplied challenge.
-pub async fn create_presentation(challenge: String) -> anyhow::Result<Presentation> {
+pub async fn create_presentation(challenge: String) -> Result<Presentation> {
   // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (doc_iss, key_iss, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
@@ -65,11 +65,9 @@ pub async fn create_presentation(challenge: String) -> anyhow::Result<Presentati
     &mut presentation,
     key_sub.private(),
     doc_sub.default_signing_method()?.id(),
-    SignatureOptions::new().challenge(challenge).expires(
-      Timestamp::now_utc()
-        .checked_add(Duration::minutes(10))
-        .ok_or_else(|| anyhow::anyhow!("10 minutes later than UTC::now was evaluated to be later than 9999AD"))?,
-    ),
+    SignatureOptions::new()
+      .challenge(challenge)
+      .expires(Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap()),
   )?;
 
   Ok(presentation)
@@ -116,7 +114,7 @@ pub async fn validator_based_validation(
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
   // Issue a Verifiable Presentation with a newly created DID Document
   // signed with a challenge from the requester:
   let challenge: &str = "475a7984-1bb5-4c4c-a56f-822bccd46440";
@@ -137,13 +135,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Do not allow credentials that expire within the next 10 hours.
   let credential_validation_options: CredentialValidationOptions = CredentialValidationOptions::default()
-    .earliest_expiry_date(
-      Timestamp::now_utc()
-        .checked_add(Duration::hours(10))
-        .ok_or(anyhow::anyhow!(
-          "10 hours later than UTC::now was evaluated to be later than 9999AD"
-        ))?,
-    );
+    .earliest_expiry_date(Timestamp::now_utc().checked_add(Duration::hours(10)).unwrap());
 
   let presentation_validation_options = PresentationValidationOptions::default()
     .presentation_verifier_options(presentation_verifier_options.clone())

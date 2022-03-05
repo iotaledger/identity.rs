@@ -106,15 +106,15 @@ async function merkleKey(clientConfig) {
         await resolver.verifyCredential(
             signedVc, 
             CredentialValidationOptions.default(),
-            FailFast.FirstError
+            FailFast.Yes
             ); 
     } catch (exception)  {
         console.log(`${exception.message}`)
-        console.log(`Credential successfully revoked!`);
         vc_revoked = true;
     }
     
     if (!vc_revoked) throw new Error("VC not revoked");
+    console.log(`Credential successfully revoked!`);
 }
 
 export {merkleKey};

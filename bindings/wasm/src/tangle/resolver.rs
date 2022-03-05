@@ -132,7 +132,7 @@ impl WasmResolver {
 
   /// Fetches the DID Document of the issuer on a `Credential`.
   ///
-  /// # Errors
+  /// ### Errors
   ///
   /// Errors if the issuer URL is not a valid `DID` or document resolution fails.
   #[wasm_bindgen(js_name = resolveCredentialIssuer)]
@@ -158,7 +158,7 @@ impl WasmResolver {
   /// Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
   /// Issuer documents are returned in arbitrary order.
   ///
-  /// # Errors
+  /// ### Errors
   ///
   /// Errors if any issuer URL is not a valid `DID` or document resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
@@ -200,7 +200,7 @@ impl WasmResolver {
 
   /// Fetches the DID Document of the holder of a `Presentation`.
   ///
-  /// # Errors
+  /// ### Errors
   ///
   /// Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationHolder)]
@@ -242,16 +242,16 @@ impl WasmResolver {
   /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
   /// `CredentialValidator::validate` in order to avoid an unnecessary resolution.
   ///
-  /// # Warning
+  /// ### Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
   /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
   /// These should be manually checked after validation, according to your requirements.
   ///
-  /// # Resolution
+  /// ### Resolution
   /// If `issuer` is null then this  DID Document will be resolved. If you already have up to
   /// an up to date version of this document you may want to instead use `CredentialValidator::validate`.
   ///
-  /// # Errors
+  /// ### Errors
   /// Errors from resolving the issuer DID Document will be returned immediately.
   /// Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
   #[wasm_bindgen(js_name = verifyCredential)]
@@ -271,7 +271,7 @@ impl WasmResolver {
 
     let promise: Promise = future_to_promise(async move {
       resolver
-        .verify_credential(&credential.0, &options.0, issuer.as_ref(), fail_fast.into())
+        .verify_credential(&credential.0, issuer.as_ref(), &options.0, fail_fast.into())
         .await
         .map(|_| JsValue::UNDEFINED)
         .wasm_result()
@@ -289,17 +289,17 @@ impl WasmResolver {
   /// - The semantic structure of the presentation,
   /// - Some properties of the credentials (see `CredentialValidator::validate` for more information).
   ///  
-  /// # Warning
+  /// ### Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
   /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
   /// These should be manually checked after validation, according to your requirements.
   ///
-  /// # Resolution
+  /// ### Resolution
   /// If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
   /// date versions of all of these DID Documents you may want to instead use
   /// `PresentationValidator::validate`.
   ///
-  /// # Errors
+  /// ### Errors
   /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
   /// Otherwise, errors from validating the presentation and its credentials will be returned
   /// according to the `fail_fast` parameter.

@@ -28,12 +28,12 @@ impl WasmPresentationValidator {
   /// - the signatures and some properties of the constituent credentials (see
   /// `CredentialValidator::validate`).
   ///
-  /// # Warning
+  /// ### Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
   /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
   /// These should be manually checked after validation, according to your requirements.
   ///
-  /// # Errors
+  /// ### Errors
   /// An error is returned whenever a validated condition is not satisfied.
   #[wasm_bindgen]
   pub fn validate(
@@ -49,7 +49,7 @@ impl WasmPresentationValidator {
 
   /// Verify the presentation's signature using the resolved document of the holder.
   ///
-  /// # Errors
+  /// ### Errors
   /// Fails if the `holder` does not match the `presentation`'s holder property.
   /// Fails if signature verification against the holder document fails.
   #[wasm_bindgen(js_name = verifyPresentationSignature)]
@@ -69,7 +69,7 @@ impl WasmPresentationValidator {
 
   /// Validates that the nonTransferable property is met.
   ///
-  /// # Errors
+  /// ### Errors
   /// Returns an error at the first credential requiring a nonTransferable property that is not met.
   #[wasm_bindgen(js_name = checkNonTransferable)]
   pub fn check_non_transferable(presentation: &WasmPresentation) -> Result<()> {
@@ -78,7 +78,7 @@ impl WasmPresentationValidator {
 
   /// Validates that the presentation only contains credentials where the credential subject is the holder.
   ///
-  /// # Errors
+  /// ### Errors
   /// Returns an error at the first credential with a credential subject not corresponding to the holder.
   #[wasm_bindgen(js_name = checkHolderIsAlwaysSubject)]
   pub fn check_holder_is_always_subject(presentation: &WasmPresentation) -> Result<()> {

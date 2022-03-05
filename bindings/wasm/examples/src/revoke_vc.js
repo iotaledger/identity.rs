@@ -44,10 +44,11 @@ async function revokeVC(clientConfig) {
     console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
 
     // Check the verifiable credential
+    const resolver = await new ResolverBuilder()
+    .clientConfig(Config.fromNetwork(clientConfig.network))
+    .build();
+    let vc_revoked = false;
     try {
-        const resolver = await new ResolverBuilder()
-        .clientConfig(Config.fromNetwork(clientConfig.network))
-        .build();
         await resolver.verifyCredential(
             signedVc, 
             CredentialValidationOptions.default(),
@@ -55,8 +56,11 @@ async function revokeVC(clientConfig) {
             ); 
     } catch (exception) {
     console.log(`${exception.message}`)
-    console.log(`Credential successfully revoked!`);
+    vc_revoked = true;
     }
+    if (!vc_revoked) throw new Error("VC not revoked");
+    console.log(`Credential successfully revoked!`);
+
 }
 
 export {revokeVC};

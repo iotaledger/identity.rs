@@ -49,7 +49,7 @@ pub enum ValidationError {
   /// Indicates that the relationship between the presentation holder and one of the credential subjects is not valid.
   #[error("expected holder = subject of the credential at index {credential_index}")]
   #[non_exhaustive]
-  HolderSubjectRelationship { credential_index: usize },
+  SubjectHolderRelationship { credential_index: usize },
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,

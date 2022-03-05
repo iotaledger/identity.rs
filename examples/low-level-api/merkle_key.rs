@@ -81,8 +81,8 @@ async fn main() -> Result<()> {
   resolver
     .verify_credential(
       &credential,
-      &CredentialValidationOptions::default(),
       None,
+      &CredentialValidationOptions::default(),
       identity::iota::FailFast::FirstError,
     )
     .await?;
@@ -101,19 +101,18 @@ async fn main() -> Result<()> {
 
   println!("Publish Receipt > {:#?}", receipt);
 
-  // Check the verifiable credential is revoked
-  if resolver
+  // Check that verifiable credential is revoked
+  let result: Result<()> = resolver
     .verify_credential(
       &credential,
-      &CredentialValidationOptions::default(),
       None,
+      &CredentialValidationOptions::default(),
       identity::iota::FailFast::FirstError,
     )
-    .await
-    .is_err()
-  {
-    println!("Credential successfully revoked!");
-  }
+    .await;
+  assert!(result.is_err());
+
+  println!("Credential successfully revoked!");
 
   Ok(())
 }

@@ -54,8 +54,8 @@ pub async fn create_vc() -> Result<String> {
   // that the issuance date is not in the future and that the expiration date is not in the past:
   CredentialValidator::validate(
     &credential,
-    &CredentialValidationOptions::default(),
     &resolved_issuer_doc,
+    &CredentialValidationOptions::default(),
     FailFast::FirstError,
   )?;
   // The issuer is now sure that the credential they are about to issue satisfies their expectations.
@@ -83,8 +83,8 @@ async fn main() -> Result<()> {
   resolver
     .verify_credential(
       &credential,
-      &CredentialValidationOptions::default(),
       None,
+      &CredentialValidationOptions::default(),
       FailFast::AllErrors,
     )
     .await?;

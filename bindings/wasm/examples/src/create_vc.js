@@ -58,8 +58,8 @@ async function createVC(clientConfig) {
     // to ensure that if validation fails then the error message will contain information about every unsuccessful validation.  
     CredentialValidator.validate(
         signedVc,
-        CredentialValidationOptions.default(),
         issuerDoc,
+        CredentialValidationOptions.default(),
         FailFast.AllErrors
     );
 

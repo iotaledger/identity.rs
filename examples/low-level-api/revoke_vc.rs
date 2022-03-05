@@ -64,8 +64,8 @@ async fn main() -> Result<()> {
   let validation_result: Result<()> = resolver
     .verify_credential(
       &signed_vc,
-      &CredentialValidationOptions::default(),
       None,
+      &CredentialValidationOptions::default(),
       identity::iota::FailFast::FirstError,
     )
     .await;

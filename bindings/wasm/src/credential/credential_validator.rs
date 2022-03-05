@@ -29,26 +29,26 @@ impl WasmCredentialValidator {
   /// - The issuance date
   /// - The semantic structure.
   ///
-  /// # Warning
+  /// ### Warning
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
   /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
   /// These should be manually checked after validation, according to your requirements.
   ///
-  /// # Errors
+  /// ### Errors
   /// An error is returned whenever a validated condition is not satisfied.
   #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
-    options: &WasmCredentialValidationOptions,
     issuer: &WasmResolvedDocument,
+    options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    CredentialValidator::validate(&credential.0, &options.0, &issuer.0, fail_fast.into()).wasm_result()
+    CredentialValidator::validate(&credential.0, &issuer.0, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Validates the semantic structure of the `Credential`.
   ///
-  /// # Warning
+  /// ### Warning
   /// This does not validate against the credential's schema nor the structure of the subject claims.
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(credential: &WasmCredential) -> Result<()> {
@@ -59,21 +59,21 @@ impl WasmCredentialValidator {
       .wasm_result()
   }
 
-  /// Validate that the [Credential] expires on or after the specified `Timestamp`.
+  /// Validate that the credential expires on or after the specified timestamp.
   #[wasm_bindgen(js_name = checkExpiresOnOrAfter)]
   pub fn check_expires_on_or_after(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
     CredentialValidator::check_expires_on_or_after(&credential.0, timestamp.0).wasm_result()
   }
 
-  /// Validate that the [Credential] is issued on or before specified `Timestamp`.
-  #[wasm_bindgen(js_name = checkIsIssuedOnOrBefore)]
-  pub fn check_is_issued_on_or_before(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
+  /// Validate that the credential is issued on or before the specified timestamp.
+  #[wasm_bindgen(js_name = checkIssuedOnOrBefore)]
+  pub fn check_issued_on_or_before(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
     CredentialValidator::check_is_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
   }
 
   /// Verify the signature using the DID Document of a trusted issuer.
   ///
-  /// # Errors
+  /// ### Errors
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
