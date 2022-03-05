@@ -3,8 +3,6 @@
 
 use std::collections::BTreeMap;
 
-use identity_core::common::OneOrMany;
-use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
@@ -15,7 +13,6 @@ use super::errors::SignerContext;
 use super::errors::ValidationError;
 use super::FailFast;
 use super::PresentationValidationOptions;
-use super::SubjectHolderRelationship;
 use crate::credential::credential_validator::CredentialValidator;
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
@@ -52,84 +49,44 @@ impl PresentationValidator {
     issuers: &[ResolvedIotaDocument],
     fail_fast: FailFast,
   ) -> PresentationValidationResult {
-    // first run the presentation specific validation units.
-    // we set up an iterator over these functions and collect any encountered errors
-    let structure_validation = std::iter::once_with(|| Self::check_structure(presentation));
-    let signature_validation = std::iter::once_with(|| {
-      Self::verify_presentation_signature(presentation, holder, &options.presentation_verifier_options)
-    });
+    // first run presentation specific validations. Then validate the credentials depending on `fail_fast` and the
+    // outcome of the previous validation(s).
 
-    // setup the validator that checks the relationship between the subject and the holder.
-    let number_of_credentials = presentation.verifiable_credential.len();
-    let subject_holder_relationship_validation = {
-      let (max_holder_not_subject_checks, max_non_transferable_violation_checks) =
-        match options.subject_holder_relationship {
-          SubjectHolderRelationship::AlwaysSubject => (number_of_credentials, 0),
-          SubjectHolderRelationship::SubjectOnNonTransferable => (0, number_of_credentials),
-          SubjectHolderRelationship::Any => (0, 0),
+    // define closures to avoid repetition
+    let validate_presentation_without_credentials =
+      || Self::validate_presentation_without_credentials(presentation, holder, options, fail_fast);
+
+    let validate_credentials = || Self::validate_credentials(presentation, issuers, options, fail_fast);
+
+    let (presentation_validation_errors, credential_errors): (
+      Vec<ValidationError>,
+      BTreeMap<usize, CompoundCredentialValidationError>,
+    ) = match fail_fast {
+      FailFast::AllErrors => (
+        validate_presentation_without_credentials().err().unwrap_or_default(),
+        validate_credentials().err().unwrap_or_default(),
+      ),
+
+      FailFast::FirstError => {
+        let presentation_validation_errors = validate_presentation_without_credentials().err().unwrap_or_default();
+        let credential_errors = if presentation_validation_errors.is_empty() {
+          // did not find an error already hence continue validating
+          validate_credentials().err().unwrap_or_default()
+        } else {
+          // already found an error hence return an empty map
+          BTreeMap::default()
         };
-      Self::holder_not_subject_iter(presentation)
-        .take(max_holder_not_subject_checks)
-        .chain(Self::non_transferable_violations(presentation).take(max_non_transferable_violation_checks))
-        .map(|credential_position| {
-          Err(ValidationError::SubjectHolderRelationship {
-            credential_index: credential_position,
-          })
-        })
+        (presentation_validation_errors, credential_errors)
+      }
     };
 
-    let presentation_validation_errors_iter = structure_validation
-      .chain(subject_holder_relationship_validation)
-      .chain(signature_validation)
-      .filter_map(|result| result.err());
-
-    let presentation_validation_errors: Vec<ValidationError> = match fail_fast {
-      FailFast::FirstError => presentation_validation_errors_iter.take(1).collect(),
-      FailFast::AllErrors => presentation_validation_errors_iter.collect(),
-    };
-
-    // now run full validations on the credentials and collect any encountered errors
-    let credential_errors_iter = presentation
-      .verifiable_credential
-      .iter()
-      .map(|credential| {
-        CredentialValidator::validate_with_trusted_issuers(
-          credential,
-          issuers,
-          &options.shared_validation_options,
-          fail_fast,
-        )
-      })
-      .enumerate()
-      .filter_map(|(position, result)| result.err().map(|error| (position, error)));
-
-    let credential_errors: BTreeMap<usize, CompoundCredentialValidationError> = credential_errors_iter
-      .take(match fail_fast {
-        FailFast::FirstError => {
-          if !presentation_validation_errors.is_empty() {
-            // we already encountered validation errors and we are supposed to fail fast so don't collect any more
-            // errors
-            0
-          } else {
-            // we did not encounter any validation errors yet, but we are supposed to fail fast so collect at most one
-            // credential error
-            1
-          }
-        }
-        FailFast::AllErrors => {
-          // we are supposed to collect all errors (if any) so collect all credential errors
-          number_of_credentials
-        }
-      })
-      .collect();
-
-    if !presentation_validation_errors.is_empty() || !credential_errors.is_empty() {
+    if presentation_validation_errors.is_empty() && credential_errors.is_empty() {
+      Ok(())
+    } else {
       Err(CompoundPresentationValidationError {
         presentation_validation_errors,
         credential_errors,
       })
-    } else {
-      Ok(())
     }
   }
 
@@ -172,78 +129,81 @@ impl PresentationValidator {
       .map_err(ValidationError::PresentationStructure)
   }
 
-  /// Validates that the nonTransferable property is met.
-  ///
-  /// # Errors
-  /// Returns an error at the first credential requiring a nonTransferable property that is not met.
-  pub fn check_non_transferable<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
-    if let Some(position) = Self::non_transferable_violations(presentation).next() {
-      let err = ValidationError::SubjectHolderRelationship {
-        credential_index: position,
-      };
-      Err(err)
-    } else {
-      Ok(())
-    }
-  }
-
-  /// Validates that the presentation only contains credentials where the credential subject is the holder.
-  ///
-  /// # Errors
-  /// Returns an error at the first credential with a credential subject not corresponding to the holder.
-  pub fn check_holder_is_always_subject<U, V>(presentation: &Presentation<U, V>) -> ValidationUnitResult {
-    if let Some(position) = Self::holder_not_subject_iter(presentation).next() {
-      let err = ValidationError::SubjectHolderRelationship {
-        credential_index: position,
-      };
-      Err(err)
-    } else {
-      Ok(())
-    }
-  }
-
-  // An iterator over the indices corresponding to the credentials that have the
-  // `nonTransferable` property set, but where the credential subject id is not the same as the presentation's holder.
+  // Validates the presentation without checking any of the credentials.
   //
-  // The output of this iterator will always be a subset of
-  // [Self::holder_not_subject_iter](Self::holder_not_subject_iter()).
-  fn non_transferable_violations<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter_helper(presentation)
-      .filter(|(_, credential)| credential.non_transferable.unwrap_or(false))
-      .map(|(position, _)| position)
-  }
-
-  // An iterator over indices corresponding to credentials where the credential subject id does not correspond to the
-  // presentation's holder.
-  //
-  // The output of this iterator is always a superset of
-  // [Self::non_transferable_violations]([Self::non_transferable_violations()]).
-  fn holder_not_subject_iter<U, V>(presentation: &Presentation<U, V>) -> impl Iterator<Item = usize> + '_ {
-    Self::holder_not_subject_iter_helper(presentation).map(|(position, _)| position)
-  }
-
-  fn holder_not_subject_iter_helper<U, V>(
+  // The following properties are validated according to `options`:
+  // - the semantic structure of the presentation,
+  // - the holder's signature,
+  fn validate_presentation_without_credentials<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
-  ) -> impl Iterator<Item = (usize, &Credential<V>)> + '_ {
-    presentation
+    holder: &ResolvedIotaDocument,
+    options: &PresentationValidationOptions,
+    fail_fast: FailFast,
+  ) -> Result<(), Vec<ValidationError>> {
+    let structure_validation = std::iter::once_with(|| Self::check_structure(presentation));
+    let signature_validation = std::iter::once_with(|| {
+      Self::verify_presentation_signature(presentation, holder, &options.presentation_verifier_options)
+    });
+
+    let presentation_validation_errors_iter = structure_validation
+      .chain(signature_validation)
+      .filter_map(|result| result.err());
+
+    let presentation_validation_errors: Vec<ValidationError> = match fail_fast {
+      FailFast::FirstError => presentation_validation_errors_iter.take(1).collect(),
+      FailFast::AllErrors => presentation_validation_errors_iter.collect(),
+    };
+
+    if presentation_validation_errors.is_empty() {
+      Ok(())
+    } else {
+      Err(presentation_validation_errors)
+    }
+  }
+
+  // Validates the credentials contained in the presentation.
+  //
+  // The following properties of the presentation's credentials are validated according to `options`:
+  // - the relationship between the holder and the credential subjects,
+  // - the signatures and some properties of the constituent credentials (see
+  // [`CredentialValidator::validate`]).
+  fn validate_credentials<U, V: Serialize>(
+    presentation: &Presentation<U, V>,
+    issuers: &[ResolvedIotaDocument],
+    options: &PresentationValidationOptions,
+    fail_fast: FailFast,
+  ) -> Result<(), BTreeMap<usize, CompoundCredentialValidationError>> {
+    let number_of_credentials = presentation.verifiable_credential.len();
+    let credential_errors_iter = presentation
       .verifiable_credential
-      .as_ref()
       .iter()
-      .enumerate()
-      .filter(|(_, credential)| {
-        match &credential.credential_subject {
-          OneOrMany::One(ref credential_subject) => credential_subject.id != presentation.holder,
-          OneOrMany::Many(subjects) => {
-            // need to check the case where the Many variant holds a vector of exactly one subject
-            if let &[ref credential_subject] = subjects.as_slice() {
-              credential_subject.id != presentation.holder
-            } else {
-              // zero or > 1 subjects means that the holder is not the subject
-              true
-            }
-          }
-        }
+      .map(|credential| {
+        CredentialValidator::validate_extended(
+          credential,
+          issuers,
+          &options.shared_validation_options,
+          presentation
+            .holder
+            .as_ref()
+            .map(|holder_url| (holder_url, options.subject_holder_relationship)),
+          fail_fast,
+        )
       })
+      .enumerate()
+      .filter_map(|(position, result)| result.err().map(|error| (position, error)));
+
+    let credential_errors: BTreeMap<usize, CompoundCredentialValidationError> = credential_errors_iter
+      .take(match fail_fast {
+        FailFast::FirstError => 1,
+        FailFast::AllErrors => number_of_credentials,
+      })
+      .collect();
+
+    if credential_errors.is_empty() {
+      Ok(())
+    } else {
+      Err(credential_errors)
+    }
   }
 }
 
@@ -257,6 +217,7 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
+  use identity_credential::credential::Credential;
   use identity_credential::presentation::PresentationBuilder;
 
   use super::*;
@@ -563,23 +524,6 @@ mod tests {
     // This violates the non transferable property of the second credential.
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
-    // check that `check_non_transferable` fails
-    assert!(matches!(
-      PresentationValidator::check_non_transferable(&presentation).unwrap_err(),
-      ValidationError::SubjectHolderRelationship { credential_index: 1 }
-    ));
-
-    // check that `check_non_transferable` fails
-    assert!(matches!(
-      PresentationValidator::check_holder_is_always_subject(&presentation).unwrap_err(),
-      ValidationError::SubjectHolderRelationship { credential_index: 1 }
-    ));
-
-    assert!(matches!(
-      PresentationValidator::check_non_transferable(&presentation).unwrap_err(),
-      ValidationError::SubjectHolderRelationship { credential_index: 1 }
-    ));
-    // check that full_validation also fails with the expected error
     // sign the presentation using subject_foo's document and private key.
 
     subject_foo_doc
@@ -622,7 +566,7 @@ mod tests {
 
     assert!(matches!(
       error.presentation_validation_errors.get(0).unwrap(),
-      &ValidationError::SubjectHolderRelationship { credential_index: 1 }
+      &ValidationError::SubjectHolderRelationship
     ));
 
     // check that the validation passes if we change the options to allow any relationship between the subject and

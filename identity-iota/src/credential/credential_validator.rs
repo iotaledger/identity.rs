@@ -6,7 +6,9 @@ use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 
 use crate::Result;
+use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_did::verifiable::VerifierOptions;
 use serde::Serialize;
@@ -15,6 +17,7 @@ use super::errors::SignerContext;
 use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 use super::FailFast;
+use super::SubjectHolderRelationship;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -46,7 +49,7 @@ impl CredentialValidator {
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
-    Self::validate_with_trusted_issuers(credential, std::slice::from_ref(issuer), options, fail_fast)
+    Self::validate_extended(credential, std::slice::from_ref(issuer), options, None, fail_fast)
   }
 
   /// Validates the semantic structure of the [`Credential`].
@@ -120,12 +123,49 @@ impl CredentialValidator {
     })
   }
 
+  /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
+  /// `relationship`.
+  pub fn check_subject_holder_relationship<T>(
+    credential: &Credential<T>,
+    holder: &Url,
+    relationship: SubjectHolderRelationship,
+  ) -> ValidationUnitResult {
+    let url_matches: bool = match &credential.credential_subject {
+      OneOrMany::One(ref credential_subject) => credential_subject.id.as_ref() == Some(holder),
+      OneOrMany::Many(subjects) => {
+        // need to check the case where the Many variant holds a vector of exactly one subject
+        if let &[ref credential_subject] = subjects.as_slice() {
+          credential_subject.id.as_ref() == Some(holder)
+        } else {
+          // zero or > 1 subjects is interpreted to mean that the holder is not the subject
+          false
+        }
+      }
+    };
+
+    let is_ok: bool = match relationship {
+      SubjectHolderRelationship::AlwaysSubject => url_matches,
+      SubjectHolderRelationship::SubjectOnNonTransferable => {
+        url_matches || !credential.non_transferable.unwrap_or(false)
+      }
+      SubjectHolderRelationship::Any => true,
+    };
+
+    if is_ok {
+      Ok(())
+    } else {
+      Err(ValidationError::SubjectHolderRelationship)
+    }
+  }
+
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
-  // validation.
-  pub(crate) fn validate_with_trusted_issuers<T: Serialize>(
+  // validation. It also validates the relation ship between a holder and the credential subjects when
+  // `relationship_criterion` is Some.
+  pub(crate) fn validate_extended<T: Serialize>(
     credential: &Credential<T>,
     issuers: &[ResolvedIotaDocument],
     options: &CredentialValidationOptions,
+    relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
     // Run all single concern validations in turn and fail immediately if `fail_fast` is true.
@@ -142,9 +182,16 @@ impl CredentialValidator {
 
     let structure_validation = std::iter::once_with(|| Self::check_structure(credential));
 
+    let subject_holder_validation = std::iter::once_with(|| {
+      relationship_criterion
+        .map(|(holder, relationship)| Self::check_subject_holder_relationship(credential, holder, relationship))
+        .unwrap_or(Ok(()))
+    });
+
     let validation_units_error_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
+      .chain(subject_holder_validation)
       .chain(signature_validation)
       .filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
@@ -166,6 +213,8 @@ mod tests {
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
+  use identity_credential::credential::Subject;
+  use identity_did::did::DID;
   use proptest::proptest;
 
   use identity_core::common::Timestamp;
@@ -498,6 +547,115 @@ mod tests {
     };
 
     assert!(matches!(error, &ValidationError::Signature { .. }));
+  }
+
+  #[test]
+  fn test_check_subject_holder_relationship() {
+    let Setup {
+      issuer_doc,
+      unsigned_credential: mut credential,
+      ..
+    } = Setup::new();
+
+    // first ensure that holder_url is the subject and set the nonTransferable property
+    let actual_holder_url = credential.credential_subject.first().unwrap().id.clone().unwrap();
+    assert_eq!(credential.credential_subject.len(), 1);
+    credential.non_transferable = Some(true);
+
+    // checking with holder = subject passes for all defined subject holder relationships:
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      dbg!(&credential),
+      dbg!(&actual_holder_url),
+      SubjectHolderRelationship::AlwaysSubject
+    )
+    .is_ok());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &actual_holder_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_ok());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &actual_holder_url,
+      SubjectHolderRelationship::Any
+    )
+    .is_ok());
+
+    // check with a holder different from the subject of the credential:
+    let issuer_url = Url::parse(issuer_doc.id().as_str()).unwrap();
+    assert!(actual_holder_url != issuer_url);
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &issuer_url,
+      SubjectHolderRelationship::AlwaysSubject
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential,
+      &issuer_url,
+      SubjectHolderRelationship::Any
+    )
+    .is_ok());
+
+    let mut credential_transferable = credential.clone();
+
+    credential_transferable.non_transferable = Some(false);
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_transferable,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_ok());
+
+    credential_transferable.non_transferable = None;
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_transferable,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_ok());
+
+    // two subjects (even when they are both the holder) should fail for all defined values except "Any"
+
+    let mut credential_duplicated_holder = credential.clone();
+    credential_duplicated_holder
+      .credential_subject
+      .push(Subject::with_id(actual_holder_url));
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_duplicated_holder,
+      &issuer_url,
+      SubjectHolderRelationship::AlwaysSubject
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_duplicated_holder,
+      &issuer_url,
+      SubjectHolderRelationship::SubjectOnNonTransferable
+    )
+    .is_err());
+
+    assert!(CredentialValidator::check_subject_holder_relationship(
+      &credential_duplicated_holder,
+      &issuer_url,
+      SubjectHolderRelationship::Any
+    )
+    .is_ok());
   }
 
   #[test]
