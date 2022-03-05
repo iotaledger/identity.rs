@@ -11,6 +11,7 @@ use identity_core::convert::ToJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::TangleRef;
 use identity_iota_core::types::Network;
@@ -25,7 +26,6 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::DIDMessageEncoding;
-use crate::tangle::Message;
 use crate::tangle::Receipt;
 use crate::tangle::TangleResolve;
 

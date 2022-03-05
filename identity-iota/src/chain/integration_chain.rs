@@ -8,6 +8,7 @@ use core::mem;
 use identity_core::convert::FmtJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::MessageIdExt;
 use identity_iota_core::message::TangleRef;
@@ -20,7 +21,6 @@ use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
-use crate::tangle::Message;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageIndex;
 

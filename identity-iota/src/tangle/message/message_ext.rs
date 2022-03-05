@@ -3,13 +3,13 @@
 
 use iota_client::bee_message::payload::transaction::Essence;
 use iota_client::bee_message::payload::Payload;
-use iota_client::bee_message::Message;
 
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::DID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::TangleRef;
 

@@ -103,8 +103,8 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
-impl From<identity::iota::BeeMessageError> for WasmError<'_> {
-  fn from(error: identity::iota::BeeMessageError) -> Self {
+impl From<identity::iota_core::BeeMessageError> for WasmError<'_> {
+  fn from(error: identity::iota_core::BeeMessageError) -> Self {
     Self {
       name: Cow::Borrowed("bee_message::Error"),
       message: Cow::Owned(error.to_string()),
