@@ -3,16 +3,19 @@
 
 use crate::Error;
 use crate::Result;
+use core::result::Result as StdResult;
 use std::fmt::Display;
+use std::str::FromStr;
 
 use serde::Deserialize;
 use serde::Serialize;
 
+// TODO: Deserialization skips endpoint validation, but that is okay at present.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Endpoint {
   name: String,
   handler: String,
-  is_hook: bool,
+  pub(crate) is_hook: bool,
 }
 
 impl Endpoint {
@@ -45,19 +48,13 @@ impl Endpoint {
 
     Ok(Self { name, handler, is_hook })
   }
+}
 
-  pub fn new_hook(string: impl AsRef<str>) -> Result<Self> {
-    let mut endpoint = Self::new(string)?;
-    endpoint.is_hook = true;
-    Ok(endpoint)
-  }
+impl FromStr for Endpoint {
+  type Err = Error;
 
-  pub fn set_is_hook(&mut self, is_hook: bool) {
-    self.is_hook = is_hook;
-  }
-
-  pub fn is_hook(&self) -> bool {
-    self.is_hook
+  fn from_str(string: &str) -> StdResult<Self, Self::Err> {
+    Self::new(string)
   }
 }
 
@@ -96,9 +93,12 @@ mod tests {
 
   #[test]
   fn valid_endpoints() {
-    assert!(!Endpoint::new("a/b").unwrap().is_hook());
-    assert!(Endpoint::new("a/b/hook").unwrap().is_hook());
-    assert!(!Endpoint::new("longer/word").unwrap().is_hook());
-    assert!(!Endpoint::new("longer/underscored_word").unwrap().is_hook());
+    assert!("a/b".parse::<Endpoint>().is_ok());
+    assert!(Endpoint::new("a/b").is_ok());
+    assert!(Endpoint::new("longer/word").is_ok());
+    assert!(Endpoint::new("longer_endpoint/underscored_word").is_ok());
+
+    assert!(!Endpoint::new("a/b").unwrap().is_hook);
+    assert!(Endpoint::new("a/b/hook").unwrap().is_hook);
   }
 }

@@ -293,7 +293,8 @@ impl Actor {
     peer: PeerId,
     input: REQ,
   ) -> Result<REQ> {
-    let endpoint = Endpoint::new_hook(input.request_name())?;
+    let mut endpoint = Endpoint::new(input.request_name())?;
+    endpoint.is_hook = true;
 
     if self.handlers().contains_key(&endpoint) {
       log::debug!("Calling send hook: {}", endpoint);
@@ -334,7 +335,7 @@ impl Actor {
 
       // Hooking
       let mut hook_endpoint: Endpoint = inbound_request.endpoint;
-      hook_endpoint.set_is_hook(true);
+      hook_endpoint.is_hook = true;
 
       if self.handlers().contains_key(&hook_endpoint) {
         log::debug!("Calling hook: {}", hook_endpoint);

@@ -26,7 +26,6 @@ impl RequestMessage {
   }
 
   pub fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
-    // TODO: Replace with some serialization that's faster or more compact?
     serde_json::from_slice::<'_, Self>(bytes)
       .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string()))
   }
