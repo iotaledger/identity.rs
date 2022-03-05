@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
-use std::any::TypeId;
 use std::pin::Pin;
 
 use futures::Future;
@@ -25,8 +24,6 @@ pub trait RequestHandler: Send + Sync {
     object: Box<dyn Any + Send + Sync>,
     request: Box<dyn Any + Send>,
   ) -> Result<AnyFuture<'_>, RemoteSendError>;
-
-  fn object_type_id(&self) -> TypeId;
 
   fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError>;
 
@@ -78,11 +75,6 @@ pub fn request_handler_deserialize_request<MOD: SyncMode, REQ: ActorRequest<MOD>
   })?;
 
   Ok(Box::new(request))
-}
-
-#[inline(always)]
-pub fn request_handler_object_type_id<OBJ: 'static>() -> TypeId {
-  TypeId::of::<OBJ>()
 }
 
 #[inline(always)]

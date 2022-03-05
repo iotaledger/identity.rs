@@ -21,7 +21,7 @@ use super::default_listening_actor;
 use super::default_sending_actor;
 
 #[tokio::test]
-async fn test_unknown_request_returns_error() -> crate::Result<()> {
+async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
   try_init_logger();
 
   let (listening_actor, addr, peer_id) = default_listening_actor().await;

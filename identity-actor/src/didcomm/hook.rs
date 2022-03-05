@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
-use std::any::TypeId;
 use std::marker::PhantomData;
 
 use futures::Future;
@@ -121,23 +120,15 @@ where
     Ok(Box::pin(future))
   }
 
-  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
-    // TODO: This is never called for hooks, panic instead?
-    crate::traits::request_handler_serialize_response::<MOD, REQ>(input)
+  fn serialize_response(&self, _input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
+    unreachable!("serialize_response is never called on hooks");
   }
 
-  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
-    // TODO: This is never called for hooks, panic instead?
-    crate::traits::request_handler_deserialize_request::<MOD, REQ>(input)
-  }
-
-  fn object_type_id(&self) -> TypeId {
-    // TODO: This is never called for hooks, panic instead?
-    crate::traits::request_handler_object_type_id::<OBJ>()
+  fn deserialize_request(&self, _input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
+    unreachable!("deserialize_request is never called on hooks");
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
-    // TODO: This is never called for hooks, panic instead?
     crate::traits::request_handler_clone_object::<OBJ>(object)
   }
 }

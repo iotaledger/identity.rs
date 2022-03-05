@@ -234,11 +234,6 @@ impl Actor {
 
     let response = self.commander.send_request(peer, message).await?;
 
-    log::debug!(
-      "ack was: {:#?}",
-      serde_json::from_slice::<serde_json::Value>(&response.0).expect("TODO")
-    );
-
     serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
         location: "[send_named_message]".to_owned(),
@@ -277,11 +272,6 @@ impl Actor {
     log::debug!("Sending `{}` message", name);
 
     let response = self.commander.send_request(peer, message).await?;
-
-    log::debug!(
-      "ack was: {:#?}",
-      serde_json::from_slice::<serde_json::Value>(&response.0).expect("TODO")
-    );
 
     let response: Vec<u8> =
       serde_json::from_slice::<StdResult<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {

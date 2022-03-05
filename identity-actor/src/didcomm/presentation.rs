@@ -28,7 +28,7 @@ impl DidCommHandler {
     let result = presentation_holder_handler(actor, request.peer, Some(request.input)).await;
 
     if let Err(err) = result {
-      log::error!("{:?}", err);
+      log::error!("presentation_holder_actor_handler errored: {:?}", err);
     }
   }
 
@@ -42,7 +42,7 @@ impl DidCommHandler {
     let result = presentation_verifier_handler(actor, request.peer, Some(request.input)).await;
 
     if let Err(err) = result {
-      log::error!("{:?}", err);
+      log::error!("presentation_verifier_actor_handler errored: {:?}", err);
     }
   }
 }

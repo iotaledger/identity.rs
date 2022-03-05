@@ -47,8 +47,6 @@ async fn send_response<T: serde::Serialize>(
   channel: ResponseChannel<ResponseMessage>,
   request_id: RequestId,
 ) -> StdResult<(), InboundFailure> {
-  log::debug!("sending response: {}", serde_json::to_string_pretty(&response).unwrap());
-
   let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
   commander.send_response(response, channel, request_id).await
 }

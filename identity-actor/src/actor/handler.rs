@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
-use std::any::TypeId;
 use std::marker::PhantomData;
 
 use futures::Future;
@@ -100,10 +99,6 @@ where
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
     crate::traits::request_handler_deserialize_request::<MOD, REQ>(input)
-  }
-
-  fn object_type_id(&self) -> TypeId {
-    crate::traits::request_handler_object_type_id::<OBJ>()
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
