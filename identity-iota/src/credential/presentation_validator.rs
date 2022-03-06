@@ -544,7 +544,8 @@ mod tests {
     let presentation_verifier_options = VerifierOptions::default().challenge("some challenge".to_owned());
     let presentation_validation_options = PresentationValidationOptions::default()
       .shared_validation_options(credential_validation_options)
-      .presentation_verifier_options(presentation_verifier_options);
+      .presentation_verifier_options(presentation_verifier_options)
+      .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
     let trusted_issuers = [
       test_utils::mock_resolved_document(issuer_foo_doc),
@@ -562,10 +563,12 @@ mod tests {
     )
     .unwrap_err();
 
-    assert!(error.presentation_validation_errors.len() == 1 && error.credential_errors.is_empty());
+    assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
+    let validation_errors_credential_idx1 = &error.credential_errors.get(&1).unwrap().validation_errors;
+    assert_eq!(validation_errors_credential_idx1.len(), 1);
 
     assert!(matches!(
-      error.presentation_validation_errors.get(0).unwrap(),
+      validation_errors_credential_idx1.get(0).unwrap(),
       &ValidationError::SubjectHolderRelationship
     ));
 

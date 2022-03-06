@@ -18,12 +18,9 @@ use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 
 use identity::iota::CredentialValidationOptions;
-use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
 use identity::iota::PresentationValidationOptions;
-use identity::iota::PresentationValidator;
 use identity::iota::Receipt;
-use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
 use identity::iota::SubjectHolderRelationship;
 use identity::prelude::*;
@@ -84,35 +81,6 @@ pub async fn resolver_based_validation(presentation_json: &str, options: &Presen
     .await
 }
 
-/// Verifies signatures and that the credential subject is the holder. Nothing else gets verified.
-pub async fn validator_based_validation(
-  presentation_json: &str,
-  holder_verifier_options: &VerifierOptions,
-  issuer_verifier_options: &VerifierOptions,
-) -> Result<()> {
-  // In this case we do not care about the issuance date and expiry date of credentials in the presentation
-  // we just want to confirm that the holder is always the credential subject and that the signatures are correct.
-  // To do this we need to use the low level validation API.
-
-  // Deserialize the presentation:
-  let presentation: Presentation = Presentation::from_json(&presentation_json)?;
-  // First check that the holder is always the subject
-  PresentationValidator::check_holder_is_always_subject(&presentation)?;
-  // Now we resolve the holder and issuers concurrently
-  let resolver: Resolver = Resolver::new().await?;
-  let (holder_doc, issuer_docs): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) = tokio::try_join!(
-    resolver.resolve_presentation_holder(&presentation),
-    resolver.resolve_presentation_issuers(&presentation)
-  )?;
-  // Verify the holders signature
-  PresentationValidator::verify_presentation_signature(&presentation, &holder_doc, holder_verifier_options)?;
-  // Verify the issuer's signatures
-  for credential in presentation.verifiable_credential.iter() {
-    CredentialValidator::verify_signature(credential, issuer_docs.as_slice(), issuer_verifier_options)?;
-  }
-  Ok(())
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
   // Issue a Verifiable Presentation with a newly created DID Document
@@ -147,14 +115,6 @@ async fn main() -> Result<()> {
 
   // Note that we did not declare a latest allowed issuance date for credentials. This is because we only want to check
   // that the credentials do not have an issuance date in the future which is a default check.
-
-  // If the verifier instead wanted certain validations to be skipped they could do so using the PresentationValidator:
-  validator_based_validation(
-    presentation_json.as_str(),
-    &presentation_verifier_options,
-    &VerifierOptions::default(),
-  )
-  .await?;
 
   Ok(())
 }

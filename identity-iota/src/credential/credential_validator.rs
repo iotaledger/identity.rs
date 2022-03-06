@@ -631,7 +631,7 @@ mod tests {
 
     // two subjects (even when they are both the holder) should fail for all defined values except "Any"
 
-    let mut credential_duplicated_holder = credential.clone();
+    let mut credential_duplicated_holder = credential;
     credential_duplicated_holder
       .credential_subject
       .push(Subject::with_id(actual_holder_url));

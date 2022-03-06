@@ -94,52 +94,8 @@ async function createVP(clientConfig) {
     console.log(`Successful VP validation using the Resolver`);
 
     // Note that the `verifyPresentation` method we called automatically resolved all DID Documents that are necessary to validate the presentation. 
-    // It is also possible to supply extra arguments to avoid some resolutions if one already has up to date resolved documents of 
+    // It is also possible to supply extra arguments to avoid some resolutions if one already has up-to-date resolved documents of 
     // either the holder or issuers (see the method's documentation). 
-
-
-    // ===========================================================================
-    // More customized validation
-    // ===========================================================================
-
-    // Suppose that the verifier does not want to validate the issuance date and expiry dates of credentials in the presentation at all.
-    // The verifier is only interested in confirming that the holder is always the credential subject and that the signatures are correct.
-    // This can be done as follows:   
-
-    // Verify that the presentation does not contain credentials where the holder is not the subject 
-    PresentationValidator.checkHolderIsAlwaysSubject(presentation);
-
-    // To verify the holder's signature and also the signature's of each credential issuer, one needs to resolve 
-    // their DID Documents. 
-
-    // Resolve the holder's DID Document
-    const resolvedHolderDoc = await resolver.resolvePresentationHolder(presentation);
-    
-    // Resolve the DID Documents of all credential issuers contained in the presentation 
-    const resolvedIssuerDocs = await resolver.resolvePresentationIssuers(presentation);
-
-    // Verify the signature of the holder 
-    PresentationValidator.verifyPresentationSignature(
-        presentation, 
-        resolvedHolderDoc,
-        new VerifierOptions({
-            challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440"
-        })
-        );
-        
-    // Verify the issuer's signatures 
-
-    const credentials = presentation.verifiableCredential(); 
-    for (let credential of credentials){
-        CredentialValidator.verifySignature(
-            credential,
-            resolvedIssuerDocs, 
-            VerifierOptions.default() 
-        );
-    }
-
-    // Since no errors were thrown by the validators we know that the validation was successful. 
-    console.log(`Successful custom VP validation`);
 
 }
 
