@@ -8,19 +8,16 @@ use crate::didcomm::thread_id::ThreadId;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
-/// Errors that can occur during the actor lifecycle.
+/// Errors that can occur during the actor operation.
 pub enum Error {
   #[error("transport error: {0}")]
   TransportError(#[source] libp2p::TransportError<std::io::Error>),
-  #[error("could not respond to a {0} request, due to the handler taking too long to produce a response, the connection timing out or a transport error.")]
-  CouldNotRespond(String),
   #[error("the actor was shut down")]
   Shutdown,
   #[error("invalid endpoint")]
   InvalidEndpoint,
   #[error("{0}")]
   OutboundFailure(#[from] OutboundFailure),
-  /// The remote has no handler for this request or the DIDComm thread does not exist.
   #[error("unexpected request `{0}`")]
   UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]
@@ -42,7 +39,6 @@ pub enum Error {
 /// Errors that can occur on the remote actor.
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
-  /// The remote has no handler for this request or the DIDComm thread does not exist.
   #[error("unexpected request: {0}")]
   UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]
@@ -67,13 +63,4 @@ impl From<RemoteSendError> for Error {
       RemoteSendError::SerializationFailure { location, message } => Error::SerializationFailure { location, message },
     }
   }
-}
-
-/// Categories that errors can be classified in, to learn about where the
-/// error originated from.
-pub enum Category {
-  /// An error that the client is responsible for.
-  Client,
-  /// An error that the peer is responsible for.
-  Remote,
 }

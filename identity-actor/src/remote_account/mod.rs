@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Category;
-
 pub mod handler;
 pub mod requests;
 
@@ -11,15 +9,6 @@ pub mod requests;
 pub enum RemoteAccountError {
   IdentityNotFound,
   AccountError(String),
-}
-
-impl RemoteAccountError {
-  pub fn classify(&self) -> Category {
-    match self {
-      Self::IdentityNotFound => Category::Client,
-      _ => Category::Remote,
-    }
-  }
 }
 
 impl From<identity_account::Error> for RemoteAccountError {

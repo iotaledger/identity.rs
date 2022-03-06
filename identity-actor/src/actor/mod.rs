@@ -24,7 +24,6 @@ pub use actor_request::RequestMode;
 pub use actor_request::Synchronous;
 pub(crate) use config::ActorConfig;
 pub use endpoint::Endpoint;
-pub use errors::Category;
 pub use errors::Error;
 pub use errors::RemoteSendError;
 pub use errors::Result;
