@@ -41,6 +41,8 @@ where
   }
 }
 
+/// A function that hooks and thus extends existing handler logic.
+/// Can modify incoming requests or abort handling.
 #[derive(Clone)]
 pub struct Hook<MOD: SyncMode, OBJ, REQ, FUT, FUN>
 where

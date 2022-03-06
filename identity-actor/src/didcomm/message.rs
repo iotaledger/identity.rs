@@ -6,6 +6,8 @@ use crate::Asynchronous;
 
 use super::thread_id::ThreadId;
 
+/// A DIDComm Plaintext Message. Implementation is currently rudimentary.
+/// https://identity.foundation/didcomm-messaging/spec/#plaintext-message-structure
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DidCommPlaintextMessage<T> {
   pub(crate) typ: String,

@@ -26,10 +26,11 @@ use crate::Endpoint;
 use crate::RequestMode;
 
 use super::behaviour::DidCommCodec;
-use super::messages::RequestMessage;
-use super::messages::ResponseMessage;
+use super::message::RequestMessage;
+use super::message::ResponseMessage;
 use super::net_commander::SwarmCommand;
 
+/// The background loop that handles libp2p swarm events and `NetCommander` commands simultaneously.
 pub struct EventLoop {
   swarm: Swarm<RequestResponse<DidCommCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,

@@ -17,6 +17,8 @@ use super::requests::IdentityCreate;
 use super::requests::IdentityGet;
 use super::RemoteAccountError;
 
+/// A proof-of-concept implementation of a remote `Account` with very basic operations
+/// and disabled tangle interaction.
 #[derive(Clone)]
 pub struct RemoteAccount {
   builder: Arc<Mutex<AccountBuilder>>,

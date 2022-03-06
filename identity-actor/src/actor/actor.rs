@@ -11,7 +11,7 @@ use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::thread_id::ThreadId;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
-use crate::p2p::messages::RequestMessage;
+use crate::p2p::message::RequestMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::ActorConfig;
 use crate::ActorRequest;

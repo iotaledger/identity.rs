@@ -13,9 +13,10 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
 
-use super::messages::RequestMessage;
-use super::messages::ResponseMessage;
+use super::message::RequestMessage;
+use super::message::ResponseMessage;
 
+/// A thread-safe way to interact with an `EventLoop` running in the background.
 #[derive(Clone)]
 pub struct NetCommander {
   command_sender: mpsc::Sender<SwarmCommand>,
@@ -98,6 +99,7 @@ impl NetCommander {
   }
 }
 
+/// A command to send to the `EventLoop` with (typically) a channel to return a response through.
 pub enum SwarmCommand {
   SendRequest {
     peer: PeerId,

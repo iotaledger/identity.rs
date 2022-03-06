@@ -27,7 +27,7 @@ pub use endpoint::Endpoint;
 pub use errors::Error;
 pub use errors::RemoteSendError;
 pub use errors::Result;
-pub use handler::Handler;
+pub(crate) use handler::Handler;
 pub(crate) use invocation::AsynchronousInvocationStrategy;
 pub(crate) use invocation::InvocationStrategy;
 pub(crate) use invocation::SynchronousInvocationStrategy;

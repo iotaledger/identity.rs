@@ -15,8 +15,8 @@ use libp2p::PeerId;
 
 use tokio::io::{self};
 
-use super::messages::RequestMessage;
-use super::messages::ResponseMessage;
+use super::message::RequestMessage;
+use super::message::ResponseMessage;
 
 #[derive(Debug, Clone)]
 pub struct DidCommProtocol();

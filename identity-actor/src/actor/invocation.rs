@@ -7,7 +7,7 @@ use std::result::Result as StdResult;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::p2p::event_loop::InboundRequest;
 use crate::p2p::event_loop::ThreadRequest;
-use crate::p2p::messages::ResponseMessage;
+use crate::p2p::message::ResponseMessage;
 use crate::p2p::net_commander::NetCommander;
 use crate::traits::RequestHandler;
 use crate::Actor;
@@ -18,8 +18,11 @@ use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 
+/// An abstraction over the strategy with which to invoke a handler, which is implemented
+/// synchronously and asynchronously.
 #[async_trait::async_trait]
 pub trait InvocationStrategy {
+  /// Invokes the `handler` and communicates with the remote through `channel`.
   #[allow(clippy::too_many_arguments)]
   async fn invoke_handler(
     handler: &dyn RequestHandler,
@@ -31,6 +34,7 @@ pub trait InvocationStrategy {
     request_id: RequestId,
   );
 
+  /// Called when the actor is unable to deserialize the request to the expected input for the handler.
   async fn handler_deserialization_failure(
     actor: &mut Actor,
     channel: ResponseChannel<ResponseMessage>,
@@ -38,6 +42,7 @@ pub trait InvocationStrategy {
     error: RemoteSendError,
   ) -> StdResult<(), InboundFailure>;
 
+  /// Called when no handler was found for the requested endpoint.
   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest);
 }
 

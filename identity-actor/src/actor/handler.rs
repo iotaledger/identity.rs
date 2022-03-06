@@ -15,6 +15,7 @@ use crate::RequestContext;
 
 use super::actor_request::private::SyncMode;
 
+/// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]
 pub struct Handler<MOD: SyncMode, OBJ, REQ, FUT, FUN>
 where
@@ -31,7 +32,7 @@ where
   // See also the drop check section in the PhantomData doc.
   _marker_obj: std::marker::PhantomData<&'static OBJ>,
   _marker_req: std::marker::PhantomData<&'static REQ>,
-  _marker_sync: std::marker::PhantomData<&'static MOD>,
+  _marker_mod: std::marker::PhantomData<&'static MOD>,
 }
 
 impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> Handler<MOD, OBJ, REQ, FUT, FUN>
@@ -47,7 +48,7 @@ where
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
-      _marker_sync: PhantomData,
+      _marker_mod: PhantomData,
     }
   }
 }

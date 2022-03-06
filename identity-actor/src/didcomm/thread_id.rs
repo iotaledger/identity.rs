@@ -5,6 +5,7 @@ use std::fmt::Display;
 
 use uuid::Uuid;
 
+/// An identifier for a DIDComm messaging thread.
 #[derive(Debug, Clone, Hash, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ThreadId(Uuid);
 

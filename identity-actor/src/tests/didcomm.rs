@@ -4,7 +4,7 @@
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::presentation::presentation_holder_handler;
 use crate::didcomm::presentation::presentation_verifier_handler;
-use crate::didcomm::presentation::DidCommHandler;
+use crate::didcomm::presentation::DidCommState;
 use crate::didcomm::presentation::Presentation;
 use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::presentation::PresentationRequest;
@@ -38,7 +38,7 @@ impl TestFunctionState {
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   try_init_logger();
-  let handler = DidCommHandler::new().await;
+  let handler = DidCommState::new().await;
 
   let mut holder_actor = default_sending_actor(|_| {}).await;
 
@@ -47,7 +47,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
       .add_state(handler)
       .add_handler(
         "didcomm/presentation_offer",
-        DidCommHandler::presentation_verifier_actor_handler,
+        DidCommState::presentation_verifier_actor_handler,
       )
       .unwrap();
   })
@@ -69,14 +69,14 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   try_init_logger();
 
-  let handler = DidCommHandler::new().await;
+  let handler = DidCommState::new().await;
 
   let (holder_actor, addr, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
       .add_handler(
         "didcomm/presentation_request",
-        DidCommHandler::presentation_holder_actor_handler,
+        DidCommState::presentation_holder_actor_handler,
       )
       .unwrap();
   })
@@ -99,14 +99,14 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> Result<()> {
   try_init_logger();
 
-  let handler = DidCommHandler::new().await;
+  let handler = DidCommState::new().await;
 
   let (holder_actor, addr, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
       .add_handler(
         "didcomm/presentation_request",
-        DidCommHandler::presentation_holder_actor_handler,
+        DidCommState::presentation_holder_actor_handler,
       )
       .unwrap();
   })
@@ -149,7 +149,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> Result<()> {
   try_init_logger();
 
-  let handler = DidCommHandler::new().await;
+  let handler = DidCommState::new().await;
 
   let function_state = TestFunctionState::new();
 
@@ -169,7 +169,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
       .add_state(handler)
       .add_handler(
         "didcomm/presentation_offer",
-        DidCommHandler::presentation_verifier_actor_handler,
+        DidCommState::presentation_verifier_actor_handler,
       )
       .unwrap();
 
@@ -252,10 +252,10 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
     builder
-      .add_state(DidCommHandler)
+      .add_state(DidCommState)
       .add_handler(
         "didcomm/presentation_offer",
-        DidCommHandler::presentation_verifier_actor_handler,
+        DidCommState::presentation_verifier_actor_handler,
       )
       .unwrap();
   })

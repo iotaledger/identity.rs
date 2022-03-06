@@ -16,5 +16,7 @@ pub use libp2p::Multiaddr;
 pub use libp2p::PeerId;
 #[cfg(feature = "account")]
 pub use remote_account::handler::RemoteAccount;
+#[cfg(feature = "account")]
 pub use remote_account::requests::IdentityGet;
+#[cfg(feature = "account")]
 pub use remote_account::requests::IdentityList;

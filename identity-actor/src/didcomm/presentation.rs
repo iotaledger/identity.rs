@@ -11,9 +11,9 @@ use crate::Asynchronous;
 use crate::RequestContext;
 
 #[derive(Clone)]
-pub struct DidCommHandler;
+pub struct DidCommState;
 
-impl DidCommHandler {
+impl DidCommState {
   pub async fn new() -> Self {
     Self
   }
@@ -118,7 +118,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct PresentationRequest(u32);
+pub struct PresentationRequest([u8; 2]);
 
 impl ActorRequest<Asynchronous> for PresentationRequest {
   type Response = ();
@@ -128,7 +128,7 @@ impl ActorRequest<Asynchronous> for PresentationRequest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct PresentationOffer(u32, u32);
+pub struct PresentationOffer([u8; 3]);
 
 impl ActorRequest<Asynchronous> for PresentationOffer {
   type Response = ();
@@ -138,7 +138,7 @@ impl ActorRequest<Asynchronous> for PresentationOffer {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct Presentation(u32, u32, u32);
+pub struct Presentation([u8; 4]);
 
 impl ActorRequest<Asynchronous> for Presentation {
   type Response = ();
@@ -148,7 +148,7 @@ impl ActorRequest<Asynchronous> for Presentation {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct PresentationResult(u32, u32, u32, u32);
+pub struct PresentationResult([u8; 5]);
 
 impl ActorRequest<Asynchronous> for PresentationResult {
   type Response = ();
