@@ -82,6 +82,9 @@ See <code>ISignatureOptions</code>.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
+<dt><a href="#Url">Url</a></dt>
+<dd><p>A parsed URL.</p>
+</dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
 <dt><a href="#VerifierOptions">VerifierOptions</a></dt>
@@ -93,23 +96,27 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
-<dd><p>Declares how a credential subject must relate to the presentation holder.</p>
+<dd><p>Declares how credential subjects must relate to the presentation holder during validation.
+See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
 </dd>
 <dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
-<dd><p>Declare that the holder must always match the subject.</p>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default used if no other variant is specified when constructing a new
+<code>PresentationValidationOptions</code>.</p>
 </dd>
 <dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
-<dd><p>Declare that the holder must match the subject on credentials with the nonTransferable property set.</p>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
 </dd>
 <dt><a href="#Any">Any</a></dt>
-<dd><p>Declares that the subject is not required to have any kind of relationship to the holder.</p>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
 </dd>
 <dt><a href="#FailFast">FailFast</a></dt>
 <dd><p>Declares when validation should return if an error occurs.</p>
@@ -610,15 +617,16 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
 **Kind**: global class  
 
 * [CredentialValidator](#CredentialValidator)
-    * [.validate(credential, options, issuer, fail_fast)](#CredentialValidator.validate)
+    * [.validate(credential, issuer, options, fail_fast)](#CredentialValidator.validate)
     * [.checkStructure(credential)](#CredentialValidator.checkStructure)
     * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
-    * [.checkIsIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIsIssuedOnOrBefore)
+    * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
+    * [.check_subject_holder_relationship(credential, holder, relationship)](#CredentialValidator.check_subject_holder_relationship)
 
 <a name="CredentialValidator.validate"></a>
 
-### CredentialValidator.validate(credential, options, issuer, fail_fast)
+### CredentialValidator.validate(credential, issuer, options, fail_fast)
 Validates a `Credential`.
 
 The following properties are validated according to `options`:
@@ -627,12 +635,12 @@ The following properties are validated according to `options`:
 - The issuance date
 - The semantic structure.
 
-# Warning
+### Warning
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
 `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
 
-# Errors
+### Errors
 An error is returned whenever a validated condition is not satisfied.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
@@ -640,8 +648,8 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | issuer | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
 <a name="CredentialValidator.checkStructure"></a>
@@ -649,7 +657,7 @@ An error is returned whenever a validated condition is not satisfied.
 ### CredentialValidator.checkStructure(credential)
 Validates the semantic structure of the `Credential`.
 
-# Warning
+### Warning
 This does not validate against the credential's schema nor the structure of the subject claims.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
@@ -661,7 +669,7 @@ This does not validate against the credential's schema nor the structure of the 
 <a name="CredentialValidator.checkExpiresOnOrAfter"></a>
 
 ### CredentialValidator.checkExpiresOnOrAfter(credential, timestamp)
-Validate that the [Credential] expires on or after the specified `Timestamp`.
+Validate that the credential expires on or after the specified timestamp.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
@@ -670,10 +678,10 @@ Validate that the [Credential] expires on or after the specified `Timestamp`.
 | credential | [<code>Credential</code>](#Credential) | 
 | timestamp | [<code>Timestamp</code>](#Timestamp) | 
 
-<a name="CredentialValidator.checkIsIssuedOnOrBefore"></a>
+<a name="CredentialValidator.checkIssuedOnOrBefore"></a>
 
-### CredentialValidator.checkIsIssuedOnOrBefore(credential, timestamp)
-Validate that the [Credential] is issued on or before specified `Timestamp`.
+### CredentialValidator.checkIssuedOnOrBefore(credential, timestamp)
+Validate that the credential is issued on or before the specified timestamp.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
@@ -687,7 +695,7 @@ Validate that the [Credential] is issued on or before specified `Timestamp`.
 ### CredentialValidator.verifySignature(credential, trusted_issuers, options)
 Verify the signature using the DID Document of a trusted issuer.
 
-# Errors
+### Errors
 This method immediately returns an error if
 the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
 to verify the credential's signature will be made and an error is returned upon failure.
@@ -699,6 +707,20 @@ to verify the credential's signature will be made and an error is returned upon 
 | credential | [<code>Credential</code>](#Credential) | 
 | trusted_issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="CredentialValidator.check_subject_holder_relationship"></a>
+
+### CredentialValidator.check\_subject\_holder\_relationship(credential, holder, relationship)
+Validate that the relationship between the `holder` and the credential subjects is in accordance with
+`relationship`.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| holder | [<code>Url</code>](#Url) | 
+| relationship | <code>number</code> | 
 
 <a name="DID"></a>
 
@@ -2247,30 +2269,28 @@ Deserializes a `PresentationValidationOptions` from a JSON object.
 **Kind**: global class  
 
 * [PresentationValidator](#PresentationValidator)
-    * [.validate(presentation, options, holder, issuers, fail_fast)](#PresentationValidator.validate)
+    * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
-    * [.checkNonTransferable(presentation)](#PresentationValidator.checkNonTransferable)
-    * [.checkHolderIsAlwaysSubject(presentation)](#PresentationValidator.checkHolderIsAlwaysSubject)
 
 <a name="PresentationValidator.validate"></a>
 
-### PresentationValidator.validate(presentation, options, holder, issuers, fail_fast)
+### PresentationValidator.validate(presentation, holder, issuers, options, fail_fast)
 Validate a `Presentation`.
 
 The following properties are validated according to `options`:
-- The holder's signature,
-- The relationship between the subject and the holder,
-- The semantic structure
-- Some properties of the credentials  (see
-`CredentialValidator::validate` for more information).
+- the semantic structure of the presentation,
+- the holder's signature,
+- the relationship between the holder and the credential subjects,
+- the signatures and some properties of the constituent credentials (see
+`CredentialValidator::validate`).
 
-# Warning
+### Warning
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
 `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
 
-# Errors
+### Errors
 An error is returned whenever a validated condition is not satisfied.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
@@ -2278,19 +2298,19 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | holder | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 | issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
 <a name="PresentationValidator.verifyPresentationSignature"></a>
 
 ### PresentationValidator.verifyPresentationSignature(presentation, holder, options)
-Verify the presentation's signature using the resolved document of the holder
+Verify the presentation's signature using the resolved document of the holder.
 
-# Errors
-Fails immediately if the supplied `holder` cannot be identified with the URL of the `presentation`'s holder
-property. Otherwise signature verification will be attempted and an error is returned upon failure.
+### Errors
+Fails if the `holder` does not match the `presentation`'s holder property.
+Fails if signature verification against the holder document fails.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -2304,34 +2324,6 @@ property. Otherwise signature verification will be attempted and an error is ret
 
 ### PresentationValidator.checkStructure(presentation)
 Validates the semantic structure of the `Presentation`.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="PresentationValidator.checkNonTransferable"></a>
-
-### PresentationValidator.checkNonTransferable(presentation)
-Validates that the nonTransferable property is met.
-
-# Errors
-Returns an error at the first credential requiring a nonTransferable property that is not met.
-
-**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
-
-| Param | Type |
-| --- | --- |
-| presentation | [<code>Presentation</code>](#Presentation) | 
-
-<a name="PresentationValidator.checkHolderIsAlwaysSubject"></a>
-
-### PresentationValidator.checkHolderIsAlwaysSubject(presentation)
-Validates that the presentation only contains credentials where the credential subject is the holder.
-
-# Errors
-Returns an error at the first credential with a credential subject not corresponding to the holder.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -2627,7 +2619,7 @@ NOTE: the document must have been published to the Tangle and have a valid messa
 ### resolver.resolveCredentialIssuer(credential) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Fetches the DID Document of the issuer on a `Credential`.
 
-# Errors
+### Errors
 
 Errors if the issuer URL is not a valid `DID` or document resolution fails.
 
@@ -2643,7 +2635,7 @@ Errors if the issuer URL is not a valid `DID` or document resolution fails.
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
-# Errors
+### Errors
 
 Errors if any issuer URL is not a valid `DID` or document resolution fails.
 
@@ -2658,7 +2650,7 @@ Errors if any issuer URL is not a valid `DID` or document resolution fails.
 ### resolver.resolvePresentationHolder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Fetches the DID Document of the holder of a `Presentation`.
 
-# Errors
+### Errors
 
 Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
 
@@ -2673,29 +2665,28 @@ Errors if the holder URL is missing, is not a valid `DID`, or document resolutio
 ### resolver.verifyCredential(credential, options, fail_fast, issuer) ⇒ <code>Promise.&lt;void&gt;</code>
 Verifies a `Credential`.
 
-This method resolves the issuer's DID Document and validates the following properties in accordance with
-`options`:
-- The issuer's signature
-- The expiration date
-- The issuance date
-- The credential's semantic structure.
+This method resolves the issuer's DID Document and validates the following properties in accordance
+with the given `options`:
+- the semantic structure of the credential,
+- the issuer's signature,
+- the expiration date,
+- the issuance date.
 
 If you already have an up to date version of the issuer's resolved DID Document you may want to use
 `CredentialValidator::validate` in order to avoid an unnecessary resolution.
 
-# Warning
+### Warning
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
 `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
 
-# Resolution
+### Resolution
 If `issuer` is null then this  DID Document will be resolved. If you already have up to
 an up to date version of this document you may want to instead use `CredentialValidator::validate`.
 
-# Errors
-If the issuer's DID Document cannot be resolved an error will be returned immediately. Otherwise
-an attempt will be made to validate the credential. If any validated condition is not satisfied
-an error will be returned.
+### Errors
+Errors from resolving the issuer DID Document will be returned immediately.
+Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
@@ -2717,20 +2708,20 @@ This method validates the following properties in accordance with `options`
 - The semantic structure of the presentation,
 - Some properties of the credentials (see `CredentialValidator::validate` for more information).
 
-# Warning
+### Warning
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
 `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
 
-# Resolution
+### Resolution
 If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
 date versions of all of these DID Documents you may want to instead use
 `PresentationValidator::validate`.
 
-# Errors
-If the `holder` and/or `issuers` DID Documents need to be resolved, but this operation fails then an error will
-immediately be returned. Otherwise an attempt will be made to validate the presentation. If any validated
-condition is not satisfied an error will be returned.
+### Errors
+Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+Otherwise, errors from validating the presentation and its credentials will be returned
+according to the `fail_fast` parameter.
 
 **Kind**: instance method of [<code>Resolver</code>](#Resolver)  
 
@@ -2974,6 +2965,60 @@ Deserializes a `Timestamp` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Url"></a>
+
+## Url
+A parsed URL.
+
+**Kind**: global class  
+
+* [Url](#Url)
+    * _instance_
+        * [.join(input)](#Url+join) ⇒ [<code>Url</code>](#Url)
+        * [.toJSON()](#Url+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.parse(input)](#Url.parse) ⇒ [<code>Url</code>](#Url)
+        * [.fromJSON(json)](#Url.fromJSON) ⇒ [<code>Url</code>](#Url)
+
+<a name="Url+join"></a>
+
+### url.join(input) ⇒ [<code>Url</code>](#Url)
+Parses the given input string as a `Url`, with `self` as the base Url.
+
+**Kind**: instance method of [<code>Url</code>](#Url)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="Url+toJSON"></a>
+
+### url.toJSON() ⇒ <code>any</code>
+Serializes a `Url` as a JSON object.
+
+**Kind**: instance method of [<code>Url</code>](#Url)  
+<a name="Url.parse"></a>
+
+### Url.parse(input) ⇒ [<code>Url</code>](#Url)
+Parses an absolute `Url` from the given input string.
+
+**Kind**: static method of [<code>Url</code>](#Url)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="Url.fromJSON"></a>
+
+### Url.fromJSON(json) ⇒ [<code>Url</code>](#Url)
+Deserializes a `Url` from a JSON object.
+
+**Kind**: static method of [<code>Url</code>](#Url)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod
@@ -3123,13 +3168,13 @@ Deserializes a `VerifierOptions` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 
@@ -3138,25 +3183,30 @@ Deserializes a `VerifierOptions` from a JSON object.
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
-Declares how a credential subject must relate to the presentation holder.
+Declares how credential subjects must relate to the presentation holder during validation.
+See `PresentationValidationOptions::subject_holder_relationship`.
+
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
 
 **Kind**: global variable  
 <a name="AlwaysSubject"></a>
 
 ## AlwaysSubject
-Declare that the holder must always match the subject.
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default used if no other variant is specified when constructing a new
+`PresentationValidationOptions`.
 
 **Kind**: global variable  
 <a name="SubjectOnNonTransferable"></a>
 
 ## SubjectOnNonTransferable
-Declare that the holder must match the subject on credentials with the nonTransferable property set.
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
 
 **Kind**: global variable  
 <a name="Any"></a>
 
 ## Any
-Declares that the subject is not required to have any kind of relationship to the holder.
+The holder is not required to have any kind of relationship to any credential subject.
 
 **Kind**: global variable  
 <a name="FailFast"></a>

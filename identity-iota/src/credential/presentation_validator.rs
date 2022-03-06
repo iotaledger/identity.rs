@@ -44,9 +44,9 @@ impl PresentationValidator {
   /// An error is returned whenever a validated condition is not satisfied.
   pub fn validate<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
-    options: &PresentationValidationOptions,
     holder: &ResolvedIotaDocument,
     issuers: &[ResolvedIotaDocument],
+    options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> PresentationValidationResult {
     // first run presentation specific validations. Then validate the credentials depending on `fail_fast` and the
@@ -356,9 +356,9 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     assert!(dbg!(PresentationValidator::validate(
       &presentation,
-      &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
+      &presentation_validation_options,
       FailFast::FirstError
     ))
     .is_ok());
@@ -420,9 +420,9 @@ mod tests {
 
     let error = PresentationValidator::validate(
       &presentation,
-      &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
+      &presentation_validation_options,
       FailFast::FirstError,
     )
     .unwrap_err();
@@ -481,9 +481,9 @@ mod tests {
     let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
     let error = PresentationValidator::validate(
       &presentation,
-      &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
+      &presentation_validation_options,
       FailFast::FirstError,
     )
     .unwrap_err();
@@ -556,9 +556,9 @@ mod tests {
 
     let error = PresentationValidator::validate(
       &presentation,
-      &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
+      &presentation_validation_options,
       FailFast::FirstError,
     )
     .unwrap_err();
@@ -577,9 +577,9 @@ mod tests {
     let options = presentation_validation_options.subject_holder_relationship(SubjectHolderRelationship::Any);
     assert!(PresentationValidator::validate(
       &presentation,
-      &options,
       &resolved_holder_document,
       &trusted_issuers,
+      &options,
       FailFast::FirstError,
     )
     .is_ok());
@@ -588,9 +588,9 @@ mod tests {
 
     assert!(PresentationValidator::validate(
       &presentation,
-      &options,
       &resolved_holder_document,
       &trusted_issuers,
+      &options,
       FailFast::FirstError,
     )
     .is_err());
@@ -659,9 +659,9 @@ mod tests {
       credential_errors,
     } = PresentationValidator::validate(
       &presentation,
-      &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
+      &presentation_validation_options,
       FailFast::FirstError,
     )
     .unwrap_err();
@@ -739,9 +739,9 @@ mod tests {
       credential_errors,
     } = PresentationValidator::validate(
       &presentation,
-      &presentation_validation_options,
       &resolved_holder_document,
       &trusted_issuers,
+      &presentation_validation_options,
       FailFast::AllErrors,
     )
     .unwrap_err();

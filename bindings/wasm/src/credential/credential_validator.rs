@@ -3,7 +3,10 @@
 
 use super::WasmCredential;
 use super::WasmCredentialValidationOptions;
+use super::WasmSubjectHolderRelationship;
+
 use crate::common::WasmTimestamp;
+use crate::common::WasmUrl;
 use crate::credential::validation_options::WasmFailFast;
 use crate::did::ArrayResolvedDocument;
 use crate::did::WasmResolvedDocument;
@@ -68,7 +71,7 @@ impl WasmCredentialValidator {
   /// Validate that the credential is issued on or before the specified timestamp.
   #[wasm_bindgen(js_name = checkIssuedOnOrBefore)]
   pub fn check_issued_on_or_before(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
-    CredentialValidator::check_is_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
+    CredentialValidator::check_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
   }
 
   /// Verify the signature using the DID Document of a trusted issuer.
@@ -85,5 +88,15 @@ impl WasmCredentialValidator {
   ) -> Result<()> {
     let trusted_issuers: Vec<ResolvedIotaDocument> = trusted_issuers.into_serde().wasm_result()?;
     CredentialValidator::verify_signature(&credential.0, trusted_issuers.as_slice(), &options.0).wasm_result()
+  }
+
+  /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
+  /// `relationship`.
+  pub fn check_subject_holder_relationship(
+    credential: &WasmCredential,
+    holder: &WasmUrl,
+    relationship: WasmSubjectHolderRelationship,
+  ) -> Result<()> {
+    CredentialValidator::check_subject_holder_relationship(&credential.0, &holder.0, relationship.into()).wasm_result()
   }
 }

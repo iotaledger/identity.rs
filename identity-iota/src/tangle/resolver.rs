@@ -238,15 +238,15 @@ where
   ) -> Result<()> {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
-        PresentationValidator::validate(presentation, options, holder, issuers, fail_fast)
+        PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
       }
       (Some(holder), None) => {
         let issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
-        PresentationValidator::validate(presentation, options, holder, &issuers, fail_fast)
+        PresentationValidator::validate(presentation, holder, &issuers, options, fail_fast)
       }
       (None, Some(issuers)) => {
         let holder: ResolvedIotaDocument = self.resolve_presentation_holder(presentation).await?;
-        PresentationValidator::validate(presentation, options, &holder, issuers, fail_fast)
+        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
       }
       (None, None) => {
         let (holder, issuers): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) = futures::future::try_join(
@@ -254,7 +254,7 @@ where
           self.resolve_presentation_issuers(presentation),
         )
         .await?;
-        PresentationValidator::validate(presentation, options, &holder, &issuers, fail_fast)
+        PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
       }
     }
     .map_err(Into::into)
