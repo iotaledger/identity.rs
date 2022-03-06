@@ -10,13 +10,13 @@ use crypto::hashes::Output;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use identity_core::utils::encode_b58;
-use iota_stronghold::Location;
+use iota_stronghold::{Location, StrongholdResult};
 use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::stronghold::Store;
+use crate::stronghold::{IotaStrongholdResult, Store, StrongholdError};
 
 pub struct Records<'snapshot> {
   pub(crate) store: Store<'snapshot>,
@@ -48,18 +48,22 @@ impl Records<'_> {
   }
 
   pub async fn index(&self) -> Result<RecordIndex> {
-    self.store.get(Locations::index()).await.and_then(RecordIndex::try_new)
+    let record = self.store.get(Locations::index()).await?;
+    match record {
+      None => Err(Error::StrongholdError(StrongholdError::RecordError)),
+      Some(record) => Ok(RecordIndex::try_new(record)?)
+    }
   }
 
-  pub async fn all(&self) -> Result<Vec<Vec<u8>>> {
-    self.index().await?.load_all(&self.store).await
+  pub async fn all(&self) -> Result<Vec<Option<Vec<u8>>>> {
+    Ok(self.index().await?.load_all(&self.store).await?)
   }
 
-  pub async fn get(&self, record_id: &[u8]) -> Result<Vec<u8>> {
+  pub async fn get(&self, record_id: &[u8]) -> Result<Option<Vec<u8>>> {
     let record_tag: RecordTag = RecordIndex::tag(record_id);
     let location: Location = Locations::record(&record_tag);
 
-    self.store.get(location).await
+    Ok(self.store.get(location).await?)
   }
 
   pub async fn set(&self, record_id: &[u8], record: &[u8]) -> Result<()> {
@@ -99,7 +103,7 @@ impl Records<'_> {
     }
 
     // Remove the record from the snapshot store
-    self.store.del(Locations::record(&record_tag)).await?;
+    self.store.del(Locations::record(&record_tag).vault_path().to_vec()).await?;
 
     Ok(())
   }
@@ -146,7 +150,7 @@ impl RecordIndex {
     self.iter().any(|chunk| chunk == tag)
   }
 
-  pub(crate) async fn load_all(&self, store: &Store<'_>) -> Result<Vec<Vec<u8>>> {
+  pub(crate) async fn load_all(&self, store: &Store<'_>) -> IotaStrongholdResult<Vec<Option<Vec<u8>>>> {
     self
       .iter()
       .map(Locations::record)

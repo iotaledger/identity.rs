@@ -5,6 +5,7 @@ use iota_stronghold::StrongholdFlags;
 use iota_stronghold::{Location, StrongholdResult};
 use std::path::Path;
 use std::time::Duration;
+use identity_core::convert::ToJson;
 
 use crate::stronghold::error::IotaStrongholdResult;
 use crate::stronghold::{Context, StrongholdError};
@@ -49,7 +50,8 @@ impl Store<'_> {
   }
 
   /// Gets a record.
-  pub async fn get(&self, location: Vec<u8>) -> IotaStrongholdResult<Option<Vec<u8>>> {
+  pub async fn get(&self, location: Location) -> IotaStrongholdResult<Option<Vec<u8>>> {
+    let location = location.vault_path().to_vec();
     match self.get_strict(location).await {
       Ok(data) => Ok(data),
       Err(StrongholdError::StrongholdResult(message)) if message == STRONG_404 => Ok(Some(Vec::new())),
@@ -64,10 +66,11 @@ impl Store<'_> {
   }
 
   /// Adds a record.
-  pub async fn set<T>(&self, location: Vec<u8>, payload: T, ttl: Option<Duration>) -> IotaStrongholdResult<()>
+  pub async fn set<T>(&self, location: Location, payload: T, ttl: Option<Duration>) -> IotaStrongholdResult<()>
   where
     T: Into<Vec<u8>>,
   {
+    let location = location.vault_path().to_vec();
     let a = Context::scope(self.path, &self.name, &self.flags)
       .await?
       .write_to_store(location, payload.into(), ttl)

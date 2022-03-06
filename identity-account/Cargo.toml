@@ -36,12 +36,12 @@ features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "7bf15af8fc8770e06f1814cc61d3cae123553de8"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dependencies.stronghold_engine]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "7bf15af8fc8770e06f1814cc61d3cae123553de8"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dev-dependencies]

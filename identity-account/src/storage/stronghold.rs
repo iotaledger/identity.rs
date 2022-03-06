@@ -1,7 +1,6 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::keys::slip10::Chain;
 use futures::executor;
 
 use identity_core::convert::FromJson;
@@ -12,11 +11,11 @@ use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use iota_stronghold::Location;
-use iota_stronghold::SLIP10DeriveInput;
 use std::convert::TryFrom;
 use std::io;
 use std::path::Path;
 use std::sync::Arc;
+use iota_stronghold::procedures::{Chain, Ed25519Sign, Slip10Derive, Slip10DeriveInput, Slip10Generate};
 
 use crate::error::Result;
 use crate::identity::ChainState;
@@ -79,11 +78,13 @@ impl Stronghold {
 #[async_trait::async_trait]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
-    self.snapshot.set_password(password).await
+    self.snapshot.set_password(password).await?;
+    Ok(())
   }
 
   async fn flush_changes(&self) -> Result<()> {
-    self.snapshot.save().await
+    self.snapshot.save().await?;
+    Ok(())
   }
 
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
@@ -147,23 +148,26 @@ impl Storage for Stronghold {
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     let vault: Vault<'_> = self.vault(did);
 
-    match location.method() {
+    Ok(match location.method() {
       MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
-    }
+    }?)
   }
 
   async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
+    let data: Option<Vec<u8>> = store.get(location_chain_state()).await?;
 
-    let data: Vec<u8> = store.get(location_chain_state()).await?;
-
-    if data.is_empty() {
-      return Ok(None);
+    match data {
+      None => return Ok(None),
+      Some(data) => {
+        if data.is_empty() {
+          return Ok(None);
+        }
+        Ok(Some(ChainState::from_json_slice(&data)?))
+      }
     }
-
-    Ok(Some(ChainState::from_json_slice(&data)?))
   }
 
   async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
@@ -182,15 +186,18 @@ impl Storage for Stronghold {
     let store: Store<'_> = self.store(&fmt_did(did));
 
     // Read the state from the stronghold snapshot
-    let data: Vec<u8> = store.get(location_state()).await?;
+    let data: Option<Vec<u8>> = store.get(location_state()).await?;
 
-    // No state data found
-    if data.is_empty() {
-      return Ok(None);
+    match data {
+      None => return Ok(None),
+      Some(data) => {
+        // No state data found
+        if data.is_empty() {
+          return Ok(None);
+        }
+        // Deserialize and return
+        Ok(Some(IdentityState::from_json_slice(&data)?))     }
     }
-
-    // Deserialize and return
-    Ok(Some(IdentityState::from_json_slice(&data)?))
   }
 
   async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
@@ -201,7 +208,7 @@ impl Storage for Stronghold {
     let json: Vec<u8> = state.to_json_vec()?;
 
     // Write the state to the stronghold snapshot
-    store.set(location_state(), json, None).await?;
+    store.set(location_state(),json, None).await?;
 
     Ok(())
   }
@@ -216,23 +223,27 @@ impl Storage for Stronghold {
 
     let bytes = store.get(location_published_generation()).await?;
 
-    if bytes.is_empty() {
-      return Ok(None);
+    match bytes {
+      None => return Ok(None),
+      Some(bytes) => {
+        if bytes.is_empty() {
+          return Ok(None);
+        }
+        let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
+          io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+              "expected to read 4 bytes as the published generation, found {} instead",
+              bytes.len()
+            ),
+          )
+        })?;
+
+        let gen = Generation::from_u32(u32::from_le_bytes(le_bytes));
+
+        Ok(Some(gen))
+      }
     }
-
-    let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
-      io::Error::new(
-        io::ErrorKind::InvalidData,
-        format!(
-          "expected to read 4 bytes as the published generation, found {} instead",
-          bytes.len()
-        ),
-      )
-    })?;
-
-    let gen = Generation::from_u32(u32::from_le_bytes(le_bytes));
-
-    Ok(Some(gen))
   }
 
   async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
@@ -256,54 +267,84 @@ impl Drop for Stronghold {
 
 async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   // Generate a SLIP10 seed as the private key
-  vault
-    .slip10_generate(location_seed(location), default_hint(), None)
-    .await?;
+  let procedure: Slip10Generate = Slip10Generate {
+    output: location_seed(location), hint: default_hint(), size_bytes: None
+  };
+  vault.execute(procedure).await?;
+  // vault
+  //   .slip10_generate(location_seed(location), default_hint(), None)
+  //   .await?;
 
   let chain: Chain = Chain::from_u32_hardened(vec![0, 0, 0]);
-  let seed: SLIP10DeriveInput = SLIP10DeriveInput::Seed(location_seed(location));
+  let seed: Slip10DeriveInput = Slip10DeriveInput::Seed(location_seed(location));
 
   // Use the SLIP10 seed to derive a child key
-  vault
-    .slip10_derive(chain, seed, location_skey(location), default_hint())
-    .await?;
+  let procedure: Slip10Derive = Slip10Derive {
+    chain, input: seed, output: location_skey(location), hint: default_hint()
+  };
+  vault.execute(procedure).await?;
+  // vault
+  //   .slip10_derive(chain, seed, location_skey(location), default_hint())
+  //   .await?;
 
   // Retrieve the public key of the derived child key
   retrieve_ed25519(vault, location).await
 }
 
 async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
-  vault
-    .ed25519_public_key(location_skey(location))
-    .await
-    .map(|public| public.to_vec().into())
+  let procedure: iota_stronghold::procedures::PublicKey = iota_stronghold::procedures::PublicKey {
+    ty: iota_stronghold::procedures::KeyType::Ed25519,
+    private_key: location_skey(location)
+  };
+  let res = vault.execute(procedure).await.map(|public| public.to_vec().into())?;
+  Ok(res)
+//   vault
+//     .ed25519_public_key(location_skey(location))
+//     .await
+//     .map(|public| public.to_vec().into())
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
+
   let public_key: PublicKey = retrieve_ed25519(vault, location).await?;
-  let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
+  let procedure :Ed25519Sign = Ed25519Sign{
+    private_key: location_skey(location),
+    msg: payload
+  };
+  let signature = vault.execute(procedure).await?;
+
+  // let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
   Ok(Signature::new(public_key, signature.into()))
 }
 
-fn location_chain_state() -> Location {
+fn location_chain_state() -> Location{
   Location::generic("$chain_state", Vec::new())
+  // "$chain_state".to_owned().into_bytes()
 }
 
-fn location_state() -> Location {
+fn location_state() -> Location{
   Location::generic("$state", Vec::new())
+  // "$state".to_owned().into_bytes()
 }
 
-fn location_seed(location: &KeyLocation) -> Location {
+fn location_seed(location: &KeyLocation) -> Location{
   Location::generic(fmt_key("$seed", location), Vec::new())
+  // "$seed".to_owned().into_bytes()
 }
 
 fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
+  // "$skey".to_owned().into_bytes()
 }
 
-fn location_published_generation() -> Location {
+fn location_published_generation() -> Location{
   Location::generic("$published_generation", Vec::new())
+  // "$published_generation".to_owned().into_bytes()
+}
+
+fn from_location(location: &Location) -> Vec<u8> {
+  location.vault_path().to_vec()
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
