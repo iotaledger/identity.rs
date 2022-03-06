@@ -9,7 +9,6 @@ use futures::pin_mut;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use libp2p::TransportError;
 
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::presentation::PresentationOffer;
@@ -324,14 +323,12 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   .await;
 
   let mut sending_actor = ActorBuilder::new().build().await.unwrap();
-
   sending_actor.add_address(peer_id, addr).await;
 
   let mut sender1 = sending_actor.clone();
-  let mut sender2 = sending_actor.clone();
 
   // Ensure that an actor shutdown returns errors through open channels,
-  // such as those in `EventLoop::await_listen` and `EventLoop::await_response`.
+  // such as those `EventLoop::await_response`.
   // Note that we do not test all `EventLoop::await*` fields, because some are
   // much harder to test than others.
   // We poll the futures once to ensure that the channels are created,
@@ -345,23 +342,12 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   let result = futures::poll!(&mut send_request_future);
   assert!(matches!(result, Poll::Pending));
 
-  let start_listening_future = sender2.start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap());
-  pin_mut!(start_listening_future);
-  let result = futures::poll!(&mut start_listening_future);
-  assert!(matches!(result, Poll::Pending));
-
   sending_actor.shutdown().await.unwrap();
 
   let result = send_request_future.await;
   assert!(matches!(
     result.unwrap_err(),
     Error::OutboundFailure(OutboundFailure::ConnectionClosed)
-  ));
-
-  let result = start_listening_future.await;
-  assert!(matches!(
-    result.unwrap_err(),
-    TransportError::Other(std::io::Error { .. })
   ));
 
   listening_actor.shutdown().await.unwrap();
