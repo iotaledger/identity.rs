@@ -195,6 +195,7 @@ impl EventLoop {
         }
 
         for (_, channel) in std::mem::take(&mut self.await_response) {
+          log::warn!("draining channel");
           let _ = channel.send(Err(OutboundFailure::ConnectionClosed));
         }
 

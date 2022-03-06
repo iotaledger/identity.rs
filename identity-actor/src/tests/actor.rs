@@ -3,11 +3,19 @@
 
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::task::Poll;
 
+use futures::pin_mut;
+use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
+use libp2p::PeerId;
+use libp2p::TransportError;
 
+use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::thread_id::ThreadId;
 use crate::remote_account::IdentityGet;
+use crate::remote_account::IdentityList;
 use crate::tests::try_init_logger;
 use crate::Actor;
 use crate::ActorBuilder;
@@ -233,4 +241,130 @@ async fn test_interacting_with_shutdown_actor_panics() {
   listening_actor.shutdown().await.unwrap();
 
   commander_copy.get_addresses().await;
+}
+
+#[tokio::test]
+async fn test_sending_to_unconnected_peer_returns_error() -> crate::Result<()> {
+  try_init_logger();
+
+  let mut sending_actor = default_sending_actor(|_| {}).await;
+
+  let result = sending_actor.send_request(PeerId::random(), IdentityList).await;
+
+  assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
+
+  let result = sending_actor
+    .send_message(PeerId::random(), &ThreadId::new(), PresentationOffer::default())
+    .await;
+
+  assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
+
+  sending_actor.shutdown().await.unwrap();
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
+  try_init_logger();
+
+  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(())
+      .add_handler(
+        "didcomm/presentation_offer",
+        |_: (), _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| {
+          tokio::time::sleep(std::time::Duration::from_millis(30))
+        },
+      )
+      .unwrap();
+  })
+  .await;
+
+  let mut sending_actor = ActorBuilder::new()
+    .timeout(std::time::Duration::from_millis(15))
+    .build()
+    .await
+    .unwrap();
+
+  sending_actor.add_address(peer_id, addr).await;
+
+  let thread_id = ThreadId::new();
+  sending_actor
+    .send_message(peer_id, &thread_id, PresentationOffer::default())
+    .await
+    .unwrap();
+
+  let result = sending_actor.await_message::<()>(&thread_id).await;
+
+  assert!(matches!(result.unwrap_err(), Error::AwaitTimeout(_)));
+
+  listening_actor.shutdown().await.unwrap();
+  sending_actor.shutdown().await.unwrap();
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<()> {
+  try_init_logger();
+
+  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(())
+      .add_handler(
+        "remote_account/list",
+        |_: (), _: Actor, _message: RequestContext<IdentityList>| async move {
+          tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+          vec![]
+        },
+      )
+      .unwrap();
+  })
+  .await;
+
+  let mut sending_actor = ActorBuilder::new().build().await.unwrap();
+
+  sending_actor.add_address(peer_id, addr).await;
+
+  let mut sender1 = sending_actor.clone();
+  let mut sender2 = sending_actor.clone();
+
+  // Ensure that an actor shutdown returns errors through open channels,
+  // such as those in `EventLoop::await_listen` and `EventLoop::await_response`.
+  // Note that we do not test all `EventLoop::await*` fields, because some are
+  // much harder to test than others.
+  // We poll the futures once to ensure that the channels are created,
+  // before shutting the actor down. If we would call these methods after shutdown,
+  // they would immediately panic (see test_interacting_with_shutdown_actor_panics),
+  // hence the need for manual polling.
+  // On the next poll after shutdown, we expect the errors.
+
+  let send_request_future = sender1.send_request(peer_id, IdentityList);
+  pin_mut!(send_request_future);
+  let result = futures::poll!(&mut send_request_future);
+  assert!(matches!(result, Poll::Pending));
+
+  let start_listening_future = sender2.start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap());
+  pin_mut!(start_listening_future);
+  let result = futures::poll!(&mut start_listening_future);
+  assert!(matches!(result, Poll::Pending));
+
+  sending_actor.shutdown().await.unwrap();
+
+  let result = send_request_future.await;
+  assert!(matches!(
+    result.unwrap_err(),
+    Error::OutboundFailure(OutboundFailure::ConnectionClosed)
+  ));
+
+  let result = start_listening_future.await;
+  assert!(matches!(
+    result.unwrap_err(),
+    TransportError::Other(std::io::Error { .. })
+  ));
+
+  listening_actor.shutdown().await.unwrap();
+
+  Ok(())
 }

@@ -12,8 +12,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
   #[error("transport error: {0}")]
   TransportError(#[source] libp2p::TransportError<std::io::Error>),
-  #[error("the actor was shut down")]
-  Shutdown,
   #[error("invalid endpoint")]
   InvalidEndpoint,
   #[error("{0}")]
