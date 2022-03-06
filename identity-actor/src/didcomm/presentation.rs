@@ -56,8 +56,6 @@ pub async fn presentation_holder_handler(
     Some(request) => request,
     None => {
       log::debug!("holder: sending presentation offer");
-      // actor.send_request(peer, PresentationOffer::default()).await?;
-
       let thread_id = ThreadId::new();
       actor
         .send_message(peer, &thread_id, PresentationOffer::default())
@@ -72,15 +70,11 @@ pub async fn presentation_holder_handler(
 
   let thread_id = request.thread_id();
 
-  // let _result = actor.call_hook("didcomm/presentation/user_consent", request).await?;
-
   log::debug!("holder: sending presentation");
   actor.send_message(peer, thread_id, Presentation::default()).await?;
 
   let _result: DidCommPlaintextMessage<PresentationResult> = actor.await_message(thread_id).await?;
   log::debug!("holder: received presentation result");
-
-  // let _result = actor.call_hook("didcomm/presentation/result", result).await?;
 
   Ok(())
 }
