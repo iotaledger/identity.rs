@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
+use crate::remote_account::IdentityList;
 use crate::Actor;
-use crate::IdentityList;
 use crate::RequestContext;
 use dashmap::DashMap;
 use identity_account::account::Account;

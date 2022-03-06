@@ -1,8 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod handler;
-pub mod requests;
+mod handler;
+mod requests;
+
+pub use handler::RemoteAccount;
+pub use requests::IdentityCreate;
+pub use requests::IdentityGet;
+pub use requests::IdentityList;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]

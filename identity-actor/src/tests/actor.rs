@@ -7,13 +7,13 @@ use std::sync::Arc;
 use libp2p::Multiaddr;
 
 use crate::didcomm::thread_id::ThreadId;
+use crate::remote_account::IdentityGet;
 use crate::tests::try_init_logger;
 use crate::Actor;
 use crate::ActorBuilder;
 use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::Error;
-use crate::IdentityGet;
 use crate::RequestContext;
 use crate::Synchronous;
 

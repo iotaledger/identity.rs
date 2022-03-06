@@ -15,8 +15,10 @@ pub use actor::*;
 pub use libp2p::Multiaddr;
 pub use libp2p::PeerId;
 #[cfg(feature = "account")]
-pub use remote_account::handler::RemoteAccount;
+pub use remote_account::IdentityCreate;
 #[cfg(feature = "account")]
-pub use remote_account::requests::IdentityGet;
+pub use remote_account::IdentityGet;
 #[cfg(feature = "account")]
-pub use remote_account::requests::IdentityList;
+pub use remote_account::IdentityList;
+#[cfg(feature = "account")]
+pub use remote_account::RemoteAccount;

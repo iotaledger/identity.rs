@@ -6,7 +6,7 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 use identity_account::identity::IdentitySetup;
-use identity_actor::remote_account::requests::IdentityCreate;
+use identity_actor::remote_account::IdentityCreate;
 use identity_actor::Actor;
 use identity_actor::ActorBuilder;
 use identity_actor::Multiaddr;
