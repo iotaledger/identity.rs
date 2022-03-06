@@ -26,7 +26,7 @@ where
 {
   pub fn add_hook<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> ActorResult<Self>
   where
-    REQ: ActorRequest<MOD> + Send + Sync + 'static,
+    REQ: ActorRequest<MOD> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
@@ -82,7 +82,7 @@ where
 impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> RequestHandler for Hook<MOD, OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest<MOD> + Send + Sync,
+  REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,

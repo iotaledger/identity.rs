@@ -226,7 +226,7 @@ where
   /// on the given `endpoint` and can deserialize it into `REQ`.
   pub fn add_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
   where
-    REQ: ActorRequest<MOD> + Send + Sync + 'static,
+    REQ: ActorRequest<MOD> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,

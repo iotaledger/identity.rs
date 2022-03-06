@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
+use std::future::Future;
 use std::marker::PhantomData;
-
-use futures::Future;
 
 use crate::traits::AnyFuture;
 use crate::traits::RequestHandler;
@@ -21,7 +20,7 @@ pub struct Handler<MOD: SyncMode, OBJ, REQ, FUT, FUN>
 where
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
-  FUT: std::future::Future<Output = REQ::Response>,
+  FUT: Future<Output = REQ::Response>,
   FUN: Fn(OBJ, crate::Actor, crate::RequestContext<REQ>) -> FUT,
   MOD: 'static,
 {
@@ -56,7 +55,7 @@ where
 impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> RequestHandler for Handler<MOD, OBJ, REQ, FUT, FUN>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest<MOD> + Send + Sync,
+  REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,
   FUT: Future<Output = REQ::Response> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
