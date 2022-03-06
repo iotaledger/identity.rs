@@ -25,14 +25,14 @@ use libp2p::TransportError;
 use crate::Endpoint;
 use crate::RequestMode;
 
-use super::behaviour::DidCommCodec;
+use super::behaviour::ActorRequestResponseCodec;
 use super::message::RequestMessage;
 use super::message::ResponseMessage;
 use super::net_commander::SwarmCommand;
 
 /// The background loop that handles libp2p swarm events and `NetCommander` commands simultaneously.
 pub struct EventLoop {
-  swarm: Swarm<RequestResponse<DidCommCodec>>,
+  swarm: Swarm<RequestResponse<ActorRequestResponseCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<ResponseMessage, OutboundFailure>>>,
   await_response_sent: HashMap<RequestId, oneshot::Sender<Result<(), InboundFailure>>>,
@@ -40,7 +40,10 @@ pub struct EventLoop {
 }
 
 impl EventLoop {
-  pub fn new(swarm: Swarm<RequestResponse<DidCommCodec>>, command_channel: mpsc::Receiver<SwarmCommand>) -> Self {
+  pub fn new(
+    swarm: Swarm<RequestResponse<ActorRequestResponseCodec>>,
+    command_channel: mpsc::Receiver<SwarmCommand>,
+  ) -> Self {
     EventLoop {
       swarm,
       command_channel,

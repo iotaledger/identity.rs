@@ -6,32 +6,28 @@ use futures::AsyncWrite;
 use futures::AsyncWriteExt;
 use libp2p::core::upgrade;
 use libp2p::core::ProtocolName;
-use libp2p::request_response::RequestResponse;
 use libp2p::request_response::RequestResponseCodec;
-use libp2p::request_response::RequestResponseEvent;
-use libp2p::swarm::NetworkBehaviour;
-use libp2p::Multiaddr;
-use libp2p::PeerId;
 
-use tokio::io::{self};
+use std::io::{self};
 
 use super::message::RequestMessage;
 use super::message::ResponseMessage;
 
 #[derive(Debug, Clone)]
-pub struct DidCommProtocol();
+pub struct ActorProtocol();
 #[derive(Clone)]
-pub struct DidCommCodec();
+pub struct ActorRequestResponseCodec();
 
-impl ProtocolName for DidCommProtocol {
+impl ProtocolName for ActorProtocol {
   fn protocol_name(&self) -> &[u8] {
-    "/didcomm/1.0.0".as_bytes()
+    // TODO: Should we tie this to the crate version?
+    "/actor/0.5.0".as_bytes()
   }
 }
 
 #[async_trait::async_trait]
-impl RequestResponseCodec for DidCommCodec {
-  type Protocol = DidCommProtocol;
+impl RequestResponseCodec for ActorRequestResponseCodec {
+  type Protocol = ActorProtocol;
   type Request = RequestMessage;
   type Response = ResponseMessage;
 
@@ -76,132 +72,5 @@ impl RequestResponseCodec for DidCommCodec {
   {
     upgrade::write_length_prefixed(io, data).await?;
     io.close().await
-  }
-}
-
-pub struct DidCommBehaviour {
-  inner: RequestResponse<DidCommCodec>,
-}
-
-impl NetworkBehaviour for DidCommBehaviour {
-  type ProtocolsHandler = <RequestResponse<DidCommCodec> as NetworkBehaviour>::ProtocolsHandler;
-
-  type OutEvent = RequestResponseEvent<RequestMessage, ResponseMessage>;
-
-  fn new_handler(&mut self) -> Self::ProtocolsHandler {
-    self.inner.new_handler()
-  }
-
-  fn inject_event(
-    &mut self,
-    peer_id: PeerId,
-    connection: libp2p::core::connection::ConnectionId,
-    event: <<Self::ProtocolsHandler as libp2p::swarm::IntoProtocolsHandler>::Handler as libp2p::swarm::ProtocolsHandler>::OutEvent,
-  ) {
-    self.inner.inject_event(peer_id, connection, event);
-  }
-
-  fn poll(
-    &mut self,
-    cx: &mut std::task::Context<'_>,
-    params: &mut impl libp2p::swarm::PollParameters,
-  ) -> std::task::Poll<libp2p::swarm::NetworkBehaviourAction<Self::OutEvent, Self::ProtocolsHandler>> {
-    self.inner.poll(cx, params)
-  }
-
-  fn addresses_of_peer(&mut self, peer_id: &PeerId) -> Vec<Multiaddr> {
-    self.inner.addresses_of_peer(peer_id)
-  }
-
-  fn inject_connected(&mut self, peer_id: &PeerId) {
-    self.inner.inject_connected(peer_id);
-  }
-
-  fn inject_disconnected(&mut self, peer_id: &PeerId) {
-    self.inner.inject_disconnected(peer_id);
-  }
-
-  fn inject_connection_established(
-    &mut self,
-    peer_id: &PeerId,
-    connection_id: &libp2p::core::connection::ConnectionId,
-    endpoint: &libp2p::core::ConnectedPoint,
-    failed_addresses: Option<&Vec<Multiaddr>>,
-  ) {
-    self
-      .inner
-      .inject_connection_established(peer_id, connection_id, endpoint, failed_addresses);
-  }
-
-  fn inject_connection_closed(
-    &mut self,
-    peer_id: &PeerId,
-    connection_id: &libp2p::core::connection::ConnectionId,
-    connected_point: &libp2p::core::ConnectedPoint,
-    handler: <Self::ProtocolsHandler as libp2p::swarm::IntoProtocolsHandler>::Handler,
-  ) {
-    self
-      .inner
-      .inject_connection_closed(peer_id, connection_id, connected_point, handler);
-  }
-
-  fn inject_address_change(
-    &mut self,
-    peer_id: &PeerId,
-    connection_id: &libp2p::core::connection::ConnectionId,
-    old: &libp2p::core::ConnectedPoint,
-    new: &libp2p::core::ConnectedPoint,
-  ) {
-    self.inner.inject_address_change(peer_id, connection_id, old, new);
-  }
-
-  fn inject_dial_failure(
-    &mut self,
-    peer_id: Option<PeerId>,
-    handler: Self::ProtocolsHandler,
-    error: &libp2p::swarm::DialError,
-  ) {
-    self.inner.inject_dial_failure(peer_id, handler, error);
-  }
-
-  fn inject_listen_failure(
-    &mut self,
-    local_addr: &Multiaddr,
-    send_back_addr: &Multiaddr,
-    handler: Self::ProtocolsHandler,
-  ) {
-    self.inner.inject_listen_failure(local_addr, send_back_addr, handler);
-  }
-
-  fn inject_new_listener(&mut self, id: libp2p::core::connection::ListenerId) {
-    self.inner.inject_new_listener(id);
-  }
-
-  fn inject_new_listen_addr(&mut self, id: libp2p::core::connection::ListenerId, addr: &Multiaddr) {
-    self.inner.inject_new_listen_addr(id, addr);
-  }
-
-  fn inject_expired_listen_addr(&mut self, id: libp2p::core::connection::ListenerId, addr: &Multiaddr) {
-    self.inner.inject_expired_listen_addr(id, addr);
-  }
-
-  fn inject_listener_error(
-    &mut self,
-    id: libp2p::core::connection::ListenerId,
-    err: &(dyn std::error::Error + 'static),
-  ) {
-    self.inner.inject_listener_error(id, err);
-  }
-
-  fn inject_listener_closed(&mut self, id: libp2p::core::connection::ListenerId, reason: Result<(), &std::io::Error>) {
-    self.inner.inject_listener_closed(id, reason);
-  }
-
-  fn inject_new_external_addr(&mut self, addr: &Multiaddr) {
-    self.inner.inject_new_external_addr(addr);
-  }
-
-  fn inject_expired_external_addr(&mut self, addr: &Multiaddr) {
-    self.inner.inject_expired_external_addr(addr);
   }
 }

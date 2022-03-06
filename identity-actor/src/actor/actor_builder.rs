@@ -7,11 +7,11 @@ use std::iter;
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use crate::p2p::behaviour::DidCommCodec;
-use crate::p2p::behaviour::DidCommProtocol;
-use crate::p2p::event_loop::EventLoop;
-use crate::p2p::event_loop::InboundRequest;
-use crate::p2p::net_commander::NetCommander;
+use crate::p2p::ActorProtocol;
+use crate::p2p::ActorRequestResponseCodec;
+use crate::p2p::EventLoop;
+use crate::p2p::InboundRequest;
+use crate::p2p::NetCommander;
 use crate::Actor;
 use crate::ActorConfig;
 use crate::ActorRequest;
@@ -142,13 +142,13 @@ impl ActorBuilder {
       tokio::spawn(fut);
     });
 
-    let mut swarm: Swarm<RequestResponse<DidCommCodec>> = {
+    let mut swarm: Swarm<RequestResponse<ActorRequestResponseCodec>> = {
       let mut config: RequestResponseConfig = RequestResponseConfig::default();
       config.set_request_timeout(self.config.timeout);
 
       let behaviour = RequestResponse::new(
-        DidCommCodec(),
-        iter::once((DidCommProtocol(), ProtocolSupport::Full)),
+        ActorRequestResponseCodec(),
+        iter::once((ActorProtocol(), ProtocolSupport::Full)),
         config,
       );
 

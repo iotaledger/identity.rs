@@ -5,10 +5,10 @@ use std::any::Any;
 use std::result::Result as StdResult;
 
 use crate::didcomm::message::DidCommPlaintextMessage;
-use crate::p2p::event_loop::InboundRequest;
-use crate::p2p::event_loop::ThreadRequest;
-use crate::p2p::message::ResponseMessage;
-use crate::p2p::net_commander::NetCommander;
+use crate::p2p::InboundRequest;
+use crate::p2p::NetCommander;
+use crate::p2p::ResponseMessage;
+use crate::p2p::ThreadRequest;
 use crate::traits::RequestHandler;
 use crate::Actor;
 use crate::RemoteSendError;
