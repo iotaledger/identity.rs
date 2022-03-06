@@ -273,7 +273,7 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
       .add_handler(
         "didcomm/presentation_offer",
         |_: (), _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| {
-          tokio::time::sleep(std::time::Duration::from_millis(30))
+          tokio::time::sleep(std::time::Duration::from_millis(40))
         },
       )
       .unwrap();
@@ -351,6 +351,58 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   ));
 
   listening_actor.shutdown().await.unwrap();
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
+  try_init_logger();
+
+  #[derive(Clone)]
+  struct TestFunctionState {
+    was_called: Arc<AtomicBool>,
+  }
+
+  impl TestFunctionState {
+    fn new() -> Self {
+      Self {
+        was_called: Arc::new(AtomicBool::new(false)),
+      }
+    }
+  }
+
+  let state = TestFunctionState::new();
+
+  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(state.clone())
+      .add_handler(
+        "didcomm/presentation_offer",
+        |state: TestFunctionState, _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {
+          tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+          state.was_called.store(true, std::sync::atomic::Ordering::SeqCst);
+        },
+      )
+      .unwrap();
+  })
+  .await;
+
+  let mut sending_actor = ActorBuilder::new().build().await.unwrap();
+  sending_actor.add_address(peer_id, addr).await;
+
+  sending_actor
+    .send_message(peer_id, &ThreadId::new(), PresentationOffer::default())
+    .await
+    .unwrap();
+
+  listening_actor.shutdown().await.unwrap();
+
+  tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+  sending_actor.shutdown().await.unwrap();
+
+  assert!(state.was_called.load(std::sync::atomic::Ordering::SeqCst));
 
   Ok(())
 }
