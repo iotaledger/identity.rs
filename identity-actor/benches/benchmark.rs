@@ -7,11 +7,11 @@ use criterion::BenchmarkId;
 use criterion::Criterion;
 use identity_account::identity::IdentitySetup;
 use identity_actor::remote_account::IdentityCreate;
+use identity_actor::remote_account::RemoteAccount;
 use identity_actor::Actor;
 use identity_actor::ActorBuilder;
 use identity_actor::Multiaddr;
 use identity_actor::PeerId;
-use identity_actor::RemoteAccount;
 
 async fn setup() -> (Actor, PeerId, Actor) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
