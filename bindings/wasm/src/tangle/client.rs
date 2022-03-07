@@ -11,6 +11,7 @@ use identity::credential::Presentation;
 use identity::did::verifiable::VerifierOptions;
 use identity::iota::Client;
 use identity::iota::CredentialValidator;
+use identity::iota::DiffMessage;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
@@ -105,7 +106,7 @@ impl WasmClient {
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
-    let diff = diff.0.clone();
+    let diff: DiffMessage = diff.0.clone();
     let client: Rc<Client> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {

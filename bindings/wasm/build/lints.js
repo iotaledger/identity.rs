@@ -20,12 +20,25 @@ function lintBigInt(content) {
  * instead.
  **/
 function lintPtrNullWithoutFree(content) {
-    if (/(?<!this).ptr = 0;/.test(content)) {
+    // Find line numbers of offending code.
+    const lines = content.split(/\r?\n/);
+    const matches = lines.flatMap(function (line, number) {
+        if (/(?<!this).ptr = 0;/.test(line)) {
+            return [(number + 1) + " " + line.trim()];
+        } else {
+            return [];
+        }
+    });
+    if (matches.length > 0) {
         throw(`ERROR: generated Javascript should not include 'obj.ptr = 0;'. 
 When weak references are enabled with '--weak-refs', WasmRefCell in wasm-bindgen causes 
 runtime errors from automatic garbage collection trying to free objects taken as owned parameters. 
-See: https://github.com/rustwasm/wasm-bindgen/pull/2677
-SUGGESTION: change any exported functions which take an owned parameter (excluding flat enums) to use a borrow instead.`);
+
+Matches:
+${matches}
+
+SUGGESTION: change any exported functions which take an owned parameter (excluding flat enums) to use a borrow instead.
+See: https://github.com/rustwasm/wasm-bindgen/pull/2677`);
     }
 }
 
