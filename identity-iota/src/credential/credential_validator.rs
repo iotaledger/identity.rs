@@ -346,7 +346,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let issuer = &(issuer_doc);
+    let _issuer = &(issuer_doc);
     let issued_on_or_before = issuance_date;
     // expires_on_or_after > expiration_date
     let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
@@ -418,7 +418,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let issuer = &(issuer_doc);
+    let _issuer = &(issuer_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
     let expires_on_or_after = expiration_date;
@@ -457,7 +457,7 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let issuer = &(issuer_doc);
+    let _issuer = &(issuer_doc);
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -486,12 +486,16 @@ mod tests {
       .unwrap();
 
     // the credential was not signed by this issuer
-    let issuer = &(other_doc);
+    let _issuer = &(other_doc);
 
     // check that `verify_signature` returns the expected error
     assert!(matches!(
-      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&other_doc), &VerifierOptions::default())
-        .unwrap_err(),
+      CredentialValidator::verify_signature(
+        &credential,
+        std::slice::from_ref(&other_doc),
+        &VerifierOptions::default()
+      )
+      .unwrap_err(),
       ValidationError::DocumentMismatch { .. }
     ));
 
@@ -534,12 +538,16 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    let issuer = &(issuer_doc);
+    let _issuer = &(issuer_doc);
 
     // run the validation unit
     assert!(matches!(
-      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer_doc), &VerifierOptions::default())
-        .unwrap_err(),
+      CredentialValidator::verify_signature(
+        &credential,
+        std::slice::from_ref(&issuer_doc),
+        &VerifierOptions::default()
+      )
+      .unwrap_err(),
       ValidationError::Signature { .. }
     ));
 
@@ -693,7 +701,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default();
 
     // declare the credential validation parameters
-    let issuer = &(issuer_doc);
+    let _issuer = &(issuer_doc);
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -736,7 +744,7 @@ mod tests {
 
     // declare the credential validation parameters
     // the credential was not issued by `other_issuer`
-    let other_issuer_resolved_doc = &(other_doc);
+    let _other_issuer_resolved_doc = &(other_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -746,10 +754,9 @@ mod tests {
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
-    let validation_errors =
-      CredentialValidator::validate(&credential, &other_doc, &options, FailFast::FirstError)
-        .unwrap_err()
-        .validation_errors;
+    let validation_errors = CredentialValidator::validate(&credential, &other_doc, &options, FailFast::FirstError)
+      .unwrap_err()
+      .validation_errors;
 
     assert!(validation_errors.len() == 1);
   }
@@ -778,7 +785,7 @@ mod tests {
 
     // declare the credential validation parameters
     // the credential was not issued by `other_issuer`
-    let other_issuer_resolved_doc = &(other_doc);
+    let _other_issuer_resolved_doc = &(other_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -789,10 +796,9 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors =
-      CredentialValidator::validate(&credential, &other_doc, &options, FailFast::AllErrors)
-        .unwrap_err()
-        .validation_errors;
+    let validation_errors = CredentialValidator::validate(&credential, &other_doc, &options, FailFast::AllErrors)
+      .unwrap_err()
+      .validation_errors;
 
     assert!(validation_errors.len() >= 4);
   }
