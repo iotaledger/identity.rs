@@ -4,11 +4,12 @@ name: Shared / Build and test stronghold nodejs
 
 on:
   workflow_call:
-    upload-binaries-as-artifacts:
-      description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
-      required: false
-      type: boolean
-      default: false
+    inputs:
+      upload-binaries-as-artifacts:
+        description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
+        required: false
+        type: boolean
+        default: false
 jobs:  
   build-stronghold-nodejs:
       defaults:
