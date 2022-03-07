@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota_core::did::IotaDID;
-use identity_iota_core::message::MessageId;
 
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
+
+use crate::tangle::MessageId;
 
 // TODO: remove TangleResolve with ClientMap refactor?
 #[async_trait::async_trait(?Send)]

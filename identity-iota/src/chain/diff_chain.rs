@@ -8,9 +8,6 @@ use core::slice::Iter;
 use identity_core::convert::FmtJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::message::Message;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -21,7 +18,10 @@ use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
+use crate::tangle::Message;
 use crate::tangle::MessageExt;
+use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
@@ -276,10 +276,10 @@ mod tests {
   use identity_iota_core::diff::DiffMessage;
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaService;
-  use identity_iota_core::message::MessageId;
 
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::ClientBuilder;
+  use crate::tangle::MessageId;
   use crate::tangle::MessageIndex;
   use crate::tangle::TangleRef;
 

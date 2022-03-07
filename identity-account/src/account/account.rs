@@ -14,13 +14,13 @@ use identity_core::crypto::SignatureOptions;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
+use identity_iota::tangle::MessageId;
+use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
 use serde::Serialize;
 
 use crate::account::AccountBuilder;

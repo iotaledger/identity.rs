@@ -17,10 +17,10 @@ use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::MessageId;
+use identity_iota::tangle::MessageIdExt;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
 use identity_iota_core::types::Network;
 
 use crate::account::Account;

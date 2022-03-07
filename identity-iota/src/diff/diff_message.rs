@@ -3,8 +3,8 @@
 
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::message::MessageId;
 
+use crate::tangle::MessageId;
 use crate::tangle::TangleRef;
 
 impl TangleRef for DiffMessage {

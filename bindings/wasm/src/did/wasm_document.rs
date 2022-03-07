@@ -12,10 +12,10 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
+use identity::iota::MessageId;
 use identity::iota_core::Error;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::IotaVerificationMethod;
-use identity::iota_core::MessageId;
 use identity::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 

@@ -10,12 +10,12 @@ use identity_core::convert::FmtJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::error::Result;
+use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly

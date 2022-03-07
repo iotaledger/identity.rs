@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var path = require('path');
+var spawn = require('child_process').spawn;
+
+var MOCHA_PATH = require.resolve('mocha/bin/mocha');
+var mochaArgs = [MOCHA_PATH, "-r", path.join(__dirname, "../src/index.js")];
+
+process.argv.slice(2).forEach(function (arg, idx, arr) {
+  switch (arg) {
+    case "-p":
+    case "--project":
+      const projectArgValueIdx = idx + 1;
+      const tsconfigPath = arr[projectArgValueIdx];
+      // remove tsconfigPath param from array parsing
+      arr.splice(projectArgValueIdx, 1);
+
+      process.env.TS_NODE_PROJECT = tsconfigPath;
+      break;
+
+    case "--paths":
+      process.env.TS_CONFIG_PATHS = true;
+      break;
+
+    case "--type-check":
+      process.env.TS_TYPE_CHECK = true;
+      break;
+
+    default:
+      // pass unrecognized args to mocha
+      mochaArgs.push(arg);
+      break;
+  }
+});
+
+var mocha = spawn(process.execPath, mochaArgs, {
+  stdio: "inherit",
+});
+mocha.on('exit', function (code, signal) {
+  process.on('exit', function () {
+    if (signal) {
+      process.kill(process.pid, signal);
+    } else {
+      process.exit(code);
+    }
+  });
+});
+
+process.on('SIGINT', function () {
+  mocha.kill('SIGINT');
+  mocha.kill('SIGTERM');
+});

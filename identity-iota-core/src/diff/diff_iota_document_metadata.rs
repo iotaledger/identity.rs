@@ -9,11 +9,11 @@ use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
+use iota_client::bee_message::MessageId;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::document::IotaDocumentMetadata;
-use crate::message::MessageId;
 
 /// NOTE: excludes the `proof` [`Signature`] from the diff to save space on the Tangle and because
 /// a merged signature will be invalid in general.

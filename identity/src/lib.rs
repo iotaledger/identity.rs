@@ -83,7 +83,6 @@ pub mod iota_core {
   pub use identity_iota_core::diff::*;
   pub use identity_iota_core::document::*;
   pub use identity_iota_core::error::*;
-  pub use identity_iota_core::message::*;
   pub use identity_iota_core::types::*;
 
   #[doc(inline)]
@@ -102,6 +101,8 @@ pub mod account {
   pub use identity_account::updates::*;
 }
 
+#[cfg(feature = "account")]
+#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
 pub mod account_core {
   //! Storage Trait and Types definitions
 

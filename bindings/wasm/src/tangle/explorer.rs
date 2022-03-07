@@ -4,8 +4,8 @@
 use std::str::FromStr;
 
 use identity::iota::ExplorerUrl;
+use identity::iota::MessageId;
 use identity::iota_core::IotaDID;
-use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::UWasmDID;

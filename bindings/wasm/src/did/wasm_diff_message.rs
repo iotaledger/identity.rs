@@ -5,9 +5,8 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 use identity::core::ToJson;
+use identity::iota::MessageId;
 use identity::iota_core::DiffMessage;
-use identity::iota_core::MessageId;
-use identity::iota_core::TangleRef;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
