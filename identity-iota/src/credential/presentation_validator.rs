@@ -15,7 +15,7 @@ use super::FailFast;
 use super::PresentationValidationOptions;
 use crate::credential::credential_validator::CredentialValidator;
 use crate::did::IotaDID;
-use crate::document::ResolvedIotaDocument;
+use crate::document::IotaDocument;
 
 /// A struct for validating [`Presentation`]s.
 #[derive(Debug, Clone)]
@@ -53,10 +53,10 @@ impl PresentationValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<U: Serialize, V: Serialize>(
+  pub fn validate<U: Serialize, V: Serialize, D: AsRef<IotaDocument>>(
     presentation: &Presentation<U, V>,
-    holder: &ResolvedIotaDocument,
-    issuers: &[ResolvedIotaDocument],
+    holder: &D,
+    issuers: &[D],
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> PresentationValidationResult {
@@ -109,9 +109,9 @@ impl PresentationValidator {
   /// # Errors
   /// Fails if the `holder` does not match the `presentation`'s holder property.
   /// Fails if signature verification against the holder document fails.
-  pub fn verify_presentation_signature<U: Serialize, V: Serialize>(
+  pub fn verify_presentation_signature<U: Serialize, V: Serialize, D: AsRef<IotaDocument>>(
     presentation: &Presentation<U, V>,
-    holder: &ResolvedIotaDocument,
+    holder: &D,
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
     let did: IotaDID = presentation
@@ -124,11 +124,11 @@ impl PresentationValidator {
           signer_ctx: SignerContext::Holder,
         })
       })?;
-    if &did != holder.document.id() {
+    if &did != holder.as_ref().id() {
       return Err(ValidationError::DocumentMismatch(SignerContext::Holder));
     }
     holder
-      .document
+      .as_ref()
       .verify_data(&presentation, options)
       .map_err(|error| ValidationError::Signature {
         source: error.into(),
@@ -148,9 +148,9 @@ impl PresentationValidator {
   // The following properties are validated according to `options`:
   // - the semantic structure of the presentation,
   // - the holder's signature,
-  fn validate_presentation_without_credentials<U: Serialize, V: Serialize>(
+  fn validate_presentation_without_credentials<U: Serialize, V: Serialize, D: AsRef<IotaDocument>>(
     presentation: &Presentation<U, V>,
-    holder: &ResolvedIotaDocument,
+    holder: &D,
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> Result<(), Vec<ValidationError>> {
@@ -181,9 +181,9 @@ impl PresentationValidator {
   // - the relationship between the holder and the credential subjects,
   // - the signatures and some properties of the constituent credentials (see
   // [`CredentialValidator::validate`]).
-  fn validate_credentials<U, V: Serialize>(
+  fn validate_credentials<U, V: Serialize, D: AsRef<IotaDocument>>(
     presentation: &Presentation<U, V>,
-    issuers: &[ResolvedIotaDocument],
+    issuers: &[D],
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> Result<(), BTreeMap<usize, CompoundCredentialValidationError>> {
@@ -362,12 +362,9 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
-    ];
+    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = (subject_foo_doc);
     assert!(dbg!(PresentationValidator::validate(
       &presentation,
       &resolved_holder_document,
@@ -404,13 +401,10 @@ mod tests {
       .unwrap();
 
     // check the validation unit
-    let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
-    ];
+    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); //validate with another challenge
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = (subject_foo_doc);
 
     // Todo match on the exact error here
     assert!(PresentationValidator::verify_presentation_signature(
@@ -487,12 +481,9 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
-    ];
+    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = (subject_foo_doc);
     let error = PresentationValidator::validate(
       &presentation,
       &resolved_holder_document,
@@ -561,12 +552,9 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
-    ];
+    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = (subject_foo_doc);
 
     let error = PresentationValidator::validate(
       &presentation,
@@ -661,12 +649,9 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
-    ];
+    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = (subject_foo_doc);
 
     let CompoundPresentationValidationError {
       presentation_validation_errors,
@@ -741,12 +726,9 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers = [
-      test_utils::mock_resolved_document(issuer_foo_doc),
-      test_utils::mock_resolved_document(issuer_bar_doc),
-    ];
+    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
 
-    let resolved_holder_document = test_utils::mock_resolved_document(subject_foo_doc);
+    let resolved_holder_document = (subject_foo_doc);
 
     let CompoundPresentationValidationError {
       presentation_validation_errors,

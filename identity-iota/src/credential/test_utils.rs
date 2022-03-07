@@ -58,14 +58,6 @@ pub(super) fn generate_credential(
     .unwrap()
 }
 
-pub(super) fn mock_resolved_document(document: IotaDocument) -> ResolvedIotaDocument {
-  ResolvedIotaDocument {
-    document,
-    integration_message_id: MessageId::null(), // not necessary for validation at least not at the moment
-    diff_message_id: MessageId::null(),        // not necessary for validation at least not at the moment
-  }
-}
-
 // generates a triple: issuer document, issuer's keys, unsigned credential issued by issuer
 pub(super) fn credential_setup() -> (IotaDocument, KeyPair, Credential) {
   let (issuer_doc, issuer_key) = generate_document_with_keys();

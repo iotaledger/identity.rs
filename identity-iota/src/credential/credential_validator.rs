@@ -53,9 +53,9 @@ impl CredentialValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<T: Serialize>(
+  pub fn validate<T: Serialize, D: AsRef<IotaDocument>>(
     credential: &Credential<T>,
-    issuer: &IotaDocument,
+    issuer: &D,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
@@ -346,7 +346,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let _issuer = &(issuer_doc);
+
     let issued_on_or_before = issuance_date;
     // expires_on_or_after > expiration_date
     let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
@@ -418,7 +418,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let _issuer = &(issuer_doc);
+
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
     let expires_on_or_after = expiration_date;
@@ -457,7 +457,7 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let _issuer = &(issuer_doc);
+
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -538,7 +538,6 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    let _issuer = &(issuer_doc);
 
     // run the validation unit
     assert!(matches!(
@@ -701,7 +700,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default();
 
     // declare the credential validation parameters
-    let _issuer = &(issuer_doc);
+
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -743,8 +742,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default();
 
     // declare the credential validation parameters
-    // the credential was not issued by `other_issuer`
-    let _other_issuer_resolved_doc = &(other_doc);
+
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -754,6 +752,7 @@ mod tests {
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
+    // Note: the credential was not issued by `other_issuer`
     let validation_errors = CredentialValidator::validate(&credential, &other_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
@@ -784,8 +783,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default();
 
     // declare the credential validation parameters
-    // the credential was not issued by `other_issuer`
-    let _other_issuer_resolved_doc = &(other_doc);
+
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -796,6 +794,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
+    // Note: the credential was not issued by `other_issuer`
     let validation_errors = CredentialValidator::validate(&credential, &other_doc, &options, FailFast::AllErrors)
       .unwrap_err()
       .validation_errors;
