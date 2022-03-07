@@ -5,8 +5,10 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use serde::Serialize;
-
+use identity_account_core::identity::ChainState;
+use identity_account_core::identity::IdentityState;
+use identity_account_core::storage::Storage;
+use identity_account_core::types::KeyLocation;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
 use identity_iota::chain::DocumentChain;
@@ -19,15 +21,12 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::MessageIdExt;
+use serde::Serialize;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
-use crate::storage::Storage;
-use crate::types::KeyLocation;
 use crate::updates::create_identity;
 use crate::updates::Update;
 use crate::Error;

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -7,6 +7,8 @@ use core::fmt::Formatter;
 use core::fmt::Result;
 use identity_core::common::Fragment;
 use identity_did::verification::MethodType;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::types::Generation;
 

@@ -277,11 +277,11 @@ mod tests {
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaService;
   use identity_iota_core::message::MessageId;
-  use identity_iota_core::message::TangleRef;
 
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::ClientBuilder;
   use crate::tangle::MessageIndex;
+  use crate::tangle::TangleRef;
 
   use super::*;
 

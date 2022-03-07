@@ -3,6 +3,10 @@
 
 use std::sync::Arc;
 
+use identity_account_core::identity::IdentityState;
+use identity_account_core::storage::MemStore;
+use identity_account_core::types::Generation;
+use identity_account_core::types::KeyLocation;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
@@ -27,10 +31,6 @@ use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
-use crate::storage::MemStore;
-use crate::types::Generation;
-use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 use crate::updates::Update;
 use crate::updates::UpdateError;

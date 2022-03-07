@@ -1,9 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use hashbrown::HashMap;
-use serde::Serialize;
-
 use identity_core::common::Fragment;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
@@ -12,6 +10,8 @@ use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;

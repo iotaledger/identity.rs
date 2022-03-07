@@ -77,7 +77,7 @@ pub mod iota {
 }
 
 pub mod iota_core {
-  //! IOTA Core Traits and Types
+  //! IOTA Core Traits and Types definitions
 
   pub use identity_iota_core::did::*;
   pub use identity_iota_core::diff::*;
@@ -96,14 +96,22 @@ pub mod account {
   //! Secure storage for Decentralized Identifiers
 
   pub use identity_account::account::*;
-  pub use identity_account::crypto::*;
   pub use identity_account::error::*;
   pub use identity_account::identity::*;
-  pub use identity_account::storage::*;
-  pub use identity_account::stronghold::*;
   pub use identity_account::types::*;
   pub use identity_account::updates::*;
-  pub use identity_account::utils::*;
+}
+
+pub mod account_core {
+  //! Storage Trait and Types definitions
+
+  pub use identity_account_core::crypto::*;
+  pub use identity_account_core::error::*;
+  pub use identity_account_core::identity::*;
+  pub use identity_account_core::storage::*;
+  pub use identity_account_core::stronghold::*;
+  pub use identity_account_core::types::*;
+  pub use identity_account_core::utils::*;
 }
 
 #[cfg(feature = "comm")]

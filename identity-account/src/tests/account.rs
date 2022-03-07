@@ -6,6 +6,9 @@ use std::sync::Arc;
 
 use futures::Future;
 
+use identity_account_core::identity::ChainState;
+use identity_account_core::identity::IdentityState;
+use identity_account_core::storage::MemStore;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
@@ -27,10 +30,8 @@ use crate::account::AccountSetup;
 use crate::account::AccountStorage;
 use crate::account::AutoSave;
 use crate::account::PublishOptions;
-use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
-use crate::storage::MemStore;
+
 use crate::Error;
 use crate::Result;
 

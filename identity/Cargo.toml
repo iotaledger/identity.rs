@@ -13,6 +13,7 @@ description = "Tools for working with Self-sovereign Identity."
 
 [dependencies]
 identity-account = { version = "=0.5.0-dev.4", path = "../identity-account", optional = true }
+identity-account-core = { version = "=0.5.0-dev.4", path = "../identity-account-core", optional = true }
 identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
@@ -35,7 +36,7 @@ default = ["async"]
 async = ["identity-iota/async", "identity-iota-core/async"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account"]
+account = ["identity-account", "identity-account-core"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]

@@ -171,8 +171,8 @@ mod test {
   use identity_iota_core::did::IotaDIDUrl;
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaVerificationMethod;
-  use identity_iota_core::message::TangleRef;
 
+  use crate::tangle::TangleRef;
   use crate::Error;
 
   use super::*;

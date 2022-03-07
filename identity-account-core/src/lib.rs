@@ -15,12 +15,14 @@
   // clippy::missing_errors_doc
 )]
 
-pub mod account;
+pub mod crypto;
 pub mod error;
 pub mod identity;
-#[cfg(test)]
-mod tests;
+pub mod storage;
+#[cfg(feature = "stronghold")]
+pub mod stronghold;
 pub mod types;
-pub mod updates;
+pub mod utils;
+
 pub use self::error::Error;
 pub use self::error::Result;
