@@ -18,6 +18,7 @@ use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
+use super::sealed_traits::VerifyingDocument;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -91,17 +92,20 @@ impl CredentialValidator {
 
   /// Verify the signature using the DID Document of a trusted issuer.
   ///
+  /// # Warning 
+  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date. 
+  /// 
   /// # Errors
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  pub fn verify_signature<T: Serialize>(
+  pub fn verify_signature<T: Serialize, D: VerifyingDocument>(
     credential: &Credential<T>,
-    trusted_issuers: &[ResolvedIotaDocument],
+    trusted_issuers: &[D],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
     // try to extract the corresponding issuer from `trusted_issuers`
-    let extracted_issuer_result: std::result::Result<&ResolvedIotaDocument, ValidationError> = {
+    let extracted_issuer_result: std::result::Result<&D, ValidationError> = {
       let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
       match issuer_did {
         Ok(did) => {
@@ -109,7 +113,7 @@ impl CredentialValidator {
           // the signature
           trusted_issuers
             .iter()
-            .find(|issuer_doc| issuer_doc.document.id() == &did)
+            .find(|issuer_doc| issuer_doc.document().id() == &did)
             .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
         }
         Err(error) => {
@@ -124,7 +128,7 @@ impl CredentialValidator {
     // use the extracted document to verify the signature
     extracted_issuer_result.and_then(|issuer| {
       issuer
-        .document
+        .document()
         .verify_data(credential, options)
         .map_err(|error| ValidationError::Signature {
           source: error.into(),
