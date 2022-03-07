@@ -33,6 +33,4 @@ pub enum StrongholdError {
   /// Caused by errors from an invalid Stronghold procedure.
   #[error("Stronghold error: {0}")]
   StrongholdResult(String),
-  #[error("Record Error")]
-  RecordError,
 }
