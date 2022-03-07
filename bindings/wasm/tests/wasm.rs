@@ -180,7 +180,10 @@ fn test_document_resolve_method() {
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
+      .resolve_method(
+        &JsValue::from(default_method.id()).unchecked_into(),
+        JsValue::undefined().unchecked_into()
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -188,7 +191,10 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
+      .resolve_method(
+        &JsValue::from(method_new.id()).unchecked_into(),
+        JsValue::undefined().unchecked_into()
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -200,7 +206,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        None
+        JsValue::undefined().unchecked_into()
       )
       .unwrap()
       .id()
@@ -209,7 +215,10 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
+      .resolve_method(
+        &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
+        JsValue::undefined().unchecked_into()
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -221,7 +230,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        None
+        JsValue::undefined().unchecked_into()
       )
       .unwrap()
       .id()
@@ -232,7 +241,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        None
+        JsValue::undefined().unchecked_into()
       )
       .unwrap()
       .id()
