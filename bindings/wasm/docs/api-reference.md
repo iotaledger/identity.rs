@@ -838,15 +838,19 @@ Defines the difference between two DID `Document`s' JSON representations.
 **Kind**: global class  
 
 * [DiffMessage](#DiffMessage)
-    * [.did](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)
-    * [.diff](#DiffMessage+diff) ⇒ <code>string</code>
-    * [.messageId](#DiffMessage+messageId) ⇒ <code>string</code>
-    * [.messageId](#DiffMessage+messageId)
-    * [.previousMessageId](#DiffMessage+previousMessageId) ⇒ <code>string</code>
-    * [.previousMessageId](#DiffMessage+previousMessageId)
-    * [.proof](#DiffMessage+proof) ⇒ <code>any</code>
-    * [.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)
-    * [.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)
+    * _instance_
+        * [.did](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)
+        * [.diff](#DiffMessage+diff) ⇒ <code>string</code>
+        * [.messageId](#DiffMessage+messageId) ⇒ <code>string</code>
+        * [.messageId](#DiffMessage+messageId)
+        * [.previousMessageId](#DiffMessage+previousMessageId) ⇒ <code>string</code>
+        * [.previousMessageId](#DiffMessage+previousMessageId)
+        * [.proof](#DiffMessage+proof) ⇒ <code>any</code>
+        * [.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)
+        * [.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)
+        * [.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 
 <a name="DiffMessage+did"></a>
 
@@ -921,6 +925,23 @@ with the given Document.
 | Param | Type |
 | --- | --- |
 | document | [<code>Document</code>](#Document) | 
+
+<a name="DiffMessage+toJSON"></a>
+
+### diffMessage.toJSON() ⇒ <code>any</code>
+Serializes a `DiffMessage` as a JSON object.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage.fromJSON"></a>
+
+### DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+Deserializes a `DiffMessage` from a JSON object.
+
+**Kind**: static method of [<code>DiffMessage</code>](#DiffMessage)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="Document"></a>
 
@@ -1308,7 +1329,7 @@ For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
 <a name="Document+toJSON"></a>
 
 ### document.toJSON() ⇒ <code>any</code>
-Serializes a `Document` object as a JSON object.
+Serializes a `Document` as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document.fromVerificationMethod"></a>
@@ -1356,7 +1377,7 @@ This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
 <a name="Document.fromJSON"></a>
 
 ### Document.fromJSON(json) ⇒ [<code>Document</code>](#Document)
-Deserializes a `Document` object from a JSON object.
+Deserializes a `Document` from a JSON object.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 

@@ -30,6 +30,10 @@ jobs:
           override: true
           components: llvm-tools-preview
 
+      # Download a pre-compiled wasm-bindgen binary.
+      - name: Install wasm-bindgen-cli
+        uses: jetli/wasm-bindgen-action@v0.1.0
+
       - name: Install cargo-binutils
         uses: actions-rs/install@v0.1
         with:

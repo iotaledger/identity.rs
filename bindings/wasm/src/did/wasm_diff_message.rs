@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
 use std::str::FromStr;
 
 use identity::core::ToJson;
@@ -94,7 +93,7 @@ impl WasmDiffMessage {
 
   /// Deserializes a `DiffMessage` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmDocument> {
+  pub fn from_json(json: &JsValue) -> Result<WasmDiffMessage> {
     json.into_serde().map(Self).wasm_result()
   }
 }
