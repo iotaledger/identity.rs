@@ -1078,7 +1078,7 @@ Returns a copy of the custom DID Document properties.
 <a name="Document+service"></a>
 
 ### document.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
-Return a set of all [Service](#Service)s in the document.
+Return a set of all [Services](#Service) in the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertService"></a>

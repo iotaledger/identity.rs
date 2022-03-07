@@ -196,7 +196,7 @@ impl WasmDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all {@link Service}s in the document.
+  /// Return a set of all {@link Service Services} in the document.
   #[wasm_bindgen]
   pub fn service(&self) -> ArrayService {
     self
