@@ -4,7 +4,11 @@ name: Shared / Build and test stronghold nodejs
 
 on:
   workflow_call:
-
+    upload-binaries-as-artifacts:
+      description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
+      required: false
+      type: boolean
+      default: false
 jobs:  
   build-stronghold-nodejs:
       defaults:
@@ -116,6 +120,7 @@ jobs:
           working-directory: ./
 
         - name: Upload artifact
+          if: ${{inputs.upload-binaries-as-artifacts}}
           uses: actions/upload-artifact@v2
           with:
             name: ${{env.APP_NAME}}-bindings-${{ matrix.settings.target }}

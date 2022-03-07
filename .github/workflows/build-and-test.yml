@@ -199,7 +199,7 @@ jobs:
           node-version: 16.x
 
       - name: Install JS dependencies
-        run: npm install
+        run: npm ci
         working-directory: bindings/wasm
 
       - name: Build WASM bindings
@@ -218,15 +218,11 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: identity-wasm-bindings-node
-          path: bindings/wasm/node
-          if-no-files-found: error
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: identity-wasm-bindings
-          path: bindings/wasm
+          name: identity-wasm-bindings-build
+          path: |
+            bindings/wasm/target
+            bindings/wasm/node
+            bindings/wasm/web
           if-no-files-found: error
 
   test-wasm:
@@ -265,17 +261,21 @@ jobs:
         with:
           node-version: 16.x
 
+      - name: Install JS dependencies
+        run: npm ci
+        working-directory: bindings/wasm
+
       - name: Download bindings/wasm artifacts
         uses: actions/download-artifact@v2
         with:
-          name: identity-wasm-bindings
+          name: identity-wasm-bindings-build
           path: bindings/wasm
     
       - name: Run Wasm unit tests and examples
         run: npm run test
         working-directory: bindings/wasm
 
-  build-stronghold-nodejs:
+  build-and-test-stronghold-nodejs:
     needs: 
       - check-for-run-condition
       - build-wasm
