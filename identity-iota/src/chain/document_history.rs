@@ -9,7 +9,6 @@ use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
-use identity_iota_core::message::TangleRef;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -21,6 +20,7 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageIndex;
+use crate::tangle::TangleRef;
 
 /// A DID Document's history and current state.
 // ChainHistory<T> is not stored directly due to limitations on exporting generics in Wasm bindings.

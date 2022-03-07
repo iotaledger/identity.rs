@@ -19,7 +19,6 @@ use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::message::MessageId;
 use crate::message::MessageIdExt;
-use crate::message::TangleRef;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -70,9 +69,19 @@ impl DiffMessage {
     &self.message_id
   }
 
+  /// Sets the DID of the associated DID Document.
+  pub fn set_message_id(&mut self, message_id: MessageId) {
+    self.message_id = message_id;
+  }
+
   /// Returns the Tangle message id of the previous DID Document diff.
   pub fn previous_message_id(&self) -> &MessageId {
     &self.previous_message_id
+  }
+
+  /// Sets the Tangle message id of the previous DID Document diff.
+  pub fn set_previous_message_id(&mut self, message_id: MessageId) {
+    self.previous_message_id = message_id;
   }
 
   /// Returns a reference to the DID Document proof.
@@ -85,28 +94,6 @@ impl DiffMessage {
   pub fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {
     let merged: IotaDocument = Diff::merge(document, self.diff.clone())?;
     Ok(merged)
-  }
-}
-
-impl TangleRef for DiffMessage {
-  fn did(&self) -> &IotaDID {
-    self.id()
-  }
-
-  fn message_id(&self) -> &MessageId {
-    &self.message_id
-  }
-
-  fn set_message_id(&mut self, message_id: MessageId) {
-    self.message_id = message_id;
-  }
-
-  fn previous_message_id(&self) -> &MessageId {
-    &self.previous_message_id
-  }
-
-  fn set_previous_message_id(&mut self, message_id: MessageId) {
-    self.previous_message_id = message_id;
   }
 }
 

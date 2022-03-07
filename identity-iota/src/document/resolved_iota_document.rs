@@ -12,11 +12,11 @@ use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::MessageIdExt;
-use identity_iota_core::message::TangleRef;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::error::Result;
+use crate::tangle::TangleRef;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more diff messages.

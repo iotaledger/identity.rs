@@ -5,11 +5,11 @@ use std::cmp::Ordering;
 
 use futures::stream::FuturesUnordered;
 use futures::TryStreamExt;
-use identity_iota_core::message::TangleRef;
 use itertools::Itertools;
 
 use crate::error::Result;
 use crate::tangle::Client;
+use crate::tangle::TangleRef;
 
 /// Fetches the milestones of messages and sorts them in ascending order of the milestone
 /// index that references them. Messages not referenced by a milestone are filtered out.

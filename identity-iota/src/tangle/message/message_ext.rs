@@ -11,13 +11,13 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
-use identity_iota_core::message::TangleRef;
 
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
 use crate::tangle::DIDMessageEncoding;
 use crate::tangle::DIDMessageVersion;
+use crate::tangle::TangleRef;
 
 /// Magic bytes used to mark DID messages.
 const DID_MESSAGE_MARKER: &[u8] = b"DID";

@@ -11,7 +11,6 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
 use identity_iota_core::message::MessageIdExt;
-use identity_iota_core::message::TangleRef;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -23,6 +22,7 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageIndex;
+use crate::tangle::TangleRef;
 
 /// Primary chain of full [`ResolvedIotaDocuments`](ResolvedIotaDocument) holding the latest version
 /// of a DID document and its history.

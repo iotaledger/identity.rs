@@ -13,7 +13,6 @@ use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::message::Message;
 use identity_iota_core::message::MessageId;
-use identity_iota_core::message::TangleRef;
 use identity_iota_core::types::Network;
 
 use crate::chain::ChainHistory;
@@ -27,6 +26,7 @@ use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::DIDMessageEncoding;
 use crate::tangle::Receipt;
+use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
 
 /// Client for performing IOTA Identity operations on the Tangle.
