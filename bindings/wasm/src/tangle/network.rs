@@ -7,8 +7,9 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_name = Network)]
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct WasmNetwork(Network);
 
 #[wasm_bindgen(js_class = Network)]
@@ -44,12 +45,6 @@ impl WasmNetwork {
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.0.name_str().to_owned()
-  }
-}
-
-impl Default for WasmNetwork {
-  fn default() -> Self {
-    Network::default().into()
   }
 }
 

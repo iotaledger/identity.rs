@@ -174,7 +174,7 @@ fn test_document_resolve_method() {
   )
   .unwrap();
   document
-    .insert_method(&method_new, WasmMethodScope::authentication())
+    .insert_method(&method_new, &WasmMethodScope::authentication())
     .unwrap();
 
   // Resolve with DIDUrl method query.
@@ -291,10 +291,10 @@ fn test_sign_document() {
   )
   .unwrap();
   document2
-    .insert_method(&method, WasmMethodScope::capability_invocation())
+    .insert_method(&method, &WasmMethodScope::capability_invocation())
     .unwrap();
   document2
-    .remove_method(document1.default_signing_method().unwrap().id())
+    .remove_method(&document1.default_signing_method().unwrap().id())
     .unwrap();
 
   // Sign update using original document.

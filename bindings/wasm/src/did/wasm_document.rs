@@ -109,14 +109,14 @@ impl WasmDocument {
 
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: WasmMethodScope) -> Result<()> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: &WasmMethodScope) -> Result<()> {
     self.0.insert_method(method.0.clone(), scope.0).wasm_result()?;
     Ok(())
   }
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: WasmDIDUrl) -> Result<()> {
+  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_method(&did.0).wasm_result()
   }
 
@@ -203,7 +203,7 @@ impl WasmDocument {
     &self,
     data: &JsValue,
     args: &JsValue,
-    options: WasmSignatureOptions,
+    options: &WasmSignatureOptions,
   ) -> Result<WasmCredential> {
     let json: JsValue = self.sign_data(data, args, options)?;
     let data: WasmCredential = WasmCredential::from_json(&json)?;
@@ -216,7 +216,7 @@ impl WasmDocument {
     &self,
     data: &JsValue,
     args: &JsValue,
-    options: WasmSignatureOptions,
+    options: &WasmSignatureOptions,
   ) -> Result<WasmPresentation> {
     let json: JsValue = self.sign_data(data, args, options)?;
     let data: WasmPresentation = WasmPresentation::from_json(&json)?;
@@ -232,7 +232,7 @@ impl WasmDocument {
   ///
   /// NOTE: use `signSelf` or `signDocument` for DID Documents.
   #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: WasmSignatureOptions) -> Result<JsValue> {
+  pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: &WasmSignatureOptions) -> Result<JsValue> {
     // TODO: clean this up and annotate types if possible.
     #[derive(Deserialize)]
     #[serde(untagged)]
@@ -251,6 +251,7 @@ impl WasmDocument {
 
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
     let args: Args = args.into_serde().wasm_result()?;
+    let options: SignatureOptions = options.0.clone();
 
     match args {
       Args::MerkleKey {
@@ -277,7 +278,7 @@ impl WasmDocument {
               .0
               .signer(&private)
               .method(&method)
-              .options(options.0)
+              .options(options)
               .merkle_key((&public, &proof))
               .sign(&mut data)
               .wasm_result()?,
@@ -293,7 +294,7 @@ impl WasmDocument {
           .0
           .signer(&private)
           .method(&method)
-          .options(options.0)
+          .options(options)
           .sign(&mut data)
           .wasm_result()?;
       }
@@ -428,7 +429,7 @@ impl WasmDocument {
 
   /// Sets the timestamp of when the DID document was created.
   #[wasm_bindgen(setter = metadataCreated)]
-  pub fn set_metadata_created(&mut self, timestamp: WasmTimestamp) {
+  pub fn set_metadata_created(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.created = timestamp.0;
   }
 
@@ -440,7 +441,7 @@ impl WasmDocument {
 
   /// Sets the timestamp of the last DID document update.
   #[wasm_bindgen(setter = metadataUpdated)]
-  pub fn set_metadata_updated(&mut self, timestamp: WasmTimestamp) {
+  pub fn set_metadata_updated(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.updated = timestamp.0;
   }
 
@@ -472,13 +473,13 @@ impl WasmDocument {
   // JSON
   // ===========================================================================
 
-  /// Serializes a `Document` object as a JSON object.
+  /// Serializes a `Document` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a `Document` object from a JSON object.
+  /// Deserializes a `Document` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmDocument> {
     json.into_serde().map(Self).wasm_result()
