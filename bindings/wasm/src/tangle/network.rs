@@ -7,10 +7,8 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_name = Network)]
-#[derive(Clone)]
-pub struct WasmNetwork(Network);
+pub struct WasmNetwork(pub(crate) Network);
 
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {

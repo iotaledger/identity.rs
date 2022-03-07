@@ -16,6 +16,7 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
+use identity::did::MethodScope;
 use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -270,12 +271,14 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: Option<WasmMethodScope>) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: OptionMethodScope) -> Result<WasmVerificationMethod> {
     let method_query: String = query.into_serde().wasm_result()?;
-    let method: &IotaVerificationMethod = if let Some(scope) = scope {
+    let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
+
+    let method: &IotaVerificationMethod = if let Some(scope) = method_scope {
       self
         .0
-        .resolve_method_with_scope(&method_query, scope.0)
+        .resolve_method_with_scope(&method_query, scope)
         .ok_or(identity::did::Error::MethodNotFound)
         .wasm_result()?
     } else {
@@ -694,4 +697,7 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
+
+  #[wasm_bindgen(typescript_type = "MethodScope | undefined")]
+  pub type OptionMethodScope;
 }

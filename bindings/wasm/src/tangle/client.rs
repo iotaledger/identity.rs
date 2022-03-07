@@ -71,7 +71,7 @@ impl WasmClient {
   /// Creates a new `Client` with default settings for the given `Network`.
   #[wasm_bindgen(js_name = fromNetwork)]
   pub fn from_network(network: &WasmNetwork) -> Result<WasmClient> {
-    let future = Client::from_network(network.clone().into());
+    let future = Client::from_network(network.0.clone());
     let output = executor::block_on(future).wasm_result();
 
     output.map(Self::from_client)
