@@ -16,9 +16,9 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::account::types::WasmMethodRelationship;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
+use crate::did::WasmMethodRelationship;
 use crate::error::Result;
 use crate::error::WasmResult;
 
