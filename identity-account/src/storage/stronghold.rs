@@ -22,7 +22,6 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::error::Result;
-use crate::Error::StrongholdError;
 use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::storage::Storage;

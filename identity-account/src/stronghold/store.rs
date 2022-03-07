@@ -8,9 +8,6 @@ use std::time::Duration;
 
 use crate::stronghold::error::IotaStrongholdResult;
 use crate::stronghold::Context;
-use crate::stronghold::StrongholdError;
-
-const STRONG_404: &str = "Unable to read from store";
 
 #[derive(Debug)]
 pub struct Store<'snapshot> {
@@ -51,17 +48,8 @@ impl Store<'_> {
 
   /// Gets a record.
   pub async fn get(&self, location: Location) -> IotaStrongholdResult<Option<Vec<u8>>> {
-    match self.get_strict(location.vault_path().to_vec()).await {
-      Ok(data) => Ok(data),
-      Err(StrongholdError::StrongholdResult(message)) if message == STRONG_404 => Ok(Some(Vec::new())),
-      Err(error) => Err(error),
-    }
-  }
-
-  /// Gets a record.
-  pub async fn get_strict(&self, location: Vec<u8>) -> IotaStrongholdResult<Option<Vec<u8>>> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    Ok(scope.read_from_store(location).await?)
+    Ok(scope.read_from_store(location.vault_path().to_vec()).await?)
   }
 
   /// Adds a record.
@@ -70,7 +58,7 @@ impl Store<'_> {
     T: Into<Vec<u8>>,
   {
     let location = location.vault_path().to_vec();
-    let _a = Context::scope(self.path, &self.name, &self.flags)
+    Context::scope(self.path, &self.name, &self.flags)
       .await?
       .write_to_store(location, payload.into(), ttl)
       .await?;
