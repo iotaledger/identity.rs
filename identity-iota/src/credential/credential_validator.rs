@@ -3,7 +3,7 @@
 
 use crate::credential::errors::CompoundCredentialValidationError;
 use crate::did::IotaDID;
-use crate::document::ResolvedIotaDocument;
+use crate::document::IotaDocument;
 
 use crate::Result;
 use identity_core::common::OneOrMany;
@@ -18,7 +18,6 @@ use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
-use super::sealed_traits::VerifyingDocument;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -56,7 +55,7 @@ impl CredentialValidator {
   /// An error is returned whenever a validated condition is not satisfied.
   pub fn validate<T: Serialize>(
     credential: &Credential<T>,
-    issuer: &ResolvedIotaDocument,
+    issuer: &IotaDocument,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
@@ -92,20 +91,20 @@ impl CredentialValidator {
 
   /// Verify the signature using the DID Document of a trusted issuer.
   ///
-  /// # Warning 
-  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date. 
-  /// 
+  /// # Warning
+  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+  ///
   /// # Errors
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  pub fn verify_signature<T: Serialize, D: VerifyingDocument>(
+  pub fn verify_signature<T: Serialize, D: AsRef<IotaDocument>>(
     credential: &Credential<T>,
     trusted_issuers: &[D],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
     // try to extract the corresponding issuer from `trusted_issuers`
-    let extracted_issuer_result: std::result::Result<&D, ValidationError> = {
+    let extracted_issuer_result: std::result::Result<&IotaDocument, ValidationError> = {
       let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
       match issuer_did {
         Ok(did) => {
@@ -113,7 +112,8 @@ impl CredentialValidator {
           // the signature
           trusted_issuers
             .iter()
-            .find(|issuer_doc| issuer_doc.document().id() == &did)
+            .map(|issuer_doc| issuer_doc.as_ref())
+            .find(|issuer_doc| issuer_doc.id() == &did)
             .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
         }
         Err(error) => {
@@ -128,7 +128,6 @@ impl CredentialValidator {
     // use the extracted document to verify the signature
     extracted_issuer_result.and_then(|issuer| {
       issuer
-        .document()
         .verify_data(credential, options)
         .map_err(|error| ValidationError::Signature {
           source: error.into(),
@@ -175,9 +174,9 @@ impl CredentialValidator {
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<T: Serialize>(
+  pub(crate) fn validate_extended<T: Serialize, D: AsRef<IotaDocument>>(
     credential: &Credential<T>,
-    issuers: &[ResolvedIotaDocument],
+    issuers: &[D],
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
@@ -356,7 +355,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
 
-    let validation_errors = CredentialValidator::validate(&credential, &issuer, &options, FailFast::FirstError)
+    let validation_errors = CredentialValidator::validate(&credential, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -428,7 +427,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &issuer, &options, FailFast::FirstError)
+    let validation_errors = CredentialValidator::validate(&credential, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -464,7 +463,7 @@ mod tests {
     let options = CredentialValidationOptions::default()
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
-    assert!(CredentialValidator::validate(&credential, &issuer, &options, FailFast::FirstError).is_ok());
+    assert!(CredentialValidator::validate(&credential, &issuer_doc, &options, FailFast::FirstError).is_ok());
   }
 
   #[test]
@@ -491,7 +490,7 @@ mod tests {
 
     // check that `verify_signature` returns the expected error
     assert!(matches!(
-      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
+      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&other_doc), &VerifierOptions::default())
         .unwrap_err(),
       ValidationError::DocumentMismatch { .. }
     ));
@@ -504,7 +503,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
 
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &issuer, &options, FailFast::FirstError)
+    let validation_errors = CredentialValidator::validate(&credential, &other_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -539,7 +538,7 @@ mod tests {
 
     // run the validation unit
     assert!(matches!(
-      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer), &VerifierOptions::default())
+      CredentialValidator::verify_signature(&credential, std::slice::from_ref(&issuer_doc), &VerifierOptions::default())
         .unwrap_err(),
       ValidationError::Signature { .. }
     ));
@@ -551,7 +550,7 @@ mod tests {
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &issuer, &options, FailFast::FirstError)
+    let validation_errors = CredentialValidator::validate(&credential, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -701,7 +700,7 @@ mod tests {
       .latest_issuance_date(issued_on_or_before)
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
-    let validation_errors = CredentialValidator::validate(&credential, &issuer, &options, FailFast::FirstError)
+    let validation_errors = CredentialValidator::validate(&credential, &issuer_doc, &options, FailFast::FirstError)
       .unwrap_err()
       .validation_errors;
 
@@ -723,7 +722,7 @@ mod tests {
       expiration_date,
     } = Setup::new();
 
-    let (other_issuer, _) = test_utils::generate_document_with_keys();
+    let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -737,7 +736,7 @@ mod tests {
 
     // declare the credential validation parameters
     // the credential was not issued by `other_issuer`
-    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_issuer);
+    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -748,7 +747,7 @@ mod tests {
       .earliest_expiry_date(expires_on_or_after);
     // validate and extract the nested error according to our expectations
     let validation_errors =
-      CredentialValidator::validate(&credential, &other_issuer_resolved_doc, &options, FailFast::FirstError)
+      CredentialValidator::validate(&credential, &other_doc, &options, FailFast::FirstError)
         .unwrap_err()
         .validation_errors;
 
@@ -765,7 +764,7 @@ mod tests {
       expiration_date,
     } = Setup::new();
 
-    let (other_issuer, _) = test_utils::generate_document_with_keys();
+    let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
       .sign_data(
         &mut credential,
@@ -779,7 +778,7 @@ mod tests {
 
     // declare the credential validation parameters
     // the credential was not issued by `other_issuer`
-    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_issuer);
+    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -791,7 +790,7 @@ mod tests {
 
     // validate and extract the nested error according to our expectations
     let validation_errors =
-      CredentialValidator::validate(&credential, &other_issuer_resolved_doc, &options, FailFast::AllErrors)
+      CredentialValidator::validate(&credential, &other_doc, &options, FailFast::AllErrors)
         .unwrap_err()
         .validation_errors;
 

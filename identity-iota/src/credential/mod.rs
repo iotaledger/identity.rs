@@ -7,7 +7,6 @@ mod presentation_validator;
 #[cfg(test)]
 mod test_utils;
 mod validation_options;
-mod sealed_traits;
 
 pub use self::credential_validator::CredentialValidator;
 pub use self::errors::CompoundCredentialValidationError;

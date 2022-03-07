@@ -649,6 +649,12 @@ impl SetSignature for IotaDocument {
   }
 }
 
+impl AsRef<IotaDocument> for IotaDocument {
+  fn as_ref(&self) -> &IotaDocument {
+    self
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use std::str::FromStr;

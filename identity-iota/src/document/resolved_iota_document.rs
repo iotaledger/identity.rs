@@ -101,3 +101,9 @@ impl From<IotaDocument> for ResolvedIotaDocument {
     }
   }
 }
+
+impl AsRef<IotaDocument> for ResolvedIotaDocument {
+  fn as_ref(&self) -> &IotaDocument {
+    &self.document
+  }
+}
