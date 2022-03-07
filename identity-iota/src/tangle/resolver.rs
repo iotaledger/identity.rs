@@ -207,16 +207,9 @@ where
 
   /// Verifies a [`Presentation`].
   ///
-  /// This method validates the following properties in accordance with the given `options`:
-  /// - the semantic structure of the presentation,
-  /// - the holder's signature,
-  /// - the relationship between the holder and the credential subjects,
-  /// - the signatures and some properties of the constituent credentials (see [`CredentialValidator::validate`]).
-  ///  
-  /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-  /// These should be manually checked after validation, according to your requirements.
+  /// # Important
+  /// See [`PresentationValidator::validate`](PresentationValidator::validate()) for information about which properties
+  /// get validated and what is expected of the optional arguments `holder` and `issuer`.
   ///
   /// # Resolution
   /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.

@@ -283,21 +283,15 @@ impl WasmResolver {
 
   /// Verifies a `Presentation`.
   ///
-  /// This method validates the following properties in accordance with `options`
-  /// - The holder's signature,
-  /// - The relationship between the holder and the credential subjects,
-  /// - The semantic structure of the presentation,
-  /// - Some properties of the credentials (see `CredentialValidator::validate` for more information).
-  ///  
-  /// ### Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-  /// These should be manually checked after validation, according to your requirements.
+  /// ### Important
+  /// See `PresentationValidator::validate` for information about which properties get
+  /// validated and what is expected of the optional arguments `holder` and `issuer`.
   ///
   /// ### Resolution
-  /// If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
-  /// date versions of all of these DID Documents you may want to instead use
-  /// `PresentationValidator::validate`.
+  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+  /// If you already have up-to-date versions of these DID Documents, you may want
+  /// to use `PresentationValidator::validate`.
+  /// See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
   ///
   /// ### Errors
   /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.

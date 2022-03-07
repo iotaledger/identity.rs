@@ -36,6 +36,17 @@ impl PresentationValidator {
   /// [`CredentialValidator::validate`]).
   ///
   /// # Warning
+  /// The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
+  /// trusted. This section contains more information on additional checks that should be carried out before and after
+  /// calling this method.
+  ///
+  /// ## The state of the supplied DID Documents.  
+  /// The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
+  /// [`Resolver::resolve_presentation_holder`](crate::tangle::Resolver::resolve_presentation_holder())
+  /// and [`Resolver::resolve_presentation_issuers`](crate::tangle::Resolver::resolve_presentation_issuers())
+  /// can help extract the latest available states of these DID Documents.
+  ///
+  /// ## Properties that are not validated
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
   /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
   /// These should be manually checked after validation, according to your requirements.
