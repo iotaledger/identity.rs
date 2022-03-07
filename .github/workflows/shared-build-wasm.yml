@@ -1,0 +1,91 @@
+name: Shared / Build Wasm
+
+# TODO
+
+on:
+  workflow_call:
+    inputs:
+      run-unit-tests:
+        description: "Should tests be run"
+        required: false
+        type: boolean
+        default: true
+      output-artifact-name:
+        description: "Name used for the output build artifact"
+        required: true
+        type: string
+jobs:  
+  build-wasm:
+    defaults:
+      run:
+        working-directory: bindings/wasm
+        shell: bash
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+    env:
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
+      RUSTC_WRAPPER: sccache
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: './.github/actions/rust/rust-setup'
+        name: rust-setup
+        with:
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
+          target-cache-enabled: true
+          sccache-enabled: true
+          sccache-path: ${{ matrix.sccache-path }}
+          target-cache-path: bindings/wasm/target
+
+      - name: Install WASM toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+        
+      - name: Setup sccache
+        uses: './.github/actions/rust/sccache/setup-sccache' 
+        with:    
+          os: ${{matrix.os}}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build WASM bindings
+        run: npm run build
+
+      - name: Run unit tests
+        if: ${{ inputs.run-unit-tests }}
+        run: npm run test:unit
+
+      - name: Build Wasm examples
+        run: npm run build:examples
+
+      - name: Stop sccache
+        uses: './.github/actions/rust/sccache/stop-sccache'
+        with:    
+          os: ${{matrix.os}}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ inputs.output-artifact-name }}
+          path: |
+            bindings/wasm/node
+            bindings/wasm/web
+            bindings/wasm/examples/dist
+          if-no-files-found: error
+          retention-days: 1

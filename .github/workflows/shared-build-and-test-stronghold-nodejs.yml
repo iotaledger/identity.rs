@@ -10,6 +10,15 @@ on:
         required: false
         type: boolean
         default: false
+      run-tests:
+        description: "Should tests be run"
+        required: false
+        type: boolean
+        default: true
+      input-artifact-name:
+        description: "Name used for the input Wasm build artifact"
+        required: true
+        type: string
 jobs:  
   build-stronghold-nodejs:
       defaults:
@@ -78,7 +87,6 @@ jobs:
             check-latest: true
             architecture: ${{ matrix.settings.architecture }}
 
-        # TODO: does 'profile: minimal' matter?
         - name: Setup Rust and cache
           uses: './.github/actions/rust/rust-setup'
           with:
@@ -89,7 +97,7 @@ jobs:
         - name: Download bindings/wasm artifacts
           uses: actions/download-artifact@v2
           with:
-            name: identity-wasm-bindings-build
+            name: ${{ inputs.input-artifact-name }}
             path: bindings/wasm
 
         - name: Prepare Wasm bindings link
@@ -112,11 +120,11 @@ jobs:
           run: ls -R .
 
         - name: Test bindings
-          if: ${{ matrix.settings.test }}
+          if: ${{ inputs.run-tests && matrix.settings.test }}
           run: ${{ matrix.settings.test }}
 
         - name: Test bindings in docker
-          if: ${{ matrix.settings.test-docker }}
+          if: ${{ inputs.run-tests && matrix.settings.test-docker }}
           run: ${{ matrix.settings.test-docker }}
           working-directory: ./
 
@@ -127,4 +135,5 @@ jobs:
             name: ${{env.APP_NAME}}-bindings-${{ matrix.settings.target }}
             path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
+            retention-days: 1
 

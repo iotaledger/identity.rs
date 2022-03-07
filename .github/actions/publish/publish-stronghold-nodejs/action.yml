@@ -1,0 +1,61 @@
+name: 'publish-wasm'
+description: 'Publishes Wasm bindings to npm'
+inputs:
+  tag:
+    description: 'Which npm tag to publish under e.g. `dev`, will default to `latest`'
+    required: false
+  npm-token:
+    description: 'used for authenticating towards npm'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
+        check-latest: true
+
+    - name: Install dependencies
+      shell: sh
+      working-directory: bindings/stronghold-nodejs
+      run: npm ci --ignore-scripts
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v2
+      with:
+        path: bindings/stronghold-nodejs/artifacts
+
+    - name: Create npm folder
+      shell: sh
+      working-directory: bindings/stronghold-nodejs
+      run: npm run create-npm-dir
+
+    - name: Move artifacts
+      shell: sh
+      working-directory: bindings/stronghold-nodejs
+      run: npm run artifacts
+
+    - name: List packages
+      shell: sh
+      working-directory: bindings/stronghold-nodejs
+      run: ls -R ./npm
+
+    # - name: Publish
+    #   run: |
+    #     if git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$";
+    #     then
+    #       echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+    #       npm publish --access public
+    #     elif git log -1 --pretty=%B | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+";
+    #     then
+    #       echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+    #       npm publish --tag next --access public
+    #     else
+    #       echo "Not a release, skipping publish"
+    #     fi
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # TODO: why would this be needed?
+    #     NPM_TOKEN: ${{ inputs.NPM_TOKEN }}

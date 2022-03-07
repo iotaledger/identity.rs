@@ -157,77 +157,10 @@ jobs:
   build-wasm:
     needs: check-for-run-condition
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        include:
-          - os: ubuntu-latest
-            sccache-path: /home/runner/.cache/sccache
-    env:
-      SCCACHE_DIR: ${{ matrix.sccache-path }}
-      RUSTC_WRAPPER: sccache
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: './.github/actions/rust/rust-setup'
-        name: rust-setup
-        with:
-          os: ${{ runner.os }}
-          job: ${{ github.job }}
-          target-cache-enabled: true
-          sccache-enabled: true
-          sccache-path: ${{ matrix.sccache-path }}
-          target-cache-path: bindings/wasm/target
-
-      - name: Install WASM toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-        
-      - name: Setup sccache
-        uses: './.github/actions/rust/sccache/setup-sccache' 
-        with:    
-          os: ${{matrix.os}}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 16.x
-
-      - name: Install JS dependencies
-        run: npm ci
-        working-directory: bindings/wasm
-
-      - name: Build WASM bindings
-        run: npm run build
-        working-directory: bindings/wasm
-
-      - name: Run unit tests
-        run: npm run test:unit
-        working-directory: bindings/wasm
-
-      - name: Build Wasm examples
-        run: npm run build:examples
-        working-directory: bindings/wasm
-
-      - name: Stop sccache
-        uses: './.github/actions/rust/sccache/stop-sccache'
-        with:    
-          os: ${{matrix.os}}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: identity-wasm-bindings-build
-          path: |
-            bindings/wasm/node
-            bindings/wasm/web
-            bindings/wasm/examples/dist
-          if-no-files-found: error
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@chore/unifiy-ci #TODO change to dev
+    with:
+      output-artifact-name: identity-wasm-bindings-build
 
   test-wasm:
     needs: build-wasm
@@ -269,3 +202,5 @@ jobs:
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
     uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@chore/unifiy-ci #TODO change to dev
+    with:
+      input-artifact-name: identity-wasm-bindings-build
