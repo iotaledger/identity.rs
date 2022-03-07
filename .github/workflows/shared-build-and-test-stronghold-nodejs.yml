@@ -89,8 +89,8 @@ jobs:
         - name: Download bindings/wasm artifacts
           uses: actions/download-artifact@v2
           with:
-            name: identity-wasm-bindings-node
-            path: bindings/wasm/node
+            name: identity-wasm-bindings-build
+            path: bindings/wasm
 
         - name: Prepare Wasm bindings link
           run: |

@@ -206,6 +206,10 @@ jobs:
         run: npm run build
         working-directory: bindings/wasm
 
+      - name: Run unit tests
+        run: npm run test:unit
+        working-directory: bindings/wasm
+
       - name: Build Wasm examples
         run: npm run build:examples
         working-directory: bindings/wasm
@@ -220,9 +224,9 @@ jobs:
         with:
           name: identity-wasm-bindings-build
           path: |
-            bindings/wasm/target
             bindings/wasm/node
             bindings/wasm/web
+            bindings/wasm/examples/dist
           if-no-files-found: error
 
   test-wasm:
@@ -235,26 +239,9 @@ jobs:
         os: [ ubuntu-latest ]
         include:
           - os: ubuntu-latest
-            sccache-path: /home/runner/.cache/sccache
 
     steps:
       - uses: actions/checkout@v2
-
-      - uses: './.github/actions/rust/rust-setup'
-        name: rust-setup
-        with:
-          os: ${{ runner.os }}
-          job: ${{ github.job }}
-          target-cache-enabled: true
-          sccache-enabled: true
-          sccache-path: ${{ matrix.sccache-path }}
-          target-cache-path: bindings/wasm/target
-
-      - name: Install WASM toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
         
       - name: Set up Node.js
         uses: actions/setup-node@v1
@@ -272,7 +259,7 @@ jobs:
           path: bindings/wasm
     
       - name: Run Wasm unit tests and examples
-        run: npm run test
+        run: npm run test:examples
         working-directory: bindings/wasm
 
   build-and-test-stronghold-nodejs:
