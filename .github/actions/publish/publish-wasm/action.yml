@@ -18,6 +18,10 @@ runs:
         override: true
         target: wasm32-unknown-unknown
 
+    # Download a pre-compiled wasm-bindgen binary to use directly, since we cannot call wasm-pack with --weak-refs.
+    - name: Install wasm-bindgen-cli
+      uses: jetli/wasm-bindgen-action@v0.1.0
+
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
