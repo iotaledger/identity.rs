@@ -201,7 +201,7 @@ where
       CredentialValidator::validate(credential, issuer.as_ref(), options, fail_fast).map_err(Into::into)
     } else {
       let issuer = self.resolve_credential_issuer(credential).await?;
-      CredentialValidator::validate(credential, &issuer.as_ref(), options, fail_fast).map_err(Into::into)
+      CredentialValidator::validate(credential, issuer.as_ref(), options, fail_fast).map_err(Into::into)
     }
   }
 

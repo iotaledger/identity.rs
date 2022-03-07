@@ -346,7 +346,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = &(issuer_doc);
     let issued_on_or_before = issuance_date;
     // expires_on_or_after > expiration_date
     let expires_on_or_after = expiration_date.checked_add(Duration::seconds(1)).unwrap();
@@ -418,7 +418,7 @@ mod tests {
       .unwrap();
 
     // declare the credential validation parameters
-    let issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = &(issuer_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
     let expires_on_or_after = expiration_date;
@@ -457,7 +457,7 @@ mod tests {
       )
       .unwrap();
     // declare the credential validation parameters
-    let issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = &(issuer_doc);
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -486,7 +486,7 @@ mod tests {
       .unwrap();
 
     // the credential was not signed by this issuer
-    let issuer = test_utils::mock_resolved_document(other_doc);
+    let issuer = &(other_doc);
 
     // check that `verify_signature` returns the expected error
     assert!(matches!(
@@ -534,7 +534,7 @@ mod tests {
         SignatureOptions::default(),
       )
       .unwrap();
-    let issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = &(issuer_doc);
 
     // run the validation unit
     assert!(matches!(
@@ -693,7 +693,7 @@ mod tests {
     credential.credential_subject = OneOrMany::default();
 
     // declare the credential validation parameters
-    let issuer = test_utils::mock_resolved_document(issuer_doc);
+    let issuer = &(issuer_doc);
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -736,7 +736,7 @@ mod tests {
 
     // declare the credential validation parameters
     // the credential was not issued by `other_issuer`
-    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_doc);
+    let other_issuer_resolved_doc = &(other_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
@@ -778,7 +778,7 @@ mod tests {
 
     // declare the credential validation parameters
     // the credential was not issued by `other_issuer`
-    let other_issuer_resolved_doc = test_utils::mock_resolved_document(other_doc);
+    let other_issuer_resolved_doc = &(other_doc);
     // issued_on_or_before < issuance_date
     let issued_on_or_before = issuance_date.checked_sub(Duration::seconds(1)).unwrap();
 
