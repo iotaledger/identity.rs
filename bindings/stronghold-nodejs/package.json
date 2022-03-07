@@ -41,7 +41,7 @@
     "build:ts": "rollup -c",
     "build:napi": "cross-env-shell napi build --platform --release --js napi-dist/napi.js --dts napi.d.ts $NPM_BUILD_NAPI_ARGS napi-dist",
     "build:napi:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm",
+    "prepublishOnly": "napi prepublish -t npm --skip-gh-release",
     "version": "napi version",
     "create-npm-dir": "napi create-npm-dir --target ./ ",
     "test": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit"
