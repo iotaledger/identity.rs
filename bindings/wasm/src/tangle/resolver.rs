@@ -236,6 +236,7 @@ impl WasmResolverBuilder {
   ///
   /// NOTE: replaces any previous `Client` or `Config` with the same network name.
   #[wasm_bindgen]
+  #[must_use]
   pub fn client(mut self, client: &WasmClient) -> WasmResolverBuilder {
     self.0 = self.0.client(Rc::clone(&client.client));
     self
