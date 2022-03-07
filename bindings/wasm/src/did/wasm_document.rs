@@ -122,9 +122,6 @@ impl WasmDocument {
   }
 
   /// Returns a list of document controllers.
-  ///
-  /// Note: Duplicates will be ignored.
-  /// Use `null` to remove all controllers.
   #[wasm_bindgen]
   pub fn controller(&self) -> ArrayDID {
     match self.0.controller() {
@@ -185,7 +182,7 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns the custom DID Document properties.
+  /// Returns a copy of the custom DID Document properties.
   #[wasm_bindgen]
   pub fn properties(&mut self) -> Result<MapStringAny> {
     let properties_map = js_sys::Map::new();
@@ -199,7 +196,7 @@ impl WasmDocument {
   // Services
   // ===========================================================================
 
-  /// Return a set of all `Service`s in the document.
+  /// Return a set of all {@link Service}s in the document.
   #[wasm_bindgen]
   pub fn service(&self) -> ArrayService {
     self
@@ -213,13 +210,13 @@ impl WasmDocument {
       .unchecked_into::<ArrayService>()
   }
 
-  /// Add a new `Service` to the document.
+  /// Add a new {@link Service} to the document.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
     Ok(self.0.insert_service(service.0.clone()))
   }
 
-  /// Remove a `Service` identified by the given `DIDUrl` from the document.
+  /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_service(&did.0).wasm_result()
@@ -231,7 +228,7 @@ impl WasmDocument {
 
   /// Returns a list of all {@link VerificationMethod} in the DID Document.
   #[wasm_bindgen]
-  pub fn methods(&self) -> ArrayMethods {
+  pub fn methods(&self) -> ArrayVerificationMethods {
     self
       .0
       .methods()
@@ -239,7 +236,7 @@ impl WasmDocument {
       .map(WasmVerificationMethod::from)
       .map(JsValue::from)
       .collect::<js_sys::Array>()
-      .unchecked_into::<ArrayMethods>()
+      .unchecked_into::<ArrayVerificationMethods>()
   }
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
@@ -692,7 +689,7 @@ extern "C" {
   pub type ArrayString;
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
-  pub type ArrayMethods;
+  pub type ArrayVerificationMethods;
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;

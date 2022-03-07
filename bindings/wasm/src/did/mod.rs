@@ -7,6 +7,7 @@ pub use self::wasm_did_url::WasmDIDUrl;
 pub use self::wasm_diff_message::WasmDiffMessage;
 pub use self::wasm_document::WasmDocument;
 pub use self::wasm_document_metadata::WasmDocumentMetadata;
+pub use self::wasm_method_relationship::WasmMethodRelationship;
 pub use self::wasm_method_scope::WasmMethodScope;
 pub use self::wasm_method_type::WasmMethodType;
 pub use self::wasm_resolved_document::PromiseArrayResolvedDocument;

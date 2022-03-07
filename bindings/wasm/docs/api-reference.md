@@ -1035,9 +1035,6 @@ Use `null` to remove all controllers.
 ### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
 Returns a list of document controllers.
 
-Note: Duplicates will be ignored.
-Use `null` to remove all controllers.
-
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+setAlsoKnownAs"></a>
 
@@ -1075,19 +1072,19 @@ This method can overwrite existing properties like `id` and result in an invalid
 <a name="Document+properties"></a>
 
 ### document.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
-Returns the custom DID Document properties.
+Returns a copy of the custom DID Document properties.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+service"></a>
 
 ### document.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
-Return a set of all `Service`s in the document.
+Return a set of all [Service](#Service)s in the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertService"></a>
 
 ### document.insertService(service) ⇒ <code>boolean</code>
-Add a new `Service` to the document.
+Add a new [Service](#Service) to the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1098,7 +1095,7 @@ Add a new `Service` to the document.
 <a name="Document+removeService"></a>
 
 ### document.removeService(did)
-Remove a `Service` identified by the given `DIDUrl` from the document.
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
