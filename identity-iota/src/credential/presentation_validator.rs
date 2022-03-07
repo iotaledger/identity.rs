@@ -362,12 +362,12 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
+    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
 
-    let resolved_holder_document = (subject_foo_doc);
+    let holder_doc = subject_foo_doc;
     assert!(dbg!(PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError
@@ -401,15 +401,15 @@ mod tests {
       .unwrap();
 
     // check the validation unit
-    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
+    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); //validate with another challenge
 
-    let resolved_holder_document = (subject_foo_doc);
+    let holder_doc = subject_foo_doc;
 
     // Todo match on the exact error here
     assert!(PresentationValidator::verify_presentation_signature(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &presentation_verifier_options
     )
     .is_err());
@@ -428,7 +428,7 @@ mod tests {
 
     let error = PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
@@ -481,12 +481,12 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
+    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
 
-    let resolved_holder_document = (subject_foo_doc);
+    let holder_doc = subject_foo_doc;
     let error = PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
@@ -552,13 +552,13 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
+    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
 
-    let resolved_holder_document = (subject_foo_doc);
+    let holder_doc = subject_foo_doc;
 
     let error = PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
@@ -579,7 +579,7 @@ mod tests {
     let options = presentation_validation_options.subject_holder_relationship(SubjectHolderRelationship::Any);
     assert!(PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &options,
       FailFast::FirstError,
@@ -590,7 +590,7 @@ mod tests {
 
     assert!(PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &options,
       FailFast::FirstError,
@@ -649,16 +649,16 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
+    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
 
-    let resolved_holder_document = (subject_foo_doc);
+    let holder_document = subject_foo_doc;
 
     let CompoundPresentationValidationError {
       presentation_validation_errors,
       credential_errors,
     } = PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_document,
       &trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
@@ -726,16 +726,16 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers = [(issuer_foo_doc), (issuer_bar_doc)];
+    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
 
-    let resolved_holder_document = (subject_foo_doc);
+    let holder_doc = subject_foo_doc;
 
     let CompoundPresentationValidationError {
       presentation_validation_errors,
       credential_errors,
     } = PresentationValidator::validate(
       &presentation,
-      &resolved_holder_document,
+      &holder_doc,
       &trusted_issuers,
       &presentation_validation_options,
       FailFast::AllErrors,

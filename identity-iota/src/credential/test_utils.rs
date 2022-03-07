@@ -13,10 +13,8 @@ use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
 
 use identity_did::did::DID;
-use iota_client::bee_message::MessageId;
 
 use crate::document::IotaDocument;
-use crate::document::ResolvedIotaDocument;
 
 pub(super) fn generate_document_with_keys() -> (IotaDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new_ed25519().unwrap();

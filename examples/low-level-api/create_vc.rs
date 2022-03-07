@@ -7,7 +7,6 @@
 //!
 //! cargo run --example create_vc
 
-use identity::core::FromJson;
 use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
@@ -69,24 +68,6 @@ pub async fn create_vc() -> Result<String> {
 #[tokio::main]
 async fn main() -> Result<()> {
   // Obtain a JSON representation of a credential issued to us
-  let credential_json: String = create_vc().await?;
-  // Perform a default validation on the credential. This default validation checks the issuer's signature, the
-  // credential's semantic structure, that the expiration date is not in the past and the issuance date is not in the
-  // future.
-
-  let credential: Credential = Credential::from_json(credential_json.as_str())?;
-  // We can use the Resolver to conveniently validate basic properties of the credential.
-  let resolver: Resolver = Resolver::new().await?;
-  // We use FailFast::No so all errors get accumulated if there are any. Then we can later inform the issuer about
-  // everything that is wrong with the credential they issued to us and they will hopefully send us a new correct
-  // credential
-  resolver
-    .verify_credential(
-      &credential,
-      None,
-      &CredentialValidationOptions::default(),
-      FailFast::AllErrors,
-    )
-    .await?;
+  let _credential_json: String = create_vc().await?;
   Ok(())
 }

@@ -6,6 +6,7 @@
 //! cargo run --example merkle_key
 
 use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
 use identity::iota::Resolver;
 
 use rand::rngs::OsRng;
@@ -78,14 +79,13 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential is valid
   let resolver: Resolver = Resolver::new().await?;
-  resolver
-    .verify_credential(
-      &credential,
-      None,
-      &CredentialValidationOptions::default(),
-      identity::iota::FailFast::FirstError,
-    )
-    .await?;
+  let resolved_issuer_doc = resolver.resolve_credential_issuer(&credential).await?;
+  CredentialValidator::validate(
+    &credential,
+    &resolved_issuer_doc,
+    &CredentialValidationOptions::default(),
+    identity::iota::FailFast::FirstError,
+  )?;
 
   println!("Credential successfully validated!");
 
@@ -102,14 +102,16 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Check that verifiable credential is revoked
-  let result: Result<()> = resolver
-    .verify_credential(
-      &credential,
-      None,
-      &CredentialValidationOptions::default(),
-      identity::iota::FailFast::FirstError,
-    )
-    .await;
+
+  let resolved_issuer_doc = resolver.resolve_credential_issuer(&credential).await?;
+  let result: Result<()> = CredentialValidator::validate(
+    &credential,
+    &resolved_issuer_doc,
+    &CredentialValidationOptions::default(),
+    identity::iota::FailFast::FirstError,
+  )
+  .map_err(Into::into);
+
   assert!(result.is_err());
 
   println!("Credential successfully revoked!");

@@ -12,8 +12,6 @@ use serde::Serialize;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
-use crate::credential::CredentialValidationOptions;
-use crate::credential::CredentialValidator;
 use crate::credential::FailFast;
 use crate::credential::PresentationValidationOptions;
 use crate::credential::PresentationValidator;
@@ -163,46 +161,6 @@ where
       })
     })?;
     self.resolve(&holder).await
-  }
-
-  /// Verifies a [`Credential`].
-  ///
-  /// This method resolves the issuer's DID Document and validates the following properties in accordance
-  /// with the given `options`:
-  /// - the semantic structure of the credential,
-  /// - the issuer's signature,
-  /// - the expiration date,
-  /// - the issuance date.
-  ///
-  /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
-  /// [`CredentialValidator::validate`](CredentialValidator::validate()) in order to avoid an unnecessary resolution.
-  ///
-  /// # Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-  /// These should be manually checked after validation, according to your requirements.
-  ///
-  /// # Resolution
-  /// The issuer's DID Document is optionally resolved if not given.
-  /// If you already have an up-to-date version of this document you may alternatively use
-  /// [`CredentialValidator::validate`](CredentialValidator::validate()).
-  ///
-  /// # Errors
-  /// Errors from resolving the issuer DID Document will be returned immediately.
-  /// Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
-  pub async fn verify_credential<U: Serialize>(
-    &self,
-    credential: &Credential<U>,
-    issuer: Option<&ResolvedIotaDocument>,
-    options: &CredentialValidationOptions,
-    fail_fast: FailFast,
-  ) -> Result<()> {
-    if let Some(issuer) = issuer {
-      CredentialValidator::validate(credential, issuer.as_ref(), options, fail_fast).map_err(Into::into)
-    } else {
-      let issuer = self.resolve_credential_issuer(credential).await?;
-      CredentialValidator::validate(credential, issuer.as_ref(), options, fail_fast).map_err(Into::into)
-    }
   }
 
   /// Verifies a [`Presentation`].

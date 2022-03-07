@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, Credential, ResolverBuilder, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, Credential, ResolverBuilder, CredentialValidationOptions, CredentialValidator, FailFast} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -29,7 +29,7 @@ async function revokeVC(clientConfig) {
 
     // Creates new identities and a VC (see "create_vc" example)
     const {alice, issuer, credentialJSON} = await createVC(clientConfig);
-    const signedVC = Credential.fromJSON(credentialJSON);
+    const signedVc = Credential.fromJSON(credentialJSON);
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
@@ -49,8 +49,10 @@ async function revokeVC(clientConfig) {
     .build();
     let vc_revoked = false;
     try {
-        await resolver.verifyCredential(
+        const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+        CredentialValidator.validate(
             signedVc, 
+            resolvedIssuerDoc,
             CredentialValidationOptions.default(),
             FailFast.FirstError
             ); 

@@ -59,9 +59,9 @@ impl WasmPresentationValidator {
 
   /// Verify the presentation's signature using the resolved document of the holder.
   ///
-  /// ### Warning 
-  /// The caller must ensure that the DID Document of the holder is up-to-date. 
-  /// 
+  /// ### Warning
+  /// The caller must ensure that the DID Document of the holder is up-to-date.
+  ///
   /// ### Errors
   /// Fails if the `holder` does not match the `presentation`'s holder property.
   /// Fails if signature verification against the holder document fails.

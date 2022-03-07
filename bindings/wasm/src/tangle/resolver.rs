@@ -22,7 +22,6 @@ use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
 use crate::credential::WasmCredential;
-use crate::credential::WasmCredentialValidationOptions;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
@@ -228,57 +227,6 @@ impl WasmResolver {
 
     // WARNING: this does not validate the return type. Check carefully.
     Ok(promise.unchecked_into::<PromiseResolvedDocument>())
-  }
-
-  /// Verifies a `Credential`.
-  ///
-  /// This method resolves the issuer's DID Document and validates the following properties in accordance
-  /// with the given `options`:
-  /// - the semantic structure of the credential,
-  /// - the issuer's signature,
-  /// - the expiration date,
-  /// - the issuance date.
-  ///
-  /// If you already have an up to date version of the issuer's resolved DID Document you may want to use
-  /// `CredentialValidator::validate` in order to avoid an unnecessary resolution.
-  ///
-  /// ### Warning
-  ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-  /// `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-  /// These should be manually checked after validation, according to your requirements.
-  ///
-  /// ### Resolution
-  /// If `issuer` is null then this  DID Document will be resolved. If you already have up to
-  /// an up to date version of this document you may want to instead use `CredentialValidator::validate`.
-  ///
-  /// ### Errors
-  /// Errors from resolving the issuer DID Document will be returned immediately.
-  /// Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
-  #[wasm_bindgen(js_name = verifyCredential)]
-  pub fn verify_credential(
-    &self,
-    credential: &WasmCredential,
-    options: &WasmCredentialValidationOptions,
-    fail_fast: WasmFailFast,
-    issuer: OptionResolvedDocument,
-  ) -> Result<PromiseVoid> {
-    // TODO: reimplemented function to avoid cloning the entire credential and validation options.
-    //       Would be solved with Rc internal representation, pending memory leak discussions.
-    let issuer: Option<ResolvedIotaDocument> = issuer.into_serde().wasm_result()?;
-    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
-    let credential: WasmCredential = credential.clone();
-    let options: WasmCredentialValidationOptions = options.clone();
-
-    let promise: Promise = future_to_promise(async move {
-      resolver
-        .verify_credential(&credential.0, issuer.as_ref(), &options.0, fail_fast.into())
-        .await
-        .map(|_| JsValue::UNDEFINED)
-        .wasm_result()
-    });
-
-    // WARNING: this does not validate the return type. Check carefully.
-    Ok(promise.unchecked_into::<PromiseVoid>())
   }
 
   /// Verifies a `Presentation`.

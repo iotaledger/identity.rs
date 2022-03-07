@@ -85,8 +85,8 @@ impl WasmCredentialValidator {
 
   /// Verify the signature using the DID Document of a trusted issuer.
   ///
-  /// # Warning 
-  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date. 
+  /// # Warning
+  /// The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
   /// ### Errors
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt

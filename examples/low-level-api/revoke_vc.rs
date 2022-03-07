@@ -19,6 +19,7 @@ use identity::did::MethodScope;
 use identity::did::DID;
 
 use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
 use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
@@ -61,14 +62,14 @@ async fn main() -> Result<()> {
 
   // Check the verifiable credential
   let resolver: Resolver = Resolver::new().await?;
-  let validation_result: Result<()> = resolver
-    .verify_credential(
-      &signed_vc,
-      None,
-      &CredentialValidationOptions::default(),
-      identity::iota::FailFast::FirstError,
-    )
-    .await;
+  let resolved_issuer_doc = resolver.resolve_credential_issuer(&signed_vc).await?;
+  let validation_result: Result<()> = CredentialValidator::validate(
+    &signed_vc,
+    &resolved_issuer_doc,
+    &CredentialValidationOptions::default(),
+    identity::iota::FailFast::FirstError,
+  )
+  .map_err(Into::into);
 
   println!("VC validation result: {:?}", validation_result);
   assert!(validation_result.is_err());

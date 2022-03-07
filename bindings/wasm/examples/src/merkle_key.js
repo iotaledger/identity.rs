@@ -13,6 +13,7 @@ import {
     Timestamp,
     VerificationMethod,
     ResolverBuilder,
+    CredentialValidator,
     CredentialValidationOptions,
     FailFast
 } from '@iota/identity-wasm';
@@ -83,8 +84,11 @@ async function merkleKey(clientConfig) {
     .clientConfig(Config.fromNetwork(clientConfig.network))
     .build();
 
-    const result = await resolver.verifyCredential(
+    const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+
+    CredentialValidator.validate(
         signedVc, 
+        resolvedIssuerDoc,
         CredentialValidationOptions.default(),
         FailFast.FirstError
         ); 
@@ -103,10 +107,13 @@ async function merkleKey(clientConfig) {
     // Check the verifiable credential is revoked
     let vc_revoked = false; 
     try {
-        await resolver.verifyCredential(
+        const updatedResolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+
+        CredentialValidator.validate(
             signedVc, 
+            updatedResolvedIssuerDoc,
             CredentialValidationOptions.default(),
-            FailFast.Yes
+            FailFast.FirstError
             ); 
     } catch (exception)  {
         console.log(`${exception.message}`)
