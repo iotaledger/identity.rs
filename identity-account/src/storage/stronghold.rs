@@ -22,6 +22,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::error::Result;
+use crate::Error::StrongholdError;
 use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
@@ -195,10 +196,6 @@ impl Storage for Stronghold {
     match data {
       None => return Ok(None),
       Some(data) => {
-        // No state data found
-        if data.is_empty() {
-          return Ok(None);
-        }
         // Deserialize and return
         Ok(Some(IdentityState::from_json_slice(&data)?))
       }
@@ -231,9 +228,6 @@ impl Storage for Stronghold {
     match bytes {
       None => return Ok(None),
       Some(bytes) => {
-        if bytes.is_empty() {
-          return Ok(None);
-        }
         let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
           io::Error::new(
             io::ErrorKind::InvalidData,

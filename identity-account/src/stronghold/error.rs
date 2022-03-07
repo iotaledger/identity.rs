@@ -5,9 +5,9 @@ use iota_stronghold::procedures::ProcedureError;
 
 pub type IotaStrongholdResult<T> = Result<T, StrongholdError>;
 
+/// Caused by errors from the [`iota_stronghold`] crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum StrongholdError {
-  /// Caused by errors from the [iota_stronghold] crate.
   #[error(transparent)]
   StrongholdActorError(#[from] iota_stronghold::ActorError),
   #[error(transparent)]
