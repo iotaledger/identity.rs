@@ -18,6 +18,9 @@ pub enum StrongholdError {
   StrongholdFatalEngineError(#[from] iota_stronghold::FatalEngineError),
   #[error(transparent)]
   StrongholdMailboxError(#[from] iota_stronghold::MailboxError),
+  /// Caused by attempting to perform an invalid IO operation.
+  #[error(transparent)]
+  IoError(#[from] std::io::Error),
   /// Caused by receiving an unexpected return value from a Stronghold procedure.
   #[error("Stronghold procedure returned unexpected type")]
   StrongholdProcedureFailure(#[from] ProcedureError),

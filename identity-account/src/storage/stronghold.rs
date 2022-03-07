@@ -10,7 +10,11 @@ use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
-use iota_stronghold::procedures::{Chain, Ed25519Sign, Slip10Derive, Slip10DeriveInput, Slip10Generate};
+use iota_stronghold::procedures::Chain;
+use iota_stronghold::procedures::Ed25519Sign;
+use iota_stronghold::procedures::Slip10Derive;
+use iota_stronghold::procedures::Slip10DeriveInput;
+use iota_stronghold::procedures::Slip10Generate;
 use iota_stronghold::Location;
 use std::convert::TryFrom;
 use std::io;
@@ -296,8 +300,7 @@ async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<P
     ty: iota_stronghold::procedures::KeyType::Ed25519,
     private_key: location_skey(location),
   };
-  let res = vault.execute(procedure).await.map(|public| public.to_vec().into())?;
-  Ok(res)
+  Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
@@ -306,7 +309,7 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
     private_key: location_skey(location),
     msg: payload,
   };
-  let signature = vault.execute(procedure).await?;
+  let signature: [u8; 64] = vault.execute(procedure).await?;
 
   Ok(Signature::new(public_key, signature.into()))
 }

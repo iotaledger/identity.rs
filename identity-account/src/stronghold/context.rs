@@ -7,7 +7,8 @@ use core::ops::DerefMut;
 use hashbrown::HashMap;
 use hashbrown::HashSet;
 use iota_stronghold::StrongholdFlags;
-use iota_stronghold::{ReadError, Stronghold};
+use iota_stronghold::ReadError;
+use iota_stronghold::Stronghold;
 use once_cell::sync::Lazy;
 use std::path::Path;
 use std::path::PathBuf;
@@ -238,7 +239,7 @@ impl Database {
 
         password.zeroize();
 
-        result?;
+        result?
       }
 
       self.clients_loaded.insert(client.into());
@@ -301,7 +302,7 @@ impl Database {
   }
 
   async fn write(&mut self, runtime: &Runtime, snapshot: &Path) -> IotaStrongholdResult<()> {
-    fs::ensure_directory(snapshot).map_err(|_e| StrongholdError::StrongholdResult("IO Error".to_owned()))?; //ToDo
+    fs::ensure_directory(snapshot)?;
 
     let mut password: Vec<u8> = runtime.password(snapshot)?.to_vec();
     let location: Option<PathBuf> = Some(snapshot.to_path_buf());
