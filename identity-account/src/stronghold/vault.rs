@@ -1,15 +1,17 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use engine::vault::RecordId;
-use iota_stronghold::procedures::{Procedure, StrongholdProcedure};
+use iota_stronghold::procedures::Procedure;
+use iota_stronghold::procedures::StrongholdProcedure;
 use iota_stronghold::Location;
 use iota_stronghold::RecordHint;
 use iota_stronghold::StrongholdFlags;
 use iota_stronghold::VaultFlags;
 use std::path::Path;
 
-use crate::stronghold::{Context, IotaStrongholdResult, StrongholdError};
+use crate::stronghold::Context;
+use crate::stronghold::IotaStrongholdResult;
 
 pub type Record = (RecordId, RecordHint);
 
@@ -80,19 +82,17 @@ impl Vault<'_> {
   /// Returns true if the specified location exists.
   pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    scope
-      .vault_exists(location.vault_path())
-      .await
-      .map_err(StrongholdError::StrongholdActorError)
+    Ok(scope.vault_exists(location.vault_path()).await?)
   }
 
   /// Runs the Stronghold garbage collector.
-  pub async fn garbage_collect(&self, vault: &[u8]) -> IotaStrongholdResult<()> {
-    Context::scope(self.path, &self.name, &self.flags)
-      .await?
-      .garbage_collect(vault.to_vec())
-      .await?; //ToDo use return value
-    Ok(())
+  pub async fn garbage_collect(&self, vault: &[u8]) -> IotaStrongholdResult<bool> {
+    Ok(
+      Context::scope(self.path, &self.name, &self.flags)
+        .await?
+        .garbage_collect(vault.to_vec())
+        .await?,
+    )
   }
 
   /// Executes a runtime [`procedure`][`Procedure`].
@@ -100,7 +100,7 @@ impl Vault<'_> {
   where
     P: Procedure + Into<StrongholdProcedure>,
   {
-    let result = Context::scope(self.path, &self.name, &self.flags)
+    let result: <P as Procedure>::Output = Context::scope(self.path, &self.name, &self.flags)
       .await?
       .runtime_exec(procedure)
       .await??;
@@ -113,7 +113,6 @@ impl Vault<'_> {
     T: AsRef<[u8]> + ?Sized,
   {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    let a = scope.list_hints_and_ids(vault.as_ref()).await?;
-    Ok(a)
+    Ok(scope.list_hints_and_ids(vault.as_ref()).await?)
   }
 }

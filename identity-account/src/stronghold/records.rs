@@ -16,7 +16,9 @@ use std::path::Path;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::stronghold::{IotaStrongholdResult, Store, StrongholdError};
+use crate::stronghold::IotaStrongholdResult;
+use crate::stronghold::Store;
+use crate::stronghold::StrongholdError;
 
 pub struct Records<'snapshot> {
   pub(crate) store: Store<'snapshot>,
@@ -48,7 +50,8 @@ impl Records<'_> {
   }
 
   pub async fn index(&self) -> Result<RecordIndex> {
-    let record = self.store.get(Locations::index()).await?;
+    self.store.get(Locations::index()).await?;
+    let record: Option<Vec<u8>> = self.store.get(Locations::index()).await?;
     match record {
       None => Err(Error::StrongholdError(StrongholdError::RecordError)),
       Some(record) => Ok(RecordIndex::try_new(record)?),

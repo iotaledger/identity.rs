@@ -4,7 +4,6 @@
 use std::fs;
 use std::path::Path;
 
-
 pub fn ensure_directory<P>(path: &P) -> Result<(), std::io::Error>
 where
   P: AsRef<Path> + ?Sized,

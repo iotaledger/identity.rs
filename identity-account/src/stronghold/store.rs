@@ -7,7 +7,8 @@ use std::path::Path;
 use std::time::Duration;
 
 use crate::stronghold::error::IotaStrongholdResult;
-use crate::stronghold::{Context, StrongholdError};
+use crate::stronghold::Context;
+use crate::stronghold::StrongholdError;
 
 const STRONG_404: &str = "Unable to read from store";
 
@@ -50,8 +51,7 @@ impl Store<'_> {
 
   /// Gets a record.
   pub async fn get(&self, location: Location) -> IotaStrongholdResult<Option<Vec<u8>>> {
-    let location = location.vault_path().to_vec();
-    match self.get_strict(location).await {
+    match self.get_strict(location.vault_path().to_vec()).await {
       Ok(data) => Ok(data),
       Err(StrongholdError::StrongholdResult(message)) if message == STRONG_404 => Ok(Some(Vec::new())),
       Err(error) => Err(error),

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use iota_stronghold::StrongholdFlags;
@@ -6,12 +6,13 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
+use crate::stronghold::Context;
+use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Password;
 use crate::stronghold::Records;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
-use crate::stronghold::{Context, IotaStrongholdResult};
 
 #[derive(Debug)]
 pub struct Snapshot {
