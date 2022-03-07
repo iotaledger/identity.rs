@@ -66,9 +66,3 @@ impl Debug for KeyLocation {
     f.write_fmt(format_args!("KeyLocation{}", self))
   }
 }
-
-impl KeyLocation {
-  fn to_bytes(&self, prefix: &str) -> Vec<u8> {
-    format!("{}:{}:{}", prefix, self.generation(), self.fragment_name()).into_bytes()
-  }
-}

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -10,7 +10,7 @@ use crypto::hashes::Output;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use identity_core::utils::encode_b58;
-use iota_stronghold::{Location, StrongholdResult};
+use iota_stronghold::Location;
 use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 
@@ -51,7 +51,7 @@ impl Records<'_> {
     let record = self.store.get(Locations::index()).await?;
     match record {
       None => Err(Error::StrongholdError(StrongholdError::RecordError)),
-      Some(record) => Ok(RecordIndex::try_new(record)?)
+      Some(record) => Ok(RecordIndex::try_new(record)?),
     }
   }
 
@@ -103,7 +103,7 @@ impl Records<'_> {
     }
 
     // Remove the record from the snapshot store
-    self.store.del(Locations::record(&record_tag).vault_path().to_vec()).await?;
+    self.store.del(Locations::record(&record_tag)).await?;
 
     Ok(())
   }

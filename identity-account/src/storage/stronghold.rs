@@ -10,12 +10,12 @@ use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
+use iota_stronghold::procedures::{Chain, Ed25519Sign, Slip10Derive, Slip10DeriveInput, Slip10Generate};
 use iota_stronghold::Location;
 use std::convert::TryFrom;
 use std::io;
 use std::path::Path;
 use std::sync::Arc;
-use iota_stronghold::procedures::{Chain, Ed25519Sign, Slip10Derive, Slip10DeriveInput, Slip10Generate};
 
 use crate::error::Result;
 use crate::identity::ChainState;
@@ -196,7 +196,8 @@ impl Storage for Stronghold {
           return Ok(None);
         }
         // Deserialize and return
-        Ok(Some(IdentityState::from_json_slice(&data)?))     }
+        Ok(Some(IdentityState::from_json_slice(&data)?))
+      }
     }
   }
 
@@ -208,7 +209,7 @@ impl Storage for Stronghold {
     let json: Vec<u8> = state.to_json_vec()?;
 
     // Write the state to the stronghold snapshot
-    store.set(location_state(),json, None).await?;
+    store.set(location_state(), json, None).await?;
 
     Ok(())
   }
@@ -268,24 +269,23 @@ impl Drop for Stronghold {
 async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   // Generate a SLIP10 seed as the private key
   let procedure: Slip10Generate = Slip10Generate {
-    output: location_seed(location), hint: default_hint(), size_bytes: None
+    output: location_seed(location),
+    hint: default_hint(),
+    size_bytes: None,
   };
   vault.execute(procedure).await?;
-  // vault
-  //   .slip10_generate(location_seed(location), default_hint(), None)
-  //   .await?;
 
   let chain: Chain = Chain::from_u32_hardened(vec![0, 0, 0]);
   let seed: Slip10DeriveInput = Slip10DeriveInput::Seed(location_seed(location));
 
   // Use the SLIP10 seed to derive a child key
   let procedure: Slip10Derive = Slip10Derive {
-    chain, input: seed, output: location_skey(location), hint: default_hint()
+    chain,
+    input: seed,
+    output: location_skey(location),
+    hint: default_hint(),
   };
   vault.execute(procedure).await?;
-  // vault
-  //   .slip10_derive(chain, seed, location_skey(location), default_hint())
-  //   .await?;
 
   // Retrieve the public key of the derived child key
   retrieve_ed25519(vault, location).await
@@ -294,57 +294,41 @@ async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<P
 async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   let procedure: iota_stronghold::procedures::PublicKey = iota_stronghold::procedures::PublicKey {
     ty: iota_stronghold::procedures::KeyType::Ed25519,
-    private_key: location_skey(location)
+    private_key: location_skey(location),
   };
   let res = vault.execute(procedure).await.map(|public| public.to_vec().into())?;
   Ok(res)
-//   vault
-//     .ed25519_public_key(location_skey(location))
-//     .await
-//     .map(|public| public.to_vec().into())
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-
   let public_key: PublicKey = retrieve_ed25519(vault, location).await?;
-  let procedure :Ed25519Sign = Ed25519Sign{
+  let procedure: Ed25519Sign = Ed25519Sign {
     private_key: location_skey(location),
-    msg: payload
+    msg: payload,
   };
   let signature = vault.execute(procedure).await?;
-
-  // let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
   Ok(Signature::new(public_key, signature.into()))
 }
 
-fn location_chain_state() -> Location{
+fn location_chain_state() -> Location {
   Location::generic("$chain_state", Vec::new())
-  // "$chain_state".to_owned().into_bytes()
 }
 
-fn location_state() -> Location{
+fn location_state() -> Location {
   Location::generic("$state", Vec::new())
-  // "$state".to_owned().into_bytes()
 }
 
-fn location_seed(location: &KeyLocation) -> Location{
+fn location_seed(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$seed", location), Vec::new())
-  // "$seed".to_owned().into_bytes()
 }
 
 fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
-  // "$skey".to_owned().into_bytes()
 }
 
-fn location_published_generation() -> Location{
+fn location_published_generation() -> Location {
   Location::generic("$published_generation", Vec::new())
-  // "$published_generation".to_owned().into_bytes()
-}
-
-fn from_location(location: &Location) -> Vec<u8> {
-  location.vault_path().to_vec()
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {

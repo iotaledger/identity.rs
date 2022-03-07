@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use actix::System;
@@ -6,8 +6,8 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use hashbrown::HashMap;
 use hashbrown::HashSet;
-use iota_stronghold::{ReadError, Stronghold, StrongholdResult};
 use iota_stronghold::StrongholdFlags;
+use iota_stronghold::{ReadError, Stronghold};
 use once_cell::sync::Lazy;
 use std::path::Path;
 use std::path::PathBuf;
@@ -21,10 +21,10 @@ use tokio::sync::Mutex as AsyncMutex;
 use tokio::sync::MutexGuard as AsyncMutexGuard;
 use zeroize::Zeroize;
 
-use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
-use crate::stronghold::error::{IotaStrongholdResult};
-use crate::stronghold::{SnapshotStatus, StrongholdError};
+use crate::stronghold::error::IotaStrongholdResult;
+use crate::stronghold::SnapshotStatus;
+use crate::stronghold::StrongholdError;
 use crate::utils::fs;
 use crate::utils::EncryptionKey;
 
@@ -258,16 +258,10 @@ impl Database {
     // Shutdown all loaded actors
     for client in self.clients_active.iter() {
       // Clear the actor cache
-      self
-        .stronghold
-        .kill_stronghold(client.clone(), false)
-        .await?;
+      self.stronghold.kill_stronghold(client.clone(), false).await?;
 
       // Kill the internal actor and client actor
-      self
-        .stronghold
-        .kill_stronghold(client.clone(), true)
-        .await?;
+      self.stronghold.kill_stronghold(client.clone(), true).await?;
     }
 
     if active {
@@ -307,15 +301,12 @@ impl Database {
   }
 
   async fn write(&mut self, runtime: &Runtime, snapshot: &Path) -> IotaStrongholdResult<()> {
-    fs::ensure_directory(snapshot).map_err(|e| StrongholdError::StrongholdResult("IO Error".to_owned()))?; //ToDo
+    fs::ensure_directory(snapshot).map_err(|_e| StrongholdError::StrongholdResult("IO Error".to_owned()))?; //ToDo
 
     let mut password: Vec<u8> = runtime.password(snapshot)?.to_vec();
     let location: Option<PathBuf> = Some(snapshot.to_path_buf());
 
-    let result  = self
-      .stronghold
-      .write_all_to_snapshot(&password, None, location)
-      .await?;
+    let result = self.stronghold.write_all_to_snapshot(&password, None, location).await?;
 
     password.zeroize();
 

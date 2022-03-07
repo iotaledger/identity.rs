@@ -1,11 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_stronghold::Location;
 use iota_stronghold::StrongholdFlags;
-use iota_stronghold::{Location, StrongholdResult};
 use std::path::Path;
 use std::time::Duration;
-use identity_core::convert::ToJson;
 
 use crate::stronghold::error::IotaStrongholdResult;
 use crate::stronghold::{Context, StrongholdError};
@@ -71,7 +70,7 @@ impl Store<'_> {
     T: Into<Vec<u8>>,
   {
     let location = location.vault_path().to_vec();
-    let a = Context::scope(self.path, &self.name, &self.flags)
+    let _a = Context::scope(self.path, &self.name, &self.flags)
       .await?
       .write_to_store(location, payload.into(), ttl)
       .await?;
@@ -79,10 +78,10 @@ impl Store<'_> {
   }
 
   /// Removes a record.
-  pub async fn del(&self, location: Vec<u8>) -> IotaStrongholdResult<()> {
+  pub async fn del(&self, location: Location) -> IotaStrongholdResult<()> {
     Context::scope(self.path, &self.name, &self.flags)
       .await?
-      .delete_from_store(location)
+      .delete_from_store(location.vault_path().to_vec())
       .await?;
     Ok(())
   }
