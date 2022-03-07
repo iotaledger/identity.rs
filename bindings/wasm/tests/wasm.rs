@@ -4,7 +4,7 @@
 use std::borrow::Cow;
 
 use identity::core::Timestamp;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;

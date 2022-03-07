@@ -57,6 +57,6 @@ stronghold = [
   "stronghold_engine",
   "actix",
   "tokio/rt-multi-thread",
-  "futures"
+  "futures",
 ]
-default = ["async", "stronghold"]
+default=["async", "stronghold"]

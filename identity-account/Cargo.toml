@@ -12,8 +12,8 @@ description = "Secure storage for Decentralized Identifiers and Verifiable Crede
 
 [dependencies]
 identity-account-core = { version = "=0.5.0-dev.4", path = "../identity-account-core", default-features = false }
-identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
 identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }
+identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
 identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
 identity-iota = { version = "=0.5.0-dev.4", path = "../identity-iota", default-features = false }
 identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
@@ -28,7 +28,6 @@ zeroize = { version = "1.4", optional = true }
 version = "0.7"
 features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
-
 [dev-dependencies]
 futures = { version = "0.3" }
 rand = { version = "0.8" }
@@ -39,4 +38,4 @@ tokio = { version = "1.5", features = ["macros", "rt", "rt-multi-thread", "sync"
 mem-client = []
 stronghold = ["identity-account-core/stronghold", "zeroize"]
 async = ["identity-iota/async", "identity-iota-core/async"]
-default = ["stronghold", "async"]
+default = ["async", "stronghold"]
