@@ -17,8 +17,8 @@ use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::chain::DiffChainHistory;
