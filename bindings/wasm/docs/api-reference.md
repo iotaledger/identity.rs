@@ -1,23 +1,6 @@
 ## Classes
 
 <dl>
-<dt><a href="#Account">Account</a></dt>
-<dd><p>An account manages one identity.</p>
-<p>It handles private keys, writing to storage and
-publishing to the Tangle.</p>
-</dd>
-<dt><a href="#AccountBuilder">AccountBuilder</a></dt>
-<dd><p>An [<code>Account</code>] builder for easy account configuration.</p>
-<p>To reduce memory usage, accounts created from the same builder share the same <code>Storage</code>
-used to store identities, and the same <a href="#Client">Client</a> used to publish identities to the Tangle.</p>
-<p>The configuration on the other hand is cloned, and therefore unique for each built account.
-This means a builder can be reconfigured in-between account creations, without affecting
-the configuration of previously built accounts.</p>
-</dd>
-<dt><a href="#AutoSave">AutoSave</a></dt>
-<dd></dd>
-<dt><a href="#ChainState">ChainState</a></dt>
-<dd></dd>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#Config">Config</a></dt>
@@ -45,35 +28,23 @@ the configuration of previously built accounts.</p>
 <dt><a href="#Duration">Duration</a></dt>
 <dd><p>A span of time.</p>
 </dd>
-<dt><a href="#Ed25519">Ed25519</a></dt>
-<dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
-<dd></dd>
-<dt><a href="#Generation">Generation</a></dt>
-<dd></dd>
-<dt><a href="#IdentityState">IdentityState</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
-<dd></dd>
-<dt><a href="#KeyLocation">KeyLocation</a></dt>
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
-<dt><a href="#MethodSecret">MethodSecret</a></dt>
-<dd></dd>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
-<dd></dd>
-<dt><a href="#PrivateKey">PrivateKey</a></dt>
 <dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <code>Signature</code>.</p>
@@ -95,8 +66,6 @@ merged with one or more <code>DiffMessages</code>.</p>
 with a DID subject.</p>
 <p>See: <a href="https://www.w3.org/TR/did-core/#services">https://www.w3.org/TR/did-core/#services</a></p>
 </dd>
-<dt><a href="#Signature">Signature</a></dt>
-<dd></dd>
 <dt><a href="#SignatureOptions">SignatureOptions</a></dt>
 <dd><p>Holds additional options for creating signatures.
 See <code>ISignatureOptions</code>.</p>
@@ -114,13 +83,13 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 </dl>
 
@@ -131,373 +100,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
-
-<a name="Account"></a>
-
-## Account
-An account manages one identity.
-
-It handles private keys, writing to storage and
-publishing to the Tangle.
-
-**Kind**: global class  
-
-* [Account](#Account)
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
-    * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
-    * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.document()](#Account+document) ⇒ [<code>Document</code>](#Document)
-    * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.publish(publish_options)](#Account+publish) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createSignedCredential(fragment, credential, signature_options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
-    * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
-    * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-    * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
-
-<a name="Account+did"></a>
-
-### account.did() ⇒ [<code>DID</code>](#DID)
-Returns the [DID](#DID) of the managed identity.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+autopublish"></a>
-
-### account.autopublish() ⇒ <code>boolean</code>
-Returns whether auto-publish is enabled.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+autosave"></a>
-
-### account.autosave() ⇒ [<code>AutoSave</code>](#AutoSave)
-Returns the auto-save configuration value.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+document"></a>
-
-### account.document() ⇒ [<code>Document</code>](#Document)
-Returns a copy of the document managed by the `Account`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+resolveIdentity"></a>
-
-### account.resolveIdentity() ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-Resolves the DID Document associated with this `Account` from the Tangle.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteIdentity"></a>
-
-### account.deleteIdentity() ⇒ <code>Promise.&lt;void&gt;</code>
-Removes the identity from the local storage entirely.
-
-Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+publish"></a>
-
-### account.publish(publish_options) ⇒ <code>Promise.&lt;void&gt;</code>
-Push all unpublished changes to the tangle in a single message.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| publish_options | <code>PublishOptions</code> \| <code>undefined</code> | 
-
-<a name="Account+createSignedCredential"></a>
-
-### account.createSignedCredential(fragment, credential, signature_options) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
-Signs a [Credential](#Credential) with the key specified by `fragment`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| credential | [<code>Credential</code>](#Credential) | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
-
-<a name="Account+createSignedDocument"></a>
-
-### account.createSignedDocument(fragment, document, signature_options) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
-Signs a [Document](#Document) with the key specified by `fragment`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| document | [<code>Document</code>](#Document) | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
-
-<a name="Account+createSignedPresentation"></a>
-
-### account.createSignedPresentation(fragment, presentation, signature_options) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-Signs a [Presentation](#Presentation) the key specified by `fragment`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| presentation | [<code>Presentation</code>](#Presentation) | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
-
-<a name="Account+createSignedData"></a>
-
-### account.createSignedData(fragment, data, signature_options) ⇒ <code>Promise.&lt;void&gt;</code>
-Signs arbitrary `data` with the key specified by `fragment`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| data | <code>any</code> | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
-
-<a name="Account+updateDocumentUnchecked"></a>
-
-### account.updateDocumentUnchecked(document) ⇒ <code>Promise.&lt;void&gt;</code>
-Overwrites the [Document](#Document) this account manages, **without doing any validation**.
-
-### WARNING
-
-This method is dangerous and can easily corrupt the internal state,
-potentially making the identity unusable. Only call this if you fully
-understand the implications!
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| document | [<code>Document</code>](#Document) | 
-
-<a name="Account+fetchState"></a>
-
-### account.fetchState() ⇒ <code>Promise.&lt;void&gt;</code>
-Fetches the latest changes from the tangle and **overwrites** the local document.
-
-If a DID is managed from distributed accounts, this should be called before making changes
-to the identity, to avoid publishing updates that would be ignored.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
-
-<a name="AccountBuilder"></a>
-
-## AccountBuilder
-An [`Account`] builder for easy account configuration.
-
-To reduce memory usage, accounts created from the same builder share the same `Storage`
-used to store identities, and the same [Client](#Client) used to publish identities to the Tangle.
-
-The configuration on the other hand is cloned, and therefore unique for each built account.
-This means a builder can be reconfigured in-between account creations, without affecting
-the configuration of previously built accounts.
-
-**Kind**: global class  
-
-* [AccountBuilder](#AccountBuilder)
-    * [new AccountBuilder(options)](#new_AccountBuilder_new)
-    * [.loadIdentity(did)](#AccountBuilder+loadIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-    * [.createIdentity(identity_setup)](#AccountBuilder+createIdentity) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-
-<a name="new_AccountBuilder_new"></a>
-
-### new AccountBuilder(options)
-Creates a new `AccountBuilder`.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>AccountBuilderOptions</code> \| <code>undefined</code> | 
-
-<a name="AccountBuilder+loadIdentity"></a>
-
-### accountBuilder.loadIdentity(did) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-Loads an existing identity with the specified `did` using the current builder configuration.
-The identity must exist in the configured `Storage`.
-
-**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-
-<a name="AccountBuilder+createIdentity"></a>
-
-### accountBuilder.createIdentity(identity_setup) ⇒ [<code>Promise.&lt;Account&gt;</code>](#Account)
-Creates a new identity based on the builder configuration and returns
-an [Account](#Account) object to manage it.
-
-The identity is stored locally in the `Storage`. The DID network is automatically determined
-by the [Client](#Client) used to publish it.
-
-**Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
-**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
-
-| Param | Type |
-| --- | --- |
-| identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
-
-<a name="AutoSave"></a>
-
-## AutoSave
-**Kind**: global class  
-
-* [AutoSave](#AutoSave)
-    * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
-
-<a name="AutoSave.never"></a>
-
-### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
-Never save.
-
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
-<a name="AutoSave.every"></a>
-
-### AutoSave.every() ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every action.
-
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
-<a name="AutoSave.batch"></a>
-
-### AutoSave.batch(number_of_actions) ⇒ [<code>AutoSave</code>](#AutoSave)
-Save after every N actions.
-
-**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
-
-| Param | Type |
-| --- | --- |
-| number_of_actions | <code>number</code> | 
-
-<a name="ChainState"></a>
-
-## ChainState
-**Kind**: global class  
-
-* [ChainState](#ChainState)
-    * _instance_
-        * [.toJSON()](#ChainState+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#ChainState.fromJSON) ⇒ [<code>ChainState</code>](#ChainState)
-
-<a name="ChainState+toJSON"></a>
-
-### chainState.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>ChainState</code>](#ChainState)  
-<a name="ChainState.fromJSON"></a>
-
-### ChainState.fromJSON(json_value) ⇒ [<code>ChainState</code>](#ChainState)
-Deserializes a JSON object as `ChainState`.
-
-**Kind**: static method of [<code>ChainState</code>](#ChainState)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
 
 <a name="Client"></a>
 
@@ -968,7 +570,6 @@ Deserializes a `Credential` object from a JSON object.
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
-        * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
@@ -1056,17 +657,6 @@ Parses a `DID` from the input string.
 | Param | Type |
 | --- | --- |
 | input | <code>string</code> | 
-
-<a name="DID.fromJSON"></a>
-
-### DID.fromJSON(json_value) ⇒ [<code>DID</code>](#DID)
-Deserializes a JSON object as `DID`.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
 
 <a name="DIDUrl"></a>
 
@@ -1351,13 +941,24 @@ with the given Document.
         * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId)
         * [.metadataProof](#Document+metadataProof) ⇒ <code>any</code>
+        * [.setController(controllers)](#Document+setController)
+        * [.controller()](#Document+controller) ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+        * [.setAlsoKnownAs(urls)](#Document+setAlsoKnownAs)
+        * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#Document+setPropertyUnchecked)
+        * [.properties()](#Document+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
+        * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
+        * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -1372,6 +973,7 @@ with the given Document.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
+        * [.isSigningMethodType(method_type)](#Document.isSigningMethodType) ⇒ <code>boolean</code>
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
@@ -1474,10 +1076,75 @@ Sets the previous integration chain message id.
 Returns the `proof` object.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+setController"></a>
+
+### document.setController(controllers)
+Sets the controllers of the DID Document.
+
+Note: Duplicates will be ignored.
+Use `null` to remove all controllers.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| controllers | [<code>DID</code>](#DID) \| [<code>Array.&lt;DID&gt;</code>](#DID) \| <code>null</code> | 
+
+<a name="Document+controller"></a>
+
+### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+Returns a list of document controllers.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+setAlsoKnownAs"></a>
+
+### document.setAlsoKnownAs(urls)
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
+
+<a name="Document+alsoKnownAs"></a>
+
+### document.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a set of the document's `alsoKnownAs`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+setPropertyUnchecked"></a>
+
+### document.setPropertyUnchecked(key, value)
+Adds a custom property to the DID Document.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result in an invalid document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="Document+properties"></a>
+
+### document.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom DID Document properties.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+service"></a>
+
+### document.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
+Return a set of all [Services](#Service) in the document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertService"></a>
 
 ### document.insertService(service) ⇒ <code>boolean</code>
-Add a new `Service` to the document.
+Add a new [Service](#Service) to the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1488,7 +1155,7 @@ Add a new `Service` to the document.
 <a name="Document+removeService"></a>
 
 ### document.removeService(did)
-Remove a `Service` identified by the given `DIDUrl` from the document.
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1496,6 +1163,12 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
+<a name="Document+methods"></a>
+
+### document.methods() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope)
@@ -1530,11 +1203,23 @@ Throws an error if no signing method is present.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+resolveMethod"></a>
 
-### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### document.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Returns a copy of the first `VerificationMethod` with an `id` property
 matching the provided `query`.
 
 Throws an error if the method is not found.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
+<a name="Document+resolveSigningMethod"></a>
+
+### document.resolveSigningMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Attempts to resolve the given method query into a method capable of signing a document update.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1551,6 +1236,33 @@ Throws an error if the method is not found.
 | --- | --- |
 | query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | index | <code>number</code> | 
+
+<a name="Document+attachMethodRelationship"></a>
+
+### document.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+Attaches the relationship to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="Document+detachMethodRelationship"></a>
+
+### document.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| relationship | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
 
@@ -1735,6 +1447,17 @@ NOTE: the generated document is unsigned, see `Document::signSelf`.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.isSigningMethodType"></a>
+
+### Document.isSigningMethodType(method_type) ⇒ <code>boolean</code>
+Returns whether the given [MethodType](#MethodType) can be used to sign document updates.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| method_type | [<code>MethodType</code>](#MethodType) | 
 
 <a name="Document.verifyRootDocument"></a>
 
@@ -1948,22 +1671,6 @@ Create a new `Duration` with the given number of weeks.
 | --- | --- |
 | weeks | <code>number</code> | 
 
-<a name="Ed25519"></a>
-
-## Ed25519
-**Kind**: global class  
-<a name="Ed25519.sign"></a>
-
-### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
-Signs the given `message` with a base58 encoded `key`.
-
-**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>Uint8Array</code> | 
-| key | <code>string</code> | 
-
 <a name="ExplorerUrl"></a>
 
 ## ExplorerUrl
@@ -2035,66 +1742,6 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="Generation"></a>
-
-## Generation
-**Kind**: global class  
-
-* [Generation](#Generation)
-    * [new Generation()](#new_Generation_new)
-    * _instance_
-        * [.toUnsignedInteger()](#Generation+toUnsignedInteger) ⇒ <code>number</code>
-    * _static_
-        * [.fromUnsignedInteger(value)](#Generation.fromUnsignedInteger) ⇒ [<code>Generation</code>](#Generation)
-
-<a name="new_Generation_new"></a>
-
-### new Generation()
-Creates a new `WasmGeneration`.
-
-<a name="Generation+toUnsignedInteger"></a>
-
-### generation.toUnsignedInteger() ⇒ <code>number</code>
-Returns the `WasmGeneration` as a 32-bit integer.
-
-**Kind**: instance method of [<code>Generation</code>](#Generation)  
-<a name="Generation.fromUnsignedInteger"></a>
-
-### Generation.fromUnsignedInteger(value) ⇒ [<code>Generation</code>](#Generation)
-Creates a new `WasmGeneration` from a 32-bit integer.
-
-**Kind**: static method of [<code>Generation</code>](#Generation)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="IdentityState"></a>
-
-## IdentityState
-**Kind**: global class  
-
-* [IdentityState](#IdentityState)
-    * _instance_
-        * [.toJSON()](#IdentityState+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#IdentityState.fromJSON) ⇒ [<code>IdentityState</code>](#IdentityState)
-
-<a name="IdentityState+toJSON"></a>
-
-### identityState.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState.fromJSON"></a>
-
-### IdentityState.fromJSON(json_value) ⇒ [<code>IdentityState</code>](#IdentityState)
-Deserializes a JSON object as `IdentityState`.
-
-**Kind**: static method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -2252,73 +1899,6 @@ Deserializes a `KeyCollection` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="KeyLocation"></a>
-
-## KeyLocation
-**Kind**: global class  
-
-* [KeyLocation](#KeyLocation)
-    * [new KeyLocation(method, fragment, generation)](#new_KeyLocation_new)
-    * _instance_
-        * [.method](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.fragment](#KeyLocation+fragment) ⇒ <code>string</code>
-        * [.fragmentName](#KeyLocation+fragmentName) ⇒ <code>string</code>
-        * [.generation](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
-        * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-
-<a name="new_KeyLocation_new"></a>
-
-### new KeyLocation(method, fragment, generation)
-
-| Param | Type |
-| --- | --- |
-| method | [<code>MethodType</code>](#MethodType) | 
-| fragment | <code>string</code> | 
-| generation | [<code>Generation</code>](#Generation) | 
-
-<a name="KeyLocation+method"></a>
-
-### keyLocation.method ⇒ [<code>MethodType</code>](#MethodType)
-Returns the method type of the key location.
-
-**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+fragment"></a>
-
-### keyLocation.fragment ⇒ <code>string</code>
-Returns the fragment name of the key location.
-
-**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+fragmentName"></a>
-
-### keyLocation.fragmentName ⇒ <code>string</code>
-Returns the fragment name of the key location.
-
-**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+generation"></a>
-
-### keyLocation.generation ⇒ [<code>Generation</code>](#Generation)
-Returns the integration generation when this key was created.
-
-**Kind**: instance property of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+toJSON"></a>
-
-### keyLocation.toJSON() ⇒ <code>any</code>
-Serializes `Signature` as a JSON object.
-
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation.fromJSON"></a>
-
-### KeyLocation.fromJSON(json_value) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Deserializes a JSON object as `KeyLocation`.
-
-**Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
 <a name="KeyPair"></a>
 
 ## KeyPair
@@ -2460,37 +2040,6 @@ Deserializes a `MethodScope` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="MethodSecret"></a>
-
-## MethodSecret
-**Kind**: global class  
-
-* [MethodSecret](#MethodSecret)
-    * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-    * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-
-<a name="MethodSecret.ed25519Base58"></a>
-
-### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 private key.
-
-**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
-
-| Param | Type |
-| --- | --- |
-| private_key | <code>string</code> | 
-
-<a name="MethodSecret.merkleKeyCollection"></a>
-
-### MethodSecret.merkleKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollection).
-
-**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
-
-| Param | Type |
-| --- | --- |
-| collection | [<code>KeyCollection</code>](#KeyCollection) | 
-
 <a name="MethodType"></a>
 
 ## MethodType
@@ -2618,34 +2167,6 @@ Deserializes a `Presentation` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="PrivateKey"></a>
-
-## PrivateKey
-**Kind**: global class  
-
-* [PrivateKey](#PrivateKey)
-    * _instance_
-        * [.publicKey()](#PrivateKey+publicKey) ⇒ <code>string</code>
-    * _static_
-        * [.fromBase58String(private_key)](#PrivateKey.fromBase58String) ⇒ [<code>PrivateKey</code>](#PrivateKey)
-
-<a name="PrivateKey+publicKey"></a>
-
-### privateKey.publicKey() ⇒ <code>string</code>
-Returns a base58 encoded string that represents the PublicKey.
-
-**Kind**: instance method of [<code>PrivateKey</code>](#PrivateKey)  
-<a name="PrivateKey.fromBase58String"></a>
-
-### PrivateKey.fromBase58String(private_key) ⇒ [<code>PrivateKey</code>](#PrivateKey)
-Create a new `PrivateKey` from a base58 encoded string.
-
-**Kind**: static method of [<code>PrivateKey</code>](#PrivateKey)  
-
-| Param | Type |
-| --- | --- |
-| private_key | <code>string</code> | 
 
 <a name="ProofPurpose"></a>
 
@@ -3094,58 +2615,6 @@ Deserializes a `Service` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
-<a name="Signature"></a>
-
-## Signature
-**Kind**: global class  
-
-* [Signature](#Signature)
-    * [new Signature(pkey, data)](#new_Signature_new)
-    * _instance_
-        * [.pkey](#Signature+pkey) ⇒ <code>string</code>
-        * [.data](#Signature+data) ⇒ <code>Uint8Array</code>
-        * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
-
-<a name="new_Signature_new"></a>
-
-### new Signature(pkey, data)
-Creates a new `Signature`.
-
-
-| Param | Type |
-| --- | --- |
-| pkey | <code>string</code> | 
-| data | <code>Uint8Array</code> | 
-
-<a name="Signature+pkey"></a>
-
-### signature.pkey ⇒ <code>string</code>
-Returns the public key, encoded as a base58 string, used to verify this signature.
-
-**Kind**: instance property of [<code>Signature</code>](#Signature)  
-<a name="Signature+data"></a>
-
-### signature.data ⇒ <code>Uint8Array</code>
-Returns the signature data as a vec of bytes.
-
-**Kind**: instance property of [<code>Signature</code>](#Signature)  
-<a name="Signature+toJSON"></a>
-
-### signature.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>Signature</code>](#Signature)  
-<a name="Signature.fromJSON"></a>
-
-### Signature.fromJSON(json_value) ⇒ [<code>Signature</code>](#Signature)
-Deserializes a JSON object as `Signature`.
-
-**Kind**: static method of [<code>Signature</code>](#Signature)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
 <a name="SignatureOptions"></a>
 
 ## SignatureOptions
@@ -3386,10 +2855,6 @@ Throws an error if any of the options are invalid.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -3401,6 +2866,10 @@ Creates a new `VerifierOptions` with default options.
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="start"></a>
 

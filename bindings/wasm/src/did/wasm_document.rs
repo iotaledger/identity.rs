@@ -4,6 +4,10 @@
 use std::str::FromStr;
 
 use identity::core::decode_b58;
+use identity::core::OneOrMany;
+use identity::core::OneOrSet;
+use identity::core::OrderedSet;
+use identity::core::Url;
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
@@ -13,6 +17,7 @@ use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::Error;
+use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
@@ -24,16 +29,19 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::KeyPair;
 use crate::crypto::WasmSignatureOptions;
+use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocumentMetadata;
 use crate::did::WasmMethodScope;
+use crate::did::WasmMethodType;
 use crate::did::WasmService;
 use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use wasm_bindgen::JsCast;
 
 // =============================================================================
 // =============================================================================
@@ -77,6 +85,12 @@ impl WasmDocument {
       .wasm_result()
   }
 
+  /// Returns whether the given {@link MethodType} can be used to sign document updates.
+  #[wasm_bindgen(js_name = isSigningMethodType)]
+  pub fn is_signing_method_type(method_type: &WasmMethodType) -> bool {
+    IotaDocument::is_signing_method_type(method_type.0)
+  }
+
   // ===========================================================================
   // Properties
   // ===========================================================================
@@ -87,17 +101,122 @@ impl WasmDocument {
     WasmDID(self.0.id().clone())
   }
 
+  /// Sets the controllers of the DID Document.
+  ///
+  /// Note: Duplicates will be ignored.
+  /// Use `null` to remove all controllers.
+  #[wasm_bindgen(js_name = setController)]
+  pub fn set_controller(&mut self, controllers: &UOneOrManyDID) -> Result<()> {
+    let controllers: Option<OneOrMany<IotaDID>> = controllers.into_serde().wasm_result()?;
+    let controller_set: Option<OneOrSet<IotaDID>> = if let Some(controllers) = controllers.map(OneOrMany::into_vec) {
+      if controllers.is_empty() {
+        None
+      } else {
+        Some(OneOrSet::try_from(OrderedSet::from_iter(controllers)).wasm_result()?)
+      }
+    } else {
+      None
+    };
+    *self.0.controller_mut() = controller_set;
+    Ok(())
+  }
+
+  /// Returns a list of document controllers.
+  #[wasm_bindgen]
+  pub fn controller(&self) -> ArrayDID {
+    match self.0.controller() {
+      Some(controllers) => controllers
+        .iter()
+        .cloned()
+        .map(WasmDID::from)
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into::<ArrayDID>(),
+      None => js_sys::Array::new().unchecked_into::<ArrayDID>(),
+    }
+  }
+
+  /// Sets the `alsoKnownAs` property in the DID document.
+  #[wasm_bindgen(js_name = setAlsoKnownAs)]
+  pub fn set_also_known_as(&mut self, urls: &UOneOrManyUrl) -> Result<()> {
+    let urls: Option<OneOrMany<String>> = urls.into_serde().wasm_result()?;
+    let mut urls_set: OrderedSet<Url> = OrderedSet::new();
+    if let Some(urls) = urls {
+      for url in urls.into_vec() {
+        urls_set.append(Url::parse(url).wasm_result()?);
+      }
+    }
+    *self.0.also_known_as_mut() = urls_set;
+    Ok(())
+  }
+
+  /// Returns a set of the document's `alsoKnownAs`.
+  #[wasm_bindgen(js_name = alsoKnownAs)]
+  pub fn also_known_as(&self) -> ArrayString {
+    self
+      .0
+      .also_known_as()
+      .iter()
+      .map(|url| url.to_string())
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
+  }
+
+  /// Adds a custom property to the DID Document.
+  /// If the value is set to `null`, the custom property will be removed.
+  ///
+  /// ### WARNING
+  /// This method can overwrite existing properties like `id` and result in an invalid document.
+  #[wasm_bindgen(js_name = setPropertyUnchecked)]
+  pub fn set_property_unchecked(&mut self, key: String, value: &JsValue) -> Result<()> {
+    let value: Option<serde_json::Value> = value.into_serde().wasm_result()?;
+    match value {
+      Some(value) => {
+        self.0.properties_mut().insert(key, value);
+      }
+      None => {
+        self.0.properties_mut().remove(&key);
+      }
+    }
+    Ok(())
+  }
+
+  /// Returns a copy of the custom DID Document properties.
+  #[wasm_bindgen]
+  pub fn properties(&mut self) -> Result<MapStringAny> {
+    let properties_map = js_sys::Map::new();
+    for (key, value) in self.0.properties().iter() {
+      properties_map.set(&JsValue::from(key), &JsValue::from_serde(&value).wasm_result()?);
+    }
+    Ok(properties_map.unchecked_into::<MapStringAny>())
+  }
+
   // ===========================================================================
   // Services
   // ===========================================================================
 
-  /// Add a new `Service` to the document.
+  /// Return a set of all {@link Service Services} in the document.
+  #[wasm_bindgen]
+  pub fn service(&self) -> ArrayService {
+    self
+      .0
+      .service()
+      .iter()
+      .cloned()
+      .map(WasmService)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayService>()
+  }
+
+  /// Add a new {@link Service} to the document.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
     Ok(self.0.insert_service(service.0.clone()))
   }
 
-  /// Remove a `Service` identified by the given `DIDUrl` from the document.
+  /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_service(&did.0).wasm_result()
@@ -107,6 +226,18 @@ impl WasmDocument {
   // Verification Methods
   // ===========================================================================
 
+  /// Returns a list of all {@link VerificationMethod} in the DID Document.
+  #[wasm_bindgen]
+  pub fn methods(&self) -> ArrayVerificationMethods {
+    self
+      .0
+      .methods()
+      .cloned()
+      .map(WasmVerificationMethod::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayVerificationMethods>()
+  }
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: WasmMethodScope) -> Result<()> {
@@ -139,10 +270,26 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: Option<WasmMethodScope>) -> Result<WasmVerificationMethod> {
+    let method_query: String = query.into_serde().wasm_result()?;
+    let method: &IotaVerificationMethod = if let Some(scope) = scope {
+      self
+        .0
+        .resolve_method_with_scope(&method_query, scope.0)
+        .ok_or(identity::did::Error::MethodNotFound)
+        .wasm_result()?
+    } else {
+      self.0.try_resolve_method(&method_query).wasm_result()?
+    };
+    Ok(WasmVerificationMethod(method.clone()))
+  }
+
+  /// Attempts to resolve the given method query into a method capable of signing a document update.
+  #[wasm_bindgen(js_name = resolveSigningMethod)]
+  pub fn resolve_signing_method(&mut self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
     let method_query: String = query.into_serde().wasm_result()?;
     Ok(WasmVerificationMethod(
-      self.0.try_resolve_method(&method_query).wasm_result()?.clone(),
+      self.0.try_resolve_signing_method(&method_query).wasm_result()?.clone(),
     ))
   }
 
@@ -151,6 +298,35 @@ impl WasmDocument {
     let method_query: String = query.into_serde().wasm_result()?;
     let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
     method.revoke_merkle_key(index).wasm_result()
+  }
+
+  /// Attaches the relationship to the given method, if the method exists.
+  ///
+  /// Note: The method needs to be in the set of verification methods,
+  /// so it cannot be an embedded one.
+  #[wasm_bindgen(js_name = attachMethodRelationship)]
+  pub fn attach_method_relationship(
+    &mut self,
+    did_url: &WasmDIDUrl,
+    relationship: WasmMethodRelationship,
+  ) -> Result<bool> {
+    self
+      .0
+      .attach_method_relationship(&did_url.0, relationship.into())
+      .wasm_result()
+  }
+
+  /// Detaches the given relationship from the given method, if the method exists.
+  #[wasm_bindgen(js_name = detachMethodRelationship)]
+  pub fn detach_method_relationship(
+    &mut self,
+    did_url: &WasmDIDUrl,
+    relationship: WasmMethodRelationship,
+  ) -> Result<bool> {
+    self
+      .0
+      .detach_method_relationship(&did_url.0, relationship.into())
+      .wasm_result()
   }
 
   // ===========================================================================
@@ -501,4 +677,25 @@ impl From<WasmDocument> for IotaDocument {
 extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
   pub type UDIDUrlQuery;
+
+  #[wasm_bindgen(typescript_type = "string | string[] | null")]
+  pub type UOneOrManyUrl;
+
+  #[wasm_bindgen(typescript_type = "DID | DID[] | null")]
+  pub type UOneOrManyDID;
+
+  #[wasm_bindgen(typescript_type = "DID[]")]
+  pub type ArrayDID;
+
+  #[wasm_bindgen(typescript_type = "Service[]")]
+  pub type ArrayService;
+
+  #[wasm_bindgen(typescript_type = "Array<string>")]
+  pub type ArrayString;
+
+  #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
+  pub type ArrayVerificationMethods;
+
+  #[wasm_bindgen(typescript_type = "Map<string, any>")]
+  pub type MapStringAny;
 }
