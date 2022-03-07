@@ -116,7 +116,7 @@ pub struct PresentationRequest([u8; 2]);
 
 impl ActorRequest<Asynchronous> for PresentationRequest {
   type Response = ();
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_request")
   }
 }
@@ -126,7 +126,7 @@ pub struct PresentationOffer([u8; 3]);
 
 impl ActorRequest<Asynchronous> for PresentationOffer {
   type Response = ();
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_offer")
   }
 }
@@ -136,7 +136,7 @@ pub struct Presentation([u8; 4]);
 
 impl ActorRequest<Asynchronous> for Presentation {
   type Response = ();
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation")
   }
 }
@@ -146,7 +146,7 @@ pub struct PresentationResult([u8; 5]);
 
 impl ActorRequest<Asynchronous> for PresentationResult {
   type Response = ();
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("didcomm/presentation_result")
   }
 }

@@ -52,7 +52,7 @@ async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
   impl ActorRequest<Asynchronous> for AsyncDummy {
     type Response = ();
 
-    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
       std::borrow::Cow::Borrowed("unknown/thread")
     }
   }
@@ -79,7 +79,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
-    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
       std::borrow::Cow::Borrowed("request/test")
     }
   }
@@ -142,7 +142,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
-    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
       std::borrow::Cow::Borrowed("request/test")
     }
   }
@@ -194,7 +194,7 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   impl ActorRequest<Synchronous> for MessageRequest {
     type Response = MessageResponse;
 
-    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
       std::borrow::Cow::Borrowed("test/message")
     }
   }

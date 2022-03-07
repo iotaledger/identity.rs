@@ -53,7 +53,7 @@ where
 {
   type Response = ();
 
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-    self.body.request_name()
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    self.body.endpoint()
   }
 }

@@ -20,7 +20,7 @@ pub struct IdentityCreate(pub IdentitySetup);
 impl ActorRequest<Synchronous> for IdentityCreate {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("remote_account/create")
   }
 }
@@ -31,7 +31,7 @@ pub struct IdentityList;
 impl ActorRequest<Synchronous> for IdentityList {
   type Response = Vec<IotaDID>;
 
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("remote_account/list")
   }
 }
@@ -42,7 +42,7 @@ pub struct IdentityGet(pub IotaDID);
 impl ActorRequest<Synchronous> for IdentityGet {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
-  fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("remote_account/get")
   }
 }

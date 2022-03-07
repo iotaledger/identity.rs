@@ -54,7 +54,7 @@ pub(crate) mod private {
 pub trait ActorRequest<T: SyncMode>: Debug + Serialize + DeserializeOwned + Send + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
-  fn request_name<'cow>(&self) -> Cow<'cow, str>;
+  fn endpoint<'cow>(&self) -> Cow<'cow, str>;
 
   fn request_mode(&self) -> RequestMode {
     T::request_mode()
