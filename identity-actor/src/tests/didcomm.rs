@@ -250,7 +250,7 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
   })
   .await;
 
-  let (mut verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(DidCommState)
       .add_handler(

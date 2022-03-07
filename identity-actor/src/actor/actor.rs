@@ -90,7 +90,7 @@ impl Actor {
   }
 
   /// Returns the [`PeerId`] that other peers can securely identify this actor with.
-  pub fn peer_id(&mut self) -> PeerId {
+  pub fn peer_id(&self) -> PeerId {
     self.state.peer_id
   }
 
