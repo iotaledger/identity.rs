@@ -19,7 +19,7 @@
     "build:examples": "webpack --config ./examples/webpack.config.js --mode=production",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "prepublishOnly": "npm run build",
-    "example:node": "node --expose-gc examples/dist/node.js",
+    "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "test": "npm run test:unit && concurrently -g --timings \"npm:test:node\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --exit",

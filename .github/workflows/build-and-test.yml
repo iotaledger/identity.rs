@@ -208,7 +208,7 @@ jobs:
         with:
           node-version: 16.x
 
-      # Download a pre-compiled wasm-bindgen binary to use directly, since we cannot call wasm-pack with --weak-refs.
+      # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
         uses: jetli/wasm-bindgen-action@v0.1.0
 
