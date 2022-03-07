@@ -48,7 +48,7 @@ pub(crate) struct ActorState {
 /// Cloning an actor produces a shallow copy and is a relatively cheap operation.
 #[derive(Clone)]
 pub struct Actor {
-  pub commander: NetCommander,
+  pub(crate) commander: NetCommander,
   pub(crate) state: Arc<ActorState>,
 }
 
