@@ -27,9 +27,6 @@ pub enum StrongholdError {
   /// Caused by attempting to access a Stronghold snapshot without a password.
   #[error("Stronghold snapshot password not found")]
   StrongholdPasswordNotSet,
-  /// Caused by an internal panic in the Stronghold runtime.
-  #[error("Stronghold mutex poisoned: {0}")]
-  StrongholdMutexPoisoned(&'static str),
   /// Caused by errors from an invalid Stronghold procedure.
   #[error("Stronghold error: {0}")]
   StrongholdResult(String),

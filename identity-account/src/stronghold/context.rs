@@ -13,8 +13,10 @@ use once_cell::sync::Lazy;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::MutexGuard;
+// use std::sync::Mutex;
+use parking_lot::Mutex;
+use parking_lot::MutexGuard;
+// use std::sync::MutexGuard;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -38,7 +40,7 @@ pub struct Context {
 
 async fn clear_expired_passwords() -> Result<()> {
   let this: &'static Context = Context::get().await?;
-  let interval: Duration = *this.runtime.password_clear()?;
+  let interval: Duration = *this.runtime.password_clear();
 
   tokio::time::sleep(interval).await;
 
@@ -48,7 +50,7 @@ async fn clear_expired_passwords() -> Result<()> {
 
   let cleared: Vec<PathBuf> = this
     .runtime
-    .password_store()?
+    .password_store()
     .drain_filter(|_, (_, instant)| instant.elapsed() > interval)
     .map(|(path, _)| path)
     .collect();
@@ -373,13 +375,13 @@ impl Runtime {
   where
     T: FnMut(&Path, &SnapshotStatus) + Send + 'static,
   {
-    self.event_listeners()?.push(Listener(Box::new(listener)));
+    self.event_listeners().push(Listener(Box::new(listener)));
 
     Ok(())
   }
 
   fn emit(&self, path: &Path, status: SnapshotStatus) -> IotaStrongholdResult<()> {
-    for listener in self.event_listeners()?.iter_mut() {
+    for listener in self.event_listeners().iter_mut() {
       (listener.0)(path, &status);
     }
 
@@ -387,8 +389,8 @@ impl Runtime {
   }
 
   fn snapshot_status(&self, path: &Path) -> IotaStrongholdResult<SnapshotStatus> {
-    if let Some(elapsed) = self.password_elapsed(path)? {
-      let interval: Duration = *self.password_clear()?;
+    if let Some(elapsed) = self.password_elapsed(path) {
+      let interval: Duration = *self.password_clear();
       let locked: bool = interval.as_millis() > 0 && elapsed >= interval;
 
       if locked {
@@ -405,28 +407,26 @@ impl Runtime {
 
   fn password(&self, path: &Path) -> IotaStrongholdResult<Password> {
     self
-      .password_store()?
+      .password_store()
       .get(path)
       .map(|(password, _)| *password)
       .ok_or(StrongholdError::StrongholdPasswordNotSet)
   }
 
-  fn password_elapsed(&self, path: &Path) -> IotaStrongholdResult<Option<Duration>> {
-    self
-      .password_store()
-      .map(|store| store.get(path).map(|(_, interval)| interval.elapsed()))
+  fn password_elapsed(&self, path: &Path) -> Option<Duration> {
+    self.password_store().get(path).map(|(_, interval)| interval.elapsed())
   }
 
   fn set_password(&self, path: &Path, password: Password) -> IotaStrongholdResult<()> {
     self
-      .password_store()?
+      .password_store()
       .insert(path.to_path_buf(), (password, Instant::now()));
 
     Ok(())
   }
 
   fn set_password_access(&self, path: &Path) -> IotaStrongholdResult<()> {
-    if let Some((_, ref mut time)) = self.password_store()?.get_mut(path) {
+    if let Some((_, ref mut time)) = self.password_store().get_mut(path) {
       *time = Instant::now();
     } else {
       return Err(StrongholdError::StrongholdPasswordNotSet);
@@ -436,29 +436,20 @@ impl Runtime {
   }
 
   fn set_password_clear(&self, interval: Duration) -> IotaStrongholdResult<()> {
-    *self.password_clear()? = interval;
+    *self.password_clear() = interval;
 
     Ok(())
   }
 
-  fn event_listeners(&self) -> IotaStrongholdResult<MutexGuard<'_, Vec<Listener>>> {
-    self
-      .event_listeners
-      .lock()
-      .map_err(|_| StrongholdError::StrongholdMutexPoisoned("listeners"))
+  fn event_listeners(&self) -> MutexGuard<'_, Vec<Listener>> {
+    self.event_listeners.lock()
   }
 
-  fn password_store(&self) -> IotaStrongholdResult<MutexGuard<'_, PasswordMap>> {
-    self
-      .password_store
-      .lock()
-      .map_err(|_| StrongholdError::StrongholdMutexPoisoned("passwords"))
+  fn password_store(&self) -> MutexGuard<'_, PasswordMap> {
+    self.password_store.lock()
   }
 
-  fn password_clear(&self) -> IotaStrongholdResult<MutexGuard<'_, Duration>> {
-    self
-      .password_clear
-      .lock()
-      .map_err(|_| StrongholdError::StrongholdMutexPoisoned("passwords"))
+  fn password_clear(&self) -> MutexGuard<'_, Duration> {
+    self.password_clear.lock()
   }
 }
