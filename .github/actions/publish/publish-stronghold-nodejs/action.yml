@@ -1,5 +1,5 @@
-name: 'publish-wasm'
-description: 'Publishes Wasm bindings to npm'
+name: 'publish-stronghold-nodejs'
+description: 'Publishes stronghold nodejs bindings to npm'
 inputs:
   tag:
     description: 'Which npm tag to publish under e.g. `dev`, will default to `latest`'

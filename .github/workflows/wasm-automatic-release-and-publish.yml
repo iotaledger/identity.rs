@@ -61,7 +61,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Release to npm
-        uses: './.github/actions/publish/publish-stronghold-node'
+        uses: './.github/actions/publish/publish-stronghold-nodejs'
         with:
           npm-token: ${{ secrets.NPM_TOKEN }}
           tag: ${{ needs.call-create-release-workflow.outputs.is-dev-release && 'dev' }}
