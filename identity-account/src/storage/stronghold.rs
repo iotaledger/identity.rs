@@ -165,12 +165,7 @@ impl Storage for Stronghold {
 
     match data {
       None => return Ok(None),
-      Some(data) => {
-        if data.is_empty() {
-          return Ok(None);
-        }
-        Ok(Some(ChainState::from_json_slice(&data)?))
-      }
+      Some(data) => Ok(Some(ChainState::from_json_slice(&data)?)),
     }
   }
 
@@ -194,10 +189,7 @@ impl Storage for Stronghold {
 
     match data {
       None => return Ok(None),
-      Some(data) => {
-        // Deserialize and return
-        Ok(Some(IdentityState::from_json_slice(&data)?))
-      }
+      Some(data) => Ok(Some(IdentityState::from_json_slice(&data)?)),
     }
   }
 
