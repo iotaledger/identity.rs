@@ -30,7 +30,7 @@ runs:
       if: ${{inputs.release-target == 'rust'}}
       with:
         command: install
-        args: -f --no-default-features --features "add" --version ^0.8 cargo-edit
+        args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
 
     - name: Replace identity version in Wasm bindings
       shell: bash
@@ -62,7 +62,7 @@ runs:
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/stronghold-nodejs
       run: |
-        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+        cargo set-version ${{ inputs.version }}
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
