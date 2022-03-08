@@ -8,8 +8,8 @@ use super::WasmSubjectHolderRelationship;
 use crate::common::WasmTimestamp;
 use crate::common::WasmUrl;
 use crate::credential::validation_options::WasmFailFast;
-use crate::did::ArrayResolvedDocument;
-use crate::did::WasmResolvedDocument;
+use crate::did::ArrayDocumentOrArrayResolvedDocument;
+use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -51,11 +51,12 @@ impl WasmCredentialValidator {
   #[wasm_bindgen]
   pub fn validate(
     credential: &WasmCredential,
-    issuer: &WasmResolvedDocument,
+    issuer: &DocumentOrResolvedDocument,
     options: &WasmCredentialValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    CredentialValidator::validate(&credential.0, &issuer.0, &options.0, fail_fast.into()).wasm_result()
+    let issuer_doc: ResolvedIotaDocument = issuer.into_serde().wasm_result()?;
+    CredentialValidator::validate(&credential.0, &issuer_doc, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Validates the semantic structure of the `Credential`.
@@ -94,7 +95,7 @@ impl WasmCredentialValidator {
   #[wasm_bindgen(js_name = verifySignature)]
   pub fn verify_signature(
     credential: &WasmCredential,
-    trusted_issuers: &ArrayResolvedDocument,
+    trusted_issuers: &ArrayDocumentOrArrayResolvedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
     let trusted_issuers: Vec<ResolvedIotaDocument> = trusted_issuers.into_serde().wasm_result()?;

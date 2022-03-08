@@ -636,6 +636,15 @@ The following properties are validated according to `options`:
 - The semantic structure.
 
 ### Warning
+The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
+trusted. This section contains more information on additional checks that should be carried out before and after
+calling this method.
+
+#### The state of the issuer's DID Document
+The caller must ensure that `issuer` represents an up-to-date DID Document. The convenience method
+`Resolver::resolveCredentialIssuer` can help extract the latest available state of the issuer's DID Document.
+
+#### Properties that are not validated
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
 `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
@@ -648,7 +657,7 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| issuer | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| issuer | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 | options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -695,6 +704,8 @@ Validate that the credential is issued on or before the specified timestamp.
 ### CredentialValidator.verifySignature(credential, trusted_issuers, options)
 Verify the signature using the DID Document of a trusted issuer.
 
+# Warning
+The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
 ### Errors
 This method immediately returns an error if
 the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
@@ -705,7 +716,7 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trusted_issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trusted_issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="CredentialValidator.check_subject_holder_relationship"></a>
@@ -2286,6 +2297,16 @@ The following properties are validated according to `options`:
 `CredentialValidator::validate`).
 
 ### Warning
+The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
+trusted. This section contains more information on additional checks that should be carried out before and after
+calling this method.
+
+#### The state of the supplied DID Documents.
+The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
+`Resolver::resolve_presentation_holder` and `Resolver::resolve_presentation_issuers`
+can help extract the latest available states of these DID Documents.
+
+#### Properties that are not validated
  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
 `credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
 These should be manually checked after validation, according to your requirements.
@@ -2298,8 +2319,8 @@ An error is returned whenever a validated condition is not satisfied.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
-| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -2307,6 +2328,9 @@ An error is returned whenever a validated condition is not satisfied.
 
 ### PresentationValidator.verifyPresentationSignature(presentation, holder, options)
 Verify the presentation's signature using the resolved document of the holder.
+
+### Warning
+The caller must ensure that the DID Document of the holder is up-to-date.
 
 ### Errors
 Fails if the `holder` does not match the `presentation`'s holder property.
@@ -2317,7 +2341,7 @@ Fails if signature verification against the holder document fails.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="PresentationValidator.checkStructure"></a>
@@ -2558,7 +2582,6 @@ Deserializes a `Document` object from a JSON object.
     * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
     * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.verifyCredential(credential, options, fail_fast, issuer)](#Resolver+verifyCredential) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="new_Resolver_new"></a>
@@ -2660,63 +2683,20 @@ Errors if the holder URL is missing, is not a valid `DID`, or document resolutio
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
-<a name="Resolver+verifyCredential"></a>
-
-### resolver.verifyCredential(credential, options, fail_fast, issuer) ⇒ <code>Promise.&lt;void&gt;</code>
-Verifies a `Credential`.
-
-This method resolves the issuer's DID Document and validates the following properties in accordance
-with the given `options`:
-- the semantic structure of the credential,
-- the issuer's signature,
-- the expiration date,
-- the issuance date.
-
-If you already have an up to date version of the issuer's resolved DID Document you may want to use
-`CredentialValidator::validate` in order to avoid an unnecessary resolution.
-
-### Warning
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-These should be manually checked after validation, according to your requirements.
-
-### Resolution
-If `issuer` is null then this  DID Document will be resolved. If you already have up to
-an up to date version of this document you may want to instead use `CredentialValidator::validate`.
-
-### Errors
-Errors from resolving the issuer DID Document will be returned immediately.
-Otherwise, errors from credential validation will be returned according to the `fail_fast` parameter.
-
-**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
-| fail_fast | <code>number</code> | 
-| issuer | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>null</code> | 
-
 <a name="Resolver+verifyPresentation"></a>
 
 ### resolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
 Verifies a `Presentation`.
 
-This method validates the following properties in accordance with `options`
-- The holder's signature,
-- The relationship between the holder and the credential subjects,
-- The semantic structure of the presentation,
-- Some properties of the credentials (see `CredentialValidator::validate` for more information).
-
-### Warning
- There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
-`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
-These should be manually checked after validation, according to your requirements.
+### Important
+See `PresentationValidator::validate` for information about which properties get
+validated and what is expected of the optional arguments `holder` and `issuer`.
 
 ### Resolution
-If `holder` and/or `issuers` is null then this/these DID Document(s) will be resolved. If you already have up to
-date versions of all of these DID Documents you may want to instead use
-`PresentationValidator::validate`.
+The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+If you already have up-to-date versions of these DID Documents, you may want
+to use `PresentationValidator::validate`.
+See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
 
 ### Errors
 Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.

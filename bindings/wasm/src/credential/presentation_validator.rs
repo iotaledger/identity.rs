@@ -4,8 +4,8 @@
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayResolvedDocument;
-use crate::did::WasmResolvedDocument;
+use crate::did::ArrayDocumentOrArrayResolvedDocument;
+use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -48,13 +48,14 @@ impl WasmPresentationValidator {
   #[wasm_bindgen]
   pub fn validate(
     presentation: &WasmPresentation,
-    holder: &WasmResolvedDocument,
-    issuers: &ArrayResolvedDocument,
+    holder: &DocumentOrResolvedDocument,
+    issuers: &ArrayDocumentOrArrayResolvedDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
+    let holder: ResolvedIotaDocument = holder.into_serde().wasm_result()?;
     let issuers: Vec<ResolvedIotaDocument> = issuers.into_serde().wasm_result()?;
-    PresentationValidator::validate(&presentation.0, &holder.0, &issuers, &options.0, fail_fast.into()).wasm_result()
+    PresentationValidator::validate(&presentation.0, &holder, &issuers, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Verify the presentation's signature using the resolved document of the holder.
@@ -68,10 +69,11 @@ impl WasmPresentationValidator {
   #[wasm_bindgen(js_name = verifyPresentationSignature)]
   pub fn verify_presentation_signature(
     presentation: &WasmPresentation,
-    holder: &WasmResolvedDocument,
+    holder: &DocumentOrResolvedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    PresentationValidator::verify_presentation_signature(&presentation.0, &holder.0, &options.0).wasm_result()
+    let holder: ResolvedIotaDocument = holder.into_serde().wasm_result()?;
+    PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 
   /// Validates the semantic structure of the `Presentation`.

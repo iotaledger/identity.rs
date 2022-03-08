@@ -26,8 +26,16 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Array<ResolvedDocument>>")]
   pub type PromiseArrayResolvedDocument;
 
+  // Workaround for (current) lack of array support in wasm-bindgen
   #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
   pub type ArrayResolvedDocument;
+
+  // Workaround for (current) lack of generics in wasm-bindgen
+  #[wasm_bindgen(typescript_type = "Document | ResolvedDocument")]
+  pub type DocumentOrResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<Document> | Array<ResolvedDocument>")]
+  pub type ArrayDocumentOrArrayResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = ResolvedDocument)]
