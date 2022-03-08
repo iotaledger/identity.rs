@@ -192,7 +192,7 @@ fn test_document_resolve_method() {
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(default_method.id()).unchecked_into())
+      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
       .unwrap()
       .id()
       .to_string(),
@@ -200,7 +200,7 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(method_new.id()).unchecked_into())
+      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
       .unwrap()
       .id()
       .to_string(),
@@ -210,7 +210,10 @@ fn test_document_resolve_method() {
   // Resolve with string method query.
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&default_method.id().to_string()).unchecked_into())
+      .resolve_method(
+        &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
+        None
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -218,7 +221,7 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into())
+      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
       .unwrap()
       .id()
       .to_string(),
@@ -228,7 +231,10 @@ fn test_document_resolve_method() {
   // Resolve with string fragment method query.
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into())
+      .resolve_method(
+        &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
+        None
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -236,7 +242,10 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into())
+      .resolve_method(
+        &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
+        None
+      )
       .unwrap()
       .id()
       .to_string(),

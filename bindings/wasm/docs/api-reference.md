@@ -96,6 +96,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
@@ -1123,13 +1125,24 @@ with the given Document.
         * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.metadataPreviousMessageId](#Document+metadataPreviousMessageId)
         * [.metadataProof](#Document+metadataProof) ⇒ <code>any</code>
+        * [.setController(controllers)](#Document+setController)
+        * [.controller()](#Document+controller) ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+        * [.setAlsoKnownAs(urls)](#Document+setAlsoKnownAs)
+        * [.alsoKnownAs()](#Document+alsoKnownAs) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.setPropertyUnchecked(key, value)](#Document+setPropertyUnchecked)
+        * [.properties()](#Document+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
+        * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
+        * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
+        * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
         * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
@@ -1144,6 +1157,7 @@ with the given Document.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
+        * [.isSigningMethodType(method_type)](#Document.isSigningMethodType) ⇒ <code>boolean</code>
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
@@ -1246,10 +1260,75 @@ Sets the previous integration chain message id.
 Returns the `proof` object.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+setController"></a>
+
+### document.setController(controllers)
+Sets the controllers of the DID Document.
+
+Note: Duplicates will be ignored.
+Use `null` to remove all controllers.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| controllers | [<code>DID</code>](#DID) \| [<code>Array.&lt;DID&gt;</code>](#DID) \| <code>null</code> | 
+
+<a name="Document+controller"></a>
+
+### document.controller() ⇒ [<code>Array.&lt;DID&gt;</code>](#DID)
+Returns a list of document controllers.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+setAlsoKnownAs"></a>
+
+### document.setAlsoKnownAs(urls)
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| urls | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>null</code> | 
+
+<a name="Document+alsoKnownAs"></a>
+
+### document.alsoKnownAs() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a set of the document's `alsoKnownAs`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+setPropertyUnchecked"></a>
+
+### document.setPropertyUnchecked(key, value)
+Adds a custom property to the DID Document.
+If the value is set to `null`, the custom property will be removed.
+
+### WARNING
+This method can overwrite existing properties like `id` and result in an invalid document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| key | <code>string</code> | 
+| value | <code>any</code> | 
+
+<a name="Document+properties"></a>
+
+### document.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the custom DID Document properties.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+service"></a>
+
+### document.service() ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
+Return a set of all [Services](#Service) in the document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertService"></a>
 
 ### document.insertService(service) ⇒ <code>boolean</code>
-Add a new `Service` to the document.
+Add a new [Service](#Service) to the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1260,7 +1339,7 @@ Add a new `Service` to the document.
 <a name="Document+removeService"></a>
 
 ### document.removeService(did)
-Remove a `Service` identified by the given `DIDUrl` from the document.
+Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1268,6 +1347,12 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
+<a name="Document+methods"></a>
+
+### document.methods() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
+Returns a list of all [VerificationMethod](#VerificationMethod) in the DID Document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope)
@@ -1302,11 +1387,23 @@ Throws an error if no signing method is present.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+resolveMethod"></a>
 
-### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### document.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Returns a copy of the first `VerificationMethod` with an `id` property
 matching the provided `query`.
 
 Throws an error if the method is not found.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
+| scope | [<code>MethodScope</code>](#MethodScope) \| <code>undefined</code> | 
+
+<a name="Document+resolveSigningMethod"></a>
+
+### document.resolveSigningMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Attempts to resolve the given method query into a method capable of signing a document update.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1323,6 +1420,33 @@ Throws an error if the method is not found.
 | --- | --- |
 | query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | index | <code>number</code> | 
+
+<a name="Document+attachMethodRelationship"></a>
+
+### document.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+Attaches the relationship to the given method, if the method exists.
+
+Note: The method needs to be in the set of verification methods,
+so it cannot be an embedded one.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| relationship | <code>number</code> | 
+
+<a name="Document+detachMethodRelationship"></a>
+
+### document.detachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did_url | [<code>DIDUrl</code>](#DIDUrl) | 
+| relationship | <code>number</code> | 
 
 <a name="Document+signSelf"></a>
 
@@ -1507,6 +1631,17 @@ NOTE: the generated document is unsigned, see `Document::signSelf`.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.isSigningMethodType"></a>
+
+### Document.isSigningMethodType(method_type) ⇒ <code>boolean</code>
+Returns whether the given [MethodType](#MethodType) can be used to sign document updates.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| method_type | [<code>MethodType</code>](#MethodType) | 
 
 <a name="Document.verifyRootDocument"></a>
 
@@ -3148,6 +3283,10 @@ Deserializes a `VerifierOptions` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
