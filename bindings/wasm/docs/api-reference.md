@@ -98,9 +98,9 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -3287,13 +3287,13 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## MethodRelationship
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="Digest"></a>
 
