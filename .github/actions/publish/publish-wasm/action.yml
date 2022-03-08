@@ -30,5 +30,5 @@ runs:
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
       # will publish 'latest' tag if no tag is passed
-      run: echo npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
+      run: npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
       working-directory: bindings/wasm

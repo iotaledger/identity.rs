@@ -1,6 +1,7 @@
 name: Shared / Build Wasm
 
-# TODO
+# This workflow builds and optionally unit tests the wasm bindings.
+# It outputs build artifacts used for publishing and building in the 'shared-build-and-test-stronghold-nodejs' workflow.
 
 on:
   workflow_call:

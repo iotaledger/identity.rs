@@ -1,5 +1,5 @@
 {
-  "name": "identity-stronghold-nodejs",
+  "name": "@iota/identity-stronghold-nodejs",
   "version": "0.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
