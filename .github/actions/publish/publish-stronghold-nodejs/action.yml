@@ -29,7 +29,9 @@ runs:
     - name: Create npm folder
       shell: sh
       working-directory: bindings/stronghold-nodejs
-      run: npm run create-npm-dir
+      run: |
+        rm -rf artifacts/identity-wasm-bindings-build
+        npm run create-npm-dir
 
     - name: Move artifacts
       shell: sh
