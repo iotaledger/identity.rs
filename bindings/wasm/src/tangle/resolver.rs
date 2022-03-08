@@ -29,7 +29,7 @@ use crate::did::UWasmDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Config;
+use crate::tangle::WasmClientConfig;
 use crate::tangle::WasmClient;
 
 #[wasm_bindgen(js_name = Resolver)]
@@ -246,7 +246,7 @@ impl WasmResolverBuilder {
   ///
   /// NOTE: replaces any previous `Client` or `Config` with the same network name.
   #[wasm_bindgen(js_name = clientConfig)]
-  pub fn client_config(mut self, mut config: Config) -> Result<WasmResolverBuilder> {
+  pub fn client_config(mut self, mut config: WasmClientConfig) -> Result<WasmResolverBuilder> {
     self.0 = self.0.client_builder(config.take_builder()?);
     Ok(self)
   }

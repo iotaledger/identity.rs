@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::ClientBuilder;
+use identity::iota::{ClientBuilder, Network};
 use std::time::Duration;
 use wasm_bindgen::prelude::*;
 
@@ -18,14 +18,14 @@ fn to_basic_auth<'a>(username: &'a Option<String>, password: &'a Option<String>)
 }
 
 /// Options to configure a new {@link Client}.
-#[wasm_bindgen]
-#[derive(Debug)]
-pub struct Config {
+#[wasm_bindgen(js_name = ClientConfig)]
+pub struct WasmClientConfig {
   pub(crate) builder: Option<ClientBuilder>,
 }
 
-#[wasm_bindgen]
-impl Config {
+// #[allow(clippy::new_without_default)]
+#[wasm_bindgen(js_class = ClientConfig)]
+impl WasmClientConfig {
   /// Creates a new `Config`.
   #[wasm_bindgen(constructor)]
   pub fn new() -> Self {
@@ -36,7 +36,7 @@ impl Config {
 
   /// Creates a new `Config` for the given IOTA Tangle network.
   #[wasm_bindgen(js_name = fromNetwork)]
-  pub fn from_network(network: &WasmNetwork) -> Result<Config, JsValue> {
+  pub fn from_network(network: &WasmNetwork) -> Result<WasmClientConfig, JsValue> {
     let mut this: Self = Self::new();
     this.set_network(network)?;
     Ok(this)
@@ -197,8 +197,82 @@ impl Config {
   }
 }
 
-impl Default for Config {
-  fn default() -> Self {
-    Self::new()
-  }
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "IClientConfig")]
+  pub type IClientConfig;
 }
+
+/// IOTA node details with optional authentication.
+struct NodeAuth {
+  url: string,
+  jwt: Option<String>,
+  username: Option<String>,
+  password: Option<String>,
+}
+
+struct ClientConfigDAO {
+  network: Network,
+
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_NODE_AUTH: &'static str = r#"
+/** IOTA node details with optional authentication. */
+interface INodeAuth {
+    readonly url: string;
+    readonly jwt?: string;
+    readonly username?: string;
+    readonly password?: string;
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_CLIENT_CONFIG: &'static str = r#"
+/** {@link ClientConfig} options. */
+interface IClientConfig {
+    /** Sets the IOTA Tangle network. */
+    readonly network?: Network;
+
+    /** Sets the DID message encoding used when publishing to the Tangle. */
+    readonly encoding?: DIDMessageEncoding;
+
+    /** Adds a list of IOTA nodes to use by their URLs. */
+    readonly nodes?: string[];
+
+    /** Sets an IOTA node by its URL to be used as primary node. */
+    readonly primaryNode?: INodeAuth;
+
+    /** Adds a list of IOTA nodes to be used by their URLs. */
+    readonly nodeAuth?: INodeAuth[];
+
+    /** Sets the node sync interval in seconds. */
+    readonly nodeSyncInterval?: number;
+
+    /** Disables the node sync process. */
+    readonly nodeSyncDisabled?: boolean;
+
+    /** Enables/disables quorum. */
+    readonly quorum?: boolean;
+
+    /** Sets the number of nodes used for quorum. */
+    readonly quorumSize?: number;
+
+    /** Sets the quorum threshold. */
+    readonly quorumThreshold?: number;
+
+    /** Sets whether proof-of-work (PoW) is performed locally or remotely.
+     * Default: false.
+     */
+    readonly localPoW?: boolean;
+
+    /** Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
+     *  Default: true.
+     */
+    readonly fallbackToLocalPoW?: boolean;
+
+    /** Sets the number of seconds that new tips will be requested during PoW. */
+    readonly tipsInterval?: number;
+
+    /** Sets the default request timeout. */
+    readonly requestTimeout?: number;
+}"#;
