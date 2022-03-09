@@ -41,25 +41,22 @@ pub async fn create_vc() -> Result<String> {
 
   println!("Credential JSON > {:#}", credential);
 
-  // Before passing this credential on the issuer wants to validate that some properties
+  // Before sending this credential to the holder the issuer wants to validate that some properties
   // of the credential satisfy their expectations.
-  // In order to validate a credential the issuer's DID Document needs to be resolved.
-  // Since the issuer wants to issue and verify several credentials without publishing updates to their DID Document
-  // the issuer decides to resolve their DID Document up front now so they can re-use it.
 
-  let resolver: Resolver = Resolver::new().await?;
-  let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve(issuer_doc.id()).await?;
+
   // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
   // that the issuance date is not in the future and that the expiration date is not in the past:
   CredentialValidator::validate(
     &credential,
-    resolved_issuer_doc.as_ref(),
+    &issuer_doc,
     &CredentialValidationOptions::default(),
     FailFast::FirstError,
   )?;
+
   // The issuer is now sure that the credential they are about to issue satisfies their expectations.
-  // Hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
-  // This means that the credential is NOT published to the tangle where it can be accessed by anyone.
+  // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
+  // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
   let credential_json: String = credential.to_json()?;
 
   Ok(credential_json)

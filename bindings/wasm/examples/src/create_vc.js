@@ -42,7 +42,7 @@ async function createVC(clientConfig) {
         private: issuer.newKey.private,
     }, SignatureOptions.default());
 
-    // Before passing this credential on the issuer wants to validate that some properties
+    // Before sending this credential to the holder the issuer wants to validate that some properties
     // of the credential satisfy their expectations.
 
 
@@ -58,10 +58,9 @@ async function createVC(clientConfig) {
     // Since `validate` did not throw any errors we know that the credential was successfully validated
     console.log(`VC successfully validated`);
 
-    // The issuer is now sure that the credential they are about to issue satisfies their expectations
-    // hence the credential is now serialized to JSON before passing it to the subject in a secure manner.
-    // This means that the credential is NOT published to the tangle where it can be accessed by anyone
-
+    // The issuer is now sure that the credential they are about to issue satisfies their expectations.
+    // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
+    // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
     const credentialJSON = signedVc.toJSON();
     return {alice, issuer, credentialJSON};
 }
