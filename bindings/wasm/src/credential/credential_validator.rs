@@ -6,13 +6,13 @@ use super::WasmCredentialValidationOptions;
 use super::WasmSubjectHolderRelationship;
 
 use crate::common::WasmTimestamp;
-use crate::common::WasmUrl;
 use crate::credential::validation_options::WasmFailFast;
 use crate::did::ArrayDocumentOrArrayResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
+use identity::core::Url;
 use identity::iota::CredentialValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::ValidationError;
@@ -102,12 +102,13 @@ impl WasmCredentialValidator {
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
-  /// `relationship`.
+  /// `relationship`. The `holder_url` parameter is expected to be the URL of the holder.
   pub fn check_subject_holder_relationship(
     credential: &WasmCredential,
-    holder: &WasmUrl,
+    holder_url: &str,
     relationship: WasmSubjectHolderRelationship,
   ) -> Result<()> {
-    CredentialValidator::check_subject_holder_relationship(&credential.0, &holder.0, relationship.into()).wasm_result()
+    let holder: Url = Url::parse(holder_url).wasm_result()?;
+    CredentialValidator::check_subject_holder_relationship(&credential.0, &holder, relationship.into()).wasm_result()
   }
 }
