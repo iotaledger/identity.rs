@@ -29,8 +29,8 @@ use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::tangle::IClientConfig;
 use crate::tangle::PromiseReceipt;
-use crate::tangle::WasmClientConfig;
 use crate::tangle::WasmNetwork;
 use crate::tangle::WasmReceipt;
 
@@ -51,8 +51,8 @@ impl WasmClient {
 
   /// Creates a new `Client` with settings from the given `Config`.
   #[wasm_bindgen(js_name = fromConfig)]
-  pub fn from_config(config: &mut WasmClientConfig) -> Result<PromiseClient> {
-    let builder: ClientBuilder = config.take_builder()?;
+  pub fn from_config(config: IClientConfig) -> Result<PromiseClient> {
+    let builder: ClientBuilder = ClientBuilder::try_from(config)?;
     let promise: Promise =
       future_to_promise(async move { builder.build().await.map(Self::from).map(Into::into).wasm_result() });
 

@@ -3,9 +3,6 @@
 <dl>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
-<dt><a href="#ClientConfig">ClientConfig</a></dt>
-<dd><p>Options to configure a new <a href="#Client">Client</a>.</p>
-</dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
@@ -264,7 +261,7 @@ Creates a new `Client` with settings from the given `Config`.
 
 | Param | Type |
 | --- | --- |
-| config | [<code>ClientConfig</code>](#ClientConfig) | 
+| config | <code>IClientConfig</code> | 
 
 <a name="Client.fromNetwork"></a>
 
@@ -276,22 +273,6 @@ Creates a new `Client` with default settings for the given `Network`.
 | Param | Type |
 | --- | --- |
 | network | [<code>Network</code>](#Network) | 
-
-<a name="ClientConfig"></a>
-
-## ClientConfig
-Options to configure a new [Client](#Client).
-
-**Kind**: global class  
-<a name="new_ClientConfig_new"></a>
-
-### new ClientConfig(config)
-Creates a new `Config`.
-
-
-| Param | Type |
-| --- | --- |
-| config | <code>IClientConfig</code> \| <code>undefined</code> | 
 
 <a name="Credential"></a>
 
@@ -2701,7 +2682,7 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 
 | Param | Type |
 | --- | --- |
-| config | [<code>ClientConfig</code>](#ClientConfig) | 
+| config | <code>IClientConfig</code> | 
 
 <a name="ResolverBuilder+build"></a>
 

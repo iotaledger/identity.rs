@@ -7,6 +7,7 @@ use std::rc::Rc;
 use futures::executor;
 use identity::core::Url;
 use identity::iota::Client;
+use identity::iota::ClientBuilder;
 use identity::iota::IotaDID;
 use identity::iota::NetworkName;
 use identity::iota::ResolvedIotaDocument;
@@ -31,8 +32,8 @@ use crate::did::UWasmDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
+use crate::tangle::IClientConfig;
 use crate::tangle::WasmClient;
-use crate::tangle::WasmClientConfig;
 
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(pub(crate) Rc<Resolver<Rc<Client>>>);
@@ -320,8 +321,8 @@ impl WasmResolverBuilder {
   ///
   /// NOTE: replaces any previous `Client` or `Config` with the same network name.
   #[wasm_bindgen(js_name = clientConfig)]
-  pub fn client_config(mut self, mut config: WasmClientConfig) -> Result<WasmResolverBuilder> {
-    self.0 = self.0.client_builder(config.take_builder()?);
+  pub fn client_config(mut self, config: IClientConfig) -> Result<WasmResolverBuilder> {
+    self.0 = self.0.client_builder(ClientBuilder::try_from(config)?);
     Ok(self)
   }
 

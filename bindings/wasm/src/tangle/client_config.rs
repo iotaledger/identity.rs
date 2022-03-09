@@ -8,26 +8,15 @@ use identity::iota::DIDMessageEncoding;
 use identity::iota::Network;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::WasmDIDMessageEncoding;
 
-/// Options to configure a new {@link Client}.
-#[wasm_bindgen(js_name = ClientConfig)]
-pub struct WasmClientConfig {
-  pub(crate) builder: Option<ClientBuilder>,
-}
+/// Try construct a `ClientBuilder` directly from an `IClientConfig` interface.
+impl TryFrom<IClientConfig> for ClientBuilder {
+  type Error = JsValue;
 
-#[wasm_bindgen(js_class = ClientConfig)]
-impl WasmClientConfig {
-  /// Creates a new `Config`.
-  #[wasm_bindgen(constructor)]
-  pub fn new(config: Option<IClientConfig>) -> Result<WasmClientConfig> {
-    let options: ConfigOptions = if let Some(config) = config {
-      config.into_serde::<ConfigOptions>().wasm_result()?
-    } else {
-      ConfigOptions::default()
-    };
+  fn try_from(config: IClientConfig) -> std::result::Result<Self, Self::Error> {
+    let options: ConfigOptions = config.into_serde::<ConfigOptions>().wasm_result()?;
 
     let mut builder: ClientBuilder = ClientBuilder::new();
     if let Some(network) = options.network {
@@ -106,11 +95,7 @@ impl WasmClientConfig {
       builder = builder.request_timeout(Duration::from_secs(u64::from(request_timeout)));
     }
 
-    Ok(Self { builder: Some(builder) })
-  }
-
-  pub(crate) fn take_builder(&mut self) -> Result<ClientBuilder> {
-    self.builder.take().ok_or_else(|| "Client Builder Consumed".into())
+    Ok(builder)
   }
 }
 
@@ -163,7 +148,7 @@ struct ConfigOptions {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_CLIENT_CONFIG: &'static str = r#"
-/** {@link ClientConfig} options. */
+/** {@link Client.fromClient} configuration options. */
 interface IClientConfig {
     /** Sets the IOTA Tangle network. */
     readonly network?: Network;
@@ -222,17 +207,19 @@ interface IClientConfig {
 mod tests {
   use identity::core::FromJson;
   use identity::core::Object;
+  use identity::iota::ClientBuilder;
   use identity::iota::DIDMessageEncoding;
   use identity::iota::Network;
+  use wasm_bindgen::JsCast;
   use wasm_bindgen::JsValue;
   use wasm_bindgen_test::*;
 
   use crate::tangle::client_config::ConfigOptions;
   use crate::tangle::client_config::NodeAuth;
+  use crate::tangle::IClientConfig;
 
-  #[wasm_bindgen_test]
-  fn test_client_config_serde() {
-    let json: JsValue = JsValue::from_serde(
+  fn mock_client_config_json() -> JsValue {
+    JsValue::from_serde(
       &Object::from_json(
         r#"{
       "network": "dev",
@@ -261,8 +248,18 @@ mod tests {
       )
       .unwrap(),
     )
-    .unwrap();
+    .unwrap()
+  }
 
+  #[wasm_bindgen_test]
+  fn test_client_config_try_from() {
+    let json: JsValue = mock_client_config_json();
+    let _client_builder: ClientBuilder = ClientBuilder::try_from(json.unchecked_into::<IClientConfig>()).unwrap();
+  }
+
+  #[wasm_bindgen_test]
+  fn test_client_config_serde() {
+    let json: JsValue = mock_client_config_json();
     let ConfigOptions {
       network,
       encoding,
