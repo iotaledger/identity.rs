@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -111,36 +111,24 @@ impl AsRef<IotaDocument> for ResolvedIotaDocument {
 #[cfg(test)]
 mod tests {
 
+  use super::*;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
-  use identity_core::crypto::KeyType;
-  use identity_core::crypto::PrivateKey;
-  use identity_core::crypto::PublicKey;
-
-  use super::*;
 
   // Characterization test: We need to be informed if it becomes impossible to deserialize a serialized `IotaDocument`
   // into a `ResolvedIotaDocument` as the Wasm bindings currently depend on this fact.
   #[test]
   fn can_deserialize_from_iota_document() {
-    let private_key: Vec<u8> = vec![
-      40, 185, 109, 70, 134, 119, 123, 37, 190, 254, 232, 186, 106, 48, 213, 63, 133, 223, 167, 126, 159, 43, 178, 4,
-      190, 217, 52, 66, 92, 63, 69, 84,
-    ];
-    let public_key: Vec<u8> = vec![
-      212, 151, 158, 35, 16, 178, 19, 27, 83, 109, 212, 138, 141, 134, 122, 246, 156, 148, 227, 69, 68, 251, 190, 31,
-      25, 101, 230, 20, 130, 188, 121, 196,
-    ];
-    let keypair = KeyPair::from((
-      KeyType::Ed25519,
-      PublicKey::from(public_key),
-      PrivateKey::from(private_key),
-    ));
+    let private_key: &[u8] = &[0; 32];
+
+    let keypair: KeyPair = KeyPair::try_from_ed25519_bytes(private_key).unwrap();
 
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     let deserialization: Result<ResolvedIotaDocument, identity_core::Error> =
       ResolvedIotaDocument::from_json(document.to_json().unwrap().as_str());
     assert!(deserialization.is_ok());
+
+    assert_eq!(deserialization.unwrap().document, document);
   }
 }
