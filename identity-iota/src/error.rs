@@ -34,8 +34,6 @@ pub enum Error {
   DocumentSignError(&'static str, #[source] Option<identity_core::Error>),
   #[error("{0}")]
   IncompatibleNetwork(String),
-  #[error("Invalid Presentation Holder")]
-  InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
   #[error("Missing Signing Key")]
@@ -48,4 +46,13 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
+  /// Caused by a single concern credential or presentation validation method failing.
+  #[error("A validation unit failed")]
+  IsolatedValidationError(#[from] crate::credential::ValidationError),
+  /// Caused by one or more failures when validating a credential.  
+  #[error("credential validation failed")]
+  CredentialValidationError(#[from] crate::credential::CompoundCredentialValidationError),
+  /// Caused by one or more failures when validating a presentation.
+  #[error("presentation validation failed")]
+  PresentationValidationError(#[from] crate::credential::CompoundPresentationValidationError),
 }

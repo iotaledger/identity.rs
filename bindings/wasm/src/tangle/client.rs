@@ -6,11 +6,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use futures::executor;
-use identity::core::FromJson;
-use identity::credential::Credential;
-use identity::credential::Presentation;
 use identity::iota::Client;
-use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
@@ -30,7 +26,6 @@ use crate::did::UWasmDID;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
-use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Config;
@@ -228,42 +223,6 @@ impl WasmClient {
 
     // WARNING: this does not validate the return type. Check carefully.
     Ok(promise.unchecked_into::<PromiseDiffChainHistory>())
-  }
-
-  /// Validates a credential with the DID Document from the Tangle.
-  // TODO: move out of client to dedicated verifier
-  #[wasm_bindgen(js_name = checkCredential)]
-  pub fn check_credential(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
-    let data: Credential = Credential::from_json(&data).wasm_result()?;
-
-    let client: Rc<Client> = self.client.clone();
-    let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&*client)
-        .validate_credential(data, options.0)
-        .await
-        .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
-    });
-
-    Ok(promise)
-  }
-
-  /// Validates a presentation with the DID Document from the Tangle.
-  // TODO: move out of client to dedicated verifier
-  #[wasm_bindgen(js_name = checkPresentation)]
-  pub fn check_presentation(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
-    let data: Presentation = Presentation::from_json(&data).wasm_result()?;
-
-    let client: Rc<Client> = self.client.clone();
-    let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&*client)
-        .validate_presentation(data, options.0)
-        .await
-        .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
-    });
-
-    Ok(promise)
   }
 }
 

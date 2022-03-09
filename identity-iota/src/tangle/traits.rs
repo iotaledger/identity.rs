@@ -1,9 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::did::IotaDID;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
+
 use crate::tangle::MessageId;
 
 pub trait TangleRef {
@@ -21,5 +22,6 @@ pub trait TangleRef {
 // TODO: remove TangleResolve with ClientMap refactor?
 #[async_trait::async_trait(?Send)]
 pub trait TangleResolve {
+  /// Resolves a DID on the Tangle
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
 }
