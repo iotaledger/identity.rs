@@ -43,10 +43,10 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseVoid;
 
-  #[wasm_bindgen(typescript_type = "ResolvedDocument | null")]
+  #[wasm_bindgen(typescript_type = "ResolvedDocument | undefined")]
   pub type OptionResolvedDocument;
 
-  #[wasm_bindgen(typescript_type = "ResolvedDocument[] | null")]
+  #[wasm_bindgen(typescript_type = "ResolvedDocument[] | undefined")]
   pub type OptionArrayResolvedDocument;
 }
 
