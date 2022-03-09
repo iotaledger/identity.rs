@@ -34,7 +34,7 @@ jobs:
 
       # Download a pre-compiled wasm-bindgen binary.
       - name: Install wasm-bindgen-cli
-        uses: jetli/wasm-bindgen-action@v0.1.0
+        uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
 
       - name: core clippy check
         uses: actions-rs/clippy-check@v1
