@@ -30,7 +30,7 @@ async function createVP(clientConfig) {
     // Create a Verifiable Presentation from the Credential
     const unsignedVp = new Presentation(alice.doc, signedVc.toJSON())
 
-    // The verifier has asked Alice for a presentation signed with the following challenge :
+    // The verifier has asked Alice for a presentation signed with the following challenge:
     const challenge = "475a7984-1bb5-4c4c-a56f-822bccd46440";
     // The verifier and holder also agree that the signature should have an expiry date
     // 10 minutes from now.
@@ -55,7 +55,7 @@ async function createVP(clientConfig) {
     // Verifier - receives a verifiable presentation from the holder and validates it.
     // ===========================================================================
 
-    // Deserialize the presentation 
+    // Deserialize the presentation from the holder. 
     const presentation = Presentation.fromJSON(signedVpJSON); 
 
     // The verifier wants the following requirements to be satisfied:
@@ -76,7 +76,7 @@ async function createVP(clientConfig) {
         earliestExpiryDate: earliestExpiryDate,
     });
 
-    // Declare that the presentation's holder must always be the subject of a credential in the presentation. 
+    // Declare that the presentation holder's DID must match the subject ID on all credentials in the presentation. 
     const subjectHolderRelationship = SubjectHolderRelationship.AlwaysSubject; 
 
     const presentationValidationOptions = new PresentationValidationOptions( {
@@ -99,7 +99,7 @@ async function createVP(clientConfig) {
         FailFast.FirstError
     );
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful. 
-    console.log(`Successful VP validation using the Resolver`);
+    console.log(`VP successfully validated`);
 
     // Note that the `verifyPresentation` method we called automatically resolved all DID Documents that are necessary to validate the presentation. 
     // It is also possible to supply extra arguments to avoid some resolutions if one already has up-to-date resolved documents of 

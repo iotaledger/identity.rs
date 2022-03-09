@@ -55,11 +55,11 @@ async function createVC(clientConfig) {
         FailFast.AllErrors
     );
 
-    // Since `validate` did not throw any errors we know that the credential was successfully validated
+    // Since `validate` did not throw any errors we know that the credential was successfully validated.
     console.log(`VC successfully validated`);
 
     // The issuer is now sure that the credential they are about to issue satisfies their expectations.
-    // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
+    // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
     // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
     const credentialJSON = signedVc.toJSON();
     return {alice, issuer, credentialJSON};

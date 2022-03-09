@@ -57,8 +57,8 @@ async function revokeVC(clientConfig) {
             FailFast.FirstError
             ); 
     } catch (exception) {
-    console.log(`${exception.message}`)
-    vc_revoked = true;
+        console.log(`${exception.message}`)
+        vc_revoked = true;
     }
     if (!vc_revoked) throw new Error("VC not revoked");
     console.log(`Credential successfully revoked!`);

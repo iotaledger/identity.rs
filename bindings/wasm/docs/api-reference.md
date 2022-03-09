@@ -82,9 +82,6 @@ See <code>ISignatureOptions</code>.</p>
 </dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
-<dt><a href="#Url">Url</a></dt>
-<dd><p>A parsed URL.</p>
-</dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
 <dt><a href="#VerifierOptions">VerifierOptions</a></dt>
@@ -98,9 +95,9 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
@@ -624,7 +621,7 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
     * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
-    * [.check_subject_holder_relationship(credential, holder, relationship)](#CredentialValidator.check_subject_holder_relationship)
+    * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -632,10 +629,10 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
 Validates a `Credential`.
 
 The following properties are validated according to `options`:
-- The issuer's signature,
-- The expiration date,
-- The issuance date
-- The semantic structure.
+- the issuer's signature,
+- the expiration date,
+- the issuance date,
+- the semantic structure.
 
 ### Warning
 The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
@@ -723,16 +720,16 @@ to verify the credential's signature will be made and an error is returned upon 
 
 <a name="CredentialValidator.check_subject_holder_relationship"></a>
 
-### CredentialValidator.check\_subject\_holder\_relationship(credential, holder, relationship)
+### CredentialValidator.check\_subject\_holder\_relationship(credential, holder_url, relationship)
 Validate that the relationship between the `holder` and the credential subjects is in accordance with
-`relationship`.
+`relationship`. The `holder_url` parameter is expected to be the URL of the holder.
 
 **Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| holder | [<code>Url</code>](#Url) | 
+| holder_url | <code>string</code> | 
 | relationship | <code>number</code> | 
 
 <a name="DID"></a>
@@ -2845,8 +2842,8 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>null</code> | 
-| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>null</code> | 
+| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>undefined</code> | 
 
 <a name="ResolverBuilder"></a>
 
@@ -3080,60 +3077,6 @@ Deserializes a `Timestamp` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Url"></a>
-
-## Url
-A parsed URL.
-
-**Kind**: global class  
-
-* [Url](#Url)
-    * _instance_
-        * [.join(input)](#Url+join) ⇒ [<code>Url</code>](#Url)
-        * [.toJSON()](#Url+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.parse(input)](#Url.parse) ⇒ [<code>Url</code>](#Url)
-        * [.fromJSON(json)](#Url.fromJSON) ⇒ [<code>Url</code>](#Url)
-
-<a name="Url+join"></a>
-
-### url.join(input) ⇒ [<code>Url</code>](#Url)
-Parses the given input string as a `Url`, with `self` as the base Url.
-
-**Kind**: instance method of [<code>Url</code>](#Url)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="Url+toJSON"></a>
-
-### url.toJSON() ⇒ <code>any</code>
-Serializes a `Url` as a JSON object.
-
-**Kind**: instance method of [<code>Url</code>](#Url)  
-<a name="Url.parse"></a>
-
-### Url.parse(input) ⇒ [<code>Url</code>](#Url)
-Parses an absolute `Url` from the given input string.
-
-**Kind**: static method of [<code>Url</code>](#Url)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="Url.fromJSON"></a>
-
-### Url.fromJSON(json) ⇒ [<code>Url</code>](#Url)
-Deserializes a `Url` from a JSON object.
-
-**Kind**: static method of [<code>Url</code>](#Url)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="VerificationMethod"></a>
 
 ## VerificationMethod
@@ -3287,13 +3230,13 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## MethodRelationship
 **Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="Digest"></a>
 

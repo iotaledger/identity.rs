@@ -103,7 +103,7 @@ async fn main() -> Result<()> {
   // Verifier - receives a verifiable presentation from the holder and validates it.
   // ===========================================================================
 
-  // Deserialize the presentation:
+  // Deserialize the presentation from the holder:
   let presentation: Presentation = Presentation::from_json(&presentation_json)?;
 
   // The verifier wants the following requirements to be satisfied:
