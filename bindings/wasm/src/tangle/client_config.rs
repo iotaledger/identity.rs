@@ -1,21 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::{ClientBuilder, Network};
 use std::time::Duration;
+
+use identity::iota::ClientBuilder;
+use identity::iota::DIDMessageEncoding;
+use identity::iota::Network;
 use wasm_bindgen::prelude::*;
 
-use crate::error::wasm_error;
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::tangle::WasmDIDMessageEncoding;
-use crate::tangle::WasmNetwork;
-
-fn to_duration(seconds: u32) -> Duration {
-  Duration::from_secs(u64::from(seconds))
-}
-
-fn to_basic_auth<'a>(username: &'a Option<String>, password: &'a Option<String>) -> Option<(&'a str, &'a str)> {
-  username.as_deref().zip(password.as_deref())
-}
 
 /// Options to configure a new {@link Client}.
 #[wasm_bindgen(js_name = ClientConfig)]
@@ -23,177 +18,99 @@ pub struct WasmClientConfig {
   pub(crate) builder: Option<ClientBuilder>,
 }
 
-// #[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = ClientConfig)]
 impl WasmClientConfig {
   /// Creates a new `Config`.
   #[wasm_bindgen(constructor)]
-  pub fn new() -> Self {
-    Self {
-      builder: Some(ClientBuilder::new()),
+  pub fn new(config: Option<IClientConfig>) -> Result<WasmClientConfig> {
+    let options: ConfigOptions = if let Some(config) = config {
+      config.into_serde::<ConfigOptions>().wasm_result()?
+    } else {
+      ConfigOptions::default()
+    };
+
+    let mut builder: ClientBuilder = ClientBuilder::new();
+    if let Some(network) = options.network {
+      builder = builder.network(network);
     }
+    if let Some(encoding) = options.encoding {
+      builder = builder.encoding(DIDMessageEncoding::from(encoding));
+    }
+    if let Some(nodes) = options.nodes {
+      builder = builder
+        .nodes(&nodes.iter().map(AsRef::as_ref).collect::<Vec<_>>())
+        .wasm_result()?;
+    }
+    if let Some(NodeAuth {
+      url,
+      jwt,
+      username,
+      password,
+    }) = options.primary_node
+    {
+      builder = builder
+        .primary_node(&url, jwt, username.as_deref().zip(password.as_deref()))
+        .wasm_result()?;
+    }
+    if let Some(NodeAuth {
+      url,
+      jwt,
+      username,
+      password,
+    }) = options.primary_pow_node
+    {
+      builder = builder
+        .primary_pow_node(&url, jwt, username.as_deref().zip(password.as_deref()))
+        .wasm_result()?;
+    }
+    if let Some(node_auth) = options.node_auth {
+      for NodeAuth {
+        url,
+        jwt,
+        username,
+        password,
+      } in node_auth
+      {
+        builder = builder
+          .node_auth(&url, jwt, username.as_deref().zip(password.as_deref()))
+          .wasm_result()?;
+      }
+    }
+    if let Some(node_sync_interval) = options.node_sync_interval {
+      builder = builder.node_sync_interval(Duration::from_secs(u64::from(node_sync_interval)));
+    }
+    if let Some(node_sync_disabled) = options.node_sync_disabled {
+      if node_sync_disabled {
+        builder = builder.node_sync_disabled();
+      }
+    }
+    if let Some(quorum) = options.quorum {
+      builder = builder.quorum(quorum);
+    }
+    if let Some(quorum_size) = options.quorum_size {
+      builder = builder.quorum_size(quorum_size);
+    }
+    if let Some(quorum_threshold) = options.quorum_threshold {
+      builder = builder.quorum_threshold(quorum_threshold);
+    }
+    if let Some(local_pow) = options.local_pow {
+      builder = builder.local_pow(local_pow);
+    }
+    if let Some(fallback_to_local_pow) = options.fallback_to_local_pow {
+      builder = builder.fallback_to_local_pow(fallback_to_local_pow);
+    }
+    if let Some(tips_interval) = options.tips_interval {
+      builder = builder.tips_interval(u64::from(tips_interval));
+    }
+    if let Some(request_timeout) = options.request_timeout {
+      builder = builder.request_timeout(Duration::from_secs(u64::from(request_timeout)));
+    }
+
+    Ok(Self { builder: Some(builder) })
   }
 
-  /// Creates a new `Config` for the given IOTA Tangle network.
-  #[wasm_bindgen(js_name = fromNetwork)]
-  pub fn from_network(network: &WasmNetwork) -> Result<WasmClientConfig, JsValue> {
-    let mut this: Self = Self::new();
-    this.set_network(network)?;
-    Ok(this)
-  }
-
-  /// Sets the IOTA Tangle network.
-  #[wasm_bindgen(js_name = setNetwork)]
-  pub fn set_network(&mut self, network: &WasmNetwork) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.network(network.clone().into()))
-  }
-
-  /// Sets the DID message encoding used when publishing to the Tangle.
-  #[wasm_bindgen(js_name = setEncoding)]
-  pub fn set_encoding(&mut self, encoding: WasmDIDMessageEncoding) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.encoding(encoding.into()))
-  }
-
-  /// Adds an IOTA node by its URL.
-  #[wasm_bindgen(js_name = setNode)]
-  pub fn set_node(&mut self, url: &str) -> Result<(), JsValue> {
-    self.try_with_mut(|builder| builder.node(url).map_err(wasm_error))
-  }
-
-  /// Adds an IOTA node by its URL to be used as primary node.
-  #[wasm_bindgen(js_name = setPrimaryNode)]
-  pub fn set_primary_node(
-    &mut self,
-    url: &str,
-    jwt: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-  ) -> Result<(), JsValue> {
-    self.try_with_mut(|builder| {
-      builder
-        .primary_node(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(wasm_error)
-    })
-  }
-
-  /// Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
-  #[wasm_bindgen(js_name = setPrimaryPoWNode)]
-  pub fn set_primary_pow_node(
-    &mut self,
-    url: &str,
-    jwt: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-  ) -> Result<(), JsValue> {
-    self.try_with_mut(|builder| {
-      builder
-        .primary_pow_node(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(wasm_error)
-    })
-  }
-
-  /// Adds a permanode by its URL.
-  #[wasm_bindgen(js_name = setPermanode)]
-  pub fn set_permanode(
-    &mut self,
-    url: &str,
-    jwt: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-  ) -> Result<(), JsValue> {
-    self.try_with_mut(|builder| {
-      builder
-        .permanode(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(wasm_error)
-    })
-  }
-
-  /// Adds an IOTA node by its URL.
-  #[wasm_bindgen(js_name = setNodeAuth)]
-  pub fn set_node_auth(
-    &mut self,
-    url: &str,
-    jwt: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-  ) -> Result<(), JsValue> {
-    self.try_with_mut(|builder| {
-      builder
-        .node_auth(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(wasm_error)
-    })
-  }
-
-  /// Sets the node sync interval.
-  #[wasm_bindgen(js_name = setNodeSyncInterval)]
-  pub fn set_node_sync_interval(&mut self, value: u32) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.node_sync_interval(to_duration(value)))
-  }
-
-  /// Disables the node sync process.
-  #[wasm_bindgen(js_name = setNodeSyncDisabled)]
-  pub fn set_node_sync_disabled(&mut self) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.node_sync_disabled())
-  }
-
-  /// Enables/disables quorum.
-  #[wasm_bindgen(js_name = setQuorum)]
-  pub fn set_quorum(&mut self, value: bool) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.quorum(value))
-  }
-
-  /// Sets the number of nodes used for quorum.
-  #[wasm_bindgen(js_name = setQuorumSize)]
-  pub fn set_quorum_size(&mut self, value: usize) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.quorum_size(value))
-  }
-
-  /// Sets the quorum threshold.
-  #[wasm_bindgen(js_name = setQuorumThreshold)]
-  pub fn set_quorum_threshold(&mut self, value: usize) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.quorum_threshold(value))
-  }
-
-  /// Sets whether proof-of-work (PoW) is performed locally or remotely.
-  ///
-  /// Default: false.
-  #[wasm_bindgen(js_name = setLocalPoW)]
-  pub fn set_local_pow(&mut self, value: bool) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.local_pow(value))
-  }
-
-  /// Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
-  ///
-  /// Default: true.
-  #[wasm_bindgen(js_name = setFallbackToLocalPoW)]
-  pub fn set_fallback_to_local_pow(&mut self, value: bool) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.fallback_to_local_pow(value))
-  }
-
-  /// Sets the number of seconds that new tips will be requested during PoW.
-  #[wasm_bindgen(js_name = setTipsInterval)]
-  pub fn set_tips_interval(&mut self, value: u32) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.tips_interval(u64::from(value)))
-  }
-
-  /// Sets the default request timeout.
-  #[wasm_bindgen(js_name = setRequestTimeout)]
-  pub fn set_request_timeout(&mut self, value: u32) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.request_timeout(to_duration(value)))
-  }
-
-  pub(crate) fn take_builder(&mut self) -> Result<ClientBuilder, JsValue> {
+  pub(crate) fn take_builder(&mut self) -> Result<ClientBuilder> {
     self.builder.take().ok_or_else(|| "Client Builder Consumed".into())
-  }
-
-  fn with_mut(&mut self, f: impl Fn(ClientBuilder) -> ClientBuilder) -> Result<(), JsValue> {
-    self.builder = Some(f(self.take_builder()?));
-    Ok(())
-  }
-
-  fn try_with_mut(&mut self, f: impl Fn(ClientBuilder) -> Result<ClientBuilder, JsValue>) -> Result<(), JsValue> {
-    self.builder = Some(f(self.take_builder()?)?);
-    Ok(())
   }
 }
 
@@ -203,17 +120,13 @@ extern "C" {
   pub type IClientConfig;
 }
 
-/// IOTA node details with optional authentication.
+/// Helper-struct for deserializing [`INodeAuth`].
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct NodeAuth {
-  url: string,
+  url: String,
   jwt: Option<String>,
   username: Option<String>,
   password: Option<String>,
-}
-
-struct ClientConfigDAO {
-  network: Network,
-
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -225,6 +138,28 @@ interface INodeAuth {
     readonly username?: string;
     readonly password?: string;
 }"#;
+
+/// Helper-struct for deserializing [`IConfigOptions`].
+#[derive(Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfigOptions {
+  network: Option<Network>,
+  encoding: Option<WasmDIDMessageEncoding>,
+  nodes: Option<Vec<String>>,
+  primary_node: Option<NodeAuth>,
+  primary_pow_node: Option<NodeAuth>,
+  node_auth: Option<Vec<NodeAuth>>,
+  node_sync_interval: Option<u32>,
+  node_sync_disabled: Option<bool>,
+  node_pool_urls: Option<Vec<String>>,
+  quorum: Option<bool>,
+  quorum_size: Option<usize>,
+  quorum_threshold: Option<usize>,
+  local_pow: Option<bool>,
+  fallback_to_local_pow: Option<bool>,
+  tips_interval: Option<u32>,
+  request_timeout: Option<u32>,
+}
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_CLIENT_CONFIG: &'static str = r#"
@@ -242,6 +177,9 @@ interface IClientConfig {
     /** Sets an IOTA node by its URL to be used as primary node. */
     readonly primaryNode?: INodeAuth;
 
+    /** Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW). */
+    readonly primaryPowNode?: INodeAuth;
+
     /** Adds a list of IOTA nodes to be used by their URLs. */
     readonly nodeAuth?: INodeAuth[];
 
@@ -250,6 +188,9 @@ interface IClientConfig {
 
     /** Disables the node sync process. */
     readonly nodeSyncDisabled?: boolean;
+
+    /** Adds a list of IOTA nodes to use by their URLs. */
+    readonly nodePoolUrls?: string[];
 
     /** Enables/disables quorum. */
     readonly quorum?: boolean;
@@ -263,12 +204,12 @@ interface IClientConfig {
     /** Sets whether proof-of-work (PoW) is performed locally or remotely.
      * Default: false.
      */
-    readonly localPoW?: boolean;
+    readonly localPow?: boolean;
 
     /** Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
      *  Default: true.
      */
-    readonly fallbackToLocalPoW?: boolean;
+    readonly fallbackToLocalPow?: boolean;
 
     /** Sets the number of seconds that new tips will be requested during PoW. */
     readonly tipsInterval?: number;
@@ -276,3 +217,132 @@ interface IClientConfig {
     /** Sets the default request timeout. */
     readonly requestTimeout?: number;
 }"#;
+
+#[cfg(test)]
+mod tests {
+  use identity::core::FromJson;
+  use identity::core::Object;
+  use identity::iota::DIDMessageEncoding;
+  use identity::iota::Network;
+  use wasm_bindgen::JsValue;
+  use wasm_bindgen_test::*;
+
+  use crate::tangle::client_config::ConfigOptions;
+  use crate::tangle::client_config::NodeAuth;
+
+  #[wasm_bindgen_test]
+  fn test_client_config_serde() {
+    let json: JsValue = JsValue::from_serde(
+      &Object::from_json(
+        r#"{
+      "network": "dev",
+      "encoding": 1,
+      "nodes": ["https://example.com:1", "https://example.com:2"],
+      "primaryNode": {
+        "url": "https://example.com:3",
+        "username": "user",
+        "password": "pass"
+      },
+      "primaryPowNode": {
+        "url": "https://example.com:4"
+      },
+      "nodeAuth": [{ "url": "https://example.com:5" }, { "url": "https://example.com:6" }],
+      "nodeSyncInterval": 42,
+      "nodeSyncDisabled": true,
+      "nodePoolUrls": ["https://example.com:7", "https://example.com:8"],
+      "quorum": true,
+      "quorumSize": 3,
+      "quorumThreshold": 2,
+      "localPow": false,
+      "fallbackToLocalPow": false,
+      "tipsInterval": 7,
+      "requestTimeout": 60
+    }"#,
+      )
+      .unwrap(),
+    )
+    .unwrap();
+
+    let ConfigOptions {
+      network,
+      encoding,
+      nodes,
+      primary_node,
+      primary_pow_node,
+      node_auth,
+      node_sync_interval,
+      node_sync_disabled,
+      node_pool_urls,
+      quorum,
+      quorum_size,
+      quorum_threshold,
+      local_pow,
+      fallback_to_local_pow,
+      tips_interval,
+      request_timeout,
+    } = json.into_serde::<ConfigOptions>().unwrap();
+    assert_eq!(network, Some(Network::Devnet));
+    assert_eq!(
+      encoding.map(DIDMessageEncoding::from),
+      Some(DIDMessageEncoding::JsonBrotli)
+    );
+    assert_eq!(
+      nodes,
+      Some(vec![
+        "https://example.com:1".to_owned(),
+        "https://example.com:2".to_owned(),
+      ])
+    );
+    assert_eq!(
+      primary_node,
+      Some(NodeAuth {
+        url: "https://example.com:3".to_owned(),
+        jwt: None,
+        username: Some("user".to_owned()),
+        password: Some("pass".to_owned()),
+      })
+    );
+    assert_eq!(
+      primary_pow_node,
+      Some(NodeAuth {
+        url: "https://example.com:4".to_owned(),
+        jwt: None,
+        username: None,
+        password: None,
+      })
+    );
+    assert_eq!(
+      node_auth,
+      Some(vec![
+        NodeAuth {
+          url: "https://example.com:5".to_owned(),
+          jwt: None,
+          username: None,
+          password: None,
+        },
+        NodeAuth {
+          url: "https://example.com:6".to_owned(),
+          jwt: None,
+          username: None,
+          password: None,
+        },
+      ])
+    );
+    assert_eq!(node_sync_interval, Some(42));
+    assert_eq!(node_sync_disabled, Some(true));
+    assert_eq!(
+      node_pool_urls,
+      Some(vec![
+        "https://example.com:7".to_owned(),
+        "https://example.com:8".to_owned(),
+      ])
+    );
+    assert_eq!(quorum, Some(true));
+    assert_eq!(quorum_size, Some(3));
+    assert_eq!(quorum_threshold, Some(2));
+    assert_eq!(local_pow, Some(false));
+    assert_eq!(fallback_to_local_pow, Some(false));
+    assert_eq!(tips_interval, Some(7));
+    assert_eq!(request_timeout, Some(60));
+  }
+}

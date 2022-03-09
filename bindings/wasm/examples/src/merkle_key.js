@@ -3,7 +3,7 @@
 
 import {
     Client,
-    Config,
+    ClientConfig,
     Credential,
     Digest,
     KeyCollection,
@@ -26,11 +26,10 @@ import {createIdentity} from './create_did';
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function merkleKey(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    // Create a client instance to publish messages to the configured Tangle network.
+    const client = Client.fromConfig(new ClientConfig({
+        network: clientConfig.network
+    }));
 
     // Creates new identities (See "create_did" example)
     const alice = await createIdentity(clientConfig);

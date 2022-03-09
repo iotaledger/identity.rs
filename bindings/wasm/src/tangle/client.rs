@@ -33,8 +33,8 @@ use crate::did::WasmResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::WasmClientConfig;
 use crate::tangle::PromiseReceipt;
+use crate::tangle::WasmClientConfig;
 use crate::tangle::WasmNetwork;
 use crate::tangle::WasmReceipt;
 
@@ -55,7 +55,7 @@ impl WasmClient {
   /// Creates a new `Client` with default settings.
   #[wasm_bindgen(constructor)]
   pub fn new() -> Result<WasmClient> {
-    Self::from_config(&mut WasmClientConfig::new())
+    Self::from_config(&mut WasmClientConfig::new(None)?)
   }
 
   /// Creates a new `Client` with settings from the given `Config`.

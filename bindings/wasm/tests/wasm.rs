@@ -3,14 +3,13 @@
 
 use std::borrow::Cow;
 
-use identity::core::{FromJson, Object, Timestamp, ToJson};
+use identity::core::Timestamp;
 use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
 
 use identity_wasm::common::WasmTimestamp;
-use identity_wasm::credential::WasmCredential;
 use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
@@ -201,7 +200,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        None
+        None,
       )
       .unwrap()
       .id()
@@ -222,7 +221,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        None
+        None,
       )
       .unwrap()
       .id()
@@ -233,7 +232,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        None
+        None,
       )
       .unwrap()
       .id()

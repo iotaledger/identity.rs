@@ -3,7 +3,7 @@
 
 import {
     Client,
-    Config,
+    ClientConfig,
     DIDMessageEncoding,
     Document,
     ExplorerUrl,
@@ -27,15 +27,14 @@ async function privateTangle(restURL, networkName) {
     // Optionally point to a locally-deployed Tangle explorer.
     const explorer = ExplorerUrl.parse("http://127.0.0.1:8082/");
 
-    // Create a client configuration and set the custom network.
-    const config = new Config();
-    config.setNetwork(network);
-
-    // This URL points to the REST API of the locally running hornet node.
-    config.setPrimaryNode(restURL || "http://127.0.0.1:14265/");
-
-    // Use DIDMessageEncoding.Json instead to publish plaintext messages to the Tangle for debugging.
-    config.setEncoding(DIDMessageEncoding.JsonBrotli);
+    // Create a custom client configuration.
+    const config = new ClientConfig({
+        network: network,
+        // This URL points to the REST API of the locally running hornet node.
+        primaryNode: {url: restURL || "http://127.0.0.1:14265/"},
+        // Use DIDMessageEncoding.Json instead to publish plaintext messages to the Tangle for debugging.
+        encoding: DIDMessageEncoding.JsonBrotli,
+    });
 
     // Create a client instance from the configuration to publish messages to the Tangle.
     const client = Client.fromConfig(config);

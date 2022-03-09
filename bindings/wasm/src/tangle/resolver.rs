@@ -29,8 +29,8 @@ use crate::did::UWasmDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::WasmClientConfig;
 use crate::tangle::WasmClient;
+use crate::tangle::WasmClientConfig;
 
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(pub(crate) Rc<Resolver<Rc<Client>>>);

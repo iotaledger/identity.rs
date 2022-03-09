@@ -3,7 +3,7 @@
 <dl>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
-<dt><a href="#Config">Config</a></dt>
+<dt><a href="#ClientConfig">ClientConfig</a></dt>
 <dd><p>Options to configure a new <a href="#Client">Client</a>.</p>
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
@@ -87,9 +87,9 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -255,7 +255,7 @@ Creates a new `Client` with settings from the given `Config`.
 
 | Param | Type |
 | --- | --- |
-| config | [<code>Config</code>](#Config) | 
+| config | [<code>ClientConfig</code>](#ClientConfig) | 
 
 <a name="Client.fromNetwork"></a>
 
@@ -268,237 +268,21 @@ Creates a new `Client` with default settings for the given `Network`.
 | --- | --- |
 | network | [<code>Network</code>](#Network) | 
 
-<a name="Config"></a>
+<a name="ClientConfig"></a>
 
-## Config
+## ClientConfig
 Options to configure a new [Client](#Client).
 
 **Kind**: global class  
+<a name="new_ClientConfig_new"></a>
 
-* [Config](#Config)
-    * [new Config()](#new_Config_new)
-    * _instance_
-        * [.setNetwork(network)](#Config+setNetwork)
-        * [.setEncoding(encoding)](#Config+setEncoding)
-        * [.setNode(url)](#Config+setNode)
-        * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
-        * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
-        * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
-        * [.setNodeAuth(url, jwt, username, password)](#Config+setNodeAuth)
-        * [.setNodeSyncInterval(value)](#Config+setNodeSyncInterval)
-        * [.setNodeSyncDisabled()](#Config+setNodeSyncDisabled)
-        * [.setQuorum(value)](#Config+setQuorum)
-        * [.setQuorumSize(value)](#Config+setQuorumSize)
-        * [.setQuorumThreshold(value)](#Config+setQuorumThreshold)
-        * [.setLocalPoW(value)](#Config+setLocalPoW)
-        * [.setFallbackToLocalPoW(value)](#Config+setFallbackToLocalPoW)
-        * [.setTipsInterval(value)](#Config+setTipsInterval)
-        * [.setRequestTimeout(value)](#Config+setRequestTimeout)
-    * _static_
-        * [.fromNetwork(network)](#Config.fromNetwork) ⇒ [<code>Config</code>](#Config)
-
-<a name="new_Config_new"></a>
-
-### new Config()
+### new ClientConfig(config)
 Creates a new `Config`.
 
-<a name="Config+setNetwork"></a>
-
-### config.setNetwork(network)
-Sets the IOTA Tangle network.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| network | [<code>Network</code>](#Network) | 
-
-<a name="Config+setEncoding"></a>
-
-### config.setEncoding(encoding)
-Sets the DID message encoding used when publishing to the Tangle.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| encoding | <code>number</code> | 
-
-<a name="Config+setNode"></a>
-
-### config.setNode(url)
-Adds an IOTA node by its URL.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-
-<a name="Config+setPrimaryNode"></a>
-
-### config.setPrimaryNode(url, jwt, username, password)
-Adds an IOTA node by its URL to be used as primary node.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setPrimaryPoWNode"></a>
-
-### config.setPrimaryPoWNode(url, jwt, username, password)
-Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setPermanode"></a>
-
-### config.setPermanode(url, jwt, username, password)
-Adds a permanode by its URL.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setNodeAuth"></a>
-
-### config.setNodeAuth(url, jwt, username, password)
-Adds an IOTA node by its URL.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setNodeSyncInterval"></a>
-
-### config.setNodeSyncInterval(value)
-Sets the node sync interval.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setNodeSyncDisabled"></a>
-
-### config.setNodeSyncDisabled()
-Disables the node sync process.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-<a name="Config+setQuorum"></a>
-
-### config.setQuorum(value)
-Enables/disables quorum.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="Config+setQuorumSize"></a>
-
-### config.setQuorumSize(value)
-Sets the number of nodes used for quorum.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setQuorumThreshold"></a>
-
-### config.setQuorumThreshold(value)
-Sets the quorum threshold.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setLocalPoW"></a>
-
-### config.setLocalPoW(value)
-Sets whether proof-of-work (PoW) is performed locally or remotely.
-
-Default: false.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="Config+setFallbackToLocalPoW"></a>
-
-### config.setFallbackToLocalPoW(value)
-Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
-
-Default: true.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="Config+setTipsInterval"></a>
-
-### config.setTipsInterval(value)
-Sets the number of seconds that new tips will be requested during PoW.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setRequestTimeout"></a>
-
-### config.setRequestTimeout(value)
-Sets the default request timeout.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config.fromNetwork"></a>
-
-### Config.fromNetwork(network) ⇒ [<code>Config</code>](#Config)
-Creates a new `Config` for the given IOTA Tangle network.
-
-**Kind**: static method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| network | [<code>Network</code>](#Network) | 
+| config | <code>IClientConfig</code> \| <code>undefined</code> | 
 
 <a name="Credential"></a>
 
@@ -2537,7 +2321,7 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 
 | Param | Type |
 | --- | --- |
-| config | [<code>Config</code>](#Config) | 
+| config | [<code>ClientConfig</code>](#ClientConfig) | 
 
 <a name="ResolverBuilder+build"></a>
 
@@ -2863,13 +2647,13 @@ Creates a new `VerifierOptions` with default options.
 
 ## KeyType
 **Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="Digest"></a>
 
 ## Digest
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

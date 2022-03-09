@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Credential, SignatureOptions, VerifierOptions} from '@iota/identity-wasm';
+import {Client, ClientConfig, Credential, SignatureOptions, VerifierOptions} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -14,11 +14,10 @@ import {manipulateIdentity} from './manipulate_did';
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createVC(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    // Create a client instance to publish messages to the configured Tangle network.
+    const client = Client.fromConfig(new ClientConfig({
+        network: clientConfig.network
+    }));
 
     // Creates new identities (See "create_did" and "manipulate_did" examples)
     const alice = await createIdentity(clientConfig);
