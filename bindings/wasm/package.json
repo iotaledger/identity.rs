@@ -25,7 +25,7 @@
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --exit",
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
-    "test:readme": "txm README.md",
+    "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
     "test:unit": "wasm-pack test --node",
     "cypress": "cypress open"
   },
