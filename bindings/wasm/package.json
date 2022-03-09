@@ -22,7 +22,7 @@
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "test": "npm run test:unit && concurrently -g --timings \"npm:test:node\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
-    "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --exit",
+    "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
