@@ -19,12 +19,20 @@ npm install @iota/identity-wasm@dev
 
 ## Build
 
-Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
+Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. 
+
+Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
+
+```bash
+cargo install --force wasm-bindgen-cli
+```
+
+Then, install the necessary dependencies using:
 ```bash
 npm install
 ```
 
-and then build the bindings for `node.js` with
+and build the bindings for `node.js` with
 
 ```bash
 npm run build:nodejs

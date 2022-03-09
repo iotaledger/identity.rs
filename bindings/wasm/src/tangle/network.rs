@@ -8,7 +8,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Network)]
-pub struct WasmNetwork(Network);
+pub struct WasmNetwork(pub(crate) Network);
 
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {
