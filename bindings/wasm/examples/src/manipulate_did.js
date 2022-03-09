@@ -3,7 +3,6 @@
 
 import {
     Client,
-    ClientConfig,
     KeyPair,
     KeyType,
     MethodScope,
@@ -26,9 +25,9 @@ import {createIdentity} from "./create_did";
  **/
 async function manipulateIdentity(clientConfig) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig({
         network: clientConfig.network
-    }));
+    });
 
     // Creates a new identity (see "create_did" example)
     let {key, doc, receipt} = await createIdentity(clientConfig);

@@ -1,16 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    Client,
-    ClientConfig,
-    DIDMessageEncoding,
-    Document,
-    ExplorerUrl,
-    KeyPair,
-    KeyType,
-    Network
-} from '@iota/identity-wasm';
+import {Client, DIDMessageEncoding, Document, ExplorerUrl, KeyPair, KeyType, Network} from '@iota/identity-wasm';
 
 /**
  This example shows how a DID document can be created on a private tangle.
@@ -27,17 +18,14 @@ async function privateTangle(restURL, networkName) {
     // Optionally point to a locally-deployed Tangle explorer.
     const explorer = ExplorerUrl.parse("http://127.0.0.1:8082/");
 
-    // Create a custom client configuration.
-    const config = new ClientConfig({
+    // Create a client instance with a custom configuration to publish messages to our private Tangle.
+    const client = await Client.fromConfig({
         network: network,
         // This URL points to the REST API of the locally running hornet node.
         primaryNode: {url: restURL || "http://127.0.0.1:14265/"},
         // Use DIDMessageEncoding.Json instead to publish plaintext messages to the Tangle for debugging.
         encoding: DIDMessageEncoding.JsonBrotli,
     });
-
-    // Create a client instance from the configuration to publish messages to the Tangle.
-    const client = await Client.fromConfig(config);
 
     // Generate a new ed25519 public/private key pair.
     const key = new KeyPair(KeyType.Ed25519);

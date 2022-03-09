@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, ClientConfig, Document, Service, Timestamp} from '@iota/identity-wasm';
+import {Client, Document, Service, Timestamp} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
 
 /**
@@ -15,9 +15,9 @@ import {createIdentity} from "./create_did";
  **/
 async function createDiff(clientConfig) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig({
         network: clientConfig.network
-    }));
+    });
 
     // Create a new identity (see "create_did.js" example).
     const {key, doc, receipt} = await createIdentity(clientConfig);

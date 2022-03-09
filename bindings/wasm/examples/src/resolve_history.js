@@ -3,7 +3,6 @@
 
 import {
     Client,
-    ClientConfig,
     Document,
     KeyPair,
     KeyType,
@@ -22,9 +21,9 @@ import {createIdentity} from "./create_did";
  **/
 async function resolveHistory(clientConfig) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig({
         network: clientConfig.network
-    }));
+    });
 
     // ===========================================================================
     // DID Creation

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, ClientConfig} from '@iota/identity-wasm';
+import {Client} from '@iota/identity-wasm';
 import {manipulateIdentity} from "./manipulate_did";
 
 /**
@@ -12,9 +12,9 @@ import {manipulateIdentity} from "./manipulate_did";
  **/
 async function resolution(clientConfig, did) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig({
         network: clientConfig.network
-    }));
+    });
 
     if (!did) {
         // Creates a new identity, that also is updated (See "manipulate_did" example).

@@ -3,7 +3,6 @@
 
 import {
     Client,
-    ClientConfig,
     Credential,
     CredentialValidationOptions,
     CredentialValidator,
@@ -30,9 +29,9 @@ import {createIdentity} from './create_did';
  **/
 async function merkleKey(clientConfig) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig({
         network: clientConfig.network
-    }));
+    });
 
     // Creates new identities (See "create_did" example)
     const alice = await createIdentity(clientConfig);

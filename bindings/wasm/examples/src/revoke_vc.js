@@ -3,7 +3,6 @@
 
 import {
     Client,
-    ClientConfig,
     Credential,
     CredentialValidationOptions,
     CredentialValidator,
@@ -31,9 +30,9 @@ import {createVC} from './create_vc';
  **/
 async function revokeVC(clientConfig) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig({
         network: clientConfig.network
-    }));
+    });
 
     // Creates new identities and a VC (see "create_vc" example)
     const {alice, issuer, credentialJSON} = await createVC(clientConfig);

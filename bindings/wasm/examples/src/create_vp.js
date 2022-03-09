@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    ClientConfig,
     Credential,
     CredentialValidationOptions,
     Duration,
@@ -101,9 +100,9 @@ async function createVP(clientConfig) {
     // the presentation holder and of credential issuers. This is something the `Resolver` can help with.
     const resolver = await Resolver
         .builder()
-        .clientConfig(new ClientConfig({
+        .clientConfig({
             network: clientConfig.network
-        }))
+        })
         .build();
 
     // Validate the presentation and all the credentials included in it according to the validation options

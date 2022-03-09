@@ -148,7 +148,7 @@ struct ConfigOptions {
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_CLIENT_CONFIG: &'static str = r#"
-/** {@link Client.fromClient} configuration options. */
+/** {@link Client} configuration options. */
 interface IClientConfig {
     /** Sets the IOTA Tangle network. */
     readonly network?: Network;
