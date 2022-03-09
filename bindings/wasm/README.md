@@ -82,7 +82,7 @@ async function main() {
     // Publish the DID Document to the IOTA Tangle.
     const receipt = await client.publishDocument(doc);
 
-    // The message can be viewed at https://explorer.iota.org/mainnet/identity-resolver/<mainnet|devnet>/<did>
+    // The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/identity-resolver/<did>
     const explorer = identity.ExplorerUrl.mainnet();
     // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
     console.log("Tangle Message Receipt:", receipt);
