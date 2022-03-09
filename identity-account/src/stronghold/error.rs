@@ -32,4 +32,7 @@ pub enum StrongholdError {
   StrongholdResult(String),
   #[error("Record Error")]
   RecordError,
+  /// Caused by attempting to parse an invalid Stronghold resource index.
+  #[error("Stronghold resource index malformed")]
+  InvalidResourceIndex,
 }

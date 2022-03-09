@@ -32,9 +32,6 @@ pub enum Error {
   #[cfg(feature = "stronghold")]
   #[error(transparent)]
   StrongholdError(#[from] StrongholdError),
-  /// Caused by attempting to parse an invalid Stronghold resource index.
-  #[error("Stronghold resource index malformed")]
-  InvalidResourceIndex,
   /// Caused by attempting to read a poisoned shared resource.
   #[error("Shared resource poisoned: read")]
   SharedReadPoisoned,

@@ -10,13 +10,11 @@ use iota_stronghold::ReadError;
 use iota_stronghold::Stronghold;
 use iota_stronghold::StrongholdFlags;
 use once_cell::sync::Lazy;
+use parking_lot::Mutex;
+use parking_lot::MutexGuard;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-// use std::sync::Mutex;
-use parking_lot::Mutex;
-use parking_lot::MutexGuard;
-// use std::sync::MutexGuard;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -38,7 +36,7 @@ pub struct Context {
   runtime: Runtime,
 }
 
-async fn clear_expired_passwords() -> Result<()> {
+async fn clear_expired_passwords() -> IotaStrongholdResult<()> {
   let this: &'static Context = Context::get().await?;
   let interval: Duration = *this.runtime.password_clear();
 
