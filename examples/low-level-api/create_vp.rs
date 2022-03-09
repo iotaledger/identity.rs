@@ -67,8 +67,8 @@ async fn main() -> Result<()> {
 
   println!("Credential JSON > {:#}", credential);
 
-  // The issuer now serialized to JSON before passing it to the subject in a secure manner.
-  // This means that the credential is NOT published to the tangle where it can be accessed by anyone.
+  // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
+  // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
   let credential_json: String = credential.to_json()?;
 
   // ===========================================================================
@@ -76,7 +76,6 @@ async fn main() -> Result<()> {
   // ===========================================================================
 
   // Deserialize the credential.
-
   let credential: Credential = Credential::from_json(credential_json.as_str())?;
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
@@ -97,7 +96,7 @@ async fn main() -> Result<()> {
       .expires(Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap()),
   )?;
 
-  // Convert the Verifiable Presentation to JSON before "exchanging" with a verifier.
+  // Convert the Verifiable Presentation to JSON to send it to the verifier.
   let presentation_json: String = presentation.to_json()?;
 
   // ===========================================================================

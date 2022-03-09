@@ -47,7 +47,7 @@ async function createVP(clientConfig) {
         expires: Timestamp.nowUTC().checkedAdd(Duration.minutes(10))
     }));
 
-    // Convert the Verifiable Presentation to JSON before "exchanging" with a verifier
+    // Convert the Verifiable Presentation to JSON to send it to the verifier.
     const signedVpJSON = signedVp.toJSON();
 
 
