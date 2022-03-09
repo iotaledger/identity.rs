@@ -120,7 +120,7 @@ See <code>IVerifierOptions</code>.</p>
         * [.checkCredential(data, options)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkPresentation(data, options)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
-        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
+        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
         * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
 
 <a name="new_Client_new"></a>
@@ -248,7 +248,7 @@ Validates a presentation with the DID Document from the Tangle.
 
 <a name="Client.fromConfig"></a>
 
-### Client.fromConfig(config) ⇒ [<code>Client</code>](#Client)
+### Client.fromConfig(config) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
 Creates a new `Client` with settings from the given `Config`.
 
 **Kind**: static method of [<code>Client</code>](#Client)  
@@ -1874,10 +1874,12 @@ Deserializes a `MethodType` object from a JSON object.
         * [.name](#Network+name) ⇒ <code>string</code>
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
+        * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
+        * [.fromJSON(json)](#Network.fromJSON) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+name"></a>
 
@@ -1892,6 +1894,12 @@ Returns the node URL of the Tangle network.
 <a name="Network+toString"></a>
 
 ### network.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network+toJSON"></a>
+
+### network.toJSON() ⇒ <code>any</code>
+Serializes a `Network` as a JSON object.
+
 **Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network.try_from_name"></a>
 
@@ -1912,6 +1920,17 @@ Parses the provided string to a `Network`.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
+<a name="Network.fromJSON"></a>
+
+### Network.fromJSON(json) ⇒ [<code>Network</code>](#Network)
+Deserializes a `Network` from a JSON object.
+
+**Kind**: static method of [<code>Network</code>](#Network)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Presentation"></a>
 
 ## Presentation
