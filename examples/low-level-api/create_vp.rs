@@ -131,10 +131,10 @@ async fn main() -> Result<()> {
   resolver
     .verify_presentation(
       &presentation,
-      None,
-      None,
       &presentation_validation_options,
       FailFast::FirstError,
+      None,
+      None,
     )
     .await?;
 

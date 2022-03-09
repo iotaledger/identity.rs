@@ -182,10 +182,10 @@ where
   pub async fn verify_presentation<U: Serialize, V: Serialize>(
     &self,
     presentation: &Presentation<U, V>,
-    holder: Option<&ResolvedIotaDocument>,
-    issuers: Option<&[ResolvedIotaDocument]>,
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
+    holder: Option<&ResolvedIotaDocument>,
+    issuers: Option<&[ResolvedIotaDocument]>,
   ) -> Result<()> {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
