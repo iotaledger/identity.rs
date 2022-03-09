@@ -10,7 +10,7 @@ use identity::iota::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::KeyCollection;
+use crate::crypto::WasmKeyCollection;
 use crate::crypto::KeyType;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
@@ -40,7 +40,7 @@ impl WasmVerificationMethod {
   pub fn new_merkle_key(
     digest: Digest,
     did: &WasmDID,
-    keys: &KeyCollection,
+    keys: &WasmKeyCollection,
     fragment: &str,
   ) -> Result<WasmVerificationMethod> {
     let did: IotaDID = did.0.clone();
@@ -96,6 +96,8 @@ impl WasmVerificationMethod {
     value.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmVerificationMethod, VerificationMethod);
 
 impl From<IotaVerificationMethod> for WasmVerificationMethod {
   fn from(method: IotaVerificationMethod) -> Self {

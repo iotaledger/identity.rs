@@ -111,6 +111,8 @@ impl WasmResolvedDocument {
   }
 }
 
+impl_wasm_clone!(WasmResolvedDocument, ResolvedDocument);
+
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {
   fn from(document: ResolvedIotaDocument) -> Self {
     Self(document)

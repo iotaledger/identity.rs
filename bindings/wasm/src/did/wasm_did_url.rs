@@ -99,6 +99,8 @@ impl WasmDIDUrl {
   }
 }
 
+impl_wasm_clone!(WasmDIDUrl, DIDUrl);
+
 impl From<IotaDIDUrl> for WasmDIDUrl {
   fn from(did_url: IotaDIDUrl) -> Self {
     Self(did_url)

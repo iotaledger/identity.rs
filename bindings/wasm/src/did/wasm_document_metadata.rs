@@ -48,6 +48,8 @@ impl WasmDocumentMetadata {
   }
 }
 
+impl_wasm_clone!(WasmDocumentMetadata, DocumentMetadata);
+
 impl From<IotaDocumentMetadata> for WasmDocumentMetadata {
   fn from(metadata: IotaDocumentMetadata) -> Self {
     Self(metadata)
