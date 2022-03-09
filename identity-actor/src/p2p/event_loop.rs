@@ -175,8 +175,10 @@ impl EventLoop {
           response_channel.send(Err(err)).expect("receiver was dropped");
         }
       },
-      SwarmCommand::AddAddress { peer, address } => {
-        self.swarm.behaviour_mut().add_address(&peer, address);
+      SwarmCommand::AddAddresses { peer, addresses } => {
+        for addr in addresses {
+          self.swarm.behaviour_mut().add_address(&peer, addr);
+        }
       }
       SwarmCommand::GetAddresses { response_channel } => {
         response_channel

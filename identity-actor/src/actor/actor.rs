@@ -29,6 +29,7 @@ use crate::Synchronous;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
+use identity_core::common::OneOrMany;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
@@ -180,10 +181,16 @@ impl Actor {
     Ok(())
   }
 
-  /// Associate the given `peer_id` with an `address`. This needs to be called before sending a
+  /// Associate the given `peer_id` with an `address`. This needs to be done before sending a
   /// request to some [`PeerId`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) {
-    self.commander.add_address(peer_id, address).await;
+    self.commander.add_addresses(peer_id, OneOrMany::One(address)).await;
+  }
+
+  /// Associate the given `peer_id` with multiple `addresses`. This needs to be done before sending a
+  /// request to some [`PeerId`].
+  pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) {
+    self.commander.add_addresses(peer_id, OneOrMany::Many(addresses)).await;
   }
 
   /// Sends an asynchronous message to a peer. To receive a potential response, use [`Actor::await_message`],

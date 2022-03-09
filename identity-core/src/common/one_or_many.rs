@@ -8,6 +8,7 @@ use core::hash::Hash;
 use core::mem::replace;
 use core::ops::Deref;
 use core::slice::from_ref;
+use std::vec::IntoIter;
 
 /// A generic container that stores exactly one or many (0+) values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -197,6 +198,51 @@ impl<'a, T> Iterator for OneOrManyIter<'a, T> {
   fn next(&mut self) -> Option<Self::Item> {
     self.index += 1;
     self.inner.get(self.index - 1)
+  }
+}
+
+// =============================================================================
+// IntoIterator
+// =============================================================================
+
+enum Either<L, R> {
+  Left(L),
+  Right(R),
+}
+
+pub struct OneOrManyIterator<T> {
+  iter: Either<Option<T>, IntoIter<T>>,
+}
+
+impl<T> OneOrManyIterator<T> {
+  fn new(inner: OneOrMany<T>) -> Self {
+    let iter = match inner {
+      OneOrMany::One(item) => Either::Left(Some(item)),
+      OneOrMany::Many(vec) => Either::Right(vec.into_iter()),
+    };
+
+    Self { iter }
+  }
+}
+
+impl<T> Iterator for OneOrManyIterator<T> {
+  type Item = T;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    match self.iter {
+      Either::Left(ref mut item_opt) => item_opt.take(),
+      Either::Right(ref mut iter) => iter.next(),
+    }
+  }
+}
+
+impl<T> IntoIterator for OneOrMany<T> {
+  type Item = T;
+
+  type IntoIter = OneOrManyIterator<T>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    OneOrManyIterator::new(self)
   }
 }
 

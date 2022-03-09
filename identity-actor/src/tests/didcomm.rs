@@ -42,7 +42,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 
   let mut holder_actor = default_sending_actor(|_| {}).await;
 
-  let (verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
       .add_handler(
@@ -53,7 +53,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   })
   .await;
 
-  holder_actor.add_address(peer_id, addr.clone()).await;
+  holder_actor.add_addresses(peer_id, addrs).await;
 
   presentation_holder_handler(holder_actor.clone(), peer_id, None)
     .await
@@ -71,7 +71,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 
   let handler = DidCommState::new().await;
 
-  let (holder_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (holder_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
       .add_handler(
@@ -83,7 +83,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   .await;
   let mut verifier_actor = default_sending_actor(|_| {}).await;
 
-  verifier_actor.add_address(peer_id, addr.clone()).await;
+  verifier_actor.add_addresses(peer_id, addrs).await;
 
   presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
     .await
@@ -101,7 +101,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 
   let handler = DidCommState::new().await;
 
-  let (holder_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (holder_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
       .add_handler(
@@ -131,7 +131,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
   })
   .await;
 
-  verifier_actor.add_address(peer_id, addr.clone()).await;
+  verifier_actor.add_addresses(peer_id, addrs).await;
 
   presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
     .await
@@ -164,7 +164,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
 
   let mut holder_actor = default_sending_actor(|_| {}).await;
 
-  let (verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
       .add_handler(
@@ -180,7 +180,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
   })
   .await;
 
-  holder_actor.add_address(peer_id, addr.clone()).await;
+  holder_actor.add_addresses(peer_id, addrs).await;
 
   presentation_holder_handler(holder_actor.clone(), peer_id, None)
     .await
@@ -250,7 +250,7 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
   })
   .await;
 
-  let (verifier_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(DidCommState)
       .add_handler(
@@ -263,7 +263,7 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
 
   let verifier_peer_id = verifier_actor.peer_id();
 
-  holder_actor.add_address(verifier_peer_id, addr.clone()).await;
+  holder_actor.add_addresses(verifier_peer_id, addrs).await;
 
   let thread_id = ThreadId::new();
 

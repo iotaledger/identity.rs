@@ -16,7 +16,7 @@ use crate::tests::try_init_logger;
 async fn test_remote_account() -> crate::Result<()> {
   try_init_logger();
 
-  let (receiver, receiver_addr, receiver_peer_id) = default_listening_actor(|builder| {
+  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(RemoteAccount::new().unwrap())
       .add_handler("remote_account/create", RemoteAccount::create)
@@ -29,7 +29,7 @@ async fn test_remote_account() -> crate::Result<()> {
   .await;
   let mut sender = default_sending_actor(|_| {}).await;
 
-  sender.add_address(receiver_peer_id, receiver_addr).await;
+  sender.add_addresses(receiver_peer_id, receiver_addrs).await;
 
   let doc: IotaDocument = sender
     .send_request(receiver_peer_id, IdentityCreate(IdentitySetup::new()))

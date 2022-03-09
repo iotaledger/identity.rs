@@ -5,6 +5,7 @@ use futures::channel::mpsc;
 use futures::channel::oneshot;
 use futures::future::poll_fn;
 
+use identity_core::common::OneOrMany;
 use libp2p::request_response::InboundFailure;
 use libp2p::request_response::OutboundFailure;
 use libp2p::request_response::RequestId;
@@ -69,8 +70,8 @@ impl NetCommander {
     receiver.await.unwrap()
   }
 
-  pub async fn add_address(&mut self, peer: PeerId, address: Multiaddr) {
-    self.send_command(SwarmCommand::AddAddress { peer, address }).await;
+  pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) {
+    self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await;
   }
 
   pub async fn get_addresses(&mut self) -> Vec<Multiaddr> {
@@ -116,9 +117,9 @@ pub enum SwarmCommand {
     address: Multiaddr,
     response_channel: oneshot::Sender<Result<Multiaddr, TransportError<std::io::Error>>>,
   },
-  AddAddress {
+  AddAddresses {
     peer: PeerId,
-    address: Multiaddr,
+    addresses: OneOrMany<Multiaddr>,
   },
   GetAddresses {
     response_channel: oneshot::Sender<Vec<Multiaddr>>,

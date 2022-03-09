@@ -31,10 +31,10 @@ use super::default_sending_actor;
 async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
   try_init_logger();
 
-  let (listening_actor, addr, peer_id) = default_listening_actor(|_| {}).await;
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|_| {}).await;
 
   let mut sending_actor = default_sending_actor(|_| {}).await;
-  sending_actor.add_address(peer_id, addr).await;
+  sending_actor.add_addresses(peer_id, addrs).await;
 
   let result = sending_actor
     .send_named_request(
@@ -160,7 +160,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 
   let state = State(Arc::new(AtomicBool::new(false)));
 
-  let (receiver, receiver_addr, receiver_peer_id) = default_listening_actor(|builder| {
+  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(state.clone())
       .add_handler("request/test", State::handler)
@@ -169,7 +169,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   .await;
   let mut sender = default_sending_actor(|_| {}).await;
 
-  sender.add_address(receiver_peer_id, receiver_addr).await;
+  sender.add_addresses(receiver_peer_id, receiver_addrs).await;
 
   sender.send_request(receiver_peer_id, Dummy(42)).await.unwrap();
 
@@ -199,7 +199,7 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
     }
   }
 
-  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
       .add_handler(
@@ -214,7 +214,7 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   .await;
 
   let mut sending_actor = default_sending_actor(|_| {}).await;
-  sending_actor.add_address(peer_id, addr).await;
+  sending_actor.add_addresses(peer_id, addrs).await;
 
   let result = sending_actor
     .send_request(peer_id, MessageRequest("test".to_owned()))
@@ -267,13 +267,13 @@ async fn test_sending_to_unconnected_peer_returns_error() -> crate::Result<()> {
 async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
   try_init_logger();
 
-  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
       .add_handler(
         "didcomm/presentation_offer",
-        |_: (), _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| {
-          tokio::time::sleep(std::time::Duration::from_millis(40))
+        |_: (), _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {
+          tokio::time::sleep(std::time::Duration::from_millis(30)).await
         },
       )
       .unwrap();
@@ -286,7 +286,7 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
     .await
     .unwrap();
 
-  sending_actor.add_address(peer_id, addr).await;
+  sending_actor.add_addresses(peer_id, addrs).await;
 
   let thread_id = ThreadId::new();
   sending_actor
@@ -308,7 +308,7 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
 async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<()> {
   try_init_logger();
 
-  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
       .add_handler(
@@ -323,7 +323,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   .await;
 
   let mut sending_actor = ActorBuilder::new().build().await.unwrap();
-  sending_actor.add_address(peer_id, addr).await;
+  sending_actor.add_addresses(peer_id, addrs).await;
 
   let mut sender1 = sending_actor.clone();
 
@@ -374,7 +374,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
 
   let state = TestFunctionState::new();
 
-  let (listening_actor, addr, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(state.clone())
       .add_handler(
@@ -389,7 +389,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
   .await;
 
   let mut sending_actor = ActorBuilder::new().build().await.unwrap();
-  sending_actor.add_address(peer_id, addr).await;
+  sending_actor.add_addresses(peer_id, addrs).await;
 
   sending_actor
     .send_message(peer_id, &ThreadId::new(), PresentationOffer::default())
