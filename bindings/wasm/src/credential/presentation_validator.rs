@@ -14,7 +14,6 @@ use identity::iota::ResolvedIotaDocument;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmPresentationValidator;
 
 #[wasm_bindgen(js_class = PresentationValidator)]

@@ -266,10 +266,10 @@ impl WasmResolver {
       resolver
         .verify_presentation(
           &presentation.0,
-          holder.as_ref(),
-          issuers.as_deref(),
           &options.0,
           fail_fast.into(),
+          holder.as_ref(),
+          issuers.as_deref(),
         )
         .await
         .map(|_| JsValue::UNDEFINED)

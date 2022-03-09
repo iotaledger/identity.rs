@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 
 /// Options to declare validation criteria when validating credentials.
 #[wasm_bindgen(js_name = CredentialValidationOptions)]
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct WasmCredentialValidationOptions(pub(crate) CredentialValidationOptions);
 
 #[wasm_bindgen(js_class = CredentialValidationOptions)]
@@ -60,7 +60,7 @@ impl From<WasmCredentialValidationOptions> for CredentialValidationOptions {
 
 /// Options to declare validation criteria when validating presentation.
 #[wasm_bindgen(js_name = PresentationValidationOptions)]
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct WasmPresentationValidationOptions(pub(crate) PresentationValidationOptions);
 
 #[wasm_bindgen(js_class = PresentationValidationOptions)]

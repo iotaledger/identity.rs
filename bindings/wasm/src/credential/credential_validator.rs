@@ -19,7 +19,6 @@ use identity::iota::ValidationError;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = CredentialValidator, inspectable)]
-#[derive(Clone, Debug)]
 pub struct WasmCredentialValidator;
 
 #[wasm_bindgen(js_class = CredentialValidator)]
