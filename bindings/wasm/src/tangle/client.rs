@@ -49,7 +49,7 @@ impl WasmClient {
     executor::block_on(Client::new()).map(Self::from).wasm_result()
   }
 
-  /// Creates a new `Client` with settings from the given `Config`.
+  /// Creates a new `Client` with the given settings.
   #[wasm_bindgen(js_name = fromConfig)]
   pub fn from_config(config: IClientConfig) -> Result<PromiseClient> {
     let builder: ClientBuilder = ClientBuilder::try_from(config)?;

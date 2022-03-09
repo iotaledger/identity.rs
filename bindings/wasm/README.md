@@ -76,7 +76,7 @@ const doc = new identity.Document(key, network.name);
 doc.signSelf(key, doc.defaultSigningMethod().id);
 
 // Create a default client instance for the network.
-const client = identity.Client.fromNetwork(network);
+const client = await identity.Client.fromConfig({ network: network });
 
 // Publish the DID Document to the IOTA Tangle
 // The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
