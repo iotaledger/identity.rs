@@ -272,16 +272,14 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
       .add_state(())
       .add_handler(
         "didcomm/presentation_offer",
-        |_: (), _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {
-          tokio::time::sleep(std::time::Duration::from_millis(30)).await
-        },
+        |_: (), _: Actor, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {},
       )
       .unwrap();
   })
   .await;
 
   let mut sending_actor = ActorBuilder::new()
-    .timeout(std::time::Duration::from_millis(15))
+    .timeout(std::time::Duration::from_millis(50))
     .build()
     .await
     .unwrap();
