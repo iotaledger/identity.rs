@@ -37,7 +37,7 @@ async function privateTangle(restURL, networkName) {
     });
 
     // Create a client instance from the configuration to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    const client = await Client.fromConfig(config);
 
     // Generate a new ed25519 public/private key pair.
     const key = new KeyPair(KeyType.Ed25519);

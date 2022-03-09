@@ -22,7 +22,7 @@ async function createIdentity(clientConfig) {
     doc.signSelf(key, doc.defaultSigningMethod().id);
 
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig(new ClientConfig({
         network: clientConfig.network
     }));
 

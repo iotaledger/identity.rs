@@ -15,7 +15,7 @@ import {createIdentity} from "./create_did";
  **/
 async function createDiff(clientConfig) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig(new ClientConfig({
         network: clientConfig.network
     }));
 

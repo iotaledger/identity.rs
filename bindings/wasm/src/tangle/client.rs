@@ -10,6 +10,7 @@ use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::iota::Client;
+use identity::iota::ClientBuilder;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -46,25 +47,22 @@ pub struct WasmClient {
 
 #[wasm_bindgen(js_class = Client)]
 impl WasmClient {
-  fn from_client(client: Client) -> WasmClient {
-    Self {
-      client: Rc::new(client),
-    }
-  }
-
   /// Creates a new `Client` with default settings.
   #[wasm_bindgen(constructor)]
   pub fn new() -> Result<WasmClient> {
-    Self::from_config(&mut WasmClientConfig::new(None)?)
+    // TODO: is there a way to avoid blocking? Async constructors are not supported.
+    executor::block_on(Client::new()).map(Self::from).wasm_result()
   }
 
   /// Creates a new `Client` with settings from the given `Config`.
   #[wasm_bindgen(js_name = fromConfig)]
-  pub fn from_config(config: &mut WasmClientConfig) -> Result<WasmClient> {
-    let future = config.take_builder()?.build();
-    let output = executor::block_on(future).wasm_result();
+  pub fn from_config(config: &mut WasmClientConfig) -> Result<PromiseClient> {
+    let builder: ClientBuilder = config.take_builder()?;
+    let promise: Promise =
+      future_to_promise(async move { builder.build().await.map(Self::from).map(Into::into).wasm_result() });
 
-    output.map(Self::from_client)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseClient>())
   }
 
   /// Creates a new `Client` with default settings for the given `Network`.
@@ -73,7 +71,7 @@ impl WasmClient {
     let future = Client::from_network(network.into());
     let output = executor::block_on(future).wasm_result();
 
-    output.map(Self::from_client)
+    output.map(Self::from)
   }
 
   /// Returns the `Client` Tangle network.
@@ -271,4 +269,18 @@ impl From<Rc<Client>> for WasmClient {
   fn from(client: Rc<Client>) -> Self {
     Self { client }
   }
+}
+
+impl From<Client> for WasmClient {
+  fn from(client: Client) -> Self {
+    Self {
+      client: Rc::new(client),
+    }
+  }
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Client>")]
+  pub type PromiseClient;
 }

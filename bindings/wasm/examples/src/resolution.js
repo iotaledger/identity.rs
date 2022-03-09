@@ -12,7 +12,7 @@ import {manipulateIdentity} from "./manipulate_did";
  **/
 async function resolution(clientConfig, did) {
     // Create a client instance to publish messages to the configured Tangle network.
-    const client = Client.fromConfig(new ClientConfig({
+    const client = await Client.fromConfig(new ClientConfig({
         network: clientConfig.network
     }));
 
