@@ -151,7 +151,6 @@ This variant is the default used if no other variant is specified when construct
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
     * _static_
         * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
-        * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
 
 <a name="new_Client_new"></a>
 
@@ -262,17 +261,6 @@ Creates a new `Client` with settings from the given `Config`.
 | Param | Type |
 | --- | --- |
 | config | <code>IClientConfig</code> | 
-
-<a name="Client.fromNetwork"></a>
-
-### Client.fromNetwork(network) ⇒ [<code>Client</code>](#Client)
-Creates a new `Client` with default settings for the given `Network`.
-
-**Kind**: static method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| network | [<code>Network</code>](#Network) | 
 
 <a name="Credential"></a>
 
