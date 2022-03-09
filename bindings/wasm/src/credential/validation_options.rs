@@ -170,7 +170,10 @@ interface IPresentationValidationOptions {
     /** Options which affect the verification of the signature on the presentation. */
     readonly presentationVerifierOptions?: VerifierOptions;
 
-    /** Declare how the presentation's credential subjects must relate to the holder. */
+    /** Declare how the presentation's credential subjects must relate to the holder.
+     * 
+     * Default: SubjectHolderRelationship.AlwaysSubject
+     */
     readonly subjectHolderRelationship?: SubjectHolderRelationship;
 
 }"#;

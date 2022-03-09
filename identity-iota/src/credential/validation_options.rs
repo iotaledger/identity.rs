@@ -101,6 +101,7 @@ pub struct PresentationValidationOptions {
   #[serde(default)]
   pub presentation_verifier_options: VerifierOptions,
   /// Declares how the presentation's credential subjects must relate to the holder.
+  /// Default: [`SubjectHolderRelationship::AlwaysSubject`].
   #[serde(default)]
   pub subject_holder_relationship: SubjectHolderRelationship,
 }
