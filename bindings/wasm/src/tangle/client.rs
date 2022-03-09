@@ -5,12 +5,7 @@ use core::str::FromStr;
 use std::rc::Rc;
 
 use futures::executor;
-use identity::core::FromJson;
-use identity::credential::Credential;
-use identity::credential::Presentation;
-use identity::did::verifiable::VerifierOptions;
 use identity::iota::Client;
-use identity::iota::CredentialValidator;
 use identity::iota::DiffMessage;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;

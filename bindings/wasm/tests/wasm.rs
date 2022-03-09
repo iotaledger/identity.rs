@@ -429,7 +429,7 @@ fn test_validations() {
     .sign_credential(
       &JsValue::from(&credential.to_json().unwrap()),
       &JsValue::from_serde(&issuer_method).unwrap(),
-      WasmSignatureOptions::default(),
+      &WasmSignatureOptions::default(),
     )
     .unwrap();
 
@@ -476,7 +476,7 @@ fn test_validations() {
     .sign_presentation(
       &presentation.to_json().unwrap(),
       &JsValue::from_serde(&subject_method).unwrap(),
-      WasmSignatureOptions::default(),
+      &WasmSignatureOptions::default(),
     )
     .unwrap();
 
