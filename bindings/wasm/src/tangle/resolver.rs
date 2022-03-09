@@ -297,6 +297,7 @@ impl From<Resolver<Rc<Client>>> for WasmResolver {
 #[wasm_bindgen(js_name = ResolverBuilder)]
 pub struct WasmResolverBuilder(ResolverBuilder<Rc<Client>>);
 
+#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = ResolverBuilder)]
 impl WasmResolverBuilder {
   /// Constructs a new `ResolverBuilder` with no `Clients` configured.
