@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
 use std::str::FromStr;
 
 use identity::core::ToJson;
@@ -17,7 +16,6 @@ use crate::error::WasmResult;
 
 /// Defines the difference between two DID `Document`s' JSON representations.
 #[wasm_bindgen(js_name = DiffMessage, inspectable)]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct WasmDiffMessage(pub(crate) DiffMessage);
 
 #[wasm_bindgen(js_class = DiffMessage)]
@@ -86,18 +84,22 @@ impl WasmDiffMessage {
   pub fn merge(&self, document: &WasmDocument) -> Result<WasmDocument> {
     self.0.merge(&document.0).map(WasmDocument).wasm_result()
   }
+
+  /// Serializes a `DiffMessage` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `DiffMessage` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmDiffMessage> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<DiffMessage> for WasmDiffMessage {
   fn from(document_diff: DiffMessage) -> Self {
     Self(document_diff)
-  }
-}
-
-impl Deref for WasmDiffMessage {
-  type Target = DiffMessage;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
   }
 }

@@ -38,7 +38,7 @@ runs:
       shell: pwsh
       run: |
         choco install sccache
-  
+
     - name: Start sccache
       if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
       shell: sh

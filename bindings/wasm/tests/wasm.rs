@@ -186,13 +186,16 @@ fn test_document_resolve_method() {
   )
   .unwrap();
   document
-    .insert_method(&method_new, WasmMethodScope::authentication())
+    .insert_method(&method_new, &WasmMethodScope::authentication())
     .unwrap();
 
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
+      .resolve_method(
+        &JsValue::from(default_method.id()).unchecked_into(),
+        JsValue::undefined().unchecked_into()
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -200,7 +203,10 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
+      .resolve_method(
+        &JsValue::from(method_new.id()).unchecked_into(),
+        JsValue::undefined().unchecked_into()
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -212,7 +218,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        None
+        JsValue::undefined().unchecked_into()
       )
       .unwrap()
       .id()
@@ -221,7 +227,10 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
+      .resolve_method(
+        &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
+        JsValue::undefined().unchecked_into()
+      )
       .unwrap()
       .id()
       .to_string(),
@@ -233,7 +242,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        None
+        JsValue::undefined().unchecked_into()
       )
       .unwrap()
       .id()
@@ -244,7 +253,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        None
+        JsValue::undefined().unchecked_into()
       )
       .unwrap()
       .id()
@@ -312,10 +321,10 @@ fn test_sign_document() {
   )
   .unwrap();
   document2
-    .insert_method(&method, WasmMethodScope::capability_invocation())
+    .insert_method(&method, &WasmMethodScope::capability_invocation())
     .unwrap();
   document2
-    .remove_method(document1.default_signing_method().unwrap().id())
+    .remove_method(&document1.default_signing_method().unwrap().id())
     .unwrap();
 
   // Sign update using original document.
@@ -420,7 +429,7 @@ fn test_validations() {
     .sign_credential(
       &JsValue::from(&credential.to_json().unwrap()),
       &JsValue::from_serde(&issuer_method).unwrap(),
-      WasmSignatureOptions::default(),
+      &WasmSignatureOptions::default(),
     )
     .unwrap();
 
@@ -467,7 +476,7 @@ fn test_validations() {
     .sign_presentation(
       &presentation.to_json().unwrap(),
       &JsValue::from_serde(&subject_method).unwrap(),
-      WasmSignatureOptions::default(),
+      &WasmSignatureOptions::default(),
     )
     .unwrap();
 

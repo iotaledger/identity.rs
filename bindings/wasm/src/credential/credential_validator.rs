@@ -73,13 +73,13 @@ impl WasmCredentialValidator {
 
   /// Validate that the credential expires on or after the specified timestamp.
   #[wasm_bindgen(js_name = checkExpiresOnOrAfter)]
-  pub fn check_expires_on_or_after(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
+  pub fn check_expires_on_or_after(credential: &WasmCredential, timestamp: &WasmTimestamp) -> Result<()> {
     CredentialValidator::check_expires_on_or_after(&credential.0, timestamp.0).wasm_result()
   }
 
   /// Validate that the credential is issued on or before the specified timestamp.
   #[wasm_bindgen(js_name = checkIssuedOnOrBefore)]
-  pub fn check_issued_on_or_before(credential: &WasmCredential, timestamp: WasmTimestamp) -> Result<()> {
+  pub fn check_issued_on_or_before(credential: &WasmCredential, timestamp: &WasmTimestamp) -> Result<()> {
     CredentialValidator::check_issued_on_or_before(&credential.0, timestamp.0).wasm_result()
   }
 

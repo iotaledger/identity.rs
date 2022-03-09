@@ -45,7 +45,7 @@ impl Config {
   /// Sets the IOTA Tangle network.
   #[wasm_bindgen(js_name = setNetwork)]
   pub fn set_network(&mut self, network: &WasmNetwork) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.network(network.clone().into()))
+    self.with_mut(|builder| builder.network(network.0.clone()))
   }
 
   /// Sets the DID message encoding used when publishing to the Tangle.

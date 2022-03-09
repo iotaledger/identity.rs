@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str::FromStr;
-use std::ops::Deref;
 use std::rc::Rc;
 
 use futures::executor;
 use identity::iota::Client;
+use identity::iota::DiffMessage;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
@@ -64,8 +64,8 @@ impl WasmClient {
 
   /// Creates a new `Client` with default settings for the given `Network`.
   #[wasm_bindgen(js_name = fromNetwork)]
-  pub fn from_network(network: WasmNetwork) -> Result<WasmClient> {
-    let future = Client::from_network(network.into());
+  pub fn from_network(network: &WasmNetwork) -> Result<WasmClient> {
+    let future = Client::from_network(network.0.clone());
     let output = executor::block_on(future).wasm_result();
 
     output.map(Self::from_client)
@@ -98,13 +98,14 @@ impl WasmClient {
 
   /// Publishes a `DiffMessage` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
-  pub fn publish_diff(&self, message_id: &str, diff: WasmDiffMessage) -> Result<PromiseReceipt> {
+  pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let diff: DiffMessage = diff.0.clone();
     let client: Rc<Client> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_diff(&message, diff.deref())
+        .publish_diff(&message, &diff)
         .await
         .map(WasmReceipt)
         .map(Into::into)

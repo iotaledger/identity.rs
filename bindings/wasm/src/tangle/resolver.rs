@@ -313,7 +313,7 @@ impl WasmResolverBuilder {
   ///
   /// NOTE: replaces any previous `Client` or `Config` with the same network name.
   #[wasm_bindgen(js_name = clientConfig)]
-  pub fn client_config(mut self, mut config: Config) -> Result<WasmResolverBuilder> {
+  pub fn client_config(mut self, config: &mut Config) -> Result<WasmResolverBuilder> {
     self.0 = self.0.client_builder(config.take_builder()?);
     Ok(self)
   }
