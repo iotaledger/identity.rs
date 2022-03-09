@@ -22,7 +22,7 @@ async function privateTangle(restURL, networkName) {
     // This name needs to match the id of the network or part of it.
     // Since the id of the one-click private tangle is `private-tangle`
     // but we can only use 6 characters, we use just `tangle`.
-    const network = Network.try_from_name(networkName || "tangle");
+    const network = Network.tryFromName(networkName || "tangle");
 
     // Optionally point to a locally-deployed Tangle explorer.
     const explorer = ExplorerUrl.parse("http://127.0.0.1:8082/");

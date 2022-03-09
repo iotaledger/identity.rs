@@ -26,7 +26,7 @@
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "txm README.md",
-    "test:unit": "wasm-pack test --node",
+    "test:unit": "wasm-pack test --release --node",
     "cypress": "cypress open"
   },
   "contributors": [

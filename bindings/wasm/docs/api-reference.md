@@ -1876,7 +1876,7 @@ Deserializes a `MethodType` object from a JSON object.
         * [.toString()](#Network+toString) ⇒ <code>string</code>
         * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
+        * [.tryFromName(name)](#Network.tryFromName) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
         * [.fromJSON(json)](#Network.fromJSON) ⇒ [<code>Network</code>](#Network)
@@ -1901,10 +1901,12 @@ Returns the node URL of the Tangle network.
 Serializes a `Network` as a JSON object.
 
 **Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network.try_from_name"></a>
+<a name="Network.tryFromName"></a>
 
-### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
+### Network.tryFromName(name) ⇒ [<code>Network</code>](#Network)
 Parses the provided string to a `Network`.
+
+Errors if the name is invalid.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 
