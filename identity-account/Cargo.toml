@@ -22,6 +22,7 @@ identity-iota = { version = "=0.5.0-dev.4", path = "../identity-iota", default-f
 itoa = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
+parking_lot = { version = "0.12" }
 paste = { version = "1.0" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 slog = { version = "2.7" }
@@ -36,12 +37,12 @@ features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dependencies.stronghold_engine]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dev-dependencies]

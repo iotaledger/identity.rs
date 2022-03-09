@@ -3,6 +3,7 @@
 
 use core::iter;
 use futures::executor::block_on;
+use iota_stronghold::procedures::KeyType;
 use iota_stronghold::Location;
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
@@ -15,11 +16,12 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::error::Error;
 use crate::stronghold::default_hint;
+use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Snapshot;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
+use crate::stronghold::StrongholdError;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
 use identity_core::crypto::KeyPair;
@@ -74,10 +76,10 @@ rusty_fork_test! {
       thread::sleep(interval * 3);
 
       let store: Store<'_> = snapshot.store("", &[]);
-      let error: Error = store.get(location("expires")).await.unwrap_err();
+      let error: StrongholdError = store.get(location("expires")).await.unwrap_err();
 
       assert!(
-        matches!(error, Error::StrongholdPasswordNotSet),
+        matches!(error, StrongholdError::StrongholdPasswordNotSet),
         "unexpected error: {:?}",
         error
       );
@@ -129,21 +131,21 @@ rusty_fork_test! {
         }
       }
 
-      let mut result: Result<Vec<u8>, Error> = store.get(location("persists1")).await;
+      let mut result: IotaStrongholdResult<Option<Vec<u8>>> = store.get(location("persists1")).await;
 
       // Test may have taken too long / been interrupted and cleared the password already, retry
-      if matches!(result, Err(Error::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
+      if matches!(result, Err(StrongholdError::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
         snapshot.set_password(Default::default()).await.unwrap();
         result = store.get(location("persists1")).await;
       }
-      assert_eq!(result.unwrap(), b"STRONGHOLD1");
+      assert_eq!(result.unwrap(), Some(b"STRONGHOLD1".to_vec()));
 
       // Wait for password to be cleared
       thread::sleep(interval * 2);
 
-      let error: Error = store.get(location("persists1")).await.unwrap_err();
+      let error: StrongholdError = store.get(location("persists1")).await.unwrap_err();
       assert!(
-        matches!(error, Error::StrongholdPasswordNotSet),
+        matches!(error, StrongholdError::StrongholdPasswordNotSet),
         "unexpected error: {:?}",
         error
       );
@@ -162,22 +164,22 @@ rusty_fork_test! {
 
       let store: Store<'_> = snapshot.store(b"store", &[]);
 
-      assert!(store.get(location("A")).await.unwrap().is_empty());
-      assert!(store.get(location("B")).await.unwrap().is_empty());
-      assert!(store.get(location("C")).await.unwrap().is_empty());
+      assert!(store.get(location("A")).await.unwrap().is_none());
+      assert!(store.get(location("B")).await.unwrap().is_none());
+      assert!(store.get(location("C")).await.unwrap().is_none());
 
       store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
       store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
       store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
 
-      assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-      assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-      assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
+      assert_eq!(store.get(location("A")).await.unwrap(), Some(b"foo".to_vec()));
+      assert_eq!(store.get(location("B")).await.unwrap(), Some(b"bar".to_vec()));
+      assert_eq!(store.get(location("C")).await.unwrap(), Some(b"baz".to_vec()));
 
       store.del(location("A")).await.unwrap();
       store.del(location("C")).await.unwrap();
 
-      assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+      assert_eq!(store.get(location("B")).await.unwrap(), Some(b"bar".to_vec()));
 
       snapshot.unload(true).await.unwrap();
 
@@ -199,9 +201,9 @@ rusty_fork_test! {
       let stores: &[_] = &[&store1, &store2, &store3];
 
       for store in stores {
-        assert!(store.get(location("A")).await.unwrap().is_empty());
-        assert!(store.get(location("B")).await.unwrap().is_empty());
-        assert!(store.get(location("C")).await.unwrap().is_empty());
+        assert!(store.get(location("A")).await.unwrap().is_none());
+        assert!(store.get(location("B")).await.unwrap().is_none());
+        assert!(store.get(location("C")).await.unwrap().is_none());
       }
 
       for store in stores {
@@ -211,9 +213,9 @@ rusty_fork_test! {
       }
 
       for store in stores {
-        assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-        assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
+        assert_eq!(store.get(location("A")).await.unwrap(), Some(b"foo".to_vec()));
+        assert_eq!(store.get(location("B")).await.unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.get(location("C")).await.unwrap(), Some(b"baz".to_vec()));
       }
 
       for store in stores {
@@ -222,7 +224,7 @@ rusty_fork_test! {
       }
 
       for store in stores {
-        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+        assert_eq!(store.get(location("B")).await.unwrap(), Some(b"bar".to_vec()));
       }
 
       snapshot1.unload(true).await.unwrap();
@@ -245,17 +247,17 @@ rusty_fork_test! {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;
         let store: Store<'_> = snapshot.store(b"persistence", &[]);
 
-        assert!(store.get(location("A")).await.unwrap().is_empty());
-        assert!(store.get(location("B")).await.unwrap().is_empty());
-        assert!(store.get(location("C")).await.unwrap().is_empty());
+        assert!(store.get(location("A")).await.unwrap().is_none());
+        assert!(store.get(location("B")).await.unwrap().is_none());
+        assert!(store.get(location("C")).await.unwrap().is_none());
 
         store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
         store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
         store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
 
-        assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-        assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
+        assert_eq!(store.get(location("A")).await.unwrap(), Some(b"foo".to_vec()));
+        assert_eq!(store.get(location("B")).await.unwrap(), Some( b"bar".to_vec()));
+        assert_eq!(store.get(location("C")).await.unwrap(), Some(b"baz".to_vec()));
 
         snapshot.unload(true).await.unwrap();
       }
@@ -264,9 +266,9 @@ rusty_fork_test! {
         let snapshot: Snapshot = load_snapshot(&filename, password).await;
         let store: Store<'_> = snapshot.store(b"persistence", &[]);
 
-        assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-        assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
+        assert_eq!(store.get(location("A")).await.unwrap(), Some(b"foo".to_vec()));
+        assert_eq!(store.get(location("B")).await.unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.get(location("C")).await.unwrap(), Some(b"baz".to_vec()));
 
         fs::remove_file(store.path()).unwrap();
       }
@@ -297,7 +299,11 @@ rusty_fork_test! {
         let vault = snapshot.vault(b"persistence", &[]);
         assert!(vault.exists(location("A")).await.unwrap());
 
-        let pubkey = vault.ed25519_public_key(location("A")).await.unwrap();
+        let procedure = iota_stronghold::procedures::PublicKey{
+          private_key: location("A"),
+          ty: KeyType::Ed25519
+        };
+        let pubkey = vault.execute(procedure).await.unwrap();
 
         assert_eq!(pubkey, keypair.public().as_ref());
 
