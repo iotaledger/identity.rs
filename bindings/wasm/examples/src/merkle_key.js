@@ -5,17 +5,17 @@ import {
     Client,
     ClientConfig,
     Credential,
+    CredentialValidationOptions,
+    CredentialValidator,
     Digest,
+    FailFast,
     KeyCollection,
     KeyType,
     MethodScope,
+    Resolver,
     SignatureOptions,
     Timestamp,
-    VerificationMethod,
-    ResolverBuilder,
-    CredentialValidator,
-    CredentialValidationOptions,
-    FailFast
+    VerificationMethod
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 
@@ -79,23 +79,20 @@ async function merkleKey(clientConfig) {
     }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const resolver = await new ResolverBuilder()
-    .clientConfig(Config.fromNetwork(clientConfig.network))
-    .build();
-
+    const resolver = await Resolver
+        .builder()
+        .client(client)
+        .build();
     const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
-
     CredentialValidator.validate(
-        signedVc, 
+        signedVc,
         resolvedIssuerDoc,
         CredentialValidationOptions.default(),
         FailFast.FirstError
-        ); 
-
+    );
     console.log(`Credential successfully validated!"`);
-  
 
-    // The Issuer would like to revoke the credential (and therefore revokes key 0)
+    // The Issuer would like to revoke the credential (and therefore revokes key 0).
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
     issuer.doc.metadataPreviousMessageId = receipt.messageId;
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
@@ -104,21 +101,21 @@ async function merkleKey(clientConfig) {
     console.log(`Identity Update: ${clientConfig.explorer.messageUrl(nextReceipt.messageId)}`);
 
     // Check the verifiable credential is revoked
-    let vc_revoked = false; 
+    let vc_revoked = false;
     try {
+        // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const updatedResolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
-
         CredentialValidator.validate(
-            signedVc, 
+            signedVc,
             updatedResolvedIssuerDoc,
             CredentialValidationOptions.default(),
             FailFast.FirstError
-            ); 
-    } catch (exception)  {
+        );
+    } catch (exception) {
         console.log(`${exception.message}`)
         vc_revoked = true;
     }
-    
+
     if (!vc_revoked) throw new Error("VC not revoked");
     console.log(`Credential successfully revoked!`);
 }

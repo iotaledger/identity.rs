@@ -62,6 +62,12 @@ impl WasmResolver {
       .wasm_result()
   }
 
+  /// Returns a {@link ResolverBuilder} to construct a new `Resolver`.
+  #[wasm_bindgen]
+  pub fn builder() -> WasmResolverBuilder {
+    WasmResolverBuilder::new()
+  }
+
   /// Returns the `Client` corresponding to the given network name if one exists.
   #[wasm_bindgen(js_name = getClient)]
   pub fn get_client(&self, network_name: String) -> Option<WasmClient> {
@@ -332,12 +338,6 @@ impl WasmResolverBuilder {
         .wasm_result()
     })
     .unchecked_into::<PromiseResolver>()
-  }
-}
-
-impl Default for WasmResolverBuilder {
-  fn default() -> Self {
-    Self::new()
   }
 }
 

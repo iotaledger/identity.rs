@@ -1,7 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {ResolverBuilder, ClientConfig, Timestamp, Duration, Presentation, Credential, FailFast, PresentationValidator, CredentialValidator, SignatureOptions, VerifierOptions, PresentationValidationOptions, CredentialValidationOptions, SubjectHolderRelationship} from '@iota/identity-wasm';
+import {
+    ClientConfig,
+    Credential,
+    CredentialValidationOptions,
+    Duration,
+    FailFast,
+    Presentation,
+    PresentationValidationOptions,
+    Resolver,
+    SignatureOptions,
+    SubjectHolderRelationship,
+    Timestamp,
+    VerifierOptions
+} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -64,21 +77,21 @@ async function createVP(clientConfig) {
     // - The issuance date must not be in the future.
 
     // Declare that the challenge must match our expectation:
-    const presentationVerifierOptions = new VerifierOptions( {
+    const presentationVerifierOptions = new VerifierOptions({
         challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440",
         allowExpired: false,
     });
 
     // Declare that any credential contained in the presentation are not allowed to expire within the next 10 hours:
     const earliestExpiryDate = Timestamp.nowUTC().checkedAdd(Duration.hours(10));
-    const credentialValidationOptions = new CredentialValidationOptions( {
+    const credentialValidationOptions = new CredentialValidationOptions({
         earliestExpiryDate: earliestExpiryDate,
     });
 
     // Declare that the presentation holder's DID must match the subject ID on all credentials in the presentation.
     const subjectHolderRelationship = SubjectHolderRelationship.AlwaysSubject;
 
-    const presentationValidationOptions = new PresentationValidationOptions( {
+    const presentationValidationOptions = new PresentationValidationOptions({
         sharedValidationOptions: credentialValidationOptions,
         presentationVerifierOptions: presentationVerifierOptions,
         subjectHolderRelationship: subjectHolderRelationship,
@@ -86,10 +99,12 @@ async function createVP(clientConfig) {
 
     // In order to validate presentations and credentials one needs to resolve the DID Documents of
     // the presentation holder and of credential issuers. This is something the `Resolver` can help with.
-
-    const resolver = await new ResolverBuilder()
-    .clientConfig(Config.fromNetwork(clientConfig.network))
-    .build();
+    const resolver = await Resolver
+        .builder()
+        .clientConfig(new ClientConfig({
+            network: clientConfig.network
+        }))
+        .build();
 
     // Validate the presentation and all the credentials included in it according to the validation options
     await resolver.verifyPresentation(

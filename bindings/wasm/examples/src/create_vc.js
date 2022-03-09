@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {ClientConfig, Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, ResolverBuilder, FailFast} from '@iota/identity-wasm';
+import {Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -9,7 +9,7 @@ import {manipulateIdentity} from './manipulate_did';
  This example shows how to create a Verifiable Credential and validate it.
  In this example, alice takes the role of the subject, while we also have an issuer.
  The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
- This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
+ This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
 
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
