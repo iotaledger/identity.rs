@@ -12,7 +12,10 @@ import {
     SignatureOptions,
     Timestamp,
     VerificationMethod,
-    VerifierOptions
+    ResolverBuilder,
+    CredentialValidator,
+    CredentialValidationOptions,
+    FailFast
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 
@@ -77,9 +80,21 @@ async function merkleKey(clientConfig) {
     }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result: ${result.verified}`);
-    if (!result.verified) throw new Error("VC not valid");
+    const resolver = await new ResolverBuilder()
+    .clientConfig(Config.fromNetwork(clientConfig.network))
+    .build();
+
+    const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+
+    CredentialValidator.validate(
+        signedVc, 
+        resolvedIssuerDoc,
+        CredentialValidationOptions.default(),
+        FailFast.FirstError
+        ); 
+
+    console.log(`Credential successfully validated!"`);
+  
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
@@ -90,9 +105,23 @@ async function merkleKey(clientConfig) {
     console.log(`Identity Update: ${clientConfig.explorer.messageUrl(nextReceipt.messageId)}`);
 
     // Check the verifiable credential is revoked
-    const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result (false = revoked): ${newResult.verified}`);
-    if (newResult.verified) throw new Error("VC not revoked");
+    let vc_revoked = false; 
+    try {
+        const updatedResolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+
+        CredentialValidator.validate(
+            signedVc, 
+            updatedResolvedIssuerDoc,
+            CredentialValidationOptions.default(),
+            FailFast.FirstError
+            ); 
+    } catch (exception)  {
+        console.log(`${exception.message}`)
+        vc_revoked = true;
+    }
+    
+    if (!vc_revoked) throw new Error("VC not revoked");
+    console.log(`Credential successfully revoked!`);
 }
 
 export {merkleKey};

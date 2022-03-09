@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, VerifierOptions} from '@iota/identity-wasm';
+import {Client, Config, Timestamp, Credential, ResolverBuilder, CredentialValidationOptions, CredentialValidator, FailFast} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -28,7 +28,8 @@ async function revokeVC(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Creates new identities and a VC (see "create_vc" example)
-    const {alice, issuer, signedVc} = await createVC(clientConfig);
+    const {alice, issuer, credentialJSON} = await createVC(clientConfig);
+    const signedVc = Credential.fromJSON(credentialJSON);
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
@@ -43,8 +44,25 @@ async function revokeVC(clientConfig) {
     console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
 
     // Check the verifiable credential
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result (false = revoked): ${result.verified}`);
+    const resolver = await new ResolverBuilder()
+    .clientConfig(Config.fromNetwork(clientConfig.network))
+    .build();
+    let vc_revoked = false;
+    try {
+        const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+        CredentialValidator.validate(
+            signedVc, 
+            resolvedIssuerDoc,
+            CredentialValidationOptions.default(),
+            FailFast.FirstError
+            ); 
+    } catch (exception) {
+        console.log(`${exception.message}`)
+        vc_revoked = true;
+    }
+    if (!vc_revoked) throw new Error("VC not revoked");
+    console.log(`Credential successfully revoked!`);
+
 }
 
 export {revokeVC};
