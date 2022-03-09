@@ -31,10 +31,10 @@ impl CredentialValidator {
   /// Validates a [`Credential`].
   ///
   /// The following properties are validated according to `options`:
-  /// - The issuer's signature,
-  /// - The expiration date,
-  /// - The issuance date
-  /// - The semantic structure.
+  /// - the issuer's signature,
+  /// - the expiration date,
+  /// - the issuance date,
+  /// - the semantic structure.
   ///
   /// # Warning
   /// The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
