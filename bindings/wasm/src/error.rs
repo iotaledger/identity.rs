@@ -183,7 +183,7 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
 impl From<identity::iota::CompoundCredentialValidationError> for WasmError<'_> {
   fn from(error: identity::iota::CompoundCredentialValidationError) -> Self {
     Self {
-      name: Cow::Borrowed("AccumulatedCredentialValidationError"),
+      name: Cow::Borrowed("CompoundCredentialValidationError"),
       message: Cow::Owned(error.to_string()),
     }
   }
