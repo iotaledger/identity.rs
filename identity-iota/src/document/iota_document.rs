@@ -649,6 +649,13 @@ impl SetSignature for IotaDocument {
   }
 }
 
+// Workaround to enable using this with the credential and presentation validators.
+impl AsRef<IotaDocument> for IotaDocument {
+  fn as_ref(&self) -> &IotaDocument {
+    self
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use std::str::FromStr;

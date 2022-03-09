@@ -3,10 +3,15 @@
 <dl>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
-<dt><a href="#ClientConfig">ClientConfig</a></dt>
+<dt><a href="#Config">Config</a></dt>
 <dd><p>Options to configure a new <a href="#Client">Client</a>.</p>
 </dd>
 <dt><a href="#Credential">Credential</a></dt>
+<dd></dd>
+<dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating credentials.</p>
+</dd>
+<dt><a href="#CredentialValidator">CredentialValidator</a></dt>
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
@@ -45,6 +50,11 @@
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
+<dd></dd>
+<dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
+<dd><p>Options to declare validation criteria when validating presentation.</p>
+</dd>
+<dt><a href="#PresentationValidator">PresentationValidator</a></dt>
 <dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <code>Signature</code>.</p>
@@ -87,10 +97,35 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
+<dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
+<dd><p>Declares how credential subjects must relate to the presentation holder during validation.
+See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
+<p>See also the <a href="https://www.w3.org/TR/vc-data-model/#subject-holder-relationships">Subject-Holder Relationship</a> section of the specification.</p>
+</dd>
+<dt><a href="#AlwaysSubject">AlwaysSubject</a></dt>
+<dd><p>The holder must always match the subject on all credentials, regardless of their <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property.
+This variant is the default used if no other variant is specified when constructing a new
+<code>PresentationValidationOptions</code>.</p>
+</dd>
+<dt><a href="#SubjectOnNonTransferable">SubjectOnNonTransferable</a></dt>
+<dd><p>The holder must match the subject only for credentials where the <a href="https://www.w3.org/TR/vc-data-model/#nontransferable-property"><code>nonTransferable</code></a> property is <code>true</code>.</p>
+</dd>
+<dt><a href="#Any">Any</a></dt>
+<dd><p>The holder is not required to have any kind of relationship to any credential subject.</p>
+</dd>
+<dt><a href="#FailFast">FailFast</a></dt>
+<dd><p>Declares when validation should return if an error occurs.</p>
+</dd>
+<dt><a href="#AllErrors">AllErrors</a></dt>
+<dd><p>Return all errors that occur during validation.</p>
+</dd>
+<dt><a href="#FirstError">FirstError</a></dt>
+<dd><p>Return after the first error occurs.</p>
+</dd>
 </dl>
 
 ## Functions
@@ -117,10 +152,8 @@ See <code>IVerifierOptions</code>.</p>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
-        * [.checkCredential(data, options)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.checkPresentation(data, options)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
-        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
+        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
         * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
 
 <a name="new_Client_new"></a>
@@ -222,40 +255,16 @@ capability invocation method.
 | --- | --- |
 | document | [<code>ResolvedDocument</code>](#ResolvedDocument) | 
 
-<a name="Client+checkCredential"></a>
-
-### client.checkCredential(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
-Validates a credential with the DID Document from the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
-<a name="Client+checkPresentation"></a>
-
-### client.checkPresentation(data, options) ⇒ <code>Promise.&lt;any&gt;</code>
-Validates a presentation with the DID Document from the Tangle.
-
-**Kind**: instance method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
-
 <a name="Client.fromConfig"></a>
 
-### Client.fromConfig(config) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
+### Client.fromConfig(config) ⇒ [<code>Client</code>](#Client)
 Creates a new `Client` with settings from the given `Config`.
 
 **Kind**: static method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| config | [<code>ClientConfig</code>](#ClientConfig) | 
+| config | [<code>Config</code>](#Config) | 
 
 <a name="Client.fromNetwork"></a>
 
@@ -268,21 +277,237 @@ Creates a new `Client` with default settings for the given `Network`.
 | --- | --- |
 | network | [<code>Network</code>](#Network) | 
 
-<a name="ClientConfig"></a>
+<a name="Config"></a>
 
-## ClientConfig
+## Config
 Options to configure a new [Client](#Client).
 
 **Kind**: global class  
-<a name="new_ClientConfig_new"></a>
 
-### new ClientConfig(config)
+* [Config](#Config)
+    * [new Config()](#new_Config_new)
+    * _instance_
+        * [.setNetwork(network)](#Config+setNetwork)
+        * [.setEncoding(encoding)](#Config+setEncoding)
+        * [.setNode(url)](#Config+setNode)
+        * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
+        * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
+        * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
+        * [.setNodeAuth(url, jwt, username, password)](#Config+setNodeAuth)
+        * [.setNodeSyncInterval(value)](#Config+setNodeSyncInterval)
+        * [.setNodeSyncDisabled()](#Config+setNodeSyncDisabled)
+        * [.setQuorum(value)](#Config+setQuorum)
+        * [.setQuorumSize(value)](#Config+setQuorumSize)
+        * [.setQuorumThreshold(value)](#Config+setQuorumThreshold)
+        * [.setLocalPoW(value)](#Config+setLocalPoW)
+        * [.setFallbackToLocalPoW(value)](#Config+setFallbackToLocalPoW)
+        * [.setTipsInterval(value)](#Config+setTipsInterval)
+        * [.setRequestTimeout(value)](#Config+setRequestTimeout)
+    * _static_
+        * [.fromNetwork(network)](#Config.fromNetwork) ⇒ [<code>Config</code>](#Config)
+
+<a name="new_Config_new"></a>
+
+### new Config()
 Creates a new `Config`.
 
+<a name="Config+setNetwork"></a>
+
+### config.setNetwork(network)
+Sets the IOTA Tangle network.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| config | <code>IClientConfig</code> \| <code>undefined</code> | 
+| network | [<code>Network</code>](#Network) | 
+
+<a name="Config+setEncoding"></a>
+
+### config.setEncoding(encoding)
+Sets the DID message encoding used when publishing to the Tangle.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| encoding | <code>number</code> | 
+
+<a name="Config+setNode"></a>
+
+### config.setNode(url)
+Adds an IOTA node by its URL.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+
+<a name="Config+setPrimaryNode"></a>
+
+### config.setPrimaryNode(url, jwt, username, password)
+Adds an IOTA node by its URL to be used as primary node.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Config+setPrimaryPoWNode"></a>
+
+### config.setPrimaryPoWNode(url, jwt, username, password)
+Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Config+setPermanode"></a>
+
+### config.setPermanode(url, jwt, username, password)
+Adds a permanode by its URL.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Config+setNodeAuth"></a>
+
+### config.setNodeAuth(url, jwt, username, password)
+Adds an IOTA node by its URL.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Config+setNodeSyncInterval"></a>
+
+### config.setNodeSyncInterval(value)
+Sets the node sync interval.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> | 
+
+<a name="Config+setNodeSyncDisabled"></a>
+
+### config.setNodeSyncDisabled()
+Disables the node sync process.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+<a name="Config+setQuorum"></a>
+
+### config.setQuorum(value)
+Enables/disables quorum.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="Config+setQuorumSize"></a>
+
+### config.setQuorumSize(value)
+Sets the number of nodes used for quorum.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> | 
+
+<a name="Config+setQuorumThreshold"></a>
+
+### config.setQuorumThreshold(value)
+Sets the quorum threshold.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> | 
+
+<a name="Config+setLocalPoW"></a>
+
+### config.setLocalPoW(value)
+Sets whether proof-of-work (PoW) is performed locally or remotely.
+
+Default: false.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="Config+setFallbackToLocalPoW"></a>
+
+### config.setFallbackToLocalPoW(value)
+Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
+
+Default: true.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> | 
+
+<a name="Config+setTipsInterval"></a>
+
+### config.setTipsInterval(value)
+Sets the number of seconds that new tips will be requested during PoW.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> | 
+
+<a name="Config+setRequestTimeout"></a>
+
+### config.setRequestTimeout(value)
+Sets the default request timeout.
+
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> | 
+
+<a name="Config.fromNetwork"></a>
+
+### Config.fromNetwork(network) ⇒ [<code>Config</code>](#Config)
+Creates a new `Config` for the given IOTA Tangle network.
+
+**Kind**: static method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| network | [<code>Network</code>](#Network) | 
 
 <a name="Credential"></a>
 
@@ -334,6 +559,178 @@ Deserializes a `Credential` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="CredentialValidationOptions"></a>
+
+## CredentialValidationOptions
+Options to declare validation criteria when validating credentials.
+
+**Kind**: global class  
+
+* [CredentialValidationOptions](#CredentialValidationOptions)
+    * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
+    * _instance_
+        * [.toJSON()](#CredentialValidationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+        * [.fromJSON(json)](#CredentialValidationOptions.fromJSON) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+
+<a name="new_CredentialValidationOptions_new"></a>
+
+### new CredentialValidationOptions(options)
+Creates a new `CredentialValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>ICredentialValidationOptions</code> | 
+
+<a name="CredentialValidationOptions+toJSON"></a>
+
+### credentialValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes a `CredentialValidationOptions` as a JSON object.
+
+**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+<a name="CredentialValidationOptions.default"></a>
+
+### CredentialValidationOptions.default() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+Creates a new `CredentialValidationOptions` with defaults.
+
+**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+<a name="CredentialValidationOptions.fromJSON"></a>
+
+### CredentialValidationOptions.fromJSON(json) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+Deserializes a `CredentialValidationOptions` from a JSON object.
+
+**Kind**: static method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="CredentialValidator"></a>
+
+## CredentialValidator
+**Kind**: global class  
+
+* [CredentialValidator](#CredentialValidator)
+    * [.validate(credential, issuer, options, fail_fast)](#CredentialValidator.validate)
+    * [.checkStructure(credential)](#CredentialValidator.checkStructure)
+    * [.checkExpiresOnOrAfter(credential, timestamp)](#CredentialValidator.checkExpiresOnOrAfter)
+    * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
+    * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
+    * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
+
+<a name="CredentialValidator.validate"></a>
+
+### CredentialValidator.validate(credential, issuer, options, fail_fast)
+Validates a `Credential`.
+
+The following properties are validated according to `options`:
+- the issuer's signature,
+- the expiration date,
+- the issuance date,
+- the semantic structure.
+
+### Warning
+The lack of an error returned from this method is in of itself not enough to conclude that the credential can be
+trusted. This section contains more information on additional checks that should be carried out before and after
+calling this method.
+
+#### The state of the issuer's DID Document
+The caller must ensure that `issuer` represents an up-to-date DID Document. The convenience method
+`Resolver::resolveCredentialIssuer` can help extract the latest available state of the issuer's DID Document.
+
+#### Properties that are not validated
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+These should be manually checked after validation, according to your requirements.
+
+### Errors
+An error is returned whenever a validated condition is not satisfied.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| issuer | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| options | [<code>CredentialValidationOptions</code>](#CredentialValidationOptions) | 
+| fail_fast | <code>number</code> | 
+
+<a name="CredentialValidator.checkStructure"></a>
+
+### CredentialValidator.checkStructure(credential)
+Validates the semantic structure of the `Credential`.
+
+### Warning
+This does not validate against the credential's schema nor the structure of the subject claims.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+
+<a name="CredentialValidator.checkExpiresOnOrAfter"></a>
+
+### CredentialValidator.checkExpiresOnOrAfter(credential, timestamp)
+Validate that the credential expires on or after the specified timestamp.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="CredentialValidator.checkIssuedOnOrBefore"></a>
+
+### CredentialValidator.checkIssuedOnOrBefore(credential, timestamp)
+Validate that the credential is issued on or before the specified timestamp.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="CredentialValidator.verifySignature"></a>
+
+### CredentialValidator.verifySignature(credential, trusted_issuers, options)
+Verify the signature using the DID Document of a trusted issuer.
+
+# Warning
+The caller must ensure that the DID Documents of the trusted issuers are up-to-date.
+### Errors
+This method immediately returns an error if
+the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
+to verify the credential's signature will be made and an error is returned upon failure.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| trusted_issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="CredentialValidator.check_subject_holder_relationship"></a>
+
+### CredentialValidator.check\_subject\_holder\_relationship(credential, holder_url, relationship)
+Validate that the relationship between the `holder` and the credential subjects is in accordance with
+`relationship`. The `holder_url` parameter is expected to be the URL of the holder.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| holder_url | <code>string</code> | 
+| relationship | <code>number</code> | 
 
 <a name="DID"></a>
 
@@ -1874,12 +2271,10 @@ Deserializes a `MethodType` object from a JSON object.
         * [.name](#Network+name) ⇒ <code>string</code>
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
-        * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.tryFromName(name)](#Network.tryFromName) ⇒ [<code>Network</code>](#Network)
+        * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
-        * [.fromJSON(json)](#Network.fromJSON) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+name"></a>
 
@@ -1895,18 +2290,10 @@ Returns the node URL of the Tangle network.
 
 ### network.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network+toJSON"></a>
+<a name="Network.try_from_name"></a>
 
-### network.toJSON() ⇒ <code>any</code>
-Serializes a `Network` as a JSON object.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network.tryFromName"></a>
-
-### Network.tryFromName(name) ⇒ [<code>Network</code>](#Network)
+### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
 Parses the provided string to a `Network`.
-
-Errors if the name is invalid.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 
@@ -1922,17 +2309,6 @@ Errors if the name is invalid.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
-<a name="Network.fromJSON"></a>
-
-### Network.fromJSON(json) ⇒ [<code>Network</code>](#Network)
-Deserializes a `Network` from a JSON object.
-
-**Kind**: static method of [<code>Network</code>](#Network)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="Presentation"></a>
 
 ## Presentation
@@ -1942,6 +2318,7 @@ Deserializes a `Network` from a JSON object.
     * [new Presentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_Presentation_new)
     * _instance_
         * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
+        * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
     * _static_
         * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
 
@@ -1962,6 +2339,12 @@ Deserializes a `Network` from a JSON object.
 Serializes a `Presentation` object as a JSON object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+verifiableCredential"></a>
+
+### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+Returns a copy of the credentials contained in the presentation.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
@@ -1972,6 +2355,137 @@ Deserializes a `Presentation` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="PresentationValidationOptions"></a>
+
+## PresentationValidationOptions
+Options to declare validation criteria when validating presentation.
+
+**Kind**: global class  
+
+* [PresentationValidationOptions](#PresentationValidationOptions)
+    * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
+    * _instance_
+        * [.toJSON()](#PresentationValidationOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+        * [.fromJSON(json)](#PresentationValidationOptions.fromJSON) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+
+<a name="new_PresentationValidationOptions_new"></a>
+
+### new PresentationValidationOptions(options)
+Creates a new `PresentationValidationOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IPresentationValidationOptions</code> | 
+
+<a name="PresentationValidationOptions+toJSON"></a>
+
+### presentationValidationOptions.toJSON() ⇒ <code>any</code>
+Serializes a `PresentationValidationOptions` as a JSON object.
+
+**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+<a name="PresentationValidationOptions.default"></a>
+
+### PresentationValidationOptions.default() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+Creates a new `PresentationValidationOptions` with defaults.
+
+**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+<a name="PresentationValidationOptions.fromJSON"></a>
+
+### PresentationValidationOptions.fromJSON(json) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+Deserializes a `PresentationValidationOptions` from a JSON object.
+
+**Kind**: static method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="PresentationValidator"></a>
+
+## PresentationValidator
+**Kind**: global class  
+
+* [PresentationValidator](#PresentationValidator)
+    * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
+    * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
+    * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
+
+<a name="PresentationValidator.validate"></a>
+
+### PresentationValidator.validate(presentation, holder, issuers, options, fail_fast)
+Validate a `Presentation`.
+
+The following properties are validated according to `options`:
+- the semantic structure of the presentation,
+- the holder's signature,
+- the relationship between the holder and the credential subjects,
+- the signatures and some properties of the constituent credentials (see
+`CredentialValidator::validate`).
+
+### Warning
+The lack of an error returned from this method is in of itself not enough to conclude that the presentation can be
+trusted. This section contains more information on additional checks that should be carried out before and after
+calling this method.
+
+#### The state of the supplied DID Documents.
+The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
+`Resolver::resolve_presentation_holder` and `Resolver::resolve_presentation_issuers`
+can help extract the latest available states of these DID Documents.
+
+#### Properties that are not validated
+ There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
+`credentialStatus`, `type`, `credentialSchema`, `refreshService`, **and more**.
+These should be manually checked after validation, according to your requirements.
+
+### Errors
+An error is returned whenever a validated condition is not satisfied.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| fail_fast | <code>number</code> | 
+
+<a name="PresentationValidator.verifyPresentationSignature"></a>
+
+### PresentationValidator.verifyPresentationSignature(presentation, holder, options)
+Verify the presentation's signature using the resolved document of the holder.
+
+### Warning
+The caller must ensure that the DID Document of the holder is up-to-date.
+
+### Errors
+Fails if the `holder` does not match the `presentation`'s holder property.
+Fails if signature verification against the holder document fails.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
+| options | [<code>VerifierOptions</code>](#VerifierOptions) | 
+
+<a name="PresentationValidator.checkStructure"></a>
+
+### PresentationValidator.checkStructure(presentation)
+Validates the semantic structure of the `Presentation`.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
 
 <a name="ProofPurpose"></a>
 
@@ -2200,6 +2714,7 @@ Deserializes a `Document` object from a JSON object.
     * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
     * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="new_Resolver_new"></a>
 
@@ -2259,7 +2774,7 @@ NOTE: the document must have been published to the Tangle and have a valid messa
 ### resolver.resolveCredentialIssuer(credential) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Fetches the DID Document of the issuer on a `Credential`.
 
-# Errors
+### Errors
 
 Errors if the issuer URL is not a valid `DID` or document resolution fails.
 
@@ -2275,7 +2790,7 @@ Errors if the issuer URL is not a valid `DID` or document resolution fails.
 Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
 Issuer documents are returned in arbitrary order.
 
-# Errors
+### Errors
 
 Errors if any issuer URL is not a valid `DID` or document resolution fails.
 
@@ -2290,7 +2805,7 @@ Errors if any issuer URL is not a valid `DID` or document resolution fails.
 ### resolver.resolvePresentationHolder(presentation) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
 Fetches the DID Document of the holder of a `Presentation`.
 
-# Errors
+### Errors
 
 Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
 
@@ -2299,6 +2814,36 @@ Errors if the holder URL is missing, is not a valid `DID`, or document resolutio
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="Resolver+verifyPresentation"></a>
+
+### resolver.verifyPresentation(presentation, options, fail_fast, holder, issuers) ⇒ <code>Promise.&lt;void&gt;</code>
+Verifies a `Presentation`.
+
+### Important
+See `PresentationValidator::validate` for information about which properties get
+validated and what is expected of the optional arguments `holder` and `issuer`.
+
+### Resolution
+The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+If you already have up-to-date versions of these DID Documents, you may want
+to use `PresentationValidator::validate`.
+See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
+
+### Errors
+Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+Otherwise, errors from validating the presentation and its credentials will be returned
+according to the `fail_fast` parameter.
+
+**Kind**: instance method of [<code>Resolver</code>](#Resolver)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+| options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
+| fail_fast | <code>number</code> | 
+| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>undefined</code> | 
 
 <a name="ResolverBuilder"></a>
 
@@ -2342,7 +2887,7 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 
 | Param | Type |
 | --- | --- |
-| config | [<code>ClientConfig</code>](#ClientConfig) | 
+| config | [<code>Config</code>](#Config) | 
 
 <a name="ResolverBuilder+build"></a>
 
@@ -2640,7 +3185,11 @@ See `IVerifierOptions`.
 
 * [VerifierOptions](#VerifierOptions)
     * [new VerifierOptions(options)](#new_VerifierOptions_new)
-    * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+    * _instance_
+        * [.toJSON()](#VerifierOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+        * [.fromJSON(json)](#VerifierOptions.fromJSON) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
 
 <a name="new_VerifierOptions_new"></a>
 
@@ -2654,12 +3203,29 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>IVerifierOptions</code> | 
 
+<a name="VerifierOptions+toJSON"></a>
+
+### verifierOptions.toJSON() ⇒ <code>any</code>
+Serializes a `VerifierOptions` as a JSON object.
+
+**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="VerifierOptions.default"></a>
 
 ### VerifierOptions.default() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
+<a name="VerifierOptions.fromJSON"></a>
+
+### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+Deserializes a `VerifierOptions` from a JSON object.
+
+**Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -2668,13 +3234,60 @@ Creates a new `VerifierOptions` with default options.
 
 ## KeyType
 **Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="Digest"></a>
 
 ## Digest
 **Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
+<a name="SubjectHolderRelationship"></a>
 
-## DIDMessageEncoding
+## SubjectHolderRelationship
+Declares how credential subjects must relate to the presentation holder during validation.
+See `PresentationValidationOptions::subject_holder_relationship`.
+
+See also the [Subject-Holder Relationship](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) section of the specification.
+
+**Kind**: global variable  
+<a name="AlwaysSubject"></a>
+
+## AlwaysSubject
+The holder must always match the subject on all credentials, regardless of their [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+This variant is the default used if no other variant is specified when constructing a new
+`PresentationValidationOptions`.
+
+**Kind**: global variable  
+<a name="SubjectOnNonTransferable"></a>
+
+## SubjectOnNonTransferable
+The holder must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`.
+
+**Kind**: global variable  
+<a name="Any"></a>
+
+## Any
+The holder is not required to have any kind of relationship to any credential subject.
+
+**Kind**: global variable  
+<a name="FailFast"></a>
+
+## FailFast
+Declares when validation should return if an error occurs.
+
+**Kind**: global variable  
+<a name="AllErrors"></a>
+
+## AllErrors
+Return all errors that occur during validation.
+
+**Kind**: global variable  
+<a name="FirstError"></a>
+
+## FirstError
+Return after the first error occurs.
+
 **Kind**: global variable  
 <a name="start"></a>
 
