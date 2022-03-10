@@ -10,8 +10,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, thiserror::Error)]
 /// Errors that can occur during the actor operation.
 pub enum Error {
-  #[error("transport error: {0}")]
-  TransportError(#[source] libp2p::TransportError<std::io::Error>),
+  #[error("{context}: {source}")]
+  TransportError {
+    context: &'static str,
+    source: libp2p::TransportError<std::io::Error>,
+  },
   #[error("invalid endpoint")]
   InvalidEndpoint,
   #[error("{0}")]
@@ -32,6 +35,8 @@ pub enum Error {
   ThreadNotFound(ThreadId),
   #[error("awaiting message timed out on thread `{0}`")]
   AwaitTimeout(ThreadId),
+  #[error("actor was shutdown")]
+  Shutdown,
 }
 
 /// Errors that can occur on the remote actor.

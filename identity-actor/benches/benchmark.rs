@@ -33,7 +33,7 @@ async fn setup() -> (Actor, PeerId, Actor) {
 
   let mut sender = ActorBuilder::new().build().await.unwrap();
 
-  sender.add_address(receiver_peer_id, addr).await;
+  sender.add_address(receiver_peer_id, addr).await.unwrap();
 
   (receiver, receiver_peer_id, sender)
 }

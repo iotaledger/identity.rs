@@ -34,7 +34,7 @@ async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
   let (listening_actor, addrs, peer_id) = default_listening_actor(|_| {}).await;
 
   let mut sending_actor = default_sending_actor(|_| {}).await;
-  sending_actor.add_addresses(peer_id, addrs).await;
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
     .send_named_request(
@@ -115,9 +115,9 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
     .await
     .unwrap();
 
-  let addr: Multiaddr = actor2.addresses().await.into_iter().next().unwrap();
+  let addr: Multiaddr = actor2.addresses().await.unwrap().into_iter().next().unwrap();
 
-  actor1.add_address(actor2.peer_id(), addr).await;
+  actor1.add_address(actor2.peer_id(), addr).await.unwrap();
 
   actor1.send_request(actor2.peer_id(), Dummy(42)).await.unwrap();
 
@@ -169,7 +169,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   .await;
   let mut sender = default_sending_actor(|_| {}).await;
 
-  sender.add_addresses(receiver_peer_id, receiver_addrs).await;
+  sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 
   sender.send_request(receiver_peer_id, Dummy(42)).await.unwrap();
 
@@ -214,7 +214,7 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   .await;
 
   let mut sending_actor = default_sending_actor(|_| {}).await;
-  sending_actor.add_addresses(peer_id, addrs).await;
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
     .send_request(peer_id, MessageRequest("test".to_owned()))
@@ -228,18 +228,17 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   Ok(())
 }
 
-#[should_panic]
 #[tokio::test]
-async fn test_interacting_with_shutdown_actor_panics() {
+async fn test_interacting_with_shutdown_actor_returns_error() {
   try_init_logger();
 
   let (listening_actor, _, _) = default_listening_actor(|_| {}).await;
 
-  let mut commander_copy = listening_actor.commander.clone();
+  let mut actor_clone = listening_actor.clone();
 
   listening_actor.shutdown().await.unwrap();
 
-  commander_copy.get_addresses().await;
+  assert!(matches!(actor_clone.addresses().await.unwrap_err(), Error::Shutdown));
 }
 
 #[tokio::test]
@@ -284,7 +283,7 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
     .await
     .unwrap();
 
-  sending_actor.add_addresses(peer_id, addrs).await;
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let thread_id = ThreadId::new();
   sending_actor
@@ -321,7 +320,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   .await;
 
   let mut sending_actor = ActorBuilder::new().build().await.unwrap();
-  sending_actor.add_addresses(peer_id, addrs).await;
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let mut sender1 = sending_actor.clone();
 
@@ -387,7 +386,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
   .await;
 
   let mut sending_actor = ActorBuilder::new().build().await.unwrap();
-  sending_actor.add_addresses(peer_id, addrs).await;
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   sending_actor
     .send_message(peer_id, &ThreadId::new(), PresentationOffer::default())

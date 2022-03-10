@@ -53,7 +53,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   })
   .await;
 
-  holder_actor.add_addresses(peer_id, addrs).await;
+  holder_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   presentation_holder_handler(holder_actor.clone(), peer_id, None)
     .await
@@ -83,7 +83,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   .await;
   let mut verifier_actor = default_sending_actor(|_| {}).await;
 
-  verifier_actor.add_addresses(peer_id, addrs).await;
+  verifier_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
     .await
@@ -131,7 +131,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
   })
   .await;
 
-  verifier_actor.add_addresses(peer_id, addrs).await;
+  verifier_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
     .await
@@ -180,7 +180,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
   })
   .await;
 
-  holder_actor.add_addresses(peer_id, addrs).await;
+  holder_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   presentation_holder_handler(holder_actor.clone(), peer_id, None)
     .await
@@ -263,7 +263,7 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
 
   let verifier_peer_id = verifier_actor.peer_id();
 
-  holder_actor.add_addresses(verifier_peer_id, addrs).await;
+  holder_actor.add_addresses(verifier_peer_id, addrs).await.unwrap();
 
   let thread_id = ThreadId::new();
 

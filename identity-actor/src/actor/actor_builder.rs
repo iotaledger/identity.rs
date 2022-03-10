@@ -117,8 +117,11 @@ impl ActorBuilder {
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
   pub async fn build(self) -> Result<Actor> {
-    let dns_transport = TokioDnsConfig::system(TokioTcpConfig::new())
-      .map_err(|err| Error::TransportError(libp2p::TransportError::Other(err)))?;
+    let dns_transport = TokioDnsConfig::system(TokioTcpConfig::new()).map_err(|err| Error::TransportError {
+      context: "unable to build transport",
+      source: libp2p::TransportError::Other(err),
+    })?;
+
     let transport = dns_transport.clone().or_transport(WsConfig::new(dns_transport));
 
     self.build_with_transport(transport).await
@@ -167,7 +170,10 @@ impl ActorBuilder {
     };
 
     for addr in self.listening_addresses {
-      swarm.listen_on(addr).map_err(Error::TransportError)?;
+      swarm.listen_on(addr).map_err(|err| Error::TransportError {
+        context: "unable to start listening",
+        source: err,
+      })?;
     }
 
     let (cmd_sender, cmd_receiver) = mpsc::channel(10);

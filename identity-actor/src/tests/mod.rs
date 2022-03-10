@@ -28,7 +28,7 @@ async fn default_listening_actor(f: impl FnOnce(&mut ActorBuilder)) -> (Actor, V
   let mut listening_actor: Actor = builder.build().await.unwrap();
 
   let _ = listening_actor.start_listening(addr).await.unwrap();
-  let addrs = listening_actor.addresses().await;
+  let addrs = listening_actor.addresses().await.unwrap();
 
   let peer_id = listening_actor.peer_id();
 

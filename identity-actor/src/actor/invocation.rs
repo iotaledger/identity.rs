@@ -40,7 +40,7 @@ pub trait InvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
-  ) -> StdResult<(), InboundFailure>;
+  ) -> crate::Result<StdResult<(), InboundFailure>>;
 
   /// Called when no handler was found for the requested endpoint.
   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest);
@@ -51,7 +51,7 @@ async fn send_response<T: serde::Serialize>(
   response: StdResult<T, RemoteSendError>,
   channel: ResponseChannel<ResponseMessage>,
   request_id: RequestId,
-) -> StdResult<(), InboundFailure> {
+) -> crate::Result<StdResult<(), InboundFailure>> {
   let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
   commander.send_response(response, channel, request_id).await
 }
@@ -84,7 +84,7 @@ impl InvocationStrategy for SynchronousInvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
-  ) -> StdResult<(), InboundFailure> {
+  ) -> crate::Result<StdResult<(), InboundFailure>> {
     send_response(
       &mut actor.commander,
       StdResult::<Vec<u8>, RemoteSendError>::Err(error),
@@ -214,7 +214,7 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
-  ) -> StdResult<(), InboundFailure> {
+  ) -> crate::Result<StdResult<(), InboundFailure>> {
     send_response(
       &mut actor.commander,
       StdResult::<(), RemoteSendError>::Err(error),

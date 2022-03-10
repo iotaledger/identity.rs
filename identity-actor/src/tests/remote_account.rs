@@ -29,7 +29,7 @@ async fn test_remote_account() -> crate::Result<()> {
   .await;
   let mut sender = default_sending_actor(|_| {}).await;
 
-  sender.add_addresses(receiver_peer_id, receiver_addrs).await;
+  sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 
   let doc: IotaDocument = sender
     .send_request(receiver_peer_id, IdentityCreate(IdentitySetup::new()))

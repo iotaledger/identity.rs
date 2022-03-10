@@ -32,7 +32,6 @@ use futures::channel::oneshot;
 use identity_core::common::OneOrMany;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use libp2p::TransportError;
 use serde::de::DeserializeOwned;
 use uuid::Uuid;
 
@@ -80,13 +79,12 @@ impl Actor {
     &self.state.as_ref().handlers
   }
 
-  // TODO: Return crate::Result?
   /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
   /// be different from `address` itself, e.g. when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when passing a
   /// single address, multiple addresses may end up being listened on. To obtain all those addresses, use
   /// [`Actor::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
   /// and should thus not be relied upon.
-  pub async fn start_listening(&mut self, address: Multiaddr) -> StdResult<Multiaddr, TransportError<std::io::Error>> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> crate::Result<Multiaddr> {
     self.commander.start_listening(address).await
   }
 
@@ -96,10 +94,11 @@ impl Actor {
   }
 
   /// Return all addresses that are currently being listened on.
-  pub async fn addresses(&mut self) -> Vec<Multiaddr> {
+  pub async fn addresses(&mut self) -> crate::Result<Vec<Multiaddr>> {
     self.commander.get_addresses().await
   }
 
+  // TODO: Move bounds onto trait itself for readability?
   #[inline(always)]
   pub(crate) fn handle_request<STR: InvocationStrategy + Send + Sync + 'static>(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
@@ -133,11 +132,20 @@ impl Actor {
               STR::handler_deserialization_failure(&mut actor, request.response_channel, request.request_id, error)
                 .await;
 
-            if let Err(err) = result {
-              log::error!(
-                "could not send error for request on endpoint `{}` due o: {err:?}",
-                request.endpoint
-              );
+            match result {
+              Ok(Err(err)) => {
+                log::error!(
+                  "could not send error for request on endpoint `{}` due to: {err:?}",
+                  request.endpoint
+                );
+              }
+              Err(err) => {
+                log::error!(
+                  "could not send error for request on endpoint `{}` due to: {err:?}",
+                  request.endpoint
+                );
+              }
+              Ok(_) => (),
             }
           }
         }
@@ -170,27 +178,25 @@ impl Actor {
   /// This will break the event loop in the background immediately, returning an error
   /// for all current handlers that interact with their copy of the actor or those waiting on messages.
   pub async fn shutdown(mut self) -> Result<()> {
-    self.commander.shutdown().await;
     // Consuming self drops the internal commander. If this is the last copy of the commander,
     // the event loop will break as a result. However, if copies exist, such as in running handlers,
-    // this will return while the event loop keeps running. Ideally we could then join on the background task
+    // this function will return while the event loop keeps running. Ideally we could then join on the background task
     // to wait for all handlers to finish gracefully. However, not all spawn functions return a JoinHandle,
     // such as wasm_bindgen_futures::spawn_local. The current alternative is to use a non-graceful exit,
     // which breaks the event loop immediately and returns an error through all open channels that require a result.
-
-    Ok(())
+    self.commander.shutdown().await
   }
 
   /// Associate the given `peer_id` with an `address`. This needs to be done before sending a
-  /// request to some [`PeerId`].
-  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) {
-    self.commander.add_addresses(peer_id, OneOrMany::One(address)).await;
+  /// request to this [`PeerId`].
+  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> crate::Result<()> {
+    self.commander.add_addresses(peer_id, OneOrMany::One(address)).await
   }
 
   /// Associate the given `peer_id` with multiple `addresses`. This needs to be done before sending a
-  /// request to some [`PeerId`].
-  pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) {
-    self.commander.add_addresses(peer_id, OneOrMany::Many(addresses)).await;
+  /// request to this [`PeerId`].
+  pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> crate::Result<()> {
+    self.commander.add_addresses(peer_id, OneOrMany::Many(addresses)).await
   }
 
   /// Sends an asynchronous message to a peer. To receive a potential response, use [`Actor::await_message`],

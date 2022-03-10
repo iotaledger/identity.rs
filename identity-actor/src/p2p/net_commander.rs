@@ -14,6 +14,8 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
 
+use crate::Error;
+
 use super::message::RequestMessage;
 use super::message::ResponseMessage;
 
@@ -28,19 +30,18 @@ impl NetCommander {
     NetCommander { command_sender }
   }
 
-  pub async fn send_request(
-    &mut self,
-    peer: PeerId,
-    request: RequestMessage,
-  ) -> Result<ResponseMessage, OutboundFailure> {
+  pub async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> crate::Result<ResponseMessage> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
       peer,
       request,
       response_channel: sender,
     };
-    self.send_command(command).await;
-    receiver.await.expect("sender was dropped")
+    self.send_command(command).await?;
+    receiver
+      .await
+      .map_err(|_| Error::Shutdown)?
+      .map_err(Error::OutboundFailure)
   }
 
   pub async fn send_response(
@@ -48,7 +49,7 @@ impl NetCommander {
     data: Vec<u8>,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
-  ) -> Result<(), InboundFailure> {
+  ) -> crate::Result<Result<(), InboundFailure>> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendResponse {
       response: data,
@@ -56,47 +57,55 @@ impl NetCommander {
       response_channel: channel,
       request_id,
     };
-    self.send_command(command).await;
-    receiver.await.expect("sender was dropped")
+    self.send_command(command).await?;
+    Ok(receiver.await.map_err(|_| Error::Shutdown)?)
   }
 
-  pub async fn start_listening(&mut self, address: Multiaddr) -> Result<Multiaddr, TransportError<std::io::Error>> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> crate::Result<Multiaddr> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::StartListening {
       address,
       response_channel: sender,
     };
-    self.send_command(command).await;
-    receiver.await.unwrap()
+    self.send_command(command).await?;
+    receiver
+      .await
+      .map_err(|_| Error::Shutdown)?
+      .map_err(|transport_err| Error::TransportError {
+        context: "unable to start listening",
+        source: transport_err,
+      })
   }
 
-  pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) {
-    self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await;
+  pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> crate::Result<()> {
+    self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await
   }
 
-  pub async fn get_addresses(&mut self) -> Vec<Multiaddr> {
+  pub async fn get_addresses(&mut self) -> crate::Result<Vec<Multiaddr>> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::GetAddresses {
         response_channel: sender,
       })
-      .await;
-    receiver.await.expect("sender was dropped")
+      .await?;
+    receiver.await.map_err(|_| Error::Shutdown)
   }
 
-  pub async fn shutdown(&mut self) {
+  pub async fn shutdown(&mut self) -> crate::Result<()> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::Shutdown {
         response_channel: sender,
       })
-      .await;
-    receiver.await.expect("sender was dropped")
+      .await?;
+    receiver.await.map_err(|_| Error::Shutdown)
   }
 
-  async fn send_command(&mut self, command: SwarmCommand) {
-    let _ = poll_fn(|cx| self.command_sender.poll_ready(cx)).await;
-    let _ = self.command_sender.start_send(command);
+  async fn send_command(&mut self, command: SwarmCommand) -> crate::Result<()> {
+    poll_fn(|cx| self.command_sender.poll_ready(cx))
+      .await
+      .map_err(|_| Error::Shutdown)?;
+    self.command_sender.start_send(command).map_err(|_| Error::Shutdown)
   }
 }
 
