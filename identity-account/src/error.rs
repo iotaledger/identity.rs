@@ -3,6 +3,7 @@
 
 //! Errors that may occur when working with Identity Accounts.
 
+#[cfg(feature = "stronghold")]
 use crate::stronghold::StrongholdError;
 
 /// Alias for a `Result` with the error type [`Error`].
