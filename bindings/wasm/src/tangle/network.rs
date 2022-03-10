@@ -13,7 +13,9 @@ pub struct WasmNetwork(pub(crate) Network);
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {
   /// Parses the provided string to a `Network`.
-  #[wasm_bindgen]
+  ///
+  /// Errors if the name is invalid.
+  #[wasm_bindgen(js_name = tryFromName)]
   pub fn try_from_name(name: String) -> Result<WasmNetwork> {
     Network::try_from_name(name).map(Self).wasm_result()
   }
@@ -43,6 +45,18 @@ impl WasmNetwork {
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.0.name_str().to_owned()
+  }
+
+  /// Serializes a `Network` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `Network` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmNetwork> {
+    json.into_serde().map(Self).wasm_result()
   }
 }
 

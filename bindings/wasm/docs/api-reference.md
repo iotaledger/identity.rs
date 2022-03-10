@@ -3,9 +3,6 @@
 <dl>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
-<dt><a href="#Config">Config</a></dt>
-<dd><p>Options to configure a new <a href="#Client">Client</a>.</p>
-</dd>
 <dt><a href="#Credential">Credential</a></dt>
 <dd></dd>
 <dt><a href="#CredentialValidationOptions">CredentialValidationOptions</a></dt>
@@ -97,8 +94,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
@@ -126,6 +121,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -153,8 +150,7 @@ This variant is the default used if no other variant is specified when construct
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
     * _static_
-        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
-        * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
+        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
 
 <a name="new_Client_new"></a>
 
@@ -257,257 +253,14 @@ capability invocation method.
 
 <a name="Client.fromConfig"></a>
 
-### Client.fromConfig(config) ⇒ [<code>Client</code>](#Client)
-Creates a new `Client` with settings from the given `Config`.
+### Client.fromConfig(config) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
+Creates a new `Client` with the given settings.
 
 **Kind**: static method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| config | [<code>Config</code>](#Config) | 
-
-<a name="Client.fromNetwork"></a>
-
-### Client.fromNetwork(network) ⇒ [<code>Client</code>](#Client)
-Creates a new `Client` with default settings for the given `Network`.
-
-**Kind**: static method of [<code>Client</code>](#Client)  
-
-| Param | Type |
-| --- | --- |
-| network | [<code>Network</code>](#Network) | 
-
-<a name="Config"></a>
-
-## Config
-Options to configure a new [Client](#Client).
-
-**Kind**: global class  
-
-* [Config](#Config)
-    * [new Config()](#new_Config_new)
-    * _instance_
-        * [.setNetwork(network)](#Config+setNetwork)
-        * [.setEncoding(encoding)](#Config+setEncoding)
-        * [.setNode(url)](#Config+setNode)
-        * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
-        * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
-        * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
-        * [.setNodeAuth(url, jwt, username, password)](#Config+setNodeAuth)
-        * [.setNodeSyncInterval(value)](#Config+setNodeSyncInterval)
-        * [.setNodeSyncDisabled()](#Config+setNodeSyncDisabled)
-        * [.setQuorum(value)](#Config+setQuorum)
-        * [.setQuorumSize(value)](#Config+setQuorumSize)
-        * [.setQuorumThreshold(value)](#Config+setQuorumThreshold)
-        * [.setLocalPoW(value)](#Config+setLocalPoW)
-        * [.setFallbackToLocalPoW(value)](#Config+setFallbackToLocalPoW)
-        * [.setTipsInterval(value)](#Config+setTipsInterval)
-        * [.setRequestTimeout(value)](#Config+setRequestTimeout)
-    * _static_
-        * [.fromNetwork(network)](#Config.fromNetwork) ⇒ [<code>Config</code>](#Config)
-
-<a name="new_Config_new"></a>
-
-### new Config()
-Creates a new `Config`.
-
-<a name="Config+setNetwork"></a>
-
-### config.setNetwork(network)
-Sets the IOTA Tangle network.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| network | [<code>Network</code>](#Network) | 
-
-<a name="Config+setEncoding"></a>
-
-### config.setEncoding(encoding)
-Sets the DID message encoding used when publishing to the Tangle.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| encoding | <code>number</code> | 
-
-<a name="Config+setNode"></a>
-
-### config.setNode(url)
-Adds an IOTA node by its URL.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-
-<a name="Config+setPrimaryNode"></a>
-
-### config.setPrimaryNode(url, jwt, username, password)
-Adds an IOTA node by its URL to be used as primary node.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setPrimaryPoWNode"></a>
-
-### config.setPrimaryPoWNode(url, jwt, username, password)
-Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setPermanode"></a>
-
-### config.setPermanode(url, jwt, username, password)
-Adds a permanode by its URL.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setNodeAuth"></a>
-
-### config.setNodeAuth(url, jwt, username, password)
-Adds an IOTA node by its URL.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| jwt | <code>string</code> \| <code>undefined</code> | 
-| username | <code>string</code> \| <code>undefined</code> | 
-| password | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Config+setNodeSyncInterval"></a>
-
-### config.setNodeSyncInterval(value)
-Sets the node sync interval.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setNodeSyncDisabled"></a>
-
-### config.setNodeSyncDisabled()
-Disables the node sync process.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-<a name="Config+setQuorum"></a>
-
-### config.setQuorum(value)
-Enables/disables quorum.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="Config+setQuorumSize"></a>
-
-### config.setQuorumSize(value)
-Sets the number of nodes used for quorum.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setQuorumThreshold"></a>
-
-### config.setQuorumThreshold(value)
-Sets the quorum threshold.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setLocalPoW"></a>
-
-### config.setLocalPoW(value)
-Sets whether proof-of-work (PoW) is performed locally or remotely.
-
-Default: false.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="Config+setFallbackToLocalPoW"></a>
-
-### config.setFallbackToLocalPoW(value)
-Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
-
-Default: true.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> | 
-
-<a name="Config+setTipsInterval"></a>
-
-### config.setTipsInterval(value)
-Sets the number of seconds that new tips will be requested during PoW.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config+setRequestTimeout"></a>
-
-### config.setRequestTimeout(value)
-Sets the default request timeout.
-
-**Kind**: instance method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Config.fromNetwork"></a>
-
-### Config.fromNetwork(network) ⇒ [<code>Config</code>](#Config)
-Creates a new `Config` for the given IOTA Tangle network.
-
-**Kind**: static method of [<code>Config</code>](#Config)  
-
-| Param | Type |
-| --- | --- |
-| network | [<code>Network</code>](#Network) | 
+| config | <code>IClientConfig</code> | 
 
 <a name="Credential"></a>
 
@@ -2292,10 +2045,12 @@ Deserializes a `MethodType` object from a JSON object.
         * [.name](#Network+name) ⇒ <code>string</code>
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
+        * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
+        * [.tryFromName(name)](#Network.tryFromName) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
+        * [.fromJSON(json)](#Network.fromJSON) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+name"></a>
 
@@ -2311,10 +2066,18 @@ Returns the node URL of the Tangle network.
 
 ### network.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network.try_from_name"></a>
+<a name="Network+toJSON"></a>
 
-### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
+### network.toJSON() ⇒ <code>any</code>
+Serializes a `Network` as a JSON object.
+
+**Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network.tryFromName"></a>
+
+### Network.tryFromName(name) ⇒ [<code>Network</code>](#Network)
 Parses the provided string to a `Network`.
+
+Errors if the name is invalid.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 
@@ -2330,6 +2093,17 @@ Parses the provided string to a `Network`.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
+<a name="Network.fromJSON"></a>
+
+### Network.fromJSON(json) ⇒ [<code>Network</code>](#Network)
+Deserializes a `Network` from a JSON object.
+
+**Kind**: static method of [<code>Network</code>](#Network)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Presentation"></a>
 
 ## Presentation
@@ -2728,14 +2502,17 @@ Deserializes a `Document` object from a JSON object.
 
 * [Resolver](#Resolver)
     * [new Resolver()](#new_Resolver_new)
-    * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
-    * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-    * [.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
-    * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
-    * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
-    * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
+    * _instance_
+        * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
+        * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+        * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+        * [.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+        * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+        * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
+        * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
+        * [.verifyPresentation(presentation, options, fail_fast, holder, issuers)](#Resolver+verifyPresentation) ⇒ <code>Promise.&lt;void&gt;</code>
+    * _static_
+        * [.builder()](#Resolver.builder) ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
 
 <a name="new_Resolver_new"></a>
 
@@ -2866,6 +2643,12 @@ according to the `fail_fast` parameter.
 | holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
 | issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>undefined</code> | 
 
+<a name="Resolver.builder"></a>
+
+### Resolver.builder() ⇒ [<code>ResolverBuilder</code>](#ResolverBuilder)
+Returns a [ResolverBuilder](#ResolverBuilder) to construct a new `Resolver`.
+
+**Kind**: static method of [<code>Resolver</code>](#Resolver)  
 <a name="ResolverBuilder"></a>
 
 ## ResolverBuilder
@@ -2908,7 +2691,7 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 
 | Param | Type |
 | --- | --- |
-| config | [<code>Config</code>](#Config) | 
+| config | <code>IClientConfig</code> | 
 
 <a name="ResolverBuilder+build"></a>
 
@@ -3255,10 +3038,6 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## KeyType
 **Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="Digest"></a>
 
 ## Digest
@@ -3309,6 +3088,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

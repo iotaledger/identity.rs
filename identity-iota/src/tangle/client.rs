@@ -50,11 +50,6 @@ impl Client {
     ClientBuilder::new()
   }
 
-  /// Creates a new [`Client`] with default settings for the given [`Network`].
-  pub async fn from_network(network: Network) -> Result<Self> {
-    Self::builder().network(network).build().await
-  }
-
   /// Creates a new [`Client`] based on the [`ClientBuilder`] configuration.
   pub async fn from_builder(builder: ClientBuilder) -> Result<Self> {
     let mut client: iota_client::ClientBuilder = builder.builder;
