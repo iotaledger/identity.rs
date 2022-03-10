@@ -344,7 +344,7 @@ fn test_sign_document() {
 #[wasm_bindgen_test]
 fn test_validations() {
   // Set up issuer & subject DID documents
-  let issuer_keys: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let issuer_keys: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
   let mut issuer_doc: WasmDocument = WasmDocument::new(&issuer_keys, None, None).unwrap();
   issuer_doc
     .sign_self(
@@ -359,7 +359,7 @@ fn test_validations() {
     )
     .unwrap();
 
-  let subject_keys: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let subject_keys: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
   let mut subject_doc: WasmDocument = WasmDocument::new(&subject_keys, None, None).unwrap();
   subject_doc
     .sign_self(
