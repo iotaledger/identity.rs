@@ -44,8 +44,15 @@ pub(crate) struct ActorState {
   pub(crate) config: ActorConfig,
 }
 
-/// The main type of the actor crate, used to send messages to remote actors.
-/// Cloning an actor produces a shallow copy and is a relatively cheap operation.
+/// The [`Actor`] can be used to send and receive messages to and from other actors.
+///
+/// An actor is a frontend for an event loop running in the background, which invokes
+/// user-registered handlers and injects a copy of the actor into it. Actors can thus be cloned
+/// without cloning the event loop, and doing so is a relatively cheap operation.
+/// Handlers are registered at actor build time, using the [`ActorBuilder`](crate::ActorBuilder).
+///
+/// After shutting down the event loop of an actor using [`Actor::shutdown`], other clones of the
+/// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Clone)]
 pub struct Actor {
   pub(crate) commander: NetCommander,
@@ -174,9 +181,12 @@ impl Actor {
     }
   }
 
-  /// Shutdown this actor. The actor will stop listening on all addresses.
-  /// This will break the event loop in the background immediately, returning an error
-  /// for all current handlers that interact with their copy of the actor or those waiting on messages.
+  /// Shut this actor down. This will break the event loop in the background immediately,
+  /// returning an error for all current handlers that interact with their copy of the
+  /// actor or those waiting on messages. The actor will thus stop listening on all addresses.
+  ///
+  /// Calling this and other methods, which interact with the event loop, on an actor that was shutdown
+  /// will return [`Error::Shutdown`].
   pub async fn shutdown(mut self) -> Result<()> {
     // Consuming self drops the internal commander. If this is the last copy of the commander,
     // the event loop will break as a result. However, if copies exist, such as in running handlers,
@@ -205,10 +215,10 @@ impl Actor {
     &mut self,
     peer: PeerId,
     thread_id: &ThreadId,
-    command: REQ,
+    message: REQ,
   ) -> Result<()> {
     self
-      .send_named_message(peer, &command.endpoint(), thread_id, command)
+      .send_named_message(peer, &message.endpoint(), thread_id, message)
       .await
   }
 
@@ -255,10 +265,10 @@ impl Actor {
   pub async fn send_request<REQ: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
-    message: REQ,
+    request: REQ,
   ) -> Result<REQ::Response> {
     self
-      .send_named_request(peer, message.endpoint().as_ref(), message)
+      .send_named_request(peer, request.endpoint().as_ref(), request)
       .await
   }
 
@@ -385,7 +395,7 @@ impl Actor {
   }
 
   /// Call the hook identified by the given `endpoint` with some `input`.
-  pub async fn call_hook<I, O>(&self, endpoint: Endpoint, peer: PeerId, input: I) -> StdResult<O, RemoteSendError>
+  async fn call_hook<I, O>(&self, endpoint: Endpoint, peer: PeerId, input: I) -> StdResult<O, RemoteSendError>
   where
     I: Send + 'static,
     O: 'static,
