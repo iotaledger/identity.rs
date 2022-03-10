@@ -16,16 +16,33 @@ impl TryFrom<IClientConfig> for ClientBuilder {
   type Error = JsValue;
 
   fn try_from(config: IClientConfig) -> std::result::Result<Self, Self::Error> {
-    let options: ConfigOptions = config.into_serde::<ConfigOptions>().wasm_result()?;
+    let ConfigOptions {
+      network,
+      encoding,
+      nodes,
+      primary_node,
+      primary_pow_node,
+      permanodes,
+      node_auth,
+      node_sync_interval,
+      node_sync_disabled,
+      quorum,
+      quorum_size,
+      quorum_threshold,
+      local_pow,
+      fallback_to_local_pow,
+      tips_interval,
+      request_timeout,
+    } = config.into_serde::<ConfigOptions>().wasm_result()?;
 
     let mut builder: ClientBuilder = ClientBuilder::new();
-    if let Some(network) = options.network {
+    if let Some(network) = network {
       builder = builder.network(network);
     }
-    if let Some(encoding) = options.encoding {
+    if let Some(encoding) = encoding {
       builder = builder.encoding(DIDMessageEncoding::from(encoding));
     }
-    if let Some(nodes) = options.nodes {
+    if let Some(nodes) = nodes {
       builder = builder
         .nodes(&nodes.iter().map(AsRef::as_ref).collect::<Vec<_>>())
         .wasm_result()?;
@@ -35,10 +52,10 @@ impl TryFrom<IClientConfig> for ClientBuilder {
       jwt,
       username,
       password,
-    }) = options.primary_node
+    }) = primary_node
     {
       builder = builder
-        .primary_node(&url, jwt, username.as_deref().zip(password.as_deref()))
+        .primary_node(&url, jwt, basic_auth(&username, &password))
         .wasm_result()?;
     }
     if let Some(NodeAuth {
@@ -46,57 +63,71 @@ impl TryFrom<IClientConfig> for ClientBuilder {
       jwt,
       username,
       password,
-    }) = options.primary_pow_node
+    }) = primary_pow_node
     {
       builder = builder
-        .primary_pow_node(&url, jwt, username.as_deref().zip(password.as_deref()))
+        .primary_pow_node(&url, jwt, basic_auth(&username, &password))
         .wasm_result()?;
     }
-    if let Some(node_auth) = options.node_auth {
-      for NodeAuth {
-        url,
-        jwt,
-        username,
-        password,
-      } in node_auth
-      {
-        builder = builder
-          .node_auth(&url, jwt, username.as_deref().zip(password.as_deref()))
-          .wasm_result()?;
-      }
+    for NodeAuth {
+      url,
+      jwt,
+      username,
+      password,
+    } in permanodes.unwrap_or_default()
+    {
+      builder = builder
+        .permanode(&url, jwt, basic_auth(&username, &password))
+        .wasm_result()?;
     }
-    if let Some(node_sync_interval) = options.node_sync_interval {
+    for NodeAuth {
+      url,
+      jwt,
+      username,
+      password,
+    } in node_auth.unwrap_or_default()
+    {
+      builder = builder
+        .node_auth(&url, jwt, basic_auth(&username, &password))
+        .wasm_result()?;
+    }
+    if let Some(node_sync_interval) = node_sync_interval {
       builder = builder.node_sync_interval(Duration::from_secs(u64::from(node_sync_interval)));
     }
-    if let Some(node_sync_disabled) = options.node_sync_disabled {
+    if let Some(node_sync_disabled) = node_sync_disabled {
       if node_sync_disabled {
         builder = builder.node_sync_disabled();
       }
     }
-    if let Some(quorum) = options.quorum {
+    if let Some(quorum) = quorum {
       builder = builder.quorum(quorum);
     }
-    if let Some(quorum_size) = options.quorum_size {
+    if let Some(quorum_size) = quorum_size {
       builder = builder.quorum_size(quorum_size);
     }
-    if let Some(quorum_threshold) = options.quorum_threshold {
+    if let Some(quorum_threshold) = quorum_threshold {
       builder = builder.quorum_threshold(quorum_threshold);
     }
-    if let Some(local_pow) = options.local_pow {
+    if let Some(local_pow) = local_pow {
       builder = builder.local_pow(local_pow);
     }
-    if let Some(fallback_to_local_pow) = options.fallback_to_local_pow {
+    if let Some(fallback_to_local_pow) = fallback_to_local_pow {
       builder = builder.fallback_to_local_pow(fallback_to_local_pow);
     }
-    if let Some(tips_interval) = options.tips_interval {
+    if let Some(tips_interval) = tips_interval {
       builder = builder.tips_interval(u64::from(tips_interval));
     }
-    if let Some(request_timeout) = options.request_timeout {
+    if let Some(request_timeout) = request_timeout {
       builder = builder.request_timeout(Duration::from_secs(u64::from(request_timeout)));
     }
 
     Ok(builder)
   }
+}
+
+/// Helper function to combine a username and password into a basic authentication tuple.
+fn basic_auth<'a>(username: &'a Option<String>, password: &'a Option<String>) -> Option<(&'a str, &'a str)> {
+  username.as_deref().zip(password.as_deref())
 }
 
 #[wasm_bindgen]
@@ -133,10 +164,10 @@ struct ConfigOptions {
   nodes: Option<Vec<String>>,
   primary_node: Option<NodeAuth>,
   primary_pow_node: Option<NodeAuth>,
+  permanodes: Option<Vec<NodeAuth>>,
   node_auth: Option<Vec<NodeAuth>>,
   node_sync_interval: Option<u32>,
   node_sync_disabled: Option<bool>,
-  node_pool_urls: Option<Vec<String>>,
   quorum: Option<bool>,
   quorum_size: Option<usize>,
   quorum_threshold: Option<usize>,
@@ -165,6 +196,9 @@ interface IClientConfig {
     /** Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW). */
     readonly primaryPowNode?: INodeAuth;
 
+    /** Adds a list of IOTA permanodes by their URLs. */
+    readonly permanodes?: INodeAuth[];
+
     /** Adds a list of IOTA nodes to be used by their URLs. */
     readonly nodeAuth?: INodeAuth[];
 
@@ -173,9 +207,6 @@ interface IClientConfig {
 
     /** Disables the node sync process. */
     readonly nodeSyncDisabled?: boolean;
-
-    /** Adds a list of IOTA nodes to use by their URLs. */
-    readonly nodePoolUrls?: string[];
 
     /** Enables/disables quorum. */
     readonly quorum?: boolean;
@@ -233,10 +264,10 @@ mod tests {
       "primaryPowNode": {
         "url": "https://example.com:4"
       },
-      "nodeAuth": [{ "url": "https://example.com:5" }, { "url": "https://example.com:6" }],
+      "permanodes": [{ "url": "https://example.com:5" }, { "url": "https://example.com:6" }],
+      "nodeAuth": [{ "url": "https://example.com:7" }, { "url": "https://example.com:8" }],
       "nodeSyncInterval": 42,
       "nodeSyncDisabled": true,
-      "nodePoolUrls": ["https://example.com:7", "https://example.com:8"],
       "quorum": true,
       "quorumSize": 3,
       "quorumThreshold": 2,
@@ -266,10 +297,10 @@ mod tests {
       nodes,
       primary_node,
       primary_pow_node,
+      permanodes,
       node_auth,
       node_sync_interval,
       node_sync_disabled,
-      node_pool_urls,
       quorum,
       quorum_size,
       quorum_threshold,
@@ -309,7 +340,7 @@ mod tests {
       })
     );
     assert_eq!(
-      node_auth,
+      permanodes,
       Some(vec![
         NodeAuth {
           url: "https://example.com:5".to_owned(),
@@ -325,15 +356,25 @@ mod tests {
         },
       ])
     );
-    assert_eq!(node_sync_interval, Some(42));
-    assert_eq!(node_sync_disabled, Some(true));
     assert_eq!(
-      node_pool_urls,
+      node_auth,
       Some(vec![
-        "https://example.com:7".to_owned(),
-        "https://example.com:8".to_owned(),
+        NodeAuth {
+          url: "https://example.com:7".to_owned(),
+          jwt: None,
+          username: None,
+          password: None,
+        },
+        NodeAuth {
+          url: "https://example.com:8".to_owned(),
+          jwt: None,
+          username: None,
+          password: None,
+        },
       ])
     );
+    assert_eq!(node_sync_interval, Some(42));
+    assert_eq!(node_sync_disabled, Some(true));
     assert_eq!(quorum, Some(true));
     assert_eq!(quorum_size, Some(3));
     assert_eq!(quorum_threshold, Some(2));

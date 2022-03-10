@@ -254,7 +254,7 @@ capability invocation method.
 <a name="Client.fromConfig"></a>
 
 ### Client.fromConfig(config) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
-Creates a new `Client` with settings from the given `Config`.
+Creates a new `Client` with the given settings.
 
 **Kind**: static method of [<code>Client</code>](#Client)  
 
