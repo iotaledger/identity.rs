@@ -7,6 +7,7 @@ use std::iter;
 use std::marker::PhantomData;
 use std::time::Duration;
 
+use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::p2p::ActorProtocol;
 use crate::p2p::ActorRequestResponseCodec;
 use crate::p2p::EventLoop;
@@ -15,6 +16,7 @@ use crate::p2p::NetCommander;
 use crate::Actor;
 use crate::ActorConfig;
 use crate::ActorRequest;
+use crate::Asynchronous;
 use crate::AsynchronousInvocationStrategy;
 use crate::Endpoint;
 use crate::Error;
@@ -24,6 +26,7 @@ use crate::RequestContext;
 use crate::RequestMode;
 use crate::Result;
 use crate::SyncMode;
+use crate::Synchronous;
 use crate::SynchronousInvocationStrategy;
 use futures::channel::mpsc;
 use futures::AsyncRead;
@@ -217,20 +220,41 @@ where
   _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<'builder, MOD: SyncMode, OBJ> HandlerBuilder<'builder, MOD, OBJ>
+impl<'builder, OBJ> HandlerBuilder<'builder, Synchronous, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
   /// Add a handler function that operates on a shared state object and some
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`.
-  pub fn add_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
+  pub fn add_sync_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
   where
-    REQ: ActorRequest<MOD> + Sync,
+    REQ: ActorRequest<Synchronous> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
     FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-    MOD: 'static + Send + Sync,
+  {
+    let handler = Handler::new(handler);
+    self.handler_map.insert(
+      Endpoint::new(endpoint)?,
+      HandlerObject::new(self.object_id, Box::new(handler)),
+    );
+    Ok(self)
+  }
+}
+
+impl<'builder, OBJ> HandlerBuilder<'builder, Asynchronous, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
+  /// Add a handler function that operates on a shared state object and some
+  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// on the given `endpoint` and can deserialize it into `REQ`.
+  pub fn add_async_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
+  where
+    REQ: ActorRequest<Asynchronous> + Sync,
+    FUT: Future<Output = ()> + Send + 'static,
+    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(

@@ -45,7 +45,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
-      .add_handler(
+      .add_async_handler(
         "didcomm/presentation_offer",
         DidCommState::presentation_verifier_actor_handler,
       )
@@ -74,7 +74,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   let (holder_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
-      .add_handler(
+      .add_async_handler(
         "didcomm/presentation_request",
         DidCommState::presentation_holder_actor_handler,
       )
@@ -104,7 +104,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
   let (holder_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
-      .add_handler(
+      .add_async_handler(
         "didcomm/presentation_request",
         DidCommState::presentation_holder_actor_handler,
       )
@@ -167,7 +167,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
   let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(handler)
-      .add_handler(
+      .add_async_handler(
         "didcomm/presentation_offer",
         DidCommState::presentation_verifier_actor_handler,
       )
@@ -253,7 +253,7 @@ async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Resul
   let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(DidCommState)
-      .add_handler(
+      .add_async_handler(
         "didcomm/presentation_offer",
         DidCommState::presentation_verifier_actor_handler,
       )
