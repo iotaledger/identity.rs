@@ -9,9 +9,6 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
-  /// Caused by errors from the [identity_did] crate.
-  #[error("{0}")]
-  DIDError(#[from] identity_did::Error),
   /// Caused when validating a Credential without a valid base context.
   #[error("Missing Base Context")]
   MissingBaseContext,

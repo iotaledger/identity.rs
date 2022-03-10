@@ -13,6 +13,8 @@ pub enum Error {
   InvalidDID(#[from] identity_did::did::DIDError),
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
+  #[error("Invalid Message: {0}")]
+  InvalidMessage(#[from] iota_client::bee_message::Error),
 
   #[error("signing failed: {0}")]
   DocumentSignError(&'static str, #[source] Option<identity_core::Error>),

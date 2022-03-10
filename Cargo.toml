@@ -10,7 +10,7 @@ members = [
   "identity-diff",
   "identity-iota",
   "identity-iota-core",
-  "identity-account-core",
+  "identity-account-storage",
 
   "examples",
 ]

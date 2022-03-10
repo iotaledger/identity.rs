@@ -8,7 +8,8 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use std::collections::HashMap;
 
-use crate::tangle::MessageId;
+use identity_iota_core::message::MessageId;
+
 use crate::tangle::TangleRef;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;

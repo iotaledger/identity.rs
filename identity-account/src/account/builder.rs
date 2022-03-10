@@ -8,10 +8,10 @@ use std::sync::Arc;
 #[cfg(feature = "stronghold")]
 use zeroize::Zeroize;
 
-use identity_account_core::storage::MemStore;
-use identity_account_core::storage::Storage;
+use identity_account_storage::storage::MemStore;
+use identity_account_storage::storage::Storage;
 #[cfg(feature = "stronghold")]
-use identity_account_core::storage::Stronghold;
+use identity_account_storage::storage::Stronghold;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::did::IotaDID;

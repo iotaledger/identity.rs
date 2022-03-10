@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use identity::iota::ExplorerUrl;
-use identity::iota::MessageId;
+use identity::iota_core::MessageId;
 use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
 

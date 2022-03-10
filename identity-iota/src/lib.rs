@@ -25,7 +25,6 @@ mod resolver;
 
 pub mod chain;
 pub mod credential;
-pub mod diff;
 pub mod document;
 pub mod error;
 pub mod tangle;

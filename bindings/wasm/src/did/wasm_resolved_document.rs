@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::MessageId;
+use identity::iota_core::MessageId;
 use identity::iota::ResolvedIotaDocument;
 use std::str::FromStr;
 
@@ -17,14 +17,25 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone, Debug)]
 pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
 
-// Workaround for Typescript type annotations on async function returns.
 #[wasm_bindgen]
 extern "C" {
+  // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<ResolvedDocument>")]
   pub type PromiseResolvedDocument;
 
   #[wasm_bindgen(typescript_type = "Promise<Array<ResolvedDocument>>")]
   pub type PromiseArrayResolvedDocument;
+
+  // Workaround for (current) lack of array support in wasm-bindgen
+  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
+  pub type ArrayResolvedDocument;
+
+  // Workaround for (current) lack of generics in wasm-bindgen
+  #[wasm_bindgen(typescript_type = "Document | ResolvedDocument")]
+  pub type DocumentOrResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<Document> | Array<ResolvedDocument>")]
+  pub type ArrayDocumentOrArrayResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = ResolvedDocument)]

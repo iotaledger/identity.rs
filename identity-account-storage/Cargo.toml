@@ -1,5 +1,5 @@
 [package]
-name = "identity-account-core"
+name = "identity-account-storage"
 version = "0.5.0-dev.4"
 authors = ["IOTA Stiftung"]
 edition = "2021"
@@ -19,17 +19,12 @@ identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-f
 identity-did = { version = "=0.5.0-dev.4", path = "../identity-did", default-features = false }
 identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
+parking_lot = { version = "0.12" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
 tokio = { version = "1.5", features = ["sync"] }
 zeroize = { version = "1.4" }
-
-[dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
-features = ["tls"]
-default-features = false
 
 [dependencies.iota-crypto]
 version = "0.7"
@@ -37,12 +32,12 @@ features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dependencies.stronghold_engine]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dev-dependencies]

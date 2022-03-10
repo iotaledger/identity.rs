@@ -842,18 +842,6 @@ where
   }
 }
 
-impl<D, T, U, V> Default for CoreDocument<D, T, U, V>
-where
-  D: DID + KeyComparable + Serialize,
-  T: Serialize + std::default::Default,
-  U: Serialize,
-  V: Serialize,
-{
-  fn default() -> Self {
-    CoreDocument::builder(Default::default()).build().unwrap()
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use crate::did::CoreDID;

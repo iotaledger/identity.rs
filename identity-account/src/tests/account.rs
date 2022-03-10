@@ -6,9 +6,9 @@ use std::sync::Arc;
 
 use futures::Future;
 
-use identity_account_core::identity::ChainState;
-use identity_account_core::identity::IdentityState;
-use identity_account_core::storage::MemStore;
+use identity_account_storage::identity::ChainState;
+use identity_account_storage::identity::IdentityState;
+use identity_account_storage::storage::MemStore;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
@@ -17,10 +17,10 @@ use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::MessageId;
-use identity_iota::tangle::MessageIdExt;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::message::MessageId;
+use identity_iota_core::message::MessageIdExt;
 use identity_iota_core::types::Network;
 
 use crate::account::Account;

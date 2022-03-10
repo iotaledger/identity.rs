@@ -7,6 +7,8 @@ use std::ops::Deref;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::message::Message;
+use identity_iota_core::message::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -16,9 +18,7 @@ use crate::chain::IntegrationChain;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::Client;
-use crate::tangle::Message;
 use crate::tangle::MessageExt;
-use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 

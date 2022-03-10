@@ -1,17 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::bee_message::payload::transaction::Essence;
-use iota_client::bee_message::payload::Payload;
-use iota_client::bee_message::Message;
-use iota_client::bee_message::MessageId;
-use iota_client::bee_message::MESSAGE_ID_LENGTH;
-
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::DID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::message::Message;
+use identity_iota_core::message::MessageId;
+use iota_client::bee_message::payload::transaction::Essence;
+use iota_client::bee_message::payload::Payload;
 
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
@@ -22,9 +20,6 @@ use crate::tangle::TangleRef;
 
 /// Magic bytes used to mark DID messages.
 const DID_MESSAGE_MARKER: &[u8] = b"DID";
-
-// TODO: Use MessageId when it has a const ctor
-static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];
 
 fn parse_message<T: FromJson + TangleRef>(message: &Message, did: &IotaDID) -> Option<T> {
   let message_id: MessageId = message.id().0;
@@ -106,28 +101,6 @@ fn add_flags_to_message(
   buffer
 }
 
-pub trait MessageIdExt: Sized {
-  fn is_null(&self) -> bool;
-
-  fn encode_hex(&self) -> String;
-
-  fn decode_hex(hex: &str) -> Result<Self>;
-}
-
-impl MessageIdExt for MessageId {
-  fn is_null(&self) -> bool {
-    self.as_ref() == NULL
-  }
-
-  fn encode_hex(&self) -> String {
-    self.to_string()
-  }
-
-  fn decode_hex(hex: &str) -> Result<Self> {
-    hex.parse().map_err(Into::into)
-  }
-}
-
 pub trait MessageExt {
   fn try_extract_document(&self, did: &IotaDID) -> Option<ResolvedIotaDocument>;
 
@@ -170,10 +143,10 @@ mod test {
   use identity_did::verification::MethodScope;
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaVerificationMethod;
+  use identity_iota_core::message::MessageId;
 
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
-  use crate::tangle::MessageId;
 
   use super::*;
 

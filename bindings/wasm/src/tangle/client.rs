@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str::FromStr;
-use std::ops::Deref;
 use std::rc::Rc;
 
 use futures::executor;
-use identity::core::FromJson;
-use identity::credential::Credential;
-use identity::credential::Presentation;
 use identity::iota::Client;
-use identity::iota::CredentialValidator;
-use identity::iota::MessageId;
+use identity::iota_core::MessageId;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
+use identity::iota_core::DiffMessage;
 use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
 use js_sys::Promise;
@@ -30,7 +26,6 @@ use crate::did::UWasmDID;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::did::WasmResolvedDocument;
-use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Config;
@@ -69,8 +64,8 @@ impl WasmClient {
 
   /// Creates a new `Client` with default settings for the given `Network`.
   #[wasm_bindgen(js_name = fromNetwork)]
-  pub fn from_network(network: WasmNetwork) -> Result<WasmClient> {
-    let future = Client::from_network(network.into());
+  pub fn from_network(network: &WasmNetwork) -> Result<WasmClient> {
+    let future = Client::from_network(network.0.clone());
     let output = executor::block_on(future).wasm_result();
 
     output.map(Self::from_client)
@@ -103,13 +98,14 @@ impl WasmClient {
 
   /// Publishes a `DiffMessage` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
-  pub fn publish_diff(&self, message_id: &str, diff: WasmDiffMessage) -> Result<PromiseReceipt> {
+  pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let diff: DiffMessage = diff.0.clone();
     let client: Rc<Client> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_diff(&message, diff.deref())
+        .publish_diff(&message, &diff)
         .await
         .map(WasmReceipt)
         .map(Into::into)
@@ -228,42 +224,6 @@ impl WasmClient {
 
     // WARNING: this does not validate the return type. Check carefully.
     Ok(promise.unchecked_into::<PromiseDiffChainHistory>())
-  }
-
-  /// Validates a credential with the DID Document from the Tangle.
-  // TODO: move out of client to dedicated verifier
-  #[wasm_bindgen(js_name = checkCredential)]
-  pub fn check_credential(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
-    let data: Credential = Credential::from_json(&data).wasm_result()?;
-
-    let client: Rc<Client> = self.client.clone();
-    let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&*client)
-        .validate_credential(data, options.0)
-        .await
-        .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
-    });
-
-    Ok(promise)
-  }
-
-  /// Validates a presentation with the DID Document from the Tangle.
-  // TODO: move out of client to dedicated verifier
-  #[wasm_bindgen(js_name = checkPresentation)]
-  pub fn check_presentation(&self, data: &str, options: WasmVerifierOptions) -> Result<Promise> {
-    let data: Presentation = Presentation::from_json(&data).wasm_result()?;
-
-    let client: Rc<Client> = self.client.clone();
-    let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&*client)
-        .validate_presentation(data, options.0)
-        .await
-        .wasm_result()
-        .and_then(|output| JsValue::from_serde(&output).wasm_result())
-    });
-
-    Ok(promise)
   }
 }
 

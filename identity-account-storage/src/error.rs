@@ -21,7 +21,7 @@ pub enum Error {
   /// Caused by errors from the [iota_stronghold] crate.
   #[cfg(feature = "stronghold")]
   #[error(transparent)]
-  StrongholdError(#[from] iota_stronghold::Error),
+  StrongholdError(#[from] crate::stronghold::StrongholdError),
 
   /// Caused by attempting to increment a generation above the maximum value.
   #[error("Generation overflow")]
@@ -48,18 +48,6 @@ pub enum Error {
   /// Caused by attempting to write a poisoned shared resource.
   #[error("Shared resource poisoned: write")]
   SharedWritePoisoned,
-  /// Caused by an internal panic in the Stronghold runtime.
-  #[error("Stronghold mutex poisoned: {0}")]
-  StrongholdMutexPoisoned(&'static str),
-  /// Caused by attempting to access a Stronghold snapshot without a password.
-  #[error("Stronghold snapshot password not found")]
-  StrongholdPasswordNotSet,
-  /// Caused by receiving an unexpected return value from a Stronghold procedure.
-  #[error("Stronghold procedure returned unexpected type")]
-  StrongholdProcedureFailure,
-  /// Caused by errors from an invalid Stronghold procedure.
-  #[error("Stronghold error: {0}")]
-  StrongholdResult(String),
 }
 
 #[doc(hidden)]

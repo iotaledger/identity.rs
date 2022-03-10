@@ -1,18 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::bee_message::MessageId;
+use identity_iota_core::message::MessageId;
+use identity_iota_core::message::MessageIdExt;
 use serde::Deserialize;
 use serde::Serialize;
-
-use identity_iota_core::types::message_id_is_null;
 
 /// Holds the last published message ids of the integration and diff chains.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ChainState {
-  #[serde(default = "MessageId::null", skip_serializing_if = "message_id_is_null")]
+  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_integration_message_id: MessageId,
-  #[serde(default = "MessageId::null", skip_serializing_if = "message_id_is_null")]
+  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_diff_message_id: MessageId,
 }
 
@@ -54,7 +53,7 @@ impl ChainState {
 
   /// Returns whether the identity has been published before.
   pub fn is_new_identity(&self) -> bool {
-    message_id_is_null(&self.last_integration_message_id)
+    self.last_integration_message_id.is_null()
   }
 }
 

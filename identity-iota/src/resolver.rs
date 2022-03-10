@@ -23,7 +23,7 @@ impl ResolverMethod for Client {
 
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
     let iota_did: IotaDID = IotaDID::try_from_core(did.clone()).map_err(|_| Error::MissingResolutionDID)?;
-    let mut resolved: ResolvedIotaDocument = self
+    let resolved: ResolvedIotaDocument = self
       .resolve(&iota_did)
       .await
       .map_err(|_| Error::MissingResolutionDocument)?;
@@ -32,9 +32,12 @@ impl ResolverMethod for Client {
     metadata.created = Some(resolved.document.metadata.created);
     metadata.updated = Some(resolved.document.metadata.updated);
 
-    let core_document = std::mem::take(resolved.document.core_document_mut());
     Ok(Some(MetaDocument {
-      data: core_document.map(CoreDID::from, |properties| properties),
+      data: resolved
+        .document
+        .core_document()
+        .clone()
+        .map(CoreDID::from, |properties| properties),
       meta: metadata,
     }))
   }

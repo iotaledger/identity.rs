@@ -11,7 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
 
 [dependencies]
-identity-account-core = { version = "=0.5.0-dev.4", path = "../identity-account-core", default-features = false }
+identity-account-storage = { version = "=0.5.0-dev.4", path = "../identity-account-storage", default-features = false }
 identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }
 identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
 identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
@@ -36,6 +36,6 @@ tokio = { version = "1.5", features = ["macros", "rt", "rt-multi-thread", "sync"
 
 [features]
 mem-client = []
-stronghold = ["identity-account-core/stronghold", "zeroize"]
+stronghold = ["identity-account-storage/stronghold", "zeroize"]
 async = ["identity-iota/async", "identity-iota-core/async"]
 default = ["async", "stronghold"]

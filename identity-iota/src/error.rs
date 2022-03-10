@@ -15,8 +15,6 @@ pub enum Error {
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
   ClientError(#[from] iota_client::error::Error),
-  #[error("Invalid Message: {0}")]
-  InvalidMessage(#[from] iota_client::bee_message::Error),
   #[error("{0}")]
   IotaCoreError(#[from] identity_iota_core::Error),
 
@@ -24,8 +22,6 @@ pub enum Error {
   DIDNotFound(String),
   #[error("{0}")]
   IncompatibleNetwork(String),
-  #[error("Invalid Presentation Holder")]
-  InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
   #[error("no client nodes provided for network")]
@@ -36,4 +32,13 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
+  /// Caused by a single concern credential or presentation validation method failing.
+  #[error("A validation unit failed")]
+  IsolatedValidationError(#[from] crate::credential::ValidationError),
+  /// Caused by one or more failures when validating a credential.  
+  #[error("credential validation failed")]
+  CredentialValidationError(#[from] crate::credential::CompoundCredentialValidationError),
+  /// Caused by one or more failures when validating a presentation.
+  #[error("presentation validation failed")]
+  PresentationValidationError(#[from] crate::credential::CompoundPresentationValidationError),
 }

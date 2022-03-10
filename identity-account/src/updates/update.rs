@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
-use identity_account_core::identity::IdentityState;
-use identity_account_core::storage::Storage;
-use identity_account_core::types::Generation;
-use identity_account_core::types::KeyLocation;
+use identity_account_storage::identity::IdentityState;
+use identity_account_storage::storage::Storage;
+use identity_account_storage::types::Generation;
+use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
@@ -172,7 +172,7 @@ impl Update {
         let public: PublicKey = if let Some(method_private_key) = method_secret {
           insert_method_secret(storage, did, &location, type_, method_private_key).await
         } else {
-          storage.key_new(did, &location).await.map_err(|e| e.into())
+          storage.key_new(did, &location).await.map_err(Into::into)
         }?;
 
         let method: IotaVerificationMethod =
@@ -317,7 +317,7 @@ async fn insert_method_secret(
         )
       );
 
-      store.key_insert(did, location, private_key).await.map_err(|e| e.into())
+      store.key_insert(did, location, private_key).await.map_err(Into::into)
     }
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(

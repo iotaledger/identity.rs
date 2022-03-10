@@ -10,11 +10,11 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Signature;
-use iota_client::bee_message::MessageId;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::types::message_id_is_null;
+use crate::message::MessageId;
+use crate::message::MessageIdExt;
 
 /// Additional attributes related to an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -24,7 +24,7 @@ pub struct IotaDocumentMetadata {
   #[serde(
     rename = "previousMessageId",
     default = "MessageId::null",
-    skip_serializing_if = "message_id_is_null"
+    skip_serializing_if = "MessageId::is_null"
   )]
   pub previous_message_id: MessageId,
   #[serde(skip_serializing_if = "Option::is_none")]

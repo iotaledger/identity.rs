@@ -12,13 +12,13 @@ use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
-use iota_client::bee_message::MessageId;
 
 use crate::did::IotaDID;
 use crate::diff::DiffIotaDocument;
 use crate::document::IotaDocument;
 use crate::error::Result;
-use crate::types::message_id_is_null;
+use crate::message::MessageId;
+use crate::message::MessageIdExt;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -28,7 +28,7 @@ pub struct DiffMessage {
   #[serde(
     rename = "previousMessageId",
     default = "MessageId::null",
-    skip_serializing_if = "message_id_is_null"
+    skip_serializing_if = "MessageId::is_null"
   )]
   pub(crate) previous_message_id: MessageId,
   #[serde(skip_serializing_if = "Option::is_none")]

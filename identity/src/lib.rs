@@ -83,6 +83,7 @@ pub mod iota_core {
   pub use identity_iota_core::diff::*;
   pub use identity_iota_core::document::*;
   pub use identity_iota_core::error::*;
+  pub use identity_iota_core::message::*;
   pub use identity_iota_core::types::*;
 
   #[doc(inline)]
@@ -103,16 +104,16 @@ pub mod account {
 
 #[cfg(feature = "account")]
 #[cfg_attr(docsrs, doc(cfg(feature = "account")))]
-pub mod account_core {
+pub mod account_storage {
   //! Storage Trait and Types definitions
 
-  pub use identity_account_core::crypto::*;
-  pub use identity_account_core::error::*;
-  pub use identity_account_core::identity::*;
-  pub use identity_account_core::storage::*;
-  pub use identity_account_core::stronghold::*;
-  pub use identity_account_core::types::*;
-  pub use identity_account_core::utils::*;
+  pub use identity_account_storage::crypto::*;
+  pub use identity_account_storage::error::*;
+  pub use identity_account_storage::identity::*;
+  pub use identity_account_storage::storage::*;
+  pub use identity_account_storage::stronghold::*;
+  pub use identity_account_storage::types::*;
+  pub use identity_account_storage::utils::*;
 }
 
 #[cfg(feature = "comm")]

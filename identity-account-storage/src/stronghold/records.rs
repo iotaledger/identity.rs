@@ -14,9 +14,9 @@ use iota_stronghold::Location;
 use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 
-use crate::error::Error;
-use crate::error::Result;
+use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Store;
+use crate::stronghold::StrongholdError;
 
 pub struct Records<'snapshot> {
   pub(crate) store: Store<'snapshot>,
@@ -47,26 +47,31 @@ impl Records<'_> {
     self.store.flags()
   }
 
-  pub async fn index(&self) -> Result<RecordIndex> {
-    self.store.get(Locations::index()).await.and_then(RecordIndex::try_new)
+  pub async fn index(&self) -> IotaStrongholdResult<RecordIndex> {
+    self.store.get(Locations::index()).await?;
+    let record: Option<Vec<u8>> = self.store.get(Locations::index()).await?;
+    match record {
+      None => Err(StrongholdError::RecordError),
+      Some(record) => Ok(RecordIndex::try_new(record)?),
+    }
   }
 
-  pub async fn all(&self) -> Result<Vec<Vec<u8>>> {
+  pub async fn all(&self) -> IotaStrongholdResult<Vec<Option<Vec<u8>>>> {
     self.index().await?.load_all(&self.store).await
   }
 
-  pub async fn get(&self, record_id: &[u8]) -> Result<Vec<u8>> {
+  pub async fn get(&self, record_id: &[u8]) -> IotaStrongholdResult<Option<Vec<u8>>> {
     let record_tag: RecordTag = RecordIndex::tag(record_id);
     let location: Location = Locations::record(&record_tag);
 
     self.store.get(location).await
   }
 
-  pub async fn set(&self, record_id: &[u8], record: &[u8]) -> Result<()> {
+  pub async fn set(&self, record_id: &[u8], record: &[u8]) -> IotaStrongholdResult<()> {
     self.try_set(record_id, record, true).await.map(|_| ())
   }
 
-  pub async fn try_set(&self, record_id: &[u8], record: &[u8], replace: bool) -> Result<bool> {
+  pub async fn try_set(&self, record_id: &[u8], record: &[u8], replace: bool) -> IotaStrongholdResult<bool> {
     let mut index: RecordIndex = self.index().await?;
     let record_tag: RecordTag = RecordIndex::tag(record_id);
     let inserted: bool = index.insert(&record_tag);
@@ -89,7 +94,7 @@ impl Records<'_> {
     }
   }
 
-  pub async fn del(&self, record_id: &[u8]) -> Result<()> {
+  pub async fn del(&self, record_id: &[u8]) -> IotaStrongholdResult<()> {
     let mut index: RecordIndex = self.index().await?;
     let record_tag: RecordTag = RecordIndex::tag(record_id);
 
@@ -130,9 +135,9 @@ pub struct RecordIndex(Vec<u8>);
 impl RecordIndex {
   const CHUNK: usize = 32;
 
-  pub(crate) fn try_new(data: Vec<u8>) -> Result<Self> {
+  pub(crate) fn try_new(data: Vec<u8>) -> IotaStrongholdResult<Self> {
     if data.len() % Self::CHUNK != 0 {
-      return Err(Error::InvalidResourceIndex);
+      return Err(StrongholdError::InvalidResourceIndex);
     }
 
     Ok(Self(data))
@@ -146,7 +151,7 @@ impl RecordIndex {
     self.iter().any(|chunk| chunk == tag)
   }
 
-  pub(crate) async fn load_all(&self, store: &Store<'_>) -> Result<Vec<Vec<u8>>> {
+  pub(crate) async fn load_all(&self, store: &Store<'_>) -> IotaStrongholdResult<Vec<Option<Vec<u8>>>> {
     self
       .iter()
       .map(Locations::record)

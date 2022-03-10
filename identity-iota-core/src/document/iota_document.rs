@@ -33,7 +33,6 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
-use iota_client::bee_message::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -44,7 +43,8 @@ use crate::diff::DiffMessage;
 use crate::document::IotaDocumentMetadata;
 use crate::error::Error;
 use crate::error::Result;
-use crate::types::message_id_is_null;
+use crate::message::MessageId;
+use crate::message::MessageIdExt;
 use crate::types::NetworkName;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
@@ -480,7 +480,7 @@ impl IotaDocument {
   /// the DID tag.
   pub fn verify_root_document(document: &IotaDocument) -> Result<()> {
     // The previous message id must be null.
-    if !message_id_is_null(&document.metadata.previous_message_id) {
+    if !document.metadata.previous_message_id.is_null() {
       return Err(Error::InvalidRootDocument);
     }
 
@@ -583,11 +583,11 @@ impl IotaDocument {
   ///
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
   pub fn diff_index(message_id: &MessageId) -> Result<String> {
-    if message_id_is_null(message_id) {
+    if message_id.is_null() {
       return Err(Error::InvalidDocumentMessageId);
     }
 
-    Ok(IotaDID::encode_key(message_id.to_string().as_bytes()))
+    Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
   }
 
   pub fn extract_signing_keys(&self) -> Vec<Option<&IotaVerificationMethod>> {
@@ -645,6 +645,13 @@ impl TrySignatureMut for IotaDocument {
 impl SetSignature for IotaDocument {
   fn set_signature(&mut self, signature: Signature) {
     self.metadata.proof = Some(signature)
+  }
+}
+
+// Workaround to enable using this with the credential and presentation validators.
+impl AsRef<IotaDocument> for IotaDocument {
+  fn as_ref(&self) -> &IotaDocument {
+    self
   }
 }
 
