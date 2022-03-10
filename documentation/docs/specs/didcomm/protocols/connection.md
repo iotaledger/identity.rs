@@ -20,7 +20,7 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 ### Relationships
 - [Termination](./termination): the DIDComm connection may be gracefully concluded using the [termination protocol](./termination).
 - [Authentication](./authentication): the authentication protocol can be used to authenticate parties participating in the established [connection](./connection).
-- [Feature Discovery](./feature-discovery): feature discovery can be used to learn about the capabilities of the other party after connection.
+- [Feature Discovery](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md): feature discovery can be used to learn about the capabilities of the other party after connection.
 
 ### Example Use-Cases
 
