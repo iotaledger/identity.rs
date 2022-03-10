@@ -1,11 +1,14 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::DIDMessageEncoding;
+use serde_repr::Deserialize_repr;
+use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = DIDMessageEncoding)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
 pub enum WasmDIDMessageEncoding {
   Json = 0,
   JsonBrotli = 1,

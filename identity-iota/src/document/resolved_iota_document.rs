@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -99,5 +99,36 @@ impl From<IotaDocument> for ResolvedIotaDocument {
       integration_message_id: MessageId::null(),
       diff_message_id: MessageId::null(),
     }
+  }
+}
+
+impl AsRef<IotaDocument> for ResolvedIotaDocument {
+  fn as_ref(&self) -> &IotaDocument {
+    &self.document
+  }
+}
+
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
+  use identity_core::crypto::KeyPair;
+
+  // Characterization test: We need to be informed if it becomes impossible to deserialize a serialized `IotaDocument`
+  // into a `ResolvedIotaDocument` as the Wasm bindings currently depend on this fact.
+  #[test]
+  fn can_deserialize_from_iota_document() {
+    let private_key: &[u8] = &[0; 32];
+
+    let keypair: KeyPair = KeyPair::try_from_ed25519_bytes(private_key).unwrap();
+
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    let deserialization: Result<ResolvedIotaDocument, identity_core::Error> =
+      ResolvedIotaDocument::from_json(document.to_json().unwrap().as_str());
+    assert!(deserialization.is_ok());
+
+    assert_eq!(deserialization.unwrap().document, document);
   }
 }

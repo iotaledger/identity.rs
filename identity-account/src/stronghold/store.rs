@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use iota_stronghold::Location;
@@ -6,12 +6,8 @@ use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 use std::time::Duration;
 
-use crate::error::Error;
-use crate::error::PleaseDontMakeYourOwnResult;
-use crate::error::Result;
+use crate::stronghold::error::IotaStrongholdResult;
 use crate::stronghold::Context;
-
-const STRONG_404: &str = "Unable to read from store";
 
 #[derive(Debug)]
 pub struct Store<'snapshot> {
@@ -51,50 +47,36 @@ impl Store<'_> {
   }
 
   /// Gets a record.
-  pub async fn get(&self, location: Location) -> Result<Vec<u8>> {
-    match self.get_strict(location).await {
-      Ok(data) => Ok(data),
-      Err(Error::StrongholdResult(message)) if message == STRONG_404 => Ok(Vec::new()),
-      Err(error) => Err(error),
-    }
-  }
-
-  /// Gets a record.
-  pub async fn get_strict(&self, location: Location) -> Result<Vec<u8>> {
+  pub async fn get(&self, location: Location) -> IotaStrongholdResult<Option<Vec<u8>>> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    let (data, status): (Vec<u8>, _) = scope.read_from_store(location).await;
-
-    status.to_result()?;
-
-    Ok(data)
+    Ok(scope.read_from_store(location.vault_path().to_vec()).await?)
   }
 
   /// Adds a record.
-  pub async fn set<T>(&self, location: Location, payload: T, ttl: Option<Duration>) -> Result<()>
+  pub async fn set<T>(&self, location: Location, payload: T, ttl: Option<Duration>) -> IotaStrongholdResult<()>
   where
     T: Into<Vec<u8>>,
   {
+    let location = location.vault_path().to_vec();
     Context::scope(self.path, &self.name, &self.flags)
       .await?
       .write_to_store(location, payload.into(), ttl)
-      .await
-      .to_result()
+      .await?;
+    Ok(())
   }
 
   /// Removes a record.
-  pub async fn del(&self, location: Location) -> Result<()> {
+  pub async fn del(&self, location: Location) -> IotaStrongholdResult<()> {
     Context::scope(self.path, &self.name, &self.flags)
       .await?
-      .delete_from_store(location)
-      .await
-      .to_result()
+      .delete_from_store(location.vault_path().to_vec())
+      .await?;
+    Ok(())
   }
 
   /// Returns true if the specified location exists.
-  pub async fn exists(&self, location: Location) -> Result<bool> {
+  pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    let exists: bool = scope.record_exists(location).await;
-
-    Ok(exists)
+    Ok(scope.record_exists(location).await?)
   }
 }

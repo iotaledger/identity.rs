@@ -3,6 +3,9 @@
 
 //! Errors that may occur when working with Identity Accounts.
 
+#[cfg(feature = "stronghold")]
+use crate::stronghold::StrongholdError;
+
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
@@ -27,25 +30,9 @@ pub enum Error {
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),
-  /// Caused by errors from the [iota_stronghold] crate.
   #[cfg(feature = "stronghold")]
   #[error(transparent)]
-  StrongholdError(#[from] iota_stronghold::Error),
-  /// Caused by errors from an invalid Stronghold procedure.
-  #[error("Stronghold error: {0}")]
-  StrongholdResult(String),
-  /// Caused by attempting to parse an invalid Stronghold resource index.
-  #[error("Stronghold resource index malformed")]
-  InvalidResourceIndex,
-  /// Caused by attempting to access a Stronghold snapshot without a password.
-  #[error("Stronghold snapshot password not found")]
-  StrongholdPasswordNotSet,
-  /// Caused by receiving an unexpected return value from a Stronghold procedure.
-  #[error("Stronghold procedure returned unexpected type")]
-  StrongholdProcedureFailure,
-  /// Caused by an internal panic in the Stronghold runtime.
-  #[error("Stronghold mutex poisoned: {0}")]
-  StrongholdMutexPoisoned(&'static str),
+  StrongholdError(#[from] StrongholdError),
   /// Caused by attempting to read a poisoned shared resource.
   #[error("Shared resource poisoned: read")]
   SharedReadPoisoned,
