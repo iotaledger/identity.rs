@@ -8,17 +8,6 @@ macro_rules! log {
   }
 }
 
-// #[macro_export]
-// macro_rules! wasm_clone {
-//   ($item:ident) => {
-//     impl $item {
-//       #[wasm_bindgen]
-//       pub fn get_clone(&self) -> $item {
-//         return $item(self.0.clone());
-//       }
-//     }
-//  };
-// }
 #[macro_export]
 macro_rules! impl_wasm_clone {
   ($wasm_class:ident, $js_class:ident) => {
@@ -29,5 +18,5 @@ macro_rules! impl_wasm_clone {
         return $wasm_class(self.0.clone());
       }
     }
-  }
+  };
 }

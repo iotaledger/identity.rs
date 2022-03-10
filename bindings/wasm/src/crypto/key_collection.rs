@@ -12,8 +12,8 @@ use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::WasmKeyPair;
 use crate::crypto::KeyType;
+use crate::crypto::WasmKeyPair;
 use crate::error::wasm_error;
 
 #[derive(Deserialize, Serialize)]

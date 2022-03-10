@@ -10,8 +10,8 @@ use identity::iota::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::WasmKeyCollection;
 use crate::crypto::KeyType;
+use crate::crypto::WasmKeyCollection;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
 use crate::error::wasm_error;

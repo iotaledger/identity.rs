@@ -23,9 +23,9 @@ use wasm_bindgen_test::*;
 
 use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::Digest;
+use identity_wasm::crypto::KeyType;
 use identity_wasm::crypto::WasmKeyCollection;
 use identity_wasm::crypto::WasmKeyPair;
-use identity_wasm::crypto::KeyType;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;

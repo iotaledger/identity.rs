@@ -665,7 +665,6 @@ impl WasmDocument {
   }
 }
 
-
 impl_wasm_clone!(WasmDocument, Document);
 
 impl From<IotaDocument> for WasmDocument {
