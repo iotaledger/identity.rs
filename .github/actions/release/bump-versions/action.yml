@@ -43,14 +43,12 @@ runs:
     
     - name: Bump Rust crate version
       shell: bash
-      # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'rust'}}
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
 
     - name: Bump Wasm bindings crate version
       shell: bash
-      # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/wasm
       run: |
@@ -58,7 +56,6 @@ runs:
 
     - name: Bump stronghold nodejs bindings crate version
       shell: bash
-      # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/stronghold-nodejs
       run: |
