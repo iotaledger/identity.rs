@@ -26,9 +26,11 @@ use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaService;
 use identity_iota::document::IotaVerificationMethod;
+use identity_iota::tangle::Client;
 use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
+use crate::account::SharedPtr;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
@@ -370,7 +372,10 @@ AttachMethodRelationship {
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> AttachMethodRelationshipBuilder<'account> {
+impl<'account, C> AttachMethodRelationshipBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
   #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
@@ -389,7 +394,10 @@ DetachMethodRelationship {
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> DetachMethodRelationshipBuilder<'account> {
+impl<'account, C> DetachMethodRelationshipBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
   #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
