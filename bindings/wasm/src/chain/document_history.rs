@@ -121,6 +121,8 @@ impl WasmDocumentHistory {
   }
 }
 
+impl_wasm_clone!(WasmDocumentHistory, DocumentHistory);
+
 impl From<DocumentHistory> for WasmDocumentHistory {
   fn from(document_history: DocumentHistory) -> Self {
     Self(document_history)

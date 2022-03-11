@@ -94,8 +94,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -121,6 +119,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -270,6 +270,7 @@ Creates a new `Client` with the given settings.
 * [Credential](#Credential)
     * _instance_
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
         * [.extend(value)](#Credential.extend) ⇒ [<code>Credential</code>](#Credential)
         * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#Credential.issue) ⇒ [<code>Credential</code>](#Credential)
@@ -280,6 +281,10 @@ Creates a new `Client` with the given settings.
 ### credential.toJSON() ⇒ <code>any</code>
 Serializes a `Credential` object as a JSON object.
 
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+clone"></a>
+
+### credential.clone() ⇒ [<code>Credential</code>](#Credential)
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential.extend"></a>
 
@@ -324,6 +329,7 @@ Options to declare validation criteria when validating credentials.
     * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
     * _instance_
         * [.toJSON()](#CredentialValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CredentialValidationOptions+clone) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
     * _static_
         * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
         * [.fromJSON(json)](#CredentialValidationOptions.fromJSON) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
@@ -345,6 +351,10 @@ Throws an error if any of the options are invalid.
 ### credentialValidationOptions.toJSON() ⇒ <code>any</code>
 Serializes a `CredentialValidationOptions` as a JSON object.
 
+**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+<a name="CredentialValidationOptions+clone"></a>
+
+### credentialValidationOptions.clone() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
 **Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 <a name="CredentialValidationOptions.default"></a>
 
@@ -501,6 +511,7 @@ Validate that the relationship between the `holder` and the credential subjects 
         * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DID+toString) ⇒ <code>string</code>
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
@@ -569,6 +580,10 @@ Returns the `DID` as a string.
 Serializes a `DID` as a JSON object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+clone"></a>
+
+### did.clone() ⇒ [<code>DID</code>](#DID)
+**Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
 
 ### DID.fromBase58(key, network) ⇒ [<code>DID</code>](#DID)
@@ -610,6 +625,7 @@ Parses a `DID` from the input string.
         * [.join(segment)](#DIDUrl+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DIDUrl+toString) ⇒ <code>string</code>
         * [.toJSON()](#DIDUrl+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DIDUrl+clone) ⇒ [<code>DIDUrl</code>](#DIDUrl)
     * _static_
         * [.parse(input)](#DIDUrl.parse) ⇒ [<code>DIDUrl</code>](#DIDUrl)
 
@@ -709,6 +725,10 @@ Returns the `DIDUrl` as a string.
 Serializes a `DIDUrl` as a JSON object.
 
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+clone"></a>
+
+### didUrl.clone() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl.parse"></a>
 
 ### DIDUrl.parse(input) ⇒ [<code>DIDUrl</code>](#DIDUrl)
@@ -785,6 +805,7 @@ Defines the difference between two DID `Document`s' JSON representations.
         * [.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)
         * [.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)
         * [.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DiffMessage+clone) ⇒ [<code>DiffMessage</code>](#DiffMessage)
     * _static_
         * [.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)
 
@@ -868,6 +889,10 @@ with the given Document.
 Serializes a `DiffMessage` as a JSON object.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+clone"></a>
+
+### diffMessage.clone() ⇒ [<code>DiffMessage</code>](#DiffMessage)
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage.fromJSON"></a>
 
 ### DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)
@@ -926,6 +951,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.mergeDiff(diff)](#Document+mergeDiff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
         * [.isSigningMethodType(method_type)](#Document.isSigningMethodType) ⇒ <code>boolean</code>
@@ -1390,6 +1416,10 @@ For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
 Serializes a `Document` as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+clone"></a>
+
+### document.clone() ⇒ [<code>Document</code>](#Document)
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document.fromVerificationMethod"></a>
 
 ### Document.fromVerificationMethod(method) ⇒ [<code>Document</code>](#Document)
@@ -1468,6 +1498,7 @@ A DID Document's history and current state.
         * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
         * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
+        * [.clone()](#DocumentHistory+clone) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
     * _static_
         * [.fromJSON(json)](#DocumentHistory.fromJSON) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
 
@@ -1511,6 +1542,10 @@ NOTE: clones the data.
 Serializes `DocumentHistory` as a JSON object.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
+<a name="DocumentHistory+clone"></a>
+
+### documentHistory.clone() ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
+**Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory.fromJSON"></a>
 
 ### DocumentHistory.fromJSON(json) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
@@ -1534,6 +1569,7 @@ Additional attributes related to an IOTA DID Document.
     * [.updated](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp)
     * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
     * [.proof](#DocumentMetadata+proof) ⇒ <code>any</code>
+    * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
 
 <a name="DocumentMetadata+created"></a>
 
@@ -1557,6 +1593,10 @@ Returns the timestamp of the last DID document update.
 Returns a reference to the `proof`.
 
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
+<a name="DocumentMetadata+clone"></a>
+
+### documentMetadata.clone() ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="Duration"></a>
 
 ## Duration
@@ -1759,6 +1799,7 @@ Deserializes from a JSON object.
         * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
         * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
+        * [.clone()](#KeyCollection+clone) ⇒ [<code>KeyCollection</code>](#KeyCollection)
     * _static_
         * [.fromJSON(json)](#KeyCollection.fromJSON) ⇒ [<code>KeyCollection</code>](#KeyCollection)
 
@@ -1843,6 +1884,10 @@ Returns the private key at the specified `index` as a base58-encoded string.
 Serializes a `KeyCollection` object as a JSON object.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+<a name="KeyCollection+clone"></a>
+
+### keyCollection.clone() ⇒ [<code>KeyCollection</code>](#KeyCollection)
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 <a name="KeyCollection.fromJSON"></a>
 
 ### KeyCollection.fromJSON(json) ⇒ [<code>KeyCollection</code>](#KeyCollection)
@@ -1866,6 +1911,7 @@ Deserializes a `KeyCollection` object from a JSON object.
         * [.public](#KeyPair+public) ⇒ <code>string</code>
         * [.private](#KeyPair+private) ⇒ <code>string</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
+        * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
         * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
@@ -1904,6 +1950,10 @@ Returns the private key as a base58-encoded string.
 Serializes a `KeyPair` object as a JSON object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
+<a name="KeyPair+clone"></a>
+
+### keyPair.clone() ⇒ [<code>KeyPair</code>](#KeyPair)
+**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair.fromBase58"></a>
 
 ### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
@@ -1939,6 +1989,7 @@ Supported verification method types.
     * _instance_
         * [.toString()](#MethodScope+toString) ⇒ <code>string</code>
         * [.toJSON()](#MethodScope+toJSON) ⇒ <code>any</code>
+        * [.clone()](#MethodScope+clone) ⇒ [<code>MethodScope</code>](#MethodScope)
     * _static_
         * [.VerificationMethod()](#MethodScope.VerificationMethod) ⇒ [<code>MethodScope</code>](#MethodScope)
         * [.Authentication()](#MethodScope.Authentication) ⇒ [<code>MethodScope</code>](#MethodScope)
@@ -1959,6 +2010,10 @@ Returns the `MethodScope` as a string.
 ### methodScope.toJSON() ⇒ <code>any</code>
 Serializes a `MethodScope` object as a JSON object.
 
+**Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
+<a name="MethodScope+clone"></a>
+
+### methodScope.clone() ⇒ [<code>MethodScope</code>](#MethodScope)
 **Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope.VerificationMethod"></a>
 
@@ -2005,6 +2060,7 @@ Supported verification method types.
 * [MethodType](#MethodType)
     * _instance_
         * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
+        * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.MerkleKeyCollection2021()](#MethodType.MerkleKeyCollection2021) ⇒ [<code>MethodType</code>](#MethodType)
@@ -2015,6 +2071,10 @@ Supported verification method types.
 ### methodType.toJSON() ⇒ <code>any</code>
 Serializes a `MethodType` object as a JSON object.
 
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType+clone"></a>
+
+### methodType.clone() ⇒ [<code>MethodType</code>](#MethodType)
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.Ed25519VerificationKey2018"></a>
 
@@ -2046,6 +2106,7 @@ Deserializes a `MethodType` object from a JSON object.
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
         * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Network+clone) ⇒ [<code>Network</code>](#Network)
     * _static_
         * [.tryFromName(name)](#Network.tryFromName) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
@@ -2071,6 +2132,10 @@ Returns the node URL of the Tangle network.
 ### network.toJSON() ⇒ <code>any</code>
 Serializes a `Network` as a JSON object.
 
+**Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network+clone"></a>
+
+### network.clone() ⇒ [<code>Network</code>](#Network)
 **Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network.tryFromName"></a>
 
@@ -2114,6 +2179,7 @@ Deserializes a `Network` from a JSON object.
     * _instance_
         * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
         * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+        * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
     * _static_
         * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
 
@@ -2140,6 +2206,10 @@ Serializes a `Presentation` object as a JSON object.
 Returns a copy of the credentials contained in the presentation.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+clone"></a>
+
+### presentation.clone() ⇒ [<code>Presentation</code>](#Presentation)
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
@@ -2162,6 +2232,7 @@ Options to declare validation criteria when validating presentation.
     * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
     * _instance_
         * [.toJSON()](#PresentationValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#PresentationValidationOptions+clone) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
     * _static_
         * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
         * [.fromJSON(json)](#PresentationValidationOptions.fromJSON) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
@@ -2183,6 +2254,10 @@ Throws an error if any of the options are invalid.
 ### presentationValidationOptions.toJSON() ⇒ <code>any</code>
 Serializes a `PresentationValidationOptions` as a JSON object.
 
+**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+<a name="PresentationValidationOptions+clone"></a>
+
+### presentationValidationOptions.clone() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
 **Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 <a name="PresentationValidationOptions.default"></a>
 
@@ -2294,6 +2369,7 @@ See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 * [ProofPurpose](#ProofPurpose)
     * _instance_
         * [.toJSON()](#ProofPurpose+toJSON) ⇒ <code>any</code>
+        * [.clone()](#ProofPurpose+clone) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
     * _static_
         * [.assertionMethod()](#ProofPurpose.assertionMethod) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
         * [.authentication()](#ProofPurpose.authentication) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
@@ -2304,6 +2380,10 @@ See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 ### proofPurpose.toJSON() ⇒ <code>any</code>
 Serializes a `ProofPurpose` object as a JSON object.
 
+**Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
+<a name="ProofPurpose+clone"></a>
+
+### proofPurpose.clone() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
 **Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
 <a name="ProofPurpose.assertionMethod"></a>
 
@@ -2342,6 +2422,7 @@ Deserializes a `ProofPurpose` object from a JSON object.
         * [.networkId](#Receipt+networkId) ⇒ <code>string</code>
         * [.nonce](#Receipt+nonce) ⇒ <code>string</code>
         * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Receipt+clone) ⇒ [<code>Receipt</code>](#Receipt)
     * _static_
         * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
 
@@ -2375,6 +2456,10 @@ Returns the message `nonce`.
 Serializes a `Receipt` as a JSON object.
 
 **Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+clone"></a>
+
+### receipt.clone() ⇒ [<code>Receipt</code>](#Receipt)
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
 <a name="Receipt.fromJSON"></a>
 
 ### Receipt.fromJSON(json) ⇒ [<code>Receipt</code>](#Receipt)
@@ -2404,6 +2489,7 @@ merged with one or more `DiffMessages`.
         * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
         * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
         * [.toJSON()](#ResolvedDocument+toJSON) ⇒ <code>any</code>
+        * [.clone()](#ResolvedDocument+clone) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
     * _static_
         * [.fromJSON(json)](#ResolvedDocument.fromJSON) ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
 
@@ -2483,6 +2569,10 @@ NOTE: trying to use the `ResolvedDocument` after calling this will throw an erro
 ### resolvedDocument.toJSON() ⇒ <code>any</code>
 Serializes a `Document` object as a JSON object.
 
+**Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
+<a name="ResolvedDocument+clone"></a>
+
+### resolvedDocument.clone() ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
 **Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 <a name="ResolvedDocument.fromJSON"></a>
 
@@ -2717,6 +2807,7 @@ See: https://www.w3.org/TR/did-core/#services
         * [.serviceEndpoint](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
         * [.properties()](#Service+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Service+clone) ⇒ [<code>Service</code>](#Service)
     * _static_
         * [.fromJSON(value)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
 
@@ -2758,6 +2849,10 @@ Returns a copy of the custom properties on the `Service`.
 Serializes a `Service` object as a JSON object.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+clone"></a>
+
+### service.clone() ⇒ [<code>Service</code>](#Service)
+**Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service.fromJSON"></a>
 
 ### Service.fromJSON(value) ⇒ [<code>Service</code>](#Service)
@@ -2779,7 +2874,10 @@ See `ISignatureOptions`.
 
 * [SignatureOptions](#SignatureOptions)
     * [new SignatureOptions(options)](#new_SignatureOptions_new)
-    * [.default()](#SignatureOptions.default) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+    * _instance_
+        * [.clone()](#SignatureOptions+clone) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+    * _static_
+        * [.default()](#SignatureOptions.default) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
 
 <a name="new_SignatureOptions_new"></a>
 
@@ -2793,6 +2891,10 @@ Throws an error if any of the options are invalid.
 | --- | --- |
 | options | <code>ISignatureOptions</code> | 
 
+<a name="SignatureOptions+clone"></a>
+
+### signatureOptions.clone() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+**Kind**: instance method of [<code>SignatureOptions</code>](#SignatureOptions)  
 <a name="SignatureOptions.default"></a>
 
 ### SignatureOptions.default() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
@@ -2895,6 +2997,7 @@ Deserializes a `Timestamp` from a JSON object.
         * [.type](#VerificationMethod+type) ⇒ <code>string</code>
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
+        * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
     * _static_
         * [.newMerkleKey(digest, did, keys, fragment)](#VerificationMethod.newMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -2954,6 +3057,10 @@ Returns the `VerificationMethod` public key data.
 Serializes a `VerificationMethod` object as a JSON object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+clone"></a>
+
+### verificationMethod.clone() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.newMerkleKey"></a>
 
 ### VerificationMethod.newMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -2991,6 +3098,7 @@ See `IVerifierOptions`.
     * [new VerifierOptions(options)](#new_VerifierOptions_new)
     * _instance_
         * [.toJSON()](#VerifierOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#VerifierOptions+clone) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
     * _static_
         * [.default()](#VerifierOptions.default) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
         * [.fromJSON(json)](#VerifierOptions.fromJSON) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
@@ -3012,6 +3120,10 @@ Throws an error if any of the options are invalid.
 ### verifierOptions.toJSON() ⇒ <code>any</code>
 Serializes a `VerifierOptions` as a JSON object.
 
+**Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
+<a name="VerifierOptions+clone"></a>
+
+### verifierOptions.clone() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
 **Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="VerifierOptions.default"></a>
 
@@ -3037,10 +3149,6 @@ Deserializes a `VerifierOptions` from a JSON object.
 <a name="KeyType"></a>
 
 ## KeyType
-**Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -3088,6 +3196,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 

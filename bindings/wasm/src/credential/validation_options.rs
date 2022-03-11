@@ -46,6 +46,8 @@ impl WasmCredentialValidationOptions {
   }
 }
 
+impl_wasm_clone!(WasmCredentialValidationOptions, CredentialValidationOptions);
+
 impl From<CredentialValidationOptions> for WasmCredentialValidationOptions {
   fn from(options: CredentialValidationOptions) -> Self {
     Self(options)
@@ -92,6 +94,8 @@ impl WasmPresentationValidationOptions {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmPresentationValidationOptions, PresentationValidationOptions);
 
 impl From<PresentationValidationOptions> for WasmPresentationValidationOptions {
   fn from(options: PresentationValidationOptions) -> Self {

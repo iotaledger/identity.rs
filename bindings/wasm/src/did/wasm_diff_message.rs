@@ -98,6 +98,8 @@ impl WasmDiffMessage {
   }
 }
 
+impl_wasm_clone!(WasmDiffMessage, DiffMessage);
+
 impl From<DiffMessage> for WasmDiffMessage {
   fn from(document_diff: DiffMessage) -> Self {
     Self(document_diff)

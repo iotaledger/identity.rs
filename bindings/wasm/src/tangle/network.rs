@@ -60,6 +60,8 @@ impl WasmNetwork {
   }
 }
 
+impl_wasm_clone!(WasmNetwork, Network);
+
 impl From<WasmNetwork> for Network {
   fn from(other: WasmNetwork) -> Self {
     other.0

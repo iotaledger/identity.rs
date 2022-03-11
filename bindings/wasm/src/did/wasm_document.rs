@@ -28,7 +28,7 @@ use wasm_bindgen::prelude::*;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
-use crate::crypto::KeyPair;
+use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmSignatureOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::WasmDID;
@@ -69,7 +69,7 @@ impl WasmDocument {
   /// * network: Tangle network to use for the DID, default `Network::mainnet`.
   /// * fragment: name of the initial verification method, default "sign-0".
   #[wasm_bindgen(constructor)]
-  pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
+  pub fn new(keypair: &WasmKeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
     let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
     IotaDocument::new_with_options(&keypair.0, network_name, fragment.as_deref())
       .map(Self)
@@ -343,7 +343,7 @@ impl WasmDocument {
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifySelfSigned`.
   #[wasm_bindgen(js_name = signSelf)]
-  pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: &UDIDUrlQuery) -> Result<()> {
+  pub fn sign_self(&mut self, key_pair: &WasmKeyPair, method_query: &UDIDUrlQuery) -> Result<()> {
     let method_query: String = method_query.into_serde().wasm_result()?;
     self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
@@ -362,7 +362,7 @@ impl WasmDocument {
   pub fn sign_document(
     &self,
     document: &mut WasmDocument,
-    key_pair: &KeyPair,
+    key_pair: &WasmKeyPair,
     method_query: &UDIDUrlQuery,
   ) -> Result<()> {
     let method_query: String = method_query.into_serde().wasm_result()?;
@@ -529,7 +529,7 @@ impl WasmDocument {
     &self,
     other: &WasmDocument,
     message_id: &str,
-    key: &KeyPair,
+    key: &WasmKeyPair,
     method_query: &UDIDUrlQuery,
   ) -> Result<WasmDiffMessage> {
     let method_query: String = method_query.into_serde().wasm_result()?;
@@ -664,6 +664,8 @@ impl WasmDocument {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmDocument, Document);
 
 impl From<IotaDocument> for WasmDocument {
   fn from(document: IotaDocument) -> Self {
