@@ -34,7 +34,6 @@ runs:
       shell: sh
       working-directory: bindings/stronghold-nodejs
       run: |
-        rm -rf artifacts/identity-wasm-bindings-build
         npm run create-npm-dir
 
     - name: Move artifacts
