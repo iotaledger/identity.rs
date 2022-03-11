@@ -21,8 +21,8 @@ extern "C" {
 
 #[wasm_bindgen(js_class = Receipt)]
 impl WasmReceipt {
-  /// Returns the associated IOTA Tangle `Network`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the associated IOTA Tangle `Network`.
+  #[wasm_bindgen]
   pub fn network(&self) -> WasmNetwork {
     WasmNetwork::from(self.0.network())
   }
@@ -40,8 +40,8 @@ impl WasmReceipt {
     self.0.network_id().to_string()
   }
 
-  /// Returns the message `nonce`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the message `nonce`.
+  #[wasm_bindgen]
   pub fn nonce(&self) -> String {
     // NOTE: do not return u64 to avoid BigInt64Array/BigUint64Array compatibility issues.
     self.0.nonce().to_string()

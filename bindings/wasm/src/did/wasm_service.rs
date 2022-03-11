@@ -37,7 +37,7 @@ impl WasmService {
   }
 
   /// Returns a copy of the `Service` id.
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }

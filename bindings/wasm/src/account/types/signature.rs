@@ -23,14 +23,14 @@ impl WasmSignature {
     Ok(WasmSignature(Signature::new(public_key, data)))
   }
 
-  #[wasm_bindgen(getter)]
-  /// Returns the public key, encoded as a base58 string, used to verify this signature.
+  #[wasm_bindgen]
+  /// Returns a copy of the public key, encoded as a base58 string, used to verify this signature.
   pub fn pkey(&self) -> String {
     encode_b58(self.0.pkey())
   }
 
-  #[wasm_bindgen(getter)]
-  /// Returns the signature data as a vec of bytes.
+  #[wasm_bindgen]
+  /// Returns a copy of the signature data as a vec of bytes.
   pub fn data(&self) -> Vec<u8> {
     self.0.data().to_vec()
   }

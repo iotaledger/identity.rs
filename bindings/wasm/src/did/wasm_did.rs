@@ -61,8 +61,8 @@ impl WasmDID {
     self.0.network_str().into()
   }
 
-  /// Returns the unique tag of the `DID`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the unique tag of the `DID`.
+  #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag().into()
   }

@@ -29,7 +29,8 @@ impl WasmNetwork {
     Self(Network::Devnet)
   }
 
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the network name.
+  #[wasm_bindgen]
   pub fn name(&self) -> String {
     self.0.name_str().to_owned()
   }
