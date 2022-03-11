@@ -26,11 +26,18 @@ pub enum Error {
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
   #[non_exhaustive]
-  #[error("serialization failed in {location} due to: {message}")]
-  SerializationFailure { location: String, message: String },
-  #[non_exhaustive]
-  #[error("deserialization failed in {location} due to: {message}")]
-  DeserializationFailure { location: String, message: String },
+  #[error("{location} serialization failed during {context} due to: {error_message}")]
+  SerializationFailure {
+    location: ErrorLocation,
+    context: String,
+    error_message: String,
+  },
+  #[error("{location} deserialization failed during {context} due to: {error_message}")]
+  DeserializationFailure {
+    location: ErrorLocation,
+    context: String,
+    error_message: String,
+  },
   #[error("thread with id `{0}` not found")]
   ThreadNotFound(ThreadId),
   #[error("awaiting message timed out on thread `{0}`")]
@@ -48,10 +55,18 @@ pub enum RemoteSendError {
   HandlerInvocationError(String),
   #[error("hook invocation error: {0}")]
   HookInvocationError(String),
-  #[error("serialization failed in {location} due to: {message}")]
-  SerializationFailure { location: String, message: String },
-  #[error("deserialization failed in {location} due to: {message}")]
-  DeserializationFailure { location: String, message: String },
+  #[error("{location} serialization failed during {context} due to: {error_message}")]
+  SerializationFailure {
+    location: ErrorLocation,
+    context: String,
+    error_message: String,
+  },
+  #[error("{location} deserialization failed during {context} due to: {error_message}")]
+  DeserializationFailure {
+    location: ErrorLocation,
+    context: String,
+    error_message: String,
+  },
 }
 
 impl From<RemoteSendError> for Error {
@@ -60,10 +75,41 @@ impl From<RemoteSendError> for Error {
       RemoteSendError::UnexpectedRequest(req) => Error::UnexpectedRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
       RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
-      RemoteSendError::DeserializationFailure { location, message } => {
-        Error::DeserializationFailure { location, message }
-      }
-      RemoteSendError::SerializationFailure { location, message } => Error::SerializationFailure { location, message },
+      RemoteSendError::DeserializationFailure {
+        location,
+        context,
+        error_message,
+      } => Error::DeserializationFailure {
+        location,
+        context,
+        error_message,
+      },
+      RemoteSendError::SerializationFailure {
+        location,
+        context,
+        error_message,
+      } => Error::SerializationFailure {
+        location,
+        context,
+        error_message,
+      },
     }
+  }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub enum ErrorLocation {
+  Local,
+  Remote,
+}
+
+impl std::fmt::Display for ErrorLocation {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let display = match self {
+      ErrorLocation::Local => "local",
+      ErrorLocation::Remote => "remote",
+    };
+
+    write!(f, "{}", display)
   }
 }

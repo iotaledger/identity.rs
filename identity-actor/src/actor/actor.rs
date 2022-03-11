@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 use std::sync::Arc;
 
+use crate::actor::errors::ErrorLocation;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::thread_id::ThreadId;
@@ -239,9 +240,9 @@ impl Actor {
     self.create_thread_channels(thread_id);
 
     let dcpm_vec = serde_json::to_vec(&dcpm).map_err(|err| Error::SerializationFailure {
-      // TODO: Could use `function_name` crate for these errors. Necessary?
-      location: "[send_named_message]".to_owned(),
-      message: err.to_string(),
+      location: ErrorLocation::Local,
+      context: "send message".to_owned(),
+      error_message: err.to_string(),
     })?;
 
     let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
@@ -252,8 +253,9 @@ impl Actor {
 
     serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
-        location: "[send_named_message]".to_owned(),
-        message: err.to_string(),
+        location: ErrorLocation::Local,
+        context: "send message".to_owned(),
+        error_message: err.to_string(),
       }
     })??;
 
@@ -282,8 +284,9 @@ impl Actor {
     let request_mode: RequestMode = request.request_mode();
 
     let request_vec = serde_json::to_vec(&request).map_err(|err| Error::SerializationFailure {
-      location: "[send_named_request]".to_owned(),
-      message: err.to_string(),
+      location: ErrorLocation::Local,
+      context: "send request".to_owned(),
+      error_message: err.to_string(),
     })?;
 
     let message = RequestMessage::new(name, request_mode, request_vec)?;
@@ -295,14 +298,16 @@ impl Actor {
     let response: Vec<u8> =
       serde_json::from_slice::<StdResult<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {
         Error::DeserializationFailure {
-          location: "[send_named_request]".to_owned(),
-          message: err.to_string(),
+          location: ErrorLocation::Local,
+          context: "send request".to_owned(),
+          error_message: err.to_string(),
         }
       })??;
 
     serde_json::from_slice::<REQ::Response>(&response).map_err(|err| Error::DeserializationFailure {
-      location: "[send_named_request]".to_owned(),
-      message: err.to_string(),
+      location: ErrorLocation::Local,
+      context: "send request".to_owned(),
+      error_message: err.to_string(),
     })
   }
 
@@ -349,8 +354,9 @@ impl Actor {
 
       let message: DidCommPlaintextMessage<T> =
         serde_json::from_slice(inbound_request.input.as_ref()).map_err(|err| Error::DeserializationFailure {
-          location: "[await_message]".to_owned(),
-          message: err.to_string(),
+          location: ErrorLocation::Local,
+          context: "await message".to_owned(),
+          error_message: err.to_string(),
         })?;
 
       log::debug!("awaited message {}", inbound_request.endpoint);

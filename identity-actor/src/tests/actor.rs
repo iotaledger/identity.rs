@@ -21,6 +21,7 @@ use crate::ActorBuilder;
 use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::Error;
+use crate::ErrorLocation;
 use crate::RequestContext;
 use crate::Synchronous;
 
@@ -400,6 +401,90 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
   sending_actor.shutdown().await.unwrap();
 
   assert!(state.was_called.load(std::sync::atomic::Ordering::SeqCst));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> crate::Result<()> {
+  try_init_logger();
+
+  // Define two types with identical serialization results, but different `Response` types.
+  // Sending `CustomRequest2` to an endpoint expecting `CustomRequest`, we expect a local deserialization error.
+
+  #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+  pub struct CustomRequest(u8);
+
+  #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+  pub struct CustomRequest2(u8);
+
+  impl ActorRequest<Synchronous> for CustomRequest {
+    type Response = String;
+
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+      std::borrow::Cow::Borrowed("test/request")
+    }
+  }
+
+  impl ActorRequest<Synchronous> for CustomRequest2 {
+    type Response = u32;
+
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+      std::borrow::Cow::Borrowed("test/request")
+    }
+  }
+
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
+    builder
+      .add_state(())
+      .add_sync_handler(
+        "test/request",
+        |_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 },
+      )
+      .unwrap();
+  })
+  .await;
+
+  let mut sending_actor = ActorBuilder::new().build().await.unwrap();
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+
+  let result = sending_actor.send_request(peer_id, CustomRequest(13)).await;
+
+  assert!(matches!(
+    result.unwrap_err(),
+    Error::DeserializationFailure {
+      location: ErrorLocation::Local,
+      ..
+    }
+  ));
+
+  // Define a third type that has a different serialization result.
+  // We expect a deserialization error on the peer.
+  #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+  pub struct CustomRequest3(String);
+
+  impl ActorRequest<Synchronous> for CustomRequest3 {
+    type Response = String;
+
+    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+      std::borrow::Cow::Borrowed("test/request")
+    }
+  }
+
+  let result = sending_actor
+    .send_request(peer_id, CustomRequest3("13".to_owned()))
+    .await;
+
+  assert!(matches!(
+    result.unwrap_err(),
+    Error::DeserializationFailure {
+      location: ErrorLocation::Remote,
+      ..
+    }
+  ));
+
+  listening_actor.shutdown().await.unwrap();
+  sending_actor.shutdown().await.unwrap();
 
   Ok(())
 }

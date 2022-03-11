@@ -25,6 +25,7 @@ pub use actor_request::Synchronous;
 pub(crate) use config::ActorConfig;
 pub use endpoint::Endpoint;
 pub use errors::Error;
+pub use errors::ErrorLocation;
 pub use errors::RemoteSendError;
 pub use errors::Result;
 pub(crate) use handler::Handler;

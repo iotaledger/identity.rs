@@ -6,6 +6,7 @@ use std::pin::Pin;
 
 use futures::Future;
 
+use crate::actor::errors::ErrorLocation;
 use crate::Actor;
 use crate::ActorRequest;
 use crate::RemoteSendError;
@@ -59,12 +60,13 @@ pub fn request_handler_serialize_response<MOD: SyncMode, REQ: ActorRequest<MOD>>
     ))
   })?;
 
-  let response: Vec<u8> = serde_json::to_vec(&input).map_err(|_| RemoteSendError::SerializationFailure {
-    location: "[request handler serialization]".to_owned(),
-    message: format!(
-      "failed to serialize response into {}",
+  let response: Vec<u8> = serde_json::to_vec(&input).map_err(|error| RemoteSendError::SerializationFailure {
+    location: ErrorLocation::Remote,
+    context: format!(
+      "serializing the handler's response into `{}`",
       std::any::type_name::<REQ::Response>()
     ),
+    error_message: error.to_string(),
   })?;
 
   Ok(response)
@@ -76,9 +78,13 @@ pub fn request_handler_deserialize_request<MOD: SyncMode, REQ: ActorRequest<MOD>
 ) -> Result<Box<dyn Any + Send>, RemoteSendError> {
   log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
 
-  let request: REQ = serde_json::from_slice(&input).map_err(|_| RemoteSendError::DeserializationFailure {
-    location: "[request handler deserialization]".to_owned(),
-    message: format!("failed to deserialize request into {}", std::any::type_name::<REQ>()),
+  let request: REQ = serde_json::from_slice(&input).map_err(|error| RemoteSendError::DeserializationFailure {
+    location: ErrorLocation::Remote,
+    context: format!(
+      "deserializing the received bytes into the handler's expected type `{}`",
+      std::any::type_name::<REQ>()
+    ),
+    error_message: error.to_string(),
   })?;
 
   Ok(Box::new(request))

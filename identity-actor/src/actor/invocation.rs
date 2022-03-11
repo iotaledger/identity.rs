@@ -18,6 +18,8 @@ use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 
+use super::errors::ErrorLocation;
+
 /// An abstraction over the strategy with which to invoke a handler, which is implemented
 /// synchronously and asynchronously.
 #[async_trait::async_trait]
@@ -159,8 +161,9 @@ impl InvocationStrategy for AsynchronousInvocationStrategy {
     let result: StdResult<(), RemoteSendError> =
       match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
         Err(error) => Err(RemoteSendError::DeserializationFailure {
-          location: "[generic DCPM deserialization]".to_owned(),
-          message: error.to_string(),
+          location: ErrorLocation::Remote,
+          context: "DIDComm plaintext message deserialization".to_owned(),
+          error_message: error.to_string(),
         }),
         Ok(plaintext_msg) => {
           let thread_id = plaintext_msg.thread_id();
