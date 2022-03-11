@@ -1,8 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+// Allow this even thought we implement Hash while deriving PartialEq.
+// A test ensures compatibility between the two.
+#![allow(clippy::derive_hash_xor_eq)]
+
 use core::fmt::Debug;
 use core::fmt::Formatter;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 use identity_core::common::Object;
 use identity_core::utils::decode_b58;
@@ -60,5 +66,59 @@ impl Debug for MethodData {
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),
       Self::PublicKeyJwk(inner) => f.debug_tuple("PublicKeyJwk").field(inner).finish(),
     }
+  }
+}
+
+impl Hash for MethodData {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    match self {
+      MethodData::PublicKeyBase58(ref string) => {
+        std::mem::discriminant(self).hash(state);
+        string.hash(state);
+      }
+      MethodData::PublicKeyMultibase(ref string) => {
+        std::mem::discriminant(self).hash(state);
+        string.hash(state);
+      }
+      MethodData::PublicKeyJwk(_) => {
+        unimplemented!("MethodData::PublicKeyJwk does currently not supported hashing")
+      }
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use std::collections::hash_map::DefaultHasher;
+  use std::hash::Hash;
+  use std::hash::Hasher;
+
+  use super::MethodData;
+
+  #[test]
+  fn test_partial_eq_and_hash_impls_agree() {
+    let data1 = MethodData::PublicKeyBase58("public_key".to_owned());
+    let data2 = MethodData::PublicKeyMultibase("public_key".to_owned());
+
+    assert_eq!(data1, data1);
+    let mut data_hasher1 = DefaultHasher::new();
+    data1.hash(&mut data_hasher1);
+    let mut data_hasher2 = DefaultHasher::new();
+    data1.hash(&mut data_hasher2);
+    assert_eq!(data_hasher1.finish(), data_hasher2.finish());
+
+    assert_eq!(data2, data2);
+    let mut data_hasher1 = DefaultHasher::new();
+    data2.hash(&mut data_hasher1);
+    let mut data_hasher2 = DefaultHasher::new();
+    data2.hash(&mut data_hasher2);
+    assert_eq!(data_hasher1.finish(), data_hasher2.finish());
+
+    assert_ne!(data1, data2);
+    let mut data_hasher1 = DefaultHasher::new();
+    data1.hash(&mut data_hasher1);
+    let mut data_hasher2 = DefaultHasher::new();
+    data2.hash(&mut data_hasher2);
+    assert_ne!(data_hasher1.finish(), data_hasher2.finish());
   }
 }

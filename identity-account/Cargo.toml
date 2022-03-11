@@ -24,6 +24,7 @@ log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 parking_lot = { version = "0.12" }
 paste = { version = "1.0" }
+seahash = { version = "4.1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 slog = { version = "2.7" }
 strum = { version = "0.21", features = ["derive"] }
