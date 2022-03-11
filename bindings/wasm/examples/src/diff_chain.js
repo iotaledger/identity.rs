@@ -23,7 +23,7 @@ async function createDiff(clientConfig) {
     const {key, doc, receipt} = await createIdentity(clientConfig);
 
     // Clone the Document
-    const updatedDoc = Document.fromJSON(doc.toJSON());
+    const updatedDoc = doc.clone();
 
     // Add a Service
     const service = new Service({
