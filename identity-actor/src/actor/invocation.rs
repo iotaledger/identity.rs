@@ -21,7 +21,7 @@ use libp2p::request_response::ResponseChannel;
 /// An abstraction over the strategy with which to invoke a handler, which is implemented
 /// synchronously and asynchronously.
 #[async_trait::async_trait]
-pub trait InvocationStrategy {
+pub trait InvocationStrategy: Send + Sync + 'static {
   /// Invokes the `handler` and communicates with the remote through `channel`.
   #[allow(clippy::too_many_arguments)]
   async fn invoke_handler(

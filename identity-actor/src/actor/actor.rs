@@ -105,9 +105,8 @@ impl Actor {
     self.commander.get_addresses().await
   }
 
-  // TODO: Move bounds onto trait itself for readability?
   #[inline(always)]
-  pub(crate) fn handle_request<STR: InvocationStrategy + Send + Sync + 'static>(mut self, request: InboundRequest) {
+  pub(crate) fn handle_request<STR: InvocationStrategy>(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
       if self.state.handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
