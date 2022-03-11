@@ -94,8 +94,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -121,6 +119,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -329,6 +329,7 @@ Options to declare validation criteria when validating credentials.
     * [new CredentialValidationOptions(options)](#new_CredentialValidationOptions_new)
     * _instance_
         * [.toJSON()](#CredentialValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#CredentialValidationOptions+clone) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
     * _static_
         * [.default()](#CredentialValidationOptions.default) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
         * [.fromJSON(json)](#CredentialValidationOptions.fromJSON) ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
@@ -350,6 +351,10 @@ Throws an error if any of the options are invalid.
 ### credentialValidationOptions.toJSON() ⇒ <code>any</code>
 Serializes a `CredentialValidationOptions` as a JSON object.
 
+**Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
+<a name="CredentialValidationOptions+clone"></a>
+
+### credentialValidationOptions.clone() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
 **Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 <a name="CredentialValidationOptions.default"></a>
 
@@ -2101,6 +2106,7 @@ Deserializes a `MethodType` object from a JSON object.
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
         * [.toJSON()](#Network+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Network+clone) ⇒ [<code>Network</code>](#Network)
     * _static_
         * [.tryFromName(name)](#Network.tryFromName) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
@@ -2126,6 +2132,10 @@ Returns the node URL of the Tangle network.
 ### network.toJSON() ⇒ <code>any</code>
 Serializes a `Network` as a JSON object.
 
+**Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network+clone"></a>
+
+### network.clone() ⇒ [<code>Network</code>](#Network)
 **Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network.tryFromName"></a>
 
@@ -2222,6 +2232,7 @@ Options to declare validation criteria when validating presentation.
     * [new PresentationValidationOptions(options)](#new_PresentationValidationOptions_new)
     * _instance_
         * [.toJSON()](#PresentationValidationOptions+toJSON) ⇒ <code>any</code>
+        * [.clone()](#PresentationValidationOptions+clone) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
     * _static_
         * [.default()](#PresentationValidationOptions.default) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
         * [.fromJSON(json)](#PresentationValidationOptions.fromJSON) ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
@@ -2243,6 +2254,10 @@ Throws an error if any of the options are invalid.
 ### presentationValidationOptions.toJSON() ⇒ <code>any</code>
 Serializes a `PresentationValidationOptions` as a JSON object.
 
+**Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
+<a name="PresentationValidationOptions+clone"></a>
+
+### presentationValidationOptions.clone() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
 **Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 <a name="PresentationValidationOptions.default"></a>
 
@@ -2407,6 +2422,7 @@ Deserializes a `ProofPurpose` object from a JSON object.
         * [.networkId](#Receipt+networkId) ⇒ <code>string</code>
         * [.nonce](#Receipt+nonce) ⇒ <code>string</code>
         * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Receipt+clone) ⇒ [<code>Receipt</code>](#Receipt)
     * _static_
         * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
 
@@ -2439,6 +2455,10 @@ Returns the message `nonce`.
 ### receipt.toJSON() ⇒ <code>any</code>
 Serializes a `Receipt` as a JSON object.
 
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+clone"></a>
+
+### receipt.clone() ⇒ [<code>Receipt</code>](#Receipt)
 **Kind**: instance method of [<code>Receipt</code>](#Receipt)  
 <a name="Receipt.fromJSON"></a>
 
@@ -3130,10 +3150,6 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## KeyType
 **Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -3180,6 +3196,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
