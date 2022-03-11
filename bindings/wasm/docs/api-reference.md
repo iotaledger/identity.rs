@@ -1248,63 +1248,15 @@ Defines the difference between two DID `Document`s' JSON representations.
 **Kind**: global class  
 
 * [DiffMessage](#DiffMessage)
-    * [.did](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)
-    * [.diff](#DiffMessage+diff) ⇒ <code>string</code>
-    * [.messageId](#DiffMessage+messageId) ⇒ <code>string</code>
-    * [.messageId](#DiffMessage+messageId)
-    * [.previousMessageId](#DiffMessage+previousMessageId) ⇒ <code>string</code>
-    * [.previousMessageId](#DiffMessage+previousMessageId)
     * [.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)
+    * [.did()](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)
+    * [.diff()](#DiffMessage+diff) ⇒ <code>string</code>
+    * [.messageId()](#DiffMessage+messageId) ⇒ <code>string</code>
+    * [.setMessageId(message_id)](#DiffMessage+setMessageId)
+    * [.previousMessageId()](#DiffMessage+previousMessageId) ⇒ <code>string</code>
+    * [.setPreviousMessageId(message_id)](#DiffMessage+setPreviousMessageId)
     * [.proof()](#DiffMessage+proof) ⇒ <code>any</code>
     * [.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)
-
-<a name="DiffMessage+did"></a>
-
-### diffMessage.did ⇒ [<code>DID</code>](#DID)
-Returns the DID of the associated DID Document.
-
-**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+diff"></a>
-
-### diffMessage.diff ⇒ <code>string</code>
-Returns the raw contents of the DID Document diff as a JSON string.
-
-NOTE: clones the data.
-
-**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+messageId"></a>
-
-### diffMessage.messageId ⇒ <code>string</code>
-Returns the message_id of the DID Document diff.
-
-**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+messageId"></a>
-
-### diffMessage.messageId
-Sets the message_id of the DID Document diff.
-
-**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="DiffMessage+previousMessageId"></a>
-
-### diffMessage.previousMessageId ⇒ <code>string</code>
-Returns the Tangle message id of the previous DID Document diff.
-
-**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
-<a name="DiffMessage+previousMessageId"></a>
-
-### diffMessage.previousMessageId
-Sets the Tangle message id of the previous DID Document diff.
-
-**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
 
 <a name="DiffMessage+id"></a>
 
@@ -1314,6 +1266,52 @@ Returns the DID of the associated DID Document.
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+did"></a>
+
+### diffMessage.did() ⇒ [<code>DID</code>](#DID)
+Returns a copy of the DID of the associated DID Document.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+diff"></a>
+
+### diffMessage.diff() ⇒ <code>string</code>
+Returns a copy of the raw contents of the DID Document diff as a JSON string.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+messageId"></a>
+
+### diffMessage.messageId() ⇒ <code>string</code>
+Returns a copy of the message_id of the DID Document diff.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+setMessageId"></a>
+
+### diffMessage.setMessageId(message_id)
+Sets the message_id of the DID Document diff.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="DiffMessage+previousMessageId"></a>
+
+### diffMessage.previousMessageId() ⇒ <code>string</code>
+Returns a copy of the Tangle message id of the previous DID Document diff.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+setPreviousMessageId"></a>
+
+### diffMessage.setPreviousMessageId(message_id)
+Sets the Tangle message id of the previous DID Document diff.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
 <a name="DiffMessage+proof"></a>
 
 ### diffMessage.proof() ⇒ <code>any</code>
@@ -2458,7 +2456,7 @@ Deserializes a JSON object as `KeyLocation`.
 * [KeyPair](#KeyPair)
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
-        * [.type](#KeyPair+type) ⇒ <code>number</code>
+        * [.type()](#KeyPair+type) ⇒ <code>number</code>
         * [.public()](#KeyPair+public) ⇒ <code>string</code>
         * [.private()](#KeyPair+private) ⇒ <code>string</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
@@ -2478,10 +2476,10 @@ Generates a new `KeyPair` object.
 
 <a name="KeyPair+type"></a>
 
-### keyPair.type ⇒ <code>number</code>
-Returns the private key as a base58-encoded string.
+### keyPair.type() ⇒ <code>number</code>
+Returns a copy of the private key as a base58-encoded string.
 
-**Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
+**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+public"></a>
 
 ### keyPair.public() ⇒ <code>string</code>
@@ -2669,24 +2667,24 @@ Deserializes a `MethodType` object from a JSON object.
 
 * [Network](#Network)
     * _instance_
-        * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.name()](#Network+name) ⇒ <code>string</code>
+        * [.defaultNodeURL()](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
 
-<a name="Network+defaultNodeURL"></a>
-
-### network.defaultNodeURL ⇒ <code>string</code> \| <code>undefined</code>
-Returns the node URL of the Tangle network.
-
-**Kind**: instance property of [<code>Network</code>](#Network)  
 <a name="Network+name"></a>
 
 ### network.name() ⇒ <code>string</code>
 Returns a copy of the network name.
+
+**Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network+defaultNodeURL"></a>
+
+### network.defaultNodeURL() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the node URL of the Tangle network.
 
 **Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network+toString"></a>
@@ -2835,30 +2833,30 @@ Deserializes a `ProofPurpose` object from a JSON object.
 
 * [Receipt](#Receipt)
     * _instance_
-        * [.messageId](#Receipt+messageId) ⇒ <code>string</code>
-        * [.networkId](#Receipt+networkId) ⇒ <code>string</code>
         * [.network()](#Receipt+network) ⇒ [<code>Network</code>](#Network)
+        * [.messageId()](#Receipt+messageId) ⇒ <code>string</code>
+        * [.networkId()](#Receipt+networkId) ⇒ <code>string</code>
         * [.nonce()](#Receipt+nonce) ⇒ <code>string</code>
         * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
 
-<a name="Receipt+messageId"></a>
-
-### receipt.messageId ⇒ <code>string</code>
-Returns the message `id`.
-
-**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
-<a name="Receipt+networkId"></a>
-
-### receipt.networkId ⇒ <code>string</code>
-Returns the message `network_id`.
-
-**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
 <a name="Receipt+network"></a>
 
 ### receipt.network() ⇒ [<code>Network</code>](#Network)
 Returns a copy of the associated IOTA Tangle `Network`.
+
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+messageId"></a>
+
+### receipt.messageId() ⇒ <code>string</code>
+Returns a copy of the message `id`.
+
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+networkId"></a>
+
+### receipt.networkId() ⇒ <code>string</code>
+Returns a copy of the message `network_id`.
 
 **Kind**: instance method of [<code>Receipt</code>](#Receipt)  
 <a name="Receipt+nonce"></a>
@@ -3171,9 +3169,9 @@ See: https://www.w3.org/TR/did-core/#services
 * [Service](#Service)
     * [new Service(service)](#new_Service_new)
     * _instance_
-        * [.type](#Service+type) ⇒ <code>string</code>
-        * [.serviceEndpoint](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
         * [.id()](#Service+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.type()](#Service+type) ⇒ <code>string</code>
+        * [.serviceEndpoint()](#Service+serviceEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
         * [.properties()](#Service+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
     * _static_
@@ -3187,22 +3185,22 @@ See: https://www.w3.org/TR/did-core/#services
 | --- | --- |
 | service | <code>IService</code> | 
 
-<a name="Service+type"></a>
-
-### service.type ⇒ <code>string</code>
-Returns a copy of the `Service` type.
-
-**Kind**: instance property of [<code>Service</code>](#Service)  
-<a name="Service+serviceEndpoint"></a>
-
-### service.serviceEndpoint ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-Returns a copy of the `Service` endpoint.
-
-**Kind**: instance property of [<code>Service</code>](#Service)  
 <a name="Service+id"></a>
 
 ### service.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
 Returns a copy of the `Service` id.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+type"></a>
+
+### service.type() ⇒ <code>string</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service+serviceEndpoint"></a>
+
+### service.serviceEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Returns a copy of the `Service` endpoint.
 
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service+properties"></a>

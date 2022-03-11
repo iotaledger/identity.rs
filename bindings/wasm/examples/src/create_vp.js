@@ -31,7 +31,7 @@ async function createVP(clientConfig) {
     // (along with other properties like `expires` and `domain`).
     const signedVp = alice.doc.signPresentation(unsignedVp, {
         method: "#sign-0",
-        private: alice.key.private,
+        private: alice.key.private(),
     }, new SignatureOptions({
         challenge: "475a7984-1bb5-4c4c-a56f-822bccd46440"
     }))

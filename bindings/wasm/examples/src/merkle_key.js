@@ -38,22 +38,22 @@ async function merkleKey(clientConfig) {
 
     // Add a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
     const keys = new KeyCollection(KeyType.Ed25519, 8);
-    const method = VerificationMethod.newMerkleKey(Digest.Sha256, issuer.doc.id, keys, "key-collection")
+    const method = VerificationMethod.newMerkleKey(Digest.Sha256, issuer.doc.id(), keys, "key-collection")
 
     // Add to the DID Document as a general-purpose verification method
-    issuer.doc.insertMethod(method, MethodScope.VerificationMethod());
-    issuer.doc.metadataPreviousMessageId = issuer.receipt.messageId;
-    issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
+    issuer.doc.insertMethod(method, MethodScope.verificationMethod());
+    issuer.doc.setMetadataPreviousMessageId(issuer.receipt.messageId());
+    issuer.doc.setMetadataUpdated(Timestamp.nowUTC());
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id());
 
     // Publish the Identity to the IOTA Network and log the results.
     // This may take a few seconds to complete proof-of-work.
     const receipt = await client.publishDocument(issuer.doc);
-    console.log(`Identity Update: ${clientConfig.explorer.messageUrl(receipt.messageId)}`);
+    console.log(`Identity Update: ${clientConfig.explorer.messageUrl(receipt.messageId())}`);
 
     // Prepare a credential subject indicating the degree earned by Alice
     let credentialSubject = {
-        id: alice.doc.id.toString(),
+        id: alice.doc.id().toString(),
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
@@ -64,13 +64,13 @@ async function merkleKey(clientConfig) {
     const unsignedVc = Credential.extend({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
-        issuer: issuer.doc.id.toString(),
+        issuer: issuer.doc.id().toString(),
         credentialSubject,
     });
 
     // Sign the credential with Issuer's Merkle Key Collection method, with key index 0
     const signedVc = issuer.doc.signCredential(unsignedVc, {
-        method: method.id.toString(),
+        method: method.id().toString(),
         public: keys.public(0),
         private: keys.private(0),
         proof: keys.merkleProof(Digest.Sha256, 0)
@@ -82,12 +82,12 @@ async function merkleKey(clientConfig) {
     if (!result.verified) throw new Error("VC not valid");
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
-    issuer.doc.revokeMerkleKey(method.id.toString(), 0);
-    issuer.doc.metadataPreviousMessageId = receipt.messageId;
+    issuer.doc.revokeMerkleKey(method.id().toString(), 0);
+    issuer.doc.setMetadataPreviousMessageId(receipt.messageId());
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id());
     const nextReceipt = await client.publishDocument(issuer.doc);
-    console.log(`Identity Update: ${clientConfig.explorer.messageUrl(nextReceipt.messageId)}`);
+    console.log(`Identity Update: ${clientConfig.explorer.messageUrl(nextReceipt.messageId())}`);
 
     // Check the verifiable credential is revoked
     const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());

@@ -67,7 +67,7 @@ const key = new identity.KeyPair(identity.KeyType.Ed25519);
 const doc = new identity.Document(key, network.name);
 
 // Sign the DID Document with the private key.
-doc.signSelf(key, doc.defaultSigningMethod().id);
+doc.signSelf(key, doc.defaultSigningMethod().id());
 
 // Create a default client instance for the network.
 const config = identity.Config.fromNetwork(network);
