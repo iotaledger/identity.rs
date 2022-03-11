@@ -204,3 +204,28 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@chore/unifiy-ci #TODO change to dev
     with:
       input-artifact-name: identity-wasm-bindings-build
+      output-artifact-name: identity-stronghold-nodejs-bindings-build #TODO: remove
+
+  #TODO: remove
+  dummy-publish:
+    needs:
+      - check-for-run-condition
+      - build-and-test-stronghold-nodejs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release to npm
+        uses: './.github/actions/publish/publish-stronghold-nodejs'
+        with:
+          npm-token: ${{ secrets.NPM_TOKEN }}
+          tag: 'dev'
+          input-artifact-name: identity-stronghold-nodejs-bindings-build
+
+     
