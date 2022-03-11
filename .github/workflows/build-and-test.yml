@@ -191,7 +191,7 @@ jobs:
           name: identity-wasm-bindings-build
           path: bindings/wasm
     
-      - name: Run Wasm unit tests and examples
+      - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
 
