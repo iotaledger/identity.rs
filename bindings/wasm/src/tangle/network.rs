@@ -35,8 +35,8 @@ impl WasmNetwork {
     self.0.name_str().to_owned()
   }
 
-  /// Returns the node URL of the Tangle network.
-  #[wasm_bindgen(getter = defaultNodeURL)]
+  /// Returns a copy of the node URL of the Tangle network.
+  #[wasm_bindgen(js_name = defaultNodeURL)]
   pub fn default_node_url(&self) -> Option<String> {
     self.0.default_node_url().map(ToString::to_string)
   }

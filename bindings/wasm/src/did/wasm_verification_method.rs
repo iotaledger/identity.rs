@@ -67,7 +67,7 @@ impl WasmVerificationMethod {
   }
 
   /// Sets the `controller` `DID` of the `VerificationMethod` object.
-  #[wasm_bindgen(js_name = controller)]
+  #[wasm_bindgen(js_name = SetController)]
   pub fn set_controller(&mut self, did: &WasmDID) {
     *self.0.controller_mut() = did.0.clone();
   }

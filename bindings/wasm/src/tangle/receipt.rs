@@ -27,14 +27,14 @@ impl WasmReceipt {
     WasmNetwork::from(self.0.network())
   }
 
-  /// Returns the message `id`.
-  #[wasm_bindgen(getter = messageId)]
+  /// Returns a copy of the message `id`.
+  #[wasm_bindgen(js_name = messageId)]
   pub fn message_id(&self) -> String {
     self.0.message_id().to_string()
   }
 
-  /// Returns the message `network_id`.
-  #[wasm_bindgen(getter = networkId)]
+  /// Returns a copy of the message `network_id`.
+  #[wasm_bindgen(js_name = networkId)]
   pub fn network_id(&self) -> String {
     // NOTE: do not return u64 to avoid BigInt64Array/BigUint64Array compatibility issues.
     self.0.network_id().to_string()
