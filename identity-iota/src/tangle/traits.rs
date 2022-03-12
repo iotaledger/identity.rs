@@ -24,7 +24,7 @@ pub trait TangleRef {
 }
 
 // TODO: remove TangleResolve with ClientMap refactor?
-#[async_trait::async_trait(? Send)]
+#[async_trait::async_trait(?Send)]
 pub trait TangleResolve {
   async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument>;
 }
