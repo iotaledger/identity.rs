@@ -8,6 +8,8 @@ use std::sync::Arc;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
+use identity::iota::Client;
+use identity::iota::IotaDID;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -24,6 +26,8 @@ use crate::error::WasmResult;
 use crate::tangle::Config;
 use crate::tangle::WasmClient;
 
+type AccountBuilderRc = AccountBuilder<Rc<Client>>;
+
 /// An [`Account`] builder for easy account configuration.
 ///
 /// To reduce memory usage, accounts created from the same builder share the same `Storage`
@@ -33,14 +37,14 @@ use crate::tangle::WasmClient;
 /// This means a builder can be reconfigured in-between account creations, without affecting
 /// the configuration of previously built accounts.
 #[wasm_bindgen(js_name = AccountBuilder)]
-pub struct WasmAccountBuilder(Rc<RefCell<AccountBuilder>>);
+pub struct WasmAccountBuilder(Rc<RefCell<AccountBuilderRc>>);
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
   /// Creates a new `AccountBuilder`.
   #[wasm_bindgen(constructor)]
   pub fn new(options: Option<AccountBuilderOptions>) -> Result<WasmAccountBuilder> {
-    let mut builder = AccountBuilder::new();
+    let mut builder: AccountBuilderRc = AccountBuilderRc::new();
 
     if let Some(builder_options) = options {
       if let Some(autopublish) = builder_options.autopublish() {
@@ -53,7 +57,7 @@ impl WasmAccountBuilder {
 
       if let Some(mut config) = builder_options.clientConfig() {
         let client: WasmClient = WasmClient::from_config(&mut config)?;
-        builder = builder.client(Arc::new(client.client.as_ref().clone()));
+        builder = builder.client(client.client);
       };
 
       if let Some(storage) = builder_options.storage() {
@@ -68,13 +72,13 @@ impl WasmAccountBuilder {
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
   pub fn load_identity(&mut self, did: &WasmDID) -> Result<PromiseAccount> {
-    let builder = self.0.clone();
-    let did = did.clone();
+    let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
+    let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
         .borrow_mut()
-        .load_identity(did.0)
+        .load_identity(did)
         .await
         .map(WasmAccount::from)
         .map(Into::into)
@@ -94,7 +98,7 @@ impl WasmAccountBuilder {
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
     let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
 
-    let builder: Rc<RefCell<AccountBuilder>> = self.0.clone();
+    let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()

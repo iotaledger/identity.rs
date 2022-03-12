@@ -5,17 +5,18 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use identity::account::Account;
 use identity::account::AttachMethodRelationshipBuilder;
 use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 use identity::did::MethodRelationship;
+use identity::iota::Client;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
+use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::did::WasmMethodRelationship;
@@ -44,14 +45,14 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
 
-    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
+    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());
       }
-      let mut account: RefMut<Account> = account.borrow_mut();
-      let mut updater: IdentityUpdater<'_> = account.update_identity();
-      let mut attach_relationship: AttachMethodRelationshipBuilder<'_> =
+      let mut account: RefMut<AccountRc> = account.borrow_mut();
+      let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
+      let mut attach_relationship: AttachMethodRelationshipBuilder<'_, Rc<Client>> =
         updater.attach_method_relationship().fragment(fragment);
 
       for relationship in relationships {
