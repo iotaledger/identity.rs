@@ -28,9 +28,9 @@ use identity_iota::document::IotaService;
 use identity_iota::document::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::NetworkName;
+use identity_iota::tangle::SharedPtr;
 
 use crate::account::Account;
-use crate::account::SharedPtr;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;

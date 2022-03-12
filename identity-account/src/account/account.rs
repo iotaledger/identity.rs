@@ -3,7 +3,6 @@
 
 use std::fmt::Debug;
 use std::ops::Deref;
-use std::rc::Rc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -22,8 +21,8 @@ use identity_iota::tangle::Client;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
+use identity_iota::tangle::SharedPtr;
 
-use crate::account::account::private::Sealed;
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
 use crate::identity::ChainState;
@@ -40,28 +39,6 @@ use crate::Result;
 use super::config::AccountSetup;
 use super::config::AutoSave;
 use super::AccountConfig;
-
-// TODO: move SharedPtr to `identity-iota`.
-/// Sealed trait to generalize over `Arc<T>` and `Rc<T>`.
-///
-/// Replace by higher-kinded type when `CoerceUnsized` is stabilized, otherwise we cannot
-/// support unsized types like dynamic traits.
-pub trait SharedPtr<T>: Clone + From<T> + Deref<Target = T> + Sealed {}
-
-impl<T> SharedPtr<T> for Rc<T> {}
-
-impl<T> SharedPtr<T> for Arc<T> {}
-
-mod private {
-  use std::rc::Rc;
-  use std::sync::Arc;
-
-  pub trait Sealed {}
-
-  impl<T> Sealed for Rc<T> {}
-
-  impl<T> Sealed for Arc<T> {}
-}
 
 /// An account manages one identity.
 ///

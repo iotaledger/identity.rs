@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_iota::tangle::Client;
+use identity_iota::tangle::SharedPtr;
 
 use crate::account::Account;
-use crate::account::SharedPtr;
 
 /// A struct created by the [`Account::update_identity`] method, that
 /// allows executing various updates on the identity it was created on.

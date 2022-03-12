@@ -11,9 +11,9 @@ use zeroize::Zeroize;
 use identity_iota::did::IotaDID;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::SharedPtr;
 
 use crate::account::Account;
-use crate::account::SharedPtr;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
 use crate::storage::MemStore;

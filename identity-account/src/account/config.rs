@@ -4,8 +4,8 @@
 use std::sync::Arc;
 
 use identity_iota::tangle::Client;
+use identity_iota::tangle::SharedPtr;
 
-use crate::account::SharedPtr;
 use crate::storage::Storage;
 
 /// A wrapper that holds configuration for an [`Account`] instantiation.
