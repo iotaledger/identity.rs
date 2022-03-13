@@ -4,8 +4,8 @@
 use std::str::FromStr;
 
 use identity::core::ToJson;
-use identity::iota_core::MessageId;
 use identity::iota_core::DiffMessage;
+use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
@@ -96,6 +96,8 @@ impl WasmDiffMessage {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmDiffMessage, DiffMessage);
 
 impl From<DiffMessage> for WasmDiffMessage {
   fn from(document_diff: DiffMessage) -> Self {

@@ -103,6 +103,8 @@ impl WasmService {
   }
 }
 
+impl_wasm_clone!(WasmService, Service);
+
 impl From<IotaService> for WasmService {
   fn from(service: IotaService) -> Self {
     Self(service)

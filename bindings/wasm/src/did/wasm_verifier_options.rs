@@ -55,6 +55,8 @@ impl From<WasmVerifierOptions> for VerifierOptions {
   }
 }
 
+impl_wasm_clone!(WasmVerifierOptions, VerifierOptions);
+
 /// Duck-typed interface to allow creating `VerifierOptions` easily.
 #[wasm_bindgen]
 extern "C" {

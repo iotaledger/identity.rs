@@ -96,6 +96,8 @@ impl WasmCredential {
   }
 }
 
+impl_wasm_clone!(WasmCredential, Credential);
+
 impl From<Credential> for WasmCredential {
   fn from(credential: Credential) -> WasmCredential {
     Self(credential)

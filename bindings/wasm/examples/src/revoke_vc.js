@@ -1,7 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Timestamp, Credential, ResolverBuilder, CredentialValidationOptions, CredentialValidator, FailFast} from '@iota/identity-wasm';
+import {
+    Client,
+    Credential,
+    CredentialValidationOptions,
+    CredentialValidator,
+    FailFast,
+    Resolver,
+    Timestamp
+} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 
 /**
@@ -15,17 +23,16 @@ import {createVC} from './create_vc';
  calls will need to include information about the network, since this is not automatically inferred from the
  arguments in all cases currently.
 
- We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
+ We recommend that you ALWAYS use a CLIENT_CONFIG parameter that you define when calling any functions that take a
  ClientConfig object. This will ensure that all the API calls use a consistent node and network.
 
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function revokeVC(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    // Create a client instance to publish messages to the configured Tangle network.
+    const client = await Client.fromConfig({
+        network: clientConfig.network
+    });
 
     // Creates new identities and a VC (see "create_vc" example)
     const {alice, issuer, credentialJSON} = await createVC(clientConfig);
@@ -43,19 +50,21 @@ async function revokeVC(clientConfig) {
     console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(messageId)}`);
     console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
 
-    // Check the verifiable credential
-    const resolver = await new ResolverBuilder()
-    .clientConfig(Config.fromNetwork(clientConfig.network))
-    .build();
+    // Check the verifiable credential.
+    const resolver = await Resolver
+        .builder()
+        .client(client)
+        .build();
     let vc_revoked = false;
     try {
+        // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
         CredentialValidator.validate(
-            signedVc, 
+            signedVc,
             resolvedIssuerDoc,
             CredentialValidationOptions.default(),
             FailFast.FirstError
-            ); 
+        );
     } catch (exception) {
         console.log(`${exception.message}`)
         vc_revoked = true;

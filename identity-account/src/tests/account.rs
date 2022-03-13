@@ -373,7 +373,7 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       let mut account = create_account(network.clone()).await;
       account.publish().await.unwrap();
 
-      let client: Client = Client::from_network(network).await.unwrap();
+      let client: Client = Client::builder().network(network).build().await.unwrap();
       let mut new_doc: IotaDocument = account.document().clone();
       new_doc.properties_mut().insert("foo".into(), 123.into());
       new_doc.properties_mut().insert("bar".into(), 456.into());
@@ -416,7 +416,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       let mut account = create_account(network.clone()).await;
       account.publish().await.unwrap();
 
-      let client: Client = Client::from_network(network).await.unwrap();
+      let client: Client = Client::builder().network(network).build().await.unwrap();
       let mut new_doc: IotaDocument = account.document().clone();
       new_doc.properties_mut().insert("foo".into(), 123.into());
       new_doc.properties_mut().insert("bar".into(), 456.into());

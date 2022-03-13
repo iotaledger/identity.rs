@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {ResolverBuilder, Config, Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
+import {Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -9,7 +9,7 @@ import {manipulateIdentity} from './manipulate_did';
  This example shows how to create a Verifiable Credential and validate it.
  In this example, alice takes the role of the subject, while we also have an issuer.
  The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
- This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
+ This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
 
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
@@ -46,8 +46,8 @@ async function createVC(clientConfig) {
     // of the credential satisfy their expectations.
 
 
-    // Validate the credential's signature, the credential's semantic structure, 
-    // check that the issuance date is not in the future and that the expiration date is not in the past. 
+    // Validate the credential's signature, the credential's semantic structure,
+    // check that the issuance date is not in the future and that the expiration date is not in the past.
     CredentialValidator.validate(
         signedVc,
         issuer.doc,

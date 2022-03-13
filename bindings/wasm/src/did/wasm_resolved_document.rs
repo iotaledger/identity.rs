@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota_core::MessageId;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::MessageId;
 use std::str::FromStr;
 
 use crate::did::WasmDiffMessage;
@@ -121,6 +121,8 @@ impl WasmResolvedDocument {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmResolvedDocument, ResolvedDocument);
 
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {
   fn from(document: ResolvedIotaDocument) -> Self {
