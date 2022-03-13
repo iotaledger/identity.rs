@@ -68,19 +68,19 @@ pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) also_known_as: OrderedSet<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) verification_method: OrderedSet<VerificationMethod<D,U>>,
+  pub(crate) verification_method: OrderedSet<VerificationMethod<D, U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) authentication: OrderedSet<MethodRef<D,U>>,
+  pub(crate) authentication: OrderedSet<MethodRef<D, U>>,
   #[serde(default = "Default::default", rename = "assertionMethod", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) assertion_method: OrderedSet<MethodRef<D,U>>,
+  pub(crate) assertion_method: OrderedSet<MethodRef<D, U>>,
   #[serde(default = "Default::default", rename = "keyAgreement", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) key_agreement: OrderedSet<MethodRef<D,U>>,
+  pub(crate) key_agreement: OrderedSet<MethodRef<D, U>>,
   #[serde(default = "Default::default", rename = "capabilityDelegation", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) capability_delegation: OrderedSet<MethodRef<D,U>>,
+  pub(crate) capability_delegation: OrderedSet<MethodRef<D, U>>,
   #[serde(default = "Default::default", rename = "capabilityInvocation", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) capability_invocation: OrderedSet<MethodRef<D,U>>,
+  pub(crate) capability_invocation: OrderedSet<MethodRef<D, U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) service: OrderedSet<Service<D,V>>,
+  pub(crate) service: OrderedSet<Service<D, V>>,
   #[serde(flatten)]
   pub(crate) properties: T,
 }
@@ -361,7 +361,7 @@ where
   ///
   /// Returns an error if a method with the same fragment already exists.
   pub fn insert_method(&mut self, method: VerificationMethod<D, U>, scope: MethodScope) -> Result<()> {
-    if self.resolve_method(method.id()).is_some() {
+    if self.resolve_method(method.id(), None).is_some() {
       return Err(Error::MethodAlreadyExists);
     }
 
@@ -427,8 +427,8 @@ where
   {
     let method_query: DIDUrlQuery<'query> = method_query.into();
 
-    match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
-      None => match self.resolve_method(method_query) {
+    match self.resolve_method(method_query.clone(), Some(MethodScope::VerificationMethod)) {
+      None => match self.resolve_method(method_query, None) {
         Some(_) => Err(Error::InvalidMethodEmbedded),
         None => Err(Error::MethodNotFound),
       },
@@ -463,8 +463,8 @@ where
     Q: Into<DIDUrlQuery<'query>>,
   {
     let method_query: DIDUrlQuery<'query> = method_query.into();
-    match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
-      None => match self.resolve_method(method_query) {
+    match self.resolve_method(method_query.clone(), Some(MethodScope::VerificationMethod)) {
+      None => match self.resolve_method(method_query, None) {
         Some(_) => Err(Error::InvalidMethodEmbedded),
         None => Err(Error::MethodNotFound),
       },
@@ -522,76 +522,41 @@ where
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
-  pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&VerificationMethod<D, U>>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.resolve_method_inner(query.into())
-  }
-
-  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
-  ///
-  /// # Errors
-  ///
-  /// Fails if no matching method is found.
-  pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&VerificationMethod<D, U>>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.resolve_method_inner(query.into()).ok_or(Error::MethodNotFound)
-  }
-
-  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
-  /// and the verification relationship specified by `scope`.
-  pub fn resolve_method_with_scope<'query, 'me, Q>(
+  pub fn resolve_method<'query, 'me, Q>(
     &'me self,
     query: Q,
-    scope: MethodScope,
+    scope: Option<MethodScope>,
   ) -> Option<&VerificationMethod<D, U>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    let resolve_ref_helper = |method_ref: &'me MethodRef<D, U>| self.resolve_method_ref(method_ref);
-
     match scope {
-      MethodScope::VerificationMethod => self.verification_method.query(query.into()),
-      MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
-        self.authentication.query(query.into()).and_then(resolve_ref_helper)
-      }
-      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
-        self.assertion_method.query(query.into()).and_then(resolve_ref_helper)
-      }
-      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-        self.key_agreement.query(query.into()).and_then(resolve_ref_helper)
-      }
-      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
-        .capability_delegation
-        .query(query.into())
-        .and_then(resolve_ref_helper),
-      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
-        .capability_invocation
-        .query(query.into())
-        .and_then(resolve_ref_helper),
-    }
-  }
+      Some(scope) => {
+        let resolve_ref_helper = |method_ref: &'me MethodRef<D, U>| self.resolve_method_ref(method_ref);
 
-  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
-  /// and the verification relationship specified by `scope`.
-  ///
-  /// # Errors
-  ///
-  /// Fails if no matching [`VerificationMethod`] is found.
-  pub fn try_resolve_method_with_scope<'query, 's: 'query, Q>(
-    &'s self,
-    query: Q,
-    scope: MethodScope,
-  ) -> Result<&VerificationMethod<D, U>>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self
-      .resolve_method_with_scope(query, scope)
-      .ok_or(Error::MethodNotFound)
+        match scope {
+          MethodScope::VerificationMethod => self.verification_method.query(query.into()),
+          MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
+            self.authentication.query(query.into()).and_then(resolve_ref_helper)
+          }
+          MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
+            self.assertion_method.query(query.into()).and_then(resolve_ref_helper)
+          }
+          MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
+            self.key_agreement.query(query.into()).and_then(resolve_ref_helper)
+          }
+          MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
+            .capability_delegation
+            .query(query.into())
+            .and_then(resolve_ref_helper),
+          MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
+            .capability_invocation
+            .query(query.into())
+            .and_then(resolve_ref_helper),
+        }
+      }
+      None => self.resolve_method_inner(query.into()),
+    }
   }
 
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
@@ -601,19 +566,6 @@ where
     Q: Into<DIDUrlQuery<'query>>,
   {
     self.resolve_method_mut_inner(query.into())
-  }
-
-  /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
-  /// matching the provided `query`.
-  ///
-  /// # Errors
-  ///
-  /// Fails if no matching [`VerificationMethod`] is found.
-  pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<D, U>>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.resolve_method_mut_inner(query.into()).ok_or(Error::MethodNotFound)
   }
 
   #[doc(hidden)]
@@ -711,14 +663,14 @@ where
     });
     let method: &VerificationMethod<D, U> = match (purpose_scope, options.method_scope) {
       (Some(purpose_scope), _) => self
-        .try_resolve_method_with_scope(signature, purpose_scope)
-        .map_err(|_| Error::InvalidSignature("method with purpose scope not found"))?,
+        .resolve_method(signature, Some(purpose_scope))
+        .ok_or(Error::InvalidSignature("method with purpose scope not found"))?,
       (None, Some(scope)) => self
-        .try_resolve_method_with_scope(signature, scope)
-        .map_err(|_| Error::InvalidSignature("method with specified scope not found"))?,
+        .resolve_method(signature, Some(scope))
+        .ok_or(Error::InvalidSignature("method with specified scope not found"))?,
       (None, None) => self
-        .try_resolve_method(signature)
-        .map_err(|_| Error::InvalidSignature("method not found"))?,
+        .resolve_method(signature, None)
+        .ok_or(Error::InvalidSignature("method not found"))?,
     };
 
     // Check method type.
@@ -889,19 +841,19 @@ mod tests {
     let document: CoreDocument = document();
 
     // Resolve methods by fragment.
-    assert_eq!(document.resolve_method("#key-1").unwrap().id().to_string(), "did:example:1234#key-1");
-    assert_eq!(document.resolve_method("#key-2").unwrap().id().to_string(), "did:example:1234#key-2");
-    assert_eq!(document.resolve_method("#key-3").unwrap().id().to_string(), "did:example:1234#key-3");
+    assert_eq!(document.resolve_method("#key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.resolve_method("#key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
+    assert_eq!(document.resolve_method("#key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
 
     // Fine to omit the octothorpe.
-    assert_eq!(document.resolve_method("key-1").unwrap().id().to_string(), "did:example:1234#key-1");
-    assert_eq!(document.resolve_method("key-2").unwrap().id().to_string(), "did:example:1234#key-2");
-    assert_eq!(document.resolve_method("key-3").unwrap().id().to_string(), "did:example:1234#key-3");
+    assert_eq!(document.resolve_method("key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.resolve_method("key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
+    assert_eq!(document.resolve_method("key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
 
     // Resolve methods by full DID Url id.
-    assert_eq!(document.resolve_method("did:example:1234#key-1").unwrap().id().to_string(), "did:example:1234#key-1");
-    assert_eq!(document.resolve_method("did:example:1234#key-2").unwrap().id().to_string(), "did:example:1234#key-2");
-    assert_eq!(document.resolve_method("did:example:1234#key-3").unwrap().id().to_string(), "did:example:1234#key-3");
+    assert_eq!(document.resolve_method("did:example:1234#key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.resolve_method("did:example:1234#key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
+    assert_eq!(document.resolve_method("did:example:1234#key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
   }
 
   #[test]
@@ -909,13 +861,13 @@ mod tests {
     let document: CoreDocument = document();
 
     // Resolving an existing reference to a missing method returns None.
-    assert_eq!(document.resolve_method("#key-4"), None);
+    assert_eq!(document.resolve_method("#key-4", None), None);
 
     // Resolving a plain DID returns None.
-    assert_eq!(document.resolve_method("did:example:1234"), None);
+    assert_eq!(document.resolve_method("did:example:1234", None), None);
 
     // Resolving an empty string returns None.
-    assert_eq!(document.resolve_method(""), None);
+    assert_eq!(document.resolve_method("", None), None);
   }
 
   #[rustfmt::skip]
