@@ -37,12 +37,8 @@ runs:
       if: inputs.os == 'windows-latest'
       shell: pwsh
       run: |
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-        # use preinstalled 7-zip to avoid unreliable installs
-        scoop config '7ZIPEXTRACT_USE_EXTERNAL' $true
-        scoop install sccache
-        echo "${HOME}/scoop/apps/sccache/current" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-  
+        choco install sccache
+
     - name: Start sccache
       if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
       shell: sh
