@@ -240,7 +240,7 @@ mod tests {
   use identity::core::Object;
   use identity::iota::ClientBuilder;
   use identity::iota::DIDMessageEncoding;
-  use identity::iota::Network;
+  use identity::iota_core::Network;
   use wasm_bindgen::JsCast;
   use wasm_bindgen::JsValue;
   use wasm_bindgen_test::*;
