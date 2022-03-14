@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "identity",
-  "identity-comm",
+  # "identity-comm",
   "identity-account",
   "identity-account-storage",
   "identity-core",

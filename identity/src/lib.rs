@@ -116,17 +116,17 @@ pub mod account_storage {
   pub use identity_account_storage::utils::*;
 }
 
-#[cfg(feature = "comm")]
-#[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
-pub mod comm {
-  //! DID Communications Message Specification
-  //!
-  //! [Specification](https://github.com/iotaledger/identity.rs/tree/dev/docs/DID%20Communications%20Research%20and%20Specification)
+// #[cfg(feature = "comm")]
+// #[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
+// pub mod comm {
+//   //! DID Communications Message Specification
+//   //!
+//   //! [Specification](https://github.com/iotaledger/identity.rs/tree/dev/docs/DID%20Communications%20Research%20and%20Specification)
 
-  pub use identity_comm::envelope::*;
-  pub use identity_comm::error::*;
-  pub use identity_comm::message::*;
-}
+//   pub use identity_comm::envelope::*;
+//   pub use identity_comm::error::*;
+//   pub use identity_comm::message::*;
+// }
 
 pub mod prelude {
   //! Prelude of commonly used types
