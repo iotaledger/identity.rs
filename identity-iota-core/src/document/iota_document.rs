@@ -659,7 +659,7 @@ impl AsRef<IotaDocument> for IotaDocument {
 mod tests {
   use std::str::FromStr;
 
-  use iota_client::bee_message::MESSAGE_ID_LENGTH;
+  use bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
   use identity_core::common::OneOrSet;

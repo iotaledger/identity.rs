@@ -221,7 +221,7 @@ impl Client {
   pub async fn resolve_diff_history(&self, document: &ResolvedIotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
-    Ok(ChainHistory::try_from_raw_messages(document, &diff_messages, self).await?)
+    ChainHistory::try_from_raw_messages(document, &diff_messages, self).await
   }
 
   /// Fetch all [`Messages`][Message] from the given index on the IOTA Tangle.

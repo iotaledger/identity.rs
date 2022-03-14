@@ -1,10 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::bee_message::MESSAGE_ID_LENGTH;
+// Re-export types from bee-message to avoid adding it or iota-client as a dependency for
+// downstream crates.
+#[doc(inline)]
+pub use bee_message::Message;
+#[doc(inline)]
+pub use bee_message::MessageId;
+
+use bee_message::MESSAGE_ID_LENGTH;
 
 use crate::error::Result;
-use crate::message::MessageId;
 
 // TODO: Use MessageId when it has a const ctor
 static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];

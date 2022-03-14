@@ -11,29 +11,18 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = ""
 
 [dependencies]
-identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }
-identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
+bee-message = { version = "0.1.6", default-features = false }
+identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-features = false }
+identity-did = { version = "=0.5.0-dev.4", path = "../identity-did", default-features = false }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
-strum = { version = "0.21", features = ["derive"] }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
-
-[dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
-features = ["tls"]
-default-features = false
 
 [dependencies.iota-crypto]
 version = "0.7"
 default-features = false
 features = ["blake2b"]
-
-[features]
-default = ["async"]
-
-# Enables async runtime support (Tokio)
-async = ["iota-client/async"]
 
 [package.metadata.docs.rs]
 # To build locally:

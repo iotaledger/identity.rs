@@ -3,13 +3,13 @@
 
 use std::str::FromStr;
 
+use bee_message::MessageId;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
-use iota_client::bee_message::MessageId;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -151,7 +151,7 @@ impl Diff for IotaDocumentMetadata {
 
 #[cfg(test)]
 mod test {
-  use iota_client::bee_message::MESSAGE_ID_LENGTH;
+  use bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Object;
   use identity_core::convert::FromJson;

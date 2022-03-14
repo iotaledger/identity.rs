@@ -35,7 +35,7 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.5", features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
+default = ["async", "stronghold"]
 mem-client = []
 stronghold = ["identity-account-storage/stronghold", "zeroize"]
-async = ["identity-iota/async", "identity-iota-core/async"]
-default = ["async", "stronghold"]
+async = ["identity-iota/async"]

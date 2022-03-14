@@ -48,7 +48,7 @@ impl DiffChain {
 
     log::debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
 
-    Ok(Self::try_from_index(integration_chain, index, client).await?)
+    Self::try_from_index(integration_chain, index, client).await
   }
 
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
