@@ -31,6 +31,7 @@ use crate::credential::WasmPresentation;
 use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmSignatureOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
+use crate::did::OptionMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
@@ -710,7 +711,4 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
-
-  #[wasm_bindgen(typescript_type = "MethodScope | undefined")]
-  pub type OptionMethodScope;
 }

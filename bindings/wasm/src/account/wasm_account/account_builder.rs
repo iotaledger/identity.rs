@@ -18,7 +18,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::storage::WasmStorage;
-use crate::account::types::WasmAutoSave;
+use crate::account::types::OptionAutoSave;
 use crate::account::types::WasmIdentitySetup;
 use crate::account::wasm_account::PromiseAccount;
 use crate::account::wasm_account::WasmAccount;
@@ -52,8 +52,8 @@ impl WasmAccountBuilder {
         builder = builder.autopublish(autopublish);
       }
 
-      if let Some(autosave) = builder_options.autosave() {
-        builder = builder.autosave(autosave.0);
+      if let Some(autosave) = builder_options.autosave().into_serde().wasm_result()? {
+        builder = builder.autosave(autosave);
       }
 
       if let Some(config) = builder_options.clientConfig() {
@@ -97,7 +97,12 @@ impl WasmAccountBuilder {
   /// @See {@link IdentitySetup} to customize the identity creation.
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
-    let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
+    let setup: IdentitySetup = {
+      match identity_setup {
+        None => IdentitySetup::default(),
+        Some(wasm_identity_setup) => IdentitySetup::try_from(wasm_identity_setup)?,
+      }
+    };
 
     let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
@@ -129,7 +134,7 @@ extern "C" {
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn autosave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
+  pub fn autosave(this: &AccountBuilderOptions) -> OptionAutoSave;
 
   #[wasm_bindgen(getter, method)]
   pub fn storage(this: &AccountBuilderOptions) -> Option<WasmStorage>;

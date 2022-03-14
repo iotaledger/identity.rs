@@ -29,7 +29,7 @@ use crate::utils::generate_ed25519_keypairs;
 const MAX_KEYS_ALLOWED: usize = 4_096;
 
 /// A collection of cryptographic keys.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct KeyCollection {
   type_: KeyType,
   public: Box<[PublicKey]>,

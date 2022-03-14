@@ -15,8 +15,8 @@ pub struct WasmKeyLocation(pub(crate) KeyLocation);
 #[wasm_bindgen(js_class = KeyLocation)]
 impl WasmKeyLocation {
   #[wasm_bindgen(constructor)]
-  pub fn new(method: WasmMethodType, fragment: String, generation: WasmGeneration) -> WasmKeyLocation {
-    WasmKeyLocation(KeyLocation::new(method.into(), fragment, generation.into()))
+  pub fn new(method: &WasmMethodType, fragment: String, generation: &WasmGeneration) -> WasmKeyLocation {
+    WasmKeyLocation(KeyLocation::new(method.0, fragment, generation.0))
   }
 
   /// Returns the method type of the key location.

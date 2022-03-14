@@ -75,14 +75,12 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#Presentation">Presentation</a></dt>
 <dd></dd>
-<<<<<<< HEAD
-<dt><a href="#PrivateKey">PrivateKey</a></dt>
-=======
 <dt><a href="#PresentationValidationOptions">PresentationValidationOptions</a></dt>
 <dd><p>Options to declare validation criteria when validating presentation.</p>
 </dd>
 <dt><a href="#PresentationValidator">PresentationValidator</a></dt>
->>>>>>> dev
+<dd></dd>
+<dt><a href="#PrivateKey">PrivateKey</a></dt>
 <dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <code>Signature</code>.</p>
@@ -123,14 +121,12 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
-<<<<<<< HEAD
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-=======
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -156,9 +152,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
->>>>>>> dev
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -182,10 +175,11 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -199,10 +193,34 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -236,17 +254,6 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -375,6 +382,17 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -396,31 +414,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -2840,35 +2833,6 @@ Deserializes a `Presentation` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<<<<<<< HEAD
-<a name="PrivateKey"></a>
-
-## PrivateKey
-**Kind**: global class  
-
-* [PrivateKey](#PrivateKey)
-    * _instance_
-        * [.publicKey()](#PrivateKey+publicKey) ⇒ <code>string</code>
-    * _static_
-        * [.fromBase58String(private_key)](#PrivateKey.fromBase58String) ⇒ [<code>PrivateKey</code>](#PrivateKey)
-
-<a name="PrivateKey+publicKey"></a>
-
-### privateKey.publicKey() ⇒ <code>string</code>
-Returns a base58 encoded string that represents the PublicKey.
-
-**Kind**: instance method of [<code>PrivateKey</code>](#PrivateKey)  
-<a name="PrivateKey.fromBase58String"></a>
-
-### PrivateKey.fromBase58String(private_key) ⇒ [<code>PrivateKey</code>](#PrivateKey)
-Create a new `PrivateKey` from a base58 encoded string.
-
-**Kind**: static method of [<code>PrivateKey</code>](#PrivateKey)  
-
-| Param | Type |
-| --- | --- |
-| private_key | <code>string</code> | 
-=======
 <a name="PresentationValidationOptions"></a>
 
 ## PresentationValidationOptions
@@ -3006,7 +2970,34 @@ Validates the semantic structure of the `Presentation`.
 | Param | Type |
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
->>>>>>> dev
+
+<a name="PrivateKey"></a>
+
+## PrivateKey
+**Kind**: global class  
+
+* [PrivateKey](#PrivateKey)
+    * _instance_
+        * [.publicKey()](#PrivateKey+publicKey) ⇒ <code>string</code>
+    * _static_
+        * [.fromBase58String(private_key)](#PrivateKey.fromBase58String) ⇒ [<code>PrivateKey</code>](#PrivateKey)
+
+<a name="PrivateKey+publicKey"></a>
+
+### privateKey.publicKey() ⇒ <code>string</code>
+Returns a base58 encoded string that represents the PublicKey.
+
+**Kind**: instance method of [<code>PrivateKey</code>](#PrivateKey)  
+<a name="PrivateKey.fromBase58String"></a>
+
+### PrivateKey.fromBase58String(private_key) ⇒ [<code>PrivateKey</code>](#PrivateKey)
+Create a new `PrivateKey` from a base58 encoded string.
+
+**Kind**: static method of [<code>PrivateKey</code>](#PrivateKey)  
+
+| Param | Type |
+| --- | --- |
+| private_key | <code>string</code> | 
 
 <a name="ProofPurpose"></a>
 
@@ -3848,9 +3839,6 @@ Deep clones the object.
 Creates a new `VerifierOptions` with default options.
 
 **Kind**: static method of [<code>VerifierOptions</code>](#VerifierOptions)  
-<<<<<<< HEAD
-<a name="DIDMessageEncoding"></a>
-=======
 <a name="VerifierOptions.fromJSON"></a>
 
 ### VerifierOptions.fromJSON(json) ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
@@ -3862,20 +3850,18 @@ Deserializes a `VerifierOptions` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="MethodRelationship"></a>
->>>>>>> dev
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
 **Kind**: global variable  
-<<<<<<< HEAD
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-=======
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -3922,11 +3908,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
->>>>>>> dev
-**Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 

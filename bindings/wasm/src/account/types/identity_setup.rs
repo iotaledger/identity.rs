@@ -1,11 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::TryFrom;
+use std::result::Result as StdResult;
+
 use identity::account::IdentitySetup;
+use identity::account::MethodSecret;
 use wasm_bindgen::prelude::*;
 
-use crate::account::types::WasmMethodSecret;
+use crate::account::types::OptionMethodSecret;
 use crate::crypto::KeyType;
+use crate::error::WasmResult;
 
 #[wasm_bindgen]
 extern "C" {
@@ -16,7 +21,7 @@ extern "C" {
   pub fn keyType(this: &WasmIdentitySetup) -> Option<KeyType>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn methodSecret(this: &WasmIdentitySetup) -> Option<WasmMethodSecret>;
+  pub fn methodSecret(this: &WasmIdentitySetup) -> OptionMethodSecret;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -38,15 +43,21 @@ export type IdentitySetup = {
 };
 "#;
 
-impl From<WasmIdentitySetup> for IdentitySetup {
-  fn from(wasm_identity_setup: WasmIdentitySetup) -> Self {
+impl TryFrom<WasmIdentitySetup> for IdentitySetup {
+  type Error = JsValue;
+
+  fn try_from(wasm_identity_setup: WasmIdentitySetup) -> StdResult<Self, Self::Error> {
     let mut setup = IdentitySetup::new();
     if let Some(key_type) = wasm_identity_setup.keyType() {
       setup = setup.key_type(key_type.into());
     }
-    if let Some(method_secret) = wasm_identity_setup.methodSecret() {
-      setup = setup.method_secret(method_secret.0);
+    if let Some(method_secret) = wasm_identity_setup
+      .methodSecret()
+      .into_serde::<Option<MethodSecret>>()
+      .wasm_result()?
+    {
+      setup = setup.method_secret(method_secret);
     };
-    setup
+    Ok(setup)
   }
 }
