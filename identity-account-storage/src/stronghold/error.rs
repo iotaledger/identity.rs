@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::procedures::ProcedureError;
-
 pub type IotaStrongholdResult<T> = Result<T, StrongholdError>;
 
 /// Caused by errors from the [`iota_stronghold`] crate.
@@ -18,12 +16,13 @@ pub enum StrongholdError {
   StrongholdFatalEngineError(#[from] iota_stronghold::FatalEngineError),
   #[error(transparent)]
   StrongholdMailboxError(#[from] iota_stronghold::MailboxError),
+  /// Caused by receiving an unexpected return value from a Stronghold procedure.
+  #[error("Stronghold procedure returned unexpected type")]
+  StrongholdProcedureFailure(#[from] iota_stronghold::procedures::ProcedureError),
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),
-  /// Caused by receiving an unexpected return value from a Stronghold procedure.
-  #[error("Stronghold procedure returned unexpected type")]
-  StrongholdProcedureFailure(#[from] ProcedureError),
+
   /// Caused by attempting to access a Stronghold snapshot without a password.
   #[error("Stronghold snapshot password not found")]
   StrongholdPasswordNotSet,

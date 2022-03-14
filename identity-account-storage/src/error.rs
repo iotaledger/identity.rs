@@ -33,9 +33,6 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
-  /// Caused by attempting to parse an invalid Stronghold resource index.
-  #[error("Stronghold resource index malformed")]
-  InvalidResourceIndex,
   /// Caused by attempting to find a key in storage that does not exist.
   #[error("key not found")]
   KeyNotFound,
