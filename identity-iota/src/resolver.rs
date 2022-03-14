@@ -3,6 +3,7 @@
 
 use async_trait::async_trait;
 use identity_did::did::CoreDID;
+use identity_did::document::CoreDocument;
 use identity_did::error::Error;
 use identity_did::error::Result;
 use identity_did::resolution::DocumentMetadata;
@@ -10,6 +11,7 @@ use identity_did::resolution::InputMetadata;
 use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaCoreDocument;
 
 use crate::document::ResolvedIotaDocument;
 use crate::tangle::Client;
@@ -32,12 +34,10 @@ impl ResolverMethod for Client {
     metadata.created = Some(resolved.document.metadata.created);
     metadata.updated = Some(resolved.document.metadata.updated);
 
+    let core_document: CoreDocument =
+      IotaCoreDocument::from(resolved.document).map(CoreDID::from, |properties| properties);
     Ok(Some(MetaDocument {
-      data: resolved
-        .document
-        .core_document()
-        .clone()
-        .map(CoreDID::from, |properties| properties),
+      data: core_document,
       meta: metadata,
     }))
   }

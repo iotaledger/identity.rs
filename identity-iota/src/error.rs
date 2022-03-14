@@ -35,7 +35,7 @@ pub enum Error {
   /// Caused by a single concern credential or presentation validation method failing.
   #[error("A validation unit failed")]
   IsolatedValidationError(#[from] crate::credential::ValidationError),
-  /// Caused by one or more failures when validating a credential.  
+  /// Caused by one or more failures when validating a credential.
   #[error("credential validation failed")]
   CredentialValidationError(#[from] crate::credential::CompoundCredentialValidationError),
   /// Caused by one or more failures when validating a presentation.
