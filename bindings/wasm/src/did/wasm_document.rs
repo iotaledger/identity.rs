@@ -537,7 +537,7 @@ impl WasmDocument {
       .0
       .diff(
         &other.0,
-        MessageId::from_str(message_id).wasm_result()?,
+        MessageId::from_str(message_id).map_err(identity::iota_core::Error::InvalidMessage).wasm_result()?,
         key.0.private(),
         &method_query,
       )
@@ -583,7 +583,7 @@ impl WasmDocument {
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
-    let message_id = MessageId::from_str(message_id).wasm_result()?;
+    let message_id = MessageId::from_str(message_id).map_err(identity::iota_core::Error::InvalidMessage).wasm_result()?;
     IotaDocument::diff_index(&message_id).wasm_result()
   }
 
@@ -633,7 +633,7 @@ impl WasmDocument {
   /// Sets the previous integration chain message id.
   #[wasm_bindgen(setter = metadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value).map_err(identity::iota_core::Error::InvalidMessage).wasm_result()?;
     self.0.metadata.previous_message_id = message_id;
     Ok(())
   }

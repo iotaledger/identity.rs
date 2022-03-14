@@ -50,7 +50,7 @@ impl WasmDiffMessage {
   /// Sets the message_id of the DID Document diff.
   #[wasm_bindgen(setter = messageId)]
   pub fn set_message_id(&mut self, message_id: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(message_id).map_err(identity::iota_core::Error::InvalidMessage).wasm_result()?;
     self.0.set_message_id(message_id);
     Ok(())
   }
@@ -64,7 +64,7 @@ impl WasmDiffMessage {
   /// Sets the Tangle message id of the previous DID Document diff.
   #[wasm_bindgen(setter = previousMessageId)]
   pub fn set_previous_message_id(&mut self, message_id: &str) -> Result<()> {
-    let previous_message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let previous_message_id: MessageId = MessageId::from_str(message_id).map_err(identity::iota_core::Error::InvalidMessage).wasm_result()?;
     self.0.set_previous_message_id(previous_message_id);
     Ok(())
   }

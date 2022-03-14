@@ -88,7 +88,7 @@ impl WasmClient {
   /// Publishes a `DiffMessage` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
-    let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let message: MessageId = MessageId::from_str(message_id).map_err(identity::iota_core::Error::InvalidMessage).wasm_result()?;
     let diff: DiffMessage = diff.0.clone();
     let client: Rc<Client> = self.client.clone();
 
