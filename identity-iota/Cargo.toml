@@ -49,7 +49,7 @@ features = ["blake2b"]
 
 [dev-dependencies]
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
-tokio = { version = "1.15", default-features = false, features = ["macros"] }
+tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
 [features]
 default = ["async"]
