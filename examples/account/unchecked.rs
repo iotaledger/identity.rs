@@ -11,7 +11,7 @@ use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::Timestamp;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use identity::prelude::IotaDocument;
 
 #[tokio::main]

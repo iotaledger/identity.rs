@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
-
+use identity_account_storage::identity::IdentityState;
+use identity_account_storage::storage::Storage;
+use identity_account_storage::types::Generation;
+use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
@@ -21,20 +24,18 @@ use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDIDUrl;
-use identity_iota::document::IotaDocument;
-use identity_iota::document::IotaService;
-use identity_iota::document::IotaVerificationMethod;
-use identity_iota::tangle::NetworkName;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::did::IotaDIDUrl;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::document::IotaService;
+use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core::tangle::NetworkName;
+use log::debug;
+use log::trace;
 
 use crate::account::Account;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
-use crate::storage::Storage;
-use crate::types::Generation;
-use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 use crate::updates::UpdateError;
 
@@ -171,7 +172,7 @@ impl Update {
         let public: PublicKey = if let Some(method_private_key) = method_secret {
           insert_method_secret(storage, did, &location, type_, method_private_key).await
         } else {
-          storage.key_new(did, &location).await
+          storage.key_new(did, &location).await.map_err(Into::into)
         }?;
 
         let method: IotaVerificationMethod =
@@ -316,7 +317,7 @@ async fn insert_method_secret(
         )
       );
 
-      store.key_insert(did, location, private_key).await
+      store.key_insert(did, location, private_key).await.map_err(Into::into)
     }
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(

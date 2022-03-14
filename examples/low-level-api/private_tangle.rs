@@ -12,8 +12,8 @@
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
 use identity::iota::ExplorerUrl;
-use identity::iota::Network;
 use identity::iota::Receipt;
+use identity::iota_core::Network;
 use identity::prelude::*;
 
 #[tokio::main]

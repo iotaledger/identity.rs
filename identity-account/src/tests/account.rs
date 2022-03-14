@@ -6,19 +6,22 @@ use std::sync::Arc;
 
 use futures::Future;
 
+use identity_account_storage::identity::ChainState;
+use identity_account_storage::identity::IdentityState;
+use identity_account_storage::storage::MemStore;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
-use identity_iota::diff::DiffMessage;
-use identity_iota::document::IotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::MessageId;
-use identity_iota::tangle::MessageIdExt;
-use identity_iota::tangle::Network;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
+use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
@@ -27,10 +30,8 @@ use crate::account::AccountSetup;
 use crate::account::AccountStorage;
 use crate::account::AutoSave;
 use crate::account::PublishOptions;
-use crate::identity::ChainState;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
-use crate::storage::MemStore;
+
 use crate::Error;
 use crate::Result;
 
@@ -268,7 +269,9 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
       .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
       .await
       .unwrap_err(),
-    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+      identity_did::Error::MethodNotFound
+    ))
   ));
 
   assert!(matches!(
@@ -276,7 +279,9 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
       .publish_with_options(PublishOptions::default().sign_with(auth_method))
       .await
       .unwrap_err(),
-    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+      identity_did::Error::MethodNotFound
+    ))
   ));
 
   // TODO: Once implemented, add a merkle key collection method with capability invocation relationship and test for

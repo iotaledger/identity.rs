@@ -91,6 +91,7 @@ impl_wasm_error_from!(
   identity::credential::Error,
   identity::did::Error,
   identity::did::DIDError,
+  identity::iota_core::Error,
   identity::iota::ValidationError
 );
 
@@ -166,15 +167,6 @@ impl From<serde_json::Error> for WasmError<'_> {
   fn from(error: serde_json::Error) -> Self {
     Self {
       name: Cow::Borrowed("serde_json::Error"), // the exact error code is embedded in the message
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
-
-impl From<identity::iota::BeeMessageError> for WasmError<'_> {
-  fn from(error: identity::iota::BeeMessageError) -> Self {
-    Self {
-      name: Cow::Borrowed("bee_message::Error"),
       message: Cow::Owned(error.to_string()),
     }
   }

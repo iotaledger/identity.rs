@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::ChainHistory;
-use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::DiffMessage;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
