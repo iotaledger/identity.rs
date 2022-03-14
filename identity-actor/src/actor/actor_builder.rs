@@ -35,7 +35,6 @@ use futures::FutureExt;
 use libp2p::core::transport::upgrade;
 use libp2p::core::Executor;
 use libp2p::core::Transport;
-use libp2p::dns::TokioDnsConfig;
 use libp2p::identity::Keypair;
 use libp2p::noise::Keypair as NoiseKeypair;
 use libp2p::noise::NoiseConfig;
@@ -44,8 +43,6 @@ use libp2p::request_response::ProtocolSupport;
 use libp2p::request_response::RequestResponse;
 use libp2p::request_response::RequestResponseConfig;
 use libp2p::swarm::SwarmBuilder;
-use libp2p::tcp::TokioTcpConfig;
-use libp2p::websocket::WsConfig;
 use libp2p::yamux::YamuxConfig;
 use libp2p::Multiaddr;
 use libp2p::Swarm;
@@ -116,13 +113,17 @@ impl ActorBuilder {
   }
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
+  #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> Result<Actor> {
-    let dns_transport = TokioDnsConfig::system(TokioTcpConfig::new()).map_err(|err| Error::TransportError {
-      context: "unable to build transport",
-      source: libp2p::TransportError::Other(err),
-    })?;
+    let dns_transport =
+      libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new()).map_err(|err| Error::TransportError {
+        context: "unable to build transport",
+        source: libp2p::TransportError::Other(err),
+      })?;
 
-    let transport = dns_transport.clone().or_transport(WsConfig::new(dns_transport));
+    let transport = dns_transport
+      .clone()
+      .or_transport(libp2p::websocket::WsConfig::new(dns_transport));
 
     self.build_with_transport(transport).await
   }
