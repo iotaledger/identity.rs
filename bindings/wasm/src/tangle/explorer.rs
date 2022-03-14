@@ -4,8 +4,8 @@
 use std::str::FromStr;
 
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
-use identity::iota::MessageId;
+use identity::iota_core::IotaDID;
+use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::UWasmDID;
@@ -44,7 +44,9 @@ impl WasmExplorerUrl {
   /// E.g. https://explorer.iota.org/mainnet/message/{message_id}
   #[wasm_bindgen(js_name = messageUrl)]
   pub fn message_url(&self, message_id: &str) -> Result<String> {
-    let message_id = MessageId::from_str(message_id).wasm_result()?;
+    let message_id = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.message_url(&message_id).map(|url| url.to_string()).wasm_result()
   }
 

@@ -7,7 +7,7 @@ use std::rc::Rc;
 use identity::core::OneOrMany;
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

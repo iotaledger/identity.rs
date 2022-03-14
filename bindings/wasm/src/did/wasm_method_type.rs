@@ -48,3 +48,5 @@ impl From<MethodType> for WasmMethodType {
     WasmMethodType(method_type)
   }
 }
+
+impl_wasm_clone!(WasmMethodType, MethodType);

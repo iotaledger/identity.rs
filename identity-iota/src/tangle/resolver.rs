@@ -8,17 +8,21 @@ use std::sync::Arc;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::tangle::NetworkName;
+use serde::Serialize;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
+use crate::credential::FailFast;
+use crate::credential::PresentationValidationOptions;
+use crate::credential::PresentationValidator;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::ClientBuilder;
-use crate::tangle::NetworkName;
 use crate::tangle::SharedPtr;
 use crate::tangle::TangleResolve;
 
@@ -97,8 +101,16 @@ where
   /// # Errors
   ///
   /// Errors if the issuer URL is not a valid [`IotaDID`] or DID resolution fails.
-  pub async fn resolve_credential_issuer(&self, credential: &Credential) -> Result<ResolvedIotaDocument> {
-    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str())?;
+  pub async fn resolve_credential_issuer<U: Serialize>(
+    &self,
+    credential: &Credential<U>,
+  ) -> Result<ResolvedIotaDocument> {
+    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str()).map_err(|error| {
+      Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
+        signer_ctx: crate::credential::SignerContext::Issuer,
+        source: error.into(),
+      })
+    })?;
     self.resolve(&issuer).await
   }
 
@@ -108,12 +120,23 @@ where
   /// # Errors
   ///
   /// Errors if any issuer URL is not a valid [`IotaDID`] or DID resolution fails.
-  pub async fn resolve_presentation_issuers(&self, presentation: &Presentation) -> Result<Vec<ResolvedIotaDocument>> {
+  pub async fn resolve_presentation_issuers<U, V: Serialize>(
+    &self,
+    presentation: &Presentation<U, V>,
+  ) -> Result<Vec<ResolvedIotaDocument>> {
     // Extract unique issuers.
     let issuers: HashSet<IotaDID> = presentation
       .verifiable_credential
       .iter()
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
+      .map(|url_result| {
+        url_result.map_err(|error| {
+          Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
+            signer_ctx: crate::credential::SignerContext::Issuer,
+            source: error.into(),
+          })
+        })
+      })
       .collect::<Result<_>>()?;
 
     // Resolve issuers concurrently.
@@ -125,10 +148,68 @@ where
   /// # Errors
   ///
   /// Errors if the holder URL is missing, is not a valid [`IotaDID`], or DID resolution fails.
-  pub async fn resolve_presentation_holder(&self, presentation: &Presentation) -> Result<ResolvedIotaDocument> {
-    let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::InvalidPresentationHolder)?;
-    let holder: IotaDID = IotaDID::parse(holder_url.as_str())?;
+  pub async fn resolve_presentation_holder<U, V>(
+    &self,
+    presentation: &Presentation<U, V>,
+  ) -> Result<ResolvedIotaDocument> {
+    let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
+      crate::credential::ValidationError::MissingPresentationHolder,
+    ))?;
+    let holder: IotaDID = IotaDID::parse(holder_url.as_str()).map_err(|error| {
+      Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
+        signer_ctx: crate::credential::SignerContext::Holder,
+        source: error.into(),
+      })
+    })?;
     self.resolve(&holder).await
+  }
+
+  /// Verifies a [`Presentation`].
+  ///
+  /// # Important
+  /// See [`PresentationValidator::validate`](PresentationValidator::validate()) for information about which properties
+  /// get validated and what is expected of the optional arguments `holder` and `issuer`.
+  ///
+  /// # Resolution
+  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+  /// If you already have up-to-date versions of these DID Documents, you may want
+  /// to use [`PresentationValidator::validate`].
+  /// See also [`Resolver::resolve_presentation_issuers`] and [`Resolver::resolve_presentation_holder`].
+  ///
+  /// # Errors
+  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+  /// Otherwise, errors from validating the presentation and its credentials will be returned
+  /// according to the `fail_fast` parameter.
+  pub async fn verify_presentation<U: Serialize, V: Serialize>(
+    &self,
+    presentation: &Presentation<U, V>,
+    options: &PresentationValidationOptions,
+    fail_fast: FailFast,
+    holder: Option<&ResolvedIotaDocument>,
+    issuers: Option<&[ResolvedIotaDocument]>,
+  ) -> Result<()> {
+    match (holder, issuers) {
+      (Some(holder), Some(issuers)) => {
+        PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
+      }
+      (Some(holder), None) => {
+        let issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
+        PresentationValidator::validate(presentation, holder, &issuers, options, fail_fast)
+      }
+      (None, Some(issuers)) => {
+        let holder: ResolvedIotaDocument = self.resolve_presentation_holder(presentation).await?;
+        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
+      }
+      (None, None) => {
+        let (holder, issuers): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) = futures::future::try_join(
+          self.resolve_presentation_holder(presentation),
+          self.resolve_presentation_issuers(presentation),
+        )
+        .await?;
+        PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
+      }
+    }
+    .map_err(Into::into)
   }
 }
 

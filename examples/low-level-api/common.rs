@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // This file contains helper functions for the examples.
@@ -8,19 +8,14 @@
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Timestamp;
-use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
-use identity::iota::CredentialValidation;
-use identity::iota::CredentialValidator;
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::Resolver;
+use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
@@ -46,22 +41,6 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
     .build()?;
 
   Ok(credential)
-}
-
-/// Convenience function for checking that a verifiable credential is valid and not revoked.
-pub async fn check_credential(resolver: &Resolver, credential: &Credential) -> Result<CredentialValidation> {
-  // Convert the Verifiable Credential to JSON to potentially "exchange" with a verifier
-  let credential_json = credential.to_json()?;
-
-  // Create a `CredentialValidator` instance to fetch and validate all
-  // associated DID Documents from the Tangle.
-  let validator: CredentialValidator<Resolver> = CredentialValidator::new(resolver);
-
-  // Perform the validation operation.
-  let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
-    .await?;
-  Ok(validation)
 }
 
 /// Convenience function for adding a new `VerificationMethod` with tag #newKey to a DID document

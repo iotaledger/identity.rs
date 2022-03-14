@@ -12,10 +12,10 @@ use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::did::Service;
 use identity::did::DID;
-use identity::iota::DiffMessage;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaService;
 use identity::iota::Receipt;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::IotaService;
 use identity::prelude::*;
 
 mod create_did;

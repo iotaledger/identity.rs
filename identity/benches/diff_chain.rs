@@ -8,13 +8,13 @@ use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::did::DID;
-use identity::iota::DiffMessage;
 use identity::iota::DocumentChain;
-use identity::iota::IotaDocument;
-use identity::iota::MessageId;
 use identity::iota::TangleRef;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDocument;
+use identity::iota_core::MessageId;
 use identity_core::crypto::SignatureOptions;
-use identity_iota::did::IotaDID;
 use identity_iota::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {

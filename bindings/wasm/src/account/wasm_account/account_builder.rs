@@ -5,11 +5,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use futures::executor;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::iota::Client;
-use identity::iota::IotaDID;
+use identity::iota::ClientBuilder;
+use identity::iota_core::IotaDID;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -23,8 +25,7 @@ use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Config;
-use crate::tangle::WasmClient;
+use crate::tangle::IClientConfig;
 
 type AccountBuilderRc = AccountBuilder<Rc<Client>>;
 
@@ -55,9 +56,9 @@ impl WasmAccountBuilder {
         builder = builder.autosave(autosave.0);
       }
 
-      if let Some(mut config) = builder_options.clientConfig() {
-        let client: WasmClient = WasmClient::from_config(&mut config)?;
-        builder = builder.client(client.client);
+      if let Some(config) = builder_options.clientConfig() {
+        let client = executor::block_on(ClientBuilder::try_from(config)?.build()).wasm_result()?;
+        builder = builder.client(Rc::new(client));
       };
 
       if let Some(storage) = builder_options.storage() {
@@ -122,7 +123,7 @@ extern "C" {
   pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn clientConfig(this: &AccountBuilderOptions) -> Option<Config>;
+  pub fn clientConfig(this: &AccountBuilderOptions) -> Option<IClientConfig>;
 
   #[wasm_bindgen(getter, method)]
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
@@ -155,7 +156,7 @@ export type AccountBuilderOptions = {
     /**
      * Client for tangle requests.
      */
-    clientConfig?: Config,
+    clientConfig?: IClientConfig,
 
     /**
      * The Storage implemantation to use for each account built by this builder.

@@ -29,6 +29,18 @@ impl WasmVerifierOptions {
   pub fn default() -> WasmVerifierOptions {
     WasmVerifierOptions(VerifierOptions::default())
   }
+
+  /// Serializes a `VerifierOptions` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `VerifierOptions` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmVerifierOptions> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<VerifierOptions> for WasmVerifierOptions {
@@ -42,6 +54,8 @@ impl From<WasmVerifierOptions> for VerifierOptions {
     options.0
   }
 }
+
+impl_wasm_clone!(WasmVerifierOptions, VerifierOptions);
 
 /// Duck-typed interface to allow creating `VerifierOptions` easily.
 #[wasm_bindgen]

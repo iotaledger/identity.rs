@@ -3,7 +3,6 @@
 
 import {
     Client,
-    Config,
     Document,
     KeyPair,
     KeyType,
@@ -21,11 +20,10 @@ import {createIdentity} from "./create_did";
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function resolveHistory(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    // Create a client instance to publish messages to the configured Tangle network.
+    const client = await Client.fromConfig({
+        network: clientConfig.network
+    });
 
     // ===========================================================================
     // DID Creation
@@ -53,7 +51,7 @@ async function resolveHistory(clientConfig) {
     // ===========================================================================
 
     // Prepare an integration chain update, which writes the full updated DID document to the Tangle.
-    const intDoc1 = Document.fromJSON(doc.toJSON()); // clone the Document
+    const intDoc1 = doc.clone();
 
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     const keys1 = new KeyPair(KeyType.Ed25519);
@@ -107,7 +105,7 @@ async function resolveHistory(clientConfig) {
     // ===========================================================================
 
     // Prepare another diff chain update.
-    const diffDoc2 = Document.fromJSON(diffDoc1.toJSON());
+    const diffDoc2 = diffDoc1.clone();
 
     // Add a second Service with the tag "linked-domain-2"
     const service2 = new Service({

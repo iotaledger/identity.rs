@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::Storage;
-use identity::account::Stronghold;
-use identity::core::decode_b58;
-use identity::core::encode_b58;
-use identity::crypto::PrivateKey;
-use identity::crypto::PublicKey;
+use identity_account_storage::storage::Storage;
+use identity_account_storage::storage::Stronghold;
+use identity_core::crypto::PrivateKey;
+use identity_core::crypto::PublicKey;
+use identity_core::utils::decode_b58;
+use identity_core::utils::encode_b58;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 use napi_derive::napi;

@@ -5,24 +5,23 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::slice::Iter;
 
+use identity_core::convert::FmtJson;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::convert::FmtJson;
-
 use crate::chain::milestone::sort_by_milestone;
 use crate::chain::IntegrationChain;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
-use crate::tangle::Message;
 use crate::tangle::MessageExt;
-use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
@@ -183,7 +182,7 @@ impl DiffChain {
     document: &ResolvedIotaDocument,
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
-    if document.document.id() != &diff.id {
+    if document.document.id() != diff.id() {
       return Err(Error::ChainError { error: "invalid DID" });
     }
 
@@ -274,13 +273,13 @@ mod tests {
   use identity_core::json;
   use identity_did::did::DID;
   use identity_did::service::Service;
+  use identity_iota_core::diff::DiffMessage;
+  use identity_iota_core::document::IotaDocument;
+  use identity_iota_core::document::IotaService;
+  use identity_iota_core::tangle::MessageId;
 
-  use crate::diff::DiffMessage;
-  use crate::document::IotaDocument;
-  use crate::document::IotaService;
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::ClientBuilder;
-  use crate::tangle::MessageId;
   use crate::tangle::MessageIndex;
   use crate::tangle::TangleRef;
 
@@ -332,7 +331,7 @@ mod tests {
     let mut diff_delete: DiffMessage = updated1
       .diff(
         &updated2,
-        diff_add.message_id,
+        *diff_add.message_id(),
         keypair.private(),
         updated1.default_signing_method().unwrap().id(),
       )
@@ -392,13 +391,13 @@ mod tests {
     }))
     .unwrap();
     updated2
-      .document
+      .core_document_mut()
       .service_mut()
       .replace(&service, service_updated.clone());
     let mut diff_edit: DiffMessage = updated1
       .diff(
         &updated2,
-        diff_add.message_id,
+        *diff_add.message_id(),
         keypair.private(),
         updated1.default_signing_method().unwrap().id(),
       )

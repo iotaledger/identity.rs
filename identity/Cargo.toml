@@ -12,16 +12,18 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Tools for working with Self-sovereign Identity."
 
 [dependencies]
-identity-account = { version = "=0.5.0-dev.4", path = "../identity-account", optional = true, default-features = false }
+identity-account = { version = "=0.5.0-dev.4", path = "../identity-account", default-features = false, optional = true }
+identity-account-storage = { version = "=0.5.0-dev.4", path = "../identity-account-storage", default-features = false, optional = true }
 identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
 identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
 identity-iota = { version = "=0.5.0-dev.4", path = "../identity-iota", default-features = false }
+identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
-tokio = { version = "1.14", features = ["full"] }
+tokio = { version = "1.17.0", features = ["full"] }
 
 [[bench]]
 name = "benchmark"
@@ -30,20 +32,20 @@ harness = false
 [features]
 default = ["async"]
 
-# Enables async runtime support (Tokio)
+# Enables async runtime support (Tokio).
 async = ["identity-iota/async"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account"]
+account = ["identity-account", "identity-account-storage"]
+
+# Enables support for stronghold storage.
+stronghold = ["identity-account/stronghold", "identity-account-storage/stronghold"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]
 
-# Enables support for stronghold storage.
-stronghold = ["identity-account/stronghold"]
-
 # Enables send and sync storage
-send-sync-storage = ["identity-account/send-sync-storage"]
+send-sync-storage = ["identity-account-storage/send-sync-storage"]
 
 [package.metadata.docs.rs]
 # To build locally:
