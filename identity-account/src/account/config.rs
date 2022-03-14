@@ -4,6 +4,7 @@
 use std::sync::Arc;
 
 use identity_iota::tangle::Client;
+use identity_iota::tangle::SharedPtr;
 
 use crate::storage::Storage;
 
@@ -15,16 +16,22 @@ use crate::storage::Storage;
 ///
 /// [`Account`]([crate::account::Account])
 #[derive(Clone, Debug)]
-pub(crate) struct AccountSetup {
+pub(crate) struct AccountSetup<C = Arc<Client>>
+where
+  C: SharedPtr<Client>,
+{
   pub(crate) storage: Arc<dyn Storage>,
-  pub(crate) client: Arc<Client>,
+  pub(crate) client: C,
   pub(crate) config: AccountConfig,
 }
 
-impl AccountSetup {
+impl<C> AccountSetup<C>
+where
+  C: SharedPtr<Client>,
+{
   /// Create a new setup from the given [`Storage`] implementation
   /// and with defaults for [`Config`] and [`Client`].
-  pub(crate) fn new(storage: Arc<dyn Storage>, client: Arc<Client>, config: AccountConfig) -> Self {
+  pub(crate) fn new(storage: Arc<dyn Storage>, client: C, config: AccountConfig) -> Self {
     Self {
       storage,
       client,
