@@ -96,11 +96,6 @@ impl WasmAccount {
     let did: IotaDID = self.0.borrow().did().to_owned();
     let storage: Arc<dyn Storage> = Arc::clone(self.0.borrow().storage());
 
-    // Drop account should release the DIDLease because we cannot take ownership of the Rc.
-    // Note that this will still fail if anyone else has a reference to the Account.
-    // TODO: remove this since DIDLease no longer exists?
-    std::mem::drop(self.0);
-
     future_to_promise(async move {
       // Create a new account since `delete_identity` consumes it.
       let account: Result<AccountRc> = AccountBuilder::new()
