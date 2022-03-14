@@ -8,6 +8,7 @@ pub use bee_message::Message;
 #[doc(inline)]
 pub use bee_message::MessageId;
 
+use crate::Error;
 use bee_message::MESSAGE_ID_LENGTH;
 
 use crate::error::Result;
@@ -33,6 +34,6 @@ impl MessageIdExt for MessageId {
   }
 
   fn decode_hex(hex: &str) -> Result<Self> {
-    hex.parse().map_err(Into::into)
+    hex.parse().map_err(Error::InvalidMessage)
   }
 }

@@ -6,8 +6,6 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error("{0}")]
-  CoreError(#[from] identity_core::Error),
-  #[error("{0}")]
   DiffError(#[from] identity_core::diff::Error),
   #[error("{0}")]
   InvalidDID(#[from] identity_did::did::DIDError),
@@ -24,8 +22,8 @@ pub enum Error {
   InvalidDocumentSigningMethodType,
   #[error("Invalid Network Name")]
   InvalidNetworkName,
-  #[error("Invalid Root Document")]
-  InvalidRootDocument,
+  #[error("invalid root document: {0}")]
+  InvalidRootDocument(&'static str),
   #[error("Missing Signing Key")]
   MissingSigningKey,
 }

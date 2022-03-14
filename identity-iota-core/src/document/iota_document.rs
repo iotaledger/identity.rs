@@ -481,15 +481,19 @@ impl IotaDocument {
   pub fn verify_root_document(document: &IotaDocument) -> Result<()> {
     // The previous message id must be null.
     if !document.metadata.previous_message_id.is_null() {
-      return Err(Error::InvalidRootDocument);
+      return Err(Error::InvalidRootDocument("previousMessageId not null"));
     }
 
     // Validate the hash of the public key matches the DID tag.
-    let signature: &Signature = document.try_signature()?;
+    let signature: &Signature = document
+      .try_signature()
+      .map_err(|err| Error::InvalidRootDocument(err.into()))?;
     let method: &IotaVerificationMethod = document.try_resolve_method(signature)?;
     let public: PublicKey = method.key_data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
-      return Err(Error::InvalidRootDocument);
+      return Err(Error::InvalidRootDocument(
+        "DID tag does not match any verification method",
+      ));
     }
 
     // Validate the document is correctly self-signed.
