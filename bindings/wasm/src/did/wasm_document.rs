@@ -278,11 +278,12 @@ impl WasmDocument {
     let method: &IotaVerificationMethod = if let Some(scope) = method_scope {
       self
         .0
-        .resolve_method_with_scope(&method_query, scope)
+        .resolve_method(&method_query, Some(scope))
         .ok_or(identity::did::Error::MethodNotFound)
         .wasm_result()?
     } else {
-      self.0.try_resolve_method(&method_query).wasm_result()?
+      self.0.resolve_method(&method_query, None).ok_or(identity::did::Error::MethodNotFound)
+        .wasm_result()?
     };
     Ok(WasmVerificationMethod(method.clone()))
   }
@@ -441,7 +442,8 @@ impl WasmDocument {
       } => {
         let merkle_key: Vec<u8> = self
           .0
-          .try_resolve_method(&*method)
+          .resolve_method(&*method, None)
+          .ok_or(Error::InvalidDoc(identity::did::Error::MethodNotFound))
           .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
           .wasm_result()?;
 
