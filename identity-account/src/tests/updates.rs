@@ -23,7 +23,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::did::IotaDID;
-use identity_iota_core::types::Network;
+use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;

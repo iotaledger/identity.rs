@@ -29,7 +29,7 @@ use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaService;
 use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::types::NetworkName;
+use identity_iota_core::tangle::NetworkName;
 use log::debug;
 use log::trace;
 

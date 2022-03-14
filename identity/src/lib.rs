@@ -83,8 +83,7 @@ pub mod iota_core {
   pub use identity_iota_core::diff::*;
   pub use identity_iota_core::document::*;
   pub use identity_iota_core::error::*;
-  pub use identity_iota_core::message::*;
-  pub use identity_iota_core::types::*;
+  pub use identity_iota_core::tangle::*;
 
   #[doc(inline)]
   pub use identity_iota_core::try_construct_did;

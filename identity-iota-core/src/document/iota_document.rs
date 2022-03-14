@@ -43,9 +43,9 @@ use crate::diff::DiffMessage;
 use crate::document::IotaDocumentMetadata;
 use crate::error::Error;
 use crate::error::Result;
-use crate::message::MessageId;
-use crate::message::MessageIdExt;
-use crate::types::NetworkName;
+use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
+use crate::tangle::NetworkName;
 
 /// A [`VerificationMethod`] adhering to the IOTA DID method specification.
 pub type IotaVerificationMethod = VerificationMethod<IotaDID, Object>;
@@ -115,7 +115,7 @@ impl IotaDocument {
   /// ```
   /// # use identity_core::crypto::KeyPair;
   /// # use identity_iota_core::document::IotaDocument;
-  /// # use identity_iota_core::types::Network;
+  /// # use identity_iota_core::tangle::Network;
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
   /// let keypair = KeyPair::new_ed25519().unwrap();
@@ -675,7 +675,7 @@ mod tests {
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
 
-  use crate::types::Network;
+  use crate::tangle::Network;
 
   use super::*;
 

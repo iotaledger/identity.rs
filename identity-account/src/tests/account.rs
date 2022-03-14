@@ -19,9 +19,9 @@ use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
-use identity_iota_core::types::Network;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
+use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;

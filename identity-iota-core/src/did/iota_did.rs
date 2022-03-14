@@ -26,9 +26,9 @@ use identity_did::did::DID;
 use crate::did::Segments;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Network;
+use crate::tangle::NetworkName;
 use crate::try_construct_did;
-use crate::types::Network;
-use crate::types::NetworkName;
 
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;

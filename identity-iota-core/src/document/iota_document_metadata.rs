@@ -13,8 +13,8 @@ use identity_core::crypto::Signature;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::message::MessageId;
-use crate::message::MessageIdExt;
+use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 
 /// Additional attributes related to an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

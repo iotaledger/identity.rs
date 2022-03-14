@@ -8,9 +8,9 @@ use core::slice::Iter;
 use identity_core::convert::FmtJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::message::Message;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
@@ -276,7 +276,7 @@ mod tests {
   use identity_iota_core::diff::DiffMessage;
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaService;
-  use identity_iota_core::message::MessageId;
+  use identity_iota_core::tangle::MessageId;
 
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::ClientBuilder;

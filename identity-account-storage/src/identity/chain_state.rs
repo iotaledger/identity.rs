@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
 use serde::Deserialize;
 use serde::Serialize;
 

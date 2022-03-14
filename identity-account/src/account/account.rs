@@ -19,8 +19,8 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::message::MessageIdExt;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
 use serde::Serialize;
 
 use crate::account::AccountBuilder;

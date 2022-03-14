@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 use identity_core::common::Url;
 use identity_did::did::DID;
-use identity_iota_core::message::MessageId;
+use identity_iota_core::tangle::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;

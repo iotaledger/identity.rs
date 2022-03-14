@@ -7,7 +7,7 @@ use core::fmt::Formatter;
 use identity_core::convert::FmtJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
-use identity_iota_core::message::MessageId;
+use identity_iota_core::tangle::MessageId;
 use serde::Deserialize;
 use serde::Serialize;
 

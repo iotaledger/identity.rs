@@ -11,7 +11,7 @@ use identity_credential::presentation::Presentation;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 //use identity_iota_core::error::Result as IotaCoreResult;
-use identity_iota_core::types::NetworkName;
+use identity_iota_core::tangle::NetworkName;
 use serde::Serialize;
 
 use crate::chain::ChainHistory;

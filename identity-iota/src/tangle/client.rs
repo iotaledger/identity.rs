@@ -8,9 +8,9 @@ use identity_core::convert::ToJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::message::Message;
-use identity_iota_core::message::MessageId;
-use identity_iota_core::types::Network;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::Network;
 use iota_client::Client as IotaClient;
 use iota_client::Error as IotaClientError;
 
