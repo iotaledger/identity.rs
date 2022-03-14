@@ -51,8 +51,8 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@chore/unifiy-ci #TODO change to dev
     with:
       input-artifact-name: identity-wasm-bindings-build
-      output-artifact-name: identity-stronghold-nodejs-bindings-build
       upload-binaries-as-artifacts: true
+      output-artifact-name: identity-stronghold-nodejs-bindings-build
       run-tests: false
 
   release-stronghold-nodejs:

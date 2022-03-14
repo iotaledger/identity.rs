@@ -7,11 +7,6 @@ name: Shared / Build and test stronghold nodejs
 on:
   workflow_call:
     inputs:
-      upload-binaries-as-artifacts:
-        description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
-        required: false
-        type: boolean
-        default: false
       run-tests:
         description: "Should tests be run"
         required: false
@@ -21,9 +16,14 @@ on:
         description: "Name used for the input Wasm build artifact"
         required: true
         type: string
+      upload-binaries-as-artifacts:
+        description: "Should binaries for each platform be uploaded as artifacts (used for publishing)"
+        required: false
+        type: boolean
+        default: false
       output-artifact-name:
-        description: "Name used for the output build artifact"
-        required: true
+        description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
+        required: false
         type: string
 jobs:  
   build-stronghold-nodejs:
