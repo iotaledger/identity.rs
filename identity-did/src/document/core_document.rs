@@ -521,7 +521,8 @@ where
       .chain(self.capability_invocation.iter())
   }
 
-  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
   pub fn resolve_method<'query, 'me, Q>(
     &'me self,
     query: Q,

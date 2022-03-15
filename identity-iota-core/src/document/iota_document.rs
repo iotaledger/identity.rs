@@ -293,8 +293,8 @@ impl IotaDocument {
     Ok(self.document.detach_method_relationship(did_url, relationship)?)
   }
 
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property
-  /// matching the provided `query`.
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
   pub fn resolve_method<'query, Q>(&self, query: Q, scope: Option<MethodScope>) -> Option<&IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
