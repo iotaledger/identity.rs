@@ -116,14 +116,18 @@ jobs:
           if: ${{ matrix.settings.setup }}
           run: ${{ matrix.settings.setup }}
 
+        # TODO: figure out how to skip peer deps fo publish
         - name: Install dependencies
-          run: npm install --ignore-scripts && npm link @iota/identity-wasm
+          run: | 
+            npm install --ignore-scripts
+            npm link @iota/identity-wasm
 
         - name: Build
           run: ${{ matrix.settings.build }}
 
         - name: List packages
           run: ls -R .
+          working-directory: ./
 
         - name: Test bindings
           if: ${{ inputs.run-tests && matrix.settings.test }}
