@@ -8,7 +8,7 @@ keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "An IOTA Tangle intergration for the identity-rs library."
+description = "An IOTA Tangle integration for the identity.rs library."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
