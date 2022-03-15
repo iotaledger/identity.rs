@@ -18,6 +18,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::OptionMethodSecret;
+use crate::account::types::WasmMethodSecret;
 use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
@@ -39,8 +40,7 @@ impl WasmAccount {
       .wasm_result()?;
 
     let method_scope: Option<MethodScope> = options.methodScope().into_serde().wasm_result()?;
-
-    let method_secret: Option<MethodSecret> = options.methodSecret().into_serde().wasm_result()?;
+    let method_secret: Option<WasmMethodSecret> = options.methodSecret().into_serde().wasm_result()?;
 
     let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
@@ -56,7 +56,7 @@ impl WasmAccount {
         create_method = create_method.scope(scope);
       };
 
-      if let Some(method_secret) = method_secret {
+      if let Some(method_secret) = method_secret.map(MethodSecret::try_from).transpose()? {
         create_method = create_method.method_secret(method_secret);
       };
 

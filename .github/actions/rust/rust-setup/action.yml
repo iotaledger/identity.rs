@@ -4,6 +4,10 @@ inputs:
   target:
     description: 'Additionally install specified target for this toolchain, ex. x86_64-apple-darwin'
     required: false
+  profile:
+    description: 'Execute rustup set profile {value} before installing the toolchain, ex. minimal'
+    required: false
+    default: 'minimal'
   os:
     description: 'OS of the runner, used for cache key construction.'
     required: true
@@ -44,6 +48,7 @@ runs:
       with:
         toolchain: stable
         override: true
+        profile: ${{ inputs.profile }}
         target: ${{ inputs.target }}
 
     - name: Cache cargo

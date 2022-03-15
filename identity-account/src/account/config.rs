@@ -7,6 +7,7 @@ use identity_account_storage::storage::Storage;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::SharedPtr;
 use serde::Deserialize;
+use serde::Serialize;
 
 /// A wrapper that holds configuration for an [`Account`] instantiation.
 ///
@@ -95,7 +96,7 @@ impl Default for AccountConfig {
 }
 
 /// Available auto-save behaviours.
-#[derive(Clone, Copy, Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum AutoSave {
   /// Never save
   Never,

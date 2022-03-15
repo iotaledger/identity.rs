@@ -4,7 +4,7 @@
 import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
 
 /**
- * This example demonstrates how to create multiple identities from a builder 
+ * This example demonstrates how to create multiple identities from a builder
  * and how to load existing identities into an account.
  */
 async function multipleIdentities(storage?: Storage) {
@@ -23,14 +23,14 @@ async function multipleIdentities(storage?: Storage) {
     let account2 = await builder.createIdentity();
 
     // Retrieve the did of the identity that account1 manages.
-    let iotaDid1 = account1.did();
+    let did1 = account1.did();
 
     // Suppose we're done with account1 and free it.
     account1.free();
 
-    // Now we want to modify the iotaDid1 identity - how do we do that?
+    // Now we want to modify the first identity - how do we do that?
     // We can load the identity from storage into an account using the builder.
-    let account1Reconstructed = await builder.loadIdentity(iotaDid1);
+    let account1Reconstructed = await builder.loadIdentity(did1);
 
     // Now we can modify the identity.
     await account1Reconstructed.createMethod({

@@ -176,7 +176,6 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -196,6 +195,7 @@ publishing to the Tangle.
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -210,17 +210,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -415,6 +404,17 @@ Adds a new Service to the DID Document.
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
 
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
+
 <a name="AccountBuilder"></a>
 
 ## AccountBuilder
@@ -478,10 +478,20 @@ by the [Client](#Client) used to publish it.
 **Kind**: global class  
 
 * [AutoSave](#AutoSave)
-    * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * _instance_
+        * [.toJSON()](#AutoSave+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.fromJSON(json_value)](#AutoSave.fromJSON) ⇒ [<code>AutoSave</code>](#AutoSave)
 
+<a name="AutoSave+toJSON"></a>
+
+### autoSave.toJSON() ⇒ <code>any</code>
+Serializes `AutoSave` as a JSON object.
+
+**Kind**: instance method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.never"></a>
 
 ### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -505,6 +515,17 @@ Save after every N actions.
 | --- | --- |
 | number_of_actions | <code>number</code> | 
 
+<a name="AutoSave.fromJSON"></a>
+
+### AutoSave.fromJSON(json_value) ⇒ [<code>AutoSave</code>](#AutoSave)
+Deserializes `AutoSave` from a JSON object.
+
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="ChainState"></a>
 
 ## ChainState
@@ -519,6 +540,8 @@ Save after every N actions.
 <a name="ChainState+toJSON"></a>
 
 ### chainState.toJSON() ⇒ <code>any</code>
+Serializes a `ChainState` object as a JSON object.
+
 **Kind**: instance method of [<code>ChainState</code>](#ChainState)  
 <a name="ChainState.fromJSON"></a>
 
@@ -2031,12 +2054,22 @@ A span of time.
 **Kind**: global class  
 
 * [Duration](#Duration)
-    * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
-    * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
-    * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
-    * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
-    * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
+    * _instance_
+        * [.toJSON()](#Duration+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
+        * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
+        * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
+        * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
+        * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
+        * [.fromJSON(json)](#Duration.fromJSON) ⇒ [<code>Duration</code>](#Duration)
 
+<a name="Duration+toJSON"></a>
+
+### duration.toJSON() ⇒ <code>any</code>
+Serializes a `Duration` as a JSON object.
+
+**Kind**: instance method of [<code>Duration</code>](#Duration)  
 <a name="Duration.seconds"></a>
 
 ### Duration.seconds(seconds) ⇒ [<code>Duration</code>](#Duration)
@@ -2091,6 +2124,17 @@ Create a new `Duration` with the given number of weeks.
 | Param | Type |
 | --- | --- |
 | weeks | <code>number</code> | 
+
+<a name="Duration.fromJSON"></a>
+
+### Duration.fromJSON(json) ⇒ [<code>Duration</code>](#Duration)
+Deserializes a `Duration` from a JSON object.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="Ed25519"></a>
 
@@ -2227,6 +2271,8 @@ Creates a new `WasmGeneration` from a 32-bit integer.
 <a name="IdentityState+toJSON"></a>
 
 ### identityState.toJSON() ⇒ <code>any</code>
+Serializes a `IdentityState` object as a JSON object.
+
 **Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
 <a name="IdentityState.fromJSON"></a>
 
@@ -2631,13 +2677,23 @@ Deserializes a `MethodScope` object from a JSON object.
 **Kind**: global class  
 
 * [MethodSecret](#MethodSecret)
-    * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-    * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * _instance_
+        * [.toJSON()](#MethodSecret+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+        * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+        * [.fromJSON(json_value)](#MethodSecret.fromJSON) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 
+<a name="MethodSecret+toJSON"></a>
+
+### methodSecret.toJSON() ⇒ <code>any</code>
+Serializes a `MethodSecret` as a JSON object.
+
+**Kind**: instance method of [<code>MethodSecret</code>](#MethodSecret)  
 <a name="MethodSecret.ed25519Base58"></a>
 
 ### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 private key.
+Creates a [MethodSecret](#MethodSecret) object from a Base58-BTC encoded Ed25519 private key.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
@@ -2655,6 +2711,17 @@ Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollecti
 | Param | Type |
 | --- | --- |
 | collection | [<code>KeyCollection</code>](#KeyCollection) | 
+
+<a name="MethodSecret.fromJSON"></a>
+
+### MethodSecret.fromJSON(json_value) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Deserializes a `MethodSecret` from a JSON object.
+
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
 
 <a name="MethodType"></a>
 
@@ -3554,6 +3621,8 @@ Returns the signature data as a vec of bytes.
 <a name="Signature+toJSON"></a>
 
 ### signature.toJSON() ⇒ <code>any</code>
+Serializes a `Signature` as a JSON object.
+
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature.fromJSON"></a>
 
