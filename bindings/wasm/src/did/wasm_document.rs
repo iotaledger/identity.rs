@@ -282,7 +282,10 @@ impl WasmDocument {
         .ok_or(identity::did::Error::MethodNotFound)
         .wasm_result()?
     } else {
-      self.0.resolve_method(&method_query, None).ok_or(identity::did::Error::MethodNotFound)
+      self
+        .0
+        .resolve_method(&method_query, None)
+        .ok_or(identity::did::Error::MethodNotFound)
         .wasm_result()?
     };
     Ok(WasmVerificationMethod(method.clone()))
