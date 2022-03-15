@@ -117,13 +117,8 @@ jobs:
           run: ${{ matrix.settings.setup }}
 
         - name: Install dependencies
-          if: ${{!inputs.run-tests}}
-          # ignore peer dependencies when not running tests, because in the case of publishing the identity-wasm peer dependency is not released yet
+          # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
           run: npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
-
-        - name: Install dependencies
-          if: ${{inputs.run-tests}}
-          run: npm ci --ignore-scripts && npm link @iota/identity-wasm
 
         - name: Build
           run: ${{ matrix.settings.build }}

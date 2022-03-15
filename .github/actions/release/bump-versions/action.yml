@@ -39,7 +39,7 @@ runs:
       run: |
         cargo add identity@=${{ inputs.version }} --path=../../identity
     
-    - name: Replace identity version in Wasm bindings
+    - name: Replace identity version in stronghold nodejs bindings
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
       working-directory: bindings/stronghold-nodejs
@@ -88,5 +88,5 @@ runs:
       working-directory: bindings/stronghold-nodejs
       run: |
         npm version ${{ inputs.version }}
-        # set 'peer dependency version
+        # set peer dependency version
         echo "`jq '.peerDependencies."@iota/identity-wasm"="${{ inputs.version }}"' package.json`" > package.json
