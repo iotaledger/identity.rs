@@ -36,8 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: './.github/actions/rust/rust-setup'
-        name: rust-setup
+      - name: Setup Rust and cache
+        uses: './.github/actions/rust/rust-setup'
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
