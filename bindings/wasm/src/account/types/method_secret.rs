@@ -42,7 +42,9 @@ impl WasmMethodSecret {
   /// Creates a {@link MethodSecret} object from {@link KeyCollection}.
   #[wasm_bindgen(js_name = merkleKeyCollection)]
   pub fn merkle_key_collection(collection: &WasmKeyCollection) -> WasmMethodSecret {
-    Self(WasmMethodSecretInner::MerkleKeyCollection(WasmKeyCollectionData::from(collection)))
+    Self(WasmMethodSecretInner::MerkleKeyCollection(WasmKeyCollectionData::from(
+      collection,
+    )))
   }
 
   /// Serializes a `MethodSecret` as a JSON object.
@@ -66,7 +68,11 @@ impl TryFrom<WasmMethodSecret> for MethodSecret {
       WasmMethodSecretInner::Ed25519(encoded) => {
         let private: PrivateKey = decode_b58(&encoded).wasm_result()?.into();
         if private.as_ref().len() != ed25519::SECRET_KEY_LENGTH {
-          return Err(identity::core::Error::InvalidKeyLength(private.as_ref().len(), ed25519::SECRET_KEY_LENGTH)).wasm_result();
+          return Err(identity::core::Error::InvalidKeyLength(
+            private.as_ref().len(),
+            ed25519::SECRET_KEY_LENGTH,
+          ))
+          .wasm_result();
         };
         Ok(MethodSecret::Ed25519(private))
       }

@@ -13,8 +13,8 @@ use identity::did::MethodScope;
 use identity::did::MethodType;
 use identity::iota::Client;
 use js_sys::Promise;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::OptionMethodSecret;
