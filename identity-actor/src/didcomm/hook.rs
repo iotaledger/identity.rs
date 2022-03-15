@@ -20,16 +20,20 @@ use crate::Result as ActorResult;
 use super::termination::DidCommTermination;
 use crate::SyncMode;
 
-impl<'builder, MOD: SyncMode, OBJ> HandlerBuilder<'builder, MOD, OBJ>
+impl<'builder, MOD, OBJ> HandlerBuilder<'builder, MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
+  MOD: SyncMode,
 {
-  pub fn add_hook<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> ActorResult<Self>
+  pub fn add_hook<REQ, FUT>(
+    self,
+    endpoint: &'static str,
+    handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  ) -> ActorResult<Self>
   where
     REQ: ActorRequest<MOD> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
     MOD: Send + Sync + 'static,
   {
     let handler = Hook::new(handler);
@@ -44,15 +48,14 @@ where
 /// A function that hooks and thus extends existing handler logic.
 /// Can modify incoming requests or abort handling.
 #[derive(Clone)]
-pub struct Hook<MOD: SyncMode, OBJ, REQ, FUT, FUN>
+pub struct Hook<MOD, OBJ, REQ, FUT>
 where
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
-  FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-  MOD: 'static,
+  MOD: SyncMode + 'static,
 {
-  func: FUN,
+  func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
@@ -62,14 +65,14 @@ where
   _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> Hook<MOD, OBJ, REQ, FUT, FUN>
+impl<MOD, OBJ, REQ, FUT> Hook<MOD, OBJ, REQ, FUT>
 where
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
-  FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  MOD: SyncMode + 'static,
 {
-  pub fn new(func: FUN) -> Self {
+  pub fn new(func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
@@ -79,14 +82,13 @@ where
   }
 }
 
-impl<MOD: SyncMode, OBJ, REQ, FUT, FUN> RequestHandler for Hook<MOD, OBJ, REQ, FUT, FUN>
+impl<MOD, OBJ, REQ, FUT> RequestHandler for Hook<MOD, OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
-  FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-  MOD: Send + Sync + 'static,
+  MOD: SyncMode + Send + Sync + 'static,
 {
   fn invoke(
     &self,

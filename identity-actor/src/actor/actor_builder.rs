@@ -111,9 +111,10 @@ impl ActorBuilder {
 
   /// Add a new shared state object and returns a [`HandlerBuilder`] which can be used to
   /// attach handlers and hooks that operate on that object.
-  pub fn add_state<MOD: SyncMode, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
+  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
+    MOD: SyncMode,
   {
     let object_id: ObjectId = Uuid::new_v4();
     self.object_map.insert(object_id, Box::new(state_object));
@@ -235,10 +236,10 @@ impl Default for ActorBuilder {
 }
 
 /// Used to attach handlers and hooks to an [`ActorBuilder`].
-pub struct HandlerBuilder<'builder, MOD: SyncMode, OBJ>
+pub struct HandlerBuilder<'builder, MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
-  MOD: 'static,
+  MOD: SyncMode + 'static,
 {
   pub(crate) object_id: ObjectId,
   pub(crate) handler_map: &'builder mut HandlerMap,
@@ -254,12 +255,15 @@ where
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
+  pub fn add_sync_handler<REQ, FUT>(
+    self,
+    endpoint: &'static str,
+    handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  ) -> Result<Self>
   where
     REQ: ActorRequest<Synchronous> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(
@@ -278,11 +282,14 @@ where
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `DidCommPlaintextMessage<REQ>`.
   /// The handler is not expected to return anything.
-  pub fn add_async_handler<REQ, FUT, FUN>(self, endpoint: &'static str, handler: FUN) -> Result<Self>
+  pub fn add_async_handler<REQ, FUT>(
+    self,
+    endpoint: &'static str,
+    handler: fn(OBJ, Actor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
+  ) -> Result<Self>
   where
     REQ: ActorRequest<Asynchronous> + Sync,
     FUT: Future<Output = ()> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(
