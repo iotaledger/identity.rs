@@ -6,11 +6,11 @@ mod event_loop;
 mod message;
 mod net_commander;
 
-pub(crate) use behaviour::ActorProtocol;
-pub(crate) use behaviour::ActorRequestResponseCodec;
-pub(crate) use event_loop::EventLoop;
-pub(crate) use event_loop::InboundRequest;
-pub(crate) use event_loop::ThreadRequest;
+pub use behaviour::ActorProtocol;
+pub use behaviour::ActorRequestResponseCodec;
+pub use event_loop::EventLoop;
+pub use event_loop::InboundRequest;
+pub use event_loop::ThreadRequest;
 pub use message::RequestMessage;
 pub use message::ResponseMessage;
 pub use net_commander::NetCommander;
