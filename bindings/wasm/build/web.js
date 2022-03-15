@@ -1,8 +1,10 @@
 const path = require('path')
 const fs = require('fs')
 const { lintAll } = require('./lints')
+const generatePackage = require('./utils/generatePackage');
 
-const entryFilePath = path.join(__dirname, '../web/identity_wasm.js');
+const RELEASE_FOLDER = path.join(__dirname, '../web/');
+const entryFilePath = path.join(RELEASE_FOLDER, 'identity_wasm.js');
 const entryFile = fs.readFileSync(entryFilePath).toString();
 
 lintAll(entryFile);
@@ -34,7 +36,7 @@ fs.writeFileSync(
     changedFile
 );
 
-const entryFilePathTs = path.join(__dirname, '../web/identity_wasm.d.ts');
+const entryFilePathTs = path.join(RELEASE_FOLDER, 'identity_wasm.d.ts');
 const entryFileTs = fs.readFileSync(entryFilePathTs).toString();
 // Replace the init function in the ts file.
 let changedFileTs = entryFileTs.replace(
@@ -45,3 +47,10 @@ fs.writeFileSync(
     entryFilePathTs,
     changedFileTs
 );
+
+const newPackage = generatePackage({
+    module: 'identity_wasm.js',
+    types: 'identity_wasm.d.ts',
+});
+
+fs.writeFileSync(path.join(RELEASE_FOLDER, 'package.json'), JSON.stringify(newPackage, null, 2));
