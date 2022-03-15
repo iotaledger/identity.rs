@@ -21,8 +21,6 @@ async function signing(storage?: Storage) {
     });
     let account = await builder.createIdentity();
 
-    //ToDo: Add Stronghold storage.
-
     // ===========================================================================
     // Signing Example
     // ===========================================================================

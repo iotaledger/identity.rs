@@ -49,7 +49,7 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
+const TS_DELETE_METHOD_OPTIONS: &'static str = r#"
 /**
  * Options for deleting a method on an identity.
  */

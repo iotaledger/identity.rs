@@ -7,13 +7,11 @@ import {ChainState, DID, Ed25519, Generation, IdentityState, KeyLocation, KeyPai
 class MemStore implements Storage {
     // TODO: check if map key comparison works as-expected.
     //       I.e. does a parsed/deserialized DID map to the same DID object?
-    private _publishedGenerations: Map<DID, Generation>;
     private _chainStates: Map<DID, ChainState>;
     private _states: Map<DID, IdentityState>;
     private _vaults: Map<DID, Map<KeyLocation, KeyPair>>;
 
     constructor() {
-        this._publishedGenerations = new Map();
         this._chainStates = new Map();
         this._states = new Map();
         this._vaults = new Map();
@@ -116,14 +114,6 @@ class MemStore implements Storage {
         this._chainStates.delete(did);
         this._states.delete(did);
         this._vaults.delete(did);
-    }
-
-    public async publishedGeneration(did: DID): Promise<Generation> {
-        return this._publishedGenerations.get(did)
-    }
-
-    public async setPublishedGeneration(did: DID, generation: Generation): Promise<void> {
-        this._publishedGenerations.set(did, generation);
     }
 }
 
