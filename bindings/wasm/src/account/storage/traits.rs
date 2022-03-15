@@ -4,19 +4,19 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
-use identity::account::ChainState;
-use identity::account::EncryptionKey;
-use identity::account::Error as AccountError;
-use identity::account::IdentityState;
-use identity::account::KeyLocation;
-use identity::account::Result as AccountResult;
-use identity::account::Signature;
-use identity::account::Storage;
+use identity::account_storage::ChainState;
+use identity::account_storage::EncryptionKey;
+use identity::account_storage::Error as AccountStorageError;
+use identity::account_storage::IdentityState;
+use identity::account_storage::KeyLocation;
+use identity::account_storage::Result as AccountStorageResult;
+use identity::account_storage::Signature;
+use identity::account_storage::Storage;
 use identity::core::decode_b58;
 use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use js_sys::Object;
 use js_sys::Promise;
 use js_sys::Reflect;
@@ -95,27 +95,27 @@ impl Debug for WasmStorage {
 #[async_trait::async_trait(?Send)]
 impl Storage for WasmStorage {
   /// Sets the account password.
-  async fn set_password(&self, password: EncryptionKey) -> AccountResult<()> {
+  async fn set_password(&self, password: EncryptionKey) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.set_password(password.to_vec()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Write any unsaved changes to disk.
-  async fn flush_changes(&self) -> AccountResult<()> {
+  async fn flush_changes(&self) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.flush_changes());
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Creates a new keypair at the specified `location`, and returns its `PublicKey`.
-  async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<PublicKey> {
+  async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: String = result
       .account_err()?
       .as_string()
-      .ok_or_else(|| AccountError::SerializationError("Expected string".to_string()))?;
+      .ok_or_else(|| AccountStorageError::SerializationError("Expected string".to_string()))?;
     let public_key: PublicKey = decode_b58(&public_key)?.into();
     Ok(public_key)
   }
@@ -126,7 +126,7 @@ impl Storage for WasmStorage {
     did: &IotaDID,
     location: &KeyLocation,
     private_key: PrivateKey,
-  ) -> AccountResult<PublicKey> {
+  ) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_insert(
       did.clone().into(),
       location.clone().into(),
@@ -136,32 +136,32 @@ impl Storage for WasmStorage {
     let public_key: String = result
       .account_err()?
       .as_string()
-      .ok_or_else(|| AccountError::SerializationError("Expected string".to_string()))?;
+      .ok_or_else(|| AccountStorageError::SerializationError("Expected string".to_string()))?;
     let public_key: PublicKey = decode_b58(&public_key)?.into();
     Ok(public_key)
   }
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<PublicKey> {
+  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_get(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: String = result
       .account_err()?
       .as_string()
-      .ok_or_else(|| AccountError::SerializationError("Expected string".to_string()))?;
+      .ok_or_else(|| AccountStorageError::SerializationError("Expected string".to_string()))?;
     let public_key: PublicKey = decode_b58(&public_key)?.into();
     Ok(public_key)
   }
 
   /// Deletes the keypair specified by `location`.
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<()> {
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.key_del(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountResult<Signature> {
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountStorageResult<Signature> {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
@@ -170,14 +170,14 @@ impl Storage for WasmStorage {
   }
 
   /// Returns `true` if a keypair exists at the specified `location`.
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> AccountResult<bool> {
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.key_exists(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Returns the chain state of the identity specified by `did`.
-  async fn chain_state(&self, did: &IotaDID) -> AccountResult<Option<ChainState>> {
+  async fn chain_state(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
     let promise: Promise = Promise::resolve(&self.chain_state(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
@@ -189,14 +189,14 @@ impl Storage for WasmStorage {
   }
 
   /// Set the chain state of the identity specified by `did`.
-  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> AccountResult<()> {
+  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.set_chain_state(did.clone().into(), chain_state.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Returns the state of the identity specified by `did`.
-  async fn state(&self, did: &IotaDID) -> AccountResult<Option<IdentityState>> {
+  async fn state(&self, did: &IotaDID) -> AccountStorageResult<Option<IdentityState>> {
     let promise: Promise = Promise::resolve(&self.state(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
@@ -208,14 +208,14 @@ impl Storage for WasmStorage {
   }
 
   /// Sets a new state for the identity specified by `did`.
-  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> AccountResult<()> {
+  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.set_state(did.clone().into(), state.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Removes the keys and any state for the identity specified by `did`.
-  async fn purge(&self, did: &IotaDID) -> AccountResult<()> {
+  async fn purge(&self, did: &IotaDID) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.purge(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
@@ -270,18 +270,21 @@ interface Storage {
 
 // from https://github.com/rustwasm/wasm-bindgen/issues/2231#issuecomment-656293288
 #[allow(dead_code)]
-pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(js_value: JsValue, classname: &str) -> Result<T, AccountError> {
+pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(
+  js_value: JsValue,
+  classname: &str,
+) -> Result<T, AccountStorageError> {
   let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
   if constructor_name == classname {
     let ptr: JsValue = Reflect::get(&js_value, &JsValue::from_str("ptr"))
-      .map_err(|_| AccountError::JsError("unable to retrieve `ptr` property".to_string()))?;
+      .map_err(|_| AccountStorageError::JsError("unable to retrieve `ptr` property".to_string()))?;
     let ptr_u32: u32 = ptr
       .as_f64()
-      .ok_or_else(|| AccountError::JsError("unable to read `ptr` property of `JsValue` as f64".to_string()))?
+      .ok_or_else(|| AccountStorageError::JsError("unable to read `ptr` property of `JsValue` as f64".to_string()))?
       as u32;
     unsafe { Ok(T::from_abi(ptr_u32)) }
   } else {
-    Err(AccountError::SerializationError(format!(
+    Err(AccountStorageError::SerializationError(format!(
       "Expected: {} - Found: {}",
       classname, constructor_name
     )))

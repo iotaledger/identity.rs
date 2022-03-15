@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::cell::Ref;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -10,12 +9,13 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::PublishOptions;
-use identity::account::Storage;
+use identity::account_storage::Storage;
 use identity::crypto::SetSignature;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
-use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
+use identity::iota::Client;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDocument;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -33,20 +33,21 @@ use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+pub(crate) type AccountRc = Account<Rc<Client>>;
+
 /// An account manages one identity.
 ///
 /// It handles private keys, writing to storage and
 /// publishing to the Tangle.
 #[wasm_bindgen(js_name = Account)]
-pub struct WasmAccount(pub(crate) Rc<RefCell<Account>>);
+pub struct WasmAccount(pub(crate) Rc<RefCell<AccountRc>>);
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
   /// Returns the {@link DID} of the managed identity.
   #[wasm_bindgen(js_name = did)]
   pub fn did(&self) -> WasmDID {
-    let account: Ref<Account> = self.0.borrow();
-    WasmDID::from(account.did().clone())
+    WasmDID::from(self.0.borrow().did().clone())
   }
 
   /// Returns whether auto-publish is enabled.
@@ -71,7 +72,7 @@ impl WasmAccount {
   /// Resolves the DID Document associated with this `Account` from the Tangle.
   #[wasm_bindgen(js_name = resolveIdentity)]
   pub fn resolve_identity(&self) -> PromiseResolvedDocument {
-    let account = self.0.clone();
+    let account: Rc<RefCell<AccountRc>> = self.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       account
@@ -95,13 +96,9 @@ impl WasmAccount {
     let did: IotaDID = self.0.borrow().did().to_owned();
     let storage: Arc<dyn Storage> = Arc::clone(self.0.borrow().storage());
 
-    // Drop account should release the DIDLease because we cannot take ownership of the Rc.
-    // Note that this will still fail if anyone else has a reference to the Account.
-    std::mem::drop(self.0);
-
     future_to_promise(async move {
       // Create a new account since `delete_identity` consumes it.
-      let account: Result<Account> = AccountBuilder::new()
+      let account: Result<AccountRc> = AccountBuilder::new()
         .storage(AccountStorage::Custom(storage))
         .load_identity(did)
         .await
@@ -246,8 +243,8 @@ impl WasmAccount {
   }
 }
 
-impl From<Account> for WasmAccount {
-  fn from(account: Account) -> WasmAccount {
+impl From<AccountRc> for WasmAccount {
+  fn from(account: AccountRc) -> WasmAccount {
     WasmAccount(Rc::new(RefCell::new(account)))
   }
 }

@@ -4,34 +4,32 @@
 use bee_rest_api::types::dtos::LedgerInclusionStateDto;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
+use identity_core::convert::ToJson;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::Network;
 use iota_client::Client as IotaClient;
 use iota_client::Error as IotaClientError;
-
-use identity_core::convert::ToJson;
 
 use crate::chain::ChainHistory;
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
 use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
-use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::DIDMessageEncoding;
-use crate::tangle::Message;
-use crate::tangle::MessageId;
-use crate::tangle::Network;
 use crate::tangle::Receipt;
 use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
 
 /// Client for performing IOTA Identity operations on the Tangle.
-#[cfg_attr(all(target_arch = "wasm32", not(target_os = "wasi")), derive(Debug, Clone))]
-#[cfg_attr(not(all(target_arch = "wasm32", not(target_os = "wasi"))), derive(Debug))]
+#[derive(Debug)]
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
@@ -49,11 +47,6 @@ impl Client {
   /// This is the same as [`ClientBuilder::new`].
   pub fn builder() -> ClientBuilder {
     ClientBuilder::new()
-  }
-
-  /// Creates a new [`Client`] with default settings for the given [`Network`].
-  pub async fn from_network(network: Network) -> Result<Self> {
-    Self::builder().network(network).build().await
   }
 
   /// Creates a new [`Client`] based on the [`ClientBuilder`] configuration.

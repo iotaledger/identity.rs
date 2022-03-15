@@ -1,29 +1,27 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! An example that revokes a key and shows how verification fails as a consequence.
 //!
 //! cargo run --example merkle_key
 
-use rand::rngs::OsRng;
-use rand::Rng;
-
 use identity::core::Timestamp;
-use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::did::verifiable::VerifierOptions;
 use identity::did::MethodScope;
-use identity::iota::CredentialValidation;
+use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
-use identity::iota::IotaDID;
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::Resolver;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
+use rand::rngs::OsRng;
+use rand::Rng;
 
 mod common;
 mod create_did;
@@ -76,16 +74,17 @@ async fn main() -> Result<()> {
 
   println!("Credential JSON > {:#}", credential);
 
-  let credential_json: String = credential.to_json()?;
-
   // Check the verifiable credential is valid
-  let validator: CredentialValidator<Client> = CredentialValidator::new(&client);
-  let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
-    .await?;
-  assert!(validation.verified);
+  let resolver: Resolver = Resolver::new().await?;
+  let resolved_issuer_doc = resolver.resolve_credential_issuer(&credential).await?;
+  CredentialValidator::validate(
+    &credential,
+    &resolved_issuer_doc,
+    &CredentialValidationOptions::default(),
+    identity::iota::FailFast::FirstError,
+  )?;
 
-  println!("Credential Validation > {:#?}", validation);
+  println!("Credential successfully validated!");
 
   // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
   issuer_doc
@@ -99,13 +98,20 @@ async fn main() -> Result<()> {
 
   println!("Publish Receipt > {:#?}", receipt);
 
-  // Check the verifiable credential is revoked
-  let validation: CredentialValidation = validator
-    .check_credential(&credential_json, VerifierOptions::default())
-    .await?;
-  assert!(!validation.verified);
+  // Check that verifiable credential is revoked
 
-  println!("Credential Validation > {:#?}", validation);
+  let resolved_issuer_doc = resolver.resolve_credential_issuer(&credential).await?;
+  let result: Result<()> = CredentialValidator::validate(
+    &credential,
+    &resolved_issuer_doc,
+    &CredentialValidationOptions::default(),
+    identity::iota::FailFast::FirstError,
+  )
+  .map_err(Into::into);
+
+  assert!(result.is_err());
+
+  println!("Credential successfully revoked!");
 
   Ok(())
 }

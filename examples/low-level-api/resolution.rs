@@ -16,9 +16,9 @@ use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
 use identity::did::CoreDID;
 use identity::did::DID;
-use identity::iota::IotaDID;
-use identity::iota::IotaDIDUrl;
 use identity::iota::Receipt;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDIDUrl;
 use identity::prelude::*;
 
 mod create_did;
