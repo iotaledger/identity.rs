@@ -1,13 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
 use std::str::FromStr;
 
 use identity::core::ToJson;
-use identity::iota::DiffMessage;
-use identity::iota::MessageId;
-use identity::iota::TangleRef;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
@@ -17,7 +15,6 @@ use crate::error::WasmResult;
 
 /// Defines the difference between two DID `Document`s' JSON representations.
 #[wasm_bindgen(js_name = DiffMessage, inspectable)]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct WasmDiffMessage(pub(crate) DiffMessage);
 
 #[wasm_bindgen(js_class = DiffMessage)]
@@ -52,7 +49,9 @@ impl WasmDiffMessage {
   /// Sets the message_id of the DID Document diff.
   #[wasm_bindgen(js_name = setMessageId)]
   pub fn set_message_id(&mut self, message_id: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.set_message_id(message_id);
     Ok(())
   }
@@ -66,7 +65,9 @@ impl WasmDiffMessage {
   /// Sets the Tangle message id of the previous DID Document diff.
   #[wasm_bindgen(js_name = setPreviousMessageId)]
   pub fn set_previous_message_id(&mut self, message_id: &str) -> Result<()> {
-    let previous_message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let previous_message_id: MessageId = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.set_previous_message_id(previous_message_id);
     Ok(())
   }
@@ -85,18 +86,24 @@ impl WasmDiffMessage {
   pub fn merge(&self, document: &WasmDocument) -> Result<WasmDocument> {
     self.0.merge(&document.0).map(WasmDocument).wasm_result()
   }
+
+  /// Serializes a `DiffMessage` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `DiffMessage` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmDiffMessage> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
+
+impl_wasm_clone!(WasmDiffMessage, DiffMessage);
 
 impl From<DiffMessage> for WasmDiffMessage {
   fn from(document_diff: DiffMessage) -> Self {
     Self(document_diff)
-  }
-}
-
-impl Deref for WasmDiffMessage {
-  type Target = DiffMessage;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
   }
 }

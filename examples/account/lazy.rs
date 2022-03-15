@@ -10,7 +10,7 @@ use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::Url;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -60,6 +60,8 @@ impl WasmReceipt {
   }
 }
 
+impl_wasm_clone!(WasmReceipt, Receipt);
+
 impl From<Receipt> for WasmReceipt {
   fn from(receipt: Receipt) -> Self {
     Self(receipt)

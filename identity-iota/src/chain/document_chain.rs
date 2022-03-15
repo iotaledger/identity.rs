@@ -4,18 +4,17 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 
+use identity_core::convert::FmtJson;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::tangle::MessageId;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::convert::FmtJson;
-
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
-use crate::tangle::MessageId;
 
 /// Holds an [`IntegrationChain`] and its corresponding [`DiffChain`] that can be used to resolve the
 /// latest version of a [`ResolvedIotaDocument`].
@@ -169,10 +168,10 @@ mod test {
   use identity_did::verification::MethodRelationship;
   use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
+  use identity_iota_core::did::IotaDIDUrl;
+  use identity_iota_core::document::IotaDocument;
+  use identity_iota_core::document::IotaVerificationMethod;
 
-  use crate::did::IotaDIDUrl;
-  use crate::document::IotaDocument;
-  use crate::document::IotaVerificationMethod;
   use crate::tangle::TangleRef;
   use crate::Error;
 

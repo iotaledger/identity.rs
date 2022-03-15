@@ -1,21 +1,23 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use identity::core::OneOrMany;
+use identity::core::OneOrSet;
+use identity::core::OrderedSet;
+use identity::iota_core::IotaDID;
+use js_sys::Promise;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::future_to_promise;
+
+use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::account::Account;
-use identity::core::OneOrMany;
-use identity::core::OneOrSet;
-use identity::core::OrderedSet;
-use identity::iota::IotaDID;
-use js_sys::Promise;
-use std::cell::RefCell;
-use std::rc::Rc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::future_to_promise;
 
 #[wasm_bindgen(js_class = Account)]
 impl WasmAccount {
@@ -43,7 +45,7 @@ impl WasmAccount {
       None
     };
 
-    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
+    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
 
     let promise: Promise = future_to_promise(async move {
       account

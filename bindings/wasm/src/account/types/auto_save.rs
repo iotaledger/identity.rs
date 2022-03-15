@@ -4,6 +4,12 @@
 use identity::account::AutoSave;
 use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "AutoSave | undefined")]
+  pub type OptionAutoSave;
+}
+
 #[wasm_bindgen(js_name = AutoSave)]
 pub struct WasmAutoSave(pub(crate) AutoSave);
 

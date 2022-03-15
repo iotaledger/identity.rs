@@ -5,24 +5,29 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use futures::executor;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
+use identity::iota::Client;
+use identity::iota::ClientBuilder;
+use identity::iota_core::IotaDID;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::storage::WasmStorage;
-use crate::account::types::WasmAutoSave;
+use crate::account::types::OptionAutoSave;
 use crate::account::types::WasmIdentitySetup;
 use crate::account::wasm_account::PromiseAccount;
 use crate::account::wasm_account::WasmAccount;
 use crate::did::WasmDID;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Config;
-use crate::tangle::WasmClient;
+use crate::tangle::IClientConfig;
+
+type AccountBuilderRc = AccountBuilder<Rc<Client>>;
 
 /// An [`Account`] builder for easy account configuration.
 ///
@@ -33,27 +38,27 @@ use crate::tangle::WasmClient;
 /// This means a builder can be reconfigured in-between account creations, without affecting
 /// the configuration of previously built accounts.
 #[wasm_bindgen(js_name = AccountBuilder)]
-pub struct WasmAccountBuilder(Rc<RefCell<AccountBuilder>>);
+pub struct WasmAccountBuilder(Rc<RefCell<AccountBuilderRc>>);
 
 #[wasm_bindgen(js_class = AccountBuilder)]
 impl WasmAccountBuilder {
   /// Creates a new `AccountBuilder`.
   #[wasm_bindgen(constructor)]
   pub fn new(options: Option<AccountBuilderOptions>) -> Result<WasmAccountBuilder> {
-    let mut builder = AccountBuilder::new();
+    let mut builder: AccountBuilderRc = AccountBuilderRc::new();
 
     if let Some(builder_options) = options {
       if let Some(autopublish) = builder_options.autopublish() {
         builder = builder.autopublish(autopublish);
       }
 
-      if let Some(autosave) = builder_options.autosave() {
-        builder = builder.autosave(autosave.0);
+      if let Some(autosave) = builder_options.autosave().into_serde().wasm_result()? {
+        builder = builder.autosave(autosave);
       }
 
-      if let Some(mut config) = builder_options.clientConfig() {
-        let client: WasmClient = WasmClient::from_config(&mut config)?;
-        builder = builder.client(Arc::new(client.client.as_ref().clone()));
+      if let Some(config) = builder_options.clientConfig() {
+        let client = executor::block_on(ClientBuilder::try_from(config)?.build()).wasm_result()?;
+        builder = builder.client(Rc::new(client));
       };
 
       if let Some(storage) = builder_options.storage() {
@@ -68,13 +73,13 @@ impl WasmAccountBuilder {
   /// The identity must exist in the configured `Storage`.
   #[wasm_bindgen(js_name = loadIdentity)]
   pub fn load_identity(&mut self, did: &WasmDID) -> Result<PromiseAccount> {
-    let builder = self.0.clone();
-    let did = did.clone();
+    let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
+    let did: IotaDID = did.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
         .borrow_mut()
-        .load_identity(did.0)
+        .load_identity(did)
         .await
         .map(WasmAccount::from)
         .map(Into::into)
@@ -92,9 +97,14 @@ impl WasmAccountBuilder {
   /// @See {@link IdentitySetup} to customize the identity creation.
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
-    let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
+    let setup: IdentitySetup = {
+      match identity_setup {
+        None => IdentitySetup::default(),
+        Some(wasm_identity_setup) => IdentitySetup::try_from(wasm_identity_setup)?,
+      }
+    };
 
-    let builder: Rc<RefCell<AccountBuilder>> = self.0.clone();
+    let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {
       builder
         .as_ref()
@@ -118,13 +128,13 @@ extern "C" {
   pub fn autopublish(this: &AccountBuilderOptions) -> Option<bool>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn clientConfig(this: &AccountBuilderOptions) -> Option<Config>;
+  pub fn clientConfig(this: &AccountBuilderOptions) -> Option<IClientConfig>;
 
   #[wasm_bindgen(getter, method)]
   pub fn milestone(this: &AccountBuilderOptions) -> Option<u32>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn autosave(this: &AccountBuilderOptions) -> Option<WasmAutoSave>;
+  pub fn autosave(this: &AccountBuilderOptions) -> OptionAutoSave;
 
   #[wasm_bindgen(getter, method)]
   pub fn storage(this: &AccountBuilderOptions) -> Option<WasmStorage>;
@@ -151,7 +161,7 @@ export type AccountBuilderOptions = {
     /**
      * Client for tangle requests.
      */
-    clientConfig?: Config,
+    clientConfig?: IClientConfig,
 
     /**
      * The Storage implemantation to use for each account built by this builder.

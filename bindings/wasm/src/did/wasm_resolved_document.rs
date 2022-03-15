@@ -3,8 +3,8 @@
 
 use std::str::FromStr;
 
-use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDiffMessage;
@@ -18,14 +18,25 @@ use crate::error::WasmResult;
 #[derive(Clone, Debug)]
 pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
 
-// Workaround for Typescript type annotations on async function returns.
 #[wasm_bindgen]
 extern "C" {
+  // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<ResolvedDocument>")]
   pub type PromiseResolvedDocument;
 
   #[wasm_bindgen(typescript_type = "Promise<Array<ResolvedDocument>>")]
   pub type PromiseArrayResolvedDocument;
+
+  // Workaround for (current) lack of array support in wasm-bindgen
+  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
+  pub type ArrayResolvedDocument;
+
+  // Workaround for (current) lack of generics in wasm-bindgen
+  #[wasm_bindgen(typescript_type = "Document | ResolvedDocument")]
+  pub type DocumentOrResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<Document> | Array<ResolvedDocument>")]
+  pub type ArrayDocumentOrArrayResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = ResolvedDocument)]
@@ -77,7 +88,9 @@ impl WasmResolvedDocument {
   /// Sets the diff chain message id.
   #[wasm_bindgen(js_name = setDiffMessageId)]
   pub fn set_diff_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.diff_message_id = message_id;
     Ok(())
   }
@@ -91,7 +104,9 @@ impl WasmResolvedDocument {
   /// Sets the integration chain message id.
   #[wasm_bindgen(js_name = setIntegrationMessageId)]
   pub fn set_integration_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.integration_message_id = message_id;
     Ok(())
   }
@@ -112,6 +127,8 @@ impl WasmResolvedDocument {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmResolvedDocument, ResolvedDocument);
 
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {
   fn from(document: ResolvedIotaDocument) -> Self {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
-use identity::account::Error as AccountError;
+use identity::account_storage::Error as AccountStorageError;
 use identity::core::decode_b58;
 use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
@@ -23,7 +23,7 @@ impl WasmPrivateKey {
   pub fn from_base58_string(private_key: &str) -> Result<WasmPrivateKey> {
     let private_key: PrivateKey = decode_b58(private_key).map_err(wasm_error)?.into();
     let private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
-      .map_err(|err| AccountError::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))
+      .map_err(|err| AccountStorageError::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))
       .wasm_result()?;
     Ok(WasmPrivateKey(ed25519::SecretKey::from_bytes(private_key_bytes)))
   }

@@ -92,10 +92,10 @@ jobs:
           sccache-path: ${{ matrix.sccache-path }}
 
       - name: Setup sccache
-        uses: './.github/actions/rust/sccache/setup-sccache' 
-        with:    
+        uses: './.github/actions/rust/sccache/setup-sccache'
+        with:
           os: ${{matrix.os}}
-     
+
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -119,7 +119,7 @@ jobs:
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
-        with:    
+        with:
           os: ${{matrix.os}}
 
   build-and-test-libjose:
@@ -187,16 +187,20 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-        
+
       - name: Setup sccache
-        uses: './.github/actions/rust/sccache/setup-sccache' 
-        with:    
+        uses: './.github/actions/rust/sccache/setup-sccache'
+        with:
           os: ${{matrix.os}}
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
           node-version: 16.x
+
+      # Download a pre-compiled wasm-bindgen binary.
+      - name: Install wasm-bindgen-cli
+        uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
 
       - name: Install JS dependencies
         run: npm install
@@ -216,5 +220,5 @@ jobs:
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
-        with:    
+        with:
           os: ${{matrix.os}}

@@ -21,12 +21,20 @@ npm install @iota/identity-wasm@dev
 
 ## Build
 
-Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
+Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. 
+
+Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
+
+```bash
+cargo install --force wasm-bindgen-cli
+```
+
+Then, install the necessary dependencies using:
 ```bash
 npm install
 ```
 
-and then build the bindings for `node.js` with
+and build the bindings for `node.js` with
 
 ```bash
 npm run build:nodejs
@@ -56,36 +64,34 @@ cat \
 ```javascript
 const identity = require('@iota/identity-wasm/node')
 
-// Choose the Tangle network to publish on.
-const network = identity.Network.mainnet();
-// const network = identity.Network.devnet();
+async function main() {
+    // Choose the Tangle network to publish on.
+    const network = identity.Network.mainnet();
+    // const network = identity.Network.devnet();
 
-// Generate a new Ed25519 KeyPair.
-const key = new identity.KeyPair(identity.KeyType.Ed25519);
+    // Generate a new Ed25519 KeyPair.
+    const key = new identity.KeyPair(identity.KeyType.Ed25519);
 
-// Create a new DID Document using the KeyPair for the default VerificationMethod.
-const doc = new identity.Document(key, network.name);
+    // Create a new DID Document using the KeyPair for the default VerificationMethod.
+    const doc = new identity.Document(key, network.name);
 
-// Sign the DID Document with the private key.
-doc.signSelf(key, doc.defaultSigningMethod().id());
+    // Sign the DID Document with the private key.
+    doc.signSelf(key, doc.defaultSigningMethod().id);
 
-// Create a default client instance for the network.
-const config = identity.Config.fromNetwork(network);
-const client = identity.Client.fromConfig(config);
+    // Create a default client instance for the network.
+    const client = await identity.Client.fromConfig({network: network});
+    
+    // Publish the DID Document to the IOTA Tangle.
+    const receipt = await client.publishDocument(doc);
 
-// Publish the DID Document to the IOTA Tangle
-// The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
-client.publishDocument(doc)
-    .then((receipt) => {
-        const explorer = identity.ExplorerUrl.mainnet();
-        // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
-        console.log("Tangle Message Receipt:", receipt);
-        console.log("Tangle Exporer Url:", explorer.resolverUrl(doc.id));
-    })
-    .catch((error) => {
-        console.error("Error: ", error);
-        throw error
-    })
+    // The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/identity-resolver/<did>
+    const explorer = identity.ExplorerUrl.mainnet();
+    // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
+    console.log("Tangle Message Receipt:", receipt);
+    console.log("Tangle Explorer Url:", explorer.resolverUrl(doc.id));
+}
+
+main()
 ```
 
 ## Web Setup

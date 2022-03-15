@@ -96,6 +96,14 @@ impl WasmCredential {
   }
 }
 
+impl_wasm_clone!(WasmCredential, Credential);
+
+impl From<Credential> for WasmCredential {
+  fn from(credential: Credential) -> WasmCredential {
+    Self(credential)
+  }
+}
+
 /// Converts `T` to `U` by converting to/from JSON.
 ///
 /// An escape-hatch for converting between types that represent the same JSON

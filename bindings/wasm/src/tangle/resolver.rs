@@ -7,11 +7,12 @@ use std::rc::Rc;
 use futures::executor;
 use identity::core::Url;
 use identity::iota::Client;
-use identity::iota::IotaDID;
-use identity::iota::NetworkName;
+use identity::iota::ClientBuilder;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
 use identity::iota::ResolverBuilder;
+use identity::iota_core::IotaDID;
+use identity::iota_core::NetworkName;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -22,18 +23,33 @@ use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
 use crate::credential::WasmCredential;
+use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
+use crate::credential::WasmPresentationValidationOptions;
 use crate::did::PromiseArrayResolvedDocument;
 use crate::did::PromiseResolvedDocument;
 use crate::did::UWasmDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Config;
+use crate::tangle::IClientConfig;
 use crate::tangle::WasmClient;
 
 #[wasm_bindgen(js_name = Resolver)]
 pub struct WasmResolver(pub(crate) Rc<Resolver<Rc<Client>>>);
+
+#[wasm_bindgen]
+extern "C" {
+  // Workaround for Typescript type annotations on async function returns.
+  #[wasm_bindgen(typescript_type = "Promise<void>")]
+  pub type PromiseVoid;
+
+  #[wasm_bindgen(typescript_type = "ResolvedDocument | undefined")]
+  pub type OptionResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "ResolvedDocument[] | undefined")]
+  pub type OptionArrayResolvedDocument;
+}
 
 #[wasm_bindgen(js_class = Resolver)]
 impl WasmResolver {
@@ -45,6 +61,12 @@ impl WasmResolver {
     executor::block_on(Resolver::<Rc<Client>>::new())
       .map(Self::from)
       .wasm_result()
+  }
+
+  /// Returns a {@link ResolverBuilder} to construct a new `Resolver`.
+  #[wasm_bindgen]
+  pub fn builder() -> WasmResolverBuilder {
+    WasmResolverBuilder::new()
   }
 
   /// Returns the `Client` corresponding to the given network name if one exists.
@@ -116,7 +138,7 @@ impl WasmResolver {
 
   /// Fetches the DID Document of the issuer on a `Credential`.
   ///
-  /// # Errors
+  /// ### Errors
   ///
   /// Errors if the issuer URL is not a valid `DID` or document resolution fails.
   #[wasm_bindgen(js_name = resolveCredentialIssuer)]
@@ -142,7 +164,7 @@ impl WasmResolver {
   /// Fetches all DID Documents of `Credential` issuers contained in a `Presentation`.
   /// Issuer documents are returned in arbitrary order.
   ///
-  /// # Errors
+  /// ### Errors
   ///
   /// Errors if any issuer URL is not a valid `DID` or document resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationIssuers)]
@@ -184,7 +206,7 @@ impl WasmResolver {
 
   /// Fetches the DID Document of the holder of a `Presentation`.
   ///
-  /// # Errors
+  /// ### Errors
   ///
   /// Errors if the holder URL is missing, is not a valid `DID`, or document resolution fails.
   #[wasm_bindgen(js_name = resolvePresentationHolder)]
@@ -195,7 +217,8 @@ impl WasmResolver {
       .0
       .holder
       .as_ref()
-      .ok_or(identity::iota::Error::InvalidPresentationHolder)
+      .ok_or(identity::iota::ValidationError::MissingPresentationHolder)
+      .map_err(identity::iota::Error::from)
       .wasm_result()?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str()).wasm_result()?;
 
@@ -212,6 +235,57 @@ impl WasmResolver {
     // WARNING: this does not validate the return type. Check carefully.
     Ok(promise.unchecked_into::<PromiseResolvedDocument>())
   }
+
+  /// Verifies a `Presentation`.
+  ///
+  /// ### Important
+  /// See `PresentationValidator::validate` for information about which properties get
+  /// validated and what is expected of the optional arguments `holder` and `issuer`.
+  ///
+  /// ### Resolution
+  /// The DID Documents for the `holder` and `issuers` are optionally resolved if not given.
+  /// If you already have up-to-date versions of these DID Documents, you may want
+  /// to use `PresentationValidator::validate`.
+  /// See also `Resolver::resolvePresentationIssuers` and `Resolver::resolvePresentationHolder`.
+  ///
+  /// ### Errors
+  /// Errors from resolving the holder and issuer DID Documents, if not provided, will be returned immediately.
+  /// Otherwise, errors from validating the presentation and its credentials will be returned
+  /// according to the `fail_fast` parameter.
+  #[wasm_bindgen(js_name = verifyPresentation)]
+  pub fn verify_presentation(
+    &self,
+    presentation: &WasmPresentation,
+    options: &WasmPresentationValidationOptions,
+    fail_fast: WasmFailFast,
+    holder: OptionResolvedDocument,
+    issuers: OptionArrayResolvedDocument,
+  ) -> Result<PromiseVoid> {
+    // TODO: reimplemented function to avoid cloning the entire presentation and validation options.
+    // Would be solved with Rc internal representation, pending memory leak discussions.
+    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.into_serde().wasm_result()?;
+    let holder: Option<ResolvedIotaDocument> = holder.into_serde().wasm_result()?;
+    let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
+    let presentation: WasmPresentation = presentation.clone();
+    let options: WasmPresentationValidationOptions = options.clone();
+
+    let promise: Promise = future_to_promise(async move {
+      resolver
+        .verify_presentation(
+          &presentation.0,
+          &options.0,
+          fail_fast.into(),
+          holder.as_ref(),
+          issuers.as_deref(),
+        )
+        .await
+        .map(|_| JsValue::UNDEFINED)
+        .wasm_result()
+    });
+
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseVoid>())
+  }
 }
 
 impl From<Resolver<Rc<Client>>> for WasmResolver {
@@ -224,6 +298,7 @@ impl From<Resolver<Rc<Client>>> for WasmResolver {
 #[wasm_bindgen(js_name = ResolverBuilder)]
 pub struct WasmResolverBuilder(ResolverBuilder<Rc<Client>>);
 
+#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = ResolverBuilder)]
 impl WasmResolverBuilder {
   /// Constructs a new `ResolverBuilder` with no `Clients` configured.
@@ -246,8 +321,8 @@ impl WasmResolverBuilder {
   ///
   /// NOTE: replaces any previous `Client` or `Config` with the same network name.
   #[wasm_bindgen(js_name = clientConfig)]
-  pub fn client_config(mut self, mut config: Config) -> Result<WasmResolverBuilder> {
-    self.0 = self.0.client_builder(config.take_builder()?);
+  pub fn client_config(mut self, config: IClientConfig) -> Result<WasmResolverBuilder> {
+    self.0 = self.0.client_builder(ClientBuilder::try_from(config)?);
     Ok(self)
   }
 
@@ -265,12 +340,6 @@ impl WasmResolverBuilder {
         .wasm_result()
     })
     .unchecked_into::<PromiseResolver>()
-  }
-}
-
-impl Default for WasmResolverBuilder {
-  fn default() -> Self {
-    Self::new()
   }
 }
 

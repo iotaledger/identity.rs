@@ -6,14 +6,14 @@ use identity::core::encode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
-use identity::crypto::KeyCollection as KeyCollection_;
+use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
+use crate::crypto::WasmKeyPair;
 use crate::error::wasm_error;
 
 #[derive(Deserialize, Serialize)]
@@ -32,16 +32,16 @@ struct KeyData {
 // =============================================================================
 // =============================================================================
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(inspectable, js_name = KeyCollection)]
 #[derive(Clone, Debug)]
-pub struct KeyCollection(pub(crate) KeyCollection_);
+pub struct WasmKeyCollection(pub(crate) KeyCollection);
 
-#[wasm_bindgen]
-impl KeyCollection {
+#[wasm_bindgen(js_class = KeyCollection)]
+impl WasmKeyCollection {
   /// Creates a new `KeyCollection` with the specified key type.
   #[wasm_bindgen(constructor)]
-  pub fn new(type_: KeyType, count: usize) -> Result<KeyCollection, JsValue> {
-    KeyCollection_::new(type_.into(), count).map_err(wasm_error).map(Self)
+  pub fn new(type_: KeyType, count: usize) -> Result<WasmKeyCollection, JsValue> {
+    KeyCollection::new(type_.into(), count).map_err(wasm_error).map(Self)
   }
 
   /// Returns the number of keys in the collection.
@@ -60,8 +60,8 @@ impl KeyCollection {
 
   /// Returns the keypair at the specified `index`.
   #[wasm_bindgen]
-  pub fn keypair(&self, index: usize) -> Option<KeyPair> {
-    self.0.keypair(index).map(KeyPair)
+  pub fn keypair(&self, index: usize) -> Option<WasmKeyPair> {
+    self.0.keypair(index).map(WasmKeyPair)
   }
 
   /// Returns the public key at the specified `index` as a base58-encoded string.
@@ -130,7 +130,7 @@ impl KeyCollection {
 
   /// Deserializes a `KeyCollection` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<KeyCollection, JsValue> {
+  pub fn from_json(json: &JsValue) -> Result<WasmKeyCollection, JsValue> {
     let data: JsonData = json.into_serde().map_err(wasm_error)?;
 
     let iter: _ = data.keys.iter().flat_map(|data| {
@@ -140,8 +140,10 @@ impl KeyCollection {
       Some((public_key, private_key))
     });
 
-    KeyCollection_::from_iterator(data.type_.into(), iter)
+    KeyCollection::from_iterator(data.type_.into(), iter)
       .map_err(wasm_error)
       .map(Self)
   }
 }
+
+impl_wasm_clone!(WasmKeyCollection, KeyCollection);

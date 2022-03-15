@@ -32,6 +32,10 @@ jobs:
           override: true
           components: clippy
 
+      # Download a pre-compiled wasm-bindgen binary.
+      - name: Install wasm-bindgen-cli
+        uses: jetli/wasm-bindgen-action@24ba6f9fff570246106ac3f80f35185600c3f6c9
+
       - name: core clippy check
         uses: actions-rs/clippy-check@v1
         with:
@@ -45,6 +49,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path ./bindings/wasm/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings
           name: wasm
+
+      - name: stronghold-nodejs clippy check
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all-targets --all-features -- -D warnings
+          name: stronghold-nodejs
 
       - name: libjose clippy check
         uses: actions-rs/clippy-check@v1

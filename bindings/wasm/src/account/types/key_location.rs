@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::KeyLocation;
+use identity::account_storage::KeyLocation;
 use wasm_bindgen::prelude::*;
 
 use crate::account::types::WasmGeneration;
@@ -15,8 +15,8 @@ pub struct WasmKeyLocation(pub(crate) KeyLocation);
 #[wasm_bindgen(js_class = KeyLocation)]
 impl WasmKeyLocation {
   #[wasm_bindgen(constructor)]
-  pub fn new(method: WasmMethodType, fragment: String, generation: WasmGeneration) -> WasmKeyLocation {
-    WasmKeyLocation(KeyLocation::new(method.into(), fragment, generation.into()))
+  pub fn new(method: &WasmMethodType, fragment: String, generation: &WasmGeneration) -> WasmKeyLocation {
+    WasmKeyLocation(KeyLocation::new(method.0, fragment, generation.0))
   }
 
   /// Returns a copy of the method type of the key location.

@@ -31,6 +31,8 @@ impl WasmSignatureOptions {
   }
 }
 
+impl_wasm_clone!(WasmSignatureOptions, SignatureOptions);
+
 impl From<SignatureOptions> for WasmSignatureOptions {
   fn from(options: SignatureOptions) -> Self {
     WasmSignatureOptions(options)

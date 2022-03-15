@@ -1,7 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Credential, SignatureOptions, VerifierOptions} from '@iota/identity-wasm';
+import {Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -9,17 +9,11 @@ import {manipulateIdentity} from './manipulate_did';
  This example shows how to create a Verifiable Credential and validate it.
  In this example, alice takes the role of the subject, while we also have an issuer.
  The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
- This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
+ This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
 
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createVC(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
-
     // Creates new identities (See "create_did" and "manipulate_did" examples)
     const alice = await createIdentity(clientConfig);
     const issuer = await manipulateIdentity(clientConfig);
@@ -48,12 +42,27 @@ async function createVC(clientConfig) {
         private: issuer.newKey.private(),
     }, SignatureOptions.default());
 
-    // Check if the credential is verifiable.
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
+    // Before sending this credential to the holder the issuer wants to validate that some properties
+    // of the credential satisfy their expectations.
 
-    console.log(`VC verification result: ${result.verified}`);
 
-    return {alice, issuer, signedVc};
+    // Validate the credential's signature, the credential's semantic structure,
+    // check that the issuance date is not in the future and that the expiration date is not in the past.
+    CredentialValidator.validate(
+        signedVc,
+        issuer.doc,
+        CredentialValidationOptions.default(),
+        FailFast.AllErrors
+    );
+
+    // Since `validate` did not throw any errors we know that the credential was successfully validated.
+    console.log(`VC successfully validated`);
+
+    // The issuer is now sure that the credential they are about to issue satisfies their expectations.
+    // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
+    // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
+    const credentialJSON = signedVc.toJSON();
+    return {alice, issuer, credentialJSON};
 }
 
 export {createVC};

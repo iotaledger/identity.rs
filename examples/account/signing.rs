@@ -19,8 +19,8 @@ use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifierOptions;
 use identity::did::DID;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {

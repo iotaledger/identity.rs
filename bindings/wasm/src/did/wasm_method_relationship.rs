@@ -6,7 +6,7 @@ use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen (js_name = MethodRelationship)]
+#[wasm_bindgen(js_name = MethodRelationship)]
 #[derive(Serialize_repr, Deserialize_repr)]
 #[repr(u8)]
 pub enum WasmMethodRelationship {

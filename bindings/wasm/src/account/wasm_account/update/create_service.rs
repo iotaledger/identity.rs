@@ -5,17 +5,18 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use identity::account::Account;
 use identity::account::CreateServiceBuilder;
 use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::Object;
 use identity::core::Url;
+use identity::iota::Client;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
+use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::error::Result;
@@ -39,11 +40,11 @@ impl WasmAccount {
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
     let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
 
-    let account: Rc<RefCell<Account>> = Rc::clone(&self.0);
+    let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
-      let mut account: RefMut<Account> = account.borrow_mut();
-      let mut updater: IdentityUpdater<'_> = account.update_identity();
-      let mut create_service: CreateServiceBuilder<'_> = updater
+      let mut account: RefMut<AccountRc> = account.borrow_mut();
+      let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
+      let mut create_service: CreateServiceBuilder<'_, Rc<Client>> = updater
         .create_service()
         .fragment(fragment)
         .type_(service_type)
@@ -68,7 +69,7 @@ extern "C" {
   #[wasm_bindgen(getter, method)]
   pub fn fragment(this: &CreateServiceOptions) -> Option<String>;
 
-  #[wasm_bindgen(getter, method, js_name= type)]
+  #[wasm_bindgen(getter, method, js_name = type)]
   pub fn type_(this: &CreateServiceOptions) -> Option<String>;
 
   #[wasm_bindgen(getter, method)]

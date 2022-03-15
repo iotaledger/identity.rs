@@ -3,6 +3,10 @@
 
 use std::sync::Arc;
 
+use identity_account_storage::identity::IdentityState;
+use identity_account_storage::storage::MemStore;
+use identity_account_storage::types::Generation;
+use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
@@ -17,9 +21,9 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
 use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::Network;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -27,10 +31,6 @@ use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentityState;
-use crate::storage::MemStore;
-use crate::types::Generation;
-use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 use crate::updates::Update;
 use crate::updates::UpdateError;
@@ -414,7 +414,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaError(identity_iota::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -498,7 +498,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::IotaError(identity_iota::Error::InvalidDoc(
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
       identity_did::Error::InvalidMethodEmbedded
     ))
   ));
@@ -629,7 +629,9 @@ async fn test_delete_method() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDoc(
+      identity_did::Error::MethodNotFound
+    ))
   ));
 
   Ok(())

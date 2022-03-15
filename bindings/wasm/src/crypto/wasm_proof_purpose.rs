@@ -42,3 +42,5 @@ impl WasmProofPurpose {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmProofPurpose, ProofPurpose);

@@ -3,16 +3,18 @@
 
 import {
     Client,
-    Config,
     Credential,
+    CredentialValidationOptions,
+    CredentialValidator,
     Digest,
+    FailFast,
     KeyCollection,
     KeyType,
     MethodScope,
+    Resolver,
     SignatureOptions,
     Timestamp,
-    VerificationMethod,
-    VerifierOptions
+    VerificationMethod
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 
@@ -26,11 +28,10 @@ import {createIdentity} from './create_did';
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function merkleKey(clientConfig) {
-    // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
-
-    // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    // Create a client instance to publish messages to the configured Tangle network.
+    const client = await Client.fromConfig({
+        network: clientConfig.network
+    });
 
     // Creates new identities (See "create_did" example)
     const alice = await createIdentity(clientConfig);
@@ -77,11 +78,20 @@ async function merkleKey(clientConfig) {
     }, SignatureOptions.default());
 
     // Check the verifiable credential is valid
-    const result = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result: ${result.verified}`);
-    if (!result.verified) throw new Error("VC not valid");
+    const resolver = await Resolver
+        .builder()
+        .client(client)
+        .build();
+    const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+    CredentialValidator.validate(
+        signedVc,
+        resolvedIssuerDoc,
+        CredentialValidationOptions.default(),
+        FailFast.FirstError
+    );
+    console.log(`Credential successfully validated!"`);
 
-    // The Issuer would like to revoke the credential (and therefore revokes key 0)
+    // The Issuer would like to revoke the credential (and therefore revokes key 0).
     issuer.doc.revokeMerkleKey(method.id().toString(), 0);
     issuer.doc.setMetadataPreviousMessageId(receipt.messageId());
     issuer.doc.metadataUpdated = Timestamp.nowUTC();
@@ -90,9 +100,23 @@ async function merkleKey(clientConfig) {
     console.log(`Identity Update: ${clientConfig.explorer.messageUrl(nextReceipt.messageId())}`);
 
     // Check the verifiable credential is revoked
-    const newResult = await client.checkCredential(signedVc.toString(), VerifierOptions.default());
-    console.log(`VC verification result (false = revoked): ${newResult.verified}`);
-    if (newResult.verified) throw new Error("VC not revoked");
+    let vc_revoked = false;
+    try {
+        // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
+        const updatedResolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+        CredentialValidator.validate(
+            signedVc,
+            updatedResolvedIssuerDoc,
+            CredentialValidationOptions.default(),
+            FailFast.FirstError
+        );
+    } catch (exception) {
+        console.log(`${exception.message}`)
+        vc_revoked = true;
+    }
+
+    if (!vc_revoked) throw new Error("VC not revoked");
+    console.log(`Credential successfully revoked!`);
 }
 
 export {merkleKey};

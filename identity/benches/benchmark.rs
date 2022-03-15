@@ -9,8 +9,8 @@ use criterion::Criterion;
 use identity::crypto::KeyPair;
 use identity::iota::DocumentChain;
 use identity::iota::IntegrationChain;
-use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDocument;
 
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;

@@ -1,5 +1,4 @@
 import * as assert from "assert";
-
 import {privateTangle} from "../../private_tangle";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! A basic example that generates and publishes subject and issuer DID
@@ -7,17 +7,19 @@
 //!
 //! cargo run --example create_vc
 
+use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::crypto::SignatureOptions;
-use identity::iota::CredentialValidation;
+use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
+use identity::iota::FailFast;
 use identity::iota::Receipt;
-use identity::iota::Resolver;
 use identity::prelude::*;
 
 mod common;
 mod create_did;
 
-pub async fn create_vc() -> Result<()> {
+pub async fn create_vc() -> Result<String> {
   // Create a DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (issuer_doc, issuer_key, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
@@ -37,17 +39,29 @@ pub async fn create_vc() -> Result<()> {
 
   println!("Credential JSON > {:#}", credential);
 
-  // Validate the verifiable credential
-  let resolver: Resolver = Resolver::new().await?;
-  let validation: CredentialValidation = common::check_credential(&resolver, &credential).await?;
-  println!("Credential Validation > {:#?}", validation);
-  assert!(validation.verified);
+  // Before sending this credential to the holder the issuer wants to validate that some properties
+  // of the credential satisfy their expectations.
 
-  Ok(())
+  // Validate the credential's signature using the issuer's DID Document, the credential's semantic structure,
+  // that the issuance date is not in the future and that the expiration date is not in the past:
+  CredentialValidator::validate(
+    &credential,
+    &issuer_doc,
+    &CredentialValidationOptions::default(),
+    FailFast::FirstError,
+  )?;
+
+  // The issuer is now sure that the credential they are about to issue satisfies their expectations.
+  // The credential is then serialized to JSON and transmitted to the subject in a secure manner.
+  // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
+  let credential_json: String = credential.to_json()?;
+
+  Ok(credential_json)
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  let _ = create_vc().await?;
+  // Obtain a JSON representation of a credential issued to us
+  let _credential_json: String = create_vc().await?;
   Ok(())
 }

@@ -1,7 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::IotaDocumentMetadata;
+use identity::iota_core::IotaDocumentMetadata;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
@@ -46,6 +46,8 @@ impl WasmDocumentMetadata {
     }
   }
 }
+
+impl_wasm_clone!(WasmDocumentMetadata, DocumentMetadata);
 
 impl From<IotaDocumentMetadata> for WasmDocumentMetadata {
   fn from(metadata: IotaDocumentMetadata) -> Self {
