@@ -469,6 +469,8 @@ impl IotaDocument {
     let signature: &Signature = document
       .try_signature()
       .map_err(|err| Error::InvalidRootDocument(err.into()))?;
+    let method: &IotaVerificationMethod = document
+      .resolve_method(signature, None)
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))?;
     let public: PublicKey = method.key_data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
