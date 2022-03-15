@@ -38,8 +38,15 @@ runs:
       working-directory: bindings/wasm
       run: |
         cargo add identity@=${{ inputs.version }} --path=../../identity
-
-      # TODO bump which versions in stronghold nodejs
+    
+    - name: Replace identity version in Wasm bindings
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: bindings/stronghold-nodejs
+      run: |
+        cargo add identity-core@=${{ inputs.version }} --path=../../identity
+        cargo add identity-iota-core@=${{ inputs.version }} --path=../../identity
+        cargo add identity-account-storage@=${{ inputs.version }} --path=../../identity
     
     - name: Bump Rust crate version
       shell: bash
