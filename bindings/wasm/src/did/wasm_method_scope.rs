@@ -20,7 +20,7 @@ pub struct WasmMethodScope(pub(crate) MethodScope);
 
 #[wasm_bindgen(js_class = MethodScope)]
 impl WasmMethodScope {
-  #[wasm_bindgen(js_name = verificationMethod)]
+  #[wasm_bindgen(js_name = VerificationMethod)]
   pub fn verification_method() -> WasmMethodScope {
     Self(MethodScope::VerificationMethod)
   }

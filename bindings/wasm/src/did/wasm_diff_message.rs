@@ -34,7 +34,6 @@ impl WasmDiffMessage {
   }
 
   /// Returns a copy of the raw contents of the DID Document diff as a JSON string.
-
   #[wasm_bindgen]
   pub fn diff(&self) -> Result<String> {
     self.0.diff().to_json().wasm_result()

@@ -42,7 +42,7 @@ async function merkleKey(clientConfig) {
     const method = VerificationMethod.newMerkleKey(Digest.Sha256, issuer.doc.id(), keys, "key-collection")
 
     // Add to the DID Document as a general-purpose verification method
-    issuer.doc.insertMethod(method, MethodScope.verificationMethod());
+    issuer.doc.insertMethod(method, MethodScope.VerificationMethod());
     issuer.doc.setMetadataPreviousMessageId(issuer.receipt.messageId());
     issuer.doc.setMetadataUpdated(Timestamp.nowUTC());
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id());
@@ -94,7 +94,7 @@ async function merkleKey(clientConfig) {
     // The Issuer would like to revoke the credential (and therefore revokes key 0).
     issuer.doc.revokeMerkleKey(method.id().toString(), 0);
     issuer.doc.setMetadataPreviousMessageId(receipt.messageId());
-    issuer.doc.metadataUpdated = Timestamp.nowUTC();
+    issuer.doc.SetMetadataUpdated(Timestamp.nowUTC());
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id());
     const nextReceipt = await client.publishDocument(issuer.doc);
     console.log(`Identity Update: ${clientConfig.explorer.messageUrl(nextReceipt.messageId())}`);

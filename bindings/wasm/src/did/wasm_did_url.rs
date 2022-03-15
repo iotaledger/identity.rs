@@ -28,7 +28,7 @@ impl WasmDIDUrl {
   }
 
   /// Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = urlStr)]
   pub fn url_str(&self) -> String {
     self.0.url().to_string()
   }
