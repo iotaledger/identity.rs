@@ -12,7 +12,7 @@ pub struct WasmIdentityState(pub(crate) IdentityState);
 
 #[wasm_bindgen(js_class = IdentityState)]
 impl WasmIdentityState {
-  // Serializes a `IdentityState` object as a JSON object.
+  /// Serializes a `IdentityState` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()

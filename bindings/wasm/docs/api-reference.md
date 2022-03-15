@@ -125,8 +125,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -152,6 +150,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -178,7 +178,6 @@ publishing to the Tangle.
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -194,6 +193,7 @@ publishing to the Tangle.
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
@@ -232,17 +232,6 @@ Sets the `alsoKnownAs` property in the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -393,6 +382,17 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -489,6 +489,8 @@ by the [Client](#Client) used to publish it.
 <a name="AutoSave+toJSON"></a>
 
 ### autoSave.toJSON() ⇒ <code>any</code>
+Serializes `AutoSave` as a JSON object.
+
 **Kind**: instance method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.never"></a>
 
@@ -538,6 +540,8 @@ Deserializes `AutoSave` from a JSON object.
 <a name="ChainState+toJSON"></a>
 
 ### chainState.toJSON() ⇒ <code>any</code>
+Serializes a `ChainState` object as a JSON object.
+
 **Kind**: instance method of [<code>ChainState</code>](#ChainState)  
 <a name="ChainState.fromJSON"></a>
 
@@ -2050,12 +2054,22 @@ A span of time.
 **Kind**: global class  
 
 * [Duration](#Duration)
-    * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
-    * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
-    * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
-    * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
-    * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
+    * _instance_
+        * [.toJSON()](#Duration+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.seconds(seconds)](#Duration.seconds) ⇒ [<code>Duration</code>](#Duration)
+        * [.minutes(minutes)](#Duration.minutes) ⇒ [<code>Duration</code>](#Duration)
+        * [.hours(hours)](#Duration.hours) ⇒ [<code>Duration</code>](#Duration)
+        * [.days(days)](#Duration.days) ⇒ [<code>Duration</code>](#Duration)
+        * [.weeks(weeks)](#Duration.weeks) ⇒ [<code>Duration</code>](#Duration)
+        * [.fromJSON(json)](#Duration.fromJSON) ⇒ [<code>Duration</code>](#Duration)
 
+<a name="Duration+toJSON"></a>
+
+### duration.toJSON() ⇒ <code>any</code>
+Serializes a `Duration` as a JSON object.
+
+**Kind**: instance method of [<code>Duration</code>](#Duration)  
 <a name="Duration.seconds"></a>
 
 ### Duration.seconds(seconds) ⇒ [<code>Duration</code>](#Duration)
@@ -2110,6 +2124,17 @@ Create a new `Duration` with the given number of weeks.
 | Param | Type |
 | --- | --- |
 | weeks | <code>number</code> | 
+
+<a name="Duration.fromJSON"></a>
+
+### Duration.fromJSON(json) ⇒ [<code>Duration</code>](#Duration)
+Deserializes a `Duration` from a JSON object.
+
+**Kind**: static method of [<code>Duration</code>](#Duration)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
 
 <a name="Ed25519"></a>
 
@@ -2246,6 +2271,8 @@ Creates a new `WasmGeneration` from a 32-bit integer.
 <a name="IdentityState+toJSON"></a>
 
 ### identityState.toJSON() ⇒ <code>any</code>
+Serializes a `IdentityState` object as a JSON object.
+
 **Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
 <a name="IdentityState.fromJSON"></a>
 
@@ -2650,13 +2677,23 @@ Deserializes a `MethodScope` object from a JSON object.
 **Kind**: global class  
 
 * [MethodSecret](#MethodSecret)
-    * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-    * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+    * _instance_
+        * [.toJSON()](#MethodSecret+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+        * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+        * [.fromJSON(json_value)](#MethodSecret.fromJSON) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 
+<a name="MethodSecret+toJSON"></a>
+
+### methodSecret.toJSON() ⇒ <code>any</code>
+Serializes a `MethodSecret` as a JSON object.
+
+**Kind**: instance method of [<code>MethodSecret</code>](#MethodSecret)  
 <a name="MethodSecret.ed25519Base58"></a>
 
 ### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from base58-encoded Ed25519 private key.
+Creates a [MethodSecret](#MethodSecret) object from a Base58-BTC encoded Ed25519 private key.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
@@ -2674,6 +2711,17 @@ Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollecti
 | Param | Type |
 | --- | --- |
 | collection | [<code>KeyCollection</code>](#KeyCollection) | 
+
+<a name="MethodSecret.fromJSON"></a>
+
+### MethodSecret.fromJSON(json_value) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Deserializes a `MethodSecret` from a JSON object.
+
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
 
 <a name="MethodType"></a>
 
@@ -3573,6 +3621,8 @@ Returns the signature data as a vec of bytes.
 <a name="Signature+toJSON"></a>
 
 ### signature.toJSON() ⇒ <code>any</code>
+Serializes a `Signature` as a JSON object.
+
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature.fromJSON"></a>
 
@@ -3877,10 +3927,6 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## MethodRelationship
 **Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -3927,6 +3973,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 

@@ -57,6 +57,7 @@ impl WasmAccountBuilder {
       }
 
       if let Some(config) = builder_options.clientConfig() {
+        // TODO: use clientBuilder instead of Client
         let client = executor::block_on(ClientBuilder::try_from(config)?.build()).wasm_result()?;
         builder = builder.client(Rc::new(client));
       };

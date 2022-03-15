@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::iter::Zip;
@@ -29,7 +29,7 @@ use crate::utils::generate_ed25519_keypairs;
 const MAX_KEYS_ALLOWED: usize = 4_096;
 
 /// A collection of cryptographic keys.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct KeyCollection {
   type_: KeyType,
   public: Box<[PublicKey]>,

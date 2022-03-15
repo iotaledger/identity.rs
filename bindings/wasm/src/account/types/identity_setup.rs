@@ -8,7 +8,8 @@ use identity::account::IdentitySetup;
 use identity::account::MethodSecret;
 use wasm_bindgen::prelude::*;
 
-use crate::account::types::OptionMethodSecret;
+use crate::account::types::method_secret::OptionMethodSecret;
+use crate::account::types::WasmMethodSecret;
 use crate::crypto::KeyType;
 use crate::error::WasmResult;
 
@@ -53,8 +54,10 @@ impl TryFrom<WasmIdentitySetup> for IdentitySetup {
     }
     if let Some(method_secret) = wasm_identity_setup
       .methodSecret()
-      .into_serde::<Option<MethodSecret>>()
+      .into_serde::<Option<WasmMethodSecret>>()
       .wasm_result()?
+      .map(MethodSecret::try_from)
+      .transpose()?
     {
       setup = setup.method_secret(method_secret);
     };

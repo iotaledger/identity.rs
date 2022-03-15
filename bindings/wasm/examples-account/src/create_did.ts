@@ -16,17 +16,17 @@ async function createIdentity(storage?: Storage) {
     });
     let account = await builder.createIdentity();
 
-    // Retrieve the did of the newly created identity.
-    let iotaDid = account.did().toString();
+    // Retrieve the DID of the newly created identity.
+    let did = account.did();
 
     // Print the DID of the created Identity.
-    console.log(iotaDid)
+    console.log(did.toString())
 
     // Print the local state of the DID Document
     console.log(account.document());
 
     // Print the Explorer URL for the DID.
-    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
 export { createIdentity };

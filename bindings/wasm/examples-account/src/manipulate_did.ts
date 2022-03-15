@@ -4,7 +4,7 @@
 import { ExplorerUrl, AccountBuilder, MethodRelationship, Storage } from './../../node/identity_wasm.js';
 
 /**
- * This example demonstrates how to manipulate a DID Document by adding/removing 
+ * This example demonstrates how to manipulate a DID Document by adding/removing
  * Verification Methods and Services.
  */
 async function manipulateIdentity(storage?: Storage) {
@@ -47,11 +47,11 @@ async function manipulateIdentity(storage?: Storage) {
     // Remove the Ed25519 verification method.
     await account.deleteMethod({ fragment: "my-next-key" })
 
-    // Retrieve the did of the newly created identity.
-    let iotaDid = account.did().toString();
+    // Retrieve the DID of the newly created identity.
+    let did = account.did();
 
     // Print the Explorer URL for the DID.
-    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
 export { manipulateIdentity };

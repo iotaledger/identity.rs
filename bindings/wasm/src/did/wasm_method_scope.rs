@@ -14,7 +14,7 @@ extern "C" {
 }
 
 /// Supported verification method types.
-#[wasm_bindgen(js_name = MethodScope)]
+#[wasm_bindgen(js_name = MethodScope, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmMethodScope(pub(crate) MethodScope);
 

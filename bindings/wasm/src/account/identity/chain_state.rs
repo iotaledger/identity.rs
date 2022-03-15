@@ -12,7 +12,7 @@ pub struct WasmChainState(pub(crate) ChainState);
 
 #[wasm_bindgen(js_class = ChainState)]
 impl WasmChainState {
-  // Serializes a `ChainState` object as a JSON object.
+  /// Serializes a `ChainState` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
