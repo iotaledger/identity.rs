@@ -8,7 +8,7 @@ keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "An IOTA Tangle intergration for the identity-rs library."
+description = "An IOTA Tangle integration for the identity.rs library."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
@@ -32,13 +32,13 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
+rev = "7d7ae32da03d3375318c181c2428a36de530d1a3"
 features = ["tls"]
 default-features = false
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "7f5ae8f5b27f5948d8e1b4717419cc1321d862da"
+rev = "7d7ae32da03d3375318c181c2428a36de530d1a3"
 default-features = false
 features = ["wasm"]
 
