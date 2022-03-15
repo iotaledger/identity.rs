@@ -326,12 +326,12 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   let mut sender1 = sending_actor.clone();
 
   // Ensure that an actor shutdown returns errors through open channels,
-  // such as those `EventLoop::await_response`.
-  // Note that we do not test all `EventLoop::await*` fields, because some are
+  // such as `EventLoop::await_response`.
+  // We do not test all `EventLoop::await*` fields, because some are
   // much harder to test than others.
   // We poll the futures once to ensure that the channels are created,
   // before shutting the actor down. If we would call these methods after shutdown,
-  // they would immediately panic (see test_interacting_with_shutdown_actor_panics),
+  // they would immediately return a shutdown error (see test_interacting_with_shutdown_actor_returns_error),
   // hence the need for manual polling.
   // On the next poll after shutdown, we expect the errors.
 
