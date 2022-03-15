@@ -1,12 +1,20 @@
 use wasm_bindgen::prelude::*;
 
-// The duck-typed JS ActorRequest interface defined in Rust.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ActorRequest {
+  pub endpoint: String,
+  pub request: serde_json::Value,
+}
+
 #[wasm_bindgen]
 extern "C" {
-  pub type ActorRequest;
-
-  // TODO: Can this be a getter?
-  // I.e.: Does it matter if requestName is serialized?
-  #[wasm_bindgen(structural, method, js_name = requestName)]
-  pub fn request_name(this: &ActorRequest) -> String;
+  #[wasm_bindgen(typescript_type = "IActorRequest")]
+  pub type IActorRequest;
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_ACTOR_REQUEST: &'static str = r#"
+interface IActorRequest {
+    readonly endpoint: string;
+    readonly request: any;
+}"#;

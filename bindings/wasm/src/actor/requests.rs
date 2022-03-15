@@ -1,55 +1,38 @@
-use identity::{
-  actor::{
-    traits::ActorRequest as IotaActorRequest, IdentityList as ActorIdentityList,
-    IdentityResolve as ActorIdentityResolve,
-  },
-  iota::IotaDID,
-  prelude::*,
-};
+use identity::actor::{ActorRequest, Synchronous};
 use wasm_bindgen::prelude::*;
 
-use crate::error::wasm_error;
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct TestRequest(String);
 
-#[wasm_bindgen]
-#[derive(Debug)]
-pub struct IdentityList(ActorIdentityList);
+impl ActorRequest<Synchronous> for TestRequest {
+  type Response = String;
 
-#[wasm_bindgen]
-impl IdentityList {
-  #[wasm_bindgen(constructor)]
-  pub fn new() -> Self {
-    Self(ActorIdentityList)
-  }
-
-  #[wasm_bindgen(js_name = requestName)]
-  pub fn request_name(&self) -> String {
-    self.0.request_name().into()
-  }
-
-  pub fn __serialize(&self) -> JsValue {
-    JsValue::from_serde(&self.0).unwrap()
+  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+    std::borrow::Cow::Borrowed("test/request")
   }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(inspectable)]
 #[derive(Debug)]
-pub struct IdentityResolve(ActorIdentityResolve);
+#[repr(transparent)]
+pub struct WasmTestRequest(TestRequest);
 
-#[wasm_bindgen]
-impl IdentityResolve {
+#[wasm_bindgen(inspectable)]
+impl WasmTestRequest {
   #[wasm_bindgen(constructor)]
-  pub fn new(did: &str) -> Result<IdentityResolve, JsValue> {
-    let did: IotaDID = did.parse().map_err(wasm_error)?;
-    let resolve = ActorIdentityResolve::new(did);
-    Ok(Self(resolve))
+  pub fn new(string: String) -> Self {
+    Self(TestRequest(string))
   }
 
-  #[wasm_bindgen(js_name = requestName)]
-  pub fn request_name(&self) -> String {
-    self.0.request_name().into()
-  }
+  // TODO: This should probably be a separate function, and not a customized `toJSON`.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> JsValue {
+    let request = serde_json::to_value(&self.0).expect("TODO");
+    let json = serde_json::json!({
+      "endpoint": String::from(self.0.endpoint()),
+      "request": request,
+    });
 
-  pub fn __serialize(&self) -> JsValue {
-    JsValue::from_serde(&self.0).unwrap()
+    JsValue::from_serde(&json).expect("TODO")
   }
 }

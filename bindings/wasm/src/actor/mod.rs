@@ -1,87 +1,64 @@
+mod handler;
 mod interface;
 mod multiaddr;
 mod peer_id;
 mod requests;
 
-use std::{borrow::Cow, cell::RefCell, rc::Rc};
-
+use crate::{
+  actor::interface::{ActorRequest, IActorRequest},
+  error::WasmResult,
+};
 use identity::{
   actor::{
-    actor::HandlerBuilder as _HandlerBuilder, actor_builder::ActorBuilder, asyncfn::AsyncFn,
-    traits::ActorRequest as IotaActorRequest,
+    primitives::{NetCommander, RequestMessage, ResponseMessage},
+    ActorBuilder, RemoteSendError,
   },
   prelude::*,
 };
-use js_sys::{Function, Promise};
-use libp2p::identity::Keypair;
+use js_sys::Promise;
+use std::{cell::RefCell, rc::Rc};
 
-use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::error::wasm_error;
+use self::{handler::Json, multiaddr::Multiaddr, peer_id::PeerId};
 
-use self::{interface::ActorRequest, multiaddr::Multiaddr, peer_id::PeerId};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct JSON(serde_json::Value);
-
-impl IotaActorRequest for JSON {
-  type Response = JSON;
-
-  fn request_name<'cow>(&self) -> Cow<'cow, str> {
-    // SAFETY: Is never called from the actor since this type
-    // is never used to call `send_request, but only `send_named_request` instead.
-    panic!("`request_name` on `JSON` should not be called");
-  }
-}
-
-#[wasm_bindgen]
-pub struct IdentityActor {
+#[wasm_bindgen(js_name = "Actor")]
+pub struct WasmActor {
   // TODO: Maybe replace with WasmRefCell
-  comm: Rc<RefCell<identity::actor::Actor>>,
+  actor: Rc<RefCell<identity::actor::Actor>>,
 }
 
 #[wasm_bindgen]
-impl IdentityActor {
+impl WasmActor {
   #[wasm_bindgen(constructor)]
-  pub fn new() -> Result<IdentityActor, JsValue> {
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
+  pub fn new() -> Result<WasmActor, JsValue> {
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Debug).module_prefix("identity"));
 
     #[allow(unused_unsafe)]
     let transport = unsafe { libp2p::wasm_ext::ffi::websocket_transport() };
     let transport = libp2p::wasm_ext::ExtTransport::new(transport);
 
-    let comm = futures::executor::block_on(async {
-      let keys = Keypair::generate_ed25519();
-
-      let executor = |fut| {
-        wasm_bindgen_futures::spawn_local(fut);
-      };
-
-      let comm = ActorBuilder::new()
-        .keys(identity::actor::InitKeypair::IdKeys(keys))
-        .build_with_transport_and_executor(transport, executor)
-        .await
-        .map_err(wasm_error);
-      comm
-    })?;
+    let actor = futures::executor::block_on(async {
+      let actor = ActorBuilder::new().build_with_transport(transport).await.expect("TODO");
+      actor
+    });
 
     Ok(Self {
-      comm: Rc::new(RefCell::new(comm)),
+      actor: Rc::new(RefCell::new(actor)),
     })
   }
 
-  #[wasm_bindgen(js_name = addPeer)]
-  pub fn add_peer(&self, peer_id: PeerId, addr: Multiaddr) -> Result<Promise, JsValue> {
+  #[wasm_bindgen(js_name = addAddress)]
+  pub fn add_address(&self, peer_id: PeerId, addr: Multiaddr) -> Result<Promise, JsValue> {
     let addr = addr.into();
     let peer_id = peer_id.into();
 
-    let comm_clone = self.comm.clone();
+    let comm_clone = self.actor.clone();
 
     let promise = future_to_promise(async move {
       log::info!("Adding peer {} with address {}", peer_id, addr);
-      comm_clone.borrow_mut().add_peer(peer_id, addr).await;
+      comm_clone.borrow_mut().add_address(peer_id, addr).await.expect("TODO");
 
       Ok(JsValue::undefined())
     });
@@ -89,91 +66,83 @@ impl IdentityActor {
     Ok(promise)
   }
 
-  #[wasm_bindgen(js_name = addHandler)]
-  pub fn add_handler(&self, object: JsValue) -> HandlerBuilder {
-    // self.comm.borrow_mut().add_handler(object)
-    todo!()
-  }
-
   #[wasm_bindgen(js_name = sendRequest)]
-  pub fn send_request(&self, peer_id: PeerId, request: ActorRequest) -> Result<Promise, JsValue> {
+  pub fn send_request(&self, peer_id: PeerId, request: &IActorRequest) -> Result<Promise, JsValue> {
     let peer_id = peer_id.into();
 
-    let comm_clone = self.comm.clone();
+    let request: ActorRequest = request.into_serde().wasm_result()?;
 
-    // TODO: It is not guaranteed that this function exists.
-    let request_name = request.request_name();
 
-    let js_val: JsValue = request.into();
 
-    // SAFETY: Unsafe can be removed, but rust-analyzer displays a hard error in that case.
-    // Only our Rust-defined ActorRequests *should* have this method, so we can use it
-    // to differentiate between a native JsValue and one we provided, as they differ in how they are serialized.
-    let serialize_property = unsafe { js_sys::Reflect::get(&js_val, &JsValue::from_str("__serialize")) }?;
+    let request_vec = serde_json::to_vec(&request.request).expect("TODO: Add constructors for serialization errors");
 
-    let json: serde_json::Value = if serialize_property.is_function() {
-      let serialize_method: Function = serialize_property.into();
-      // SAFETY: We implement this function in Rust with a `JsValue` return type.
-      // If the function is implemented in JS and an exception is thrown, then a panic is ok.
-      let res: JsValue = serialize_method.call0(&js_val).unwrap();
-      // SAFETY: We can always succesfully parse the result of JSON.stringify into a `serde_json::Value`
-      res.into_serde().unwrap()
-    } else {
-      // SAFETY: We can always succesfully parse the result of JSON.stringify into a `serde_json::Value`
-      js_val.into_serde().unwrap()
-    };
+    // TODO: Endpoint validation.
+    let message = RequestMessage::new(request.endpoint, identity::actor::RequestMode::Synchronous, request_vec)
+      .expect("TODO RequestMessage");
 
-    let request = JSON(json);
+    let mut commander: NetCommander = self.actor.borrow().commander.clone();
 
     let promise = future_to_promise(async move {
-      log::info!("Sending request {:?} to endpoint {:?}", request.0, request_name);
+      let response: ResponseMessage = commander
+        .send_request(peer_id, message)
+        .await
+        .expect("TODO ResponseMessage");
 
-      // TODO: Most likely unsafe to borrow_mut
-      let response = comm_clone
-        .borrow_mut()
-        .send_named_request(peer_id, &request_name, request)
-        .await;
+      let response: Vec<u8> = serde_json::from_slice::<Result<Vec<u8>, RemoteSendError>>(&response.0)
+        .expect("TODO deserialization")
+        .expect("TODO RemoteSendError");
 
-      log::info!("Response: {:?}", response);
+      let value = serde_json::from_slice::<Json>(&response).expect("TODO serialize to JSON");
 
-      match response {
-        Ok(value) => JsValue::from_serde(&value).map_err(wasm_error),
-        Err(error) => Err(wasm_error(error)),
-      }
+      Ok(JsValue::from_serde(&value).expect("TODO convert to JsValue"))
+    });
+
+    Ok(promise)
+  }
+
+  #[wasm_bindgen]
+  pub fn shutdown(&self) -> Result<Promise, JsValue> {
+    let mut commander = self.actor.borrow().commander.clone();
+
+    let promise = future_to_promise(async move {
+      
+      commander.shutdown().await.expect("TODO");
+
+      Ok(JsValue::undefined())
     });
 
     Ok(promise)
   }
 }
 
-#[wasm_bindgen]
-pub struct HandlerBuilder {
-  builder: _HandlerBuilder,
-}
+// #[wasm_bindgen]
+// pub struct HandlerBuilder {
+//   builder: _HandlerBuilder,
+// }
 
-#[wasm_bindgen]
-impl HandlerBuilder {
-  #[wasm_bindgen(js_name = addHandlerMethod)]
-  pub fn add_handler_method(self, endpoint: &str, method: js_sys::Function) {
-    let fun = AsyncFn::new(|handler: JsValue, request: JSON| {
-      let method_clone = method.clone();
+// #[wasm_bindgen]
+// impl HandlerBuilder {
+//   #[wasm_bindgen(js_name = addHandlerMethod)]
+//   pub fn add_handler_method(self, endpoint: &str, method: js_sys::Function) {
+//     let fun = AsyncFn::new(|handler: JsValue, request: JSON| {
+//       let method_clone = method.clone();
 
-      async move {
-        // SAFETY: A JSON value can always be successfully converted
-        let val = JsValue::from_serde(&request.0).unwrap();
-        let promise = method_clone.call1(&handler, &val).unwrap();
+//       async move {
+//         // SAFETY: A JSON value can always be successfully converted
+//         let val = JsValue::from_serde(&request.0).unwrap();
+//         let promise = method_clone.call1(&handler, &val).unwrap();
 
-        let promise = js_sys::Promise::from(promise);
-        let result = wasm_bindgen_futures::JsFuture::from(promise).await;
+//         let promise = js_sys::Promise::from(promise);
+//         let result = wasm_bindgen_futures::JsFuture::from(promise).await;
 
-        // TODO: Is this correct?
-        match result {
-          Ok(js_val) => JSON(js_val.into_serde().unwrap()),
-          Err(js_val) => JSON(js_val.into_serde().unwrap()),
-        }
-      }
-    });
+//         // TODO: Is this correct?
+//         match result {
+//           Ok(js_val) => JSON(js_val.into_serde().unwrap()),
+//           Err(js_val) => JSON(js_val.into_serde().unwrap()),
+//         }
+//       }
+//     });
 
-    self.builder.add_method("endpoint", fun);
-  }
-}
+//     self.builder.add_method("endpoint", fun);
+//   }
+// }

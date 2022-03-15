@@ -11,6 +11,7 @@ extern "C" {
   fn bytes(this: &Multiaddr) -> Vec<u8>;
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<actor::Multiaddr> for Multiaddr {
   fn into(self) -> actor::Multiaddr {
     let addr_bytes = self.bytes();

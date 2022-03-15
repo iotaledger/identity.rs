@@ -11,6 +11,7 @@ extern "C" {
   fn toBytes(this: &PeerId) -> Vec<u8>;
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<actor::PeerId> for PeerId {
   fn into(self) -> actor::PeerId {
     let addr_bytes = self.toBytes();
