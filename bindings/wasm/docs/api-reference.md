@@ -177,7 +177,6 @@ publishing to the Tangle.
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
@@ -194,6 +193,7 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
@@ -221,17 +221,6 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
 
 <a name="Account+setAlsoKnownAs"></a>
 
@@ -393,6 +382,17 @@ Deletes a verification method if the method exists.
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
 
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -478,10 +478,18 @@ by the [Client](#Client) used to publish it.
 **Kind**: global class  
 
 * [AutoSave](#AutoSave)
-    * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
-    * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
+    * _instance_
+        * [.toJSON()](#AutoSave+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.never()](#AutoSave.never) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.every()](#AutoSave.every) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.batch(number_of_actions)](#AutoSave.batch) ⇒ [<code>AutoSave</code>](#AutoSave)
+        * [.fromJSON(json_value)](#AutoSave.fromJSON) ⇒ [<code>AutoSave</code>](#AutoSave)
 
+<a name="AutoSave+toJSON"></a>
+
+### autoSave.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>AutoSave</code>](#AutoSave)  
 <a name="AutoSave.never"></a>
 
 ### AutoSave.never() ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -504,6 +512,17 @@ Save after every N actions.
 | Param | Type |
 | --- | --- |
 | number_of_actions | <code>number</code> | 
+
+<a name="AutoSave.fromJSON"></a>
+
+### AutoSave.fromJSON(json_value) ⇒ [<code>AutoSave</code>](#AutoSave)
+Deserializes `AutoSave` from a JSON object.
+
+**Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
 
 <a name="ChainState"></a>
 
