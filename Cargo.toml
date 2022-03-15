@@ -4,11 +4,13 @@ members = [
   "identity",
   "identity-comm",
   "identity-account",
+  "identity-account-storage",
   "identity-core",
   "identity-credential",
   "identity-did",
   "identity-diff",
   "identity-iota",
+  "identity-iota-core",
 
   "examples",
 ]

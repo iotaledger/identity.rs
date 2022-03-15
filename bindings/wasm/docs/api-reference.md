@@ -285,6 +285,8 @@ Serializes a `Credential` object as a JSON object.
 <a name="Credential+clone"></a>
 
 ### credential.clone() ⇒ [<code>Credential</code>](#Credential)
+Deep clones the object.
+
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential.extend"></a>
 
@@ -355,6 +357,8 @@ Serializes a `CredentialValidationOptions` as a JSON object.
 <a name="CredentialValidationOptions+clone"></a>
 
 ### credentialValidationOptions.clone() ⇒ [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)
+Deep clones the object.
+
 **Kind**: instance method of [<code>CredentialValidationOptions</code>](#CredentialValidationOptions)  
 <a name="CredentialValidationOptions.default"></a>
 
@@ -583,6 +587,8 @@ Serializes a `DID` as a JSON object.
 <a name="DID+clone"></a>
 
 ### did.clone() ⇒ [<code>DID</code>](#DID)
+Deep clones the object.
+
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
 
@@ -728,6 +734,8 @@ Serializes a `DIDUrl` as a JSON object.
 <a name="DIDUrl+clone"></a>
 
 ### didUrl.clone() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Deep clones the object.
+
 **Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
 <a name="DIDUrl.parse"></a>
 
@@ -892,6 +900,8 @@ Serializes a `DiffMessage` as a JSON object.
 <a name="DiffMessage+clone"></a>
 
 ### diffMessage.clone() ⇒ [<code>DiffMessage</code>](#DiffMessage)
+Deep clones the object.
+
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage.fromJSON"></a>
 
@@ -1419,6 +1429,8 @@ Serializes a `Document` as a JSON object.
 <a name="Document+clone"></a>
 
 ### document.clone() ⇒ [<code>Document</code>](#Document)
+Deep clones the object.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document.fromVerificationMethod"></a>
 
@@ -1545,6 +1557,8 @@ Serializes `DocumentHistory` as a JSON object.
 <a name="DocumentHistory+clone"></a>
 
 ### documentHistory.clone() ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
+Deep clones the object.
+
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory.fromJSON"></a>
 
@@ -1596,6 +1610,8 @@ Returns a reference to the `proof`.
 <a name="DocumentMetadata+clone"></a>
 
 ### documentMetadata.clone() ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
+Deep clones the object.
+
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="Duration"></a>
 
@@ -1887,6 +1903,8 @@ Serializes a `KeyCollection` object as a JSON object.
 <a name="KeyCollection+clone"></a>
 
 ### keyCollection.clone() ⇒ [<code>KeyCollection</code>](#KeyCollection)
+Deep clones the object.
+
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 <a name="KeyCollection.fromJSON"></a>
 
@@ -1953,6 +1971,8 @@ Serializes a `KeyPair` object as a JSON object.
 <a name="KeyPair+clone"></a>
 
 ### keyPair.clone() ⇒ [<code>KeyPair</code>](#KeyPair)
+Deep clones the object.
+
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair.fromBase58"></a>
 
@@ -2014,6 +2034,8 @@ Serializes a `MethodScope` object as a JSON object.
 <a name="MethodScope+clone"></a>
 
 ### methodScope.clone() ⇒ [<code>MethodScope</code>](#MethodScope)
+Deep clones the object.
+
 **Kind**: instance method of [<code>MethodScope</code>](#MethodScope)  
 <a name="MethodScope.VerificationMethod"></a>
 
@@ -2075,6 +2097,8 @@ Serializes a `MethodType` object as a JSON object.
 <a name="MethodType+clone"></a>
 
 ### methodType.clone() ⇒ [<code>MethodType</code>](#MethodType)
+Deep clones the object.
+
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.Ed25519VerificationKey2018"></a>
 
@@ -2136,6 +2160,8 @@ Serializes a `Network` as a JSON object.
 <a name="Network+clone"></a>
 
 ### network.clone() ⇒ [<code>Network</code>](#Network)
+Deep clones the object.
+
 **Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network.tryFromName"></a>
 
@@ -2209,6 +2235,8 @@ Returns a copy of the credentials contained in the presentation.
 <a name="Presentation+clone"></a>
 
 ### presentation.clone() ⇒ [<code>Presentation</code>](#Presentation)
+Deep clones the object.
+
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
 
@@ -2258,6 +2286,8 @@ Serializes a `PresentationValidationOptions` as a JSON object.
 <a name="PresentationValidationOptions+clone"></a>
 
 ### presentationValidationOptions.clone() ⇒ [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)
+Deep clones the object.
+
 **Kind**: instance method of [<code>PresentationValidationOptions</code>](#PresentationValidationOptions)  
 <a name="PresentationValidationOptions.default"></a>
 
@@ -2384,6 +2414,8 @@ Serializes a `ProofPurpose` object as a JSON object.
 <a name="ProofPurpose+clone"></a>
 
 ### proofPurpose.clone() ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
+Deep clones the object.
+
 **Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
 <a name="ProofPurpose.assertionMethod"></a>
 
@@ -2459,6 +2491,8 @@ Serializes a `Receipt` as a JSON object.
 <a name="Receipt+clone"></a>
 
 ### receipt.clone() ⇒ [<code>Receipt</code>](#Receipt)
+Deep clones the object.
+
 **Kind**: instance method of [<code>Receipt</code>](#Receipt)  
 <a name="Receipt.fromJSON"></a>
 
@@ -2573,6 +2607,8 @@ Serializes a `Document` object as a JSON object.
 <a name="ResolvedDocument+clone"></a>
 
 ### resolvedDocument.clone() ⇒ [<code>ResolvedDocument</code>](#ResolvedDocument)
+Deep clones the object.
+
 **Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 <a name="ResolvedDocument.fromJSON"></a>
 
@@ -2852,6 +2888,8 @@ Serializes a `Service` object as a JSON object.
 <a name="Service+clone"></a>
 
 ### service.clone() ⇒ [<code>Service</code>](#Service)
+Deep clones the object.
+
 **Kind**: instance method of [<code>Service</code>](#Service)  
 <a name="Service.fromJSON"></a>
 
@@ -2894,6 +2932,8 @@ Throws an error if any of the options are invalid.
 <a name="SignatureOptions+clone"></a>
 
 ### signatureOptions.clone() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
+Deep clones the object.
+
 **Kind**: instance method of [<code>SignatureOptions</code>](#SignatureOptions)  
 <a name="SignatureOptions.default"></a>
 
@@ -3060,6 +3100,8 @@ Serializes a `VerificationMethod` object as a JSON object.
 <a name="VerificationMethod+clone"></a>
 
 ### verificationMethod.clone() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Deep clones the object.
+
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.newMerkleKey"></a>
 
@@ -3124,6 +3166,8 @@ Serializes a `VerifierOptions` as a JSON object.
 <a name="VerifierOptions+clone"></a>
 
 ### verifierOptions.clone() ⇒ [<code>VerifierOptions</code>](#VerifierOptions)
+Deep clones the object.
+
 **Kind**: instance method of [<code>VerifierOptions</code>](#VerifierOptions)  
 <a name="VerifierOptions.default"></a>
 

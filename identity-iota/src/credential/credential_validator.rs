@@ -1,16 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::credential::errors::CompoundCredentialValidationError;
-use crate::did::IotaDID;
-use crate::document::IotaDocument;
-
-use crate::Result;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_did::verifiable::VerifierOptions;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 use serde::Serialize;
 
 use super::errors::SignerContext;
@@ -18,6 +15,8 @@ use super::errors::ValidationError;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
+use crate::credential::errors::CompoundCredentialValidationError;
+use crate::Result;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -105,7 +104,7 @@ impl CredentialValidator {
   ) -> ValidationUnitResult {
     // try to extract the corresponding issuer from `trusted_issuers`
     let extracted_issuer_result: std::result::Result<&IotaDocument, ValidationError> = {
-      let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse();
+      let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
       match issuer_did {
         Ok(did) => {
           // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
@@ -226,19 +225,17 @@ mod tests {
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
-  use identity_credential::credential::Subject;
-  use identity_did::did::DID;
-  use proptest::proptest;
-
   use identity_core::common::Timestamp;
-
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::SignatureOptions;
+  use identity_credential::credential::Subject;
+  use identity_did::did::DID;
+  use identity_iota_core::document::IotaDocument;
+  use proptest::proptest;
 
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;
-  use crate::document::IotaDocument;
 
   const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
   const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z

@@ -3,7 +3,7 @@
 
 use identity::core::decode_b58;
 use identity::did::DID;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::WasmKeyPair;

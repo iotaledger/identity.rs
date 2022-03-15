@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::borrow::Borrow;
@@ -8,7 +8,8 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use std::collections::HashMap;
 
-use crate::tangle::MessageId;
+use identity_iota_core::tangle::MessageId;
+
 use crate::tangle::TangleRef;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;
@@ -114,7 +115,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::IotaDID;
+  use identity_iota_core::did::IotaDID;
 
   use super::*;
 

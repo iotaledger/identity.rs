@@ -1,11 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
 use identity::core::FromJson;
 use identity::core::Object;
 use identity::core::Timestamp;
 use identity::core::ToJson;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
+use identity_wasm::common::WasmTimestamp;
 use identity_wasm::credential::WasmCredential;
 use identity_wasm::credential::WasmCredentialValidationOptions;
 use identity_wasm::credential::WasmCredentialValidator;
@@ -13,25 +16,22 @@ use identity_wasm::credential::WasmFailFast;
 use identity_wasm::credential::WasmPresentation;
 use identity_wasm::credential::WasmPresentationValidationOptions;
 use identity_wasm::credential::WasmPresentationValidator;
-use identity_wasm::crypto::WasmSignatureOptions;
-use identity_wasm::did::WasmVerifierOptions;
-use js_sys::Array;
-use std::borrow::Cow;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_test::*;
-
-use identity_wasm::common::WasmTimestamp;
 use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyType;
 use identity_wasm::crypto::WasmKeyCollection;
 use identity_wasm::crypto::WasmKeyPair;
+use identity_wasm::crypto::WasmSignatureOptions;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
 use identity_wasm::did::WasmMethodScope;
 use identity_wasm::did::WasmVerificationMethod;
+use identity_wasm::did::WasmVerifierOptions;
 use identity_wasm::error::WasmError;
+use js_sys::Array;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_test::*;
 
 #[wasm_bindgen_test]
 fn test_keypair() {

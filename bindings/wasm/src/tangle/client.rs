@@ -7,12 +7,12 @@ use std::rc::Rc;
 use futures::executor;
 use identity::iota::Client;
 use identity::iota::ClientBuilder;
-use identity::iota::DiffMessage;
-use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
-use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDocument;
+use identity::iota_core::MessageId;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -88,7 +88,9 @@ impl WasmClient {
   /// Publishes a `DiffMessage` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
-    let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let message: MessageId = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     let diff: DiffMessage = diff.0.clone();
     let client: Rc<Client> = self.client.clone();
 
