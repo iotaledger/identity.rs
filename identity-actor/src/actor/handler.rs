@@ -11,8 +11,7 @@ use crate::Actor;
 use crate::ActorRequest;
 use crate::RemoteSendError;
 use crate::RequestContext;
-
-use super::actor_request::private::SyncMode;
+use crate::SyncMode;
 
 /// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]

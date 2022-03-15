@@ -63,10 +63,11 @@ pub struct ActorBuilder {
 
 impl ActorBuilder {
   /// Creates a new `ActorBuilder`.
-  pub fn new() -> Self {
+  pub fn new() -> ActorBuilder {
     Self {
       listening_addresses: vec![],
       keypair: None,
+
       config: ActorConfig::default(),
       handler_map: HashMap::new(),
       object_map: HashMap::new(),
@@ -94,6 +95,18 @@ impl ActorBuilder {
   pub fn timeout(mut self, timeout: Duration) -> Self {
     self.config.timeout = timeout;
     self
+  }
+
+  /// Grants low-level access to the handler map for use in bindings.
+  #[cfg(feature = "primitives")]
+  pub fn handlers(&mut self) -> &mut HandlerMap {
+    &mut self.handler_map
+  }
+
+  /// Grants low-level access to the object map for use in bindings.
+  #[cfg(feature = "primitives")]
+  pub fn objects(&mut self) -> &mut ObjectMap {
+    &mut self.object_map
   }
 
   /// Add a new shared state object and returns a [`HandlerBuilder`] which can be used to
@@ -146,7 +159,13 @@ impl ActorBuilder {
     };
 
     let executor = Box::new(|fut| {
-      tokio::spawn(fut);
+      cfg_if::cfg_if! {
+        if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
+          tokio::spawn(fut);
+        } else {
+          wasm_bindgen_futures::spawn_local(fut);
+        }
+      }
     });
 
     let mut swarm: Swarm<RequestResponse<ActorRequestResponseCodec>> = {

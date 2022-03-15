@@ -56,7 +56,10 @@ pub(crate) struct ActorState {
 /// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Clone)]
 pub struct Actor {
+  #[cfg(not(feature = "primitives"))]
   pub(crate) commander: NetCommander,
+  #[cfg(feature = "primitives")]
+  pub commander: NetCommander,
   pub(crate) state: Arc<ActorState>,
 }
 
@@ -108,7 +111,15 @@ impl Actor {
 
   #[inline(always)]
   pub(crate) fn handle_request<STR: InvocationStrategy>(mut self, request: InboundRequest) {
-    let _ = tokio::spawn(async move {
+    cfg_if::cfg_if! {
+      if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
+        let spawn = tokio::spawn;
+      } else {
+        let spawn = wasm_bindgen_futures::spawn_local;
+      }
+    }
+
+    let _ = spawn(async move {
       if self.state.handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
 
@@ -441,7 +452,7 @@ pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
 pub(crate) type ObjectId = Uuid;
 
 /// A [`RequestHandler`] and the id of its associated shared state object.
-pub(crate) struct HandlerObject {
+pub struct HandlerObject {
   handler: Box<dyn RequestHandler>,
   object_id: ObjectId,
 }

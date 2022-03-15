@@ -4,7 +4,7 @@
 #[allow(clippy::module_inception)]
 mod actor;
 mod actor_builder;
-mod actor_request;
+pub(crate) mod actor_request;
 mod config;
 mod endpoint;
 mod errors;
@@ -17,10 +17,10 @@ pub use actor::Actor;
 pub(crate) use actor::HandlerObject;
 pub use actor_builder::ActorBuilder;
 pub use actor_builder::HandlerBuilder;
-pub(crate) use actor_request::private::SyncMode;
 pub use actor_request::ActorRequest;
 pub use actor_request::Asynchronous;
 pub use actor_request::RequestMode;
+pub(crate) use actor_request::SyncMode;
 pub use actor_request::Synchronous;
 pub(crate) use config::ActorConfig;
 pub use endpoint::Endpoint;

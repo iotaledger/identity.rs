@@ -11,8 +11,7 @@ use crate::Actor;
 use crate::ActorRequest;
 use crate::RemoteSendError;
 use crate::RequestContext;
-
-use super::actor_request::private::SyncMode;
+use crate::SyncMode;
 
 /// A future whose output is an `Any` trait object.
 pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;

@@ -36,4 +36,4 @@ impl RequestMessage {
 }
 
 #[derive(Debug)]
-pub struct ResponseMessage(pub(crate) Vec<u8>);
+pub struct ResponseMessage(pub Vec<u8>);

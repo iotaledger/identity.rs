@@ -12,6 +12,7 @@ description = "A peer-to-peer identity communication framework"
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
+cfg-if = { version = "1.0", default-features = false }
 dashmap = { version = "5.1", default-features = false }
 futures = { version = "0.3", default-features = false }
 identity-account = { path = "../identity-account", default-features = false, optional = true }
@@ -28,6 +29,7 @@ uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 libp2p = { version = "*", features = ["wasm-bindgen", "wasm-ext", "wasm-ext-websocket"] }
 uuid = { version = "*", features = ["wasm-bindgen"] }
+wasm-bindgen-futures = { version = "0.4.29", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
@@ -39,4 +41,8 @@ harness = false
 
 [features]
 account = ["identity-account/mem-client", "identity-account/async"]
+# A feature that exposes lower-level building blocks of the actor,
+# intended for bindings, but not for general use.
+# Changes to types exposed under this feature are **not** covered by semver.
+primitives = []
 default = ["account"]

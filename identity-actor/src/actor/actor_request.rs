@@ -8,8 +8,6 @@ use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Serialize;
 
-use self::private::SyncMode;
-
 /// Used to represent the synchronicity of a request at runtime.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RequestMode {
@@ -22,28 +20,28 @@ pub struct Synchronous;
 /// A marker to indicate that an [`ActorRequest`] type is handled asynchronously.
 pub struct Asynchronous;
 
-pub(crate) mod private {
-  use crate::RequestMode;
+/// Used to represent the synchronicity of a request at compile-time.
+pub trait SyncMode: private::Sealed {
+  fn request_mode() -> RequestMode;
+}
 
-  use super::Asynchronous;
-  use super::Synchronous;
-
-  /// Used to represent the synchronicity of a request at compile-time.
-  pub trait SyncMode {
-    fn request_mode() -> RequestMode;
+impl SyncMode for Synchronous {
+  fn request_mode() -> RequestMode {
+    RequestMode::Synchronous
   }
+}
 
-  impl SyncMode for Synchronous {
-    fn request_mode() -> RequestMode {
-      RequestMode::Synchronous
-    }
+impl SyncMode for Asynchronous {
+  fn request_mode() -> RequestMode {
+    RequestMode::Asynchronous
   }
+}
 
-  impl SyncMode for Asynchronous {
-    fn request_mode() -> RequestMode {
-      RequestMode::Asynchronous
-    }
-  }
+mod private {
+  pub trait Sealed {}
+
+  impl Sealed for super::Asynchronous {}
+  impl Sealed for super::Synchronous {}
 }
 
 // A request that can be sent to an actor with the expected response being of type `Response`.
