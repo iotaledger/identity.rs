@@ -4,7 +4,6 @@
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::result::Result as StdResult;
-use std::sync::PoisonError;
 
 use identity::account::UpdateError;
 use identity::account_storage::Error as AccountStorageError;
@@ -191,15 +190,6 @@ impl From<identity::iota::CompoundPresentationValidationError> for WasmError<'_>
   fn from(error: identity::iota::CompoundPresentationValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundPresentationValidationError"),
-      message: Cow::Owned(error.to_string()),
-    }
-  }
-}
-
-impl<T> From<PoisonError<T>> for WasmError<'_> {
-  fn from(error: PoisonError<T>) -> Self {
-    Self {
-      name: Cow::Borrowed("Mutex::PoisonError"),
       message: Cow::Owned(error.to_string()),
     }
   }

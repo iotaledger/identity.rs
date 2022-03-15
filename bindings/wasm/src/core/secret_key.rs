@@ -9,23 +9,22 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
-use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen(js_name = PrivateKey, inspectable)]
-pub struct WasmPrivateKey(pub(crate) ed25519::SecretKey);
+#[wasm_bindgen(js_name = Ed25519PrivateKey)]
+pub struct WasmEd25519PrivateKey(pub(crate) ed25519::SecretKey);
 
-#[wasm_bindgen(js_class = PrivateKey)]
-impl WasmPrivateKey {
+#[wasm_bindgen(js_class = Ed25519PrivateKey)]
+impl WasmEd25519PrivateKey {
   /// Create a new `PrivateKey` from a base58 encoded string.
-  #[wasm_bindgen(js_name = "fromBase58String")]
-  pub fn from_base58_string(private_key: &str) -> Result<WasmPrivateKey> {
-    let private_key: PrivateKey = decode_b58(private_key).map_err(wasm_error)?.into();
+  #[wasm_bindgen(js_name = "fromBase58")]
+  pub fn from_base58(private_key: &str) -> Result<WasmEd25519PrivateKey> {
+    let private_key: PrivateKey = decode_b58(private_key).wasm_result()?.into();
     let private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
       .map_err(|err| AccountStorageError::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))
       .wasm_result()?;
-    Ok(WasmPrivateKey(ed25519::SecretKey::from_bytes(private_key_bytes)))
+    Ok(WasmEd25519PrivateKey(ed25519::SecretKey::from_bytes(private_key_bytes)))
   }
 
   /// Returns a base58 encoded string that represents the PublicKey.

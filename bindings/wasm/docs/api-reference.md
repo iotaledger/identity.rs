@@ -49,6 +49,8 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
+<dt><a href="#Ed25519PrivateKey">Ed25519PrivateKey</a></dt>
+<dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#Generation">Generation</a></dt>
@@ -79,8 +81,6 @@ the configuration of previously built accounts.</p>
 <dd><p>Options to declare validation criteria when validating presentation.</p>
 </dd>
 <dt><a href="#PresentationValidator">PresentationValidator</a></dt>
-<dd></dd>
-<dt><a href="#PrivateKey">PrivateKey</a></dt>
 <dd></dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
 <dd><p>Associates a purpose with a <code>Signature</code>.</p>
@@ -125,8 +125,6 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -152,6 +150,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -175,7 +175,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -193,23 +192,10 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -382,6 +368,17 @@ Deletes a verification method if the method exists.
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
 
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -393,16 +390,19 @@ Adds a new verification method to the DID document.
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
 
-<a name="Account+createService"></a>
+<a name="Account+attachMethodRelationships"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>CreateServiceOptions</code> | 
+| options | <code>AttachMethodRelationshipOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -2140,6 +2140,11 @@ Deserializes a `Duration` from a JSON object.
 
 ## Ed25519
 **Kind**: global class  
+
+* [Ed25519](#Ed25519)
+    * [.sign(message, key)](#Ed25519.sign) ⇒ <code>Uint8Array</code>
+    * [.verify(message, signature, key)](#Ed25519.verify)
+
 <a name="Ed25519.sign"></a>
 
 ### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
@@ -2151,6 +2156,45 @@ Signs the given `message` with a base58 encoded `key`.
 | --- | --- |
 | message | <code>Uint8Array</code> | 
 | key | <code>string</code> | 
+
+<a name="Ed25519.verify"></a>
+
+### Ed25519.verify(message, signature, key)
+**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
+
+| Param | Type |
+| --- | --- |
+| message | <code>Uint8Array</code> | 
+| signature | <code>Uint8Array</code> | 
+| key | <code>string</code> | 
+
+<a name="Ed25519PrivateKey"></a>
+
+## Ed25519PrivateKey
+**Kind**: global class  
+
+* [Ed25519PrivateKey](#Ed25519PrivateKey)
+    * _instance_
+        * [.publicKey()](#Ed25519PrivateKey+publicKey) ⇒ <code>string</code>
+    * _static_
+        * [.fromBase58(private_key)](#Ed25519PrivateKey.fromBase58) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
+
+<a name="Ed25519PrivateKey+publicKey"></a>
+
+### ed25519PrivateKey.publicKey() ⇒ <code>string</code>
+Returns a base58 encoded string that represents the PublicKey.
+
+**Kind**: instance method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
+<a name="Ed25519PrivateKey.fromBase58"></a>
+
+### Ed25519PrivateKey.fromBase58(private_key) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
+Create a new `PrivateKey` from a base58 encoded string.
+
+**Kind**: static method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
+
+| Param | Type |
+| --- | --- |
+| private_key | <code>string</code> | 
 
 <a name="ExplorerUrl"></a>
 
@@ -3038,34 +3082,6 @@ Validates the semantic structure of the `Presentation`.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
-<a name="PrivateKey"></a>
-
-## PrivateKey
-**Kind**: global class  
-
-* [PrivateKey](#PrivateKey)
-    * _instance_
-        * [.publicKey()](#PrivateKey+publicKey) ⇒ <code>string</code>
-    * _static_
-        * [.fromBase58String(private_key)](#PrivateKey.fromBase58String) ⇒ [<code>PrivateKey</code>](#PrivateKey)
-
-<a name="PrivateKey+publicKey"></a>
-
-### privateKey.publicKey() ⇒ <code>string</code>
-Returns a base58 encoded string that represents the PublicKey.
-
-**Kind**: instance method of [<code>PrivateKey</code>](#PrivateKey)  
-<a name="PrivateKey.fromBase58String"></a>
-
-### PrivateKey.fromBase58String(private_key) ⇒ [<code>PrivateKey</code>](#PrivateKey)
-Create a new `PrivateKey` from a base58 encoded string.
-
-**Kind**: static method of [<code>PrivateKey</code>](#PrivateKey)  
-
-| Param | Type |
-| --- | --- |
-| private_key | <code>string</code> | 
-
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
@@ -3927,10 +3943,6 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## MethodRelationship
 **Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -3977,6 +3989,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 

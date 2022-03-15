@@ -47,5 +47,3 @@ npm run example:account -- create_did
 ## Browser
 
 Although the examples should work in browser environment, we don't provide a browser project as for now.
-
-TODO: add browser account examples.
