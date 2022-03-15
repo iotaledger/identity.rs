@@ -159,7 +159,9 @@ impl Storage for WasmStorage {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
-    let signature: Signature = js_value.into_serde().map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    let signature: Signature = js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(signature)
   }
 
@@ -178,7 +180,9 @@ impl Storage for WasmStorage {
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }
-    let chain_state: ChainState = js_value.into_serde().map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    let chain_state: ChainState = js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(Some(chain_state))
   }
 
@@ -197,7 +201,9 @@ impl Storage for WasmStorage {
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }
-    let state: IdentityState = js_value.into_serde().map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    let state: IdentityState = js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(Some(state))
   }
 
