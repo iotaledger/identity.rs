@@ -45,8 +45,6 @@ impl WasmKeyCollection {
   }
 
   /// Returns the number of keys in the collection.
-  // TODO: Is it OK to have a getter here? I think this will be similar to how one normally gets the length
-  // of a collection in Javascript?
   #[wasm_bindgen(getter)]
   pub fn length(&self) -> usize {
     self.0.len()
