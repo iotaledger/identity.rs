@@ -2,17 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::PublicKey;
-#[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+#[cfg(feature = "bindings-derive")]
 use serde::Deserialize;
-#[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+#[cfg(feature = "bindings-derive")]
 use serde::Serialize;
 
 /// A digital signature and associated public key.
-#[cfg_attr(
-  all(target_arch = "wasm32", not(target_os = "wasi")),
-  derive(Clone, Debug, Deserialize, Serialize)
-)]
-#[cfg_attr(not(all(target_arch = "wasm32", not(target_os = "wasi"))), derive(Clone, Debug))]
+#[cfg_attr(feature = "bindings-derive", derive(Clone, Deserialize, Serialize))]
+#[cfg_attr(not(feature = "bindings-derive"), derive(Clone))]
 pub struct Signature {
   pub(crate) pkey: PublicKey,
   pub(crate) data: Vec<u8>,
