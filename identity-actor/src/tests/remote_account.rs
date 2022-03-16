@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_account::identity::IdentitySetup;
-use identity_iota::document::IotaDocument;
+use identity_iota_core::document::IotaDocument;
 
 use crate::remote_account::IdentityCreate;
 use crate::remote_account::IdentityGet;

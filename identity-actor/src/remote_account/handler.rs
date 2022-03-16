@@ -9,8 +9,8 @@ use crate::RequestContext;
 use dashmap::DashMap;
 use identity_account::account::Account;
 use identity_account::account::AccountBuilder;
-use identity_iota::did::IotaDID;
-use identity_iota::document::IotaDocument;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 use tokio::sync::Mutex;
 
 use super::requests::IdentityCreate;

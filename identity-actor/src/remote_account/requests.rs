@@ -4,8 +4,8 @@
 use std::borrow::Cow;
 
 use identity_account::identity::IdentitySetup;
-use identity_iota::did::IotaDID;
-use identity_iota::document::IotaDocument;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 

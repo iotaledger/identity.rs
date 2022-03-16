@@ -5,7 +5,6 @@
 
 mod base_encoding;
 mod ed25519;
-pub mod public_key_serde;
 
 pub use self::base_encoding::*;
 pub use self::ed25519::*;

@@ -6,7 +6,7 @@ use identity_core::crypto::KeyType;
 use crate::types::MethodSecret;
 
 /// Configuration used to create a new Identity.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct IdentitySetup {
   pub(crate) key_type: KeyType,
   // TODO: Impl Serialize for MethodSecret eventually
