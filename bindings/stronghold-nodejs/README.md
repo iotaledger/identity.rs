@@ -37,6 +37,11 @@ npm run build
 ```
 If you linked the Wasm bindings, don't forget to unlink before packaging the module.
 
+```bash
+npm unlink --no-save @iota/identity-wasm
+npm install
+```
+
 ## Minimum Requirements
 
 The minimum supported version for node is: `v16.0.0`
