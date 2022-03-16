@@ -30,11 +30,11 @@ export class MemStore implements Storage {
         this._vaults = new Map();
     }
 
-    public async setPassword(_encryptionKey: Uint8Array): Promise<void> {}
+    public async setPassword(_encryptionKey: Uint8Array) {}
 
-    public async flushChanges(): Promise<void> {}
+    public async flushChanges() {}
 
-    public async keyNew(did: DID, keyLocation: KeyLocation): Promise<string> {
+    public async keyNew(did: DID, keyLocation: KeyLocation) {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
             throw new Error('Unsuported Method')
         }
@@ -50,7 +50,7 @@ export class MemStore implements Storage {
         return publicKey
     }
 
-    public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string): Promise<string> {
+    public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string) {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
             throw new Error('Unsuported Method')
         }
@@ -67,7 +67,7 @@ export class MemStore implements Storage {
         return publicKey
     }
 
-    public async keyExists(did: DID, keyLocation: KeyLocation): Promise<boolean> {
+    public async keyExists(did: DID, keyLocation: KeyLocation) {
         const vault = this._vaults.get(did);
         if (vault) {
             return vault.has(keyLocation)
@@ -75,7 +75,7 @@ export class MemStore implements Storage {
         return false
     }
 
-    public async keyGet(did: DID, keyLocation: KeyLocation): Promise<string> {
+    public async keyGet(did: DID, keyLocation: KeyLocation) {
         const vault = this._vaults.get(did);
         if (vault) {
             const keyPair = vault.get(keyLocation);
@@ -87,14 +87,14 @@ export class MemStore implements Storage {
         throw new Error('DID not found')
     }
 
-    public async keyDel(did: DID, keyLocation: KeyLocation): Promise<void> {
+    public async keyDel(did: DID, keyLocation: KeyLocation) {
         const vault = this._vaults.get(did);
         if (vault) {
             vault.delete(keyLocation);
         }
     }
 
-    public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
+    public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array) {
         const vault = this._vaults.get(did);
         if (!vault) {
             throw new Error('DID not found')
@@ -110,23 +110,23 @@ export class MemStore implements Storage {
         return new Signature(keyPair.public, signature)
     }
 
-    public async chainState(did: DID): Promise<ChainState> {
+    public async chainState(did: DID) {
         return this._chainStates.get(did);
     }
 
-    public async setChainState(did: DID, chainState: ChainState): Promise<void> {
+    public async setChainState(did: DID, chainState: ChainState) {
         this._chainStates.set(did, chainState);
     }
 
-    public async state(did: DID): Promise<IdentityState> {
+    public async state(did: DID) {
         return this._states.get(did)
     }
 
-    public async setState(did: DID, identityState: IdentityState): Promise<void> {
+    public async setState(did: DID, identityState: IdentityState) {
         this._states.set(did, identityState);
     }
 
-    public async purge(did: DID): Promise<void> {
+    public async purge(did: DID) {
         this._chainStates.delete(did);
         this._states.delete(did);
         this._vaults.delete(did);
