@@ -58,9 +58,7 @@ impl NapiStronghold {
   #[napi]
   pub async fn set_password(&self, password: Vec<u32>) -> Result<()> {
     let password: [u8; 32] = password
-      .into_iter()
-      .filter_map(|n| u8::try_from(n).ok())
-      .collect::<Vec<u8>>()
+      .try_into_bytes()?
       .try_into()
       .map_err(|_| Error::from_reason("Invalid password type. Expected [u8; 32]".to_owned()))?;
     self.0.set_password(password).await.napi_result()
@@ -107,13 +105,10 @@ impl NapiStronghold {
   /// Signs `data` with the private key at the specified `location`.
   #[napi]
   pub async fn key_sign(&self, did: &NapiDID, location: &NapiKeyLocation, data: Vec<u32>) -> Result<NapiSignature> {
-    let data_u8: Vec<u8> = data.iter().filter_map(|n| u8::try_from(*n).ok()).collect();
-    if data_u8.len() != data.len() {
-      return Err(Error::from_reason(String::from("Invalid data type. Expected Vec<u8>")));
-    }
+    let data: Vec<u8> = data.try_into_bytes()?;
     self
       .0
-      .key_sign(&did.0, &location.0, data_u8)
+      .key_sign(&did.0, &location.0, data)
       .await
       .napi_result()
       .map(|signature| signature.into())
@@ -163,5 +158,19 @@ impl NapiStronghold {
   #[napi]
   pub async fn purge(&self, did: &NapiDID) -> Result<()> {
     self.0.purge(&did.0).await.napi_result()
+  }
+}
+
+trait TryIntoBytes {
+  fn try_into_bytes(self) -> Result<Vec<u8>>;
+}
+
+impl TryIntoBytes for Vec<u32> {
+  fn try_into_bytes(self) -> Result<Vec<u8>> {
+    self
+      .into_iter()
+      .map(u8::try_from)
+      .collect::<std::result::Result<Vec<u8>, _>>()
+      .map_err(|err| Error::from_reason(format!("invalid data type, expected UInt8Array: {}", err)))
   }
 }

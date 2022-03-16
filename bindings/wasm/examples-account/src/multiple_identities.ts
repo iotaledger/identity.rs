@@ -10,7 +10,7 @@ import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm
 async function multipleIdentities(storage?: Storage) {
 
     // Create an AccountBuilder to make it easier to create multiple identities.
-    // Every account created from the builder will use the same storage - the default memory storage in this case.
+    // Every account created from the builder will use the same storage.
     let builder = new AccountBuilder({
         storage,
     });
@@ -32,20 +32,16 @@ async function multipleIdentities(storage?: Storage) {
     // We can load the identity from storage into an account using the builder.
     let account1Reconstructed = await builder.loadIdentity(did1);
 
-    // Now we can modify the identity.
-    await account1Reconstructed.createMethod({
+    // Now we can make modifications to the identity.
+    // We can even do so concurrently.
+    const account1Promise = account1Reconstructed.createMethod({
         fragment: "my_key"
     })
+    const account2Promise = account2.createMethod({
+        fragment: "my_other_key"
+    })
 
-    // Note that there can only ever be one account that manages the same did.
-    // If we attempt to create another account that manages the same did as account2, we get an error.
-    try {
-        await builder.loadIdentity(account2.did());
-    } catch (e) {
-        if (e instanceof Error) {
-            console.assert(e.name === "IdentityInUse")
-        }
-    }
+    await Promise.all([account1Promise, account2Promise]);
 
     // Print the Explorer URL for the DID.
     let did = account1Reconstructed.did().toString();
