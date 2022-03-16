@@ -2502,6 +2502,7 @@ Deserializes a `KeyCollection` object from a JSON object.
         * [.fragmentName()](#KeyLocation+fragmentName) ⇒ <code>string</code>
         * [.generation()](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
         * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
+        * [.toString()](#KeyLocation+toString) ⇒ <code>string</code>
     * _static_
         * [.fromJSON(json_value)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
 
@@ -2544,6 +2545,10 @@ Returns a copy of the integration generation when this key was created.
 ### keyLocation.toJSON() ⇒ <code>any</code>
 Serializes `Signature` as a JSON object.
 
+**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+toString"></a>
+
+### keyLocation.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation.fromJSON"></a>
 
@@ -2773,6 +2778,7 @@ Supported verification method types.
 * [MethodType](#MethodType)
     * _instance_
         * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
+        * [.toString()](#MethodType+toString) ⇒ <code>string</code>
         * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
@@ -2784,6 +2790,10 @@ Supported verification method types.
 ### methodType.toJSON() ⇒ <code>any</code>
 Serializes a `MethodType` object as a JSON object.
 
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType+toString"></a>
+
+### methodType.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+clone"></a>
 

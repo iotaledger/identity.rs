@@ -54,6 +54,11 @@ impl WasmKeyLocation {
   pub fn from_json(json_value: JsValue) -> Result<WasmKeyLocation> {
     json_value.into_serde().map(Self).wasm_result()
   }
+
+  #[wasm_bindgen(js_name = toString)]
+  pub fn to_string(&self) -> String {
+    self.0.to_string()
+  }
 }
 
 impl From<WasmKeyLocation> for KeyLocation {

@@ -10,7 +10,7 @@ import {
     KeyPair,
     KeyType,
     MethodType,
-    PrivateKey,
+    Ed25519PrivateKey,
     Signature,
 } from '../../../node/identity_wasm.js';
 
@@ -20,9 +20,9 @@ import type { Storage } from '../../../node/identity_wasm.js';
 export class MemStore implements Storage {
     // TODO: check if map key comparison works as-expected.
     //       I.e. does a parsed/deserialized DID map to the same DID object?
-    private _chainStates: Map<DID, ChainState>;
-    private _states: Map<DID, IdentityState>;
-    private _vaults: Map<DID, Map<KeyLocation, KeyPair>>;
+    private _chainStates: Map<string, ChainState>;
+    private _states: Map<string, IdentityState>;
+    private _vaults: Map<string, Map<string, KeyPair>>;
 
     constructor() {
         this._chainStates = new Map();
@@ -35,52 +35,52 @@ export class MemStore implements Storage {
     public async flushChanges() {}
 
     public async keyNew(did: DID, keyLocation: KeyLocation) {
-        if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
+        if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
             throw new Error('Unsuported Method')
         }
         const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-        const publicKey: string = keyPair.public;
-        const vault = this._vaults.get(did);
+        const publicKey: string = keyPair.public();
+        const vault = this._vaults.get(did.toString());
         if (vault) {
-            vault.set(keyLocation, keyPair);
+            vault.set(keyLocation.toString(), keyPair);
         } else {
-            const newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this._vaults.set(did, newVault);
+            const newVault: Map<string, KeyPair> = new Map([[keyLocation.toString(), keyPair]]);
+            this._vaults.set(did.toString(), newVault);
         }
         return publicKey
     }
 
     public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string) {
-        if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
+        if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
             throw new Error('Unsuported Method')
         }
-        const secretKey: PrivateKey = PrivateKey.fromBase58String(privateKey);
+        const secretKey: Ed25519PrivateKey = Ed25519PrivateKey.fromBase58(privateKey);
         const publicKey: string = secretKey.publicKey();
         const keyPair: KeyPair = KeyPair.fromBase58(KeyType.Ed25519, privateKey, publicKey);
-        const vault = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
         if (vault) {
-            vault.set(keyLocation, keyPair);
+            vault.set(keyLocation.toString(), keyPair);
         } else {
-            const newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this._vaults.set(did, newVault);
+            const newVault: Map<string, KeyPair> = new Map([[keyLocation.toString(), keyPair]]);
+            this._vaults.set(did.toString(), newVault);
         }
         return publicKey
     }
 
     public async keyExists(did: DID, keyLocation: KeyLocation) {
-        const vault = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
         if (vault) {
-            return vault.has(keyLocation)
+            return vault.has(keyLocation.toString())
         }
         return false
     }
 
     public async keyGet(did: DID, keyLocation: KeyLocation) {
-        const vault = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
         if (vault) {
-            const keyPair = vault.get(keyLocation);
+            const keyPair = vault.get(keyLocation.toString());
             if (keyPair) {
-                return keyPair.public
+                return keyPair.public()
             }
             throw new Error('Key location not found')
         }
@@ -88,48 +88,48 @@ export class MemStore implements Storage {
     }
 
     public async keyDel(did: DID, keyLocation: KeyLocation) {
-        const vault = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
         if (vault) {
-            vault.delete(keyLocation);
+            vault.delete(keyLocation.toString());
         }
     }
 
     public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array) {
-        const vault = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
         if (!vault) {
             throw new Error('DID not found')
         }
-        const keyPair = vault.get(keyLocation);
+        const keyPair = vault.get(keyLocation.toString());
         if (!keyPair) {
             throw new Error('Key location not found')
         }
-        if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
+        if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
             throw new Error('Unsuported Method')
         }
-        const signature: Uint8Array = Ed25519.sign(data, keyPair.private);
-        return new Signature(keyPair.public, signature)
+        const signature: Uint8Array = Ed25519.sign(data, keyPair.private());
+        return new Signature(keyPair.public(), signature)
     }
 
     public async chainState(did: DID) {
-        return this._chainStates.get(did);
+        return this._chainStates.get(did.toString());
     }
 
     public async setChainState(did: DID, chainState: ChainState) {
-        this._chainStates.set(did, chainState);
+        this._chainStates.set(did.toString(), chainState);
     }
 
     public async state(did: DID) {
-        return this._states.get(did)
+        return this._states.get(did.toString())
     }
 
     public async setState(did: DID, identityState: IdentityState) {
-        this._states.set(did, identityState);
+        this._states.set(did.toString(), identityState);
     }
 
     public async purge(did: DID) {
-        this._chainStates.delete(did);
-        this._states.delete(did);
-        this._vaults.delete(did);
+        this._chainStates.delete(did.toString());
+        this._states.delete(did.toString());
+        this._vaults.delete(did.toString());
     }
 }
 

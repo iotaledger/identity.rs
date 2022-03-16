@@ -41,6 +41,11 @@ impl WasmMethodType {
   pub fn from_json(json: &JsValue) -> Result<WasmMethodType> {
     json.into_serde().map(Self).wasm_result()
   }
+
+  #[wasm_bindgen(js_name = toString)]
+  pub fn to_string(&self) -> String {
+    self.0.to_string()
+  }
 }
 
 impl From<WasmMethodType> for MethodType {

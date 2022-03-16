@@ -7,7 +7,7 @@ import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
 import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
-import { unchecked } from "./unchecked";
+import { unchecked } from "./advanced/unchecked";
 
 async function main() {
     //Check if an example is mentioned
