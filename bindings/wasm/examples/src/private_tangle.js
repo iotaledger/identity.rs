@@ -32,20 +32,20 @@ async function privateTangle(restURL, networkName) {
 
     // Create a DID with the network set explicitly.
     // This will result in a DID prefixed by `did:iota:tangle`.
-    const doc = new Document(key, network.name);
+    const doc = new Document(key, network.name());
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id);
+    doc.signSelf(key, doc.defaultSigningMethod().id());
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc);
 
     // Make sure the DID can be resolved on the private tangle
-    const resolved = await client.resolve(doc.id);
+    const resolved = await client.resolve(doc.id());
 
     console.log(`Published the DID document to the private tangle:`);
     console.log(resolved);
-    console.log(`Explore the DID Document: ${explorer.resolverUrl(doc.id)}`);
+    console.log(`Explore the DID Document: ${explorer.resolverUrl(doc.id())}`);
 
     // Return the results.
     return {key, resolved, receipt};

@@ -20,7 +20,7 @@ async function createVC(clientConfig) {
 
     // Prepare a credential subject indicating the degree earned by Alice
     let credentialSubject = {
-        id: alice.doc.id.toString(),
+        id: alice.doc.id().toString(),
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
@@ -31,15 +31,15 @@ async function createVC(clientConfig) {
     const unsignedVc = Credential.extend({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
-        issuer: issuer.doc.id.toString(),
+        issuer: issuer.doc.id().toString(),
         credentialSubject,
     });
 
     // Sign the credential with the Issuer's newKey
     const signedVc = issuer.doc.signCredential(unsignedVc, {
-        method: issuer.doc.id.toString() + "#newKey",
-        public: issuer.newKey.public,
-        private: issuer.newKey.private,
+        method: issuer.doc.id().toString() + "#newKey",
+        public: issuer.newKey.public(),
+        private: issuer.newKey.private(),
     }, SignatureOptions.default());
 
     // Before sending this credential to the holder the issuer wants to validate that some properties

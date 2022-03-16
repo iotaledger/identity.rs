@@ -54,32 +54,32 @@ impl WasmVerificationMethod {
     }
   }
 
-  /// Returns the `id` `DIDUrl` of the `VerificationMethod` object.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
-  /// Returns the `controller` `DID` of the `VerificationMethod` object.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `controller` `DID` of the `VerificationMethod` object.
+  #[wasm_bindgen]
   pub fn controller(&self) -> WasmDID {
     WasmDID::from(self.0.controller().clone())
   }
 
-  /// Returns the `controller` `DID` of the `VerificationMethod` object.
-  #[wasm_bindgen(setter = controller)]
+  /// Sets the `controller` `DID` of the `VerificationMethod` object.
+  #[wasm_bindgen(js_name = SetController)]
   pub fn set_controller(&mut self, did: &WasmDID) {
     *self.0.controller_mut() = did.0.clone();
   }
 
-  /// Returns the `VerificationMethod` type.
-  #[wasm_bindgen(getter = type)]
+  /// Returns a copy of the `VerificationMethod` type.
+  #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> String {
     self.0.key_type().as_str().into()
   }
 
-  /// Returns the `VerificationMethod` public key data.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `VerificationMethod` public key data.
+  #[wasm_bindgen]
   pub fn data(&self) -> Result<JsValue> {
     JsValue::from_serde(self.0.key_data()).wasm_result()
   }

@@ -97,8 +97,8 @@ impl WasmDocument {
   // Properties
   // ===========================================================================
 
-  /// Returns the DID Document `id`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the DID Document `id`.
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
   }
@@ -596,47 +596,47 @@ impl WasmDocument {
   // Metadata
   // ===========================================================================
 
-  /// Returns the metadata associated with this document.
+  /// Returns a copy of the metadata associated with this document.
   ///
-  /// NOTE: clones the data. Use the `metadataCreated`, `metadataUpdated`,
-  /// `metadataPreviousMessageId`, `metadataProof` properties instead.
-  #[wasm_bindgen(getter)]
+  /// NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
+  /// `metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
+  #[wasm_bindgen]
   pub fn metadata(&self) -> WasmDocumentMetadata {
     WasmDocumentMetadata::from(self.0.metadata.clone())
   }
 
-  /// Returns the timestamp of when the DID document was created.
-  #[wasm_bindgen(getter = metadataCreated)]
+  /// Returns a copy of the timestamp of when the DID document was created.
+  #[wasm_bindgen(js_name = metadataCreated)]
   pub fn metadata_created(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.metadata.created)
   }
 
   /// Sets the timestamp of when the DID document was created.
-  #[wasm_bindgen(setter = metadataCreated)]
+  #[wasm_bindgen(js_name = setMetadataCreated)]
   pub fn set_metadata_created(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.created = timestamp.0;
   }
 
-  /// Returns the timestamp of the last DID document update.
-  #[wasm_bindgen(getter = metadataUpdated)]
+  /// Returns a copy of the timestamp of the last DID document update.
+  #[wasm_bindgen(js_name = metadataUpdated)]
   pub fn metadata_updated(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.metadata.updated)
   }
 
   /// Sets the timestamp of the last DID document update.
-  #[wasm_bindgen(setter = metadataUpdated)]
+  #[wasm_bindgen(js_name = setMetadataUpdated)]
   pub fn set_metadata_updated(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.updated = timestamp.0;
   }
 
-  /// Returns the previous integration chain message id.
-  #[wasm_bindgen(getter = metadataPreviousMessageId)]
+  /// Returns a copy of the previous integration chain message id.
+  #[wasm_bindgen(js_name = metadataPreviousMessageId)]
   pub fn metadata_previous_message_id(&self) -> String {
     self.0.metadata.previous_message_id.to_string()
   }
 
   /// Sets the previous integration chain message id.
-  #[wasm_bindgen(setter = metadataPreviousMessageId)]
+  #[wasm_bindgen(js_name = setMetadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
       .map_err(identity::iota_core::Error::InvalidMessage)
@@ -645,8 +645,8 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns the `proof` object.
-  #[wasm_bindgen(getter = metadataProof)]
+  /// Returns a copy of the `proof` object.
+  #[wasm_bindgen(js_name = metadataProof)]
   pub fn metadata_proof(&self) -> Result<JsValue> {
     // TODO: implement proper bindings for the proof
     match &self.0.metadata.proof {
