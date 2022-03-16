@@ -7,8 +7,8 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-identity-account-storage = { version = "=0.5.0-dev.4", path = "../../identity-account-storage", default-features = false, features = ["stronghold", "send-sync-storage"] }
-identity-core = { version = "=0.5.0-dev.4", path = "../../identity-core", default-features = false }
+identity-account-storage = { version = "=0.5.0-dev.4", path = "../../identity-account-storage", default-features = false, features = ["stronghold", "send-sync-storage", "bindings-derive"] }
+identity-core = { version = "=0.5.0-dev.4", path = "../../identity-core", default-features = false, features = ["bindings-derive"] }
 identity-iota-core = { version = "=0.5.0-dev.4", path = "../../identity-iota-core", default-features = false }
 napi = { version = "2.0.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
 napi-derive = { version = "2.0.7" }
