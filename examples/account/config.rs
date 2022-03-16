@@ -45,8 +45,9 @@ async fn main() -> Result<()> {
       // Configure a client for the private network
       ClientBuilder::new()
         .network(network.clone())
-        .primary_node(private_node_url, None, None)?
-        // .permanode(<permanode_url>, None, None)? // set a permanode for the same network
+        .primary_node(private_node_url, None, None)?,
+      // set a permanode for the same network
+      // .permanode(<permanode_url>, None, None)?
     );
 
   // Create an identity and publish it.

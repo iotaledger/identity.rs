@@ -45,6 +45,12 @@ pub enum Error {
   /// Caused by attempting to write a poisoned shared resource.
   #[error("Shared resource poisoned: write")]
   SharedWritePoisoned,
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("JsValue serialization error: {0}")]
+  SerializationError(String),
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("javascript function threw an exception: {0}")]
+  JsError(String),
 }
 
 #[doc(hidden)]

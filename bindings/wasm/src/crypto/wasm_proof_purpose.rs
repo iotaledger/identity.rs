@@ -10,7 +10,7 @@ use crate::error::WasmResult;
 /// Associates a purpose with a `Signature`.
 ///
 /// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
-#[wasm_bindgen(js_name = ProofPurpose)]
+#[wasm_bindgen(js_name = ProofPurpose, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmProofPurpose(pub(crate) ProofPurpose);
 

@@ -3,6 +3,7 @@
 
 pub use self::digest::Digest;
 pub use self::key_collection::WasmKeyCollection;
+pub use self::key_collection::WasmKeyCollectionData;
 pub use self::key_pair::WasmKeyPair;
 pub use self::key_type::KeyType;
 pub use self::wasm_proof_purpose::WasmProofPurpose;

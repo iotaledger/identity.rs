@@ -44,6 +44,12 @@ stronghold = ["identity-account/stronghold", "identity-account-storage/stronghol
 # Enables support for DID Communication
 # comm = ["identity-comm"]
 
+# Enables send and sync storage
+send-sync-storage = ["identity-account-storage/send-sync-storage"]
+
+# Enables specific derives needed for bindings
+bindings-derive = ["identity-core/bindings-derive", "identity-account-storage/bindings-derive"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

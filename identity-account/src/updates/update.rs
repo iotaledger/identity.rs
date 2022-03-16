@@ -24,6 +24,8 @@ use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
@@ -371,7 +373,10 @@ AttachMethodRelationship {
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> AttachMethodRelationshipBuilder<'account> {
+impl<'account, C> AttachMethodRelationshipBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
   #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
@@ -390,7 +395,10 @@ DetachMethodRelationship {
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> DetachMethodRelationshipBuilder<'account> {
+impl<'account, C> DetachMethodRelationshipBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
   #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);

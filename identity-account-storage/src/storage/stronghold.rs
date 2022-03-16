@@ -1,8 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use futures::executor;
+use std::path::Path;
+use std::sync::Arc;
 
+use async_trait::async_trait;
+use futures::executor;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PrivateKey;
@@ -16,10 +19,6 @@ use iota_stronghold::procedures::Slip10Derive;
 use iota_stronghold::procedures::Slip10DeriveInput;
 use iota_stronghold::procedures::Slip10Generate;
 use iota_stronghold::Location;
-use std::convert::TryFrom;
-use std::io;
-use std::path::Path;
-use std::sync::Arc;
 
 use crate::error::Result;
 use crate::identity::ChainState;
@@ -29,7 +28,6 @@ use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
@@ -79,7 +77,8 @@ impl Stronghold {
   }
 }
 
-#[async_trait::async_trait]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
     self.snapshot.set_password(password).await?;
@@ -210,41 +209,6 @@ impl Storage for Stronghold {
     // TODO: Will be re-implemented later with the key location refactor
     todo!("stronghold purge not implemented");
   }
-
-  async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {
-    let store: Store<'_> = self.store(&fmt_did(did));
-
-    let bytes = store.get(location_published_generation()).await?;
-
-    match bytes {
-      None => return Ok(None),
-      Some(bytes) => {
-        let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
-          io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!(
-              "expected to read 4 bytes as the published generation, found {} instead",
-              bytes.len()
-            ),
-          )
-        })?;
-
-        let gen = Generation::from_u32(u32::from_le_bytes(le_bytes));
-
-        Ok(Some(gen))
-      }
-    }
-  }
-
-  async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
-    let store: Store<'_> = self.store(&fmt_did(did));
-
-    store
-      .set(location_published_generation(), index.to_u32().to_le_bytes(), None)
-      .await?;
-
-    Ok(())
-  }
 }
 
 impl Drop for Stronghold {
@@ -313,10 +277,6 @@ fn location_seed(location: &KeyLocation) -> Location {
 
 fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
-}
-
-fn location_published_generation() -> Location {
-  Location::generic("$published_generation", Vec::new())
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {

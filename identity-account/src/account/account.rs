@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Debug;
+use std::ops::Deref;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -15,6 +17,7 @@ use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::PublishType;
+use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
@@ -41,27 +44,33 @@ use super::AccountConfig;
 /// It handles private keys, writing to storage and
 /// publishing to the Tangle.
 #[derive(Debug)]
-pub struct Account {
+pub struct Account<C = Arc<Client>>
+where
+  C: SharedPtr<Client>,
+{
   config: AccountConfig,
   storage: Arc<dyn Storage>,
-  client: Arc<Client>,
+  client: C,
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
 }
 
-impl Account {
+impl<C> Account<C>
+where
+  C: SharedPtr<Client>,
+{
   // ===========================================================================
   // Constructors
   // ===========================================================================
 
   /// Creates a new [AccountBuilder].
-  pub fn builder() -> AccountBuilder {
+  pub fn builder() -> AccountBuilder<C> {
     AccountBuilder::new()
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, chain_state: ChainState, state: IdentityState) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup<C>, chain_state: ChainState, state: IdentityState) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
@@ -78,11 +87,11 @@ impl Account {
   /// is automatically determined by the [`Client`] used to publish it.
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
-  pub(crate) async fn create_identity(account_setup: AccountSetup, identity_setup: IdentitySetup) -> Result<Self> {
+  pub(crate) async fn create_identity(account_setup: AccountSetup<C>, identity_setup: IdentitySetup) -> Result<Self> {
     let state: IdentityState = create_identity(
       identity_setup,
-      account_setup.client.network().name(),
-      account_setup.storage.as_ref(),
+      account_setup.client.deref().network().name(),
+      account_setup.storage.deref(),
     )
     .await?;
 
@@ -101,7 +110,7 @@ impl Account {
   ///
   /// Callers are expected **not** to load the same [`IotaDID`] into more than one account,
   /// as that would cause race conditions when updating the identity.
-  pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+  pub(crate) async fn load_identity(setup: AccountSetup<C>, did: IotaDID) -> Result<Self> {
     // Ensure the DID matches the client network.
     if did.network_str() != setup.client.network().name_str() {
       return Err(Error::IotaError(identity_iota::Error::IncompatibleNetwork(format!(
@@ -122,9 +131,9 @@ impl Account {
   // Getters & Setters
   // ===========================================================================
 
-  /// Returns a reference to the [Storage] implementation.
-  pub fn storage(&self) -> &dyn Storage {
-    self.storage.as_ref()
+  /// Returns a reference counter to the [Storage] implementation.
+  pub fn storage(&self) -> &Arc<dyn Storage> {
+    &self.storage
   }
 
   /// Returns whether auto-publish is enabled.
@@ -192,7 +201,7 @@ impl Account {
   ///
   /// On this type, various operations can be executed
   /// that modify an identity, such as creating services or methods.
-  pub fn update_identity(&mut self) -> IdentityUpdater<'_> {
+  pub fn update_identity(&mut self) -> IdentityUpdater<'_, C> {
     IdentityUpdater::new(self)
   }
 
@@ -218,7 +227,7 @@ impl Account {
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().purge(self.did()).await?;
+    self.storage().deref().purge(self.did()).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -241,7 +250,7 @@ impl Account {
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
     state
-      .sign_data(self.did(), self.storage(), &location, data, options)
+      .sign_data(self.did(), self.storage().deref(), &location, data, options)
       .await?;
 
     Ok(())
@@ -300,14 +309,17 @@ impl Account {
     // TODO: An account always holds a valid identity,
     // so if None is returned, that's a broken invariant.
     // This should be mapped to a fatal error in the future.
-    self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
+    self
+      .storage()
+      .deref()
+      .state(self.did())
+      .await?
+      .ok_or(Error::IdentityNotFound)
   }
 
   pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
     let did = self.did().to_owned();
-    let storage = Arc::clone(&self.storage);
-
-    update.process(&did, &mut self.state, storage.as_ref()).await?;
+    update.process(&did, &mut self.state, self.storage.deref()).await?;
 
     self.increment_actions();
 
@@ -347,7 +359,7 @@ impl Account {
     signing_state
       .sign_data(
         self.did(),
-        self.storage(),
+        self.storage().deref(),
         &signing_key_location,
         document,
         SignatureOptions::default(),
@@ -491,7 +503,7 @@ impl Account {
     old_state
       .sign_data(
         self.did(),
-        self.storage(),
+        self.storage().deref(),
         &signing_key_location,
         &mut diff,
         SignatureOptions::default(),
@@ -524,10 +536,10 @@ impl Account {
   async fn save(&self, force: bool) -> Result<()> {
     match self.config.autosave {
       AutoSave::Every => {
-        self.storage().flush_changes().await?;
+        self.storage().deref().flush_changes().await?;
       }
       AutoSave::Batch(step) if force || (step != 0 && self.actions() % step == 0) => {
-        self.storage().flush_changes().await?;
+        self.storage().deref().flush_changes().await?;
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
     }

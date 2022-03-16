@@ -52,7 +52,7 @@ async function createVP(clientConfig) {
     // Sign the verifiable presentation with the holder's private key and include the requested challenge and expiry timestamp.
     const signedVp = alice.doc.signPresentation(unsignedVp, {
         method: "#sign-0",
-        private: alice.key.private,
+        private: alice.key.private(),
     }, new SignatureOptions({
         challenge: challenge,
         expires: Timestamp.nowUTC().checkedAdd(Duration.minutes(10))

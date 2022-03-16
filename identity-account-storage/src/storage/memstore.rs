@@ -4,6 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use async_trait::async_trait;
 use crypto::signatures::ed25519;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
@@ -24,7 +25,6 @@ use crate::error::Result;
 use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
@@ -35,11 +35,9 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 type ChainStates = HashMap<IotaDID, ChainState>;
 type States = HashMap<IotaDID, IdentityState>;
 type Vaults = HashMap<IotaDID, MemVault>;
-type PublishedGenerations = HashMap<IotaDID, Generation>;
 
 pub struct MemStore {
   expand: bool,
-  published_generations: Shared<PublishedGenerations>,
   chain_states: Shared<ChainStates>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -49,7 +47,6 @@ impl MemStore {
   pub fn new() -> Self {
     Self {
       expand: false,
-      published_generations: Shared::new(HashMap::new()),
       chain_states: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
@@ -63,13 +60,10 @@ impl MemStore {
   pub fn set_expand(&mut self, value: bool) {
     self.expand = value;
   }
-
-  pub fn vaults(&self) -> Result<Vaults> {
-    self.vaults.read().map(|data| data.clone())
-  }
 }
 
-#[async_trait::async_trait]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
   async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
     Ok(())
@@ -199,15 +193,6 @@ impl Storage for MemStore {
     let _ = self.vaults.write()?.remove(did);
     let _ = self.chain_states.write()?.remove(did);
 
-    Ok(())
-  }
-
-  async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {
-    Ok(self.published_generations.read()?.get(did).copied())
-  }
-
-  async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
-    self.published_generations.write()?.insert(did.clone(), index);
     Ok(())
   }
 }

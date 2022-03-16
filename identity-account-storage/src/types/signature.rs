@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::PublicKey;
+#[cfg(feature = "bindings-derive")]
+use serde::Deserialize;
+#[cfg(feature = "bindings-derive")]
+use serde::Serialize;
 
 /// A digital signature and associated public key.
-#[derive(Clone, Debug)]
+#[cfg_attr(feature = "bindings-derive", derive(Clone, Deserialize, Serialize))]
+#[cfg_attr(not(feature = "bindings-derive"), derive(Clone))]
 pub struct Signature {
   pub(crate) pkey: PublicKey,
   pub(crate) data: Vec<u8>,
@@ -21,7 +26,7 @@ impl Signature {
     &self.pkey
   }
 
-  /// Returns the the signature data as a slice of bytes.
+  /// Returns the signature data as a slice of bytes.
   pub fn data(&self) -> &[u8] {
     &self.data
   }
