@@ -6,16 +6,17 @@ image: /img/Identity_icon.png
 keywords:
 - Rust
 - Identity
+- reference
 ---
 
 ## Requirements
 
-- [Rust](https://www.rust-lang.org/) (>= 1.51)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51)
+- [Rust](https://www.rust-lang.org/) (>= 1.51).
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51).
 
 ## Include the Library
 
-To include IOTA Identity in your project add it as a dependency in your `Cargo.toml`:
+To include IOTA Identity in your project, add it as a dependency in your `Cargo.toml`.
 
 ### Latest Stable Release
 
@@ -28,7 +29,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 
 ### Development Release
 
-This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+This version matches the `dev` branch of this repository. It has all the **latest features**, but it **may also have undocumented breaking changes**.
 
 ```rust
 [dependencies]
@@ -58,7 +59,7 @@ cargo run --example getting_started
 
 ## API Reference
 
-If you would like to build the [API Reference](api_reference) yourself from source, you can do so by running the following command:
+If you would like to build the [API Reference](api_reference) yourself from the source, you can do so by running the following command:
 
 ```rust
 cargo doc --document-private-items --no-deps --open

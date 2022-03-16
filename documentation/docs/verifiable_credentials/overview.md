@@ -1,19 +1,20 @@
 ---
 title: Verifiable Credentials Overview
 sidebar_label: Overview
-description: Verifiable Credentials are statements about the holder. They can be verified online or in person, and the holder decides who to share them with.
+description: Verifiable Credentials are statements about the holder. They can be verified online or in person and the holder decides who to share them with.
 image: /img/Identity_icon.png
 keywords:
 - verifiable
 - credentials
 - person
+- reference
 ---
 
-Credentials are statements about an entity, such as properties that the entity posseses or capabilities that they have (like drivers licences, passports, or a person's age). Verifiable Credentials (VCs) are statements (eg. Alice has a drivers licence) that can be cryptographically verified by a third party, either online or in person. Additionally, the holder of the VC decides what is shared and who it is shared with.
+Credentials are statements about an entity, such as properties that the entity possesses or capabilities that they have, like a driver's license, a passport, or a someone's age. Verifiable Credentials (VCs) are statements, like someone having a driver's license, that can be cryptographically verified by a third party, either online or in person. The holder of the VC can then decide what is shared and who it is shared with.
 
-There are several types of actors that play different roles in a verifiable credential system. We'll start with a common example of how things work in the world today using physical credentials and centralized databases, and outline the roles that various entities play in the Verifiable Credential system.
+There are several types of actors that play different roles in a verifiable credential system. Starting with a common example of how things work today that you will find below, this article explains how physical credentials and centralized databases are used while outlining the roles that various entities play in the Verifiable Credential system.
 
-:::tip Example - Passport Issuance
+:::note Example - Passport Issuance
 
 A government (the _Issuer_) issues a passport asserting citizenship (the _Verifiable Credential_) to Alice (the _Subject_ and _Holder_), and writes the information to a database (the _Verifiable Data Registry_). When crossing the border, Alice (the _Holder_) presents her passport to a border agent (the _Verifier_) who can verify that Alice (the _Subject_) is indeed a citizen.
 
@@ -21,26 +22,28 @@ A government (the _Issuer_) issues a passport asserting citizenship (the _Verifi
 
 **Subject:** An entity about which claims are made – Alice (the _Subject_) is a citizen of this country.
 
-**Holder:** An entity which posseses verifiable credentials – Alice (the _Holder_) posseses the passport (the _VC_).
+**Holder:** An entity which possesses verifiable credentials – Alice (the _Holder_) possesses the passport (the _VC_).
 
 **Issuer:** An entity which asserts claims about a subject – The governing body (the _Issuer_), which is trusted, issues Alice a passport.
 
-**Verifier:** An entity which check's if the VC a holder presents is legitimate – The border agent (the _Verifier_) trusts the government (the _Issuer_) which issued Alice her passport, and validates that Alice (the _Subject_) is a citizen.
+**Verifier:** An entity which checks if the VC a holder presents is legitimate – The border agent (the _Verifier_) trusts the government (the _Issuer_) which issued Alice her passport and validates that Alice (the _Subject_) is a citizen.
 
 :::note
 
-See the [Verifiable Credentials Data Model 1.0 Specification](https://w3c.github.io/vc-data-model/) for more information.
+For more information, you can check out the [Verifiable Credentials Data Model 1.0 Specification page](https://w3c.github.io/vc-data-model/).
 
 :::
 
 ### Verifiable Credentials in IOTA
 
-In the IOTA Identity framework, instead of a physical passport being given to Alice with the passport information being written into a centralized database owned by the government, Alice receives a digital verifiable credential, and the information required for verification in the future is written to the Tangle.
+In the IOTA Identity framework, instead of a physical passport being given to Alice with the passport information being written into a centralized database owned by the government (TW Note: I'm not sure if this phrase inside the commas is necessary), Alice receives a digitally verifiable credential and the information required for verification in the future is written to the Tangle.
 
-At a high level, the creation and verification of a VC on IOTA works as follows:
+The first step in the creation and verification of a VC is to create a verifiable credential. This requires the subject and issuer (Alice and the government, respectively) to have DIDs published to the Tangle with a set of statements being asserted (that Alice has a passport). The issuer signs the credential with their private key and publishes the public key to the Tangle. In the future, a proof can be used by the verifiers to validate the authenticity of the credentials using the issuer's public key.
 
-The first step is to create a verifiable credential which requires the subject (Alice) and issuer (the government) to have DIDs published to the Tangle, and a set of statements being asserted (that Alice has a passport). The issuer signs the credential with their private key and publishes the public key to the Tangle. In the future, a proof can be used to assert the authenticity of the credentials by verifiers using the issuer's public key.
-
-After the credential is published to the tangle, Validation is performed by looking up the issuer's key on the Tangle, the holder proving ownership of their DID to the verifier (evidence), and validating that the credential has indeed been signed by the issuing party.
+After the credential is published to the Tangle, validations occur:
+ 
+ - by looking up the issuer's key on the Tangle. 
+ - the holder proving ownership of their DID to the verifier (evidence). 
+ - validating that the credential has been signed by the issuing party.
 
 The remaining chapters in this section explore creation, verification, and revocation of VCs in more detail.

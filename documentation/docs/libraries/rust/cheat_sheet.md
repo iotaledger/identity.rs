@@ -14,11 +14,12 @@ keywords:
 - update
 - resolve
 - remove
+- reference
 ---
 
 ## Import the Library
 
-To include IOTA Identity in your project add it as a dependency in your Cargo.toml.
+To include IOTA Identity in your project, add it as a dependency in your Cargo.toml.
 
 ### Latest Stable Release
 
@@ -31,7 +32,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 
 ### Development Release
 
-This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+This version matches the `dev` branch of this repository. It has all the **latest features**, but it **may also have undocumented breaking changes**.
 
 ```rust
 [dependencies]
@@ -40,7 +41,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 
 ## Decentralized Identifiers (DID)
 
-A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the DID specifications v1.0 Working.
+A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies with the DID specifications v1.0 Working.
 
 ### [Create](../../decentralized_identifiers/create.mdx)
 
@@ -248,7 +249,7 @@ Account.publish_updates(did).await?;
 
 #### Account.update_identity(did).create_method()
 
-Add a new Ed25519 (default) verification method to the identity - the  verification method is included as an embedded authentication method.
+Add a new Ed25519 (default) verification method to the identity - the verification method is included as an embedded authentication method.
 
 ```rs
 account
@@ -398,6 +399,6 @@ account.sign(did, "key-1", &mut credential).await?;
 
 ## Verifiable Presentations (VP)
 
-A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+A Verifiable Presentation is the format that you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp.
 
-### [Create](../../verifiable_credentials/verifiable_presentations.mdx)
+### [Create](https://wiki.iota.org/identity.rs/verifiable_credentials/verifiable_presentations)

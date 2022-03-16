@@ -1,7 +1,7 @@
 ---
 title:  Wasm Cheat Sheet
 sidebar_label: Cheat Sheet
-description: IOTA Identity Wasm Library Cheat Sheet
+description: IOTA Identity WASM Library Cheat Sheet.
 image: /img/Identity_icon.png
 keywords:
 - wasm
@@ -14,6 +14,7 @@ keywords:
 - update
 - resolve
 - remove
+- reference
 ---
 
 ## Install the Library
@@ -30,7 +31,7 @@ npm install @iota/identity-wasm
 
 ### Development Release
 
-This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+This version matches the `dev` branch of this repository. It has all the **latest features**, but it **may also have undocumented breaking changes**.
 
 ```bash
 npm install @iota/identity-wasm@dev
@@ -38,7 +39,7 @@ npm install @iota/identity-wasm@dev
 
 ## Decentralized Identifiers (DID)
 
-A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the DID specifications v1.0 Working.
+A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies with the DID specifications v1.0 Working.
 
 ### [Create](../../decentralized_identifiers/create.mdx)
 
@@ -114,6 +115,7 @@ Object consisting of:
 </details>
 
 ####  [Document.fromKeyPair(key, network)](api_reference#Document.fromKeyPair)
+
 Creates a new DID Document from the given [KeyPair](api_reference#KeyPair) and optional network.
 
 ##### Parameters
@@ -151,7 +153,7 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
 ```
 </details>
 
-### [Publish](../../decentralized_identifiers/create.mdx)
+### [Publish](https://wiki.iota.org/identity.rs/decentralized_identifiers/create)
 
 #### [Client.publishDocument(document)](api_reference#Client+publishDocument)
 
@@ -179,7 +181,7 @@ Promise
 ```
 </details>
 
-### [Update](../../decentralized_identifiers/update.mdx)
+### [Update](https://wiki.iota.org/identity.rs/decentralized_identifiers/update)
 
 #### [Document.insertMethod(verificationMethod, scope)](api_reference#documentinsertmethodmethod-scope-⇒-boolean)
 
@@ -220,7 +222,7 @@ Use a [Client](api_reference#Client) to resolve a DID [Document](api_reference#D
 
 ##### Parameters
 
-* did: string.  The [Document](api_reference#Document)'s identifier. 
+* did: string. The [Document](api_reference#Document)'s identifier. 
 
 ```js
 client.resolve(did:string);
@@ -258,7 +260,7 @@ Use a [Client](api_reference#Client) to return the message history of a DID [Doc
 
 ##### Parameters
 
-* did: string.  The [Document](api_reference#Document)'s identifier.
+* did: string. The [Document](api_reference#Document)'s identifier.
 
 ```js
 client.resolveHistory(did:string);
@@ -419,11 +421,11 @@ Document.signCredential(data: any, args: any);
 
 </details>
 
-### [Revoke](../../verifiable_credentials/revoke.mdx)
+### [Revoke](https://wiki.iota.org/identity.rs/verifiable_credentials/revoke)
 
 #### [Document.removeMethod(DID)](api_reference#Document+removeMethod)
 
-Remove a public key ([DID](api_reference#DID)) that signed a [VerifiableCredential](api_reference#VerifiableCredential) from a [Document](api_reference#Document),  effectively revoking the VC as it will no longer be able to verify.
+Remove a public key ([DID](api_reference#DID)) that signed a [VerifiableCredential](api_reference#VerifiableCredential) from a [Document](api_reference#Document), effectively revoking the VC as it will no longer be able to verify.
 
 ##### Parameters
 
@@ -438,7 +440,7 @@ Document.removeMethod(did: DID);
  
 #### [Document.revokeMerkleKey(query, index)](api_reference#Document+revokeMerkleKey)
 
-[Revoke a single key from a MerkleKeyCollection](../../verifiable_credentials/merkle_key_collection.mdx) from a [Document](api_reference#Document), instead of revoking the entire verification method.
+[Revoke a single key from a MerkleKeyCollection](https://wiki.iota.org/identity.rs/verifiable_credentials/merkle_key_collection) from a [Document](api_reference#Document), instead of revoking the entire verification method.
 
 ##### Parameters
 
@@ -456,7 +458,7 @@ Document.revokeMerkleKey(query, index);
 
 ## Verifiable Presentations (VP)
 
-A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+A Verifiable Presentation is the format that you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp.
 
 ### [Create](../../verifiable_credentials/verifiable_presentations.mdx)
 
@@ -511,11 +513,11 @@ new VerifiablePresentation(holder_doc: Document, credential_data: any, presentat
 
 </details>
 
-### [Sign](../../verifiable_credentials/verifiable_presentations.mdx)
+### [Sign](https://wiki.iota.org/identity.rs/verifiable_credentials/verifiable_presentations)
 
 #### [Document.signPresentation(data, args)](api_reference#documentsignpresentationdata-args-⇒-codeverifiablepresentationcode)
 
-Use a [Document](api_reference#Document) to sign a [Verifiable Presentation](api_reference#VerifiablePresentation)
+Use a [Document](api_reference#Document) to sign a [Verifiable Presentation](api_reference#VerifiablePresentation).
 
 ##### Parameters
 
