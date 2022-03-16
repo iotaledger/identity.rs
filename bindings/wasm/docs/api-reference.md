@@ -2188,7 +2188,7 @@ Returns a base58 encoded string that represents the PublicKey.
 <a name="Ed25519PrivateKey.fromBase58"></a>
 
 ### Ed25519PrivateKey.fromBase58(private_key) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
-Create a new `PrivateKey` from a base58 encoded string.
+Create a new `Ed25519PrivateKey` from a base58 encoded string.
 
 **Kind**: static method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 

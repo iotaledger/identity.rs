@@ -17,7 +17,7 @@ pub struct WasmEd25519PrivateKey(pub(crate) ed25519::SecretKey);
 
 #[wasm_bindgen(js_class = Ed25519PrivateKey)]
 impl WasmEd25519PrivateKey {
-  /// Create a new `PrivateKey` from a base58 encoded string.
+  /// Create a new `Ed25519PrivateKey` from a base58 encoded string.
   #[wasm_bindgen(js_name = "fromBase58")]
   pub fn from_base58(private_key: &str) -> Result<WasmEd25519PrivateKey> {
     let private_key: PrivateKey = decode_b58(private_key).wasm_result()?.into();
