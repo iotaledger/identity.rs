@@ -88,7 +88,7 @@ async function main() {
     const explorer = identity.ExplorerUrl.mainnet();
     // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
     console.log("Tangle Message Receipt:", receipt);
-    console.log("Tangle Explorer Url:", explorer.resolverUrl(doc.id));
+    console.log("Tangle Explorer Url:", explorer.resolverUrl(doc.id()));
 }
 
 main()
