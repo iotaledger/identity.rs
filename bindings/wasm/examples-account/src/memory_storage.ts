@@ -3,7 +3,10 @@
 
 import {ChainState, DID, Ed25519, Generation, IdentityState, KeyLocation, KeyPair, KeyType, MethodType, PrivateKey, Signature, Storage} from './../../node/identity_wasm.js';
 
+// TODO: add thorough comments explaining what this is and how to use it with an Account.
 class MemStore implements Storage {
+    // TODO: check if map key comparison works as-expected.
+    //       I.e. does a parsed/deserialized DID map to the same DID object?
     private _publishedGenerations: Map<DID, Generation>;
     private _chainStates: Map<DID, ChainState>;
     private _states: Map<DID, IdentityState>;
@@ -100,7 +103,7 @@ class MemStore implements Storage {
     public async setChainState(did: DID, chainState: ChainState): Promise<void> {
         this._chainStates.set(did, chainState);
     }
-    
+
     public async state(did: DID): Promise<IdentityState> {
         return this._states.get(did)
     }
@@ -108,17 +111,17 @@ class MemStore implements Storage {
     public async setState(did: DID, identityState: IdentityState): Promise<void> {
         this._states.set(did, identityState);
     }
-    
+
     public async purge(did: DID): Promise<void> {
         this._chainStates.delete(did);
         this._states.delete(did);
         this._vaults.delete(did);
     }
-    
+
     public async publishedGeneration(did: DID): Promise<Generation> {
         return this._publishedGenerations.get(did)
     }
-    
+
     public async setPublishedGeneration(did: DID, generation: Generation): Promise<void> {
         this._publishedGenerations.set(did, generation);
     }

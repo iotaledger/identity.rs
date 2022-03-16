@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, Timestamp, ExplorerUrl, Document, Storage } from './../../node/identity_wasm.js';
+import { AccountBuilder, Timestamp, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
 
 /**
- * This example demonstrates how to update the custom properties of a DID document directly 
+ * This example demonstrates how to update the custom properties of a DID document directly
  * and publish it without performing validation.
  */
 async function unchecked(storage?: Storage) {
@@ -21,12 +21,10 @@ async function unchecked(storage?: Storage) {
     let document = account.document();
 
     // Print the local state of the DID Document
-    console.log(`[Example] Document before update`, account.document());
+    console.log(`[Example] Document before update`, document);
 
     // Add a custom property to the document.
-    const documentJSON = document.toJSON();
-    documentJSON["doc"]["myCustomPropertyKey"] = "value";
-    document = Document.fromJSON(documentJSON);
+    document.setPropertyUnchecked("myCustomPropertyKey", "value");
 
     // Override the updated field timestamp to 01.01.1900 00:00:00.
     // because we can. This is usually set automatically when updating via the `Account`.
@@ -41,10 +39,8 @@ async function unchecked(storage?: Storage) {
     // Print the local state of the DID Document after the update.
     console.log(`[Example] Document after update`, account.document());
 
-    let iotaDid = account.did().toString();
-    
     // Print the Explorer URL for the DID.
-    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(account.did()));
 
 }
 

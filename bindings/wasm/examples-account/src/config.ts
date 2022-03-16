@@ -20,12 +20,12 @@ async function config(storage?: Storage) {
     const explorer = ExplorerUrl.parse("https://explorer.iota.org/devnet");
 
     // In a locally running one-click tangle, this would usually be `http://127.0.0.1:14265`
-    let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
+    const private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         // `AutoSave.never()` never auto-saves, relies on the storage drop save.
         // `AutoSave.every()` saves immediately after every action,
         autosave: AutoSave.batch(10), // saves after every 10 actions.
@@ -40,12 +40,12 @@ async function config(storage?: Storage) {
     // Create an identity and publish it.
     // The created DID will use the network name configured for the client.
     try {
-        let account = await builder.createIdentity();
-        let did = account.did();
+        const account = await builder.createIdentity();
+        const did = account.did();
 
         // Prints the Identity Resolver Explorer URL.
         // The entire history can be observed on this page by clicking "Loading History".
-        console.log(`[Example] Explore the DID Document = ${explorer.resolverUrl(did.toString())}`);
+        console.log(`[Example] Explore the DID Document = ${explorer.resolverUrl(did)}`);
 
     } catch (e) {
         if (e instanceof Error) {

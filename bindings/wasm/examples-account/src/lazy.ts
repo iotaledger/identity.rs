@@ -1,11 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
+import {
+    AccountBuilder,
+    ExplorerUrl,
+    KeyPair,
+    KeyType,
+    MethodScope,
+    MethodSecret,
+    MethodType,
+    Storage
+} from '../../node';
 
 /**
- * This example demonstrates how to take control over publishing DID updates manually, 
- * instead of the default automated behavior. 
+ * This example demonstrates how to take control over publishing DID updates manually,
+ * instead of the default automated behavior.
  */
 async function lazy(storage?: Storage) {
 
@@ -44,11 +53,11 @@ async function lazy(storage?: Storage) {
     // Publish the updates as one message to the tangle.
     await account.publish();
 
-    // Retrieve the did of the newly created identity.
-    let iotaDid = account.did().toString();
+    // Retrieve the DID of the newly created identity.
+    let did = account.did();
 
     // Print the Explorer URL for the DID.
-    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(iotaDid));
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
 export { lazy };

@@ -17,17 +17,13 @@ use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota_core::IotaDID;
-use js_sys::Object;
 use js_sys::Promise;
-use js_sys::Reflect;
-use wasm_bindgen::convert::FromWasmAbi;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::identity::WasmIdentityState;
 use crate::account::types::WasmKeyLocation;
-use crate::account::types::WasmSignature;
 use crate::did::WasmDID;
 use crate::error::JsValueResult;
 
@@ -35,8 +31,6 @@ use crate::error::JsValueResult;
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseUnit;
-  #[wasm_bindgen(typescript_type = "Promise<DIDLease>")]
-  pub type PromiseDIDLease;
   #[wasm_bindgen(typescript_type = "Promise<string>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
@@ -165,8 +159,10 @@ impl Storage for WasmStorage {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
-    let signature: WasmSignature = downcast_js_value(js_value, "Signature")?;
-    Ok(signature.into())
+    let signature: Signature = js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(signature)
   }
 
   /// Returns `true` if a keypair exists at the specified `location`.
@@ -184,8 +180,10 @@ impl Storage for WasmStorage {
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }
-    let chain_state: WasmChainState = downcast_js_value(js_value, "ChainState")?;
-    Ok(Some(chain_state.into()))
+    let chain_state: ChainState = js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(Some(chain_state))
   }
 
   /// Set the chain state of the identity specified by `did`.
@@ -203,8 +201,10 @@ impl Storage for WasmStorage {
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }
-    let state: WasmIdentityState = downcast_js_value(js_value, "IdentityState")?;
-    Ok(Some(state.into()))
+    let state: IdentityState = js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(Some(state))
   }
 
   /// Sets a new state for the identity specified by `did`.
@@ -232,11 +232,11 @@ interface Storage {
   /** Write any unsaved changes to disk.*/
   flushChanges: () => Promise<void>;
 
-  /** Creates a new keypair at the specified `location`, 
+  /** Creates a new keypair at the specified `location`,
    * and returns its public key as a base58 string.*/
   keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;
 
-  /** Inserts a private key, encoded as a base58 string, at the specified `location`, 
+  /** Inserts a private key, encoded as a base58 string, at the specified `location`,
    * and returns its public key as a base58 string.*/
   keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: string) => Promise<string>;
 
@@ -267,26 +267,3 @@ interface Storage {
   /** Removes the keys and any state for the identity specified by `did`.*/
   purge: (did: DID) => Promise<void>;
 }"#;
-
-// from https://github.com/rustwasm/wasm-bindgen/issues/2231#issuecomment-656293288
-#[allow(dead_code)]
-pub fn downcast_js_value<T: FromWasmAbi<Abi = u32>>(
-  js_value: JsValue,
-  classname: &str,
-) -> Result<T, AccountStorageError> {
-  let constructor_name: js_sys::JsString = Object::get_prototype_of(&js_value).constructor().name();
-  if constructor_name == classname {
-    let ptr: JsValue = Reflect::get(&js_value, &JsValue::from_str("ptr"))
-      .map_err(|_| AccountStorageError::JsError("unable to retrieve `ptr` property".to_string()))?;
-    let ptr_u32: u32 = ptr
-      .as_f64()
-      .ok_or_else(|| AccountStorageError::JsError("unable to read `ptr` property of `JsValue` as f64".to_string()))?
-      as u32;
-    unsafe { Ok(T::from_abi(ptr_u32)) }
-  } else {
-    Err(AccountStorageError::SerializationError(format!(
-      "Expected: {} - Found: {}",
-      classname, constructor_name
-    )))
-  }
-}
