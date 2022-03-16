@@ -16,10 +16,10 @@ async function signing(storage?: Storage) {
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         storage,
     });
-    let account = await builder.createIdentity();
+    const account = await builder.createIdentity();
 
     // ===========================================================================
     // Signing Example
@@ -31,11 +31,11 @@ async function signing(storage?: Storage) {
     })
 
     // Create a subject DID for the recipient of a `UniversityDegree` credential.
-    let keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-    let subjectDid = new DID(keyPair);
+    const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
+    const subjectDid = new DID(keyPair);
 
     // Prepare a credential subject indicating the degree earned by Alice.
-    let credentialSubject = {
+    const credentialSubject = {
         id: subjectDid.toString(),
         name: "Alice",
         degree: {
@@ -54,23 +54,23 @@ async function signing(storage?: Storage) {
     // ...and sign the Credential with the previously created Verification Method.
     // Note: Different methods are available for different data types,
     // use the Method `createSignedData` to sign arbitrary data.
-    let signedVc = await account.createSignedCredential("key_1", unsignedVc, SignatureOptions.default());
+    const signedVc = await account.createSignedCredential("key_1", unsignedVc, SignatureOptions.default());
 
     console.log("[Example] Local Credential", signedVc);
 
     // Fetch the DID Document from the Tangle.
     //
     // This is an optional step to ensure DID Document consistency.
-    let resolved = await account.resolveIdentity();
+    const resolved = await account.resolveIdentity();
 
     // Retrieve the DID from the newly created identity.
-    let did = account.did().toString();
+    const did = account.did().toString();
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 
     // Ensure the resolved DID Document can verify the credential signature.
-    let verified = resolved.intoDocument().verifyData(signedVc, VerifierOptions.default());
+    const verified = resolved.intoDocument().verifyData(signedVc, VerifierOptions.default());
 
     console.log("[Example] Credential Verified = ", verified);
 }

@@ -16,13 +16,13 @@ async function config(storage?: Storage) {
     // private tangle is `private-tangle`, but we can only use 6 characters.
     // Keep in mind, there are easier ways to change to devnet via `Network::Devnet`
     const network_name = "dev";
-    let network = Network.tryFromName(network_name)
+    const network = Network.tryFromName(network_name)
 
     // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082`
     const explorer = ExplorerUrl.parse("https://explorer.iota.org/devnet");
 
     // In a locally running one-click tangle, this would usually be `http://127.0.0.1:14265`
-    let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
+    const private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
 
     // The creation step generates a keypair, builds an identity

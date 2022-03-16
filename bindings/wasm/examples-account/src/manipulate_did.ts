@@ -14,10 +14,10 @@ async function manipulateIdentity(storage?: Storage) {
     // ===========================================================================
 
     // Create a new Account with the default configuration.
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         storage,
     });
-    let account = await builder.createIdentity();
+    const account = await builder.createIdentity();
 
     // ===========================================================================
     // Identity Manipulation
@@ -48,7 +48,7 @@ async function manipulateIdentity(storage?: Storage) {
     await account.deleteMethod({ fragment: "my-next-key" })
 
     // Retrieve the DID of the newly created identity.
-    let did = account.did();
+    const did = account.did();
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));

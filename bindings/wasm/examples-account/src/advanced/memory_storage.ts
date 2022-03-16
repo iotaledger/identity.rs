@@ -1,10 +1,23 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {ChainState, DID, Ed25519, Generation, IdentityState, KeyLocation, KeyPair, KeyType, MethodType, PrivateKey, Signature, Storage} from './../../node/identity_wasm.js';
+import {
+    ChainState,
+    DID,
+    Ed25519,
+    IdentityState,
+    KeyLocation,
+    KeyPair,
+    KeyType,
+    MethodType,
+    PrivateKey,
+    Signature,
+} from '../../../node/identity_wasm.js';
+
+import type { Storage } from '../../../node/identity_wasm.js';
 
 // TODO: add thorough comments explaining what this is and how to use it with an Account.
-class MemStore implements Storage {
+export class MemStore implements Storage {
     // TODO: check if map key comparison works as-expected.
     //       I.e. does a parsed/deserialized DID map to the same DID object?
     private _chainStates: Map<DID, ChainState>;
@@ -27,10 +40,11 @@ class MemStore implements Storage {
         }
         const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
         const publicKey: string = keyPair.public;
-        if (this._vaults.has(did)) {
-            this._vaults.get(did).set(keyLocation, keyPair);
+        const vault = this._vaults.get(did);
+        if (vault) {
+            vault.set(keyLocation, keyPair);
         } else {
-            let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
+            const newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
             this._vaults.set(did, newVault);
         }
         return publicKey
@@ -40,31 +54,32 @@ class MemStore implements Storage {
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
             throw new Error('Unsuported Method')
         }
-        let secretKey: PrivateKey = PrivateKey.fromBase58String(privateKey);
-        let publicKey: string = secretKey.publicKey();
-        let keyPair: KeyPair = KeyPair.fromBase58(KeyType.Ed25519, privateKey, publicKey);
-        if (this._vaults.has(did)) {
-            this._vaults.get(did).set(keyLocation, keyPair);
+        const secretKey: PrivateKey = PrivateKey.fromBase58String(privateKey);
+        const publicKey: string = secretKey.publicKey();
+        const keyPair: KeyPair = KeyPair.fromBase58(KeyType.Ed25519, privateKey, publicKey);
+        const vault = this._vaults.get(did);
+        if (vault) {
+            vault.set(keyLocation, keyPair);
         } else {
-            let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
+            const newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
             this._vaults.set(did, newVault);
         }
         return publicKey
     }
 
     public async keyExists(did: DID, keyLocation: KeyLocation): Promise<boolean> {
-        if (this._vaults.has(did)) {
-            let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
+        const vault = this._vaults.get(did);
+        if (vault) {
             return vault.has(keyLocation)
         }
         return false
     }
 
     public async keyGet(did: DID, keyLocation: KeyLocation): Promise<string> {
-        if (this._vaults.has(did)) {
-            let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
-            if (vault.has(keyLocation)) {
-                let keyPair: KeyPair = vault.get(keyLocation);
+        const vault = this._vaults.get(did);
+        if (vault) {
+            const keyPair = vault.get(keyLocation);
+            if (keyPair) {
                 return keyPair.public
             }
             throw new Error('Key location not found')
@@ -73,24 +88,25 @@ class MemStore implements Storage {
     }
 
     public async keyDel(did: DID, keyLocation: KeyLocation): Promise<void> {
-        if (this._vaults.has(did)) {
-            this._vaults.get(did).delete(keyLocation);
+        const vault = this._vaults.get(did);
+        if (vault) {
+            vault.delete(keyLocation);
         }
     }
 
     public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
-        if (!this._vaults.has(did)) {
+        const vault = this._vaults.get(did);
+        if (!vault) {
             throw new Error('DID not found')
         }
-        let vault: Map<KeyLocation, KeyPair> = this._vaults.get(did);
-        if (!vault.has(keyLocation)) {
+        const keyPair = vault.get(keyLocation);
+        if (!keyPair) {
             throw new Error('Key location not found')
         }
-        let keyPair: KeyPair = vault.get(keyLocation);
         if (keyLocation.method !== MethodType.Ed25519VerificationKey2018()) {
             throw new Error('Unsuported Method')
         }
-        let signature: Uint8Array = Ed25519.sign(data, keyPair.private);
+        const signature: Uint8Array = Ed25519.sign(data, keyPair.private);
         return new Signature(keyPair.public, signature)
     }
 

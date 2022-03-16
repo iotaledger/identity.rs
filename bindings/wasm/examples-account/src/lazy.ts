@@ -21,11 +21,11 @@ async function lazy(storage?: Storage) {
     // Create a new Account with auto publishing set to false.
     // This means updates are not pushed to the tangle automatically.
     // Rather, when we publish, multiple updates are batched together.
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         autopublish: false,
         storage,
     });
-    let account = await builder.createIdentity();
+    const account = await builder.createIdentity();
 
     // Add a new service to the local DID document.
     await account.createService({
@@ -54,7 +54,7 @@ async function lazy(storage?: Storage) {
     await account.publish();
 
     // Retrieve the DID of the newly created identity.
-    let did = account.did();
+    const did = account.did();
 
     // Print the Explorer URL for the DID.
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));

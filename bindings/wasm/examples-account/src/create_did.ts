@@ -11,13 +11,13 @@ async function createIdentity(storage?: Storage) {
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         storage,
     });
-    let account = await builder.createIdentity();
+    const account = await builder.createIdentity();
 
     // Retrieve the DID of the newly created identity.
-    let did = account.did();
+    const did = account.did();
 
     // Print the DID of the created Identity.
     console.log(did.toString())

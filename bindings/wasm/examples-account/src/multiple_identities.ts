@@ -11,26 +11,26 @@ async function multipleIdentities(storage?: Storage) {
 
     // Create an AccountBuilder to make it easier to create multiple identities.
     // Every account created from the builder will use the same storage.
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         storage,
     });
 
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
-    let account1 = await builder.createIdentity();
+    const account1 = await builder.createIdentity();
 
     // Create a second identity.
-    let account2 = await builder.createIdentity();
+    const account2 = await builder.createIdentity();
 
     // Retrieve the did of the identity that account1 manages.
-    let did1 = account1.did();
+    const did1 = account1.did();
 
     // Suppose we're done with account1 and free it.
     account1.free();
 
     // Now we want to modify the first identity - how do we do that?
     // We can load the identity from storage into an account using the builder.
-    let account1Reconstructed = await builder.loadIdentity(did1);
+    const account1Reconstructed = await builder.loadIdentity(did1);
 
     // Now we can make modifications to the identity.
     // We can even do so concurrently.
@@ -44,7 +44,7 @@ async function multipleIdentities(storage?: Storage) {
     await Promise.all([account1Promise, account2Promise]);
 
     // Print the Explorer URL for the DID.
-    let did = account1Reconstructed.did().toString();
+    const did = account1Reconstructed.did().toString();
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
