@@ -8,6 +8,9 @@ use std::sync::Arc;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::tangle::NetworkName;
 use serde::Serialize;
 
 use crate::chain::ChainHistory;
@@ -15,14 +18,11 @@ use crate::chain::DocumentHistory;
 use crate::credential::FailFast;
 use crate::credential::PresentationValidationOptions;
 use crate::credential::PresentationValidator;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::ClientBuilder;
-use crate::tangle::NetworkName;
 use crate::tangle::TangleResolve;
 
 /// A `Resolver` supports resolving DID Documents across different Tangle networks using

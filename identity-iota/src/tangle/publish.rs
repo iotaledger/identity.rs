@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::document::IotaDocument;
-use crate::document::IotaVerificationMethod;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::document::IotaVerificationMethod;
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
 #[derive(Clone, Copy, Debug)]
@@ -35,14 +35,14 @@ impl PublishType {
 
 #[cfg(test)]
 mod test {
-  use crate::did::IotaDIDUrl;
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyPair;
   use identity_did::did::DID;
   use identity_did::verification::MethodScope;
+  use identity_iota_core::did::IotaDIDUrl;
+  use identity_iota_core::document::IotaVerificationMethod;
 
-  use crate::document::IotaVerificationMethod;
   use crate::Result;
 
   use super::*;

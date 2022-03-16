@@ -11,8 +11,8 @@ use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::iota::ClientBuilder;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
-use identity::iota::Network;
+use identity::iota_core::IotaDID;
+use identity::iota_core::Network;
 
 #[tokio::main]
 async fn main() -> Result<()> {

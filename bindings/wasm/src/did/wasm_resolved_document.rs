@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::MessageId;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::MessageId;
 use std::str::FromStr;
 
 use crate::did::WasmDiffMessage;
@@ -86,7 +86,9 @@ impl WasmResolvedDocument {
   /// Sets the diff chain message id.
   #[wasm_bindgen(setter = diffMessageId)]
   pub fn set_diff_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.diff_message_id = message_id;
     Ok(())
   }
@@ -100,7 +102,9 @@ impl WasmResolvedDocument {
   /// Sets the integration chain message id.
   #[wasm_bindgen(setter = integrationMessageId)]
   pub fn set_integration_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.integration_message_id = message_id;
     Ok(())
   }
@@ -121,6 +125,8 @@ impl WasmResolvedDocument {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmResolvedDocument, ResolvedDocument);
 
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {
   fn from(document: ResolvedIotaDocument) -> Self {

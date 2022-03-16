@@ -4,9 +4,8 @@
 use std::str::FromStr;
 
 use identity::core::ToJson;
-use identity::iota::DiffMessage;
-use identity::iota::MessageId;
-use identity::iota::TangleRef;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
@@ -51,7 +50,9 @@ impl WasmDiffMessage {
   /// Sets the message_id of the DID Document diff.
   #[wasm_bindgen(setter = messageId)]
   pub fn set_message_id(&mut self, message_id: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.set_message_id(message_id);
     Ok(())
   }
@@ -65,7 +66,9 @@ impl WasmDiffMessage {
   /// Sets the Tangle message id of the previous DID Document diff.
   #[wasm_bindgen(setter = previousMessageId)]
   pub fn set_previous_message_id(&mut self, message_id: &str) -> Result<()> {
-    let previous_message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    let previous_message_id: MessageId = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.set_previous_message_id(previous_message_id);
     Ok(())
   }
@@ -97,6 +100,8 @@ impl WasmDiffMessage {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmDiffMessage, DiffMessage);
 
 impl From<DiffMessage> for WasmDiffMessage {
   fn from(document_diff: DiffMessage) -> Self {

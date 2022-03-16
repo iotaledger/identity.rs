@@ -7,11 +7,12 @@ use std::rc::Rc;
 use futures::executor;
 use identity::core::Url;
 use identity::iota::Client;
-use identity::iota::IotaDID;
-use identity::iota::NetworkName;
+use identity::iota::ClientBuilder;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
 use identity::iota::ResolverBuilder;
+use identity::iota_core::IotaDID;
+use identity::iota_core::NetworkName;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -31,7 +32,7 @@ use crate::did::UWasmDID;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Config;
+use crate::tangle::IClientConfig;
 use crate::tangle::WasmClient;
 
 #[wasm_bindgen(js_name = Resolver)]
@@ -60,6 +61,12 @@ impl WasmResolver {
     executor::block_on(Resolver::<Rc<Client>>::new())
       .map(Self::from)
       .wasm_result()
+  }
+
+  /// Returns a {@link ResolverBuilder} to construct a new `Resolver`.
+  #[wasm_bindgen]
+  pub fn builder() -> WasmResolverBuilder {
+    WasmResolverBuilder::new()
   }
 
   /// Returns the `Client` corresponding to the given network name if one exists.
@@ -291,6 +298,7 @@ impl From<Resolver<Rc<Client>>> for WasmResolver {
 #[wasm_bindgen(js_name = ResolverBuilder)]
 pub struct WasmResolverBuilder(ResolverBuilder<Rc<Client>>);
 
+#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = ResolverBuilder)]
 impl WasmResolverBuilder {
   /// Constructs a new `ResolverBuilder` with no `Clients` configured.
@@ -313,8 +321,8 @@ impl WasmResolverBuilder {
   ///
   /// NOTE: replaces any previous `Client` or `Config` with the same network name.
   #[wasm_bindgen(js_name = clientConfig)]
-  pub fn client_config(mut self, config: &mut Config) -> Result<WasmResolverBuilder> {
-    self.0 = self.0.client_builder(config.take_builder()?);
+  pub fn client_config(mut self, config: IClientConfig) -> Result<WasmResolverBuilder> {
+    self.0 = self.0.client_builder(ClientBuilder::try_from(config)?);
     Ok(self)
   }
 
@@ -332,12 +340,6 @@ impl WasmResolverBuilder {
         .wasm_result()
     })
     .unchecked_into::<PromiseResolver>()
-  }
-}
-
-impl Default for WasmResolverBuilder {
-  fn default() -> Self {
-    Self::new()
   }
 }
 

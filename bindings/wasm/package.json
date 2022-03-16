@@ -26,7 +26,7 @@
     "test:browser:parallel": "cypress-parallel -s test:browser -t 4 -d cypress/integration -a '\"--quiet\"'",
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
-    "test:unit": "wasm-pack test --node",
+    "test:unit": "wasm-pack test --release --node",
     "cypress": "cypress open"
   },
   "contributors": [

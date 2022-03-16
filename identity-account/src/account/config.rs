@@ -3,9 +3,8 @@
 
 use std::sync::Arc;
 
+use identity_account_storage::storage::Storage;
 use identity_iota::tangle::Client;
-
-use crate::storage::Storage;
 
 /// A wrapper that holds configuration for an [`Account`] instantiation.
 ///

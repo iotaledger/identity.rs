@@ -15,13 +15,13 @@ use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ChainHistory;
 use identity::iota::Client;
-use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
-use identity::iota::IotaDocument;
-use identity::iota::IotaService;
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::IotaDocument;
+use identity::iota_core::IotaService;
+use identity::iota_core::IotaVerificationMethod;
 
 mod create_did;
 

@@ -63,3 +63,5 @@ impl WasmMethodScope {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmMethodScope, MethodScope);

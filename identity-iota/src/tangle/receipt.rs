@@ -1,13 +1,13 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::tangle::Message;
-use crate::tangle::MessageId;
-use crate::tangle::Network;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::Network;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Receipt {

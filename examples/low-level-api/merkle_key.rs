@@ -5,13 +5,6 @@
 //!
 //! cargo run --example merkle_key
 
-use identity::iota::CredentialValidationOptions;
-use identity::iota::CredentialValidator;
-use identity::iota::Resolver;
-
-use rand::rngs::OsRng;
-use rand::Rng;
-
 use identity::core::Timestamp;
 use identity::credential::Credential;
 use identity::crypto::merkle_key::Sha256;
@@ -20,11 +13,15 @@ use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::did::MethodScope;
-
-use identity::iota::IotaDID;
-use identity::iota::IotaVerificationMethod;
+use identity::iota::CredentialValidationOptions;
+use identity::iota::CredentialValidator;
 use identity::iota::Receipt;
+use identity::iota::Resolver;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
+use rand::rngs::OsRng;
+use rand::Rng;
 
 mod common;
 mod create_did;

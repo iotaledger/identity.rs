@@ -71,14 +71,22 @@ pub mod iota {
 
   pub use identity_iota::chain::*;
   pub use identity_iota::credential::*;
-  pub use identity_iota::did::*;
-  pub use identity_iota::diff::*;
   pub use identity_iota::document::*;
   pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;
+}
+
+pub mod iota_core {
+  //! IOTA Core Traits and Types definitions
+
+  pub use identity_iota_core::did::*;
+  pub use identity_iota_core::diff::*;
+  pub use identity_iota_core::document::*;
+  pub use identity_iota_core::error::*;
+  pub use identity_iota_core::tangle::*;
 
   #[doc(inline)]
-  pub use identity_iota::try_construct_did;
+  pub use identity_iota_core::try_construct_did;
 }
 
 #[cfg(feature = "account")]
@@ -87,35 +95,46 @@ pub mod account {
   //! Secure storage for Decentralized Identifiers
 
   pub use identity_account::account::*;
-  pub use identity_account::crypto::*;
   pub use identity_account::error::*;
   pub use identity_account::identity::*;
-  pub use identity_account::storage::*;
-  pub use identity_account::stronghold::*;
   pub use identity_account::types::*;
   pub use identity_account::updates::*;
-  pub use identity_account::utils::*;
 }
 
-#[cfg(feature = "comm")]
-#[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
-pub mod comm {
-  //! DID Communications Message Specification
-  //!
-  //! [Specification](https://github.com/iotaledger/identity.rs/tree/dev/docs/DID%20Communications%20Research%20and%20Specification)
+#[cfg(feature = "account")]
+#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
+pub mod account_storage {
+  //! Storage Trait and Types definitions
 
-  pub use identity_comm::envelope::*;
-  pub use identity_comm::error::*;
-  pub use identity_comm::message::*;
+  pub use identity_account_storage::crypto::*;
+  pub use identity_account_storage::error::*;
+  pub use identity_account_storage::identity::*;
+  pub use identity_account_storage::storage::*;
+  #[cfg(feature = "stronghold")]
+  pub use identity_account_storage::stronghold::*;
+  pub use identity_account_storage::types::*;
+  pub use identity_account_storage::utils::*;
 }
+
+// #[cfg(feature = "comm")]
+// #[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
+// pub mod comm {
+//   //! DID Communications Message Specification
+//   //!
+//   //! [Specification](https://github.com/iotaledger/identity.rs/tree/dev/docs/DID%20Communications%20Research%20and%20Specification)
+
+//   pub use identity_comm::envelope::*;
+//   pub use identity_comm::error::*;
+//   pub use identity_comm::message::*;
+// }
 
 pub mod prelude {
   //! Prelude of commonly used types
 
   pub use identity_core::crypto::KeyPair;
-  pub use identity_iota::document::IotaDocument;
   pub use identity_iota::tangle::Client;
   pub use identity_iota::Result;
+  pub use identity_iota_core::document::IotaDocument;
 }
 
 #[cfg(feature = "actor")]

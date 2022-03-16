@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::Network;
+use identity::iota_core::Network;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -13,7 +13,9 @@ pub struct WasmNetwork(pub(crate) Network);
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {
   /// Parses the provided string to a `Network`.
-  #[wasm_bindgen]
+  ///
+  /// Errors if the name is invalid.
+  #[wasm_bindgen(js_name = tryFromName)]
   pub fn try_from_name(name: String) -> Result<WasmNetwork> {
     Network::try_from_name(name).map(Self).wasm_result()
   }
@@ -44,7 +46,21 @@ impl WasmNetwork {
   pub fn to_string(&self) -> String {
     self.0.name_str().to_owned()
   }
+
+  /// Serializes a `Network` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `Network` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmNetwork> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
+
+impl_wasm_clone!(WasmNetwork, Network);
 
 impl From<WasmNetwork> for Network {
   fn from(other: WasmNetwork) -> Self {

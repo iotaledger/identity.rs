@@ -81,3 +81,5 @@ impl WasmPresentation {
       .unchecked_into::<ArrayCredential>()
   }
 }
+
+impl_wasm_clone!(WasmPresentation, Presentation);
