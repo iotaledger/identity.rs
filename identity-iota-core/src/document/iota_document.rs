@@ -65,6 +65,8 @@ pub struct IotaDocument {
   pub(crate) document: IotaCoreDocument,
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub proof: Option<Signature>,
 }
 
 impl TryMethod for IotaDocument {
@@ -618,7 +620,7 @@ impl<'a, 'b, 'c> IotaDocument {}
 
 impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
   fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
-    Self { document, metadata }
+    Self { document, metadata, proof: None }
   }
 }
 
@@ -636,19 +638,19 @@ impl Display for IotaDocument {
 
 impl TrySignature for IotaDocument {
   fn signature(&self) -> Option<&Signature> {
-    self.metadata.proof.as_ref()
+    self.proof.as_ref()
   }
 }
 
 impl TrySignatureMut for IotaDocument {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.metadata.proof.as_mut()
+    self.proof.as_mut()
   }
 }
 
 impl SetSignature for IotaDocument {
   fn set_signature(&mut self, signature: Signature) {
-    self.metadata.proof = Some(signature)
+    self.proof = Some(signature)
   }
 }
 
