@@ -19,26 +19,26 @@ impl WasmKeyLocation {
     WasmKeyLocation(KeyLocation::new(method.0, fragment, generation.0))
   }
 
-  /// Returns the method type of the key location.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the method type of the key location.
+  #[wasm_bindgen]
   pub fn method(&self) -> WasmMethodType {
     self.0.method().into()
   }
 
-  /// Returns the fragment name of the key location.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the fragment name of the key location.
+  #[wasm_bindgen]
   pub fn fragment(&self) -> String {
     self.0.fragment().clone().into()
   }
 
-  /// Returns the fragment name of the key location.
-  #[wasm_bindgen(getter = fragmentName)]
+  /// Returns a copy of the fragment name of the key location.
+  #[wasm_bindgen(js_name = fragmentName)]
   pub fn fragment_name(&self) -> String {
     self.0.fragment_name().to_string()
   }
 
-  /// Returns the integration generation when this key was created.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the integration generation when this key was created.
+  #[wasm_bindgen]
   pub fn generation(&self) -> WasmGeneration {
     self.0.generation().into()
   }

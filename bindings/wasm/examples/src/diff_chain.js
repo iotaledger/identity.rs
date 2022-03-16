@@ -27,25 +27,25 @@ async function createDiff(clientConfig) {
 
     // Add a Service
     const service = new Service({
-        id: doc.id.toUrl().join("#linked-domain-1"),
+        id: doc.id().toUrl().join("#linked-domain-1"),
         type: "LinkedDomains",
         serviceEndpoint: "https://example.com/",
     });
     updatedDoc.insertService(service);
-    updatedDoc.metadataUpdated = Timestamp.nowUTC();
+    updatedDoc.setMetadataUpdated(Timestamp.nowUTC());
     console.log(updatedDoc);
 
     // Create diff
-    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.defaultSigningMethod().id);
+    const diff = doc.diff(updatedDoc, receipt.messageId(), key, doc.defaultSigningMethod().id());
     console.log(diff);
 
     // Publish diff to the Tangle
-    const diffReceipt = await client.publishDiff(receipt.messageId, diff);
+    const diffReceipt = await client.publishDiff(receipt.messageId(), diff);
     console.log(diffReceipt);
-    console.log(`Diff Chain Transaction: ${clientConfig.explorer.messageUrl(diffReceipt.messageId)}`);
-    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
+    console.log(`Diff Chain Transaction: ${clientConfig.explorer.messageUrl(diffReceipt.messageId())}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id())}`);
 
-    return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
+    return {updatedDoc, key, diffMessageId: diffReceipt.messageId()};
 }
 
 export {createDiff};

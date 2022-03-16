@@ -39,16 +39,16 @@ async function revokeVC(clientConfig) {
     const signedVc = Credential.fromJSON(credentialJSON);
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
-    issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
-    issuer.doc.metadataPreviousMessageId = issuer.updatedMessageId;
-    issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
+    issuer.doc.removeMethod(issuer.doc.id().toUrl().join("#newKey"));
+    issuer.doc.setMetadataPreviousMessageId(issuer.updatedMessageId);
+    issuer.doc.setMetadataUpdated(Timestamp.nowUTC());
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id());
     // This is an integration chain update, so we publish the full document.
-    const {messageId} = await client.publishDocument(issuer.doc);
-
+    const receipt = await client.publishDocument(issuer.doc);
+    console.log(`published document`);
     // Log the resulting Identity update
-    console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(messageId)}`);
-    console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
+    console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(receipt.messageId())}`);
+    console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id())}`);
 
     // Check the verifiable credential.
     const resolver = await Resolver

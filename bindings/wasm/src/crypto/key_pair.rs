@@ -44,20 +44,20 @@ impl WasmKeyPair {
     Ok(Self((type_.into(), public, private).into()))
   }
 
-  /// Returns the private key as a base58-encoded string.
-  #[wasm_bindgen(getter = type)]
+  /// Returns a copy of the private key as a base58-encoded string.
+  #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> KeyType {
     KeyType::from(self.0.type_())
   }
 
-  /// Returns the public key as a base58-encoded string.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the public key as a base58-encoded string.
+  #[wasm_bindgen]
   pub fn public(&self) -> String {
     encode_b58(self.0.public())
   }
 
-  /// Returns the private key as a base58-encoded string.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the private key as a base58-encoded string.
+  #[wasm_bindgen]
   pub fn private(&self) -> String {
     encode_b58(self.0.private())
   }

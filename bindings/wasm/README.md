@@ -73,10 +73,10 @@ async function main() {
     const key = new identity.KeyPair(identity.KeyType.Ed25519);
 
     // Create a new DID Document using the KeyPair for the default VerificationMethod.
-    const doc = new identity.Document(key, network.name);
+    const doc = new identity.Document(key, network.name());
 
     // Sign the DID Document with the private key.
-    doc.signSelf(key, doc.defaultSigningMethod().id);
+    doc.signSelf(key, doc.defaultSigningMethod().id());
 
     // Create a default client instance for the network.
     const client = await identity.Client.fromConfig({network: network});
@@ -88,7 +88,7 @@ async function main() {
     const explorer = identity.ExplorerUrl.mainnet();
     // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
     console.log("Tangle Message Receipt:", receipt);
-    console.log("Tangle Explorer Url:", explorer.resolverUrl(doc.id));
+    console.log("Tangle Explorer Url:", explorer.resolverUrl(doc.id()));
 }
 
 main()
