@@ -10,9 +10,9 @@ keywords:
 - reference
 ---
 
-Credentials are statements about an entity, such as properties that the entity possesses or capabilities that they have, like a driver's license, a passport, or a someone's age. Verifiable Credentials (VCs) are statements, like someone having a driver's license, that can be cryptographically verified by a third party, either online or in person. The holder of the VC can then decide what is shared and who it is shared with.
+Credentials are statements about an entity, such as properties that the entity possesses or capabilities that they have, like a driver's license, a passport, or a someone's age. Verifiable Credentials (VCs) are statements that can be cryptographically verified by a third party, either online or in person, like someone having a driver's license. The holder of the VC can then decide what is shared and who to share it with.
 
-There are several types of actors that play different roles in a verifiable credential system. Starting with a common example of how things work today that you will find below, this article explains how physical credentials and centralized databases are used while outlining the roles that various entities play in the Verifiable Credential system.
+There are several types of actors that play different roles in a verifiable credential system. This article explains how things work today and how physical credentials and centralized databases are used while outlining the roles that various entities play in the Verifiable Credential system, starting with a common example.
 
 :::note Example - Passport Issuance
 
@@ -42,8 +42,8 @@ The first step in the creation and verification of a VC is to create a verifiabl
 
 After the credential is published to the Tangle, validations occur:
  
- - by looking up the issuer's key on the Tangle. 
- - the holder proving ownership of their DID to the verifier (evidence). 
- - validating that the credential has been signed by the issuing party.
+ - By looking up the issuer's key on the Tangle. 
+ - The holder proving ownership of their DID to the verifier (evidence). 
+ - Validating that the credential has been signed by the issuing party.
 
 The remaining chapters in this section explore creation, verification, and revocation of VCs in more detail.
