@@ -90,12 +90,21 @@ impl Debug for KeyLocation2 {
   }
 }
 
-/// Returns the [`KeyLocation2`] of an [`IotaVerificationMethod`].
-pub fn method_key_location(method: &IotaVerificationMethod) -> KeyLocation2 {
-  let fragment: &str = method.id().fragment().expect("TODO");
-  let method_data: &MethodData = method.key_data();
+pub trait IotaVerificationMethodExt {
+  /// Returns the [`KeyLocation2`] of an [`IotaVerificationMethod`].
+  fn key_location(&self) -> crate::Result<KeyLocation2>;
+}
 
-  KeyLocation2::new(method.key_type(), fragment.to_owned(), method_data)
+impl IotaVerificationMethodExt for IotaVerificationMethod {
+  fn key_location(&self) -> crate::Result<KeyLocation2> {
+    let fragment: &str = self
+      .id()
+      .fragment()
+      .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
+    let method_data: &MethodData = self.key_data();
+
+    Ok(KeyLocation2::new(self.key_type(), fragment.to_owned(), method_data))
+  }
 }
 
 /// The storage location of a verification method key.

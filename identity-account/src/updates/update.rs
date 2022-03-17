@@ -4,9 +4,7 @@
 use crypto::signatures::ed25519;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
-use identity_account_storage::types::method_key_location;
-use identity_account_storage::types::Generation;
-use identity_account_storage::types::KeyLocation;
+use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation2;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
@@ -14,7 +12,6 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDIDUrl;
@@ -82,7 +79,7 @@ pub(crate) async fn create_identity(
 
   let method: IotaVerificationMethod =
     IotaVerificationMethod::new(did.clone(), setup.key_type, &public_key, fragment.as_ref())?;
-  let location: KeyLocation2 = method_key_location(&method);
+  let location: KeyLocation2 = method.key_location()?;
 
   ensure!(
     !store.key_exists(&did, &location).await?,
@@ -173,9 +170,9 @@ impl Update {
         let public_key: PublicKey = storage.key_get(did, &location).await?;
 
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public_key, fragment.name())?;
+          IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;
 
-        let new_location: KeyLocation2 = method_key_location(&method);
+        let new_location: KeyLocation2 = method.key_location()?;
 
         storage.key_move(did, &location, did, &new_location).await?;
 
