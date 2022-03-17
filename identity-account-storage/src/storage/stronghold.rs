@@ -116,7 +116,9 @@ impl Storage for Stronghold {
   }
 
   async fn key_move(&self, from_did: &IotaDID, from: &KeyLocation2, to_did: &IotaDID, to: &KeyLocation2) -> Result<()> {
-    unimplemented!()
+    let vault: Vault<'_> = self.vault(from_did);
+
+    // move_key()
   }
 
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey> {
@@ -231,42 +233,21 @@ async fn generate_ed25519(
 ) -> Result<KeyLocation2> {
   let random: Vec<u8> = random()?.to_vec();
   let did_string: String = did.to_string();
-  let seed_location: Location = Location::generic(format!("tmp_seed:{}", did_string), random.clone());
   let key_location: Location = Location::generic(format!("tmp_key:{}", did_string), random);
 
-  // Generate a SLIP10 seed as the private key
-  let procedure: procedures::Slip10Generate = procedures::Slip10Generate {
-    output: seed_location.clone(),
-    hint: default_hint(),
-    size_bytes: None,
-  };
-  vault.execute(procedure).await?;
-
-  let chain: procedures::Chain = procedures::Chain::from_u32_hardened(vec![0, 0, 0]);
-  let seed: procedures::Slip10DeriveInput = procedures::Slip10DeriveInput::Seed(seed_location.clone());
-
-  // Use the SLIP10 seed to derive a child key
-  let procedure: procedures::Slip10Derive = procedures::Slip10Derive {
-    chain,
-    input: seed,
+  let generate_key: procedures::GenerateKey = procedures::GenerateKey {
+    ty: procedures::KeyType::Ed25519,
     output: key_location.clone(),
     hint: default_hint(),
   };
-  vault.execute(procedure).await?;
+
+  vault.execute(generate_key).await?;
 
   // Retrieve the public key of the derived child key
   let public_key: PublicKey = retrieve_ed25519(vault, key_location.clone()).await?;
 
   let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
   let new_location = KeyLocation2::new(method_type, fragment.to_owned(), method.key_data());
-
-  let revoke_seed: procedures::RevokeData = procedures::RevokeData {
-    location: seed_location,
-    // The subsequent move_key will run garbage collection.
-    should_gc: false,
-  };
-
-  vault.execute(revoke_seed).await?;
 
   move_key(vault, key_location, new_location.to_location(did)).await?;
 
