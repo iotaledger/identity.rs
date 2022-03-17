@@ -151,7 +151,7 @@ impl Storage for MemStore {
     unimplemented!()
   }
 
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation2) -> Result<()> {
     // let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     // let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
 
@@ -161,7 +161,7 @@ impl Storage for MemStore {
     unimplemented!()
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation2, data: Vec<u8>) -> Result<Signature> {
     // let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     // let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     // let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;

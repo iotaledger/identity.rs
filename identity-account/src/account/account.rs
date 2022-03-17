@@ -10,7 +10,8 @@ use std::sync::Arc;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
-use identity_account_storage::types::KeyLocation;
+use identity_account_storage::types::IotaVerificationMethodExt;
+use identity_account_storage::types::KeyLocation2;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
 use identity_iota::chain::DocumentChain;
@@ -247,7 +248,7 @@ where
       .resolve_method(fragment)
       .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
-    let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
+    let location: KeyLocation2 = method.key_location()?;
 
     state
       .sign_data(self.did(), self.storage().deref(), &location, data, options)
@@ -346,15 +347,7 @@ where
       None => signing_state.document().default_signing_method()?,
     };
 
-    let signing_key_location: KeyLocation = new_state.method_location(
-      signing_method.key_type(),
-      // TODO: Should be a fatal error.
-      signing_method
-        .id()
-        .fragment()
-        .ok_or(Error::MethodMissingFragment)?
-        .to_owned(),
-    )?;
+    let signing_key_location: KeyLocation2 = signing_method.key_location()?;
 
     signing_state
       .sign_data(
@@ -490,15 +483,7 @@ where
       None => old_state.document().default_signing_method()?,
     };
 
-    let signing_key_location: KeyLocation = old_state.method_location(
-      signing_method.key_type(),
-      // TODO: Should be a fatal error.
-      signing_method
-        .id()
-        .fragment()
-        .ok_or(Error::MethodMissingFragment)?
-        .to_owned(),
-    )?;
+    let signing_key_location: KeyLocation2 = signing_method.key_location()?;
 
     old_state
       .sign_data(

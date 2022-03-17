@@ -128,13 +128,12 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation2) -> Result<()> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        vault.delete(location_seed(location), false).await?;
-        vault.delete(location_skey(location), false).await?;
+        vault.delete(location.to_location(did), false).await?;
 
         // TODO: Garbage Collection (?)
       }
@@ -144,11 +143,11 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation2, data: Vec<u8>) -> Result<Signature> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location).await,
+      MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location.to_location(did)).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_sign] Handle MerkleKeyCollection2021"),
     }
   }
@@ -244,7 +243,7 @@ async fn generate_ed25519(
   vault.execute(procedure).await?;
 
   let chain: procedures::Chain = procedures::Chain::from_u32_hardened(vec![0, 0, 0]);
-  let seed: procedures::Slip10DeriveInput = procedures::Slip10DeriveInput::Seed(seed_location);
+  let seed: procedures::Slip10DeriveInput = procedures::Slip10DeriveInput::Seed(seed_location.clone());
 
   // Use the SLIP10 seed to derive a child key
   let procedure: procedures::Slip10Derive = procedures::Slip10Derive {
@@ -261,6 +260,14 @@ async fn generate_ed25519(
   let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
   let new_location = KeyLocation2::new(method_type, fragment.to_owned(), method.key_data());
 
+  let revoke_seed: procedures::RevokeData = procedures::RevokeData {
+    location: seed_location,
+    // The subsequent move_key will run garbage collection.
+    should_gc: false,
+  };
+
+  vault.execute(revoke_seed).await?;
+
   move_key(vault, key_location, new_location.to_location(did)).await?;
 
   Ok(new_location)
@@ -274,11 +281,10 @@ async fn retrieve_ed25519(vault: &Vault<'_>, location: Location) -> Result<Publi
   Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
 }
 
-async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  // TODO: Fix location.
-  let public_key: PublicKey = retrieve_ed25519(vault, Location::generic(vec![], vec![])).await?;
+async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: Location) -> Result<Signature> {
+  let public_key: PublicKey = retrieve_ed25519(vault, location.clone()).await?;
   let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
-    private_key: location_skey(location),
+    private_key: location,
     msg: payload,
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;

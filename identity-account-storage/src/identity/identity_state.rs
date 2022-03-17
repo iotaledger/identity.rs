@@ -20,6 +20,7 @@ use crate::error::Result;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
+use crate::types::KeyLocation2;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IdentityState {
@@ -90,7 +91,7 @@ impl IdentityState {
     &self,
     did: &IotaDID,
     store: &dyn Storage,
-    location: &KeyLocation,
+    location: &KeyLocation2,
     data: &mut U,
     options: SignatureOptions,
   ) -> Result<()>
@@ -101,7 +102,7 @@ impl IdentityState {
     let private: RemoteKey<'_> = RemoteKey::new(did, location, store);
 
     // Create the Verification Method identifier
-    let fragment: &str = location.fragment().identifier();
+    let fragment: &str = location.fragment.as_ref();
     let method_url: IotaDIDUrl = self.document.id().to_url().join(fragment)?;
 
     match location.method() {

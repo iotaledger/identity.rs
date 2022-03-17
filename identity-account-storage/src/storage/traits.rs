@@ -50,7 +50,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Moves a key from one did-location pair to another.
   ///
-  /// The key at the old location should be removed. If a key at the target exists, it will be overwritten.
+  /// The key at the source location will be removed. If a key at the target exists, it will be overwritten.
   async fn key_move(
     &self,
     source_did: &IotaDID,
@@ -63,10 +63,10 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()>;
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation2) -> Result<()>;
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation2, data: Vec<u8>) -> Result<Signature>;
 
   /// Returns `true` if a keypair exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation2) -> Result<bool>;
