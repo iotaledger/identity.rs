@@ -25,9 +25,8 @@ runs:
         command: install
         args: --version ^0.2 cargo-workspaces
 
-    - name: Install cargo-edit # to use cargo add
+    - name: Install cargo-edit # to use cargo add adn set-version
       uses: actions-rs/cargo@v1
-      if: ${{inputs.release-target == 'rust'}}
       with:
         command: install
         args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
