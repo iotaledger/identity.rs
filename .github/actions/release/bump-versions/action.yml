@@ -25,9 +25,8 @@ runs:
         command: install
         args: --version ^0.2 cargo-workspaces
 
-    - name: Install cargo-edit # to use cargo add
+    - name: Install cargo-edit # to use cargo add and set-version
       uses: actions-rs/cargo@v1
-      if: ${{inputs.release-target == 'rust'}}
       with:
         command: install
         args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
@@ -44,9 +43,9 @@ runs:
       if: ${{inputs.release-target == 'rust'}}
       working-directory: bindings/stronghold-nodejs
       run: |
-        cargo add identity-core@=${{ inputs.version }} --path=../../identity
-        cargo add identity-iota-core@=${{ inputs.version }} --path=../../identity
-        cargo add identity-account-storage@=${{ inputs.version }} --path=../../identity
+        cargo add identity-core@=${{ inputs.version }} --path=../../identity-core
+        cargo add identity-iota-core@=${{ inputs.version }} --path=../../identity-iota-core
+        cargo add identity-account-storage@=${{ inputs.version }} --path=../../identity-account-storage
     
     - name: Bump Rust crate version
       shell: bash
