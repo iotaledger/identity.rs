@@ -36,15 +36,6 @@ impl WasmDocumentMetadata {
   pub fn previous_message_id(&self) -> String {
     self.0.previous_message_id.to_string()
   }
-
-  /// Returns a copy of the reference to the `proof`.
-  #[wasm_bindgen]
-  pub fn proof(&self) -> Result<JsValue> {
-    match &self.0.proof {
-      Some(proof) => JsValue::from_serde(proof).wasm_result(),
-      None => Ok(JsValue::NULL),
-    }
-  }
 }
 
 impl_wasm_clone!(WasmDocumentMetadata, DocumentMetadata);

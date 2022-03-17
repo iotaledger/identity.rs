@@ -9,7 +9,7 @@ use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::Signature;
+
 use serde::Deserialize;
 use serde::Serialize;
 

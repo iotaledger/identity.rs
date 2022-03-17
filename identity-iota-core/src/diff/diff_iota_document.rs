@@ -55,7 +55,7 @@ impl Diff for IotaDocument {
       .transpose()?
       .unwrap_or_else(|| self.metadata.clone());
 
-    Ok(IotaDocument::from((document, metadata)))
+    Ok(IotaDocument::from((document, metadata, None)))
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
@@ -71,7 +71,7 @@ impl Diff for IotaDocument {
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `metadata`"))?;
 
-    Ok(IotaDocument::from((document, metadata)))
+    Ok(IotaDocument::from((document, metadata, None)))
   }
 
   fn into_diff(self) -> Result<Self::Type> {

@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
   // Create an AccountBuilder to make it easier to create multiple identities.
   // Every account created from the builder will use the same storage - stronghold in this case.
   let mut builder: AccountBuilder =
-    Account::builder().autopublish(false).storage(AccountStorage::Stronghold(stronghold_path, Some(password), None));
+    Account::builder().storage(AccountStorage::Stronghold(stronghold_path, Some(password), None));
 
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.

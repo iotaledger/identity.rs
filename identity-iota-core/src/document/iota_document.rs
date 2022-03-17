@@ -162,7 +162,7 @@ impl IotaDocument {
       .capability_invocation(MethodRef::Embed(method))
       .build()?;
     let metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    Ok(Self::from((document, metadata)))
+    Ok(Self::from((document, metadata, None)))
   }
 
   /// Returns whether the given [`MethodType`] can be used to sign document updates.
@@ -618,9 +618,13 @@ impl IotaDocument {
 
 impl<'a, 'b, 'c> IotaDocument {}
 
-impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
-  fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
-    Self { document, metadata, proof: None }
+impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)> for IotaDocument {
+  fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)) -> Self {
+    Self {
+      document,
+      metadata,
+      proof,
+    }
   }
 }
 
@@ -726,7 +730,7 @@ mod tests {
       .build()
       .unwrap();
 
-    IotaDocument::from((document, metadata))
+    IotaDocument::from((document, metadata, None))
   }
 
   fn generate_testkey() -> KeyPair {
