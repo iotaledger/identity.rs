@@ -7,12 +7,14 @@ use async_trait::async_trait;
 
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
 
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::types::KeyLocation;
+use crate::types::KeyLocation2;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
@@ -40,17 +42,14 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
 
-  /// Creates a new keypair at the specified `location` and returns its `PublicKey`.
-  async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
+  /// Creates a new keypair for the given `did` and returns its location.
+  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation2>;
 
-  /// Inserts a private key at the specified `location` and returns its `PublicKey`.
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey>;
-
-  /// Moves a key from one location to another.
-  async fn key_move(&self, did: &IotaDID, from: &KeyLocation, to: &KeyLocation) -> Result<()>;
+  /// Inserts a private key at the specified `location`.
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation2, private_key: PrivateKey) -> Result<()>;
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
   async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()>;

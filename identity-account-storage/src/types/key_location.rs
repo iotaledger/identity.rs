@@ -18,9 +18,9 @@ use crate::types::Generation;
 /// The storage location of a verification method key.
 #[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct KeyLocation2 {
-  method: MethodType,
-  fragment: String,
-  key_hash: u64,
+  pub method: MethodType,
+  pub fragment: String,
+  pub key_hash: u64,
 }
 
 impl KeyLocation2 {

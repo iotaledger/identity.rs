@@ -8,16 +8,14 @@ use async_trait::async_trait;
 use futures::executor;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
-use iota_stronghold::procedures::Chain;
-use iota_stronghold::procedures::Ed25519Sign;
-use iota_stronghold::procedures::Slip10Derive;
-use iota_stronghold::procedures::Slip10DeriveInput;
-use iota_stronghold::procedures::Slip10Generate;
+use identity_iota_core::document::IotaVerificationMethod;
+use iota_stronghold::procedures;
 use iota_stronghold::Location;
 
 use crate::error::Result;
@@ -25,10 +23,12 @@ use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
+use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
 use crate::types::KeyLocation;
+use crate::types::KeyLocation2;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
@@ -90,39 +90,36 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation2> {
     let vault: Vault<'_> = self.vault(did);
 
-    let public: PublicKey = match location.method() {
-      MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, location).await?,
+    let location: KeyLocation2 = match method_type {
+      MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, method_type, fragment, did).await?,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
     };
 
-    Ok(public)
+    Ok(location)
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
+  // TODO: Should this also not return the pub key since the caller could have just calculated it themselves,
+  // and to be consistent with key_new?
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation2, private_key: PrivateKey) -> Result<()> {
     let vault = self.vault(did);
 
+    let stronghold_location: Location = location.to_location(did);
+
     vault
-      .insert(location_skey(location), private_key.as_ref(), default_hint(), &[])
+      .insert(stronghold_location.clone(), private_key.as_ref(), default_hint(), &[])
       .await?;
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_insert] Handle MerkleKeyCollection2021"),
-    }
+    Ok(())
   }
 
-  async fn key_move(&self, did: &IotaDID, from: &KeyLocation, to: &KeyLocation) -> Result<()> {
-    unimplemented!()
-  }
-
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
+      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location.to_location(did)).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_get] Handle MerkleKeyCollection2021"),
     }
   }
@@ -223,48 +220,86 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
+async fn generate_ed25519(
+  vault: &Vault<'_>,
+  method_type: MethodType,
+  fragment: &str,
+  did: &IotaDID,
+) -> Result<KeyLocation2> {
+  let random: Vec<u8> = random()?.to_vec();
+  let did_string: String = did.to_string();
+  let seed_location: Location = Location::generic(format!("tmp_seed:{}", did_string), random.clone());
+  let key_location: Location = Location::generic(format!("tmp_key:{}", did_string), random);
+
   // Generate a SLIP10 seed as the private key
-  let procedure: Slip10Generate = Slip10Generate {
-    output: location_seed(location),
+  let procedure: procedures::Slip10Generate = procedures::Slip10Generate {
+    output: seed_location.clone(),
     hint: default_hint(),
     size_bytes: None,
   };
   vault.execute(procedure).await?;
 
-  let chain: Chain = Chain::from_u32_hardened(vec![0, 0, 0]);
-  let seed: Slip10DeriveInput = Slip10DeriveInput::Seed(location_seed(location));
+  let chain: procedures::Chain = procedures::Chain::from_u32_hardened(vec![0, 0, 0]);
+  let seed: procedures::Slip10DeriveInput = procedures::Slip10DeriveInput::Seed(seed_location);
 
   // Use the SLIP10 seed to derive a child key
-  let procedure: Slip10Derive = Slip10Derive {
+  let procedure: procedures::Slip10Derive = procedures::Slip10Derive {
     chain,
     input: seed,
-    output: location_skey(location),
+    output: key_location.clone(),
     hint: default_hint(),
   };
   vault.execute(procedure).await?;
 
   // Retrieve the public key of the derived child key
-  retrieve_ed25519(vault, location).await
+  let public_key: PublicKey = retrieve_ed25519(vault, key_location.clone()).await?;
+
+  let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
+  let new_location = KeyLocation2::new(method_type, fragment.to_owned(), method.key_data());
+
+  move_key(vault, key_location, new_location.to_location(did)).await?;
+
+  Ok(new_location)
 }
 
-async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
-  let procedure: iota_stronghold::procedures::PublicKey = iota_stronghold::procedures::PublicKey {
-    ty: iota_stronghold::procedures::KeyType::Ed25519,
-    private_key: location_skey(location),
+async fn retrieve_ed25519(vault: &Vault<'_>, location: Location) -> Result<PublicKey> {
+  let procedure: procedures::PublicKey = procedures::PublicKey {
+    ty: procedures::KeyType::Ed25519,
+    private_key: location,
   };
   Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_ed25519(vault, location).await?;
-  let procedure: Ed25519Sign = Ed25519Sign {
+  // TODO: Fix location.
+  let public_key: PublicKey = retrieve_ed25519(vault, Location::generic(vec![], vec![])).await?;
+  let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
     private_key: location_skey(location),
     msg: payload,
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;
 
   Ok(Signature::new(public_key, signature.into()))
+}
+
+// Moves a key from one location to another, thus deleting the old one.
+async fn move_key(vault: &Vault<'_>, from: Location, to: Location) -> Result<()> {
+  let copy_record = procedures::CopyRecord {
+    source: from.clone(),
+    target: to,
+    hint: default_hint(),
+  };
+
+  vault.execute(copy_record).await?;
+
+  let revoke_data = procedures::RevokeData {
+    location: from,
+    should_gc: true,
+  };
+
+  vault.execute(revoke_data).await?;
+
+  Ok(())
 }
 
 fn location_chain_state() -> Location {
@@ -283,10 +318,24 @@ fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
 }
 
+fn random() -> IotaStrongholdResult<[u8; 64]> {
+  let mut bytes: [u8; 64] = [0; 64];
+  crypto::utils::rand::fill(&mut bytes)
+    .map_err(|err| crate::stronghold::StrongholdError::IoError(std::io::Error::new(std::io::ErrorKind::Other, err)))?;
+  Ok(bytes)
+}
+
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
   format!("{}:{}:{}", prefix, location.generation(), location.fragment_name()).into_bytes()
 }
 
 fn fmt_did(did: &IotaDID) -> String {
   format!("$identity:{}", did.authority())
+}
+
+impl KeyLocation2 {
+  fn to_location(&self, did: &IotaDID) -> Location {
+    let bytes: Vec<u8> = format!("{}:{}", self.fragment, self.key_hash).into_bytes();
+    Location::generic(did.to_string(), bytes)
+  }
 }
