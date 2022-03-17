@@ -5,8 +5,6 @@ use identity::iota_core::IotaDocumentMetadata;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
-use crate::error::Result;
-use crate::error::WasmResult;
 
 // =============================================================================
 // =============================================================================
