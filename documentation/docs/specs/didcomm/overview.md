@@ -56,7 +56,7 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 
 | Name | Version | Description |
 | :--- | :---: | :--- | 
-| [Discover Features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md) | 1.0 | Describes how agents can query one another to discover which features they support, and to what extent. |
+| [Discover Features](https://github.com/decentralized-identity/didcomm-messaging/blob/ef997c9d3cd1cd24eb182ffa2930a095d3b856a9/docs/spec-files/feature_discovery.md) | 2.0 | Describes how agents can query one another to discover which features they support, and to what extent. |
 | [Trust Ping](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/trustping.md) | 1.0 | A standard way for agents to test connectivity, responsiveness, and security of a DIDComm channel. | 
 
 ## Resources

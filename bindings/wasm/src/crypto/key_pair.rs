@@ -3,7 +3,7 @@
 
 use identity::core::decode_b58;
 use identity::core::encode_b58;
-use identity::crypto::KeyPair as KeyPair_;
+use identity::crypto::KeyPair;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
@@ -23,41 +23,41 @@ struct JsonData {
 // =============================================================================
 // =============================================================================
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(inspectable, js_name = KeyPair)]
 #[derive(Clone, Debug)]
-pub struct KeyPair(pub(crate) KeyPair_);
+pub struct WasmKeyPair(pub(crate) KeyPair);
 
-#[wasm_bindgen]
-impl KeyPair {
+#[wasm_bindgen(js_class = KeyPair)]
+impl WasmKeyPair {
   /// Generates a new `KeyPair` object.
   #[wasm_bindgen(constructor)]
-  pub fn new(type_: KeyType) -> Result<KeyPair> {
-    KeyPair_::new(type_.into()).map(Self).wasm_result()
+  pub fn new(type_: KeyType) -> Result<WasmKeyPair> {
+    KeyPair::new(type_.into()).map(Self).wasm_result()
   }
 
   /// Parses a `KeyPair` object from base58-encoded public/private keys.
   #[wasm_bindgen(js_name = fromBase58)]
-  pub fn from_base58(type_: KeyType, public_key: &str, private_key: &str) -> Result<KeyPair> {
+  pub fn from_base58(type_: KeyType, public_key: &str, private_key: &str) -> Result<WasmKeyPair> {
     let public: PublicKey = decode_b58(public_key).wasm_result()?.into();
     let private: PrivateKey = decode_b58(private_key).wasm_result()?.into();
 
     Ok(Self((type_.into(), public, private).into()))
   }
 
-  /// Returns the private key as a base58-encoded string.
-  #[wasm_bindgen(getter = type)]
+  /// Returns a copy of the private key as a base58-encoded string.
+  #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> KeyType {
     KeyType::from(self.0.type_())
   }
 
-  /// Returns the public key as a base58-encoded string.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the public key as a base58-encoded string.
+  #[wasm_bindgen]
   pub fn public(&self) -> String {
     encode_b58(self.0.public())
   }
 
-  /// Returns the private key as a base58-encoded string.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the private key as a base58-encoded string.
+  #[wasm_bindgen]
   pub fn private(&self) -> String {
     encode_b58(self.0.private())
   }
@@ -76,9 +76,17 @@ impl KeyPair {
 
   /// Deserializes a `KeyPair` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<KeyPair> {
+  pub fn from_json(json: &JsValue) -> Result<WasmKeyPair> {
     let data: JsonData = json.into_serde().wasm_result()?;
 
     Self::from_base58(data.type_, &data.public, &data.private)
   }
 }
+
+impl From<KeyPair> for WasmKeyPair {
+  fn from(key_pair: KeyPair) -> Self {
+    WasmKeyPair(key_pair)
+  }
+}
+
+impl_wasm_clone!(WasmKeyPair, KeyPair);

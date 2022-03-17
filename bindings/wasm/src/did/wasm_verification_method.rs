@@ -5,13 +5,13 @@ use identity::core::decode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::PublicKey;
-use identity::iota::IotaDID;
-use identity::iota::IotaVerificationMethod;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::KeyCollection;
 use crate::crypto::KeyType;
+use crate::crypto::WasmKeyCollection;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
 use crate::error::wasm_error;
@@ -40,7 +40,7 @@ impl WasmVerificationMethod {
   pub fn new_merkle_key(
     digest: Digest,
     did: &WasmDID,
-    keys: &KeyCollection,
+    keys: &WasmKeyCollection,
     fragment: &str,
   ) -> Result<WasmVerificationMethod> {
     let did: IotaDID = did.0.clone();
@@ -54,32 +54,32 @@ impl WasmVerificationMethod {
     }
   }
 
-  /// Returns the `id` `DIDUrl` of the `VerificationMethod` object.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
-  /// Returns the `controller` `DID` of the `VerificationMethod` object.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `controller` `DID` of the `VerificationMethod` object.
+  #[wasm_bindgen]
   pub fn controller(&self) -> WasmDID {
     WasmDID::from(self.0.controller().clone())
   }
 
-  /// Returns the `controller` `DID` of the `VerificationMethod` object.
-  #[wasm_bindgen(setter = controller)]
+  /// Sets the `controller` `DID` of the `VerificationMethod` object.
+  #[wasm_bindgen(js_name = SetController)]
   pub fn set_controller(&mut self, did: &WasmDID) {
     *self.0.controller_mut() = did.0.clone();
   }
 
-  /// Returns the `VerificationMethod` type.
-  #[wasm_bindgen(getter = type)]
+  /// Returns a copy of the `VerificationMethod` type.
+  #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> String {
     self.0.key_type().as_str().into()
   }
 
-  /// Returns the `VerificationMethod` public key data.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `VerificationMethod` public key data.
+  #[wasm_bindgen]
   pub fn data(&self) -> Result<JsValue> {
     JsValue::from_serde(self.0.key_data()).wasm_result()
   }
@@ -96,6 +96,8 @@ impl WasmVerificationMethod {
     value.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmVerificationMethod, VerificationMethod);
 
 impl From<IotaVerificationMethod> for WasmVerificationMethod {
   fn from(method: IotaVerificationMethod) -> Self {

@@ -3,10 +3,10 @@
 
 use identity::core::decode_b58;
 use identity::did::DID;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::KeyPair;
+use crate::crypto::WasmKeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -21,7 +21,7 @@ pub struct WasmDID(pub(crate) IotaDID);
 impl WasmDID {
   /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &KeyPair, network: Option<String>) -> Result<WasmDID> {
+  pub fn new(key: &WasmKeyPair, network: Option<String>) -> Result<WasmDID> {
     let public: &[u8] = key.0.public().as_ref();
     Self::from_public_key(public, network)
   }
@@ -61,8 +61,8 @@ impl WasmDID {
     self.0.network_str().into()
   }
 
-  /// Returns the unique tag of the `DID`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the unique tag of the `DID`.
+  #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag().into()
   }
@@ -92,6 +92,12 @@ impl WasmDID {
     self.0.to_string()
   }
 
+  /// Deserializes a JSON object as `DID`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmDID> {
+    json_value.into_serde().map(Self).wasm_result()
+  }
+
   /// Serializes a `DID` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> JsValue {
@@ -99,6 +105,8 @@ impl WasmDID {
     JsValue::from_str(self.0.as_str())
   }
 }
+
+impl_wasm_clone!(WasmDID, DID);
 
 impl From<IotaDID> for WasmDID {
   fn from(did: IotaDID) -> Self {

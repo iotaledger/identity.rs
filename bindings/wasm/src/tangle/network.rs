@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::Network;
+use identity::iota_core::Network;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -30,13 +30,14 @@ impl WasmNetwork {
     Self(Network::Devnet)
   }
 
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the network name.
+  #[wasm_bindgen]
   pub fn name(&self) -> String {
     self.0.name_str().to_owned()
   }
 
-  /// Returns the node URL of the Tangle network.
-  #[wasm_bindgen(getter = defaultNodeURL)]
+  /// Returns a copy of the node URL of the Tangle network.
+  #[wasm_bindgen(js_name = defaultNodeURL)]
   pub fn default_node_url(&self) -> Option<String> {
     self.0.default_node_url().map(ToString::to_string)
   }
@@ -59,6 +60,8 @@ impl WasmNetwork {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmNetwork, Network);
 
 impl From<WasmNetwork> for Network {
   fn from(other: WasmNetwork) -> Self {

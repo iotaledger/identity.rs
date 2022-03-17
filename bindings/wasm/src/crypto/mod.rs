@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use self::digest::Digest;
-pub use self::key_collection::KeyCollection;
-pub use self::key_pair::KeyPair;
+pub use self::key_collection::WasmKeyCollection;
+pub use self::key_collection::WasmKeyCollectionData;
+pub use self::key_pair::WasmKeyPair;
 pub use self::key_type::KeyType;
 pub use self::wasm_proof_purpose::WasmProofPurpose;
 pub use self::wasm_signature_options::WasmSignatureOptions;

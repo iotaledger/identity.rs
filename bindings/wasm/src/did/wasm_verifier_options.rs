@@ -9,7 +9,7 @@ use crate::error::WasmResult;
 
 /// Holds additional signature verification options.
 /// See `IVerifierOptions`.
-#[wasm_bindgen(js_name = VerifierOptions)]
+#[wasm_bindgen(js_name = VerifierOptions, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmVerifierOptions(pub(crate) VerifierOptions);
 
@@ -54,6 +54,8 @@ impl From<WasmVerifierOptions> for VerifierOptions {
     options.0
   }
 }
+
+impl_wasm_clone!(WasmVerifierOptions, VerifierOptions);
 
 /// Duck-typed interface to allow creating `VerifierOptions` easily.
 #[wasm_bindgen]

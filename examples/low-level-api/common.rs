@@ -8,17 +8,14 @@
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Timestamp;
-
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-
 use identity::did::MethodScope;
 use identity::did::DID;
-
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and

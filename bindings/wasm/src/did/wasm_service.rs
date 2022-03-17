@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::did::ServiceEndpoint;
-use identity::iota::IotaDIDUrl;
-use identity::iota::IotaService;
+use identity::iota_core::IotaDIDUrl;
+use identity::iota_core::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -37,19 +37,19 @@ impl WasmService {
   }
 
   /// Returns a copy of the `Service` id.
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
   /// Returns a copy of the `Service` type.
-  #[wasm_bindgen(getter = type)]
+  #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> String {
     self.0.type_().to_owned()
   }
 
   /// Returns a copy of the `Service` endpoint.
-  #[wasm_bindgen(getter = serviceEndpoint)]
+  #[wasm_bindgen(js_name = serviceEndpoint)]
   pub fn service_endpoint(&self) -> UServiceEndpoint {
     match self.0.service_endpoint() {
       // string
@@ -102,6 +102,8 @@ impl WasmService {
     value.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmService, Service);
 
 impl From<IotaService> for WasmService {
   fn from(service: IotaService) -> Self {

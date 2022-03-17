@@ -1,15 +1,15 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-
 use std::time::Duration;
+
+use identity_iota_core::tangle::Network;
 
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::DIDMessageEncoding;
-use crate::tangle::Network;
 
 const DEFAULT_LOCAL_POW: bool = false;
 

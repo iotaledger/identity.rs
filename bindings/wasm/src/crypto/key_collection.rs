@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::decode_b58;
@@ -6,25 +6,26 @@ use identity::core::encode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
-use identity::crypto::KeyCollection as KeyCollection_;
+use identity::crypto::KeyCollection;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
-use crate::error::wasm_error;
+use crate::crypto::WasmKeyPair;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[derive(Deserialize, Serialize)]
-struct JsonData {
+pub struct WasmKeyCollectionData {
   #[serde(rename = "type")]
   type_: KeyType,
-  keys: Vec<KeyData>,
+  keys: Vec<WasmKeyData>,
 }
 
 #[derive(Deserialize, Serialize)]
-struct KeyData {
+struct WasmKeyData {
   public: String,
   private: String,
 }
@@ -32,16 +33,16 @@ struct KeyData {
 // =============================================================================
 // =============================================================================
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(inspectable, js_name = KeyCollection)]
 #[derive(Clone, Debug)]
-pub struct KeyCollection(pub(crate) KeyCollection_);
+pub struct WasmKeyCollection(pub(crate) KeyCollection);
 
-#[wasm_bindgen]
-impl KeyCollection {
+#[wasm_bindgen(js_class = KeyCollection)]
+impl WasmKeyCollection {
   /// Creates a new `KeyCollection` with the specified key type.
   #[wasm_bindgen(constructor)]
-  pub fn new(type_: KeyType, count: usize) -> Result<KeyCollection, JsValue> {
-    KeyCollection_::new(type_.into(), count).map_err(wasm_error).map(Self)
+  pub fn new(type_: KeyType, count: usize) -> Result<WasmKeyCollection> {
+    KeyCollection::new(type_.into(), count).map(Self).wasm_result()
   }
 
   /// Returns the number of keys in the collection.
@@ -58,8 +59,8 @@ impl KeyCollection {
 
   /// Returns the keypair at the specified `index`.
   #[wasm_bindgen]
-  pub fn keypair(&self, index: usize) -> Option<KeyPair> {
-    self.0.keypair(index).map(KeyPair)
+  pub fn keypair(&self, index: usize) -> Option<WasmKeyPair> {
+    self.0.keypair(index).map(WasmKeyPair)
   }
 
   /// Returns the public key at the specified `index` as a base58-encoded string.
@@ -106,31 +107,44 @@ impl KeyCollection {
 
   /// Serializes a `KeyCollection` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    let public: _ = self.0.iter_public();
-    let private: _ = self.0.iter_private();
+  pub fn to_json(&self) -> Result<JsValue> {
+    let data: WasmKeyCollectionData = WasmKeyCollectionData::from(self);
+    JsValue::from_serde(&data).wasm_result()
+  }
 
-    let keys: Vec<KeyData> = public
+  /// Deserializes a `KeyCollection` object from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmKeyCollection> {
+    let data: WasmKeyCollectionData = json.into_serde().wasm_result()?;
+    WasmKeyCollection::try_from(data)
+  }
+}
+
+impl From<&WasmKeyCollection> for WasmKeyCollectionData {
+  fn from(collection: &WasmKeyCollection) -> Self {
+    let public = collection.0.iter_public();
+    let private = collection.0.iter_private();
+
+    let keys: Vec<WasmKeyData> = public
       .zip(private)
-      .map(|(public, private)| KeyData {
+      .map(|(public, private)| WasmKeyData {
         public: encode_b58(public),
         private: encode_b58(private),
       })
       .collect();
 
-    let data: JsonData = JsonData {
+    WasmKeyCollectionData {
       keys,
-      type_: self.0.type_().into(),
-    };
-
-    JsValue::from_serde(&data).map_err(wasm_error)
+      type_: collection.0.type_().into(),
+    }
   }
+}
 
-  /// Deserializes a `KeyCollection` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<KeyCollection, JsValue> {
-    let data: JsonData = json.into_serde().map_err(wasm_error)?;
+impl TryFrom<WasmKeyCollectionData> for WasmKeyCollection {
+  type Error = JsValue;
 
+  fn try_from(data: WasmKeyCollectionData) -> std::result::Result<Self, Self::Error> {
+    // TODO: throw decoding errors instead unless we plan on removing KeyCollection.
     let iter: _ = data.keys.iter().flat_map(|data| {
       let public_key: PublicKey = decode_b58(&data.public).ok()?.into();
       let private_key: PrivateKey = decode_b58(&data.private).ok()?.into();
@@ -138,8 +152,10 @@ impl KeyCollection {
       Some((public_key, private_key))
     });
 
-    KeyCollection_::from_iterator(data.type_.into(), iter)
-      .map_err(wasm_error)
+    KeyCollection::from_iterator(data.type_.into(), iter)
       .map(Self)
+      .wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmKeyCollection, KeyCollection);

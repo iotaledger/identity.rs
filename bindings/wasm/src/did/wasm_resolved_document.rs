@@ -1,15 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::MessageId;
-use identity::iota::ResolvedIotaDocument;
 use std::str::FromStr;
+
+use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::MessageId;
+use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
-use wasm_bindgen::prelude::*;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more `DiffMessages`.
@@ -61,10 +62,11 @@ impl WasmResolvedDocument {
   // Properties
   // ===========================================================================
 
-  /// Returns the inner DID document.
+  /// Returns a copy of the inner DID document.
   ///
-  /// NOTE: clones the data. Use `intoDocument()` for efficiency.
-  #[wasm_bindgen(getter)]
+  /// NOTE: If the `ResolvedDocument` is no longer needed after calling this method
+  /// then consider using `intoDocument()` for efficiency.
+  #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
     WasmDocument::from(self.0.document.clone())
   }
@@ -77,30 +79,34 @@ impl WasmResolvedDocument {
     WasmDocument::from(self.0.document)
   }
 
-  /// Returns the diff chain message id.
-  #[wasm_bindgen(getter = diffMessageId)]
+  /// Returns a copy of the diff chain message id.
+  #[wasm_bindgen(js_name = diffMessageId)]
   pub fn diff_message_id(&self) -> String {
     self.0.diff_message_id.to_string()
   }
 
   /// Sets the diff chain message id.
-  #[wasm_bindgen(setter = diffMessageId)]
+  #[wasm_bindgen(js_name = setDiffMessageId)]
   pub fn set_diff_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.diff_message_id = message_id;
     Ok(())
   }
 
-  /// Returns the integration chain message id.
-  #[wasm_bindgen(getter = integrationMessageId)]
+  /// Returns a copy of the integration chain message id.
+  #[wasm_bindgen(js_name = integrationMessageId)]
   pub fn integration_message_id(&self) -> String {
     self.0.integration_message_id.to_string()
   }
 
   /// Sets the integration chain message id.
-  #[wasm_bindgen(setter = integrationMessageId)]
+  #[wasm_bindgen(js_name = setIntegrationMessageId)]
   pub fn set_integration_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.integration_message_id = message_id;
     Ok(())
   }
@@ -121,6 +127,8 @@ impl WasmResolvedDocument {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmResolvedDocument, ResolvedDocument);
 
 impl From<ResolvedIotaDocument> for WasmResolvedDocument {
   fn from(document: ResolvedIotaDocument) -> Self {

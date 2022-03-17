@@ -15,8 +15,10 @@ description = "Web Assembly bindings for the identity-rs crate."
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
+iota-crypto = { version = "0.7", default-features = false, features = ["ed25519"] }
 js-sys = { version = "0.3" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
@@ -28,6 +30,7 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "=0.5.0-dev.4"
 path = "../../identity"
 default-features = false
+features = ["account", "bindings-derive"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }

@@ -7,8 +7,14 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "MethodScope | undefined")]
+  pub type OptionMethodScope;
+}
+
 /// Supported verification method types.
-#[wasm_bindgen(js_name = MethodScope)]
+#[wasm_bindgen(js_name = MethodScope, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmMethodScope(pub(crate) MethodScope);
 
@@ -63,3 +69,5 @@ impl WasmMethodScope {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmMethodScope, MethodScope);

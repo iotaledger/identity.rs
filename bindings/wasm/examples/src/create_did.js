@@ -16,10 +16,10 @@ async function createIdentity(clientConfig) {
     const key = new KeyPair(KeyType.Ed25519);
 
     // Create a DID Document (an identity) from the generated key pair.
-    const doc = new Document(key, clientConfig.network.name);
+    const doc = new Document(key, clientConfig.network.name());
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id);
+    doc.signSelf(key, doc.defaultSigningMethod().id());
 
     // Create a client instance to publish messages to the configured Tangle network.
     const client = await Client.fromConfig({
@@ -30,8 +30,8 @@ async function createIdentity(clientConfig) {
     const receipt = await client.publishDocument(doc);
 
     // Log the results.
-    console.log(`DID Document Transaction: ${clientConfig.explorer.messageUrl(receipt.messageId)}`);
-    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
+    console.log(`DID Document Transaction: ${clientConfig.explorer.messageUrl(receipt.messageId())}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id())}`);
 
     // Return the results.
     return {key, doc, receipt};

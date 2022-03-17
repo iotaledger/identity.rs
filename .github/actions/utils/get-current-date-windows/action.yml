@@ -1,8 +1,0 @@
-name: 'get-current-date-windows'
-description: 'Script for getting the current date on windows.'
-runs:
-  using: "composite"
-  steps:
-    - name: Get current date
-      shell: pwsh
-      run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append

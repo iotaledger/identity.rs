@@ -17,20 +17,21 @@ use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
-use identity::iota::Error;
-use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
-use identity::iota::IotaVerificationMethod;
-use identity::iota::MessageId;
-use identity::iota::NetworkName;
+use identity::iota_core::Error;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDocument;
+use identity::iota_core::IotaVerificationMethod;
+use identity::iota_core::MessageId;
+use identity::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
-use crate::crypto::KeyPair;
+use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmSignatureOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
+use crate::did::OptionMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
@@ -69,7 +70,7 @@ impl WasmDocument {
   /// * network: Tangle network to use for the DID, default `Network::mainnet`.
   /// * fragment: name of the initial verification method, default "sign-0".
   #[wasm_bindgen(constructor)]
-  pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
+  pub fn new(keypair: &WasmKeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
     let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
     IotaDocument::new_with_options(&keypair.0, network_name, fragment.as_deref())
       .map(Self)
@@ -96,8 +97,8 @@ impl WasmDocument {
   // Properties
   // ===========================================================================
 
-  /// Returns the DID Document `id`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the DID Document `id`.
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
   }
@@ -343,7 +344,7 @@ impl WasmDocument {
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifySelfSigned`.
   #[wasm_bindgen(js_name = signSelf)]
-  pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: &UDIDUrlQuery) -> Result<()> {
+  pub fn sign_self(&mut self, key_pair: &WasmKeyPair, method_query: &UDIDUrlQuery) -> Result<()> {
     let method_query: String = method_query.into_serde().wasm_result()?;
     self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
@@ -362,7 +363,7 @@ impl WasmDocument {
   pub fn sign_document(
     &self,
     document: &mut WasmDocument,
-    key_pair: &KeyPair,
+    key_pair: &WasmKeyPair,
     method_query: &UDIDUrlQuery,
   ) -> Result<()> {
     let method_query: String = method_query.into_serde().wasm_result()?;
@@ -529,7 +530,7 @@ impl WasmDocument {
     &self,
     other: &WasmDocument,
     message_id: &str,
-    key: &KeyPair,
+    key: &WasmKeyPair,
     method_query: &UDIDUrlQuery,
   ) -> Result<WasmDiffMessage> {
     let method_query: String = method_query.into_serde().wasm_result()?;
@@ -537,7 +538,9 @@ impl WasmDocument {
       .0
       .diff(
         &other.0,
-        MessageId::from_str(message_id).wasm_result()?,
+        MessageId::from_str(message_id)
+          .map_err(identity::iota_core::Error::InvalidMessage)
+          .wasm_result()?,
         key.0.private(),
         &method_query,
       )
@@ -583,7 +586,9 @@ impl WasmDocument {
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
-    let message_id = MessageId::from_str(message_id).wasm_result()?;
+    let message_id = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     IotaDocument::diff_index(&message_id).wasm_result()
   }
 
@@ -591,55 +596,57 @@ impl WasmDocument {
   // Metadata
   // ===========================================================================
 
-  /// Returns the metadata associated with this document.
+  /// Returns a copy of the metadata associated with this document.
   ///
-  /// NOTE: clones the data. Use the `metadataCreated`, `metadataUpdated`,
-  /// `metadataPreviousMessageId`, `metadataProof` properties instead.
-  #[wasm_bindgen(getter)]
+  /// NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
+  /// `metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
+  #[wasm_bindgen]
   pub fn metadata(&self) -> WasmDocumentMetadata {
     WasmDocumentMetadata::from(self.0.metadata.clone())
   }
 
-  /// Returns the timestamp of when the DID document was created.
-  #[wasm_bindgen(getter = metadataCreated)]
+  /// Returns a copy of the timestamp of when the DID document was created.
+  #[wasm_bindgen(js_name = metadataCreated)]
   pub fn metadata_created(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.metadata.created)
   }
 
   /// Sets the timestamp of when the DID document was created.
-  #[wasm_bindgen(setter = metadataCreated)]
+  #[wasm_bindgen(js_name = setMetadataCreated)]
   pub fn set_metadata_created(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.created = timestamp.0;
   }
 
-  /// Returns the timestamp of the last DID document update.
-  #[wasm_bindgen(getter = metadataUpdated)]
+  /// Returns a copy of the timestamp of the last DID document update.
+  #[wasm_bindgen(js_name = metadataUpdated)]
   pub fn metadata_updated(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.metadata.updated)
   }
 
   /// Sets the timestamp of the last DID document update.
-  #[wasm_bindgen(setter = metadataUpdated)]
+  #[wasm_bindgen(js_name = setMetadataUpdated)]
   pub fn set_metadata_updated(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.updated = timestamp.0;
   }
 
-  /// Returns the previous integration chain message id.
-  #[wasm_bindgen(getter = metadataPreviousMessageId)]
+  /// Returns a copy of the previous integration chain message id.
+  #[wasm_bindgen(js_name = metadataPreviousMessageId)]
   pub fn metadata_previous_message_id(&self) -> String {
     self.0.metadata.previous_message_id.to_string()
   }
 
   /// Sets the previous integration chain message id.
-  #[wasm_bindgen(setter = metadataPreviousMessageId)]
+  #[wasm_bindgen(js_name = setMetadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
-    let message_id: MessageId = MessageId::from_str(value).wasm_result()?;
+    let message_id: MessageId = MessageId::from_str(value)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
     self.0.metadata.previous_message_id = message_id;
     Ok(())
   }
 
-  /// Returns the `proof` object.
-  #[wasm_bindgen(getter = metadataProof)]
+  /// Returns a copy of the `proof` object.
+  #[wasm_bindgen(js_name = metadataProof)]
   pub fn metadata_proof(&self) -> Result<JsValue> {
     // TODO: implement proper bindings for the proof
     match &self.0.metadata.proof {
@@ -665,12 +672,19 @@ impl WasmDocument {
   }
 }
 
+impl_wasm_clone!(WasmDocument, Document);
+
 impl From<IotaDocument> for WasmDocument {
   fn from(document: IotaDocument) -> Self {
     Self(document)
   }
 }
 
+impl From<WasmDocument> for IotaDocument {
+  fn from(wasm_document: WasmDocument) -> Self {
+    wasm_document.0
+  }
+}
 /// Duck-typed union to pass either a string or WasmDIDUrl as a parameter.
 #[wasm_bindgen]
 extern "C" {
@@ -697,7 +711,4 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
-
-  #[wasm_bindgen(typescript_type = "MethodScope | undefined")]
-  pub type OptionMethodScope;
 }

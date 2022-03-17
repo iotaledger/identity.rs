@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -37,7 +37,8 @@ impl private::Sealed for Private {}
 // =============================================================================
 
 /// A cryptographic key.
-#[derive(Clone)]
+#[cfg_attr(feature = "bindings-derive", derive(Clone, Deserialize, Serialize))]
+#[cfg_attr(not(feature = "bindings-derive"), derive(Clone))]
 pub struct Key<V: private::Sealed> {
   key: Box<[u8]>,
   vis: PhantomData<V>,
