@@ -12,6 +12,7 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDIDUrl;
@@ -61,24 +62,38 @@ pub(crate) async fn create_identity(
 
   // TODO: Should we just hardcode the entire sign-0?
   let fragment: String = format!("{}0", DEFAULT_UPDATE_METHOD_PREFIX);
-  let tmp_location: KeyLocation2 = KeyLocation2::random(method_type);
-  let tmp_did: IotaDID = KEY_GENERATION_DID.parse().unwrap();
+  // let tmp_location: KeyLocation2 = KeyLocation2::random(method_type);
+  // let tmp_did: IotaDID = KEY_GENERATION_DID.parse().unwrap();
 
-  // TODO: Remove KeyPair::try_from_ed25519_bytes (?)
+  // TODO: Replace before merge.
+  let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
+    ensure!(
+      private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+      UpdateError::InvalidMethodSecret(format!(
+        "an ed25519 private key requires {} bytes, found {}",
+        ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len()
+      ))
+    );
 
-  if let Some(inner_method_secret @ MethodSecret::Ed25519(_)) = setup.method_secret {
-    insert_method_secret(store, &tmp_did, &tmp_location, method_type, inner_method_secret).await?;
+    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
   } else {
-    store.key_new(&tmp_did, fragment.as_ref(), method_type).await?;
+    KeyPair::new_ed25519()?
   };
 
-  let public_key: PublicKey = store.key_get(&tmp_did, &tmp_location).await?;
+  // if let Some(inner_method_secret @ MethodSecret::Ed25519(_)) = setup.method_secret {
+  //   insert_method_secret(store, &tmp_did, &tmp_location, method_type, inner_method_secret).await?;
+  // } else {
+  //   store.key_new(&tmp_did, fragment.as_ref(), method_type).await?;
+  // };
+
+  // let public_key: PublicKey = store.key_get(&tmp_did, &tmp_location).await?;
 
   // Generate a new DID from the public key
-  let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
+  let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did.clone(), setup.key_type, &public_key, fragment.as_ref())?;
+    IotaVerificationMethod::new(did.clone(), setup.key_type, keypair.public(), fragment.as_ref())?;
   let location: KeyLocation2 = method.key_location()?;
 
   ensure!(
@@ -86,7 +101,12 @@ pub(crate) async fn create_identity(
     UpdateError::DocumentAlreadyExists
   );
 
-  store.key_move(&tmp_did, &tmp_location, &did, &location).await?;
+  let private_key = keypair.private().to_owned();
+  std::mem::drop(keypair);
+
+  insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
+
+  // store.key_move(&tmp_did, &tmp_location, &did, &location).await?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
@@ -174,7 +194,7 @@ impl Update {
 
         let new_location: KeyLocation2 = method.key_location()?;
 
-        storage.key_move(did, &location, did, &new_location).await?;
+        storage.key_move(did, &location, &new_location).await?;
 
         state.document_mut().insert_method(method, scope)?;
       }

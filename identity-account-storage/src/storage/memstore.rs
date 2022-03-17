@@ -128,7 +128,7 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_move(&self, from_did: &IotaDID, from: &KeyLocation2, to_did: &IotaDID, to: &KeyLocation2) -> Result<()> {
+  async fn key_move(&self, did: &IotaDID, source: &KeyLocation2, target: &KeyLocation2) -> Result<()> {
     unimplemented!()
   }
 

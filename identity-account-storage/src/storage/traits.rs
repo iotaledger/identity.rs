@@ -51,13 +51,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Moves a key from one did-location pair to another.
   ///
   /// The key at the source location will be removed. If a key at the target exists, it will be overwritten.
-  async fn key_move(
-    &self,
-    source_did: &IotaDID,
-    source: &KeyLocation2,
-    target_did: &IotaDID,
-    target: &KeyLocation2,
-  ) -> Result<()>;
+  async fn key_move(&self, did: &IotaDID, source: &KeyLocation2, target: &KeyLocation2) -> Result<()>;
 
   /// Retrieves the public key at the specified `location`.
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey>;

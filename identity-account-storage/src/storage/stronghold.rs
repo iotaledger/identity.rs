@@ -115,10 +115,9 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_move(&self, from_did: &IotaDID, from: &KeyLocation2, to_did: &IotaDID, to: &KeyLocation2) -> Result<()> {
-    let vault: Vault<'_> = self.vault(from_did);
-
-    // move_key()
+  async fn key_move(&self, did: &IotaDID, source: &KeyLocation2, target: &KeyLocation2) -> Result<()> {
+    let vault: Vault<'_> = self.vault(did);
+    move_key(&vault, source.to_location(did), target.to_location(did)).await
   }
 
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey> {
