@@ -17,7 +17,7 @@ use identity_core::utils::encode_b58;
 use identity_iota_core::did::IotaDID;
 
 use crate::storage::Storage;
-use crate::types::KeyLocation2;
+use crate::types::KeyLocation;
 
 pub struct RemoteEd25519;
 
@@ -61,13 +61,13 @@ impl RemoteEd25519 {
 #[derive(Debug)]
 pub struct RemoteKey<'a> {
   did: &'a IotaDID,
-  location: &'a KeyLocation2,
+  location: &'a KeyLocation,
   store: &'a dyn Storage,
 }
 
 impl<'a> RemoteKey<'a> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(did: &'a IotaDID, location: &'a KeyLocation2, store: &'a dyn Storage) -> Self {
+  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
     Self { did, location, store }
   }
 }

@@ -5,7 +5,7 @@ use crypto::signatures::ed25519;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::IotaVerificationMethodExt;
-use identity_account_storage::types::KeyLocation2;
+use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
@@ -62,7 +62,7 @@ pub(crate) async fn create_identity(
 
   // TODO: Should we just hardcode the entire sign-0?
   let fragment: String = format!("{}0", DEFAULT_UPDATE_METHOD_PREFIX);
-  // let tmp_location: KeyLocation2 = KeyLocation2::random(method_type);
+  // let tmp_location: KeyLocation = KeyLocation::random(method_type);
   // let tmp_did: IotaDID = KEY_GENERATION_DID.parse().unwrap();
 
   // TODO: Replace before merge.
@@ -94,7 +94,7 @@ pub(crate) async fn create_identity(
 
   let method: IotaVerificationMethod =
     IotaVerificationMethod::new(did.clone(), setup.key_type, keypair.public(), fragment.as_ref())?;
-  let location: KeyLocation2 = method.key_location()?;
+  let location: KeyLocation = method.key_location()?;
 
   ensure!(
     !store.key_exists(&did, &location).await?,
@@ -164,7 +164,7 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let location: KeyLocation2 = KeyLocation2::random(type_);
+        let location: KeyLocation = KeyLocation::random(type_);
 
         // The key location must be available.
         // TODO: config: strict
@@ -192,7 +192,7 @@ impl Update {
         let method: IotaVerificationMethod =
           IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;
 
-        let new_location: KeyLocation2 = method.key_location()?;
+        let new_location: KeyLocation = method.key_location()?;
 
         storage.key_move(did, &location, &new_location).await?;
 
@@ -311,7 +311,7 @@ impl Update {
 async fn insert_method_secret(
   store: &dyn Storage,
   did: &IotaDID,
-  location: &KeyLocation2,
+  location: &KeyLocation,
   method_type: MethodType,
   method_secret: MethodSecret,
 ) -> Result<()> {

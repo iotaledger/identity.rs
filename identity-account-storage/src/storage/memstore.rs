@@ -27,12 +27,11 @@ use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
-use crate::types::KeyLocation2;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 use crate::utils::Shared;
 
-type MemVault = HashMap<KeyLocation2, KeyPair>;
+type MemVault = HashMap<KeyLocation, KeyPair>;
 
 type ChainStates = HashMap<IotaDID, ChainState>;
 type States = HashMap<IotaDID, IdentityState>;
@@ -75,9 +74,7 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation2>
-// async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>
-  {
+  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
@@ -88,7 +85,7 @@ impl Storage for MemStore {
 
         let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public, fragment)?;
 
-        let location = KeyLocation2::new(method_type, fragment.to_owned(), method.key_data());
+        let location = KeyLocation::new(method_type, fragment.to_owned(), method.key_data());
 
         vault.insert(location.clone(), keypair);
 
@@ -100,7 +97,7 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation2, private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
@@ -116,7 +113,7 @@ impl Storage for MemStore {
 
         let public_key: PublicKey = public.to_bytes().to_vec().into();
 
-        let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), private_key));
+        let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key, private_key));
 
         vault.insert(location.clone(), keypair);
 
@@ -128,59 +125,68 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_move(&self, did: &IotaDID, source: &KeyLocation2, target: &KeyLocation2) -> Result<()> {
-    unimplemented!()
+  async fn key_move(&self, did: &IotaDID, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+
+    if let Some(vault) = vaults.get_mut(did) {
+      match vault.remove(source) {
+        Some(key) => {
+          vault.insert(target.clone(), key);
+          Ok(())
+        }
+        None => Err(Error::KeyNotFound),
+      }
+    } else {
+      Err(Error::KeyVaultNotFound)
+    }
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation2) -> Result<bool> {
-    // let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+    let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
-    // if let Some(vault) = vaults.get(did) {
-    //   return Ok(vault.contains_key(location));
-    // }
+    if let Some(vault) = vaults.get(did) {
+      return Ok(vault.contains_key(location));
+    }
 
     Ok(false)
   }
 
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey> {
-    // let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    // let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
-    // let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
+  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+    let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
+    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
-    // Ok(keypair.public().clone())
-    unimplemented!()
+    Ok(keypair.public().clone())
   }
 
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation2) -> Result<()> {
-    // let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    // let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
 
-    // vault.remove(location);
+    vault.remove(location);
 
-    // Ok(())
-    unimplemented!()
+    Ok(())
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation2, data: Vec<u8>) -> Result<Signature> {
-    // let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    // let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
-    // let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+    let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
+    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
-    // match location.method() {
-    //   MethodType::Ed25519VerificationKey2018 => {
-    //     assert_eq!(keypair.type_(), KeyType::Ed25519);
+    match location.method() {
+      MethodType::Ed25519VerificationKey2018 => {
+        assert_eq!(keypair.type_(), KeyType::Ed25519);
 
-    //     let public: PublicKey = keypair.public().clone();
-    //     let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
-    //     let signature: Signature = Signature::new(public, signature.to_vec());
+        let public: PublicKey = keypair.public().clone();
+        let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
+        let signature: Signature = Signature::new(public, signature.to_vec());
 
-    //     Ok(signature)
-    //   }
-    //   MethodType::MerkleKeyCollection2021 => {
-    //     todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")
-    //   }
-    // }
-    unimplemented!()
+        Ok(signature)
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")
+      }
+    }
   }
 
   async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {

@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::MemStore;
-use identity_account_storage::types::Generation;
+use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -23,6 +23,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
@@ -54,17 +55,16 @@ async fn account_setup(network: Network) -> AccountSetup {
 async fn test_create_identity() -> Result<()> {
   let account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let expected_fragment = format!("{}{}", crate::updates::DEFAULT_UPDATE_METHOD_PREFIX, Generation::new());
+  let expected_fragment = format!("{}0", crate::updates::DEFAULT_UPDATE_METHOD_PREFIX);
 
   let state: &IdentityState = account.state();
 
-  assert!(state.document().resolve_method(&expected_fragment).is_some());
+  let method: &IotaVerificationMethod = state.document().resolve_method(&expected_fragment).unwrap();
+
   assert_eq!(state.document().core_document().verification_relationships().count(), 1);
   assert_eq!(state.document().core_document().methods().count(), 1);
 
-  let location = state
-    .method_location(MethodType::Ed25519VerificationKey2018, expected_fragment.clone())
-    .unwrap();
+  let location = method.key_location().unwrap();
 
   // Ensure we can retrieve the correct location for the key.
   assert_eq!(
@@ -72,7 +72,7 @@ async fn test_create_identity() -> Result<()> {
     KeyLocation::new(
       MethodType::Ed25519VerificationKey2018,
       expected_fragment,
-      Generation::new(),
+      method.key_data()
     )
   );
 
@@ -132,10 +132,12 @@ async fn test_create_identity_already_exists() -> Result<()> {
     .method_secret(MethodSecret::Ed25519(keypair.private().clone()));
   let account_setup = account_setup(Network::Mainnet).await;
 
-  let account = Account::create_identity(account_setup.clone(), identity_create.clone()).await?;
+  let account = Account::create_identity(account_setup.clone(), identity_create.clone())
+    .await
+    .unwrap();
   let did: IotaDID = account.did().to_owned();
 
-  let initial_state = account_setup.storage.state(&did).await?.unwrap();
+  let initial_state = account_setup.storage.state(&did).await.unwrap().unwrap();
 
   let output = Account::create_identity(account_setup.clone(), identity_create).await;
 
@@ -187,28 +189,19 @@ async fn test_create_method() -> Result<()> {
 
   let state: &IdentityState = account.state();
 
+  let method: &IotaVerificationMethod = state.document().resolve_method(&fragment).unwrap();
+
   // Ensure existence and key type
-  assert_eq!(
-    state.document().resolve_method(&fragment).unwrap().key_type(),
-    method_type
-  );
+  assert_eq!(method.key_type(), method_type);
 
   // Still only the default relationship.
   assert_eq!(state.document().core_document().verification_relationships().count(), 1);
   assert_eq!(state.document().core_document().methods().count(), 2);
 
-  let location = state.method_location(method_type, fragment.clone()).unwrap();
+  let location = method.key_location().unwrap();
 
   // Ensure we can retrieve the correct location for the key.
-  assert_eq!(
-    location,
-    KeyLocation::new(
-      method_type,
-      fragment,
-      // `create_identity` calls publish, which increments the generation.
-      Generation::new().try_increment().unwrap(),
-    )
-  );
+  assert_eq!(location, KeyLocation::new(method_type, fragment, method.key_data()));
 
   // Ensure the key exists in storage.
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
@@ -338,9 +331,9 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
   let state: &IdentityState = account.state();
 
-  assert!(state.document().resolve_method(&fragment).is_some());
+  let method: &IotaVerificationMethod = state.document().resolve_method(&fragment).unwrap();
 
-  let location = state.method_location(method_type, fragment).unwrap();
+  let location = method.key_location().unwrap();
   let public_key = account.storage().key_get(account.did(), &location).await?;
 
   assert_eq!(public_key.as_ref(), keypair.public().as_ref());
@@ -593,7 +586,8 @@ async fn test_delete_method() -> Result<()> {
   account.process_update(update).await?;
 
   // Ensure it was added.
-  assert!(account.state().document().resolve_method(&fragment).is_some());
+  let method: &IotaVerificationMethod = account.state().document().resolve_method(&fragment).unwrap();
+  let location = method.key_location().unwrap();
 
   let update: Update = Update::DeleteMethod {
     fragment: "key-1".to_owned(),
@@ -611,9 +605,7 @@ async fn test_delete_method() -> Result<()> {
 
   assert_eq!(state.document().core_document().methods().count(), 1);
 
-  let location = state.method_location(method_type, fragment.clone()).unwrap();
-
-  // Ensure the key still exists in storage - deletion in storage happens after successful publication.
+  // Ensure the key still exists in storage.
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.

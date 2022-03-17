@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use identity_core::common::Fragment;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 use identity_iota_core::document::IotaVerificationMethod;
@@ -16,17 +15,15 @@ use seahash::SeaHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use crate::types::Generation;
-
 /// The storage location of a verification method key.
 #[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-pub struct KeyLocation2 {
+pub struct KeyLocation {
   pub method: MethodType,
   pub fragment: String,
   pub key_hash: u64,
 }
 
-impl KeyLocation2 {
+impl KeyLocation {
   pub fn new(method: MethodType, fragment: String, method_data: &MethodData) -> Self {
     let mut hasher = SeaHasher::new();
     method_data.hash(&mut hasher);
@@ -73,7 +70,7 @@ impl KeyLocation2 {
   }
 }
 
-impl Display for KeyLocation2 {
+impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_fmt(format_args!(
       "({}:{}:{})",
@@ -84,82 +81,25 @@ impl Display for KeyLocation2 {
   }
 }
 
-impl Debug for KeyLocation2 {
+impl Debug for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_fmt(format_args!("KeyLocation{}", self))
   }
 }
 
 pub trait IotaVerificationMethodExt {
-  /// Returns the [`KeyLocation2`] of an [`IotaVerificationMethod`].
-  fn key_location(&self) -> crate::Result<KeyLocation2>;
+  /// Returns the [`KeyLocation`] of an [`IotaVerificationMethod`].
+  fn key_location(&self) -> crate::Result<KeyLocation>;
 }
 
 impl IotaVerificationMethodExt for IotaVerificationMethod {
-  fn key_location(&self) -> crate::Result<KeyLocation2> {
+  fn key_location(&self) -> crate::Result<KeyLocation> {
     let fragment: &str = self
       .id()
       .fragment()
       .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
     let method_data: &MethodData = self.key_data();
 
-    Ok(KeyLocation2::new(self.key_type(), fragment.to_owned(), method_data))
-  }
-}
-
-/// The storage location of a verification method key.
-#[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-pub struct KeyLocation {
-  method: MethodType,
-  fragment: Fragment,
-  generation: Generation,
-}
-
-impl KeyLocation {
-  /// Creates a new `KeyLocation`.
-  pub fn new(method: MethodType, fragment: String, generation: Generation) -> Self {
-    Self {
-      method,
-      fragment: Fragment::new(fragment),
-
-      generation,
-    }
-  }
-
-  /// Returns the method type of the key location.
-  pub fn method(&self) -> MethodType {
-    self.method
-  }
-
-  /// Returns the fragment name of the key location.
-  pub fn fragment(&self) -> &Fragment {
-    &self.fragment
-  }
-
-  /// Returns the fragment name of the key location.
-  pub fn fragment_name(&self) -> &str {
-    self.fragment.name()
-  }
-
-  /// Returns the integration generation when this key was created.
-  pub fn generation(&self) -> Generation {
-    self.generation
-  }
-}
-
-impl Display for KeyLocation {
-  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!(
-      "({}:{}:{})",
-      self.generation,
-      self.fragment,
-      self.method.as_u32()
-    ))
-  }
-}
-
-impl Debug for KeyLocation {
-  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!("KeyLocation{}", self))
+    Ok(KeyLocation::new(self.key_type(), fragment.to_owned(), method_data))
   }
 }

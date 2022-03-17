@@ -15,12 +15,10 @@ use serde::Serialize;
 
 use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;
-use crate::error::Error;
 use crate::error::Result;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-use crate::types::KeyLocation2;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IdentityState {
@@ -60,16 +58,6 @@ impl IdentityState {
     self.method_generations.insert(fragment, self.generation());
   }
 
-  /// Return the `KeyLocation` of the given method.
-  pub fn method_location(&self, method_type: MethodType, fragment: String) -> Result<KeyLocation> {
-    let fragment = Fragment::new(fragment);
-    // We don't return `MethodNotFound`, as the `KeyNotFound` error might occur when a method exists
-    // in the document, but the key is not present locally (e.g. in a distributed setup).
-    let generation = self.method_generations.get(&fragment).ok_or(Error::KeyNotFound)?;
-
-    Ok(KeyLocation::new(method_type, fragment.into(), *generation))
-  }
-
   // ===========================================================================
   // Document State
   // ===========================================================================
@@ -82,16 +70,11 @@ impl IdentityState {
     &mut self.document
   }
 
-  /// Returns a key location suitable for the specified `fragment`.
-  pub fn key_location(&self, method: MethodType, fragment: String) -> Result<KeyLocation> {
-    Ok(KeyLocation::new(method, fragment, self.generation()))
-  }
-
   pub async fn sign_data<U>(
     &self,
     did: &IotaDID,
     store: &dyn Storage,
-    location: &KeyLocation2,
+    location: &KeyLocation,
     data: &mut U,
     options: SignatureOptions,
   ) -> Result<()>
@@ -102,8 +85,8 @@ impl IdentityState {
     let private: RemoteKey<'_> = RemoteKey::new(did, location, store);
 
     // Create the Verification Method identifier
-    let fragment: &str = location.fragment.as_ref();
-    let method_url: IotaDIDUrl = self.document.id().to_url().join(fragment)?;
+    let fragment: Fragment = Fragment::new(location.fragment.clone());
+    let method_url: IotaDIDUrl = self.document.id().to_url().join(fragment.identifier())?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {

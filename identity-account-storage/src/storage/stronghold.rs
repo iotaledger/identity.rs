@@ -28,7 +28,6 @@ use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
 use crate::types::KeyLocation;
-use crate::types::KeyLocation2;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
@@ -90,10 +89,10 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation2> {
+  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
     let vault: Vault<'_> = self.vault(did);
 
-    let location: KeyLocation2 = match method_type {
+    let location: KeyLocation = match method_type {
       MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, method_type, fragment, did).await?,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
     };
@@ -103,7 +102,7 @@ impl Storage for Stronghold {
 
   // TODO: Should this also not return the pub key since the caller could have just calculated it themselves,
   // and to be consistent with key_new?
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation2, private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let vault = self.vault(did);
 
     let stronghold_location: Location = location.to_location(did);
@@ -115,12 +114,12 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_move(&self, did: &IotaDID, source: &KeyLocation2, target: &KeyLocation2) -> Result<()> {
+  async fn key_move(&self, did: &IotaDID, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(did);
     move_key(&vault, source.to_location(did), target.to_location(did)).await
   }
 
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey> {
+  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
@@ -129,7 +128,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation2) -> Result<()> {
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
@@ -144,7 +143,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation2, data: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
@@ -153,7 +152,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation2) -> Result<bool> {
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     let vault: Vault<'_> = self.vault(did);
 
     Ok(match location.method() {
@@ -229,7 +228,7 @@ async fn generate_ed25519(
   method_type: MethodType,
   fragment: &str,
   did: &IotaDID,
-) -> Result<KeyLocation2> {
+) -> Result<KeyLocation> {
   let random: Vec<u8> = random()?.to_vec();
   let did_string: String = did.to_string();
   let key_location: Location = Location::generic(format!("tmp_key:{}", did_string), random);
@@ -246,7 +245,7 @@ async fn generate_ed25519(
   let public_key: PublicKey = retrieve_ed25519(vault, key_location.clone()).await?;
 
   let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
-  let new_location = KeyLocation2::new(method_type, fragment.to_owned(), method.key_data());
+  let new_location = KeyLocation::new(method_type, fragment.to_owned(), method.key_data());
 
   move_key(vault, key_location, new_location.to_location(did)).await?;
 
@@ -300,14 +299,6 @@ fn location_state() -> Location {
   Location::generic("$state", Vec::new())
 }
 
-fn location_seed(location: &KeyLocation) -> Location {
-  Location::generic(fmt_key("$seed", location), Vec::new())
-}
-
-fn location_skey(location: &KeyLocation) -> Location {
-  Location::generic(fmt_key("$skey", location), Vec::new())
-}
-
 fn random() -> IotaStrongholdResult<[u8; 64]> {
   let mut bytes: [u8; 64] = [0; 64];
   crypto::utils::rand::fill(&mut bytes)
@@ -315,15 +306,11 @@ fn random() -> IotaStrongholdResult<[u8; 64]> {
   Ok(bytes)
 }
 
-fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
-  format!("{}:{}:{}", prefix, location.generation(), location.fragment_name()).into_bytes()
-}
-
 fn fmt_did(did: &IotaDID) -> String {
   format!("$identity:{}", did.authority())
 }
 
-impl KeyLocation2 {
+impl KeyLocation {
   fn to_location(&self, did: &IotaDID) -> Location {
     let bytes: Vec<u8> = format!("{}:{}", self.fragment, self.key_hash).into_bytes();
     Location::generic(did.to_string(), bytes)
