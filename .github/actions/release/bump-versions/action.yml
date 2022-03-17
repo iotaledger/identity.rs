@@ -25,7 +25,7 @@ runs:
         command: install
         args: --version ^0.2 cargo-workspaces
 
-    - name: Install cargo-edit # to use cargo add adn set-version
+    - name: Install cargo-edit # to use cargo add and set-version
       uses: actions-rs/cargo@v1
       with:
         command: install
