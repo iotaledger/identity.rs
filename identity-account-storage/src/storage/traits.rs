@@ -46,6 +46,9 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Inserts a private key at the specified `location` and returns its `PublicKey`.
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey>;
 
+  /// Moves a key from one location to another.
+  async fn key_move(&self, did: &IotaDID, from: &KeyLocation, to: &KeyLocation) -> Result<()>;
+
   /// Retrieves the public key at the specified `location`.
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
 

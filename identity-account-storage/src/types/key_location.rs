@@ -5,13 +5,13 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use std::hash::Hasher;
 use identity_core::common::Fragment;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 use identity_iota_core::document::IotaVerificationMethod;
 use seahash::SeaHasher;
 use std::hash::Hash;
+use std::hash::Hasher;
 
 use crate::types::Generation;
 
