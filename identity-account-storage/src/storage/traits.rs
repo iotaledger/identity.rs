@@ -48,6 +48,17 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Inserts a private key at the specified `location`.
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation2, private_key: PrivateKey) -> Result<()>;
 
+  /// Moves a key from one did-location pair to another.
+  ///
+  /// The key at the old location should be removed. If a key at the target exists, it will be overwritten.
+  async fn key_move(
+    &self,
+    source_did: &IotaDID,
+    source: &KeyLocation2,
+    target_did: &IotaDID,
+    target: &KeyLocation2,
+  ) -> Result<()>;
+
   /// Retrieves the public key at the specified `location`.
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey>;
 
@@ -58,7 +69,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
 
   /// Returns `true` if a keypair exists at the specified `location`.
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation2) -> Result<bool>;
 
   /// Returns the chain state of the identity specified by `did`.
   async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>>;

@@ -115,6 +115,10 @@ impl Storage for Stronghold {
     Ok(())
   }
 
+  async fn key_move(&self, from_did: &IotaDID, from: &KeyLocation2, to_did: &IotaDID, to: &KeyLocation2) -> Result<()> {
+    unimplemented!()
+  }
+
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation2) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(did);
 
@@ -149,11 +153,11 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation2) -> Result<bool> {
     let vault: Vault<'_> = self.vault(did);
 
     Ok(match location.method() {
-      MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
+      MethodType::Ed25519VerificationKey2018 => vault.exists(location.to_location(did)).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
     }?)
   }

@@ -20,6 +20,7 @@ identity-did = { version = "=0.5.0-dev.4", path = "../identity-did", default-fea
 identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 parking_lot = { version = "0.12" }
+rand = { version = "0.8" }
 seahash = { version = "4.1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
@@ -42,7 +43,6 @@ rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
 [dev-dependencies]
-rand = { version = "0.8" }
 rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 

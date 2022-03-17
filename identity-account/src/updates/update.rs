@@ -4,8 +4,10 @@
 use crypto::signatures::ed25519;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
+use identity_account_storage::types::method_key_location;
 use identity_account_storage::types::Generation;
 use identity_account_storage::types::KeyLocation;
+use identity_account_storage::types::KeyLocation2;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
@@ -42,6 +44,8 @@ use crate::types::MethodSecret;
 use crate::updates::UpdateError;
 
 pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
+// TODO: Should this be a IotaDID lazily initialized?
+pub const KEY_GENERATION_DID: &str = "did:iota:00000000000000000000000000000000000000000000";
 
 pub(crate) async fn create_identity(
   setup: IdentitySetup,
@@ -58,51 +62,38 @@ pub(crate) async fn create_identity(
     UpdateError::InvalidMethodType(method_type)
   );
 
-  let generation = Generation::new();
-  let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
+  // TODO: Should we just hardcode the entire sign-0?
+  let fragment: String = format!("{}0", DEFAULT_UPDATE_METHOD_PREFIX);
+  let tmp_location: KeyLocation2 = KeyLocation2::random(method_type);
+  let tmp_did: IotaDID = KEY_GENERATION_DID.parse().unwrap();
 
-  let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
+  // TODO: Remove KeyPair::try_from_ed25519_bytes (?)
 
-  let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
-    ensure!(
-      private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-      UpdateError::InvalidMethodSecret(format!(
-        "an ed25519 private key requires {} bytes, found {}",
-        ed25519::SECRET_KEY_LENGTH,
-        private_key.as_ref().len()
-      ))
-    );
-
-    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
+  if let Some(inner_method_secret @ MethodSecret::Ed25519(_)) = setup.method_secret {
+    insert_method_secret(store, &tmp_did, &tmp_location, method_type, inner_method_secret).await?;
   } else {
-    KeyPair::new_ed25519()?
+    store.key_new(&tmp_did, fragment.as_ref(), method_type).await?;
   };
 
+  let public_key: PublicKey = store.key_get(&tmp_did, &tmp_location).await?;
+
   // Generate a new DID from the public key
-  let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
+  let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
+
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(did.clone(), setup.key_type, &public_key, fragment.as_ref())?;
+  let location: KeyLocation2 = method_key_location(&method);
 
   ensure!(
     !store.key_exists(&did, &location).await?,
     UpdateError::DocumentAlreadyExists
   );
 
-  let private_key = keypair.private().to_owned();
-  std::mem::drop(keypair);
-
-  let public: PublicKey =
-    insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
-
-  let method_fragment = location.fragment().to_owned();
-
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did, setup.key_type, &public, method_fragment.name())?;
+  store.key_move(&tmp_did, &tmp_location, &did, &location).await?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
-  let mut state = IdentityState::new(document);
-
-  // Store the generations at which the method was added
-  state.store_method_generations(method_fragment);
+  let state = IdentityState::new(document);
 
   Ok(state)
 }
@@ -156,31 +147,37 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let location: KeyLocation = state.key_location(type_, fragment)?;
+        let location: KeyLocation2 = KeyLocation2::random(type_);
 
         // The key location must be available.
         // TODO: config: strict
-        ensure!(
-          !storage.key_exists(did, &location).await?,
-          UpdateError::DuplicateKeyLocation(location)
-        );
+        // ensure!(
+        //   !storage.key_exists(did, &location).await?,
+        //   UpdateError::DuplicateKeyLocation(location)
+        // );
 
-        let method_url: CoreDIDUrl = did.as_ref().to_url().join(location.fragment().identifier())?;
+        // TODO: Done to ensure a leading `#`. Should be replaced eventually.
+        let fragment: Fragment = Fragment::new(fragment);
+        let method_url: CoreDIDUrl = did.as_ref().to_url().join(fragment.identifier())?;
 
         if state.document().resolve_method(method_url).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
-        let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(storage, did, &location, type_, method_private_key).await
+        if let Some(method_private_key) = method_secret {
+          insert_method_secret(storage, did, &location, type_, method_private_key).await?;
         } else {
-          storage.key_new(did, &location).await.map_err(Into::into)
-        }?;
+          storage.key_new(did, fragment.name(), type_).await?;
+        };
+
+        let public_key: PublicKey = storage.key_get(did, &location).await?;
 
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
+          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public_key, fragment.name())?;
 
-        state.store_method_generations(location.fragment().clone());
+        let new_location: KeyLocation2 = method_key_location(&method);
+
+        storage.key_move(did, &location, did, &new_location).await?;
 
         state.document_mut().insert_method(method, scope)?;
       }
@@ -297,10 +294,10 @@ impl Update {
 async fn insert_method_secret(
   store: &dyn Storage,
   did: &IotaDID,
-  location: &KeyLocation,
+  location: &KeyLocation2,
   method_type: MethodType,
   method_secret: MethodSecret,
-) -> Result<PublicKey> {
+) -> Result<()> {
   match method_secret {
     MethodSecret::Ed25519(private_key) => {
       ensure!(

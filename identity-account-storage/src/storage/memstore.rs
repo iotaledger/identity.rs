@@ -128,7 +128,11 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+  async fn key_move(&self, from_did: &IotaDID, from: &KeyLocation2, to_did: &IotaDID, to: &KeyLocation2) -> Result<()> {
+    unimplemented!()
+  }
+
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation2) -> Result<bool> {
     // let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
     // if let Some(vault) = vaults.get(did) {
