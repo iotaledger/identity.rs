@@ -14,13 +14,13 @@ use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use iota_stronghold::procedures;
 use iota_stronghold::Location;
 
 use crate::error::Result;
 use crate::identity::ChainState;
-use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
 use crate::stronghold::IotaStrongholdResult;
@@ -183,28 +183,28 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
+  async fn state(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
     // Read the state from the stronghold snapshot
-    let data: Option<Vec<u8>> = store.get(location_state()).await?;
+    let data: Option<Vec<u8>> = store.get(location_document()).await?;
 
     match data {
       None => return Ok(None),
-      Some(data) => Ok(Some(IdentityState::from_json_slice(&data)?)),
+      Some(data) => Ok(Some(IotaDocument::from_json_slice(&data)?)),
     }
   }
 
-  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
+  async fn set_state(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
     // Serialize the state
-    let json: Vec<u8> = state.to_json_vec()?;
+    let json: Vec<u8> = document.to_json_vec()?;
 
     // Write the state to the stronghold snapshot
-    store.set(location_state(), json, None).await?;
+    store.set(location_document(), json, None).await?;
 
     Ok(())
   }
@@ -295,8 +295,8 @@ fn location_chain_state() -> Location {
   Location::generic("$chain_state", Vec::new())
 }
 
-fn location_state() -> Location {
-  Location::generic("$state", Vec::new())
+fn location_document() -> Location {
+  Location::generic("$document", Vec::new())
 }
 
 fn random() -> IotaStrongholdResult<[u8; 64]> {

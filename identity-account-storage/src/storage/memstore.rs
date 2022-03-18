@@ -15,6 +15,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
@@ -24,7 +25,6 @@ use zeroize::Zeroize;
 use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
-use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 use crate::types::Signature;
@@ -34,13 +34,13 @@ use crate::utils::Shared;
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
 type ChainStates = HashMap<IotaDID, ChainState>;
-type States = HashMap<IotaDID, IdentityState>;
+type States = HashMap<IotaDID, IotaDocument>;
 type Vaults = HashMap<IotaDID, MemVault>;
 
 pub struct MemStore {
   expand: bool,
   chain_states: Shared<ChainStates>,
-  states: Shared<States>,
+  documents: Shared<States>,
   vaults: Shared<Vaults>,
 }
 
@@ -49,7 +49,7 @@ impl MemStore {
     Self {
       expand: false,
       chain_states: Shared::new(HashMap::new()),
-      states: Shared::new(HashMap::new()),
+      documents: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
     }
   }
@@ -199,18 +199,18 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
-    self.states.read().map(|states| states.get(did).cloned())
+  async fn state(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+    self.documents.read().map(|documents| documents.get(did).cloned())
   }
 
-  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
-    self.states.write()?.insert(did.clone(), state.clone());
+  async fn set_state(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
+    self.documents.write()?.insert(did.clone(), document.clone());
 
     Ok(())
   }
 
   async fn purge(&self, did: &IotaDID) -> Result<()> {
-    let _ = self.states.write()?.remove(did);
+    let _ = self.documents.write()?.remove(did);
     let _ = self.vaults.write()?.remove(did);
     let _ = self.chain_states.write()?.remove(did);
 
@@ -223,7 +223,7 @@ impl Debug for MemStore {
     if self.expand {
       f.debug_struct("MemStore")
         .field("chain_states", &self.chain_states)
-        .field("states", &self.states)
+        .field("states", &self.documents)
         .field("vaults", &self.vaults)
         .finish()
     } else {

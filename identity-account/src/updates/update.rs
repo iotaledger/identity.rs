@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
-use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
@@ -48,7 +47,7 @@ pub(crate) async fn create_identity(
   setup: IdentitySetup,
   network: NetworkName,
   store: &dyn Storage,
-) -> Result<IdentityState> {
+) -> Result<IotaDocument> {
   let method_type = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
   };
@@ -111,9 +110,7 @@ pub(crate) async fn create_identity(
 
   let document = IotaDocument::from_verification_method(method)?;
 
-  let state = IdentityState::new(document);
-
-  Ok(state)
+  Ok(document)
 }
 
 #[derive(Clone, Debug)]
@@ -153,9 +150,9 @@ pub(crate) enum Update {
 }
 
 impl Update {
-  pub(crate) async fn process(self, did: &IotaDID, state: &mut IdentityState, storage: &dyn Storage) -> Result<()> {
+  pub(crate) async fn process(self, did: &IotaDID, document: &mut IotaDocument, storage: &dyn Storage) -> Result<()> {
     debug!("[Update::process] Update = {:?}", self);
-    trace!("[Update::process] State = {:?}", state);
+    trace!("[Update::process] State = {:?}", document);
     trace!("[Update::process] Store = {:?}", storage);
 
     match self {
@@ -171,7 +168,7 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
         let method_url: CoreDIDUrl = did.as_ref().to_url().join(fragment.identifier())?;
 
-        if state.document().resolve_method(method_url).is_some() {
+        if document.resolve_method(method_url).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
@@ -197,7 +194,7 @@ impl Update {
         // Move the key from the tmp to the expected location.
         storage.key_move(did, &tmp_location, &location).await?;
 
-        state.document_mut().insert_method(method, scope)?;
+        document.insert_method(method, scope)?;
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -205,7 +202,7 @@ impl Update {
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         // Prevent deleting the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().core_document().capability_invocation();
+        let capability_invocation_set = document.core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &method_url);
@@ -215,7 +212,7 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.document_mut().remove_method(&method_url)?;
+        document.remove_method(&method_url)?;
       }
       Self::AttachMethodRelationship {
         fragment,
@@ -227,9 +224,7 @@ impl Update {
 
         for relationship in relationships {
           // Ignore result: attaching is idempotent.
-          let _ = state
-            .document_mut()
-            .attach_method_relationship(&method_url, relationship)?;
+          let _ = document.attach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::DetachMethodRelationship {
@@ -242,7 +237,7 @@ impl Update {
 
         // Prevent detaching the last method capable of signing the DID document.
         let capability_invocation_set: &OrderedSet<MethodRef<IotaDID>> =
-          state.document().core_document().capability_invocation();
+          document.core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &method_url);
@@ -254,9 +249,7 @@ impl Update {
 
         for relationship in relationships {
           // Ignore result: detaching is idempotent.
-          let _ = state
-            .document_mut()
-            .detach_method_relationship(&method_url, relationship)?;
+          let _ = document.detach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::CreateService {
@@ -270,7 +263,7 @@ impl Update {
 
         // The service must not exist.
         ensure!(
-          state.document().service().query(&did_url).is_none(),
+          document.service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment.name().to_owned()),
         );
 
@@ -280,7 +273,7 @@ impl Update {
           .type_(type_)
           .build()?;
 
-        state.document_mut().insert_service(service);
+        document.insert_service(service);
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -288,22 +281,22 @@ impl Update {
 
         // The service must exist
         ensure!(
-          state.document().service().query(&service_url).is_some(),
+          document.service().query(&service_url).is_some(),
           UpdateError::ServiceNotFound
         );
 
-        state.document_mut().remove_service(&service_url)?;
+        document.remove_service(&service_url)?;
       }
       Self::SetController { controllers } => {
-        *state.document_mut().controller_mut() = controllers;
+        *document.controller_mut() = controllers;
       }
 
       Self::SetAlsoKnownAs { urls } => {
-        *state.document_mut().also_known_as_mut() = urls;
+        *document.also_known_as_mut() = urls;
       }
     }
 
-    state.document_mut().metadata.updated = Timestamp::now_utc();
+    document.metadata.updated = Timestamp::now_utc();
 
     Ok(())
   }

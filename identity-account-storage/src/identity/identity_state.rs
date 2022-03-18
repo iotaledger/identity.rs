@@ -9,7 +9,6 @@ use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
-use serde::Deserialize;
 use serde::Serialize;
 
 use crate::crypto::RemoteEd25519;
@@ -18,29 +17,9 @@ use crate::error::Result;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct IdentityState {
-  document: IotaDocument,
-}
-
-impl IdentityState {
-  pub fn new(document: IotaDocument) -> Self {
-    Self { document }
-  }
-
-  // ===========================================================================
-  // Document State
-  // ===========================================================================
-
-  pub fn document(&self) -> &IotaDocument {
-    &self.document
-  }
-
-  pub fn document_mut(&mut self) -> &mut IotaDocument {
-    &mut self.document
-  }
-
-  pub async fn sign_data<U>(
+#[async_trait::async_trait]
+pub trait IotaDocumentExt {
+  async fn remote_sign_data<U>(
     &self,
     did: &IotaDID,
     store: &dyn Storage,
@@ -49,14 +28,28 @@ impl IdentityState {
     options: SignatureOptions,
   ) -> Result<()>
   where
-    U: Serialize + SetSignature,
+    U: Serialize + SetSignature + Send + Sync;
+}
+
+#[async_trait::async_trait]
+impl IotaDocumentExt for IotaDocument {
+  async fn remote_sign_data<U>(
+    &self,
+    did: &IotaDID,
+    store: &dyn Storage,
+    location: &KeyLocation,
+    data: &mut U,
+    options: SignatureOptions,
+  ) -> Result<()>
+  where
+    U: Serialize + SetSignature + Send + Sync,
   {
     // Create a private key suitable for identity_core::crypto
     let private: RemoteKey<'_> = RemoteKey::new(did, location, store);
 
     // Create the Verification Method identifier
     let fragment: Fragment = Fragment::new(location.fragment.clone());
-    let method_url: IotaDIDUrl = self.document.id().to_url().join(fragment.identifier())?;
+    let method_url: IotaDIDUrl = self.id().to_url().join(fragment.identifier())?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {

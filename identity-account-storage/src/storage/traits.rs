@@ -9,10 +9,10 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 
 use crate::error::Result;
 use crate::identity::ChainState;
-use crate::identity::IdentityState;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
@@ -70,11 +70,11 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Set the chain state of the identity specified by `did`.
   async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
 
-  /// Returns the state of the identity specified by `did`.
-  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>>;
+  /// Returns the [`IotaDocument`] of the identity specified by `did`.
+  async fn state(&self, did: &IotaDID) -> Result<Option<IotaDocument>>;
 
   /// Sets a new state for the identity specified by `did`.
-  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()>;
+  async fn set_state(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
 
   /// Removes the keys and any state for the identity specified by `did`.
   async fn purge(&self, did: &IotaDID) -> Result<()>;

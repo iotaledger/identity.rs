@@ -3,7 +3,6 @@
 
 use std::sync::Arc;
 
-use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
@@ -56,13 +55,13 @@ async fn account_setup(network: Network) -> AccountSetup {
 async fn test_create_identity() -> Result<()> {
   let account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let state: &IdentityState = account.state();
+  let document: &IotaDocument = account.document();
 
   let expected_fragment = IotaDocument::DEFAULT_METHOD_FRAGMENT;
-  let method: &IotaVerificationMethod = state.document().resolve_method(expected_fragment).unwrap();
+  let method: &IotaVerificationMethod = document.resolve_method(expected_fragment).unwrap();
 
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().core_document().methods().count(), 1);
+  assert_eq!(document.core_document().verification_relationships().count(), 1);
+  assert_eq!(document.core_document().methods().count(), 1);
 
   let location = method.key_location().unwrap();
 
@@ -80,11 +79,11 @@ async fn test_create_identity() -> Result<()> {
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Enure the state was written to storage.
-  assert!(account.load_state().await.is_ok());
+  assert!(account.load_document().await.is_ok());
 
   // Ensure timestamps were recently set.
-  assert!(state.document().metadata.created > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(document.metadata.created > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   Ok(())
 }
@@ -174,7 +173,7 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 async fn test_create_method() -> Result<()> {
   let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let initial_state: IdentityState = account.state().to_owned();
+  let initial_document: IotaDocument = account.document().to_owned();
   let method_type = MethodType::Ed25519VerificationKey2018;
 
   let fragment = "key-1".to_owned();
@@ -187,16 +186,16 @@ async fn test_create_method() -> Result<()> {
 
   account.process_update(update).await?;
 
-  let state: &IdentityState = account.state();
+  let document: &IotaDocument = account.document();
 
-  let method: &IotaVerificationMethod = state.document().resolve_method(&fragment).unwrap();
+  let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
   // Ensure existence and key type
   assert_eq!(method.key_type(), method_type);
 
   // Still only the default relationship.
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().core_document().methods().count(), 2);
+  assert_eq!(document.core_document().verification_relationships().count(), 1);
+  assert_eq!(document.core_document().methods().count(), 2);
 
   let location = method.key_location().unwrap();
 
@@ -207,12 +206,10 @@ async fn test_create_method() -> Result<()> {
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.
-  assert_eq!(
-    initial_state.document().metadata.created,
-    state.document().metadata.created
-  );
+  assert_eq!(initial_document.metadata.created, document.metadata.created);
+
   // Ensure `updated` was recently set.
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   Ok(())
 }
@@ -239,13 +236,13 @@ async fn test_create_scoped_method() -> Result<()> {
 
     account.process_update(update).await?;
 
-    let state: &IdentityState = account.state();
+    let document: &IotaDocument = account.document();
 
-    assert_eq!(state.document().core_document().verification_relationships().count(), 2);
+    assert_eq!(document.core_document().verification_relationships().count(), 2);
 
-    assert_eq!(state.document().core_document().methods().count(), 2);
+    assert_eq!(document.core_document().methods().count(), 2);
 
-    let core_doc = state.document().core_document();
+    let core_doc = document.core_document();
 
     let contains = match scope {
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
@@ -329,9 +326,9 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
   account.process_update(update).await?;
 
-  let state: &IdentityState = account.state();
+  let document: &IotaDocument = account.document();
 
-  let method: &IotaVerificationMethod = state.document().resolve_method(&fragment).unwrap();
+  let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
   let location = method.key_location().unwrap();
   let public_key = account.storage().key_get(account.did(), &location).await?;
@@ -379,12 +376,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   // One relationship by default.
   assert_eq!(
-    account
-      .state()
-      .document()
-      .core_document()
-      .verification_relationships()
-      .count(),
+    account.document().core_document().verification_relationships().count(),
     1
   );
 
@@ -574,7 +566,7 @@ async fn test_delete_method() -> Result<()> {
 
   let fragment = "key-1".to_owned();
   let method_type = MethodType::Ed25519VerificationKey2018;
-  let initial_state = account.state().to_owned();
+  let initial_document = account.document().to_owned();
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -586,7 +578,7 @@ async fn test_delete_method() -> Result<()> {
   account.process_update(update).await?;
 
   // Ensure it was added.
-  let method: &IotaVerificationMethod = account.state().document().resolve_method(&fragment).unwrap();
+  let method: &IotaVerificationMethod = account.document().resolve_method(&fragment).unwrap();
   let location = method.key_location().unwrap();
 
   let update: Update = Update::DeleteMethod {
@@ -595,26 +587,23 @@ async fn test_delete_method() -> Result<()> {
 
   account.process_update(update.clone()).await?;
 
-  let state: &IdentityState = account.state();
+  let document: &IotaDocument = account.document();
 
   // Ensure it no longer exists.
-  assert!(state.document().resolve_method(&fragment).is_none());
+  assert!(document.resolve_method(&fragment).is_none());
 
   // Still only the default relationship.
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
+  assert_eq!(document.core_document().verification_relationships().count(), 1);
 
-  assert_eq!(state.document().core_document().methods().count(), 1);
+  assert_eq!(document.core_document().methods().count(), 1);
 
   // Ensure the key still exists in storage.
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.
-  assert_eq!(
-    initial_state.document().metadata.created,
-    state.document().metadata.created
-  );
+  assert_eq!(initial_document.metadata.created, document.metadata.created);
   // Ensure `updated` was recently set.
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   // Deleting a non-existing methods fails.
   let output = account.process_update(update).await;
