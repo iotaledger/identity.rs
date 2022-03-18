@@ -398,8 +398,6 @@ where
       }
     }
 
-    self.state.increment_generation()?;
-
     self.store_state().await?;
 
     Ok(())

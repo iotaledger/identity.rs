@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use hashbrown::HashMap;
 use identity_core::common::Fragment;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
@@ -17,45 +16,16 @@ use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;
 use crate::error::Result;
 use crate::storage::Storage;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IdentityState {
-  generation: Generation,
-  #[serde(skip_serializing_if = "HashMap::is_empty")]
-  method_generations: HashMap<Fragment, Generation>,
   document: IotaDocument,
 }
 
 impl IdentityState {
   pub fn new(document: IotaDocument) -> Self {
-    Self {
-      generation: Generation::new(),
-      method_generations: HashMap::new(),
-      document,
-    }
-  }
-
-  // ===========================================================================
-  // Internal State
-  // ===========================================================================
-
-  /// Returns the current generation of the identity integration chain.
-  pub fn generation(&self) -> Generation {
-    self.generation
-  }
-
-  /// Increments the generation of the identity diff chain.
-  pub fn increment_generation(&mut self) -> Result<()> {
-    self.generation = self.generation.try_increment()?;
-
-    Ok(())
-  }
-
-  /// Stores the generations at which the method was inserted.
-  pub fn store_method_generations(&mut self, fragment: Fragment) {
-    self.method_generations.insert(fragment, self.generation());
+    Self { document }
   }
 
   // ===========================================================================

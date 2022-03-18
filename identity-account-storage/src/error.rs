@@ -22,7 +22,6 @@ pub enum Error {
   #[cfg(feature = "stronghold")]
   #[error(transparent)]
   StrongholdError(#[from] crate::stronghold::StrongholdError),
-
   /// Caused by attempting to increment a generation above the maximum value.
   #[error("Generation overflow")]
   GenerationOverflow,
