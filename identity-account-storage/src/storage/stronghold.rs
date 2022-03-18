@@ -30,7 +30,7 @@ use crate::stronghold::Store;
 use crate::stronghold::Vault;
 use crate::types::KeyLocation;
 use crate::types::Signature;
-use crate::utils::derive_encryption_key;
+use crate::utils::{derive_encryption_key, EncryptionKey};
 
 #[derive(Debug)]
 pub struct Stronghold {
@@ -73,6 +73,12 @@ impl Stronghold {
   /// Default: true
   pub fn set_dropsave(&mut self, value: bool) {
     self.dropsave = value;
+  }
+
+  /// Sets the account password.
+  pub async fn set_password(&self, password: EncryptionKey) -> Result<()> {
+    self.snapshot.set_password(password).await?;
+    Ok(())
   }
 }
 
