@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity::account_storage::ChainState;
-use identity::account_storage::EncryptionKey;
 use identity::account_storage::Error as AccountStorageError;
 use identity::account_storage::IdentityState;
 use identity::account_storage::KeyLocation;
@@ -47,8 +46,6 @@ extern "C" {
 extern "C" {
   pub type WasmStorage;
 
-  #[wasm_bindgen(method, js_name = setPassword)]
-  pub fn set_password(this: &WasmStorage, password: Vec<u8>) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = keyNew)]
@@ -88,12 +85,6 @@ impl Debug for WasmStorage {
 
 #[async_trait::async_trait(?Send)]
 impl Storage for WasmStorage {
-  /// Sets the account password.
-  async fn set_password(&self, password: EncryptionKey) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.set_password(password.to_vec()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
 
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> AccountStorageResult<()> {
@@ -226,9 +217,6 @@ impl Storage for WasmStorage {
 const STORAGE: &'static str = r#"
 /** All methods an object must implement to be used as an account storage. */
 interface Storage {
-  /** Sets the account password.*/
-  setPassword: (encryptionKey: Uint8Array) => Promise<void>;
-
   /** Write any unsaved changes to disk.*/
   flushChanges: () => Promise<void>;
 
