@@ -85,7 +85,6 @@ impl Debug for WasmStorage {
 
 #[async_trait::async_trait(?Send)]
 impl Storage for WasmStorage {
-
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.flush_changes());
