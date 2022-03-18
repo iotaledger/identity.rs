@@ -120,24 +120,24 @@ Example of an Integration DID Message:
 ```json
 {
   "doc": {
-    "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
+    "id": "did:iota:ERtmNv3hYnWU7fZMGKpMLy7QBJqPovCSYyewtoHUGmpf",
     "capabilityInvocation": [
       {
-        "id": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e#sign-0",
-        "controller": "did:iota:X7U84ez4YeaLwpfdnhdgFyPLa53twvAuMSYdRQas54e",
+        "id": "did:iota:ERtmNv3hYnWU7fZMGKpMLy7QBJqPovCSYyewtoHUGmpf#sign-0",
+        "controller": "did:iota:ERtmNv3hYnWU7fZMGKpMLy7QBJqPovCSYyewtoHUGmpf",
         "type": "Ed25519VerificationKey2018",
-        "publicKeyMultibase": "zCqNmbG7e4GMohTndkStNXUQGHFD5YusnwWpFdpyWFWH3"
+        "publicKeyMultibase": "zETX79R6G5fkTMZhHXaCMhjC3Xpx3NLJVSNurat8Ls9Tn"
       }
     ]
   },
   "meta": {
-    "created": "2022-01-21T09:50:09Z",
-    "updated": "2022-01-21T09:50:09Z",
+    "created": "2022-03-18T06:59:50Z",
+    "updated": "2022-03-18T06:59:50Z"
   },
   "proof": {
     "type": "JcsEd25519Signature2020",
-    "verificationMethod": "#sign-0",
-    "signatureValue": "4pzMWzn19oqibHXqEdLr4EEHygs7QF2mMdvEhSMPiCVejEZGL4Vi5BGnmrJjMqKyNr6c6sSd3EXKoYxAuC2YiZNF"
+    "verificationMethod": "did:iota:ERtmNv3hYnWU7fZMGKpMLy7QBJqPovCSYyewtoHUGmpf#sign-0",
+    "signatureValue": "278R6WyoG359VjnGm2GJK6XAjBNh6AM59BXJmjfRQerVQMTG3EjWGXw64CKgGKvVBbP98QMVUw1YXBbuGuDbJW6A"
   }
 }
 ```

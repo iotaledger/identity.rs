@@ -55,6 +55,7 @@ impl Diff for IotaDocument {
       .transpose()?
       .unwrap_or_else(|| self.metadata.clone());
 
+    // NOTE: proof intentionally excluded
     Ok(IotaDocument::from((document, metadata, None)))
   }
 
@@ -71,6 +72,7 @@ impl Diff for IotaDocument {
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `metadata`"))?;
 
+    // NOTE: proof intentionally excluded
     Ok(IotaDocument::from((document, metadata, None)))
   }
 

@@ -648,6 +648,7 @@ impl WasmDocument {
   /// Returns a copy of the `proof` object.
   #[wasm_bindgen]
   pub fn proof(&self) -> Result<JsValue> {
+    // TODO: implement proper bindings for the proof.
     match &self.0.proof {
       Some(proof) => JsValue::from_serde(proof).wasm_result(),
       None => Ok(JsValue::NULL),
