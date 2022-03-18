@@ -30,7 +30,8 @@ use crate::stronghold::Store;
 use crate::stronghold::Vault;
 use crate::types::KeyLocation;
 use crate::types::Signature;
-use crate::utils::{derive_encryption_key, EncryptionKey};
+use crate::utils::derive_encryption_key;
+use crate::utils::EncryptionKey;
 
 #[derive(Debug)]
 pub struct Stronghold {

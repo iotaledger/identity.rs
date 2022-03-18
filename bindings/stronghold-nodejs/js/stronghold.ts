@@ -16,6 +16,10 @@ export class Stronghold implements Storage {
         return stronghold
     }
 
+    public async setPassword(encryptionKey: Uint8Array) {
+        return this.napiStronghold.setPassword(Array.from(encryptionKey))
+    }
+
     public async flushChanges() {
         return this.napiStronghold.flushChanges()
     }
