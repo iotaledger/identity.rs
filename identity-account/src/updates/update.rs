@@ -41,7 +41,6 @@ use crate::identity::IdentitySetup;
 use crate::types::MethodSecret;
 use crate::updates::UpdateError;
 
-pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
 // TODO: Should this be a IotaDID lazily initialized?
 pub const KEY_GENERATION_DID: &str = "did:iota:00000000000000000000000000000000000000000000";
 
@@ -60,8 +59,6 @@ pub(crate) async fn create_identity(
     UpdateError::InvalidMethodType(method_type)
   );
 
-  // TODO: Should we just hardcode the entire sign-0?
-  let fragment: String = format!("{}0", DEFAULT_UPDATE_METHOD_PREFIX);
   // let tmp_location: KeyLocation = KeyLocation::random(method_type);
   // let tmp_did: IotaDID = KEY_GENERATION_DID.parse().unwrap();
 
@@ -92,8 +89,12 @@ pub(crate) async fn create_identity(
   // Generate a new DID from the public key
   let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
 
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did.clone(), setup.key_type, keypair.public(), fragment.as_ref())?;
+  let method: IotaVerificationMethod = IotaVerificationMethod::new(
+    did.clone(),
+    setup.key_type,
+    keypair.public(),
+    IotaDocument::DEFAULT_METHOD_FRAGMENT,
+  )?;
   let location: KeyLocation = method.key_location()?;
 
   ensure!(

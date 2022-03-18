@@ -23,6 +23,7 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::Network;
 
@@ -55,11 +56,10 @@ async fn account_setup(network: Network) -> AccountSetup {
 async fn test_create_identity() -> Result<()> {
   let account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let expected_fragment = format!("{}0", crate::updates::DEFAULT_UPDATE_METHOD_PREFIX);
-
   let state: &IdentityState = account.state();
 
-  let method: &IotaVerificationMethod = state.document().resolve_method(&expected_fragment).unwrap();
+  let expected_fragment = IotaDocument::DEFAULT_METHOD_FRAGMENT;
+  let method: &IotaVerificationMethod = state.document().resolve_method(expected_fragment).unwrap();
 
   assert_eq!(state.document().core_document().verification_relationships().count(), 1);
   assert_eq!(state.document().core_document().methods().count(), 1);
@@ -71,7 +71,7 @@ async fn test_create_identity() -> Result<()> {
     location,
     KeyLocation::new(
       MethodType::Ed25519VerificationKey2018,
-      expected_fragment,
+      expected_fragment.to_owned(),
       method.key_data()
     )
   );
