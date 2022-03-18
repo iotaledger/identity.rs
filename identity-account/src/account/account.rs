@@ -7,8 +7,8 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+use identity_account_storage::crypto::remote_sign_data;
 use identity_account_storage::identity::ChainState;
-use identity_account_storage::identity::IotaDocumentExt;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
@@ -234,19 +234,24 @@ where
   /// Signs `data` with the key specified by `fragment`.
   pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
   where
-    U: Serialize + SetSignature + Send + Sync,
+    U: Serialize + SetSignature,
   {
-    let document: &IotaDocument = self.document();
-
-    let method: &IotaVerificationMethod = document
+    let method: &IotaVerificationMethod = self
+      .document()
       .resolve_method(fragment)
       .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
     let location: KeyLocation = method.key_location()?;
 
-    document
-      .remote_sign_data(self.did(), self.storage().deref(), &location, data, options)
-      .await?;
+    remote_sign_data(
+      self.document(),
+      self.did(),
+      self.storage().deref(),
+      &location,
+      data,
+      options,
+    )
+    .await?;
 
     Ok(())
   }
@@ -347,15 +352,15 @@ where
 
     let signing_key_location: KeyLocation = signing_method.key_location()?;
 
-    signing_doc
-      .remote_sign_data(
-        self.did(),
-        self.storage().deref(),
-        &signing_key_location,
-        document,
-        SignatureOptions::default(),
-      )
-      .await?;
+    remote_sign_data(
+      signing_doc,
+      self.did(),
+      self.storage().deref(),
+      &signing_key_location,
+      document,
+      SignatureOptions::default(),
+    )
+    .await?;
 
     Ok(())
   }
@@ -475,15 +480,15 @@ where
 
     let signing_key_location: KeyLocation = signing_method.key_location()?;
 
-    old_doc
-      .remote_sign_data(
-        self.did(),
-        self.storage().deref(),
-        &signing_key_location,
-        &mut diff,
-        SignatureOptions::default(),
-      )
-      .await?;
+    remote_sign_data(
+      old_doc,
+      self.did(),
+      self.storage().deref(),
+      &signing_key_location,
+      &mut diff,
+      SignatureOptions::default(),
+    )
+    .await?;
 
     log::debug!(
       "[publish_diff_change] publishing on index {}",
