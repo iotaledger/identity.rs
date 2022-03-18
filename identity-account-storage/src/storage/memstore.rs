@@ -199,11 +199,11 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn state(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+  async fn document(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     self.documents.read().map(|documents| documents.get(did).cloned())
   }
 
-  async fn set_state(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
+  async fn set_document(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     self.documents.write()?.insert(did.clone(), document.clone());
 
     Ok(())

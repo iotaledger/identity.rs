@@ -122,7 +122,7 @@ where
     }
 
     // Ensure the did exists in storage
-    let document: IotaDocument = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
+    let document: IotaDocument = setup.storage.document(&did).await?.ok_or(Error::IdentityNotFound)?;
     let chain_state = setup.storage.chain_state(&did).await?.ok_or(Error::IdentityNotFound)?;
 
     Self::with_setup(setup, chain_state, document).await
@@ -316,7 +316,7 @@ where
     self
       .storage()
       .deref()
-      .state(self.did())
+      .document(self.did())
       .await?
       .ok_or(Error::IdentityNotFound)
   }
@@ -407,7 +407,7 @@ where
   }
 
   async fn store_state(&self) -> Result<()> {
-    self.storage.set_state(self.did(), &self.document).await?;
+    self.storage.set_document(self.did(), &self.document).await?;
     self.storage.set_chain_state(self.did(), self.chain_state()).await?;
 
     self.save(false).await?;

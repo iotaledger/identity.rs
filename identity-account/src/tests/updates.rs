@@ -136,7 +136,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
     .unwrap();
   let did: IotaDID = account.did().to_owned();
 
-  let initial_state = account_setup.storage.state(&did).await.unwrap().unwrap();
+  let initial_state = account_setup.storage.document(&did).await.unwrap().unwrap();
 
   let output = Account::create_identity(account_setup.clone(), identity_create).await;
 
@@ -146,7 +146,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
   ));
 
   // Ensure nothing was overwritten in storage
-  assert_eq!(initial_state, account_setup.storage.state(&did).await?.unwrap());
+  assert_eq!(initial_state, account_setup.storage.document(&did).await?.unwrap());
 
   Ok(())
 }

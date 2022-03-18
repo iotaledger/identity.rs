@@ -183,7 +183,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn state(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+  async fn document(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
@@ -196,7 +196,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn set_state(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
+  async fn set_document(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 

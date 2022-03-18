@@ -71,10 +71,10 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
 
   /// Returns the [`IotaDocument`] of the identity specified by `did`.
-  async fn state(&self, did: &IotaDID) -> Result<Option<IotaDocument>>;
+  async fn document(&self, did: &IotaDID) -> Result<Option<IotaDocument>>;
 
   /// Sets a new state for the identity specified by `did`.
-  async fn set_state(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
+  async fn set_document(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
 
   /// Removes the keys and any state for the identity specified by `did`.
   async fn purge(&self, did: &IotaDID) -> Result<()>;
