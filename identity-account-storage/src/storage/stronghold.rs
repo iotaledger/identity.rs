@@ -89,7 +89,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
+  async fn key_generate(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
     let vault: Vault<'_> = self.vault(did);
 
     let location: KeyLocation = match method_type {
@@ -100,8 +100,6 @@ impl Storage for Stronghold {
     Ok(location)
   }
 
-  // TODO: Should this also not return the pub key since the caller could have just calculated it themselves,
-  // and to be consistent with key_new?
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let vault = self.vault(did);
 
@@ -119,7 +117,7 @@ impl Storage for Stronghold {
     move_key(&vault, source.to_location(did), target.to_location(did)).await
   }
 
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {

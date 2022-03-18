@@ -175,10 +175,10 @@ impl Update {
         if let Some(method_private_key) = method_secret {
           insert_method_secret(storage, did, &tmp_location, type_, method_private_key).await?;
         } else {
-          storage.key_new(did, fragment.name(), type_).await?;
+          storage.key_generate(did, fragment.name(), type_).await?;
         };
 
-        let public_key: PublicKey = storage.key_get(did, &tmp_location).await?;
+        let public_key: PublicKey = storage.key_public(did, &tmp_location).await?;
 
         let method: IotaVerificationMethod =
           IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;

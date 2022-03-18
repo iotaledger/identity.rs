@@ -42,7 +42,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn flush_changes(&self) -> Result<()>;
 
   /// Creates a new keypair for the given `did` and returns its location.
-  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation>;
+  async fn key_generate(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation>;
 
   /// Inserts a private key at the specified `location`.
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
@@ -53,7 +53,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn key_move(&self, did: &IotaDID, source: &KeyLocation, target: &KeyLocation) -> Result<()>;
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
   async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()>;

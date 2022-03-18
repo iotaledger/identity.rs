@@ -74,7 +74,7 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_new(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
+  async fn key_generate(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
@@ -151,7 +151,7 @@ impl Storage for MemStore {
     Ok(false)
   }
 
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;

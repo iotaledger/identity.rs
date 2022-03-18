@@ -331,7 +331,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
   let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
   let location = method.key_location().unwrap();
-  let public_key = account.storage().key_get(account.did(), &location).await?;
+  let public_key = account.storage().key_public(account.did(), &location).await?;
 
   assert_eq!(public_key.as_ref(), keypair.public().as_ref());
 
