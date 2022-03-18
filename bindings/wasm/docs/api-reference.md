@@ -121,6 +121,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
@@ -152,8 +154,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 </dl>
 
 ## Functions
@@ -938,6 +938,7 @@ Validate that the relationship between the `holder` and the credential subjects 
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
         * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
+        * [.fromPublicKey(public_key, network)](#DID.fromPublicKey) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
         * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
@@ -1011,6 +1012,18 @@ Serializes a `DID` as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID.fromPublicKey"></a>
+
+### DID.fromPublicKey(public_key, network) ⇒ [<code>DID</code>](#DID)
+Creates a new `DID` from an arbitrary public key.
+
+**Kind**: static method of [<code>DID</code>](#DID)  
+
+| Param | Type |
+| --- | --- |
+| public_key | <code>Uint8Array</code> | 
+| network | <code>string</code> \| <code>undefined</code> | 
+
 <a name="DID.parse"></a>
 
 ### DID.parse(input) ⇒ [<code>DID</code>](#DID)
@@ -2557,6 +2570,7 @@ Deserializes a JSON object as `KeyLocation`.
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
         * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
+        * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -2599,6 +2613,19 @@ Serializes a `KeyPair` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
+<a name="KeyPair.fromBase58"></a>
+
+### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
+Parses a `KeyPair` object from the public/private keys.
+
+**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
+
+| Param | Type |
+| --- | --- |
+| type_ | <code>number</code> | 
+| public_key | <code>Uint8Array</code> | 
+| private_key | <code>Uint8Array</code> | 
+
 <a name="KeyPair.fromJSON"></a>
 
 ### KeyPair.fromJSON(json) ⇒ [<code>KeyPair</code>](#KeyPair)
@@ -3906,6 +3933,10 @@ Deserializes a `VerifierOptions` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
@@ -3964,10 +3995,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 

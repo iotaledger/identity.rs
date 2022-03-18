@@ -33,6 +33,7 @@ default-features = false
 features = ["account", "bindings-derive"]
 
 [dev-dependencies]
+json = { version = "0.12.4" }
 wasm-bindgen-test = { version = "0.3" }
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]

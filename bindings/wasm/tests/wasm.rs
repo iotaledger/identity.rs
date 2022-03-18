@@ -36,9 +36,7 @@ use wasm_bindgen_test::*;
 #[wasm_bindgen_test]
 fn test_keypair() {
   let key1 = WasmKeyPair::new(KeyType::Ed25519).unwrap();
-  let public_key = key1.public();
-  let private_key = key1.private();
-  let key2 = WasmKeyPair::from_base58(KeyType::Ed25519, &public_key, &private_key).unwrap();
+  let key2 = WasmKeyPair::from_keys(KeyType::Ed25519, key1.public(), key1.private()).unwrap();
 
   let json1 = key1.to_json().unwrap();
   let json2 = key2.to_json().unwrap();
@@ -101,8 +99,7 @@ fn test_did() {
 
   assert_eq!(did.to_string(), parsed.to_string());
 
-  let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("dev".to_owned())).unwrap();
+  let base58 = WasmDID::from_public_key(&key.public(), Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_name(), "dev");
@@ -409,19 +406,13 @@ fn test_validations() {
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
   // sign the credential with the issuer's DID Document
-
   let issuer_method: Object = Object::from_json(
-    format!(
-      r#"{{
-    "method": "{}",
-    "public": "{}",
-    "private": "{}"
-  }}"#,
-      "#sign-0",
-      issuer_keys.public(),
-      issuer_keys.private()
-    )
-    .as_str(),
+    &json::object! {
+      method: "#sign-0",
+      public: issuer_keys.public(),
+      private: issuer_keys.private()
+    }
+    .dump(),
   )
   .unwrap();
 
@@ -460,15 +451,11 @@ fn test_validations() {
   .unwrap();
 
   let subject_method: Object = Object::from_json(
-    format!(
-      r#"{{
-    "method": "{}",
-    "private": "{}"
-  }}"#,
-      "#sign-0",
-      subject_keys.private()
-    )
-    .as_str(),
+    &json::object! {
+      method: "#sign-0",
+      private: subject_keys.private()
+    }
+    .dump(),
   )
   .unwrap();
 
