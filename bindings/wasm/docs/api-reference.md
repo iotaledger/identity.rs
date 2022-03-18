@@ -192,8 +192,8 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
@@ -368,17 +368,6 @@ Deletes a verification method if the method exists.
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
 
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
-
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -389,6 +378,17 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -1388,7 +1388,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.setMetadataUpdated(timestamp)](#Document+setMetadataUpdated)
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
-        * [.metadataProof()](#Document+metadataProof) ⇒ <code>any</code>
+        * [.proof()](#Document+proof) ⇒ <code>any</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -1843,9 +1843,9 @@ Sets the previous integration chain message id.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="Document+metadataProof"></a>
+<a name="Document+proof"></a>
 
-### document.metadataProof() ⇒ <code>any</code>
+### document.proof() ⇒ <code>any</code>
 Returns a copy of the `proof` object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -2011,7 +2011,6 @@ Additional attributes related to an IOTA DID Document.
     * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
     * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp)
     * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp)
-    * [.proof()](#DocumentMetadata+proof) ⇒ <code>any</code>
     * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
 
 <a name="DocumentMetadata+previousMessageId"></a>
@@ -2028,12 +2027,6 @@ Returns a copy of the timestamp of when the DID document was created.
 
 ### documentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp)
 Returns a copy of the timestamp of the last DID document update.
-
-**Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
-<a name="DocumentMetadata+proof"></a>
-
-### documentMetadata.proof() ⇒ <code>any</code>
-Returns a copy of the reference to the `proof`.
 
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="DocumentMetadata+clone"></a>

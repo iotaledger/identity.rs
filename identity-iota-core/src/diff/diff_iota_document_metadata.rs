@@ -96,7 +96,6 @@ impl Diff for IotaDocumentMetadata {
       created,
       updated,
       previous_message_id,
-      proof: None, // NOTE: proof intentionally excluded.
       properties,
     })
   }
@@ -130,7 +129,6 @@ impl Diff for IotaDocumentMetadata {
       created,
       updated,
       previous_message_id,
-      proof: None, // NOTE: proof intentionally excluded.
       properties,
     })
   }
