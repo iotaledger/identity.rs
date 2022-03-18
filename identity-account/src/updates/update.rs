@@ -164,14 +164,7 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let location: KeyLocation = KeyLocation::random(type_);
-
-        // The key location must be available.
-        // TODO: config: strict
-        // ensure!(
-        //   !storage.key_exists(did, &location).await?,
-        //   UpdateError::DuplicateKeyLocation(location)
-        // );
+        let tmp_location: KeyLocation = KeyLocation::random(type_);
 
         // TODO: Done to ensure a leading `#`. Should be replaced eventually.
         let fragment: Fragment = Fragment::new(fragment);
@@ -182,19 +175,26 @@ impl Update {
         }
 
         if let Some(method_private_key) = method_secret {
-          insert_method_secret(storage, did, &location, type_, method_private_key).await?;
+          insert_method_secret(storage, did, &tmp_location, type_, method_private_key).await?;
         } else {
           storage.key_new(did, fragment.name(), type_).await?;
         };
 
-        let public_key: PublicKey = storage.key_get(did, &location).await?;
+        let public_key: PublicKey = storage.key_get(did, &tmp_location).await?;
 
         let method: IotaVerificationMethod =
           IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;
 
-        let new_location: KeyLocation = method.key_location()?;
+        let location: KeyLocation = method.key_location()?;
 
-        storage.key_move(did, &location, &new_location).await?;
+        // The key location must be available.
+        ensure!(
+          !storage.key_exists(did, &location).await?,
+          UpdateError::DuplicateKeyLocation(location)
+        );
+
+        // Move the key from the tmp to the expected location.
+        storage.key_move(did, &tmp_location, &location).await?;
 
         state.document_mut().insert_method(method, scope)?;
       }
