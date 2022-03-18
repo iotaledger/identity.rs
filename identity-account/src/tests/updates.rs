@@ -4,6 +4,7 @@
 use std::sync::Arc;
 
 use identity_account_storage::storage::MemStore;
+use identity_account_storage::types::method_to_key_type;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
@@ -68,11 +69,7 @@ async fn test_create_identity() -> Result<()> {
   // Ensure we can retrieve the correct location for the key.
   assert_eq!(
     location,
-    KeyLocation::new(
-      MethodType::Ed25519VerificationKey2018,
-      expected_fragment.to_owned(),
-      method.key_data()
-    )
+    KeyLocation::new(KeyType::Ed25519, expected_fragment.to_owned(), method.key_data())
   );
 
   // Ensure the key exists in storage.
@@ -200,7 +197,10 @@ async fn test_create_method() -> Result<()> {
   let location = method.key_location().unwrap();
 
   // Ensure we can retrieve the correct location for the key.
-  assert_eq!(location, KeyLocation::new(method_type, fragment, method.key_data()));
+  assert_eq!(
+    location,
+    KeyLocation::new(method_to_key_type(method_type), fragment, method.key_data())
+  );
 
   // Ensure the key exists in storage.
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());

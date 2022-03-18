@@ -12,7 +12,6 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
-use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
@@ -89,12 +88,11 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_generate(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
+  async fn key_generate(&self, did: &IotaDID, fragment: &str, key_type: KeyType) -> Result<KeyLocation> {
     let vault: Vault<'_> = self.vault(did);
 
-    let location: KeyLocation = match method_type {
-      MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, method_type, fragment, did).await?,
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
+    let location: KeyLocation = match key_type {
+      KeyType::Ed25519 => generate_ed25519(&vault, key_type, fragment, did).await?,
     };
 
     Ok(location)
@@ -120,22 +118,18 @@ impl Storage for Stronghold {
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(did);
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location.to_location(did)).await,
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_get] Handle MerkleKeyCollection2021"),
+    match location.key_type {
+      KeyType::Ed25519 => retrieve_ed25519(&vault, location.to_location(did)).await,
     }
   }
 
   async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(did);
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
-        vault.delete(location.to_location(did), false).await?;
-
-        // TODO: Garbage Collection (?)
+    match location.key_type {
+      KeyType::Ed25519 => {
+        vault.delete(location.to_location(did), true).await?;
       }
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_del] Handle MerkleKeyCollection2021"),
     }
 
     Ok(())
@@ -144,19 +138,17 @@ impl Storage for Stronghold {
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vault: Vault<'_> = self.vault(did);
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location.to_location(did)).await,
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_sign] Handle MerkleKeyCollection2021"),
+    match location.key_type {
+      KeyType::Ed25519 => sign_ed25519(&vault, data, location.to_location(did)).await,
     }
   }
 
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
-    let vault: Vault<'_> = self.vault(did);
-
-    Ok(match location.method() {
-      MethodType::Ed25519VerificationKey2018 => vault.exists(location.to_location(did)).await,
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
-    }?)
+    self
+      .vault(did)
+      .exists(location.to_location(did))
+      .await
+      .map_err(Into::into)
   }
 
   async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
@@ -221,12 +213,7 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_ed25519(
-  vault: &Vault<'_>,
-  method_type: MethodType,
-  fragment: &str,
-  did: &IotaDID,
-) -> Result<KeyLocation> {
+async fn generate_ed25519(vault: &Vault<'_>, key_type: KeyType, fragment: &str, did: &IotaDID) -> Result<KeyLocation> {
   let random: Vec<u8> = random()?.to_vec();
   let did_string: String = did.to_string();
   let key_location: Location = Location::generic(format!("tmp_key:{}", did_string), random);
@@ -243,7 +230,7 @@ async fn generate_ed25519(
   let public_key: PublicKey = retrieve_ed25519(vault, key_location.clone()).await?;
 
   let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
-  let new_location = KeyLocation::new(method_type, fragment.to_owned(), method.key_data());
+  let new_location = KeyLocation::new(key_type, fragment.to_owned(), method.key_data());
 
   move_key(vault, key_location, new_location.to_location(did)).await?;
 

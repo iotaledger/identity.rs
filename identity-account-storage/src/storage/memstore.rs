@@ -13,7 +13,6 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
-use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
@@ -74,35 +73,28 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_generate(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation> {
+  async fn key_generate(&self, did: &IotaDID, fragment: &str, key_type: KeyType) -> Result<KeyLocation> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
-    match method_type {
-      MethodType::Ed25519VerificationKey2018 => {
-        let keypair: KeyPair = KeyPair::new_ed25519()?;
-        let public: PublicKey = keypair.public().clone();
+    let keypair: KeyPair = KeyPair::new(key_type)?;
+    let public: PublicKey = keypair.public().clone();
 
-        let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public, fragment)?;
+    let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public, fragment)?;
 
-        let location = KeyLocation::new(method_type, fragment.to_owned(), method.key_data());
+    let location = KeyLocation::new(key_type, fragment.to_owned(), method.key_data());
 
-        vault.insert(location.clone(), keypair);
+    vault.insert(location.clone(), keypair);
 
-        Ok(location)
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_new] Handle MerkleKeyCollection2021")
-      }
-    }
+    Ok(location)
   }
 
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
+    match location.key_type {
+      KeyType::Ed25519 => {
         let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
 
@@ -118,9 +110,6 @@ impl Storage for MemStore {
         vault.insert(location.clone(), keypair);
 
         Ok(())
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_insert] Handle MerkleKeyCollection2021")
       }
     }
   }
@@ -173,8 +162,8 @@ impl Storage for MemStore {
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
+    match location.key_type {
+      KeyType::Ed25519 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
         let public: PublicKey = keypair.public().clone();
@@ -182,9 +171,6 @@ impl Storage for MemStore {
         let signature: Signature = Signature::new(public, signature.to_vec());
 
         Ok(signature)
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")
       }
     }
   }

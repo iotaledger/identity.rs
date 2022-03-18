@@ -3,6 +3,7 @@
 
 use crypto::signatures::ed25519;
 use identity_account_storage::storage::Storage;
+use identity_account_storage::types::method_to_key_type;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
@@ -104,7 +105,8 @@ pub(crate) async fn create_identity(
   let private_key = keypair.private().to_owned();
   std::mem::drop(keypair);
 
-  insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
+  let key_type: KeyType = method_to_key_type(method_type);
+  insert_method_secret(store, &did, &location, key_type, MethodSecret::Ed25519(private_key)).await?;
 
   // store.key_move(&tmp_did, &tmp_location, &did, &location).await?;
 
@@ -162,7 +164,8 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let tmp_location: KeyLocation = KeyLocation::random(type_);
+        let key_type: KeyType = method_to_key_type(type_);
+        let tmp_location: KeyLocation = KeyLocation::random(key_type);
 
         // TODO: Done to ensure a leading `#`. Should be replaced eventually.
         let fragment: Fragment = Fragment::new(fragment);
@@ -173,9 +176,9 @@ impl Update {
         }
 
         if let Some(method_private_key) = method_secret {
-          insert_method_secret(storage, did, &tmp_location, type_, method_private_key).await?;
+          insert_method_secret(storage, did, &tmp_location, key_type, method_private_key).await?;
         } else {
-          storage.key_generate(did, fragment.name(), type_).await?;
+          storage.key_generate(did, fragment.name(), key_type).await?;
         };
 
         let public_key: PublicKey = storage.key_public(did, &tmp_location).await?;
@@ -306,7 +309,7 @@ async fn insert_method_secret(
   store: &dyn Storage,
   did: &IotaDID,
   location: &KeyLocation,
-  method_type: MethodType,
+  key_type: KeyType,
   method_secret: MethodSecret,
 ) -> Result<()> {
   match method_secret {
@@ -321,22 +324,13 @@ async fn insert_method_secret(
       );
 
       ensure!(
-        matches!(method_type, MethodType::Ed25519VerificationKey2018),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
-        )
+        matches!(key_type, KeyType::Ed25519),
+        UpdateError::InvalidMethodSecret("KeyType::Ed25519 can only be used with an ed25519 method secret".to_owned(),)
       );
 
       store.key_insert(did, location, private_key).await.map_err(Into::into)
     }
     MethodSecret::MerkleKeyCollection(_) => {
-      ensure!(
-        matches!(method_type, MethodType::MerkleKeyCollection2021),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
-        )
-      );
-
       todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
     }
   }

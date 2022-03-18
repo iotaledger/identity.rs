@@ -5,9 +5,9 @@ use core::fmt::Debug;
 
 use async_trait::async_trait;
 
+use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 
@@ -42,7 +42,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn flush_changes(&self) -> Result<()>;
 
   /// Creates a new keypair for the given `did` and returns its location.
-  async fn key_generate(&self, did: &IotaDID, fragment: &str, method_type: MethodType) -> Result<KeyLocation>;
+  async fn key_generate(&self, did: &IotaDID, fragment: &str, key_type: KeyType) -> Result<KeyLocation>;
 
   /// Inserts a private key at the specified `location`.
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;

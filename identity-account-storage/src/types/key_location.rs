@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
+use identity_core::crypto::KeyType;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 use identity_iota_core::document::IotaVerificationMethod;
@@ -18,26 +19,26 @@ use std::hash::Hasher;
 /// The storage location of a verification method key.
 #[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct KeyLocation {
-  pub method: MethodType,
+  pub key_type: KeyType,
   pub fragment: String,
   pub key_hash: u64,
 }
 
 impl KeyLocation {
-  pub fn new(method: MethodType, fragment: String, method_data: &MethodData) -> Self {
+  pub fn new(key_type: KeyType, fragment: String, method_data: &MethodData) -> Self {
     let mut hasher = SeaHasher::new();
     method_data.hash(&mut hasher);
     let key_hash = hasher.finish();
 
     Self {
-      method,
+      key_type,
       fragment,
       key_hash,
     }
   }
 
   /// Generates a random location for a key of the given [`MethodType`].
-  pub fn random(method: MethodType) -> Self {
+  pub fn random(key_type: KeyType) -> Self {
     let mut thread_rng: ThreadRng = rand::thread_rng();
     let fragment: String = (&mut thread_rng)
       .sample_iter(Alphanumeric)
@@ -47,20 +48,10 @@ impl KeyLocation {
     let key_hash: u64 = (&mut thread_rng).gen();
 
     Self {
-      method,
+      key_type,
       fragment,
       key_hash,
     }
-  }
-
-  /// Returns the method type of the key location.
-  pub fn method(&self) -> MethodType {
-    self.method
-  }
-
-  /// Returns the fragment name of the key location.
-  pub fn fragment(&self) -> &str {
-    &self.fragment
   }
 
   // TODO: Should probably be removed here and put into an extension trait for Stronghold?
@@ -72,12 +63,7 @@ impl KeyLocation {
 
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!(
-      "({}:{}:{})",
-      self.method.as_u32(),
-      self.fragment,
-      self.key_hash
-    ))
+    f.write_fmt(format_args!("({}:{})", self.fragment, self.key_hash))
   }
 }
 
@@ -100,6 +86,15 @@ impl IotaVerificationMethodExt for IotaVerificationMethod {
       .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
     let method_data: &MethodData = self.key_data();
 
-    Ok(KeyLocation::new(self.key_type(), fragment.to_owned(), method_data))
+    let key_type: KeyType = method_to_key_type(self.key_type());
+
+    Ok(KeyLocation::new(key_type, fragment.to_owned(), method_data))
+  }
+}
+
+pub fn method_to_key_type(method_type: MethodType) -> KeyType {
+  match method_type {
+    MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+    MethodType::MerkleKeyCollection2021 => todo!(),
   }
 }
