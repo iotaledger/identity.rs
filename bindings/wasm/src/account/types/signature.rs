@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::account_storage::Signature;
-use identity::core::decode_b58;
-use identity::core::encode_b58;
-use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
-use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -18,15 +14,14 @@ pub struct WasmSignature(pub(crate) Signature);
 impl WasmSignature {
   #[wasm_bindgen(constructor)]
   /// Creates a new `Signature`.
-  pub fn new(pkey: &str, data: Vec<u8>) -> Result<WasmSignature> {
-    let public_key: PublicKey = decode_b58(pkey).map_err(wasm_error)?.into();
-    Ok(WasmSignature(Signature::new(public_key, data)))
+  pub fn new(pkey: Vec<u8>, data: Vec<u8>) -> Result<WasmSignature> {
+    Ok(WasmSignature(Signature::new(pkey.into(), data)))
   }
 
   #[wasm_bindgen]
-  /// Returns a copy of the public key, encoded as a base58 string, used to verify this signature.
-  pub fn pkey(&self) -> String {
-    encode_b58(self.0.pkey())
+  /// Returns a copy of the public key used to verify this signature.
+  pub fn pkey(&self) -> Vec<u8> {
+    self.0.pkey().into()
   }
 
   #[wasm_bindgen]

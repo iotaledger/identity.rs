@@ -12,8 +12,6 @@ use identity::account_storage::KeyLocation;
 use identity::account_storage::Result as AccountStorageResult;
 use identity::account_storage::Signature;
 use identity::account_storage::Storage;
-use identity::core::decode_b58;
-use identity::core::encode_b58;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota_core::IotaDID;
@@ -31,7 +29,7 @@ use crate::error::JsValueResult;
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseUnit;
-  #[wasm_bindgen(typescript_type = "Promise<string>")]
+  #[wasm_bindgen(typescript_type = "Promise<UInt8Array>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
   pub type PromiseSignature;
@@ -58,7 +56,7 @@ extern "C" {
     this: &WasmStorage,
     did: WasmDID,
     location: WasmKeyLocation,
-    private_key: String,
+    private_key: Vec<u8>,
   ) -> PromisePublicKey;
   #[wasm_bindgen(method, js_name = keyGet)]
   pub fn key_get(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
@@ -106,12 +104,11 @@ impl Storage for WasmStorage {
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: String = result
+    let public_key: Vec<u8> = result
       .account_err()?
-      .as_string()
-      .ok_or_else(|| AccountStorageError::SerializationError("Expected string".to_string()))?;
-    let public_key: PublicKey = decode_b58(&public_key)?.into();
-    Ok(public_key)
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(public_key.into())
   }
 
   /// Inserts a private key at the specified `location`, and returns its `PublicKey`.
@@ -121,30 +118,25 @@ impl Storage for WasmStorage {
     location: &KeyLocation,
     private_key: PrivateKey,
   ) -> AccountStorageResult<PublicKey> {
-    let promise: Promise = Promise::resolve(&self.key_insert(
-      did.clone().into(),
-      location.clone().into(),
-      encode_b58(private_key.as_ref()),
-    ));
+    let promise: Promise =
+      Promise::resolve(&self.key_insert(did.clone().into(), location.clone().into(), (&private_key).into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: String = result
+    let public_key: Vec<u8> = result
       .account_err()?
-      .as_string()
-      .ok_or_else(|| AccountStorageError::SerializationError("Expected string".to_string()))?;
-    let public_key: PublicKey = decode_b58(&public_key)?.into();
-    Ok(public_key)
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(public_key.into())
   }
 
   /// Retrieves the public key at the specified `location`.
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_get(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: String = result
+    let public_key: Vec<u8> = result
       .account_err()?
-      .as_string()
-      .ok_or_else(|| AccountStorageError::SerializationError("Expected string".to_string()))?;
-    let public_key: PublicKey = decode_b58(&public_key)?.into();
-    Ok(public_key)
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(public_key.into())
   }
 
   /// Deletes the keypair specified by `location`.
@@ -233,18 +225,18 @@ interface Storage {
   flushChanges: () => Promise<void>;
 
   /** Creates a new keypair at the specified `location`,
-   * and returns its public key as a base58 string.*/
-  keyNew: (did: DID, keyLocation: KeyLocation) => Promise<string>;
+   * and returns its public key.*/
+  keyNew: (did: DID, keyLocation: KeyLocation) => Promise<UInt8Array>;
 
-  /** Inserts a private key, encoded as a base58 string, at the specified `location`,
-   * and returns its public key as a base58 string.*/
-  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: string) => Promise<string>;
+  /** Inserts a private key at the specified `location`,
+   * and returns its public key.*/
+  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: UInt8Array) => Promise<UInt8Array>;
 
   /** Returns `true` if a keypair exists at the specified `location`.*/
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
-  /** Retrieves the public key, encoded as a base58 string, from the specified `location`.*/
-  keyGet: (did: DID, keyLocation: KeyLocation) => Promise<string>;
+  /** Retrieves the public key from the specified `location`.*/
+  keyGet: (did: DID, keyLocation: KeyLocation) => Promise<UInt8Array>;
 
   /** Deletes the keypair specified by the given `location`. Nothing happens if the key is not found.*/
   keyDel: (did: DID, keyLocation: KeyLocation) => Promise<void>;

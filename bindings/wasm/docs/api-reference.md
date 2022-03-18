@@ -125,6 +125,8 @@ See <code>IVerifierOptions</code>.</p>
 <dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -150,8 +152,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -175,6 +175,8 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -192,10 +194,33 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -368,17 +393,6 @@ Deletes a verification method if the method exists.
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
 
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
-
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -390,30 +404,16 @@ Adds a new verification method to the DID document.
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
 
-<a name="Account+attachMethodRelationships"></a>
+<a name="Account+createService"></a>
 
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -938,7 +938,6 @@ Validate that the relationship between the `holder` and the credential subjects 
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
         * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
-        * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
         * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
@@ -1012,18 +1011,6 @@ Serializes a `DID` as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID.fromBase58"></a>
-
-### DID.fromBase58(key, network) ⇒ [<code>DID</code>](#DID)
-Creates a new `DID` from a base58-encoded public key.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
 <a name="DID.parse"></a>
 
 ### DID.parse(input) ⇒ [<code>DID</code>](#DID)
@@ -2144,14 +2131,14 @@ Deserializes a `Duration` from a JSON object.
 <a name="Ed25519.sign"></a>
 
 ### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
-Signs the given `message` with a base58 encoded `key`.
+Signs the `message` with the given `Key`.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
 
 | Param | Type |
 | --- | --- |
 | message | <code>Uint8Array</code> | 
-| key | <code>string</code> | 
+| key | <code>Uint8Array</code> | 
 
 <a name="Ed25519.verify"></a>
 
@@ -2162,7 +2149,7 @@ Signs the given `message` with a base58 encoded `key`.
 | --- | --- |
 | message | <code>Uint8Array</code> | 
 | signature | <code>Uint8Array</code> | 
-| key | <code>string</code> | 
+| key | <code>Uint8Array</code> | 
 
 <a name="Ed25519PrivateKey"></a>
 
@@ -2171,26 +2158,26 @@ Signs the given `message` with a base58 encoded `key`.
 
 * [Ed25519PrivateKey](#Ed25519PrivateKey)
     * _instance_
-        * [.publicKey()](#Ed25519PrivateKey+publicKey) ⇒ <code>string</code>
+        * [.publicKey()](#Ed25519PrivateKey+publicKey) ⇒ <code>Uint8Array</code>
     * _static_
         * [.fromBase58(private_key)](#Ed25519PrivateKey.fromBase58) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
 
 <a name="Ed25519PrivateKey+publicKey"></a>
 
-### ed25519PrivateKey.publicKey() ⇒ <code>string</code>
-Returns a base58 encoded string that represents the PublicKey.
+### ed25519PrivateKey.publicKey() ⇒ <code>Uint8Array</code>
+Returns the PublicKey as a `UInt8Array`.
 
 **Kind**: instance method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 <a name="Ed25519PrivateKey.fromBase58"></a>
 
 ### Ed25519PrivateKey.fromBase58(private_key) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
-Create a new `Ed25519PrivateKey` from a base58 encoded string.
+Create a new `Ed25519PrivateKey` from a 'UInt8Array'.
 
 **Kind**: static method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 
 | Param | Type |
 | --- | --- |
-| private_key | <code>string</code> | 
+| private_key | <code>Uint8Array</code> | 
 
 <a name="ExplorerUrl"></a>
 
@@ -2382,8 +2369,8 @@ Deserializes from a JSON object.
         * [.length](#KeyCollection+length) ⇒ <code>number</code>
         * [.isEmpty()](#KeyCollection+isEmpty) ⇒ <code>boolean</code>
         * [.keypair(index)](#KeyCollection+keypair) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
-        * [.public(index)](#KeyCollection+public) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.private(index)](#KeyCollection+private) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.public(index)](#KeyCollection+public) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
+        * [.private(index)](#KeyCollection+private) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
         * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
         * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
@@ -2427,8 +2414,8 @@ Returns the keypair at the specified `index`.
 
 <a name="KeyCollection+public"></a>
 
-### keyCollection.public(index) ⇒ <code>string</code> \| <code>undefined</code>
-Returns the public key at the specified `index` as a base58-encoded string.
+### keyCollection.public(index) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
+Returns the public key at the specified `index` as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 
@@ -2438,8 +2425,8 @@ Returns the public key at the specified `index` as a base58-encoded string.
 
 <a name="KeyCollection+private"></a>
 
-### keyCollection.private(index) ⇒ <code>string</code> \| <code>undefined</code>
-Returns the private key at the specified `index` as a base58-encoded string.
+### keyCollection.private(index) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
+Returns the private key at the specified `index` as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 
@@ -2565,12 +2552,11 @@ Deserializes a JSON object as `KeyLocation`.
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
         * [.type()](#KeyPair+type) ⇒ <code>number</code>
-        * [.public()](#KeyPair+public) ⇒ <code>string</code>
-        * [.private()](#KeyPair+private) ⇒ <code>string</code>
+        * [.public()](#KeyPair+public) ⇒ <code>Uint8Array</code>
+        * [.private()](#KeyPair+private) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
         * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
-        * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -2586,19 +2572,19 @@ Generates a new `KeyPair` object.
 <a name="KeyPair+type"></a>
 
 ### keyPair.type() ⇒ <code>number</code>
-Returns a copy of the private key as a base58-encoded string.
+Returns the `KeyType` of the `KeyPair` object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+public"></a>
 
-### keyPair.public() ⇒ <code>string</code>
-Returns a copy of the public key as a base58-encoded string.
+### keyPair.public() ⇒ <code>Uint8Array</code>
+Returns a copy of the public key as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+private"></a>
 
-### keyPair.private() ⇒ <code>string</code>
-Returns a copy of the private key as a base58-encoded string.
+### keyPair.private() ⇒ <code>Uint8Array</code>
+Returns a copy of the private key as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+toJSON"></a>
@@ -2613,19 +2599,6 @@ Serializes a `KeyPair` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair.fromBase58"></a>
-
-### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
-Parses a `KeyPair` object from base58-encoded public/private keys.
-
-**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
-
-| Param | Type |
-| --- | --- |
-| type_ | <code>number</code> | 
-| public_key | <code>string</code> | 
-| private_key | <code>string</code> | 
-
 <a name="KeyPair.fromJSON"></a>
 
 ### KeyPair.fromJSON(json) ⇒ [<code>KeyPair</code>](#KeyPair)
@@ -2733,13 +2706,13 @@ Serializes a `MethodSecret` as a JSON object.
 <a name="MethodSecret.ed25519Base58"></a>
 
 ### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from a Base58-BTC encoded Ed25519 private key.
+Creates a [MethodSecret](#MethodSecret) object from a `UInt8Array`.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
 | Param | Type |
 | --- | --- |
-| private_key | <code>string</code> | 
+| private_key | <code>Uint8Array</code> | 
 
 <a name="MethodSecret.merkleKeyCollection"></a>
 
@@ -3604,7 +3577,7 @@ Deserializes a `Service` object from a JSON object.
 * [Signature](#Signature)
     * [new Signature(pkey, data)](#new_Signature_new)
     * _instance_
-        * [.pkey()](#Signature+pkey) ⇒ <code>string</code>
+        * [.pkey()](#Signature+pkey) ⇒ <code>Uint8Array</code>
         * [.data()](#Signature+data) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
     * _static_
@@ -3618,13 +3591,13 @@ Creates a new `Signature`.
 
 | Param | Type |
 | --- | --- |
-| pkey | <code>string</code> | 
+| pkey | <code>Uint8Array</code> | 
 | data | <code>Uint8Array</code> | 
 
 <a name="Signature+pkey"></a>
 
-### signature.pkey() ⇒ <code>string</code>
-Returns a copy of the public key, encoded as a base58 string, used to verify this signature.
+### signature.pkey() ⇒ <code>Uint8Array</code>
+Returns a copy of the public key used to verify this signature.
 
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature+data"></a>
@@ -3793,15 +3766,14 @@ Deserializes a `Timestamp` from a JSON object.
 <a name="new_VerificationMethod_new"></a>
 
 ### new VerificationMethod(did, key_type, public_key, fragment)
-Creates a new `VerificationMethod` object from the given `did` and
-Base58-BTC encoded public key.
+Creates a new `VerificationMethod` object from the given `did` and public key.
 
 
 | Param | Type |
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
 | key_type | <code>number</code> | 
-| public_key | <code>string</code> | 
+| public_key | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
@@ -3942,6 +3914,10 @@ Deserializes a `VerifierOptions` from a JSON object.
 
 ## MethodRelationship
 **Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -3988,10 +3964,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 

@@ -419,13 +419,13 @@ impl WasmDocument {
     enum Args {
       MerkleKey {
         method: String,
-        public: String,
-        private: String,
+        public: Vec<u8>,
+        private: Vec<u8>,
         proof: String,
       },
       Default {
         method: String,
-        private: String,
+        private: Vec<u8>,
       },
     }
 
@@ -446,8 +446,8 @@ impl WasmDocument {
           .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
           .wasm_result()?;
 
-        let public: PublicKey = decode_b58(&public).map(Into::into).wasm_result()?;
-        let private: PrivateKey = decode_b58(&private).map(Into::into).wasm_result()?;
+        let public: PublicKey = public.into();
+        let private: PrivateKey = private.into();
 
         let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
         let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
@@ -468,7 +468,7 @@ impl WasmDocument {
         }
       }
       Args::Default { method, private } => {
-        let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
+        let private: PrivateKey = private.into();
 
         self
           .0

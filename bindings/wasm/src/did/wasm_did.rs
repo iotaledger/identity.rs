@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::decode_b58;
 use identity::did::DID;
 use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
@@ -22,23 +21,17 @@ impl WasmDID {
   /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
   pub fn new(key: &WasmKeyPair, network: Option<String>) -> Result<WasmDID> {
-    let public: &[u8] = key.0.public().as_ref();
-    Self::from_public_key(public, network)
-  }
-
-  /// Creates a new `DID` from a base58-encoded public key.
-  #[wasm_bindgen(js_name = fromBase58)]
-  pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID> {
-    let public: Vec<u8> = decode_b58(key).wasm_result()?;
-    Self::from_public_key(public.as_slice(), network)
+    let public_key: Vec<u8> = key.0.public().into();
+    Self::from_public_key(&public_key, network)
   }
 
   /// Creates a new `DID` from an arbitrary public key.
-  fn from_public_key(public: &[u8], network: Option<String>) -> Result<WasmDID> {
+  #[wasm_bindgen(js_name = fromPublicKey)]
+  pub fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
     let did = if let Some(network) = network {
-      IotaDID::new_with_network(public, network)
+      IotaDID::new_with_network(public_key, network)
     } else {
-      IotaDID::new(public)
+      IotaDID::new(public_key)
     };
     did.wasm_result().map(Self)
   }

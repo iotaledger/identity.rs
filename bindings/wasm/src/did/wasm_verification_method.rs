@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::decode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::PublicKey;
@@ -24,12 +23,15 @@ pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]
 impl WasmVerificationMethod {
-  /// Creates a new `VerificationMethod` object from the given `did` and
-  /// Base58-BTC encoded public key.
-  // TODO: refactor public/private keys to use UInt8Array instead?
+  /// Creates a new `VerificationMethod` object from the given `did` and public key.
   #[wasm_bindgen(constructor)]
-  pub fn new(did: &WasmDID, key_type: KeyType, public_key: String, fragment: String) -> Result<WasmVerificationMethod> {
-    let public_key: PublicKey = PublicKey::from(decode_b58(&public_key).wasm_result()?);
+  pub fn new(
+    did: &WasmDID,
+    key_type: KeyType,
+    public_key: Vec<u8>,
+    fragment: String,
+  ) -> Result<WasmVerificationMethod> {
+    let public_key: PublicKey = public_key.into();
     IotaVerificationMethod::new(did.0.clone(), key_type.into(), &public_key, &fragment)
       .map(Self)
       .map_err(wasm_error)
