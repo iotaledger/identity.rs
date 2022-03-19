@@ -30,10 +30,10 @@ export class Stronghold implements Storage {
         return this.napiStronghold.keyNew(napiDID, napiKeyLocation)
     }
 
-    public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string) {
+    public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) {
         let napiDID = NapiDID.fromJSON(did.toJSON());
         let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
-        return this.napiStronghold.keyInsert(napiDID, napiKeyLocation, privateKey)
+        return this.napiStronghold.keyInsert(napiDID, napiKeyLocation, Array.from(privateKey))
     }
 
     public async keyExists(did: DID, keyLocation: KeyLocation) {
