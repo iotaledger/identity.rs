@@ -16,7 +16,7 @@ pub struct WasmEd25519PrivateKey(pub(crate) ed25519::SecretKey);
 impl WasmEd25519PrivateKey {
   /// Create a new `Ed25519PrivateKey` from a 'UInt8Array'.
   #[wasm_bindgen(js_name = "fromBase58")]
-  pub fn from_base58(private_key: Vec<u8>) -> Result<WasmEd25519PrivateKey> {
+  pub fn from_key(private_key: Vec<u8>) -> Result<WasmEd25519PrivateKey> {
     let private_key: PrivateKey = private_key.into();
     let private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
       .map_err(|err| AccountStorageError::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))

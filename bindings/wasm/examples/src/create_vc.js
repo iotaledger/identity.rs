@@ -38,8 +38,8 @@ async function createVC(clientConfig) {
     // Sign the credential with the Issuer's newKey
     const signedVc = issuer.doc.signCredential(unsignedVc, {
         method: issuer.doc.id().toString() + "#newKey",
-        public: issuer.newKey.public(),
-        private: issuer.newKey.private(),
+        public: [issuer.newKey.public()],
+        private: [issuer.newKey.private()],
     }, SignatureOptions.default());
 
     // Before sending this credential to the holder the issuer wants to validate that some properties
