@@ -5,8 +5,6 @@ use identity::iota_core::IotaDocumentMetadata;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
-use crate::error::Result;
-use crate::error::WasmResult;
 
 // =============================================================================
 // =============================================================================
@@ -35,15 +33,6 @@ impl WasmDocumentMetadata {
   #[wasm_bindgen(getter = previousMessageId)]
   pub fn previous_message_id(&self) -> String {
     self.0.previous_message_id.to_string()
-  }
-
-  /// Returns a copy of the reference to the `proof`.
-  #[wasm_bindgen]
-  pub fn proof(&self) -> Result<JsValue> {
-    match &self.0.proof {
-      Some(proof) => JsValue::from_serde(proof).wasm_result(),
-      None => Ok(JsValue::NULL),
-    }
   }
 }
 
