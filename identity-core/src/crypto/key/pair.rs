@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::convert::TryInto;
@@ -15,6 +15,9 @@ use crate::utils::generate_ed25519_keypair;
 use crate::utils::keypair_from_ed25519_private_key;
 
 /// A convenient type for representing a pair of cryptographic keys.
+// TODO: refactor with exact types for each key type? E.g. Ed25519KeyPair, X25519KeyPair etc.
+//       Maybe a KeyPair trait with associated types? Might need typed key structs
+//       like Ed25519Public, X25519Private etc. to avoid exposing pre-1.0 dependency types.
 #[derive(Clone, Debug)]
 pub struct KeyPair {
   type_: KeyType,
@@ -32,6 +35,14 @@ impl KeyPair {
   pub fn new(type_: KeyType) -> Result<Self> {
     let (public, private): (PublicKey, PrivateKey) = match type_ {
       KeyType::Ed25519 => generate_ed25519_keypair()?,
+      KeyType::X25519 => {
+        let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
+        let public: ed25519::PublicKey = secret.public_key();
+
+        let private: PrivateKey = secret.to_bytes().to_vec().into();
+        let public: PublicKey = public.to_bytes().to_vec().into();
+        (public, private)
+      }
     };
 
     Ok(Self { type_, public, private })
@@ -39,8 +50,9 @@ impl KeyPair {
 
   /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
   ///
-  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
+  // TODO: either move to Ed25519KeyPair depending on refactor or generalise this.
   pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
     let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
       .try_into()
