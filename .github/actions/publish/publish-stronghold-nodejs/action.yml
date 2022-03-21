@@ -22,7 +22,7 @@ runs:
     - name: Install dependencies
       shell: sh
       working-directory: bindings/stronghold-nodejs
-      run: npm ci --ignore-scripts
+      run: npm ci --ignore-scripts --legacy-peer-deps
 
     - name: Download all artifacts
       uses: actions/download-artifact@v2
