@@ -73,8 +73,8 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
     let authentication: MethodRef<IotaDID> = MethodBuilder::default()
       .id(chain.id().to_url().join(&format!("#key-{}", i)).unwrap())
       .controller(chain.id().clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(keypair.public()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(keypair.public()))
       .build()
       .map(Into::into)
       .unwrap();

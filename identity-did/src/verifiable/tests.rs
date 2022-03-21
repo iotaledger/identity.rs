@@ -77,8 +77,8 @@ fn test_sign_verify_data_ed25519() {
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(method_data_base(public_key))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(method_data_base(public_key))
       .build()
       .unwrap();
 
@@ -114,8 +114,8 @@ fn test_sign_verify_data_merkle_key_ed25519_sha256() {
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(controller.to_url().join("#key-collection").unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::MerkleKeyCollection2021)
-      .key_data(method_data_base(mkey))
+      .type_(MethodType::MerkleKeyCollection2021)
+      .data(method_data_base(mkey))
       .build()
       .unwrap();
 
@@ -155,8 +155,8 @@ fn setup() -> (KeyPair, CoreDocument) {
   let method: VerificationMethod = VerificationMethod::builder(Default::default())
     .id(controller.to_url().join("#key-1").unwrap())
     .controller(controller.clone())
-    .key_type(MethodType::Ed25519VerificationKey2018)
-    .key_data(MethodData::new_multibase(public_key))
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .data(MethodData::new_multibase(public_key))
     .build()
     .unwrap();
 

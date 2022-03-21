@@ -81,13 +81,13 @@ impl WasmVerificationMethod {
   /// Returns a copy of the `VerificationMethod` type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> String {
-    self.0.key_type().as_str().into()
+    self.0.type_().as_str().into()
   }
 
   /// Returns a copy of the `VerificationMethod` public key data.
   #[wasm_bindgen]
   pub fn data(&self) -> WasmMethodData {
-    WasmMethodData::from(self.0.key_data().clone())
+    WasmMethodData::from(self.0.data().clone())
   }
 
   /// Serializes a `VerificationMethod` object as a JSON object.

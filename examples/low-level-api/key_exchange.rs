@@ -71,7 +71,7 @@ pub async fn run() -> Result<()> {
       .document
       .resolve_method_with_scope("kex-0", MethodScope::key_agreement())
       .unwrap();
-    let bob_public_key: Vec<u8> = bob_method.key_data().try_decode()?;
+    let bob_public_key: Vec<u8> = bob_method.data().try_decode()?;
 
     // Compute the shared secret.
     X25519::key_exchange(alice_x25519.private(), &bob_public_key)?
@@ -84,7 +84,7 @@ pub async fn run() -> Result<()> {
       .document
       .resolve_method_with_scope("kex-0", MethodScope::key_agreement())
       .unwrap();
-    let alice_public_key: Vec<u8> = alice_method.key_data().try_decode()?;
+    let alice_public_key: Vec<u8> = alice_method.data().try_decode()?;
 
     // Compute the shared secret.
     X25519::key_exchange(bob_x25519.private(), &alice_public_key)?

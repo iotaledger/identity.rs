@@ -178,8 +178,8 @@ mod tests {
     let method: VerificationMethod = MethodBuilder::default()
       .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(keypair.public()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(keypair.public()))
       .build()
       .unwrap();
 

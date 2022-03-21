@@ -40,11 +40,9 @@ where
   pub(crate) id: DIDUrl<D>,
   pub(crate) controller: D,
   #[serde(rename = "type")]
-  // TODO: rename methodType
-  pub(crate) key_type: MethodType,
+  pub(crate) type_: MethodType,
   #[serde(flatten)]
-  // TODO: rename methodData
-  pub(crate) key_data: MethodData,
+  pub(crate) data: MethodData,
   #[serde(flatten)]
   pub(crate) properties: T,
 }
@@ -87,8 +85,8 @@ where
     Ok(VerificationMethod {
       id,
       controller: builder.controller.ok_or(Error::InvalidMethod("missing controller"))?,
-      key_type: builder.key_type.ok_or(Error::InvalidMethod("missing key_type"))?,
-      key_data: builder.key_data.ok_or(Error::InvalidMethod("missing key_data"))?,
+      type_: builder.type_.ok_or(Error::InvalidMethod("missing type"))?,
+      data: builder.data.ok_or(Error::InvalidMethod("missing data"))?,
       properties: builder.properties,
     })
   }
@@ -125,27 +123,23 @@ where
   }
 
   /// Returns a reference to the verification `Method` type.
-  // TODO: rename methodType
-  pub fn key_type(&self) -> MethodType {
-    self.key_type
+  pub fn type_(&self) -> MethodType {
+    self.type_
   }
 
   /// Returns a mutable reference to the verification `Method` type.
-  // TODO: rename methodType
-  pub fn key_type_mut(&mut self) -> &mut MethodType {
-    &mut self.key_type
+  pub fn type_mut(&mut self) -> &mut MethodType {
+    &mut self.type_
   }
 
   /// Returns a reference to the verification `Method` data.
-  // TODO: rename methodData
-  pub fn key_data(&self) -> &MethodData {
-    &self.key_data
+  pub fn data(&self) -> &MethodData {
+    &self.data
   }
 
   /// Returns a mutable reference to the verification `Method` data.
-  // TODO: rename methodData
-  pub fn key_data_mut(&mut self) -> &mut MethodData {
-    &mut self.key_data
+  pub fn data_mut(&mut self) -> &mut MethodData {
+    &mut self.data
   }
 
   /// Returns a reference to the custom verification `Method` properties.
@@ -173,8 +167,8 @@ where
     VerificationMethod {
       id: self.id.map(&mut f),
       controller: f(self.controller),
-      key_type: self.key_type,
-      key_data: self.key_data,
+      type_: self.type_,
+      data: self.data,
       properties: self.properties,
     }
   }
@@ -188,8 +182,8 @@ where
     Ok(VerificationMethod {
       id: self.id.try_map(&mut f)?,
       controller: f(self.controller)?,
-      key_type: self.key_type,
-      key_data: self.key_data,
+      type_: self.type_,
+      data: self.data,
       properties: self.properties,
     })
   }
@@ -216,12 +210,12 @@ where
     let mut builder: MethodBuilder<D, T> = MethodBuilder::default().id(id).controller(did);
     match key_type {
       KeyType::Ed25519 => {
-        builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
-        builder = builder.key_data(MethodData::new_multibase(public_key));
+        builder = builder.type_(MethodType::Ed25519VerificationKey2018);
+        builder = builder.data(MethodData::new_multibase(public_key));
       }
       KeyType::X25519 => {
-        builder = builder.key_type(MethodType::X25519KeyAgreementKey2019);
-        builder = builder.key_data(MethodData::new_multibase(public_key));
+        builder = builder.type_(MethodType::X25519KeyAgreementKey2019);
+        builder = builder.data(MethodData::new_multibase(public_key));
       }
     }
     builder.build()
@@ -243,8 +237,8 @@ where
     MethodBuilder::default()
       .id(id)
       .controller(did)
-      .key_type(MethodType::MerkleKeyCollection2021)
-      .key_data(MethodData::new_multibase(&keys.encode_merkle_key::<M>()))
+      .type_(MethodType::MerkleKeyCollection2021)
+      .data(MethodData::new_multibase(&keys.encode_merkle_key::<M>()))
       .build()
       .map_err(Into::into)
   }
@@ -255,7 +249,7 @@ where
   ///
   /// - if this is called on a `VerificationMethod` with a type other than [`MethodType::MerkleKeyCollection2021`].
   pub fn revoke_merkle_key(&mut self, index: u32) -> Result<bool> {
-    let method_type: MethodType = self.key_type();
+    let method_type: MethodType = self.type_();
     if method_type != MethodType::MerkleKeyCollection2021 {
       return Err(Error::InvalidMethodRevocation(method_type));
     }

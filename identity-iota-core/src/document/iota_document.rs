@@ -153,7 +153,7 @@ impl IotaDocument {
   /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_self`].
   pub fn from_verification_method(method: IotaVerificationMethod) -> Result<Self> {
     // Ensure the verification method key type is allowed to sign document updates.
-    if !Self::is_signing_method_type(method.key_type()) {
+    if !Self::is_signing_method_type(method.type_()) {
       return Err(Error::InvalidDocumentSigningMethodType);
     }
 
@@ -343,7 +343,7 @@ impl IotaDocument {
       .resolve_method_with_scope(query, MethodScope::capability_invocation())
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
       .and_then(|method| {
-        if Self::is_signing_method_type(method.key_type()) {
+        if Self::is_signing_method_type(method.type_()) {
           Ok(method)
         } else {
           Err(Error::InvalidDocumentSigningMethodType)
@@ -422,7 +422,7 @@ impl IotaDocument {
     };
 
     // Sign document.
-    match method.key_type() {
+    match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
@@ -498,7 +498,7 @@ impl IotaDocument {
       .try_signature()
       .map_err(|err| Error::InvalidRootDocument(err.into()))?;
     let method: &IotaVerificationMethod = document.try_resolve_method(signature)?;
-    let public: PublicKey = method.key_data().try_decode()?.into();
+    let public: PublicKey = method.data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
       return Err(Error::InvalidRootDocument(
         "DID tag does not match any verification method",
@@ -614,7 +614,7 @@ impl IotaDocument {
       })
       .filter(|method| {
         if let Some(method) = method {
-          IotaDocument::is_signing_method_type(method.key_type())
+          IotaDocument::is_signing_method_type(method.type_())
         } else {
           true
         }
@@ -716,8 +716,8 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }
@@ -762,11 +762,11 @@ mod tests {
 
     assert_eq!(default_signing_method.id().to_string(), DID_METHOD_ID);
     assert_eq!(
-      document.default_signing_method().unwrap().key_type(),
+      document.default_signing_method().unwrap().type_(),
       MethodType::Ed25519VerificationKey2018
     );
     assert_eq!(
-      document.default_signing_method().unwrap().key_data(),
+      document.default_signing_method().unwrap().data(),
       &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
@@ -779,11 +779,11 @@ mod tests {
       DID_DEVNET_METHOD_ID
     );
     assert_eq!(
-      document.default_signing_method().unwrap().key_type(),
+      document.default_signing_method().unwrap().type_(),
       MethodType::Ed25519VerificationKey2018
     );
     assert_eq!(
-      document.default_signing_method().unwrap().key_data(),
+      document.default_signing_method().unwrap().data(),
       &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
@@ -874,8 +874,8 @@ mod tests {
     let expected = IotaVerificationMethod::builder(Default::default())
       .id(DID_METHOD_ID.parse().unwrap())
       .controller(valid_did())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyMultibase(
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyMultibase(
         "zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
       ))
       .build()
@@ -1440,7 +1440,7 @@ mod tests {
     let signing_method: IotaVerificationMethod = document.default_signing_method().unwrap().clone();
 
     // Ensure signing method has an appropriate type.
-    assert!(IotaDocument::is_signing_method_type(signing_method.key_type()));
+    assert!(IotaDocument::is_signing_method_type(signing_method.type_()));
 
     // Ensure signing method has a capability invocation relationship.
     let capability_invocation: &IotaVerificationMethod = document

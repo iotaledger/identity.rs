@@ -19,10 +19,8 @@ where
 {
   pub(crate) id: Option<DIDUrl<D>>,
   pub(crate) controller: Option<D>,
-  // TODO: rename methodType
-  pub(crate) key_type: Option<MethodType>,
-  // TODO: rename methodData
-  pub(crate) key_data: Option<MethodData>,
+  pub(crate) type_: Option<MethodType>,
+  pub(crate) data: Option<MethodData>,
   pub(crate) properties: T,
 }
 
@@ -35,8 +33,8 @@ where
     Self {
       id: None,
       controller: None,
-      key_type: None,
-      key_data: None,
+      type_: None,
+      data: None,
       properties,
     }
   }
@@ -56,18 +54,16 @@ where
   }
 
   /// Sets the `type` value of the generated verification `VerificationMethod`.
-  // TODO: rename methodType
   #[must_use]
-  pub fn key_type(mut self, value: MethodType) -> Self {
-    self.key_type = Some(value);
+  pub fn type_(mut self, value: MethodType) -> Self {
+    self.type_ = Some(value);
     self
   }
 
   /// Sets the `data` value of the generated `VerificationMethod`.
-  // TODO: rename methodData
   #[must_use]
-  pub fn key_data(mut self, value: MethodData) -> Self {
-    self.key_data = Some(value);
+  pub fn data(mut self, value: MethodData) -> Self {
+    self.data = Some(value);
     self
   }
 
@@ -86,8 +82,8 @@ where
     Self {
       id: None,
       controller: None,
-      key_type: None,
-      key_data: None,
+      type_: None,
+      data: None,
       properties: Default::default(),
     }
   }
@@ -105,8 +101,8 @@ mod tests {
       let result: Result<VerificationMethod> = MethodBuilder::default()
         .id("did:example:123#key".parse().unwrap())
         .controller("did:example:123".parse().unwrap())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(method_data_fn(""))
+        .type_(MethodType::Ed25519VerificationKey2018)
+        .data(method_data_fn(""))
         .build();
       assert!(result.is_ok());
     }
@@ -117,8 +113,8 @@ mod tests {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyMultibase("".into()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
@@ -127,28 +123,28 @@ mod tests {
   fn test_missing_id() {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .controller("did:example:123".parse().unwrap())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyMultibase("".into()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 
   #[test]
-  fn test_missing_key_type() {
+  fn test_missing_type() {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .key_data(MethodData::PublicKeyMultibase("".into()))
+      .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
 
   #[test]
-  fn test_missing_key_data() {
+  fn test_missing_data() {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .key_type(MethodType::Ed25519VerificationKey2018)
+      .type_(MethodType::Ed25519VerificationKey2018)
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }
@@ -157,8 +153,8 @@ mod tests {
   fn test_missing_controller() {
     let result: Result<VerificationMethod> = MethodBuilder::default()
       .id("did:example:123#key".parse().unwrap())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyMultibase("".into()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyMultibase("".into()))
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidMethod(_)));
   }

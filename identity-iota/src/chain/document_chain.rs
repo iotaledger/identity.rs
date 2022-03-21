@@ -220,8 +220,8 @@ mod test {
       let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
         .id(chain.id().to_url().join("#key-2").unwrap())
         .controller(chain.id().clone())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_multibase(keypair.public()))
+        .type_(MethodType::Ed25519VerificationKey2018)
+        .data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)
         .unwrap();
@@ -381,7 +381,7 @@ mod test {
       .unwrap()
     {
       MethodRef::Embed(method) => {
-        *method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
+        *method.data_mut() = MethodData::new_multibase([3u8; 32]);
       }
       MethodRef::Refer(_) => unreachable!(),
     };
@@ -440,7 +440,7 @@ mod test {
       .verification_method_mut()
       .head_mut()
       .unwrap();
-    *updated_method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
+    *updated_method.data_mut() = MethodData::new_multibase([3u8; 32]);
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 

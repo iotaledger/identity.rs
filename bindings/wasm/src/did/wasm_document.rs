@@ -443,7 +443,7 @@ impl WasmDocument {
         let merkle_key: Vec<u8> = self
           .0
           .try_resolve_method(&*method)
-          .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
+          .and_then(|method| method.data().try_decode().map_err(Error::InvalidDoc))
           .wasm_result()?;
 
         let public: PublicKey = decode_b58(&public).map(Into::into).wasm_result()?;
