@@ -40,28 +40,6 @@ jobs:
         fail-fast: false
         matrix:
           settings:
-            - host: macos-latest
-              target: x86_64-apple-darwin
-              architecture: x64
-              build: |
-                npm run build
-                strip -x dist/*.node
-              test: |
-                npm run test
-            - host: windows-latest
-              target: x86_64-pc-windows-msvc
-              architecture: x64
-              build: |
-                npm run build
-              test: |
-                npm run test
-            - host: ubuntu-latest
-              target: x86_64-unknown-linux-gnu
-              architecture: x64
-              build: |
-                npm run build && strip dist/*.node
-              test: |
-                npm run test
             - host: ubuntu-latest
               target: x86_64-unknown-linux-musl
               architecture: x64
@@ -73,14 +51,6 @@ jobs:
               test-docker: |
                 docker build -f .github/Dockerfile.alpine -t tester .
                 docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/identity-stronghold-nodejs.linux-x64-musl.node && npm run test"
-            - host: macos-latest
-              target: aarch64-apple-darwin
-              build: |
-                export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
-                npm run build && strip -x dist/*.node
-              # we can't test this properly because the macos-latest runners don't have apple silicon / aarch64
-              test: |
-                echo "let's hope for the best"
       name: stable - ${{ matrix.settings.target }} - node@16
       runs-on: ${{ matrix.settings.host }}
       steps:
