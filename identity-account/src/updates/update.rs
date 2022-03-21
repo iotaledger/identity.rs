@@ -71,6 +71,11 @@ pub(crate) async fn create_identity(
   // Generate a new DID from the public key
   let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
 
+  ensure!(
+    store.index_get(&did).await?.is_none(),
+    UpdateError::DocumentAlreadyExists
+  );
+
   let method: IotaVerificationMethod = IotaVerificationMethod::new(
     did.clone(),
     setup.key_type,
@@ -78,11 +83,6 @@ pub(crate) async fn create_identity(
     IotaDocument::DEFAULT_METHOD_FRAGMENT,
   )?;
   let location: KeyLocation = method.key_location()?;
-
-  ensure!(
-    !store.key_exists(account_id, &location).await?,
-    UpdateError::DocumentAlreadyExists
-  );
 
   store.key_move(account_id, &tmp_location, &location).await?;
 
@@ -149,7 +149,6 @@ impl Update {
         method_secret,
       } => {
         let key_type: KeyType = method_to_key_type(type_);
-        let tmp_location: KeyLocation = KeyLocation::random(key_type);
 
         // TODO: Done to ensure a leading `#`. Should be replaced eventually.
         let fragment: Fragment = Fragment::new(fragment);
@@ -159,10 +158,12 @@ impl Update {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
-        if let Some(method_private_key) = method_secret {
+        let tmp_location: KeyLocation = if let Some(method_private_key) = method_secret {
+          let tmp_location: KeyLocation = KeyLocation::random(key_type);
           insert_method_secret(storage, account_id, &tmp_location, key_type, method_private_key).await?;
+          tmp_location
         } else {
-          storage.key_generate(account_id, key_type).await?;
+          storage.key_generate(account_id, key_type).await?
         };
 
         let public_key: PublicKey = storage.key_public(account_id, &tmp_location).await?;
