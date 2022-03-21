@@ -101,8 +101,10 @@ impl Storage for Stronghold {
   async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(account_id);
 
+    log::debug!("generating key @ {location}");
+
     match location.key_type {
-      KeyType::Ed25519 => generate_ed25519(&vault, account_id, location).await?,
+      KeyType::Ed25519 => generate_ed25519(&vault, location).await?,
     }
 
     Ok(())
@@ -112,7 +114,9 @@ impl Storage for Stronghold {
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let vault = self.vault(account_id);
 
-    let stronghold_location: Location = location.to_location(account_id);
+    log::debug!("inserting key @ {location}");
+
+    let stronghold_location: Location = location.into();
 
     vault
       .insert(stronghold_location, private_key.as_ref(), default_hint(), &[])
@@ -123,14 +127,17 @@ impl Storage for Stronghold {
 
   async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(account_id);
-    move_key(&vault, source.to_location(account_id), target.to_location(account_id)).await
+
+    log::debug!("moving key from {source} to {target}");
+
+    move_key(&vault, source.into(), target.into()).await
   }
 
   async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => retrieve_ed25519(&vault, location.to_location(account_id)).await,
+      KeyType::Ed25519 => retrieve_ed25519(&vault, location.into()).await,
     }
   }
 
@@ -139,7 +146,7 @@ impl Storage for Stronghold {
 
     match location.key_type {
       KeyType::Ed25519 => {
-        vault.delete(location.to_location(account_id), true).await?;
+        vault.delete(location.into(), true).await?;
       }
     }
 
@@ -150,16 +157,12 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => sign_ed25519(&vault, data, location.to_location(account_id)).await,
+      KeyType::Ed25519 => sign_ed25519(&vault, data, location.into()).await,
     }
   }
 
   async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
-    self
-      .vault(account_id)
-      .exists(location.to_location(account_id))
-      .await
-      .map_err(Into::into)
+    self.vault(account_id).exists(location.into()).await.map_err(Into::into)
   }
 
   async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
@@ -265,8 +268,8 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_ed25519(vault: &Vault<'_>, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
-  let location: Location = location.to_location(account_id);
+async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<()> {
+  let location: Location = location.into();
 
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: procedures::KeyType::Ed25519,
@@ -330,9 +333,9 @@ fn fmt_account_id(account_id: &AccountId) -> String {
   format!("$identity:{}", account_id)
 }
 
-impl KeyLocation {
-  fn to_location(&self, account_id: &AccountId) -> Location {
-    let bytes: Vec<u8> = format!("{}:{}", self.fragment, self.key_hash).into_bytes();
-    Location::generic(account_id.to_string(), bytes)
+impl From<&KeyLocation> for Location {
+  fn from(key_location: &KeyLocation) -> Self {
+    let bytes: Vec<u8> = format!("{}:{}", key_location.fragment, key_location.key_hash).into_bytes();
+    Location::generic("$vault".as_bytes().to_vec(), bytes)
   }
 }

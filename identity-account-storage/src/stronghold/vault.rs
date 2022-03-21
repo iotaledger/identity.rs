@@ -79,10 +79,10 @@ impl Vault<'_> {
     Ok(())
   }
 
-  /// Returns true if the specified location exists.
+  /// Returns true if the specified vault record exists.
   pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    Ok(scope.vault_exists(location.vault_path()).await?)
+    Ok(scope.record_exists(location).await?)
   }
 
   /// Runs the Stronghold garbage collector.
