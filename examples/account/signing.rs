@@ -21,6 +21,7 @@ use identity::did::DID;
 use identity::iota::ExplorerUrl;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota_core::IotaDID;
+use identity::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -133,10 +133,14 @@ where
 
 #[cfg(test)]
 mod tests {
+  use serde_json::json;
+  use serde_json::Value;
+
   use identity_core::common::Object;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
@@ -145,8 +149,6 @@ mod tests {
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
-  use serde_json::json;
-  use serde_json::Value;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;

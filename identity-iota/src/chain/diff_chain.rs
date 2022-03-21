@@ -270,6 +270,7 @@ impl From<DiffChain> for Vec<DiffMessage> {
 mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_core::json;
   use identity_did::did::DID;
   use identity_did::service::Service;

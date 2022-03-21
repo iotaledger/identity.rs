@@ -5,6 +5,7 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
 use identity_core::json;
 use identity_credential::credential::Credential;
 use identity_credential::credential::CredentialBuilder;

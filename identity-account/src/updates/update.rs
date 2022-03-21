@@ -3,6 +3,9 @@
 
 use crypto::keys::x25519;
 use crypto::signatures::ed25519;
+use log::debug;
+use log::trace;
+
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::Generation;
@@ -33,8 +36,6 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaService;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::NetworkName;
-use log::debug;
-use log::trace;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -65,19 +66,22 @@ pub(crate) async fn create_identity(
 
   let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
 
-  let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
-    ensure!(
-      private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-      UpdateError::InvalidMethodSecret(format!(
-        "an ed25519 private key requires {} bytes, found {}",
-        ed25519::SECRET_KEY_LENGTH,
-        private_key.as_ref().len()
-      ))
-    );
-
-    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
-  } else {
-    KeyPair::new(KeyType::Ed25519)?
+  let keypair: KeyPair = match &setup.method_secret {
+    None => KeyPair::new(KeyType::Ed25519)?,
+    Some(MethodSecret::Ed25519(private_key)) => {
+      ensure!(
+        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodSecret(format!(
+          "an Ed25519 private key requires {} bytes, found {}",
+          ed25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+      KeyPair::try_from_private_key_bytes(private_key.as_ref(), KeyType::Ed25519)?
+    }
+    _ => {
+      return Err(UpdateError::InvalidMethodSecret("expected None or Ed25519 private key".to_owned()).into());
+    }
   };
 
   // Generate a new DID from the public key

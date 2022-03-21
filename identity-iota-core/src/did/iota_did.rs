@@ -344,6 +344,7 @@ impl KeyComparable for IotaDID {
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
 

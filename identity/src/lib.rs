@@ -132,6 +132,7 @@ pub mod prelude {
   //! Prelude of commonly used types
 
   pub use identity_core::crypto::KeyPair;
+  pub use identity_core::crypto::KeyType;
   pub use identity_iota::tangle::Client;
   pub use identity_iota::Result;
   pub use identity_iota_core::document::IotaDocument;

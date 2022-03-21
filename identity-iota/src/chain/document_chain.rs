@@ -158,6 +158,7 @@ impl Display for DocumentChain {
 mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::SignatureOptions;
   use identity_core::crypto::TrySignature;

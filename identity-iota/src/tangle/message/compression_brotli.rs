@@ -30,6 +30,7 @@ pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Ve
 mod test {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_iota_core::document::IotaDocument;
 
   use super::*;

@@ -282,7 +282,7 @@ rusty_fork_test! {
       let password: EncryptionKey = derive_encryption_key("my-password:test_vault_persistence");
       let filename: PathBuf = generate_filename();
 
-      let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let keypair = KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
 
       {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;

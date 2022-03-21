@@ -13,7 +13,6 @@ use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypair;
-use crate::utils::keypair_from_ed25519_private_key;
 
 /// A convenient type for representing a pair of cryptographic keys.
 // TODO: refactor with exact types for each key type? E.g. Ed25519KeyPair, X25519KeyPair etc.
@@ -44,23 +43,39 @@ impl KeyPair {
     Ok(Self { type_, public, private })
   }
 
-  /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
+  /// Reconstructs a [`KeyPair`] from the bytes of a private key.
   ///
-  /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// The private key for [`Ed25519`][`KeyType::Ed25519`] must be a 32-byte seed in compliance
+  /// with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-  // TODO: either move to Ed25519KeyPair depending on refactor or generalise this to X25519.
-  // TODO: allow converting Ed25519 to X25519.
-  pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
-    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
-      .try_into()
-      .map_err(|_| crypto::Error::PrivateKeyError)?;
+  pub fn try_from_private_key_bytes(private_key_bytes: &[u8], key_type: KeyType) -> Result<Self, crypto::Error> {
+    let (public, private) = match key_type {
+      KeyType::Ed25519 => {
+        let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
+          .try_into()
+          .map_err(|_| crypto::Error::PrivateKeyError)?; // TODO: improve error message
+        let private_key: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
+        let public_key: ed25519::PublicKey = private_key.public_key();
 
-    let private_key = ed25519::SecretKey::from_bytes(private_key_bytes);
+        let private: PrivateKey = private_key.to_bytes().to_vec().into();
+        let public: PublicKey = public_key.to_bytes().to_vec().into();
+        (public, private)
+      }
+      KeyType::X25519 => {
+        let private_key_bytes: [u8; x25519::SECRET_KEY_LENGTH] = private_key_bytes
+          .try_into()
+          .map_err(|_| crypto::Error::PrivateKeyError)?; // TODO: improve error message
+        let private_key: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
+        let public_key: x25519::PublicKey = private_key.public_key();
 
-    let (public, private) = keypair_from_ed25519_private_key(private_key);
+        let private: PrivateKey = private_key.to_bytes().to_vec().into();
+        let public: PublicKey = public_key.to_bytes().to_vec().into();
+        (public, private)
+      }
+    };
 
     Ok(Self {
-      type_: KeyType::Ed25519,
+      type_: key_type,
       public,
       private,
     })
@@ -134,5 +149,15 @@ mod tests {
     assert_eq!(keypair.type_(), KeyType::X25519);
     assert_eq!(keypair.public().as_ref().len(), 32);
     assert_eq!(keypair.private().as_ref().len(), 32);
+  }
+
+  #[test]
+  fn test_try_from_private_key_bytes() {
+    for key_type in [KeyType::Ed25519, KeyType::X25519] {
+      let keypair: KeyPair = KeyPair::new(key_type).unwrap();
+      let reconstructed: KeyPair = KeyPair::try_from_private_key_bytes(keypair.private.as_ref(), key_type).unwrap();
+      assert_eq!(keypair.private.as_ref(), reconstructed.private.as_ref());
+      assert_eq!(keypair.public.as_ref(), reconstructed.public.as_ref());
+    }
   }
 }

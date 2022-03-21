@@ -22,6 +22,7 @@ use identity::iota_core::DiffMessage;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::IotaService;
 use identity::iota_core::IotaVerificationMethod;
+use identity::prelude::*;
 
 mod create_did;
 

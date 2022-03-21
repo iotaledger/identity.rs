@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Timestamp;
@@ -9,6 +9,7 @@ use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::PublicKey;
@@ -213,7 +214,7 @@ fn test_sign_verify_method_type() {
   assert!(document
     .verify_data(
       &data,
-      &VerifierOptions::default().method_type(vec![MethodType::MerkleKeyCollection2021])
+      &VerifierOptions::default().method_type(vec![MethodType::MerkleKeyCollection2021]),
     )
     .is_err());
 }
@@ -247,7 +248,7 @@ fn test_sign_verify_method_scope() {
     assert!(document
       .verify_data(
         &data,
-        &VerifierOptions::default().method_scope(MethodScope::VerificationRelationship(relationship))
+        &VerifierOptions::default().method_scope(MethodScope::VerificationRelationship(relationship)),
       )
       .is_err());
   }
@@ -353,7 +354,7 @@ fn test_sign_verify_purpose() {
   assert!(document
     .verify_data(
       &data,
-      &VerifierOptions::default().purpose(ProofPurpose::AssertionMethod)
+      &VerifierOptions::default().purpose(ProofPurpose::AssertionMethod),
     )
     .is_err());
 
@@ -372,7 +373,7 @@ fn test_sign_verify_purpose() {
       &data,
       &VerifierOptions::default()
         .method_scope(MethodScope::authentication())
-        .purpose(ProofPurpose::AssertionMethod)
+        .purpose(ProofPurpose::AssertionMethod),
     )
     .is_err());
 }

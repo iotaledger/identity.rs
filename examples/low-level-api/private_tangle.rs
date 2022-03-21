@@ -9,6 +9,7 @@
 //!
 //! cargo run --example private_tangle
 
+use identity::crypto::KeyType;
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
 use identity::iota::ExplorerUrl;

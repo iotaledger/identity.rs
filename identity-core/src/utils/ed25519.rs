@@ -22,17 +22,6 @@ pub fn generate_ed25519_keypair() -> Result<(PublicKey, PrivateKey)> {
   Ok((public, private))
 }
 
-// Reconstructs a pair of public/private Ed25519 keys from an ed25519::SecretKey.
-// TODO: move or remove
-pub(crate) fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) -> (PublicKey, PrivateKey) {
-  let public: ed25519::PublicKey = private_key.public_key();
-
-  let private: PrivateKey = private_key.to_bytes().to_vec().into();
-  let public: PublicKey = public.to_bytes().to_vec().into();
-
-  (public, private)
-}
-
 /// Generates a list of public/private Ed25519 keys.
 ///
 /// See [`generate_ed25519_keypair`].

@@ -114,6 +114,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
 
   // Characterization test: We need to be informed if it becomes impossible to deserialize a serialized `IotaDocument`
   // into a `ResolvedIotaDocument` as the Wasm bindings currently depend on this fact.
@@ -121,7 +122,7 @@ mod tests {
   fn can_deserialize_from_iota_document() {
     let private_key: &[u8] = &[0; 32];
 
-    let keypair: KeyPair = KeyPair::try_from_ed25519_bytes(private_key).unwrap();
+    let keypair: KeyPair = KeyPair::try_from_private_key_bytes(private_key, KeyType::Ed25519).unwrap();
 
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     let deserialization: Result<ResolvedIotaDocument, identity_core::Error> =
