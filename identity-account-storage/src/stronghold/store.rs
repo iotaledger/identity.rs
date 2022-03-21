@@ -47,33 +47,33 @@ impl Store<'_> {
   }
 
   /// Gets a record.
-  pub async fn get(&self, location: Location) -> IotaStrongholdResult<Option<Vec<u8>>> {
+  pub async fn get(&self, key: impl Into<Vec<u8>>) -> IotaStrongholdResult<Option<Vec<u8>>> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    Ok(scope.read_from_store(location.vault_path().to_vec()).await?)
+    Ok(scope.read_from_store(key.into()).await?)
   }
 
   /// Adds a record.
-  pub async fn set<T>(&self, location: Location, payload: T, ttl: Option<Duration>) -> IotaStrongholdResult<()>
+  pub async fn set<T>(&self, key: impl Into<Vec<u8>>, payload: T, ttl: Option<Duration>) -> IotaStrongholdResult<()>
   where
     T: Into<Vec<u8>>,
   {
-    let location = location.vault_path().to_vec();
     Context::scope(self.path, &self.name, &self.flags)
       .await?
-      .write_to_store(location, payload.into(), ttl)
+      .write_to_store(key.into(), payload.into(), ttl)
       .await?;
     Ok(())
   }
 
   /// Removes a record.
-  pub async fn del(&self, location: Location) -> IotaStrongholdResult<()> {
+  pub async fn del(&self, key: impl Into<Vec<u8>>) -> IotaStrongholdResult<()> {
     Context::scope(self.path, &self.name, &self.flags)
       .await?
-      .delete_from_store(location.vault_path().to_vec())
+      .delete_from_store(key.into())
       .await?;
     Ok(())
   }
 
+  // TODO: This function is implemented incorrectly, remove, probably.
   /// Returns true if the specified location exists.
   pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
     let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;

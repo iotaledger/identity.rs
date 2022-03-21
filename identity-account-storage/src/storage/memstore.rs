@@ -30,17 +30,21 @@ use crate::types::Signature;
 use crate::utils::EncryptionKey;
 use crate::utils::Shared;
 
+use super::AccountId;
+
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
 type ChainStates = HashMap<IotaDID, ChainState>;
 type States = HashMap<IotaDID, IotaDocument>;
 type Vaults = HashMap<IotaDID, MemVault>;
+type Index = HashMap<IotaDID, AccountId>;
 
 pub struct MemStore {
   expand: bool,
   chain_states: Shared<ChainStates>,
   documents: Shared<States>,
   vaults: Shared<Vaults>,
+  index: Shared<Index>,
 }
 
 impl MemStore {
@@ -50,6 +54,7 @@ impl MemStore {
       chain_states: Shared::new(HashMap::new()),
       documents: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
+      index: Shared::new(HashMap::new()),
     }
   }
 
@@ -201,6 +206,20 @@ impl Storage for MemStore {
     let _ = self.chain_states.write()?.remove(did);
 
     Ok(())
+  }
+
+  async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {
+    let mut index = self.index.write()?;
+
+    index.insert(did, account_id);
+
+    Ok(())
+  }
+
+  async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>> {
+    let index = self.index.read()?;
+
+    Ok(index.get(did).cloned())
   }
 }
 

@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -17,6 +18,9 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use iota_stronghold::procedures;
 use iota_stronghold::Location;
+use tokio::sync::RwLock;
+use tokio::sync::RwLockReadGuard;
+use tokio::sync::RwLockWriteGuard;
 
 use crate::error::Result;
 use crate::identity::ChainState;
@@ -31,9 +35,17 @@ use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
 
+use super::AccountId;
+use super::StoreKey;
+
+// The name of the stronghold client used for indexing, which is global for a storage instance.
+static INDEX_CLIENT_PATH: &str = "$index";
+
 #[derive(Debug)]
 pub struct Stronghold {
   snapshot: Arc<Snapshot>,
+  // Used to prevent race conditions when updating the index concurrently.
+  index_lock: RwLock<()>,
   dropsave: bool,
 }
 
@@ -51,6 +63,7 @@ impl Stronghold {
 
     Ok(Self {
       snapshot: Arc::new(snapshot),
+      index_lock: RwLock::new(()),
       dropsave: dropsave.unwrap_or(true),
     })
   }
@@ -203,6 +216,47 @@ impl Storage for Stronghold {
     // TODO: Will be re-implemented later with the key location refactor
     todo!("stronghold purge not implemented");
   }
+
+  async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {
+    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
+
+    let store: Store<'_> = self.store(INDEX_CLIENT_PATH);
+
+    let mut index: HashMap<IotaDID, AccountId> = match store.get(INDEX_CLIENT_PATH).await? {
+      Some(index_vec) => HashMap::<IotaDID, AccountId>::from_json_slice(&index_vec)?,
+      None => HashMap::new(),
+    };
+
+    index.insert(did, account_id);
+
+    let index_vec: Vec<u8> = index.to_json_vec()?;
+
+    store.set(INDEX_CLIENT_PATH, index_vec, None).await?;
+
+    std::mem::drop(index_lock);
+
+    Ok(())
+  }
+
+  async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>> {
+    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
+
+    let store: Store<'_> = self.store(INDEX_CLIENT_PATH);
+
+    let lookup: Option<AccountId> = match store.get(INDEX_CLIENT_PATH).await? {
+      Some(index_vec) => {
+        let index: HashMap<IotaDID, AccountId> = HashMap::from_json_slice(&index_vec)?;
+        index.get(did).cloned()
+      }
+      None => None,
+    };
+
+    // Explicitly drop the lock so it's not considered unused,
+    // and possibly optimized away.
+    std::mem::drop(index_lock);
+
+    Ok(lookup)
+  }
 }
 
 impl Drop for Stronghold {
@@ -276,12 +330,12 @@ async fn move_key(vault: &Vault<'_>, from: Location, to: Location) -> Result<()>
   Ok(())
 }
 
-fn location_chain_state() -> Location {
-  Location::generic("$chain_state", Vec::new())
+fn location_chain_state() -> StoreKey {
+  "$chain_state".to_owned()
 }
 
-fn location_document() -> Location {
-  Location::generic("$document", Vec::new())
+fn location_document() -> StoreKey {
+  "$document".to_owned()
 }
 
 fn random() -> IotaStrongholdResult<[u8; 64]> {

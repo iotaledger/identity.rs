@@ -10,12 +10,16 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
+use uuid::Uuid;
 
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
+
+pub type StoreKey = String;
+pub type AccountId = Uuid;
 
 #[cfg(not(feature = "send-sync-storage"))]
 mod storage_sub_trait {
@@ -78,4 +82,13 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Removes the keys and any state for the identity specified by `did`.
   async fn purge(&self, did: &IotaDID) -> Result<()>;
+
+  /// Adds the did -> account_id mapping to the index.
+  ///
+  /// Note that his operation needs to be synchronized globally for a given storage instance,
+  /// in order to prevent race conditions when inserting index entries concurrently.
+  async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()>;
+
+  // Looks up the [`AccountId`] of the given `did`.
+  async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>>;
 }
