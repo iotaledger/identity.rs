@@ -54,7 +54,9 @@ async fn account_setup(network: Network) -> AccountSetup {
 
 #[tokio::test]
 async fn test_create_identity() -> Result<()> {
-  let account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+  let account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default())
+    .await
+    .unwrap();
 
   let document: &IotaDocument = account.document();
 
@@ -64,7 +66,7 @@ async fn test_create_identity() -> Result<()> {
   assert_eq!(document.core_document().verification_relationships().count(), 1);
   assert_eq!(document.core_document().methods().count(), 1);
 
-  let location = method.key_location().unwrap();
+  let location: KeyLocation = method.key_location().unwrap();
 
   // Ensure we can retrieve the correct location for the key.
   assert_eq!(
@@ -73,7 +75,11 @@ async fn test_create_identity() -> Result<()> {
   );
 
   // Ensure the key exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+  assert!(account
+    .storage()
+    .key_exists(account.account_id, &location)
+    .await
+    .unwrap());
 
   // Enure the state was written to storage.
   assert!(account.load_document().await.is_ok());
@@ -81,6 +87,12 @@ async fn test_create_identity() -> Result<()> {
   // Ensure timestamps were recently set.
   assert!(document.metadata.created > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
   assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+
+  // Ensure the DID was added to the index.
+  assert_eq!(
+    account.storage().index_get(account.did()).await.unwrap().unwrap(),
+    account.account_id
+  );
 
   Ok(())
 }
@@ -131,9 +143,13 @@ async fn test_create_identity_already_exists() -> Result<()> {
   let account = Account::create_identity(account_setup.clone(), identity_create.clone())
     .await
     .unwrap();
-  let did: IotaDID = account.did().to_owned();
 
-  let initial_state = account_setup.storage.document(&did).await.unwrap().unwrap();
+  let initial_state = account_setup
+    .storage
+    .document(account.account_id)
+    .await
+    .unwrap()
+    .unwrap();
 
   let output = Account::create_identity(account_setup.clone(), identity_create).await;
 
@@ -143,7 +159,10 @@ async fn test_create_identity_already_exists() -> Result<()> {
   ));
 
   // Ensure nothing was overwritten in storage
-  assert_eq!(initial_state, account_setup.storage.document(&did).await?.unwrap());
+  assert_eq!(
+    initial_state,
+    account_setup.storage.document(account.account_id).await?.unwrap()
+  );
 
   Ok(())
 }
@@ -167,8 +186,12 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_method() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+async fn test_create_method_1() -> Result<()> {
+  pretty_env_logger::init();
+
+  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default())
+    .await
+    .unwrap();
 
   let initial_document: IotaDocument = account.document().to_owned();
   let method_type = MethodType::Ed25519VerificationKey2018;
@@ -181,7 +204,7 @@ async fn test_create_method() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update).await?;
+  account.process_update(update).await.unwrap();
 
   let document: &IotaDocument = account.document();
 
@@ -203,7 +226,11 @@ async fn test_create_method() -> Result<()> {
   );
 
   // Ensure the key exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+  assert!(account
+    .storage()
+    .key_exists(account.account_id, &location)
+    .await
+    .unwrap());
 
   // Ensure `created` wasn't updated.
   assert_eq!(initial_document.metadata.created, document.metadata.created);
@@ -331,7 +358,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
   let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
   let location = method.key_location().unwrap();
-  let public_key = account.storage().key_public(account.did(), &location).await?;
+  let public_key = account.storage().key_public(account.account_id, &location).await?;
 
   assert_eq!(public_key.as_ref(), keypair.public().as_ref());
 
@@ -598,7 +625,11 @@ async fn test_delete_method() -> Result<()> {
   assert_eq!(document.core_document().methods().count(), 1);
 
   // Ensure the key still exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+  assert!(account
+    .storage()
+    .key_exists(account.account_id, &location)
+    .await
+    .unwrap());
 
   // Ensure `created` wasn't updated.
   assert_eq!(initial_document.metadata.created, document.metadata.created);

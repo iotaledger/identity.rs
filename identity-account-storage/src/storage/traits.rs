@@ -45,43 +45,44 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
 
-  /// Creates a new keypair for the given `did` and returns its location.
-  async fn key_generate(&self, did: &IotaDID, fragment: &str, key_type: KeyType) -> Result<KeyLocation>;
+  /// Creates a new keypair for the given `account_id` and returns its location.
+  /// The location of the keypair can be randomly generated.
+  async fn key_generate(&self, account_id: AccountId, key_type: KeyType) -> Result<KeyLocation>;
 
   /// Inserts a private key at the specified `location`.
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
+  async fn key_insert(&self, account_id: AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
 
   /// Moves a key from one did-location pair to another.
   ///
   /// The key at the source location will be removed. If a key at the target exists, it will be overwritten.
-  async fn key_move(&self, did: &IotaDID, source: &KeyLocation, target: &KeyLocation) -> Result<()>;
+  async fn key_move(&self, account_id: AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()>;
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_public(&self, account_id: AccountId, location: &KeyLocation) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()>;
+  async fn key_del(&self, account_id: AccountId, location: &KeyLocation) -> Result<()>;
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
+  async fn key_sign(&self, account_id: AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
 
   /// Returns `true` if a keypair exists at the specified `location`.
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
+  async fn key_exists(&self, account_id: AccountId, location: &KeyLocation) -> Result<bool>;
 
   /// Returns the chain state of the identity specified by `did`.
-  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>>;
+  async fn chain_state(&self, account_id: AccountId) -> Result<Option<ChainState>>;
 
   /// Set the chain state of the identity specified by `did`.
-  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
+  async fn set_chain_state(&self, account_id: AccountId, chain_state: &ChainState) -> Result<()>;
 
   /// Returns the [`IotaDocument`] of the identity specified by `did`.
-  async fn document(&self, did: &IotaDID) -> Result<Option<IotaDocument>>;
+  async fn document(&self, account_id: AccountId) -> Result<Option<IotaDocument>>;
 
   /// Sets a new state for the identity specified by `did`.
-  async fn set_document(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
+  async fn set_document(&self, account_id: AccountId, state: &IotaDocument) -> Result<()>;
 
   /// Removes the keys and any state for the identity specified by `did`.
-  async fn purge(&self, did: &IotaDID) -> Result<()>;
+  async fn purge(&self, account_id: AccountId) -> Result<()>;
 
   /// Adds the did -> account_id mapping to the index.
   ///

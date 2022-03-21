@@ -15,13 +15,13 @@ use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
-use identity_iota_core::did::IotaDID;
 
 use identity_core::common::Fragment;
 use identity_did::did::DID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
 
+use crate::storage::AccountId;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 
@@ -66,15 +66,19 @@ impl RemoteEd25519 {
 /// A reference to a storage instance and identity key location.
 #[derive(Debug)]
 pub struct RemoteKey<'a> {
-  did: &'a IotaDID,
+  account_id: &'a AccountId,
   location: &'a KeyLocation,
   store: &'a dyn Storage,
 }
 
 impl<'a> RemoteKey<'a> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
-    Self { did, location, store }
+  pub fn new(account_id: &'a AccountId, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
+    Self {
+      account_id,
+      location,
+      store,
+    }
   }
 }
 
@@ -94,7 +98,7 @@ impl<'a> RemoteSign<'a> {
   pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<Vec<u8>> {
     key
       .store
-      .key_sign(key.did, key.location, message.to_vec())
+      .key_sign(*key.account_id, key.location, message.to_vec())
       .await
       .map_err(|_| Error::InvalidProofValue("remote sign"))
       .map(|signature| signature.data)
@@ -103,7 +107,7 @@ impl<'a> RemoteSign<'a> {
 
 pub async fn remote_sign_data<D>(
   doc: &IotaDocument,
-  did: &IotaDID,
+  account_id: &AccountId,
   store: &dyn Storage,
   location: &KeyLocation,
   data: &mut D,
@@ -113,7 +117,7 @@ where
   D: Serialize + SetSignature,
 {
   // Create a private key suitable for identity_core::crypto
-  let private: RemoteKey<'_> = RemoteKey::new(did, location, store);
+  let private: RemoteKey<'_> = RemoteKey::new(account_id, location, store);
 
   // Create the Verification Method identifier
   let fragment: Fragment = Fragment::new(location.fragment.clone());

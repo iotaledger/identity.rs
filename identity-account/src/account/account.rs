@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use identity_account_storage::crypto::remote_sign_data;
 use identity_account_storage::identity::ChainState;
+use identity_account_storage::storage::AccountId;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
@@ -49,6 +50,7 @@ pub struct Account<C = Arc<Client>>
 where
   C: SharedPtr<Client>,
 {
+  pub(crate) account_id: AccountId,
   config: AccountConfig,
   storage: Arc<dyn Storage>,
   client: C,
@@ -71,8 +73,14 @@ where
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup<C>, chain_state: ChainState, document: IotaDocument) -> Result<Self> {
+  async fn with_setup(
+    setup: AccountSetup<C>,
+    account_id: AccountId,
+    chain_state: ChainState,
+    document: IotaDocument,
+  ) -> Result<Self> {
     Ok(Self {
+      account_id,
       config: setup.config,
       storage: setup.storage,
       client: setup.client,
@@ -89,14 +97,14 @@ where
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(account_setup: AccountSetup<C>, identity_setup: IdentitySetup) -> Result<Self> {
-    let document: IotaDocument = create_identity(
+    let (account_id, document): (AccountId, IotaDocument) = create_identity(
       identity_setup,
       account_setup.client.deref().network().name(),
       account_setup.storage.deref(),
     )
     .await?;
 
-    let mut account = Self::with_setup(account_setup, ChainState::new(), document).await?;
+    let mut account = Self::with_setup(account_setup, account_id, ChainState::new(), document).await?;
 
     account.store_state().await?;
 
@@ -121,11 +129,21 @@ where
       ))));
     }
 
-    // Ensure the did exists in storage
-    let document: IotaDocument = setup.storage.document(&did).await?.ok_or(Error::IdentityNotFound)?;
-    let chain_state = setup.storage.chain_state(&did).await?.ok_or(Error::IdentityNotFound)?;
+    let account_id: AccountId = setup.storage.index_get(&did).await?.ok_or(Error::IdentityNotFound)?;
 
-    Self::with_setup(setup, chain_state, document).await
+    // Ensure the did exists in storage
+    let document: IotaDocument = setup
+      .storage
+      .document(account_id)
+      .await?
+      .ok_or(Error::IdentityNotFound)?;
+    let chain_state = setup
+      .storage
+      .chain_state(account_id)
+      .await?
+      .ok_or(Error::IdentityNotFound)?;
+
+    Self::with_setup(setup, account_id, chain_state, document).await
   }
 
   // ===========================================================================
@@ -223,7 +241,7 @@ where
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().deref().purge(self.did()).await?;
+    self.storage().deref().purge(self.account_id).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -245,7 +263,7 @@ where
 
     remote_sign_data(
       self.document(),
-      self.did(),
+      &self.account_id,
       self.storage().deref(),
       &location,
       data,
@@ -316,14 +334,16 @@ where
     self
       .storage()
       .deref()
-      .document(self.did())
+      .document(self.account_id)
       .await?
       .ok_or(Error::IdentityNotFound)
   }
 
   pub(crate) async fn process_update(&mut self, update: Update) -> Result<()> {
     let did = self.did().to_owned();
-    update.process(&did, &mut self.document, self.storage.deref()).await?;
+    update
+      .process(&did, self.account_id, &mut self.document, self.storage.deref())
+      .await?;
 
     self.increment_actions();
 
@@ -354,7 +374,7 @@ where
 
     remote_sign_data(
       signing_doc,
-      self.did(),
+      &self.account_id,
       self.storage().deref(),
       &signing_key_location,
       document,
@@ -407,8 +427,11 @@ where
   }
 
   async fn store_state(&self) -> Result<()> {
-    self.storage.set_document(self.did(), &self.document).await?;
-    self.storage.set_chain_state(self.did(), self.chain_state()).await?;
+    self.storage.set_document(self.account_id, &self.document).await?;
+    self
+      .storage
+      .set_chain_state(self.account_id, self.chain_state())
+      .await?;
 
     self.save(false).await?;
 
@@ -482,7 +505,7 @@ where
 
     remote_sign_data(
       old_doc,
-      self.did(),
+      &self.account_id,
       self.storage().deref(),
       &signing_key_location,
       &mut diff,
