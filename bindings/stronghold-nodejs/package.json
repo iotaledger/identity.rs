@@ -9,6 +9,7 @@
   "napi": {
     "name": "identity-stronghold-nodejs",
     "triples": {
+      "defaults": false,
       "additional": [
         "aarch64-apple-darwin",
         "x86_64-apple-darwin",
@@ -41,11 +42,17 @@
     "build:ts": "rollup -c",
     "build:napi": "cross-env-shell napi build --platform --release --js napi-dist/napi.js --dts napi.d.ts $NPM_BUILD_NAPI_ARGS napi-dist",
     "build:napi:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm --skip-gh-release",
     "create-npm-dir": "napi create-npm-dir --target ./ ",
     "test": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit"
   },
   "peerDependencies": {
     "@iota/identity-wasm": "0.5.0-dev.5"
+  },
+  "optionalDependencies": {
+    "@iota/identity-stronghold-nodejs-darwin-arm64": "0.5.0-dev.5",
+    "@iota/identity-stronghold-nodejs-darwin-x64": "0.5.0-dev.5",
+    "@iota/identity-stronghold-nodejs-win32-x64-msvc": "0.5.0-dev.5",
+    "@iota/identity-stronghold-nodejs-linux-x64-musl": "0.5.0-dev.5",
+    "@iota/identity-stronghold-nodejs-linux-x64-gnu": "0.5.0-dev.5"
   }
 }
