@@ -75,12 +75,6 @@ impl Stronghold {
   pub fn set_dropsave(&mut self, value: bool) {
     self.dropsave = value;
   }
-
-  /// Sets the account password.
-  pub async fn set_password(&self, password: EncryptionKey) -> Result<()> {
-    self.snapshot.set_password(password).await?;
-    Ok(())
-  }
 }
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
