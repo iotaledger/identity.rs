@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-stronghold-nodejs",
-  "version": "0.0.0",
+  "version": "0.5.0-dev.5",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -43,6 +43,6 @@
     "test": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit"
   },
   "peerDependencies": {
-    "@iota/identity-wasm": "^0.5.0-dev.4"
+    "@iota/identity-wasm": "0.5.0-dev.5"
   }
 }
