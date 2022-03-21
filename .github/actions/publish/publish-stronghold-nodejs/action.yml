@@ -54,4 +54,5 @@ runs:
       # will publish 'latest' tag if no tag is passed
       run: |
         echo "//registry.npmjs.org/:_authToken=${{ inputs.npm-token }}" >> ~/.npmrc
-        npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
+        npm run prepublishOnly
+        # npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
