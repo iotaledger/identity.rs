@@ -18,7 +18,6 @@
     "build:docs": "node ./build/docs",
     "build:examples": "webpack --config ./examples/webpack.config.js --mode=production",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
-    "prepublishOnly": "npm run build",
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "example:account": "ts-node ./examples-account/src/node.ts",
