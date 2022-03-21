@@ -63,10 +63,10 @@ pub(crate) async fn create_identity(
   if let Some(inner_method_secret @ MethodSecret::Ed25519(_)) = setup.method_secret {
     insert_method_secret(store, account_id, &tmp_location, setup.key_type, inner_method_secret).await?;
   } else {
-    store.key_generate(account_id, &tmp_location).await?;
+    store.key_generate(&account_id, &tmp_location).await?;
   }
 
-  let public_key: PublicKey = store.key_public(account_id, &tmp_location).await?;
+  let public_key: PublicKey = store.key_public(&account_id, &tmp_location).await?;
 
   // Generate a new DID from the public key
   let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
@@ -84,7 +84,7 @@ pub(crate) async fn create_identity(
   )?;
   let location: KeyLocation = method.key_location()?;
 
-  store.key_move(account_id, &tmp_location, &location).await?;
+  store.key_move(&account_id, &tmp_location, &location).await?;
 
   store.index_set(did, account_id).await?;
 
@@ -163,10 +163,10 @@ impl Update {
         if let Some(method_private_key) = method_secret {
           insert_method_secret(storage, account_id, &tmp_location, key_type, method_private_key).await?;
         } else {
-          storage.key_generate(account_id, &tmp_location).await?;
+          storage.key_generate(&account_id, &tmp_location).await?;
         };
 
-        let public_key: PublicKey = storage.key_public(account_id, &tmp_location).await?;
+        let public_key: PublicKey = storage.key_public(&account_id, &tmp_location).await?;
 
         let method: IotaVerificationMethod =
           IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;
@@ -175,12 +175,12 @@ impl Update {
 
         // The key location must be available.
         ensure!(
-          !storage.key_exists(account_id, &location).await?,
+          !storage.key_exists(&account_id, &location).await?,
           UpdateError::DuplicateKeyLocation(location)
         );
 
         // Move the key from the tmp to the expected location.
-        storage.key_move(account_id, &tmp_location, &location).await?;
+        storage.key_move(&account_id, &tmp_location, &location).await?;
 
         document.insert_method(method, scope)?;
       }
@@ -314,7 +314,7 @@ async fn insert_method_secret(
       );
 
       store
-        .key_insert(account_id, location, private_key)
+        .key_insert(&account_id, location, private_key)
         .await
         .map_err(Into::into)
     }

@@ -12,10 +12,8 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::did::DID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaVerificationMethod;
 use iota_stronghold::procedures;
 use iota_stronghold::Location;
 use tokio::sync::RwLock;
@@ -26,7 +24,6 @@ use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
-use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
@@ -72,8 +69,8 @@ impl Stronghold {
     self.snapshot.store(name, &[])
   }
 
-  fn vault(&self, id: &IotaDID) -> Vault<'_> {
-    self.snapshot.vault(&fmt_did(id), &[])
+  fn vault(&self, id: &AccountId) -> Vault<'_> {
+    self.snapshot.vault(&fmt_account_id(id), &[])
   }
 
   /// Returns whether save-on-drop is enabled.
@@ -101,72 +98,73 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_generate(&self, did: &IotaDID, fragment: &str, key_type: KeyType) -> Result<KeyLocation> {
-    let vault: Vault<'_> = self.vault(did);
+  async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+    let vault: Vault<'_> = self.vault(account_id);
 
-    let location: KeyLocation = match key_type {
-      KeyType::Ed25519 => generate_ed25519(&vault, key_type, fragment, did).await?,
-    };
+    match location.key_type {
+      KeyType::Ed25519 => generate_ed25519(&vault, account_id, location).await?,
+    }
 
-    Ok(location)
+    Ok(())
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
-    let vault = self.vault(did);
+  // TODO: Let take reference to account id?
+  async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
+    let vault = self.vault(account_id);
 
-    let stronghold_location: Location = location.to_location(did);
+    let stronghold_location: Location = location.to_location(account_id);
 
     vault
-      .insert(stronghold_location.clone(), private_key.as_ref(), default_hint(), &[])
+      .insert(stronghold_location, private_key.as_ref(), default_hint(), &[])
       .await?;
 
     Ok(())
   }
 
-  async fn key_move(&self, did: &IotaDID, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
-    let vault: Vault<'_> = self.vault(did);
-    move_key(&vault, source.to_location(did), target.to_location(did)).await
+  async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
+    let vault: Vault<'_> = self.vault(account_id);
+    move_key(&vault, source.to_location(account_id), target.to_location(account_id)).await
   }
 
-  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
-    let vault: Vault<'_> = self.vault(did);
+  async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => retrieve_ed25519(&vault, location.to_location(did)).await,
+      KeyType::Ed25519 => retrieve_ed25519(&vault, location.to_location(account_id)).await,
     }
   }
 
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
-    let vault: Vault<'_> = self.vault(did);
+  async fn key_del(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+    let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
       KeyType::Ed25519 => {
-        vault.delete(location.to_location(did), true).await?;
+        vault.delete(location.to_location(account_id), true).await?;
       }
     }
 
     Ok(())
   }
 
-  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
-    let vault: Vault<'_> = self.vault(did);
+  async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+    let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => sign_ed25519(&vault, data, location.to_location(did)).await,
+      KeyType::Ed25519 => sign_ed25519(&vault, data, location.to_location(account_id)).await,
     }
   }
 
-  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+  async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
     self
-      .vault(did)
-      .exists(location.to_location(did))
+      .vault(account_id)
+      .exists(location.to_location(account_id))
       .await
       .map_err(Into::into)
   }
 
-  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
+  async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(&fmt_account_id(account_id));
     let data: Option<Vec<u8>> = store.get(location_chain_state()).await?;
 
     match data {
@@ -175,9 +173,9 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
+  async fn set_chain_state(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(&fmt_account_id(account_id));
 
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
@@ -186,9 +184,9 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn document(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+  async fn document(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(&fmt_account_id(account_id));
 
     // Read the state from the stronghold snapshot
     let data: Option<Vec<u8>> = store.get(location_document()).await?;
@@ -199,9 +197,9 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn set_document(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
+  async fn set_document(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(&fmt_account_id(account_id));
 
     // Serialize the state
     let json: Vec<u8> = document.to_json_vec()?;
@@ -212,7 +210,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn purge(&self, _did: &IotaDID) -> Result<()> {
+  async fn purge(&self, _account_id: &AccountId) -> Result<()> {
     // TODO: Will be re-implemented later with the key location refactor
     todo!("stronghold purge not implemented");
   }
@@ -267,28 +265,18 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_ed25519(vault: &Vault<'_>, key_type: KeyType, fragment: &str, did: &IotaDID) -> Result<KeyLocation> {
-  let random: Vec<u8> = random()?.to_vec();
-  let did_string: String = did.to_string();
-  let key_location: Location = Location::generic(format!("tmp_key:{}", did_string), random);
+async fn generate_ed25519(vault: &Vault<'_>, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+  let location: Location = location.to_location(account_id);
 
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: procedures::KeyType::Ed25519,
-    output: key_location.clone(),
+    output: location,
     hint: default_hint(),
   };
 
   vault.execute(generate_key).await?;
 
-  // Retrieve the public key of the derived child key
-  let public_key: PublicKey = retrieve_ed25519(vault, key_location.clone()).await?;
-
-  let method = IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
-  let new_location = KeyLocation::new(key_type, fragment.to_owned(), method.key_data());
-
-  move_key(vault, key_location, new_location.to_location(did)).await?;
-
-  Ok(new_location)
+  Ok(())
 }
 
 async fn retrieve_ed25519(vault: &Vault<'_>, location: Location) -> Result<PublicKey> {
@@ -338,20 +326,13 @@ fn location_document() -> StoreKey {
   "$document".to_owned()
 }
 
-fn random() -> IotaStrongholdResult<[u8; 64]> {
-  let mut bytes: [u8; 64] = [0; 64];
-  crypto::utils::rand::fill(&mut bytes)
-    .map_err(|err| crate::stronghold::StrongholdError::IoError(std::io::Error::new(std::io::ErrorKind::Other, err)))?;
-  Ok(bytes)
-}
-
-fn fmt_did(did: &IotaDID) -> String {
-  format!("$identity:{}", did.authority())
+fn fmt_account_id(account_id: &AccountId) -> String {
+  format!("$identity:{}", account_id)
 }
 
 impl KeyLocation {
-  fn to_location(&self, did: &IotaDID) -> Location {
+  fn to_location(&self, account_id: &AccountId) -> Location {
     let bytes: Vec<u8> = format!("{}:{}", self.fragment, self.key_hash).into_bytes();
-    Location::generic(did.to_string(), bytes)
+    Location::generic(account_id.to_string(), bytes)
   }
 }

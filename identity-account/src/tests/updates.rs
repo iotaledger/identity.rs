@@ -11,7 +11,6 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -77,7 +76,7 @@ async fn test_create_identity() -> Result<()> {
   // Ensure the key exists in storage.
   assert!(account
     .storage()
-    .key_exists(account.account_id, &location)
+    .key_exists(&account.account_id, &location)
     .await
     .unwrap());
 
@@ -146,7 +145,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let initial_state = account_setup
     .storage
-    .document(account.account_id)
+    .document(&account.account_id)
     .await
     .unwrap()
     .unwrap();
@@ -161,7 +160,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
   // Ensure nothing was overwritten in storage
   assert_eq!(
     initial_state,
-    account_setup.storage.document(account.account_id).await?.unwrap()
+    account_setup.storage.document(&account.account_id).await?.unwrap()
   );
 
   Ok(())
@@ -226,7 +225,7 @@ async fn test_create_method() -> Result<()> {
   // Ensure the key exists in storage.
   assert!(account
     .storage()
-    .key_exists(account.account_id, &location)
+    .key_exists(&account.account_id, &location)
     .await
     .unwrap());
 
@@ -345,7 +344,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
   let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
   let location = method.key_location().unwrap();
-  let public_key = account.storage().key_public(account.account_id, &location).await?;
+  let public_key = account.storage().key_public(&account.account_id, &location).await?;
 
   assert_eq!(public_key.as_ref(), keypair.public().as_ref());
 
@@ -615,7 +614,7 @@ async fn test_delete_method() -> Result<()> {
   // Ensure the key still exists in storage.
   assert!(account
     .storage()
-    .key_exists(account.account_id, &location)
+    .key_exists(&account.account_id, &location)
     .await
     .unwrap());
 

@@ -98,7 +98,7 @@ impl<'a> RemoteSign<'a> {
   pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<Vec<u8>> {
     key
       .store
-      .key_sign(*key.account_id, key.location, message.to_vec())
+      .key_sign(key.account_id, key.location, message.to_vec())
       .await
       .map_err(|_| Error::InvalidProofValue("remote sign"))
       .map(|signature| signature.data)

@@ -77,9 +77,9 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_generate(&self, account_id: AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.entry(account_id).or_default();
+    let vault: &mut MemVault = vaults.entry(*account_id).or_default();
 
     let keypair: KeyPair = KeyPair::new(location.key_type)?;
 
@@ -90,9 +90,9 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_insert(&self, account_id: AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.entry(account_id).or_default();
+    let vault: &mut MemVault = vaults.entry(*account_id).or_default();
 
     match location.key_type {
       KeyType::Ed25519 => {
@@ -117,12 +117,12 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_move(&self, account_id: AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
+  async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
 
     log::debug!("moving key from {source} to {target}");
 
-    if let Some(vault) = vaults.get_mut(&account_id) {
+    if let Some(vault) = vaults.get_mut(account_id) {
       match vault.remove(source) {
         Some(key) => {
           vault.insert(target.clone(), key);
@@ -135,19 +135,19 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_exists(&self, account_id: AccountId, location: &KeyLocation) -> Result<bool> {
+  async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
-    if let Some(vault) = vaults.get(&account_id) {
+    if let Some(vault) = vaults.get(account_id) {
       return Ok(vault.contains_key(location));
     }
 
     Ok(false)
   }
 
-  async fn key_public(&self, account_id: AccountId, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(&account_id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &MemVault = vaults.get(account_id).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
     log::debug!("retrieving pub key for location {location}");
@@ -155,18 +155,18 @@ impl Storage for MemStore {
     Ok(keypair.public().clone())
   }
 
-  async fn key_del(&self, account_id: AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_del(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.get_mut(&account_id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &mut MemVault = vaults.get_mut(account_id).ok_or(Error::KeyVaultNotFound)?;
 
     vault.remove(location);
 
     Ok(())
   }
 
-  async fn key_sign(&self, account_id: AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(&account_id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &MemVault = vaults.get(account_id).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
     log::debug!("signing with {location}");
@@ -184,33 +184,33 @@ impl Storage for MemStore {
     }
   }
 
-  async fn chain_state(&self, account_id: AccountId) -> Result<Option<ChainState>> {
-    self.chain_states.read().map(|states| states.get(&account_id).cloned())
+  async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
+    self.chain_states.read().map(|states| states.get(account_id).cloned())
   }
 
-  async fn set_chain_state(&self, account_id: AccountId, chain_state: &ChainState) -> Result<()> {
-    self.chain_states.write()?.insert(account_id, chain_state.clone());
+  async fn set_chain_state(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
+    self.chain_states.write()?.insert(*account_id, chain_state.clone());
 
     Ok(())
   }
 
-  async fn document(&self, account_id: AccountId) -> Result<Option<IotaDocument>> {
+  async fn document(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
     self
       .documents
       .read()
-      .map(|documents| documents.get(&account_id).cloned())
+      .map(|documents| documents.get(account_id).cloned())
   }
 
-  async fn set_document(&self, account_id: AccountId, document: &IotaDocument) -> Result<()> {
-    self.documents.write()?.insert(account_id, document.clone());
+  async fn set_document(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
+    self.documents.write()?.insert(*account_id, document.clone());
 
     Ok(())
   }
 
-  async fn purge(&self, account_id: AccountId) -> Result<()> {
-    let _ = self.documents.write()?.remove(&account_id);
-    let _ = self.vaults.write()?.remove(&account_id);
-    let _ = self.chain_states.write()?.remove(&account_id);
+  async fn purge(&self, account_id: &AccountId) -> Result<()> {
+    let _ = self.documents.write()?.remove(account_id);
+    let _ = self.vaults.write()?.remove(account_id);
+    let _ = self.chain_states.write()?.remove(account_id);
 
     Ok(())
   }

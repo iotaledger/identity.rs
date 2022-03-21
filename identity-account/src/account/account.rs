@@ -134,12 +134,12 @@ where
     // Ensure the did exists in storage
     let document: IotaDocument = setup
       .storage
-      .document(account_id)
+      .document(&account_id)
       .await?
       .ok_or(Error::IdentityNotFound)?;
     let chain_state = setup
       .storage
-      .chain_state(account_id)
+      .chain_state(&account_id)
       .await?
       .ok_or(Error::IdentityNotFound)?;
 
@@ -241,7 +241,7 @@ where
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().deref().purge(self.account_id).await?;
+    self.storage().deref().purge(&self.account_id).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -334,7 +334,7 @@ where
     self
       .storage()
       .deref()
-      .document(self.account_id)
+      .document(&self.account_id)
       .await?
       .ok_or(Error::IdentityNotFound)
   }
@@ -427,10 +427,10 @@ where
   }
 
   async fn store_state(&self) -> Result<()> {
-    self.storage.set_document(self.account_id, &self.document).await?;
+    self.storage.set_document(&self.account_id, &self.document).await?;
     self
       .storage
-      .set_chain_state(self.account_id, self.chain_state())
+      .set_chain_state(&self.account_id, self.chain_state())
       .await?;
 
     self.save(false).await?;
