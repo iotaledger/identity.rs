@@ -430,7 +430,7 @@ impl WasmDocument {
     }
 
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let args: Args = args.into_serde().wasm_result()?;
+    let args: Args = serde_wasm_bindgen::from_value(*args)?;
     let options: SignatureOptions = options.0.clone();
 
     match args {

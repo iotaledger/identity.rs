@@ -72,8 +72,8 @@ async function merkleKey(clientConfig) {
     // Sign the credential with Issuer's Merkle Key Collection method, with key index 0
     const signedVc = issuer.doc.signCredential(unsignedVc, {
         method: method.id().toString(),
-        public: Array.from(keys.public(0)),
-        private: Array.from(keys.private(0)),
+        public: keys.public(0),
+        private: keys.private(0),
         proof: keys.merkleProof(Digest.Sha256, 0)
     }, SignatureOptions.default());
 
