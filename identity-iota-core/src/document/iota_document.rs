@@ -425,6 +425,13 @@ impl IotaDocument {
         JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
+      MethodType::X25519KeyAgreementKey2019 => {
+        // Merkle Key Collections cannot be used to sign documents.
+        return Err(Error::DocumentSignError(
+          "X25519KeyAgreementKey2019 not allowed to sign documents",
+          None,
+        ));
+      }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
         return Err(Error::DocumentSignError(

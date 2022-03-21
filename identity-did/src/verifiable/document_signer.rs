@@ -162,6 +162,9 @@ where
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
       }
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(Error::InvalidMethodType);
+      }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
 

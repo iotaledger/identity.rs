@@ -48,8 +48,9 @@ pub(crate) async fn create_identity(
   network: NetworkName,
   store: &dyn Storage,
 ) -> Result<IdentityState> {
-  let method_type = match setup.key_type {
+  let method_type: MethodType = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
+    KeyType::X25519 => MethodType::X25519KeyAgreementKey2019,
   };
 
   // The method type must be able to sign document updates.

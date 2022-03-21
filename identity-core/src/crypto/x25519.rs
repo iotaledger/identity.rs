@@ -9,7 +9,7 @@ use crate::crypto::key_exchange::KeyExchange;
 use crate::Error;
 
 /// An implementation of `X25519` Diffie-Hellman cryptographic key exchange.
-// TODO: this phantom data workaround sucks.
+// TODO: this phantom data workaround sucks, maybe make key_exchange generic instead?
 pub struct X25519<T: ?Sized = [u8], U: ?Sized = [u8]>(
   PhantomData<*const T>,
   PhantomData<*const U>,
@@ -22,7 +22,6 @@ impl<T, U> KeyExchange for X25519<T, U> where
   T: AsRef<[u8]> + ?Sized,
   U: AsRef<[u8]> + ?Sized,
 {
-  // Using since that's the internal representation of PublicKey and PrivateKey.
   type Private = T;
   type Public = U;
   type Output = [u8; 32];

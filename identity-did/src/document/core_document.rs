@@ -771,6 +771,9 @@ where
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
       }
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(Error::InvalidMethodType);
+      }
       MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&public_key)? {
         (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
           merkle_key_verify::<D, X, Sha256, Ed25519, U>(data, method, &public_key)?;

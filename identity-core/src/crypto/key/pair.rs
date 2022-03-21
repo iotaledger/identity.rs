@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::convert::TryInto;
+use crypto::keys::x25519;
 
 use crypto::signatures::ed25519;
 use zeroize::Zeroize;
@@ -27,6 +28,7 @@ pub struct KeyPair {
 
 impl KeyPair {
   /// Creates a new [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`].
+  // TODO: remove, redundant.
   pub fn new_ed25519() -> Result<Self> {
     Self::new(KeyType::Ed25519)
   }
@@ -36,8 +38,8 @@ impl KeyPair {
     let (public, private): (PublicKey, PrivateKey) = match type_ {
       KeyType::Ed25519 => generate_ed25519_keypair()?,
       KeyType::X25519 => {
-        let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
-        let public: ed25519::PublicKey = secret.public_key();
+        let secret: x25519::SecretKey = x25519::SecretKey::generate()?;
+        let public: x25519::PublicKey = secret.public_key();
 
         let private: PrivateKey = secret.to_bytes().to_vec().into();
         let public: PublicKey = public.to_bytes().to_vec().into();

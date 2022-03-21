@@ -19,7 +19,9 @@ where
 {
   pub(crate) id: Option<DIDUrl<D>>,
   pub(crate) controller: Option<D>,
+  // TODO: rename methodType
   pub(crate) key_type: Option<MethodType>,
+  // TODO: rename methodData
   pub(crate) key_data: Option<MethodData>,
   pub(crate) properties: T,
 }
@@ -54,6 +56,7 @@ where
   }
 
   /// Sets the `type` value of the generated verification `VerificationMethod`.
+  // TODO: rename methodType
   #[must_use]
   pub fn key_type(mut self, value: MethodType) -> Self {
     self.key_type = Some(value);
@@ -61,6 +64,7 @@ where
   }
 
   /// Sets the `data` value of the generated `VerificationMethod`.
+  // TODO: rename methodData
   #[must_use]
   pub fn key_data(mut self, value: MethodData) -> Self {
     self.key_data = Some(value);

@@ -40,8 +40,10 @@ where
   pub(crate) id: DIDUrl<D>,
   pub(crate) controller: D,
   #[serde(rename = "type")]
+  // TODO: rename methodType
   pub(crate) key_type: MethodType,
   #[serde(flatten)]
+  // TODO: rename methodData
   pub(crate) key_data: MethodData,
   #[serde(flatten)]
   pub(crate) properties: T,
@@ -123,21 +125,25 @@ where
   }
 
   /// Returns a reference to the verification `Method` type.
+  // TODO: rename methodType
   pub fn key_type(&self) -> MethodType {
     self.key_type
   }
 
   /// Returns a mutable reference to the verification `Method` type.
+  // TODO: rename methodType
   pub fn key_type_mut(&mut self) -> &mut MethodType {
     &mut self.key_type
   }
 
   /// Returns a reference to the verification `Method` data.
+  // TODO: rename methodData
   pub fn key_data(&self) -> &MethodData {
     &self.key_data
   }
 
   /// Returns a mutable reference to the verification `Method` data.
+  // TODO: rename methodData
   pub fn key_data_mut(&mut self) -> &mut MethodData {
     &mut self.key_data
   }
@@ -211,6 +217,10 @@ where
     match key_type {
       KeyType::Ed25519 => {
         builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
+        builder = builder.key_data(MethodData::new_multibase(public_key));
+      }
+      KeyType::X25519 => {
+        builder = builder.key_type(MethodType::X25519KeyAgreementKey2019);
         builder = builder.key_data(MethodData::new_multibase(public_key));
       }
     }
