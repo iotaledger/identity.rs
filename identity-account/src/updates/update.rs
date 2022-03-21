@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
@@ -317,6 +318,25 @@ async fn insert_method_secret(
         matches!(method_type, MethodType::Ed25519VerificationKey2018),
         UpdateError::InvalidMethodSecret(
           "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
+        )
+      );
+
+      store.key_insert(did, location, private_key).await.map_err(Into::into)
+    }
+    MethodSecret::X25519(private_key) => {
+      ensure!(
+        private_key.as_ref().len() == x25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodSecret(format!(
+          "an ed25519 private key requires {} bytes, found {}",
+          x25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+
+      ensure!(
+        matches!(method_type, MethodType::X25519KeyAgreementKey2019),
+        UpdateError::InvalidMethodSecret(
+          "MethodType::X25519KeyAgreementKey2019 can only be used with an x25519 method secret".to_owned(),
         )
       );
 

@@ -26,7 +26,7 @@ zeroize = { version = "1.4", optional = true }
 
 [dependencies.iota-crypto]
 version = "0.7"
-features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
+features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std", "x25519"]
 
 [dev-dependencies]
 futures = { version = "0.3" }

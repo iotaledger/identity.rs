@@ -25,6 +25,11 @@ impl WasmMethodType {
     WasmMethodType(MethodType::Ed25519VerificationKey2018)
   }
 
+  #[wasm_bindgen(js_name = X25519KeyAgreementKey2019)]
+  pub fn x25519_key_agreement_key_2019() -> WasmMethodType {
+    WasmMethodType(MethodType::X25519KeyAgreementKey2019)
+  }
+
   #[wasm_bindgen(js_name = MerkleKeyCollection2021)]
   pub fn merkle_key_collection_2021() -> WasmMethodType {
     WasmMethodType(MethodType::MerkleKeyCollection2021)

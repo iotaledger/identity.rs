@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -25,7 +25,7 @@ pub enum MethodData {
 
 impl MethodData {
   /// Creates a new `MethodData` variant with base58-encoded content.
-  pub fn new_b58(data: impl AsRef<[u8]>) -> Self {
+  pub fn new_base58(data: impl AsRef<[u8]>) -> Self {
     Self::PublicKeyBase58(encode_b58(&data))
   }
 

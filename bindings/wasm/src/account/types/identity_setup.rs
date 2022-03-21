@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::account::types::method_secret::OptionMethodSecret;
 use crate::account::types::WasmMethodSecret;
-use crate::crypto::KeyType;
+use crate::crypto::WasmKeyType;
 use crate::error::WasmResult;
 
 #[wasm_bindgen]
@@ -19,7 +19,7 @@ extern "C" {
   pub type WasmIdentitySetup;
 
   #[wasm_bindgen(getter, method)]
-  pub fn keyType(this: &WasmIdentitySetup) -> Option<KeyType>;
+  pub fn keyType(this: &WasmIdentitySetup) -> Option<WasmKeyType>;
 
   #[wasm_bindgen(getter, method)]
   pub fn methodSecret(this: &WasmIdentitySetup) -> OptionMethodSecret;

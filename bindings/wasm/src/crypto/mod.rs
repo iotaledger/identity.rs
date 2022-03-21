@@ -5,9 +5,10 @@ pub use self::digest::Digest;
 pub use self::key_collection::WasmKeyCollection;
 pub use self::key_collection::WasmKeyCollectionData;
 pub use self::key_pair::WasmKeyPair;
-pub use self::key_type::KeyType;
+pub use self::key_type::WasmKeyType;
 pub use self::wasm_proof_purpose::WasmProofPurpose;
 pub use self::wasm_signature_options::WasmSignatureOptions;
+pub use self::wasm_x25519::WasmX25519;
 
 mod digest;
 mod key_collection;
@@ -15,3 +16,4 @@ mod key_pair;
 mod key_type;
 mod wasm_proof_purpose;
 mod wasm_signature_options;
+mod wasm_x25519;

@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use async_trait::async_trait;
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
@@ -18,7 +19,6 @@ use identity_iota_core::did::IotaDID;
 use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
-use crypto::keys::x25519;
 use zeroize::Zeroize;
 
 use crate::error::Error;

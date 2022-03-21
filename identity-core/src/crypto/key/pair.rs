@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::convert::TryInto;
 use crypto::keys::x25519;
+use std::convert::TryInto;
 
 use crypto::signatures::ed25519;
 use zeroize::Zeroize;
@@ -54,7 +54,8 @@ impl KeyPair {
   ///
   /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-  // TODO: either move to Ed25519KeyPair depending on refactor or generalise this.
+  // TODO: either move to Ed25519KeyPair depending on refactor or generalise this to X25519.
+  // TODO: allow converting Ed25519 to X25519.
   pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
     let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
       .try_into()

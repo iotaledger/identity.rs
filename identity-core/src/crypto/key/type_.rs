@@ -3,10 +3,10 @@
 
 use core::str::FromStr;
 
-use crate::crypto::Ed25519;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_tree::Hash;
+use crate::crypto::Ed25519;
 use crate::error::Error;
 use crate::error::Result;
 

@@ -94,7 +94,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     let public: PublicKey = match location.method() {
-      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => generate_private_key(&vault, location).await?,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        generate_private_key(&vault, location).await?
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
     };
 
@@ -109,7 +111,9 @@ impl Storage for Stronghold {
       .await?;
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => retrieve_public_key(&vault, location).await,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        retrieve_public_key(&vault, location).await
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_insert] Handle MerkleKeyCollection2021"),
     }
   }
@@ -118,7 +122,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => retrieve_public_key(&vault, location).await,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        retrieve_public_key(&vault, location).await
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_get] Handle MerkleKeyCollection2021"),
     }
   }
@@ -153,7 +159,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     Ok(match location.method() {
-      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => vault.exists(location_skey(location)).await,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        vault.exists(location_skey(location)).await
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
     }?)
   }
