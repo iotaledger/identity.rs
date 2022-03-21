@@ -28,7 +28,7 @@ async function keyExchange(clientConfig) {
     {
         // Create a DID Document.
         const keypair = new KeyPair(KeyType.Ed25519);
-        const document = new Document(keypair, clientConfig.network);
+        const document = new Document(keypair, clientConfig.network.name());
 
         // Insert a new X25519 KeyAgreement verification method.
         let x25519 = new KeyPair(KeyType.X25519);
@@ -49,7 +49,7 @@ async function keyExchange(clientConfig) {
     {
         // Create a DID Document.
         const keypair = new KeyPair(KeyType.Ed25519);
-        const document = new Document(keypair, clientConfig.network);
+        const document = new Document(keypair, clientConfig.network.name());
 
         // Insert a new X25519 KeyAgreement verification method.
         let x25519 = new KeyPair(KeyType.X25519);
@@ -65,7 +65,7 @@ async function keyExchange(clientConfig) {
     }
 
     // Alice and Bob tell each other their DIDs. They each resolve the DID Document of the other
-    // to obtain their X25519 public key. Note that in practise, they would run this code completely
+    // to obtain their X25519 public key. Note that in practice, they would run this code completely
     // separately.
 
     let aliceSharedSecretKey;
@@ -88,10 +88,18 @@ async function keyExchange(clientConfig) {
         bobSharedSecretKey = X25519.keyExchange(bobX25519.private(), alicePublicKey);
     }
 
-    // Both shared secret keys computed separately by Alice and Bob will match,
-    // and they can then use it to establish encrypted communications.
-    if(aliceSharedSecretKey !== bobSharedSecretKey) throw new Error("shared secret keys do not match!");
+    // Both shared secret keys computed separately by Alice and Bob will match
+    // and can then be used to establish encrypted communications.
+    if(!isArrayEqual(aliceSharedSecretKey, bobSharedSecretKey)) throw new Error("shared secret keys do not match!");
     console.log(`Diffie-Hellman key exchange successful!`);
+}
+
+function isArrayEqual(a, b) {
+    if(a.length !== b.length) return false;
+    for(let i = 0; i < a.length; i++) {
+        if(a[i] !== b[i]) return false;
+    }
+    return true;
 }
 
 export {keyExchange};

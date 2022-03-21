@@ -61,7 +61,7 @@ pub async fn run() -> Result<()> {
   };
 
   // Alice and Bob tell each other their DIDs. They each resolve the DID Document of the other
-  // to obtain their X25519 public key. Note that in practise, they would run this code completely
+  // to obtain their X25519 public key. Note that in practice, they would run this code completely
   // separately.
 
   let alice_shared_secret_key: [u8; 32] = {
@@ -90,8 +90,8 @@ pub async fn run() -> Result<()> {
     X25519::key_exchange(bob_x25519.private(), &alice_public_key)?
   };
 
-  // Both shared secret keys computed separately by Alice and Bob will match,
-  // and they can then use it to establish encrypted communications.
+  // Both shared secret keys computed separately by Alice and Bob will match
+  // and can then be used to establish encrypted communications.
   assert_eq!(alice_shared_secret_key, bob_shared_secret_key);
   println!("Diffie-Hellman key exchange successful!");
 
