@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use criterion::criterion_group;
@@ -11,6 +11,7 @@ use identity::iota::DocumentChain;
 use identity::iota::IntegrationChain;
 use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
+use identity_core::crypto::KeyType;
 
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;
