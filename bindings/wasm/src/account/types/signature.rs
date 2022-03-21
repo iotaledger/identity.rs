@@ -21,7 +21,7 @@ impl WasmSignature {
   #[wasm_bindgen]
   /// Returns a copy of the public key used to verify this signature.
   pub fn pkey(&self) -> Vec<u8> {
-    self.0.pkey().into()
+    self.0.pkey().as_ref().to_vec()
   }
 
   #[wasm_bindgen]

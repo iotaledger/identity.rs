@@ -5,7 +5,6 @@ use identity::did::DID;
 use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::WasmKeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -18,16 +17,14 @@ pub struct WasmDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = DID)]
 impl WasmDID {
-  /// Creates a new `DID` from a `KeyPair` object.
+  /// Creates a new `DID` from a public key.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &WasmKeyPair, network: Option<String>) -> Result<WasmDID> {
-    let public_key: Vec<u8> = key.0.public().into();
-    Self::from_public_key(&public_key, network)
+  pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
+    Self::from_public_key(public_key, network)
   }
 
   /// Creates a new `DID` from an arbitrary public key.
-  #[wasm_bindgen(js_name = fromPublicKey)]
-  pub fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
+  fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
     let did = if let Some(network) = network {
       IotaDID::new_with_network(public_key, network)
     } else {

@@ -65,13 +65,13 @@ impl WasmKeyCollection {
   /// Returns the public key at the specified `index` as a `UInt8Array`.
   #[wasm_bindgen]
   pub fn public(&self, index: usize) -> Option<Vec<u8>> {
-    self.0.public(index).map(Into::into)
+    self.0.public(index).map(|public_key| public_key.as_ref().to_vec())
   }
 
   /// Returns the private key at the specified `index` as a `UInt8Array`.
   #[wasm_bindgen]
   pub fn private(&self, index: usize) -> Option<Vec<u8>> {
-    self.0.private(index).map(Into::into)
+    self.0.private(index).map(|public_key| public_key.as_ref().to_vec())
   }
 
   #[wasm_bindgen(js_name = merkleRoot)]
@@ -127,8 +127,8 @@ impl From<&WasmKeyCollection> for WasmKeyCollectionData {
     let keys: Vec<WasmKeyData> = public
       .zip(private)
       .map(|(public, private)| WasmKeyData {
-        public: public.into(),
-        private: private.into(),
+        public: public.as_ref().to_vec(),
+        private: private.as_ref().to_vec(),
       })
       .collect();
 

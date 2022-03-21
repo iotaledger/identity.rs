@@ -119,7 +119,7 @@ impl Storage for WasmStorage {
     private_key: PrivateKey,
   ) -> AccountStorageResult<PublicKey> {
     let promise: Promise =
-      Promise::resolve(&self.key_insert(did.clone().into(), location.clone().into(), (&private_key).into()));
+      Promise::resolve(&self.key_insert(did.clone().into(), location.clone().into(), private_key.as_ref().to_vec()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?

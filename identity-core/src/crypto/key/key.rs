@@ -88,9 +88,3 @@ impl<V: private::Sealed> From<Vec<u8>> for Key<V> {
     other.into_boxed_slice().into()
   }
 }
-
-impl<V: private::Sealed> From<&Key<V>> for Vec<u8> {
-  fn from(other: &Key<V>) -> Self {
-    other.as_ref().to_vec()
-  }
-}

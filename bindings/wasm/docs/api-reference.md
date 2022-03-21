@@ -926,7 +926,7 @@ Validate that the relationship between the `holder` and the credential subjects 
 **Kind**: global class  
 
 * [DID](#DID)
-    * [new DID(key, network)](#new_DID_new)
+    * [new DID(public_key, network)](#new_DID_new)
     * _instance_
         * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
@@ -938,19 +938,18 @@ Validate that the relationship between the `holder` and the credential subjects 
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
         * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
-        * [.fromPublicKey(public_key, network)](#DID.fromPublicKey) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
         * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
-### new DID(key, network)
-Creates a new `DID` from a `KeyPair` object.
+### new DID(public_key, network)
+Creates a new `DID` from a public key.
 
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| public_key | <code>Uint8Array</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DID+networkName"></a>
@@ -1012,18 +1011,6 @@ Serializes a `DID` as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID.fromPublicKey"></a>
-
-### DID.fromPublicKey(public_key, network) ⇒ [<code>DID</code>](#DID)
-Creates a new `DID` from an arbitrary public key.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| public_key | <code>Uint8Array</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
 <a name="DID.parse"></a>
 
 ### DID.parse(input) ⇒ [<code>DID</code>](#DID)
@@ -2563,7 +2550,7 @@ Deserializes a JSON object as `KeyLocation`.
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
         * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
-        * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.fromKeys(type_, public_key, private_key)](#KeyPair.fromKeys) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -2606,9 +2593,9 @@ Serializes a `KeyPair` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair.fromBase58"></a>
+<a name="KeyPair.fromKeys"></a>
 
-### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
+### KeyPair.fromKeys(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
 Parses a `KeyPair` object from the public/private keys.
 
 **Kind**: static method of [<code>KeyPair</code>](#KeyPair)  

@@ -32,7 +32,7 @@ impl WasmKeyPair {
   }
 
   /// Parses a `KeyPair` object from the public/private keys.
-  #[wasm_bindgen(js_name = fromBase58)]
+  #[wasm_bindgen(js_name = fromKeys)]
   pub fn from_keys(type_: KeyType, public_key: Vec<u8>, private_key: Vec<u8>) -> Result<WasmKeyPair> {
     Ok(Self((type_.into(), public_key.into(), private_key.into()).into()))
   }
@@ -46,13 +46,13 @@ impl WasmKeyPair {
   /// Returns a copy of the public key as a `UInt8Array`.
   #[wasm_bindgen]
   pub fn public(&self) -> Vec<u8> {
-    self.0.public().into()
+    self.0.public().as_ref().to_vec()
   }
 
   /// Returns a copy of the private key as a `UInt8Array`.
   #[wasm_bindgen]
   pub fn private(&self) -> Vec<u8> {
-    self.0.private().into()
+    self.0.private().as_ref().to_vec()
   }
 
   /// Serializes a `KeyPair` object as a JSON object.
