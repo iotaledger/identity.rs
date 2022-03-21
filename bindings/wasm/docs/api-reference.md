@@ -66,7 +66,7 @@ the configuration of previously built accounts.</p>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
-<dd><p>Supported verification method types.</p>
+<dd><p>Supported verification method data formats.</p>
 </dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
@@ -2639,7 +2639,7 @@ Deserializes a `KeyPair` object from a JSON object.
 <a name="MethodData"></a>
 
 ## MethodData
-Supported verification method types.
+Supported verification method data formats.
 
 **Kind**: global class  
 
