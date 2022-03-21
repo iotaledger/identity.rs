@@ -101,7 +101,7 @@ mod tests {
 
   #[test]
   fn test_method_builder_success() {
-    for method_data_fn in [MethodData::new_b58, MethodData::new_multibase] {
+    for method_data_fn in [MethodData::new_base58, MethodData::new_multibase] {
       let result: Result<VerificationMethod> = MethodBuilder::default()
         .id("did:example:123#key".parse().unwrap())
         .controller("did:example:123".parse().unwrap())
