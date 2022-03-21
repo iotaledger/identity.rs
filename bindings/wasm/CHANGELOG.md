@@ -1,5 +1,44 @@
 # Changelog
 
+## [wasm-v0.5.0-dev.5](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.5) (2022-03-21)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.4...wasm-v0.5.0-dev.5)
+ 
+This release introduces a breaking change to the proof field of DID Documents created by versions `v0.5.0-dev.1` through `v0.5.0-dev.4`, making all prior documents incompatible. The main feature of this release is the introduction of WebAssembly (Wasm) bindings for the high-level `Account` API for Javascript/Typescript in both Node.js and the browser. This includes Stronghold storage support but only for Node.js, as it was determined that compiling Stronghold to Wasm for private key storage in the browser would not be sufficiently secure.
+
+### Changed
+
+- Move DID Document proof outside metadata [\#728](https://github.com/iotaledger/identity.rs/pull/728)
+- Replace Wasm getters and setters with methods [\#706](https://github.com/iotaledger/identity.rs/pull/706)
+- Replace Wasm `Config` with `ClientConfig` interface [\#696](https://github.com/iotaledger/identity.rs/pull/696)
+- Change `IotaDocument::verify_document` from a static function to a method [\#675](https://github.com/iotaledger/identity.rs/pull/675)
+- Make Wasm support dependent on `target_arch` rather than feature [\#666](https://github.com/iotaledger/identity.rs/pull/666)
+- Refactor `CoreDocument`, `VerificationMethod`, `Service` to use generic DID [\#655](https://github.com/iotaledger/identity.rs/pull/655)
+- Overhaul `CredentialValidator`, add `PresentationValidator` [\#599](https://github.com/iotaledger/identity.rs/pull/599)
+- Replace `ClientMap` with new `Resolver` [\#594](https://github.com/iotaledger/identity.rs/pull/594)
+
+### Added
+
+- Add deep clone function in Wasm [\#705](https://github.com/iotaledger/identity.rs/pull/705)
+- Add `Duration` for `Timestamp` arithmetic [\#684](https://github.com/iotaledger/identity.rs/pull/684)
+- Add `Client` fallback to local PoW option [\#682](https://github.com/iotaledger/identity.rs/pull/682)
+- Add Wasm `Service` constructor and field getters [\#680](https://github.com/iotaledger/identity.rs/pull/680)
+- Complete `Document` Wasm bindings [\#679](https://github.com/iotaledger/identity.rs/pull/679)
+- Add `Document.signDocument` for Wasm [\#674](https://github.com/iotaledger/identity.rs/pull/674)
+- Add Wasm bindings for `set_controller` and `set_also_known_as` in the `Account` [\#668](https://github.com/iotaledger/identity.rs/pull/668)
+- Add NodeJs bindings for Stronghold `Storage` [\#660](https://github.com/iotaledger/identity.rs/pull/660)
+- Add Wasm `Account` `Storage` interface [\#597](https://github.com/iotaledger/identity.rs/pull/597)
+- Add Wasm bindings for the `Account` [\#574](https://github.com/iotaledger/identity.rs/pull/574)
+
+### Patch
+
+- Enable Wasm weak references for automatic garbage collection [\#694](https://github.com/iotaledger/identity.rs/pull/694)
+- Fix `WasmTimestamp` JSON serialization [\#688](https://github.com/iotaledger/identity.rs/pull/688)
+
+### Removed
+
+- Remove `publicKeyJwk` [\#732](https://github.com/iotaledger/identity.rs/pull/732)
+
 ## [wasm-v0.5.0-dev.4](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0-dev.4) (2022-02-14)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0-dev.3...wasm-v0.5.0-dev.4)
