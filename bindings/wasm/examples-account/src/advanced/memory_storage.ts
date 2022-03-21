@@ -36,7 +36,7 @@ export class MemStore implements Storage {
 
     public async keyNew(did: DID, keyLocation: KeyLocation) {
         if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
-            throw new Error('Unsuported Method')
+            throw new Error('Unsupported Method')
         }
         const keyPair = new KeyPair(KeyType.Ed25519);
         const publicKey = keyPair.public();
@@ -52,7 +52,7 @@ export class MemStore implements Storage {
 
     public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: string) {
         if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
-            throw new Error('Unsuported Method')
+            throw new Error('Unsupported Method')
         }
         const secretKey = Ed25519PrivateKey.fromBase58(privateKey);
         const publicKey = secretKey.publicKey();
@@ -104,7 +104,7 @@ export class MemStore implements Storage {
             throw new Error('Key location not found')
         }
         if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
-            throw new Error('Unsuported Method')
+            throw new Error('Unsupported Method')
         }
         const signature = Ed25519.sign(data, keyPair.private());
         return new Signature(keyPair.public(), signature)
