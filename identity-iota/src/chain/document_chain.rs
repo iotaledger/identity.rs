@@ -200,14 +200,7 @@ mod test {
       keys.push(keypair);
 
       assert_eq!(
-        chain
-          .current()
-          .document
-          .metadata
-          .proof
-          .as_ref()
-          .unwrap()
-          .verification_method(),
+        chain.current().document.proof.as_ref().unwrap().verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
       assert_eq!(chain.current().diff_message_id, MessageId::null());
