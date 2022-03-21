@@ -58,13 +58,13 @@ pub(crate) async fn create_identity(
 
   let account_id: AccountId = AccountId::new_v4();
 
-  let tmp_location: KeyLocation = if let Some(inner_method_secret @ MethodSecret::Ed25519(_)) = setup.method_secret {
-    let tmp_location: KeyLocation = KeyLocation::random(setup.key_type);
+  let tmp_location: KeyLocation = KeyLocation::random(setup.key_type);
+
+  if let Some(inner_method_secret @ MethodSecret::Ed25519(_)) = setup.method_secret {
     insert_method_secret(store, account_id, &tmp_location, setup.key_type, inner_method_secret).await?;
-    tmp_location
   } else {
-    store.key_generate(account_id, setup.key_type).await?
-  };
+    store.key_generate(account_id, &tmp_location).await?;
+  }
 
   let public_key: PublicKey = store.key_public(account_id, &tmp_location).await?;
 
@@ -158,12 +158,12 @@ impl Update {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
-        let tmp_location: KeyLocation = if let Some(method_private_key) = method_secret {
-          let tmp_location: KeyLocation = KeyLocation::random(key_type);
+        let tmp_location: KeyLocation = KeyLocation::random(key_type);
+
+        if let Some(method_private_key) = method_secret {
           insert_method_secret(storage, account_id, &tmp_location, key_type, method_private_key).await?;
-          tmp_location
         } else {
-          storage.key_generate(account_id, key_type).await?
+          storage.key_generate(account_id, &tmp_location).await?;
         };
 
         let public_key: PublicKey = storage.key_public(account_id, &tmp_location).await?;

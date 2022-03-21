@@ -77,19 +77,17 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_generate(&self, account_id: AccountId, key_type: KeyType) -> Result<KeyLocation> {
+  async fn key_generate(&self, account_id: AccountId, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(account_id).or_default();
 
-    let keypair: KeyPair = KeyPair::new(key_type)?;
-
-    let location: KeyLocation = KeyLocation::random(key_type);
+    let keypair: KeyPair = KeyPair::new(location.key_type)?;
 
     vault.insert(location.clone(), keypair);
 
     log::debug!("generated key at {location}");
 
-    Ok(location)
+    Ok(())
   }
 
   async fn key_insert(&self, account_id: AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {

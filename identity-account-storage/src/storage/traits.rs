@@ -45,10 +45,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
 
-  // TODO: Let this take a `KeyLocation` directly.
-  /// Creates a new keypair for the given `account_id` and returns its location.
-  /// The location of the keypair can be randomly generated.
-  async fn key_generate(&self, account_id: AccountId, key_type: KeyType) -> Result<KeyLocation>;
+  /// Creates a new keypair for the given `account_id` at the given `location`.
+  async fn key_generate(&self, account_id: AccountId, location: &KeyLocation) -> Result<()>;
 
   /// Inserts a private key at the specified `location`.
   async fn key_insert(&self, account_id: AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
