@@ -15,7 +15,7 @@ use identity_iota_core::document::IotaDocument;
 use crate::Result;
 
 pub(super) fn generate_document_with_keys() -> (IotaDocument, KeyPair) {
-  let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
   (document, keypair)
 }

@@ -77,7 +77,7 @@ pub(crate) async fn create_identity(
 
     KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
   } else {
-    KeyPair::new_ed25519()?
+    KeyPair::new(KeyType::Ed25519)?
   };
 
   // Generate a new DID from the public key

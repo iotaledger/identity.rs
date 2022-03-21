@@ -18,7 +18,7 @@ use identity_core::crypto::SignatureOptions;
 use identity_iota::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
-  let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
   document

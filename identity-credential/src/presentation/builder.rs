@@ -172,7 +172,7 @@ mod tests {
 
   #[test]
   fn test_presentation_builder_valid() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let controller: CoreDID = "did:example:1234".parse().unwrap();
 
     let method: VerificationMethod = MethodBuilder::default()

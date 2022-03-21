@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
     .await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
-  let subject_key: KeyPair = KeyPair::new_ed25519()?;
+  let subject_key: KeyPair = KeyPair::new(KeyType::Ed25519)?;
   let subject_did: IotaDID = IotaDID::new(subject_key.public().as_ref())?;
 
   // Create the actual Verifiable Credential subject.

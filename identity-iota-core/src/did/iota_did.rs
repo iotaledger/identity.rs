@@ -446,7 +446,7 @@ mod tests {
 
   #[test]
   fn test_new() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
@@ -456,7 +456,7 @@ mod tests {
 
   #[test]
   fn test_new_with_network() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let did: IotaDID = IotaDID::new_with_network(key.public().as_ref(), "foo").unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -466,7 +466,7 @@ mod tests {
 
   #[test]
   fn test_normalize() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     // An IotaDID with "main" as the network can be normalized ("main" removed)
@@ -477,7 +477,7 @@ mod tests {
 
   #[test]
   fn test_setter() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
     let mut did_url: IotaDIDUrl = did.into_url();
 

@@ -70,7 +70,7 @@ impl TryMethod for MockObject {
 #[test]
 fn test_sign_verify_data_ed25519() {
   for method_data_base in [MethodData::new_base58, MethodData::new_multibase] {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let controller: CoreDID = "did:example:1234".parse().unwrap();
     let public_key = key.public().as_ref().to_vec();
 
@@ -148,7 +148,7 @@ fn test_sign_verify_data_merkle_key_ed25519_sha256() {
 // ===========================================================================
 
 fn setup() -> (KeyPair, CoreDocument) {
-  let key: KeyPair = KeyPair::new_ed25519().unwrap();
+  let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let controller: CoreDID = "did:example:1234".parse().unwrap();
   let public_key = key.public().as_ref().to_vec();
 

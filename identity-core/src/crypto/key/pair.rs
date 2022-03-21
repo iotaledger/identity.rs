@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::keys::x25519;
 use std::convert::TryInto;
 
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
@@ -27,12 +27,6 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-  /// Creates a new [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`].
-  // TODO: remove, redundant.
-  pub fn new_ed25519() -> Result<Self> {
-    Self::new(KeyType::Ed25519)
-  }
-
   /// Creates a new [`KeyPair`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType) -> Result<Self> {
     let (public, private): (PublicKey, PrivateKey) = match type_ {
@@ -128,8 +122,16 @@ mod tests {
 
   #[test]
   fn test_new_ed25519() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     assert_eq!(keypair.type_(), KeyType::Ed25519);
+    assert_eq!(keypair.public().as_ref().len(), 32);
+    assert_eq!(keypair.private().as_ref().len(), 32);
+  }
+
+  #[test]
+  fn test_new_x25519() {
+    let keypair: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
+    assert_eq!(keypair.type_(), KeyType::X25519);
     assert_eq!(keypair.public().as_ref().len(), 32);
     assert_eq!(keypair.private().as_ref().len(), 32);
   }

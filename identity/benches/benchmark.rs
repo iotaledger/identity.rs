@@ -34,7 +34,7 @@ fn generate_did(keypair: &KeyPair) {
 }
 
 fn bench_generate_signed_document(c: &mut Criterion) {
-  let keypair = KeyPair::new_ed25519().unwrap();
+  let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
 
   c.bench_function("generate signed document", |b| {
     b.iter(|| generate_signed_document(&keypair))
@@ -42,7 +42,7 @@ fn bench_generate_signed_document(c: &mut Criterion) {
 }
 
 fn bench_generate_did(c: &mut Criterion) {
-  let keypair = KeyPair::new_ed25519().unwrap();
+  let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
   c.bench_function("generate did", |b| b.iter(|| generate_did(&keypair)));
 }
 

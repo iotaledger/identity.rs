@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
     let mut int_doc_1 = document.clone();
 
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
-    let keys_1: KeyPair = KeyPair::new_ed25519()?;
+    let keys_1: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let method_1: IotaVerificationMethod = IotaVerificationMethod::new(int_doc_1.id().clone(), keys_1.type_(), keys_1.public(), "keys-1")?;
     assert!(int_doc_1.insert_method(method_1, MethodScope::VerificationMethod).is_ok());
 
@@ -176,7 +176,7 @@ async fn main() -> Result<()> {
     int_doc_2.remove_service(&int_doc_2.id().to_url().join("#linked-domain-1")?)?;
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
-    let keys_2: KeyPair = KeyPair::new_ed25519()?;
+    let keys_2: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let method_2: IotaVerificationMethod = IotaVerificationMethod::new(int_doc_2.id().clone(), keys_2.type_(), keys_2.public(), "keys-2")?;
     assert!(int_doc_2.insert_method(method_2, MethodScope::VerificationMethod).is_ok());
 

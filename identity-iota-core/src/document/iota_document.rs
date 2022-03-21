@@ -90,11 +90,11 @@ impl IotaDocument {
   /// Example:
   ///
   /// ```
-  /// # use identity_core::crypto::KeyPair;
+  /// # use identity_core::crypto::{KeyPair, KeyType};
   /// # use identity_iota_core::document::IotaDocument;
   /// #
   /// // Create a DID Document from a new Ed25519 keypair.
-  /// let keypair = KeyPair::new_ed25519().unwrap();
+  /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
   /// let document = IotaDocument::new(&keypair).unwrap();
   /// ```
   pub fn new(keypair: &KeyPair) -> Result<Self> {
@@ -116,11 +116,12 @@ impl IotaDocument {
   ///
   /// ```
   /// # use identity_core::crypto::KeyPair;
+  /// # use identity_core::crypto::KeyType;
   /// # use identity_iota_core::document::IotaDocument;
   /// # use identity_iota_core::tangle::Network;
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
-  /// let keypair = KeyPair::new_ed25519().unwrap();
+  /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
   /// let document = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key")).unwrap();
   /// assert_eq!(document.id().network_str(), "dev");
   /// assert_eq!(
@@ -1578,13 +1579,13 @@ mod tests {
 
   #[test]
   fn test_document_equality() {
-    let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let original_doc: IotaDocument = IotaDocument::new_with_options(&keypair1, None, Some("test-0")).unwrap();
 
     let mut doc1 = original_doc.clone();
 
     // Update the key material of the existing verification method test-0.
-    let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
@@ -1600,7 +1601,7 @@ mod tests {
     assert_ne!(original_doc, doc1);
 
     let mut doc2 = doc1.clone();
-    let keypair3: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let method3: IotaVerificationMethod =
       IotaVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 

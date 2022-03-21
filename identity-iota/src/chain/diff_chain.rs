@@ -286,7 +286,7 @@ mod tests {
   use super::*;
 
   fn create_document() -> (ResolvedIotaDocument, KeyPair) {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(

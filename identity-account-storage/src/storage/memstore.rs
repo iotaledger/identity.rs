@@ -80,7 +80,7 @@ impl Storage for MemStore {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        let keypair: KeyPair = KeyPair::new_ed25519()?;
+        let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
         let public: PublicKey = keypair.public().clone();
 
         vault.insert(location.clone(), keypair);

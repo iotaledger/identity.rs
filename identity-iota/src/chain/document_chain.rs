@@ -186,7 +186,7 @@ mod test {
     // Create Initial Document
     // =========================================================================
     {
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
       document
         .sign_self(
@@ -216,7 +216,7 @@ mod test {
       new.integration_message_id = new_integration_message_id;
 
       // Replace the capability invocation signing key (one step key rotation).
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
         .id(chain.id().to_url().join("#key-2").unwrap())
         .controller(chain.id().clone())
@@ -458,7 +458,7 @@ mod test {
   }
 
   fn create_initial_document() -> (ResolvedIotaDocument, KeyPair) {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(

@@ -45,7 +45,7 @@ pub async fn main() -> Result<()> {
     .await?;
 
   // Generate a new Ed25519 public/private key pair.
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
   // Create a DID with the network set explicitly.
   let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;

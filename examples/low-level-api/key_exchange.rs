@@ -27,7 +27,7 @@ pub async fn run() -> Result<()> {
   // Alice creates and publishes their DID Document (see create_did and manipulate_did examples).
   let (alice_did, alice_x25519): (IotaDID, KeyPair) = {
     // Create a DID Document.
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let mut document: IotaDocument = IotaDocument::new(&keypair)?;
 
     // Insert a new X25519 KeyAgreement verification method.
@@ -45,7 +45,7 @@ pub async fn run() -> Result<()> {
   // Bob creates and publishes their DID Document (see create_did and manipulate_did examples).
   let (bob_did, bob_x25519): (IotaDID, KeyPair) = {
     // Create a DID Document.
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let mut document: IotaDocument = IotaDocument::new(&keypair)?;
 
     // Insert a new X25519 KeyAgreement verification method.
