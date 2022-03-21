@@ -1,5 +1,38 @@
 # Changelog
 
+## [v0.5.0-dev.5](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.5) (2022-03-21)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.4...v0.5.0-dev.5)
+ 
+This release introduces a breaking change to the proof field of DID Documents created by versions `v0.5.0-dev.1` through `v0.5.0-dev.4`, making all prior documents incompatible. The main feature of this release is the introduction of WebAssembly (Wasm) bindings for the high-level `Account` API for Javascript/Typescript in both Node.js and the browser. This includes Stronghold storage support but only for Node.js, as it was determined that compiling Stronghold to Wasm for private key storage in the browser would not be sufficiently secure.
+
+### Changed
+
+- Move DID Document proof outside metadata [\#728](https://github.com/iotaledger/identity.rs/pull/728)
+- Add separate `identity-iota-core`, `identity-account-storage` crates [\#693](https://github.com/iotaledger/identity.rs/pull/693)
+- Change `IotaDocument::verify_document` from a static function to a method [\#675](https://github.com/iotaledger/identity.rs/pull/675)
+- Make Wasm support dependent on `target_arch` rather than feature [\#666](https://github.com/iotaledger/identity.rs/pull/666)
+- Refactor `CoreDocument`, `VerificationMethod`, `Service` to use generic DID [\#655](https://github.com/iotaledger/identity.rs/pull/655)
+- Overhaul `CredentialValidator`, add `PresentationValidator` [\#599](https://github.com/iotaledger/identity.rs/pull/599)
+- Replace `ClientMap` with new `Resolver` [\#594](https://github.com/iotaledger/identity.rs/pull/594)
+
+### Added
+
+- Generify `Account::client` over `Rc`, `Arc` [\#707](https://github.com/iotaledger/identity.rs/pull/707)
+- Update Stronghold [\#691](https://github.com/iotaledger/identity.rs/pull/691)
+- Add `Duration` for `Timestamp` arithmetic [\#684](https://github.com/iotaledger/identity.rs/pull/684)
+- Add `Client` fallback to local PoW option [\#682](https://github.com/iotaledger/identity.rs/pull/682)
+- Set `controller`, `alsoKnownAs` fields from Account [\#658](https://github.com/iotaledger/identity.rs/pull/658)
+
+### Patch
+
+- Update iota.rs to include timeout bugfix [\#712](https://github.com/iotaledger/identity.rs/pull/712)
+
+### Removed
+
+- Remove `publicKeyJwk` [\#732](https://github.com/iotaledger/identity.rs/pull/732)
+- Remove `DIDLease` account feature [\#664](https://github.com/iotaledger/identity.rs/pull/664)
+
 ## [v0.5.0-dev.4](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.4) (2022-02-14)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.3...v0.5.0-dev.4)

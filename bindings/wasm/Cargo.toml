@@ -27,7 +27,7 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity]
-version = "=0.5.0-dev.4"
+version = "=0.5.0-dev.5"
 path = "../../identity"
 default-features = false
 features = ["account", "bindings-derive"]
