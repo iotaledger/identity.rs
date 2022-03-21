@@ -15,8 +15,8 @@ use crate::crypto::WasmKeyType;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
 use crate::did::WasmMethodData;
-use crate::error::Result;
 use crate::error::wasm_error;
+use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
@@ -29,7 +29,12 @@ impl WasmVerificationMethod {
   /// Base58-BTC encoded public key.
   // TODO: refactor public/private keys to use UInt8Array instead?
   #[wasm_bindgen(constructor)]
-  pub fn new(did: &WasmDID, key_type: WasmKeyType, public_key: String, fragment: String) -> Result<WasmVerificationMethod> {
+  pub fn new(
+    did: &WasmDID,
+    key_type: WasmKeyType,
+    public_key: String,
+    fragment: String,
+  ) -> Result<WasmVerificationMethod> {
     let public_key: PublicKey = PublicKey::from(decode_b58(&public_key).wasm_result()?);
     IotaVerificationMethod::new(did.0.clone(), key_type.into(), &public_key, &fragment)
       .map(Self)

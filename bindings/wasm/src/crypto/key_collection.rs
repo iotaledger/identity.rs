@@ -12,8 +12,8 @@ use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::WasmKeyType;
 use crate::crypto::WasmKeyPair;
+use crate::crypto::WasmKeyType;
 use crate::error::Result;
 use crate::error::WasmResult;
 

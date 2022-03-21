@@ -23,6 +23,8 @@ impl WasmX25519 {
   // Named privateKey to avoid reserved keyword private in Javascript.
   pub fn key_exchange(privateKey: String, publicKey: Vec<u8>) -> Result<Vec<u8>> {
     let private: Vec<u8> = decode_b58(&privateKey).wasm_result()?;
-    X25519::key_exchange(&private, &publicKey).map(|bytes| bytes.to_vec()).wasm_result()
+    X25519::key_exchange(&private, &publicKey)
+      .map(|bytes| bytes.to_vec())
+      .wasm_result()
   }
 }
