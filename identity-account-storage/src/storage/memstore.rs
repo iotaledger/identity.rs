@@ -85,8 +85,6 @@ impl Storage for MemStore {
 
     vault.insert(location.clone(), keypair);
 
-    log::debug!("generated key at {location}");
-
     Ok(())
   }
 
@@ -108,8 +106,6 @@ impl Storage for MemStore {
 
         let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key, private_key));
 
-        log::debug!("inserted key at {location}");
-
         vault.insert(location.to_owned(), keypair);
 
         Ok(())
@@ -119,8 +115,6 @@ impl Storage for MemStore {
 
   async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-
-    log::debug!("moving key from {source} to {target}");
 
     if let Some(vault) = vaults.get_mut(account_id) {
       match vault.remove(source) {
@@ -150,8 +144,6 @@ impl Storage for MemStore {
     let vault: &MemVault = vaults.get(account_id).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
-    log::debug!("retrieving pub key for location {location}");
-
     Ok(keypair.public().clone())
   }
 
@@ -168,8 +160,6 @@ impl Storage for MemStore {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(account_id).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
-
-    log::debug!("signing with {location}");
 
     match location.key_type {
       KeyType::Ed25519 => {

@@ -39,6 +39,14 @@ use crate::types::MethodSecret;
 use crate::updates::Update;
 use crate::updates::UpdateError;
 
+// There's a bug in our stronghold wrapper that makes multiple `Stronghold`s not work concurrently,
+// so we're using a static instance as a temporary workaround, until we've upgraded.
+static TEST_STRONGHOLD: once_cell::sync::Lazy<Arc<dyn Storage>> = once_cell::sync::Lazy::new(|| {
+  let temp_file = temporary_random_path();
+  let stronghold: Stronghold = futures::executor::block_on(Stronghold::new(&temp_file, "password", None)).unwrap();
+  Arc::new(stronghold)
+});
+
 async fn account_setup(network: Network) -> AccountSetup {
   AccountSetup::new(
     Arc::new(MemStore::new()),
@@ -80,17 +88,11 @@ fn temporary_random_path() -> String {
       .collect::<String>(),
   );
   file.set_extension("stronghold");
-  let path = file.to_str().unwrap().to_owned();
-  println!("temp path: {path}");
-  path
+  file.to_str().unwrap().to_owned()
 }
 
 async fn storages() -> [Arc<dyn Storage>; 2] {
-  let temp_file = temporary_random_path();
-  [
-    Arc::new(MemStore::new()),
-    Arc::new(Stronghold::new(&temp_file, "password", None).await.unwrap()),
-  ]
+  [Arc::new(MemStore::new()), Arc::clone(&TEST_STRONGHOLD)]
 }
 
 #[tokio::test]

@@ -101,8 +101,6 @@ impl Storage for Stronghold {
   async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(account_id);
 
-    log::debug!("generating key @ {location}");
-
     match location.key_type {
       KeyType::Ed25519 => generate_ed25519(&vault, location).await?,
     }
@@ -113,8 +111,6 @@ impl Storage for Stronghold {
   // TODO: Let take reference to account id?
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let vault = self.vault(account_id);
-
-    log::debug!("inserting key @ {location}");
 
     let stronghold_location: Location = location.into();
 
@@ -127,8 +123,6 @@ impl Storage for Stronghold {
 
   async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(account_id);
-
-    log::debug!("moving key from {source} to {target}");
 
     move_key(&vault, source.into(), target.into()).await
   }
