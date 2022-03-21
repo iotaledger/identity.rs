@@ -38,13 +38,13 @@ export class MemStore implements Storage {
         if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
             throw new Error('Unsuported Method')
         }
-        const keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-        const publicKey: string = keyPair.public();
+        const keyPair = new KeyPair(KeyType.Ed25519);
+        const publicKey = keyPair.public();
         const vault = this._vaults.get(did.toString());
         if (vault) {
             vault.set(keyLocation.toString(), keyPair);
         } else {
-            const newVault: Map<string, KeyPair> = new Map([[keyLocation.toString(), keyPair]]);
+            const newVault = new Map([[keyLocation.toString(), keyPair]]);
             this._vaults.set(did.toString(), newVault);
         }
         return publicKey
@@ -54,14 +54,14 @@ export class MemStore implements Storage {
         if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
             throw new Error('Unsuported Method')
         }
-        const secretKey: Ed25519PrivateKey = Ed25519PrivateKey.fromBase58(privateKey);
-        const publicKey: string = secretKey.publicKey();
-        const keyPair: KeyPair = KeyPair.fromBase58(KeyType.Ed25519, privateKey, publicKey);
+        const secretKey = Ed25519PrivateKey.fromBase58(privateKey);
+        const publicKey = secretKey.publicKey();
+        const keyPair = KeyPair.fromBase58(KeyType.Ed25519, privateKey, publicKey);
         const vault = this._vaults.get(did.toString());
         if (vault) {
             vault.set(keyLocation.toString(), keyPair);
         } else {
-            const newVault: Map<string, KeyPair> = new Map([[keyLocation.toString(), keyPair]]);
+            const newVault = new Map([[keyLocation.toString(), keyPair]]);
             this._vaults.set(did.toString(), newVault);
         }
         return publicKey
@@ -106,7 +106,7 @@ export class MemStore implements Storage {
         if (keyLocation.method().toString() !== MethodType.Ed25519VerificationKey2018().toString()) {
             throw new Error('Unsuported Method')
         }
-        const signature: Uint8Array = Ed25519.sign(data, keyPair.private());
+        const signature = Ed25519.sign(data, keyPair.private());
         return new Signature(keyPair.public(), signature)
     }
 
