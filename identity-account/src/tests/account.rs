@@ -303,7 +303,7 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
   // INVALID: try sign with a CapabilityInvocation method with an invalid MethodType.
   assert!(matches!(
     account
-      .publish_with_options(PublishOptions::default().sign_with(auth_method))
+      .publish_with_options(PublishOptions::default().sign_with(invalid_signing_method))
       .await
       .unwrap_err(),
     Error::IotaCoreError(identity_iota_core::Error::InvalidDocumentSigningMethodType),

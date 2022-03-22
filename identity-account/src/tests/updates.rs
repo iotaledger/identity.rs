@@ -117,7 +117,7 @@ async fn test_create_identity_network() -> Result<()> {
     ),
     IdentitySetup::default(),
   )
-  .await?;
+    .await?;
   assert_eq!(account.did().network_str(), "custom");
 
   Ok(())
@@ -169,54 +169,54 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+  for method_type in [MethodType::Ed25519VerificationKey2018, MethodType::X25519KeyAgreementKey2019] {
+    let mut account: Account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let initial_state: IdentityState = account.state().to_owned();
-  let method_type = MethodType::Ed25519VerificationKey2018;
+    let initial_state: IdentityState = account.state().to_owned();
 
-  let fragment = "key-1".to_owned();
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: None,
-    type_: method_type,
-    fragment: fragment.clone(),
-  };
+    let fragment = "key-1".to_owned();
+    let update: Update = Update::CreateMethod {
+      scope: MethodScope::default(),
+      method_secret: None,
+      type_: method_type,
+      fragment: fragment.clone(),
+    };
 
-  account.process_update(update).await?;
+    account.process_update(update).await?;
 
-  let state: &IdentityState = account.state();
+    let state: &IdentityState = account.state();
 
-  // Ensure existence and key type
-  assert_eq!(state.document().resolve_method(&fragment).unwrap().type_(), method_type);
+    // Ensure existence and method type
+    assert_eq!(state.document().resolve_method(&fragment).unwrap().type_(), method_type);
 
-  // Still only the default relationship.
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().core_document().methods().count(), 2);
+    // Still only the default relationship.
+    assert_eq!(state.document().core_document().verification_relationships().count(), 1);
+    assert_eq!(state.document().core_document().methods().count(), 2);
 
-  let location = state.method_location(method_type, fragment.clone()).unwrap();
+    let location = state.method_location(method_type, fragment.clone()).unwrap();
 
-  // Ensure we can retrieve the correct location for the key.
-  assert_eq!(
-    location,
-    KeyLocation::new(
-      method_type,
-      fragment,
-      // `create_identity` calls publish, which increments the generation.
-      Generation::new().try_increment().unwrap(),
-    )
-  );
+    // Ensure we can retrieve the correct location for the key.
+    assert_eq!(
+      location,
+      KeyLocation::new(
+        method_type,
+        fragment,
+        // `create_identity` calls publish, which increments the generation.
+        Generation::new().try_increment().unwrap(),
+      )
+    );
 
-  // Ensure the key exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+    // Ensure the key exists in storage.
+    assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
-  // Ensure `created` wasn't updated.
-  assert_eq!(
-    initial_state.document().metadata.created,
-    state.document().metadata.created
-  );
-  // Ensure `updated` was recently set.
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-
+    // Ensure `created` wasn't updated.
+    assert_eq!(
+      initial_state.document().metadata.created,
+      state.document().metadata.created
+    );
+    // Ensure `updated` was recently set.
+    assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  }
   Ok(())
 }
 
