@@ -201,7 +201,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn purge(&self, _account_id: &AccountId) -> Result<()> {
+  async fn purge(&self, did: &IotaDID) -> Result<()> {
     // TODO: Will be re-implemented later with the key location refactor
     todo!("stronghold purge not implemented");
   }
@@ -245,6 +245,24 @@ impl Storage for Stronghold {
     std::mem::drop(index_lock);
 
     Ok(lookup)
+  }
+
+  async fn index(&self) -> Result<Vec<IotaDID>> {
+    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
+
+    let store: Store<'_> = self.store(INDEX_CLIENT_PATH);
+
+    let dids: Vec<IotaDID> = match store.get(INDEX_CLIENT_PATH).await? {
+      Some(index_vec) => {
+        let index: HashMap<IotaDID, AccountId> = HashMap::from_json_slice(&index_vec)?;
+        index.keys().cloned().collect()
+      }
+      None => Vec::new(),
+    };
+
+    std::mem::drop(index_lock);
+
+    Ok(dids)
   }
 }
 

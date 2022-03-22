@@ -76,7 +76,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn set_document(&self, account_id: &AccountId, state: &IotaDocument) -> Result<()>;
 
   /// Removes the keys and any state for the identity specified by `did`.
-  async fn purge(&self, account_id: &AccountId) -> Result<()>;
+  /// This operation is idempotent: it does not fail if the given `did` does not exist.
+  async fn purge(&self, did: &IotaDID) -> Result<()>;
 
   /// Adds the did -> account_id mapping to the index.
   ///
@@ -86,4 +87,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   // Looks up the [`AccountId`] of the given `did`.
   async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>>;
+
+  // Retrieve the list of DIDs stored in the index.
+  async fn index(&self) -> Result<Vec<IotaDID>>;
 }

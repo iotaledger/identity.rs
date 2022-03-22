@@ -241,7 +241,7 @@ where
   /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.storage().deref().purge(&self.account_id).await?;
+    self.storage().purge(self.did()).await?;
 
     // Write the changes to disk
     self.save(false).await?;

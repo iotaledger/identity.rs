@@ -30,7 +30,6 @@ pub enum Error {
   /// Caused by errors from the [identity_iota_core] crate.
   #[error(transparent)]
   IotaCoreError(#[from] identity_iota_core::Error),
-
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,

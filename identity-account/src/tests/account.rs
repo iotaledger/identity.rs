@@ -16,6 +16,7 @@ use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::MessageId;
@@ -518,4 +519,42 @@ async fn test_assert_account_futures_are_send() -> Result<()> {
   assert_future_send(account.update_identity().create_method().apply());
 
   Ok(())
+}
+
+#[tokio::test]
+async fn test_storage_index() {
+  let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
+
+  let account1: Account = builder.create_identity(IdentitySetup::default()).await.unwrap();
+
+  let index: Vec<IotaDID> = account1.storage().index().await.unwrap();
+
+  assert_eq!(index.len(), 1);
+  assert!(index.contains(account1.did()));
+
+  let account2: Account = builder.create_identity(IdentitySetup::default()).await.unwrap();
+
+  let index: Vec<IotaDID> = account2.storage().index().await.unwrap();
+
+  assert_eq!(index.len(), 2);
+  assert!(index.contains(account1.did()));
+  assert!(index.contains(account2.did()));
+
+  assert_eq!(
+    account2.storage().index_get(account1.did()).await.unwrap(),
+    Some(account1.account_id)
+  );
+  assert_eq!(
+    account2.storage().index_get(account2.did()).await.unwrap(),
+    Some(account2.account_id)
+  );
+
+  let account1_did: IotaDID = account1.did().to_owned();
+  account1.delete_identity().await.unwrap();
+
+  assert!(account2.storage().index_get(&account1_did).await.unwrap().is_none());
+  assert_eq!(
+    account2.storage().index_get(account2.did()).await.unwrap(),
+    Some(account2.account_id)
+  );
 }

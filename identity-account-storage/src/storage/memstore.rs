@@ -192,10 +192,14 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn purge(&self, account_id: &AccountId) -> Result<()> {
-    let _ = self.documents.write()?.remove(account_id);
-    let _ = self.vaults.write()?.remove(account_id);
-    let _ = self.chain_states.write()?.remove(account_id);
+  async fn purge(&self, did: &IotaDID) -> Result<()> {
+    if let Some(account_id) = self.index_get(did).await? {
+      let _ = self.documents.write()?.remove(&account_id);
+      let _ = self.vaults.write()?.remove(&account_id);
+      let _ = self.chain_states.write()?.remove(&account_id);
+
+      self.index.write()?.remove(did);
+    }
 
     Ok(())
   }
@@ -212,6 +216,10 @@ impl Storage for MemStore {
     let index = self.index.read()?;
 
     Ok(index.get(did).cloned())
+  }
+
+  async fn index(&self) -> Result<Vec<IotaDID>> {
+    Ok(self.index.read()?.keys().cloned().collect())
   }
 }
 
