@@ -22,7 +22,7 @@ A government (the _Issuer_) issues a passport asserting citizenship (the _Verifi
 
 **Subject:** An entity about which claims are made – Alice (the _Subject_) is a citizen of this country.
 
-**Holder:** An entity which possesses verifiable credentials – Alice (the _Holder_) possesses the passport (the _VC_).
+**Holder:** An entity which owns verifiable credentials – Alice (the _Holder_) owns the passport (the _VC_).
 
 **Issuer:** An entity which asserts claims about a subject – The governing body (the _Issuer_), which is trusted, issues Alice a passport.
 
