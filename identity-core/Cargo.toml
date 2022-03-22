@@ -1,6 +1,6 @@
 [package]
 name = "identity-core"
-version = "0.5.0-dev.4"
+version = "0.5.0-dev.5"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -14,7 +14,7 @@ description = "The core traits and types for the identity-rs library."
 base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 hex = { version = "0.4", default-features = false }
-identity-diff = { version = "=0.5.0-dev.4", path = "../identity-diff", default-features = false }
+identity-diff = { version = "=0.5.0-dev.5", path = "../identity-diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 roaring = { version = "0.7", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }

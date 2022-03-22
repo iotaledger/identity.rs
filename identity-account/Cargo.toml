@@ -1,6 +1,6 @@
 [package]
 name = "identity-account"
-version = "0.5.0-dev.4"
+version = "0.5.0-dev.5"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -11,12 +11,12 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
 
 [dependencies]
-identity-account-storage = { version = "=0.5.0-dev.4", path = "../identity-account-storage", default-features = false }
-identity-core = { version = "=0.5.0-dev.4", path = "../identity-core" }
-identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
-identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
-identity-iota = { version = "=0.5.0-dev.4", path = "../identity-iota", default-features = false }
-identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
+identity-account-storage = { version = "=0.5.0-dev.5", path = "../identity-account-storage", default-features = false }
+identity-core = { version = "=0.5.0-dev.5", path = "../identity-core" }
+identity-credential = { version = "=0.5.0-dev.5", path = "../identity-credential" }
+identity-did = { version = "=0.5.0-dev.5", path = "../identity-did" }
+identity-iota = { version = "=0.5.0-dev.5", path = "../identity-iota", default-features = false }
+identity-iota-core = { version = "=0.5.0-dev.5", path = "../identity-iota-core", default-features = false }
 log = { version = "0.4", default-features = false }
 paste = { version = "1.0" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }

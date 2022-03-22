@@ -30,8 +30,6 @@ export class MemStore implements Storage {
         this._vaults = new Map();
     }
 
-    public async setPassword(_encryptionKey: Uint8Array) {}
-
     public async flushChanges() {}
 
     public async keyNew(did: DID, keyLocation: KeyLocation) {

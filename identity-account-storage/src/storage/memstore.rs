@@ -27,7 +27,6 @@ use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 use crate::types::Signature;
-use crate::utils::EncryptionKey;
 use crate::utils::Shared;
 
 type MemVault = HashMap<KeyLocation, KeyPair>;
@@ -65,10 +64,6 @@ impl MemStore {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
-  async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
-    Ok(())
-  }
-
   async fn flush_changes(&self) -> Result<()> {
     Ok(())
   }
