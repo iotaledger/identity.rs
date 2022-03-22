@@ -11,7 +11,6 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -548,7 +547,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: Some(MethodSecret::Ed25519(private_key)),
-    type_: MethodType::MerkleKeyCollection2021,
+    type_: MethodType::X25519KeyAgreementKey2019,
     fragment: "key-1".to_owned(),
   };
 
@@ -556,11 +555,10 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
-  let key_collection = KeyCollection::new_ed25519(4).unwrap();
-
+  let keypair: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::MerkleKeyCollection(key_collection)),
+    method_secret: Some(MethodSecret::X25519(keypair.private().clone())),
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-2".to_owned(),
   };

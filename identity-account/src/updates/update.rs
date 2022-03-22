@@ -346,16 +346,6 @@ async fn insert_method_secret(
 
       store.key_insert(did, location, private_key).await.map_err(Into::into)
     }
-    MethodSecret::MerkleKeyCollection(_) => {
-      ensure!(
-        matches!(method_type, MethodType::MerkleKeyCollection2021),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
-        )
-      );
-
-      todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
-    }
   }
 }
 

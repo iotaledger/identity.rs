@@ -90,9 +90,6 @@ impl Storage for MemStore {
 
         Ok(public)
       }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_new] Handle MerkleKeyCollection2021")
-      }
     }
   }
 
@@ -128,9 +125,6 @@ impl Storage for MemStore {
         vault.insert(location.clone(), keypair);
 
         Ok(public_key)
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_insert] Handle MerkleKeyCollection2021")
       }
     }
   }
@@ -179,9 +173,6 @@ impl Storage for MemStore {
       }
       MethodType::X25519KeyAgreementKey2019 => {
         return Err(identity_did::Error::InvalidMethodType.into());
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")
       }
     }
   }

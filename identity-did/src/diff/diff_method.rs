@@ -284,14 +284,14 @@ mod test {
   fn test_type() {
     let method = test_method();
     let mut new = method.clone();
-    *new.type_mut() = MethodType::MerkleKeyCollection2021;
+    *new.type_mut() = MethodType::X25519KeyAgreementKey2019;
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
     assert!(diff.data.is_none());
     assert!(diff.properties.is_none());
-    assert_eq!(diff.type_, Some(MethodType::MerkleKeyCollection2021));
+    assert_eq!(diff.type_, Some(MethodType::X25519KeyAgreementKey2019));
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -372,7 +372,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add type_
-    *new.type_mut() = MethodType::MerkleKeyCollection2021;
+    *new.type_mut() = MethodType::X25519KeyAgreementKey2019;
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());

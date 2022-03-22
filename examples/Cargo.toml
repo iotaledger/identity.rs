@@ -71,10 +71,6 @@ name = "key_exchange"
 path = "low-level-api/key_exchange.rs"
 
 [[example]]
-name = "merkle_key"
-path = "low-level-api/merkle_key.rs"
-
-[[example]]
 name = "resolution"
 path = "low-level-api/resolution.rs"
 
