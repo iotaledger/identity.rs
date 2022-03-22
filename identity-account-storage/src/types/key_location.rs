@@ -58,7 +58,7 @@ impl Display for KeyLocation {
       "({}:{}:{})",
       self.generation,
       self.fragment,
-      self.method.as_u32()
+      self.method
     ))
   }
 }
