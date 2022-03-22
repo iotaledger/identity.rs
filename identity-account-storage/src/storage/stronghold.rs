@@ -87,11 +87,6 @@ impl Stronghold {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
-  async fn flush_changes(&self) -> Result<()> {
-    self.snapshot.save().await?;
-    Ok(())
-  }
-
   async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(account_id);
 
@@ -269,6 +264,11 @@ impl Storage for Stronghold {
     std::mem::drop(index_lock);
 
     Ok(dids)
+  }
+
+  async fn flush_changes(&self) -> Result<()> {
+    self.snapshot.save().await?;
+    Ok(())
   }
 }
 

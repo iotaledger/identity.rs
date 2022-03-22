@@ -68,10 +68,6 @@ impl MemStore {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
-  async fn flush_changes(&self) -> Result<()> {
-    Ok(())
-  }
-
   async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(*account_id).or_default();
@@ -220,6 +216,10 @@ impl Storage for MemStore {
 
   async fn index(&self) -> Result<Vec<IotaDID>> {
     Ok(self.index.read()?.keys().cloned().collect())
+  }
+
+  async fn flush_changes(&self) -> Result<()> {
+    Ok(())
   }
 }
 

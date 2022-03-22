@@ -31,36 +31,50 @@ mod storage_sub_trait {
   impl<S: Send + Sync + super::Storage> StorageSendSyncMaybe for S {}
 }
 
-/// An interface for Identity Account storage implementations.
+/// An interface for Account storage implementations.
 ///
-/// See [MemStore][crate::storage::MemStore] for a test/example implementation.
+/// The [`Storage`] interface is used for secure operations on keys, such as generation and signing,
+/// as well as key-value like storage of data structures, such as DID documents.
+///
+/// This interface works with [`AccountId`] and [`IotaDID`] as the top-level identifiers.
+/// `AccountId` is intended as a partition-key, i.e. everything related to the account
+/// can be stored in its own partition. Keys are identified by [`KeyLocation`]s in that partition.
+/// An `IotaDID` can be resolved to an `AccountId` using an index, which is a global data structure.
+/// Therefore, index operations need to be carefully synchronized per [`Storage`] instance, while other operations
+/// only need to be synchronized within the same `AccountId`.
+/// For example, two `key_generate` operations with different account ids can be executed concurrently.
+///
+/// See [`MemStore`][crate::storage::MemStore] for a test/example implementation.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
-  /// Write any unsaved changes to disk.
-  async fn flush_changes(&self) -> Result<()>;
-
   /// Creates a new keypair for the given `account_id` at the given `location`.
+  ///
+  /// If a key at `location` exists, it is overwritten.
   async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()>;
 
   /// Inserts a private key at the specified `location`.
+  ///
+  /// If a key at `location` exists, it is overwritten.
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
 
-  /// Moves a key from `source` to `target` within the given `account_id`.
+  /// Moves a key from `source` to `target`.
   ///
-  /// The key at the source location will be removed. If a key at the target exists, it will be overwritten.
+  /// The key at the source location is removed. If a key at the target exists, it is overwritten.
   async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()>;
 
-  /// Retrieves the public key at the specified `location`.
+  /// Retrieves the public key from `location`.
   async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey>;
 
-  /// Deletes the keypair specified by `location`.
+  /// Deletes the key at `location`.
+  ///
+  /// This operation is idempotent: it does not fail if the key does not exist.
   async fn key_del(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()>;
 
   /// Signs `data` with the private key at the specified `location`.
   async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
 
-  /// Returns `true` if a keypair exists at the specified `location`.
+  /// Returns `true` if a key exists at the specified `location`.
   async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool>;
 
   /// Returns the chain state of the identity specified by `did`.
@@ -76,6 +90,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn set_document(&self, account_id: &AccountId, state: &IotaDocument) -> Result<()>;
 
   /// Removes the keys and any state for the identity specified by `did`.
+  ///
   /// This operation is idempotent: it does not fail if the given `did` does not exist.
   async fn purge(&self, did: &IotaDID) -> Result<()>;
 
@@ -90,4 +105,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   // Retrieve the list of DIDs stored in the index.
   async fn index(&self) -> Result<Vec<IotaDID>>;
+
+  /// Write any unsaved changes to disk.
+  async fn flush_changes(&self) -> Result<()>;
 }
