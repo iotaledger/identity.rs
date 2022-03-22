@@ -54,7 +54,11 @@ mod tests {
 
   #[test]
   fn test_method_type_serde() {
-    for method_type in [MethodType::Ed25519VerificationKey2018, MethodType::X25519KeyAgreementKey2019, MethodType::MerkleKeyCollection2021] {
+    for method_type in [
+      MethodType::Ed25519VerificationKey2018,
+      MethodType::X25519KeyAgreementKey2019,
+      MethodType::MerkleKeyCollection2021,
+    ] {
       let ser: Value = serde_json::to_value(&method_type).unwrap();
       assert_eq!(ser.as_str().unwrap(), method_type.as_str());
       let de: MethodType = serde_json::from_value(ser.clone()).unwrap();

@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::str::FromStr;
 use core::fmt::Display;
 use core::fmt::Formatter;
+use core::str::FromStr;
 
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
@@ -64,8 +64,8 @@ impl Display for KeyType {
 
 #[cfg(test)]
 mod tests {
-  use serde_json::Value;
   use super::*;
+  use serde_json::Value;
 
   #[test]
   fn test_key_type_serde() {

@@ -12,6 +12,7 @@ use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::error::Result;
+use crate::utils::ed25519_private_try_from_bytes;
 use crate::utils::generate_ed25519_keypair;
 
 /// A convenient type for representing a pair of cryptographic keys.
@@ -51,10 +52,7 @@ impl KeyPair {
   pub fn try_from_private_key_bytes(key_type: KeyType, private_key_bytes: &[u8]) -> Result<Self> {
     let (public, private) = match key_type {
       KeyType::Ed25519 => {
-        let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
-          .try_into()
-          .map_err(|_| crypto::Error::PrivateKeyError)?; // TODO: improve error message
-        let private_key: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
+        let private_key: ed25519::SecretKey = ed25519_private_try_from_bytes(private_key_bytes)?;
         let public_key: ed25519::PublicKey = private_key.public_key();
 
         let private: PrivateKey = private_key.to_bytes().to_vec().into();
@@ -64,7 +62,7 @@ impl KeyPair {
       KeyType::X25519 => {
         let private_key_bytes: [u8; x25519::SECRET_KEY_LENGTH] = private_key_bytes
           .try_into()
-          .map_err(|_| crypto::Error::PrivateKeyError)?; // TODO: improve error message
+          .map_err(|_| crate::Error::InvalidKeyLength(private_key_bytes.len(), ed25519::SECRET_KEY_LENGTH))?;
         let private_key: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
         let public_key: x25519::PublicKey = private_key.public_key();
 

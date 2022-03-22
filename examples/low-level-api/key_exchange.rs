@@ -5,7 +5,6 @@
 //!
 //! cargo run --example key_exchange
 
-use identity::crypto::KeyExchange;
 use identity::crypto::KeyType;
 use identity::crypto::X25519;
 use identity::did::MethodScope;

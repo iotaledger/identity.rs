@@ -3,14 +3,13 @@
 
 //! Cryptographic Utilities
 
-pub use self::exchange::KeyExchange;
-pub use self::exchange::X25519;
 pub use self::key::KeyCollection;
 pub use self::key::KeyPair;
 pub use self::key::KeyRef;
 pub use self::key::KeyType;
 pub use self::key::PrivateKey;
 pub use self::key::PublicKey;
+pub use self::key::X25519;
 pub use self::proof::JcsEd25519;
 pub use self::signature::Ed25519;
 pub use self::signature::Named;
@@ -26,7 +25,6 @@ pub use self::signature::TrySignatureMut;
 pub use self::signature::Verifier;
 pub use self::signature::Verify;
 
-mod exchange;
 mod key;
 mod proof;
 mod signature;
