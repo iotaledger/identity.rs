@@ -40,12 +40,6 @@ pub enum Error {
   MethodMissingFragment,
 }
 
-#[doc(hidden)]
-pub trait PleaseDontMakeYourOwnResult<T> {
-  #[allow(clippy::wrong_self_convention)]
-  fn to_result(self) -> Result<T>;
-}
-
 impl From<identity_did::did::DIDError> for Error {
   fn from(error: identity_did::did::DIDError) -> Self {
     identity_did::Error::from(error).into()
