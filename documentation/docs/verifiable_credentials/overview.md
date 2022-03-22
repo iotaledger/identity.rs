@@ -36,7 +36,7 @@ For more information, you can check out the [Verifiable Credentials Data Model 1
 
 ### Verifiable Credentials in IOTA
 
-In the IOTA Identity framework, instead of a physical passport being given to Alice with the passport information being written into a centralized database owned by the government (TW Note: I'm not sure if this phrase inside the commas is necessary), Alice receives a digitally verifiable credential and the information required for verification in the future is written to the Tangle.
+In the IOTA Idenitity framework, Alice would receive a digitally verifiable credential rather than a physical passport. Rather than the passport information being written into a centralized database owned by the government for verfication, the digitial credential is (in the future) written to the Tangle.
 
 The first step in the creation and verification of a VC is to create a verifiable credential. This requires the subject and issuer (Alice and the government, respectively) to have DIDs published to the Tangle with a set of statements being asserted (that Alice has a passport). The issuer signs the credential with their private key and publishes the public key to the Tangle. In the future, a proof can be used by the verifiers to validate the authenticity of the credentials using the issuer's public key.
 

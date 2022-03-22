@@ -1,7 +1,7 @@
 ---
 title:  Wasm Cheat Sheet
 sidebar_label: Cheat Sheet
-description: IOTA Identity WASM Library Cheat Sheet.
+description: IOTA Identity Wasm Library Cheat Sheet.
 image: /img/Identity_icon.png
 keywords:
 - wasm
@@ -153,7 +153,7 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
 ```
 </details>
 
-### [Publish](https://wiki.iota.org/identity.rs/decentralized_identifiers/create)
+### [Publish](../../decentralized_identifiers/create.mdx)
 
 #### [Client.publishDocument(document)](api_reference#Client+publishDocument)
 

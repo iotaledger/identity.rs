@@ -29,7 +29,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 
 ### Development Release
 
-This version matches the `dev` branch of this repository. It has all the **latest features**, but it **may also have undocumented breaking changes**.
+This version matches the `dev` branch of this repository. It has the **latest features**, but it **may also have undocumented breaking changes**.
 
 ```rust
 [dependencies]

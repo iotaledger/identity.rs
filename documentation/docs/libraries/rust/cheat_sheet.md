@@ -32,7 +32,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 
 ### Development Release
 
-This version matches the `dev` branch of this repository. It has all the **latest features**, but it **may also have undocumented breaking changes**.
+This version matches the `dev` branch of this repository. It has the **latest features**, but it **may also have undocumented breaking changes**.
 
 ```rust
 [dependencies]
@@ -399,6 +399,6 @@ account.sign(did, "key-1", &mut credential).await?;
 
 ## Verifiable Presentations (VP)
 
-A Verifiable Presentation is the format that you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp.
+A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp.
 
 ### [Create](https://wiki.iota.org/identity.rs/verifiable_credentials/verifiable_presentations)

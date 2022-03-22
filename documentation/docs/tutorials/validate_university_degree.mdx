@@ -37,7 +37,7 @@ As described in the [Digital Identities Solution](https://www.iota.org/solutions
 
 |Term   | Definition    |
 |:---   |:---           |
-| [Decentralized Identifier (DID)](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) |A globally unique persistent identifier that does not require a centralized registration authority and is often either generated or registered cryptographically.|
+| [Decentralized Identifier (DID)](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) |A globally unique persistent identifier that does not require a centralized registration authority and is often generated or registered cryptographically.|
 | [DID Subject](https://www.w3.org/TR/did-core/#dfn-did-subjects)          |The entity identified by a DID and described by a DID document. Anything can be a DID subject: person, group, organization, physical thing, digital thing, logical thing, etc.  |
 | [DID Document](https://www.w3.org/TR/did-core/#dfn-did-documents)          |A set of data describing the DID subject, including mechanisms, such as cryptographic public keys, that the DID subject or a DID delegate can use to authenticate itself and prove its association with the DID.  |
 | [Verification Method](https://www.w3.org/TR/did-core/#dfn-verification-method)   |A set of parameters that can be used together with a process to independently verify a proof. For example, a cryptographic public key can be used as a verification method for a digital signature; in such usage, it verifies that the signer possessed the associated cryptographic private key. |
@@ -53,7 +53,6 @@ As described in the [Digital Identities Solution](https://www.iota.org/solutions
 ## Key Storage
 
 - In this tutorial, you will store the key pairs for every newly created or updated DID document in Weakhold.
-- Okay, okay, it is just a couple of JSON files in a folder, but it gets the job done (TW Note: remove or embrace the brevity?).
 - The files are stored in the [Weakhold Folder](https://github.com/adrian-grassl/iota-identity-tutorial/tree/master/weakhold) (such as ./weakhold/Alice.json).
 
 :::note This is not a proper key storage solution.
@@ -287,7 +286,7 @@ You could also revoke Alice's signature on the verifiable presentation by removi
 
 ### 11. **Verifier**: Verify Signatures Again
 
-The IOTA Foundation verifies Alice and the University's signatures again by checking the verifiable presentation and discovers that the University revoked her signature.
+The IOTA Foundation verifies Alice and the University's signatures again by checking the verifiable presentation and discovers that the University revoked its signature.
 
 - [checkVerifiablePresentation.js](https://github.com/adrian-grassl/iota-identity-tutorial/blob/master/checkVerifiablePresentation.js).
 
