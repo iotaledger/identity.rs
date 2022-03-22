@@ -16,7 +16,7 @@ pub struct WasmX25519(pub(crate) X25519);
 #[wasm_bindgen(js_class = X25519)]
 impl WasmX25519 {
   /// Performs a cryptographic key exchange process (e.g. Diffie-Hellman) using the private key
-  /// of the first party with with the public key of the second party, resulting in a shared secret.
+  /// of the first party with the public key of the second party, resulting in a shared secret.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = keyExchange)]
   // TODO: refactor private key type to UInt8Array
