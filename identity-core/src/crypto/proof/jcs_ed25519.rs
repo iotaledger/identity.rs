@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::marker::PhantomData;
+
 use serde::Serialize;
 
 use crate::convert::ToJson;
@@ -79,6 +80,7 @@ mod tests {
   use crate::crypto::Ed25519;
   use crate::crypto::JcsEd25519;
   use crate::crypto::KeyPair;
+  use crate::crypto::KeyType;
   use crate::crypto::PrivateKey;
   use crate::crypto::PublicKey;
   use crate::crypto::SignatureValue;
@@ -147,8 +149,8 @@ mod tests {
 
   #[test]
   fn test_sign_verify() {
-    let key1: KeyPair = KeyPair::new_ed25519().unwrap();
-    let key2: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let key2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
 
     let data1: Value = json!({ "msg": "IOTA Identity" });
     let data2: Value = json!({ "msg": "IOTA Identity 2" });

@@ -2,6 +2,7 @@ import {defaultClientConfig, initIdentity, setupDOMLog} from "./utils_web.js";
 import {createIdentity} from "./create_did.js";
 import {createVC} from "./create_vc.js";
 import {manipulateIdentity} from "./manipulate_did.js";
+import {keyExchange} from "./key_exchange.js";
 import {resolution} from "./resolution.js";
 import {createVP} from "./create_vp.js";
 import {revokeVC} from "./revoke_vc.js";
@@ -16,6 +17,7 @@ export {
     createIdentity,
     createVC,
     manipulateIdentity,
+    keyExchange,
     resolution,
     createVP,
     revokeVC,
@@ -79,6 +81,11 @@ window.onload = async () => {
             const networkName = document.querySelector("#create-private-network-name").value;
             privateTangle(restURL, networkName);
         });
+
+    //handle key exchange example on click event
+    document
+        .querySelector("#key_exchange_btn")
+        .addEventListener("click", () => keyExchange(CLIENT_CONFIG));
 
     //handle diff chain on click event
     document

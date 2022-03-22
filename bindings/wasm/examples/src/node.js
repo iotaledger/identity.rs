@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 import {createIdentity} from "./create_did";
@@ -12,6 +12,7 @@ import {merkleKey} from "./merkle_key";
 import {CLIENT_CONFIG} from "./config";
 import {resolveHistory} from "./resolve_history";
 import {createDiff} from "./diff_chain";
+import {keyExchange} from "./key_exchange";
 
 async function main() {
     //Check if an example is mentioned
@@ -36,6 +37,8 @@ async function main() {
             return await createVP(CLIENT_CONFIG);
         case "merkle_key":
             return await merkleKey(CLIENT_CONFIG);
+        case "key_exchange":
+            return await keyExchange(CLIENT_CONFIG);
         case "private_tangle":
             return await privateTangle();
         case "resolve_history":
@@ -49,6 +52,7 @@ async function main() {
             await manipulateIdentity(CLIENT_CONFIG);
             await resolution(CLIENT_CONFIG);
             await createVC(CLIENT_CONFIG);
+            await keyExchange(CLIENT_CONFIG);
             await revokeVC(CLIENT_CONFIG);
             await createVP(CLIENT_CONFIG);
             await merkleKey(CLIENT_CONFIG);

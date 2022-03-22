@@ -158,6 +158,7 @@ impl Display for DocumentChain {
 mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::SignatureOptions;
   use identity_core::crypto::TrySignature;
@@ -186,7 +187,7 @@ mod test {
     // Create Initial Document
     // =========================================================================
     {
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
       document
         .sign_self(
@@ -216,12 +217,12 @@ mod test {
       new.integration_message_id = new_integration_message_id;
 
       // Replace the capability invocation signing key (one step key rotation).
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
         .id(chain.id().to_url().join("#key-2").unwrap())
         .controller(chain.id().clone())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_multibase(keypair.public()))
+        .type_(MethodType::Ed25519VerificationKey2018)
+        .data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)
         .unwrap();
@@ -381,7 +382,7 @@ mod test {
       .unwrap()
     {
       MethodRef::Embed(method) => {
-        *method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
+        *method.data_mut() = MethodData::new_multibase([3u8; 32]);
       }
       MethodRef::Refer(_) => unreachable!(),
     };
@@ -440,7 +441,7 @@ mod test {
       .verification_method_mut()
       .head_mut()
       .unwrap();
-    *updated_method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
+    *updated_method.data_mut() = MethodData::new_multibase([3u8; 32]);
     new_resolved.document.metadata.updated = Timestamp::now_utc();
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
@@ -458,7 +459,7 @@ mod test {
   }
 
   fn create_initial_document() -> (ResolvedIotaDocument, KeyPair) {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(

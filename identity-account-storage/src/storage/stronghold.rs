@@ -88,7 +88,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     let public: PublicKey = match location.method() {
-      MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, location).await?,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        generate_private_key(&vault, location).await?
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
     };
 
@@ -103,7 +105,9 @@ impl Storage for Stronghold {
       .await?;
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        retrieve_public_key(&vault, location).await
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_insert] Handle MerkleKeyCollection2021"),
     }
   }
@@ -112,7 +116,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        retrieve_public_key(&vault, location).await
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_get] Handle MerkleKeyCollection2021"),
     }
   }
@@ -121,7 +127,7 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
         vault.delete(location_seed(location), false).await?;
         vault.delete(location_skey(location), false).await?;
 
@@ -138,6 +144,7 @@ impl Storage for Stronghold {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location).await,
+      MethodType::X25519KeyAgreementKey2019 => Err(identity_did::Error::InvalidMethodType.into()),
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_sign] Handle MerkleKeyCollection2021"),
     }
   }
@@ -146,7 +153,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(did);
 
     Ok(match location.method() {
-      MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
+      MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
+        vault.exists(location_skey(location)).await
+      }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
     }?)
   }
@@ -213,7 +222,7 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
+async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   // Generate a SLIP10 seed as the private key
   let procedure: Slip10Generate = Slip10Generate {
     output: location_seed(location),
@@ -235,19 +244,19 @@ async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<P
   vault.execute(procedure).await?;
 
   // Retrieve the public key of the derived child key
-  retrieve_ed25519(vault, location).await
+  retrieve_public_key(vault, location).await
 }
 
-async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
+async fn retrieve_public_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   let procedure: iota_stronghold::procedures::PublicKey = iota_stronghold::procedures::PublicKey {
-    ty: iota_stronghold::procedures::KeyType::Ed25519,
+    ty: location_key_type(location),
     private_key: location_skey(location),
   };
   Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_ed25519(vault, location).await?;
+  let public_key: PublicKey = retrieve_public_key(vault, location).await?;
   let procedure: Ed25519Sign = Ed25519Sign {
     private_key: location_skey(location),
     msg: payload,
@@ -255,6 +264,14 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   let signature: [u8; 64] = vault.execute(procedure).await?;
 
   Ok(Signature::new(public_key, signature.into()))
+}
+
+fn location_key_type(location: &KeyLocation) -> iota_stronghold::procedures::KeyType {
+  match location.method() {
+    MethodType::Ed25519VerificationKey2018 => iota_stronghold::procedures::KeyType::Ed25519,
+    MethodType::X25519KeyAgreementKey2019 => iota_stronghold::procedures::KeyType::X25519,
+    MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
+  }
 }
 
 fn location_chain_state() -> Location {

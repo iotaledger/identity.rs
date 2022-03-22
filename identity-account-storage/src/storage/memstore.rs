@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use async_trait::async_trait;
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
@@ -74,7 +75,15 @@ impl Storage for MemStore {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        let keypair: KeyPair = KeyPair::new_ed25519()?;
+        let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+        let public: PublicKey = keypair.public().clone();
+
+        vault.insert(location.clone(), keypair);
+
+        Ok(public)
+      }
+      MethodType::X25519KeyAgreementKey2019 => {
+        let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
         let public: PublicKey = keypair.public().clone();
 
         vault.insert(location.clone(), keypair);
@@ -95,16 +104,27 @@ impl Storage for MemStore {
       MethodType::Ed25519VerificationKey2018 => {
         let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
-
         let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
         private_key_bytes.zeroize();
 
         let public: ed25519::PublicKey = secret.public_key();
-
         let public_key: PublicKey = public.to_bytes().to_vec().into();
 
         let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), private_key));
+        vault.insert(location.clone(), keypair);
 
+        Ok(public_key)
+      }
+      MethodType::X25519KeyAgreementKey2019 => {
+        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
+        let secret: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
+        private_key_bytes.zeroize();
+
+        let public: x25519::PublicKey = secret.public_key();
+        let public_key: PublicKey = public.to_bytes().to_vec().into();
+
+        let keypair: KeyPair = KeyPair::from((KeyType::X25519, public_key.clone(), private_key));
         vault.insert(location.clone(), keypair);
 
         Ok(public_key)
@@ -156,6 +176,9 @@ impl Storage for MemStore {
         let signature: Signature = Signature::new(public, signature.to_vec());
 
         Ok(signature)
+      }
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(identity_did::Error::InvalidMethodType.into());
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")

@@ -247,7 +247,7 @@ where
       .resolve_method(fragment)
       .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
-    let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
+    let location: KeyLocation = state.method_location(method.type_(), fragment.to_owned())?;
 
     state
       .sign_data(self.did(), self.storage().deref(), &location, data, options)
@@ -347,7 +347,7 @@ where
     };
 
     let signing_key_location: KeyLocation = new_state.method_location(
-      signing_method.key_type(),
+      signing_method.type_(),
       // TODO: Should be a fatal error.
       signing_method
         .id()
@@ -491,7 +491,7 @@ where
     };
 
     let signing_key_location: KeyLocation = old_state.method_location(
-      signing_method.key_type(),
+      signing_method.type_(),
       // TODO: Should be a fatal error.
       signing_method
         .id()

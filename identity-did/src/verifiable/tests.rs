@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Timestamp;
@@ -9,6 +9,7 @@ use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::PublicKey;
@@ -69,16 +70,16 @@ impl TryMethod for MockObject {
 
 #[test]
 fn test_sign_verify_data_ed25519() {
-  for method_data_base in [MethodData::new_b58, MethodData::new_multibase] {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+  for method_data_base in [MethodData::new_base58, MethodData::new_multibase] {
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let controller: CoreDID = "did:example:1234".parse().unwrap();
     let public_key = key.public().as_ref().to_vec();
 
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(method_data_base(public_key))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(method_data_base(public_key))
       .build()
       .unwrap();
 
@@ -100,7 +101,7 @@ fn test_sign_verify_data_ed25519() {
 
 #[test]
 fn test_sign_verify_data_merkle_key_ed25519_sha256() {
-  for method_data_base in [MethodData::new_b58, MethodData::new_multibase] {
+  for method_data_base in [MethodData::new_base58, MethodData::new_multibase] {
     let total: usize = 1 << 11;
     let index: usize = 1 << 9;
 
@@ -114,8 +115,8 @@ fn test_sign_verify_data_merkle_key_ed25519_sha256() {
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
       .id(controller.to_url().join("#key-collection").unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::MerkleKeyCollection2021)
-      .key_data(method_data_base(mkey))
+      .type_(MethodType::MerkleKeyCollection2021)
+      .data(method_data_base(mkey))
       .build()
       .unwrap();
 
@@ -148,15 +149,15 @@ fn test_sign_verify_data_merkle_key_ed25519_sha256() {
 // ===========================================================================
 
 fn setup() -> (KeyPair, CoreDocument) {
-  let key: KeyPair = KeyPair::new_ed25519().unwrap();
+  let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let controller: CoreDID = "did:example:1234".parse().unwrap();
   let public_key = key.public().as_ref().to_vec();
 
   let method: VerificationMethod = VerificationMethod::builder(Default::default())
     .id(controller.to_url().join("#key-1").unwrap())
     .controller(controller.clone())
-    .key_type(MethodType::Ed25519VerificationKey2018)
-    .key_data(MethodData::new_multibase(public_key))
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .data(MethodData::new_multibase(public_key))
     .build()
     .unwrap();
 
@@ -213,7 +214,7 @@ fn test_sign_verify_method_type() {
   assert!(document
     .verify_data(
       &data,
-      &VerifierOptions::default().method_type(vec![MethodType::MerkleKeyCollection2021])
+      &VerifierOptions::default().method_type(vec![MethodType::MerkleKeyCollection2021]),
     )
     .is_err());
 }
@@ -247,7 +248,7 @@ fn test_sign_verify_method_scope() {
     assert!(document
       .verify_data(
         &data,
-        &VerifierOptions::default().method_scope(MethodScope::VerificationRelationship(relationship))
+        &VerifierOptions::default().method_scope(MethodScope::VerificationRelationship(relationship)),
       )
       .is_err());
   }
@@ -353,7 +354,7 @@ fn test_sign_verify_purpose() {
   assert!(document
     .verify_data(
       &data,
-      &VerifierOptions::default().purpose(ProofPurpose::AssertionMethod)
+      &VerifierOptions::default().purpose(ProofPurpose::AssertionMethod),
     )
     .is_err());
 
@@ -372,7 +373,7 @@ fn test_sign_verify_purpose() {
       &data,
       &VerifierOptions::default()
         .method_scope(MethodScope::authentication())
-        .purpose(ProofPurpose::AssertionMethod)
+        .purpose(ProofPurpose::AssertionMethod),
     )
     .is_err());
 }

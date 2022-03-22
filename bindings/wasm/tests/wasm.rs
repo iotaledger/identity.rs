@@ -17,9 +17,9 @@ use identity_wasm::credential::WasmPresentation;
 use identity_wasm::credential::WasmPresentationValidationOptions;
 use identity_wasm::credential::WasmPresentationValidator;
 use identity_wasm::crypto::Digest;
-use identity_wasm::crypto::KeyType;
 use identity_wasm::crypto::WasmKeyCollection;
 use identity_wasm::crypto::WasmKeyPair;
+use identity_wasm::crypto::WasmKeyType;
 use identity_wasm::crypto::WasmSignatureOptions;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
@@ -35,10 +35,10 @@ use wasm_bindgen_test::*;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
-  let key1 = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let key1 = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let public_key = key1.public();
   let private_key = key1.private();
-  let key2 = WasmKeyPair::from_base58(KeyType::Ed25519, &public_key, &private_key).unwrap();
+  let key2 = WasmKeyPair::from_base58(WasmKeyType::Ed25519, &public_key, &private_key).unwrap();
 
   let json1 = key1.to_json().unwrap();
   let json2 = key2.to_json().unwrap();
@@ -56,7 +56,7 @@ fn test_keypair() {
 #[wasm_bindgen_test]
 fn test_key_collection() {
   let size = 1 << 5;
-  let keys = WasmKeyCollection::new(KeyType::Ed25519, size).unwrap();
+  let keys = WasmKeyCollection::new(WasmKeyType::Ed25519, size).unwrap();
 
   assert_eq!(keys.length(), size);
   assert!(!keys.is_empty());
@@ -92,7 +92,7 @@ fn test_js_error_from_wasm_error() {
 
 #[wasm_bindgen_test]
 fn test_did() {
-  let key = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let did = WasmDID::new(&key, None).unwrap();
 
   assert_eq!(did.network_name(), "main");
@@ -111,7 +111,7 @@ fn test_did() {
 #[wasm_bindgen_test]
 fn test_did_url() {
   // Base DID Url
-  let key = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let did = WasmDID::new(&key, None).unwrap();
   let did_url = did.to_url();
 
@@ -136,7 +136,7 @@ fn test_did_url() {
 
 #[wasm_bindgen_test]
 fn test_document_new() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
   assert_eq!(document.id().network_name(), "main");
   assert!(document.default_signing_method().is_ok());
@@ -144,7 +144,7 @@ fn test_document_new() {
 
 #[wasm_bindgen_test]
 fn test_document_sign_self() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
 
   // Sign with DIDUrl method query.
   {
@@ -173,14 +173,14 @@ fn test_document_sign_self() {
 
 #[wasm_bindgen_test]
 fn test_document_resolve_method() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
   let default_method: WasmVerificationMethod = document.default_signing_method().unwrap();
 
-  let keypair_new: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair_new: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let method_new: WasmVerificationMethod = WasmVerificationMethod::new(
     &document.id(),
-    KeyType::Ed25519,
+    WasmKeyType::Ed25519,
     keypair_new.public(),
     "new-key".to_owned(),
   )
@@ -264,7 +264,7 @@ fn test_document_resolve_method() {
 
 #[wasm_bindgen_test]
 fn test_document_network() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
   assert_eq!(document.id().network_name(), "dev");
@@ -307,12 +307,12 @@ fn test_timestamp_serde() {
 
 #[wasm_bindgen_test]
 fn test_sign_document() {
-  let keypair1: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair1: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document1: WasmDocument = WasmDocument::new(&keypair1, None, None).unwrap();
 
   // Replace the default signing method.
   let mut document2: WasmDocument = document1.clone();
-  let keypair2: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair2: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let method: WasmVerificationMethod = WasmVerificationMethod::new(
     &document2.id(),
     keypair2.type_(),
@@ -344,7 +344,7 @@ fn test_sign_document() {
 #[wasm_bindgen_test]
 fn test_validations() {
   // Set up issuer & subject DID documents
-  let issuer_keys: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let issuer_keys: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let mut issuer_doc: WasmDocument = WasmDocument::new(&issuer_keys, None, None).unwrap();
   issuer_doc
     .sign_self(
@@ -359,7 +359,7 @@ fn test_validations() {
     )
     .unwrap();
 
-  let subject_keys: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let subject_keys: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let mut subject_doc: WasmDocument = WasmDocument::new(&subject_keys, None, None).unwrap();
   subject_doc
     .sign_self(

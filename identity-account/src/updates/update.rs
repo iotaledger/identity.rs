@@ -1,7 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
+use log::debug;
+use log::trace;
+
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::Generation;
@@ -32,8 +36,6 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaService;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::NetworkName;
-use log::debug;
-use log::trace;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -48,8 +50,9 @@ pub(crate) async fn create_identity(
   network: NetworkName,
   store: &dyn Storage,
 ) -> Result<IdentityState> {
-  let method_type = match setup.key_type {
+  let method_type: MethodType = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
+    KeyType::X25519 => MethodType::X25519KeyAgreementKey2019,
   };
 
   // The method type must be able to sign document updates.
@@ -63,19 +66,22 @@ pub(crate) async fn create_identity(
 
   let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
 
-  let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
-    ensure!(
-      private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-      UpdateError::InvalidMethodSecret(format!(
-        "an ed25519 private key requires {} bytes, found {}",
-        ed25519::SECRET_KEY_LENGTH,
-        private_key.as_ref().len()
-      ))
-    );
-
-    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
-  } else {
-    KeyPair::new_ed25519()?
+  let keypair: KeyPair = match &setup.method_secret {
+    None => KeyPair::new(KeyType::Ed25519)?,
+    Some(MethodSecret::Ed25519(private_key)) => {
+      ensure!(
+        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodSecret(format!(
+          "an Ed25519 private key requires {} bytes, found {}",
+          ed25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+      KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?
+    }
+    _ => {
+      return Err(UpdateError::InvalidMethodSecret("expected None or Ed25519 private key".to_owned()).into());
+    }
   };
 
   // Generate a new DID from the public key
@@ -316,6 +322,25 @@ async fn insert_method_secret(
         matches!(method_type, MethodType::Ed25519VerificationKey2018),
         UpdateError::InvalidMethodSecret(
           "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
+        )
+      );
+
+      store.key_insert(did, location, private_key).await.map_err(Into::into)
+    }
+    MethodSecret::X25519(private_key) => {
+      ensure!(
+        private_key.as_ref().len() == x25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodSecret(format!(
+          "an ed25519 private key requires {} bytes, found {}",
+          x25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+
+      ensure!(
+        matches!(method_type, MethodType::X25519KeyAgreementKey2019),
+        UpdateError::InvalidMethodSecret(
+          "MethodType::X25519KeyAgreementKey2019 can only be used with an x25519 method secret".to_owned(),
         )
       );
 
