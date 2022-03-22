@@ -4,7 +4,6 @@
 //! Cryptographic Utilities
 
 pub use self::key::KeyPair;
-pub use self::key::KeyRef;
 pub use self::key::KeyType;
 pub use self::key::PrivateKey;
 pub use self::key::PublicKey;

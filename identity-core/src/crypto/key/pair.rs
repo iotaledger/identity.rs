@@ -7,7 +7,6 @@ use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
-use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
@@ -96,19 +95,9 @@ impl KeyPair {
     &self.public
   }
 
-  /// Returns the public key as a [`KeyRef`] object.
-  pub fn public_ref(&self) -> KeyRef<'_> {
-    KeyRef::new(self.type_, self.public.as_ref())
-  }
-
   /// Returns a reference to the [`PrivateKey`] object.
   pub const fn private(&self) -> &PrivateKey {
     &self.private
-  }
-
-  /// Returns the private key as a [`KeyRef`] object.
-  pub fn private_ref(&self) -> KeyRef<'_> {
-    KeyRef::new(self.type_, self.private.as_ref())
   }
 }
 

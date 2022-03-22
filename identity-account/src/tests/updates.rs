@@ -117,7 +117,7 @@ async fn test_create_identity_network() -> Result<()> {
     ),
     IdentitySetup::default(),
   )
-    .await?;
+  .await?;
   assert_eq!(account.did().network_str(), "custom");
 
   Ok(())
@@ -169,8 +169,12 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method() -> Result<()> {
-  for method_type in [MethodType::Ed25519VerificationKey2018, MethodType::X25519KeyAgreementKey2019] {
-    let mut account: Account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+  for method_type in [
+    MethodType::Ed25519VerificationKey2018,
+    MethodType::X25519KeyAgreementKey2019,
+  ] {
+    let mut account: Account =
+      Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
     let initial_state: IdentityState = account.state().to_owned();
 
