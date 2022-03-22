@@ -1,16 +1,14 @@
 # Rust
-target/
+/target/
 Cargo.lock
 
 # npm / yarn
 node_modules/
 
 # Build artifacts
-wasm-web/
-wasm-node/
-web/
-node/
-pkg/
+/web/
+/node/
+
 
 # cypress
 cypress/screenshots/
