@@ -3,7 +3,6 @@
 
 use std::str::FromStr;
 
-use identity::core::decode_b58;
 use identity::core::OneOrMany;
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
@@ -372,7 +371,7 @@ impl WasmDocument {
   pub fn sign_credential(
     &self,
     data: &JsValue,
-    privateKey: String,
+    privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmCredential> {
@@ -389,7 +388,7 @@ impl WasmDocument {
   pub fn sign_presentation(
     &self,
     data: &JsValue,
-    privateKey: String,
+    privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmPresentation> {
@@ -408,12 +407,12 @@ impl WasmDocument {
   pub fn sign_data(
     &self,
     data: &JsValue,
-    privateKey: String,
+    privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let private_key: PrivateKey = decode_b58(&privateKey).wasm_result().map(Into::into)?;
+    let private_key: PrivateKey = privateKey.into();
     let method_query: String = methodQuery.into_serde().wasm_result()?;
     let options: SignatureOptions = options.0.clone();
 

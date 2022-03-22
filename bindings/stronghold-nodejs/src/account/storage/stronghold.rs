@@ -5,8 +5,6 @@ use identity_account_storage::storage::Storage;
 use identity_account_storage::storage::Stronghold;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::utils::decode_b58;
-use identity_core::utils::encode_b58;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 use napi_derive::napi;
@@ -62,28 +60,31 @@ impl NapiStronghold {
 
   /// Creates a new keypair at the specified `location`
   #[napi]
-  pub async fn key_new(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<String> {
+  pub async fn key_new(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
     let public_key: PublicKey = self.0.key_new(&did.0, &location.0).await.napi_result()?;
-    Ok(encode_b58(&public_key))
+    let public_key: Vec<u8> = public_key.as_ref().to_vec();
+    Ok(public_key.into_iter().map(u32::from).collect())
   }
 
   /// Inserts a private key at the specified `location`.
   #[napi]
-  pub async fn key_insert(&self, did: &NapiDID, location: &NapiKeyLocation, private_key: String) -> Result<String> {
-    let private_key: PrivateKey = decode_b58(&private_key).napi_result()?.into();
+  pub async fn key_insert(&self, did: &NapiDID, location: &NapiKeyLocation, private_key: Vec<u32>) -> Result<Vec<u32>> {
+    let private_key: PrivateKey = private_key.try_into_bytes()?.into();
     let public_key: PublicKey = self
       .0
       .key_insert(&did.0, &location.0, private_key)
       .await
       .napi_result()?;
-    Ok(encode_b58(&public_key))
+    let public_key: Vec<u8> = public_key.as_ref().to_vec();
+    Ok(public_key.into_iter().map(u32::from).collect())
   }
 
   /// Retrieves the public key at the specified `location`.
   #[napi]
-  pub async fn key_get(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<String> {
+  pub async fn key_get(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
     let public_key: PublicKey = self.0.key_get(&did.0, &location.0).await.napi_result()?;
-    Ok(encode_b58(&public_key))
+    let public_key: Vec<u8> = public_key.as_ref().to_vec();
+    Ok(public_key.into_iter().map(u32::from).collect())
   }
 
   /// Deletes the keypair specified by `location`.

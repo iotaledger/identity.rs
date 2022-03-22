@@ -4,7 +4,6 @@
 use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity::account::MethodSecret;
-use identity::core::decode_b58;
 use identity::crypto::PrivateKey;
 use serde::Deserialize;
 use serde::Serialize;
@@ -22,8 +21,8 @@ extern "C" {
 /// Workaround for being unable to use serde for private keys.
 #[derive(Serialize, Deserialize)]
 enum WasmMethodSecretInner {
-  Ed25519(String),
-  X25519(String),
+  Ed25519(Vec<u8>),
+  X25519(Vec<u8>),
 }
 
 #[wasm_bindgen(js_name = MethodSecret)]
@@ -32,16 +31,17 @@ pub struct WasmMethodSecret(WasmMethodSecretInner);
 
 #[wasm_bindgen(js_class = MethodSecret)]
 impl WasmMethodSecret {
-  /// Creates a {@link MethodSecret} object from a Base58-BTC encoded Ed25519 private key.
-  #[wasm_bindgen(js_name = ed25519Base58)]
-  pub fn ed25519_base58(private_key: String) -> WasmMethodSecret {
-    Self(WasmMethodSecretInner::Ed25519(private_key))
+  /// Creates an Ed25519 {@link MethodSecret} from a `UInt8Array`.
+  #[allow(non_snake_case)]
+  #[wasm_bindgen(js_name = ed25519)]
+  pub fn ed25519(privateKey: Vec<u8>) -> WasmMethodSecret {
+    Self(WasmMethodSecretInner::Ed25519(privateKey))
   }
 
-  /// Creates a {@link MethodSecret} object from a Base58-BTC encoded X25519 private key.
+  /// Creates an X25519 {@link MethodSecret} from a `UInt8Array`.
   #[allow(non_snake_case)]
-  #[wasm_bindgen(js_name = x25519Base58)]
-  pub fn x25519_base58(privateKey: String) -> WasmMethodSecret {
+  #[wasm_bindgen(js_name = x25519)]
+  pub fn x25519(privateKey: Vec<u8>) -> WasmMethodSecret {
     Self(WasmMethodSecretInner::X25519(privateKey))
   }
 
@@ -63,27 +63,27 @@ impl TryFrom<WasmMethodSecret> for MethodSecret {
 
   fn try_from(value: WasmMethodSecret) -> std::result::Result<Self, Self::Error> {
     match value.0 {
-      WasmMethodSecretInner::Ed25519(encoded) => {
-        let private: PrivateKey = decode_b58(&encoded).wasm_result()?.into();
-        if private.as_ref().len() != ed25519::SECRET_KEY_LENGTH {
+      WasmMethodSecretInner::Ed25519(private_key) => {
+        let private_key: PrivateKey = private_key.into();
+        if private_key.as_ref().len() != ed25519::SECRET_KEY_LENGTH {
           return Err(identity::core::Error::InvalidKeyLength(
-            private.as_ref().len(),
+            private_key.as_ref().len(),
             ed25519::SECRET_KEY_LENGTH,
           ))
           .wasm_result();
         };
-        Ok(MethodSecret::Ed25519(private))
+        Ok(MethodSecret::Ed25519(private_key))
       }
-      WasmMethodSecretInner::X25519(encoded) => {
-        let private: PrivateKey = decode_b58(&encoded).wasm_result()?.into();
-        if private.as_ref().len() != x25519::SECRET_KEY_LENGTH {
+      WasmMethodSecretInner::X25519(private_key) => {
+        let private_key: PrivateKey = private_key.into();
+        if private_key.as_ref().len() != x25519::SECRET_KEY_LENGTH {
           return Err(identity::core::Error::InvalidKeyLength(
-            private.as_ref().len(),
+            private_key.as_ref().len(),
             x25519::SECRET_KEY_LENGTH,
           ))
           .wasm_result();
         };
-        Ok(MethodSecret::X25519(private))
+        Ok(MethodSecret::X25519(private_key))
       }
     }
   }
