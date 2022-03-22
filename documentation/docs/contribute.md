@@ -12,7 +12,7 @@ keywords:
 - reference
 ---
 
-**Thanks for thinking about contributing to the project! You can contribute using the following methods.**
+**Thanks for thinking about contributing to the project! You can contribute using the following ways.**
 
 ## Join the Identity Initiative
 
@@ -28,9 +28,9 @@ If you would like to get involved, join the #experience channel on [Discord](htt
 
 All of the code is open source and hosted on [GitHub](https://github.com/iotaledger/identity.rs) where you can:
 
-- Report a bug.
-- Suggest a new feature.
-- Contribute to the documentation.
+- [Report a bug](https://github.com/iotaledger/identity.rs/issues/new/choose).
+- [Suggest a new feature](https://github.com/iotaledger/documentation/blob/develop/.github/CONTRIBUTING.md).
+- [Contribute to the documentation](https://wiki.iota.org/identity.rs/contribute#contribute-to-the-documentation).
 
 ## Contribute to the Documentation
 

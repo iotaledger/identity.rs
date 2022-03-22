@@ -15,35 +15,35 @@ In this article you will learn about the software development process for the IO
 
 ## Issues
 
-Issues are opened when a certain task or problem is noted but cannot immediately be fixed. Issues may contain bug reports, requests, or larger topics. Please use the correct GitHub issue template for your issue type. Only IOTA Foundation members should use the task templates flagged for maintainers. You should make sure to [label](#Issue-Labels) the issue correctly. As a contributor, you may also add issues to a certain [project](https://github.com/iotaledger/identity.rs/projects/).
+Issues are opened when a certain task or problem is noted but cannot immediately be fixed. Issues may contain bug reports, requests, or larger topics. Please use the correct GitHub issue template for your issue type. Only IOTA Foundation members should use the task templates flagged for maintainers. You should make sure to [label](#issue-Labels) the issue correctly. As a contributor, you may also add issues to a certain [project](https://github.com/iotaledger/identity.rs/projects/).
 
 ## Git
 
 ### Pull Requests
 
-New branches should be pushed to the GitHub repository as soon as possible, making them public to all contributors. In addition, a pull request (PR) should be opened in draft status, describing the goals and any requirements of the changes. To generate good [changelogs](#Changelog), a PR title must be written in a way that is suitable as a changelog entry while the PR must be [labeled](#PR-Labels) correctly.
+New branches should be pushed to the GitHub repository as soon as possible, making them public to all contributors. In addition, a pull request (PR) should be opened in draft status, describing the goals and any requirements of the changes. To generate good [changelogs](#changelog), a PR title must be written in a way that is suitable as a changelog entry while the PR must be [labeled](#pr-labels) correctly.
 
 Any code written should frequently be committed and pushed back to the GitHub branch. This acts as both a back-up mechanism and provides transparency towards other contributors and the community. You should also pull from the origin branch of the PR regularly to prevent merge conflicts.
 
 Other contributors are encouraged to provide feedback on a PR during its development. A PR should be flagged as 'ready for review' once the PR has implemented all changes and no further commits are planned by the main contributors. The repository requires a review to be provided by at least one (other) developer in the team that works in the same language or has knowledge of the work before it can be merged. For larger PRs, the review of two maintainers is recommended.
 
-Once a PR is approved, the preferred method is "squash-and-merge" for non-epic branches to keep the destination branch clean and allow for many small commits while work is in-progress. Epic branches must instead be merged with the merge commits of included PRs intact, so the [changelog generator](#Changelog) can detect included changes. Once merged in, the source branch may be deleted.
+Once a PR is approved, the preferred method is "squash-and-merge" for non-epic branches to keep the destination branch clean and allow for many small commits while work is in-progress. Epic branches must instead be merged with the merge commits of included PRs intact, so the [changelog generator](#changelog) can detect included changes. Once merged in, the source branch may be deleted.
 
 ### Branches
 
 IOTA Identity always has two permanent branches: `main` and `dev`. Both branches are protected and disallow direct commits; the only changes allowed are from pull requests approved and merged by maintainers.
 
-#### Main (main)
+#### [Main](https://github.com/iotaledger/identity.rs/tree/main) (main) 
 
 The `main` branch contains a stable version of the code that is released towards package managers such as `crates.io` and `npm`. This branch only accepts PRs that merge from `release` or `hotfix` branches. 
 
-#### Dev (dev)
+#### [Dev](https://github.com/iotaledger/identity.rs) (dev)
 
 The `dev` branch contains a frequently updated version of the code that is released towards package managers under a development flag. These releases may contain breaking changes without a strong notice towards developers using them. While the `dev` branch may get frequent updates, it may not contain unfinished features. Any large, multi-PR feature should be committed to a long-lived `epic` branch created specifically for that feature.
 
 ### Work Branches
 
-These are branches that developers work on directly. Their names should be prefixed appropriately with one of the following categories. For example, a PR fixing a null pointer bug in the WASM bindings might be created from a branch called `fix/client-non-null`.
+These are branches that developers work on directly. Their names should be prefixed appropriately with one of the following categories. For example, a PR fixing a null pointer bug in the Wasm bindings might be created from a branch called `fix/client-non-null`.
 
 #### Feature (feat/, doc/, chore/, fix/)
 
@@ -82,7 +82,7 @@ Changelogs are generated for the core Rust library and each binding separately. 
 
 This includes the PR in the core Rust library changelog.
 
-##### `WASM`
+##### `Wasm`
 
 This includes the PR in the WASM bindings changelog.
 
@@ -140,7 +140,7 @@ Notice the `v` in front of the version. We [tag](https://git-scm.com/book/en/v2/
 
 Additionally, we may release `dev` versions separately for both bindings and the core Rust library. These releases are meant as a preview of upcoming versions. For example, if the current version is `1.2.3` with the tag `v1.2.3`, we may release `v1.3.0-dev.1` which is then superseded by the actual `1.3.0` release.
 
-To create a release, perform the following steps:
+You should follow these steps to create a release:
 
 1. Ensure all the changes you want to release are on the `dev` branch.
 2. Select the appropriate GitHub Actions workflow, e.g. `Rust Create Release PR`.
