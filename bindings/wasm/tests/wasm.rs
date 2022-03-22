@@ -382,7 +382,7 @@ fn test_validations() {
     .sign_credential(
       &JsValue::from(&credential.to_json().unwrap()),
       issuer_keys.private(),
-      "#sign-0".to_owned(),
+      &JsValue::from_str("#sign-0").unchecked_into(),
       &WasmSignatureOptions::default(),
     )
     .unwrap();
@@ -417,7 +417,7 @@ fn test_validations() {
     .sign_presentation(
       &presentation.to_json().unwrap(),
       subject_keys.private(),
-      "#sign-0".to_owned(),
+      &JsValue::from_str("#sign-0").unchecked_into(),
       &WasmSignatureOptions::default(),
     )
     .unwrap();

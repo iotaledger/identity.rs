@@ -373,7 +373,7 @@ impl WasmDocument {
     &self,
     data: &JsValue,
     privateKey: String,
-    methodQuery: String,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmCredential> {
     let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
@@ -390,7 +390,7 @@ impl WasmDocument {
     &self,
     data: &JsValue,
     privateKey: String,
-    methodQuery: String,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmPresentation> {
     let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
@@ -409,16 +409,17 @@ impl WasmDocument {
     &self,
     data: &JsValue,
     privateKey: String,
-    methodQuery: String,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
+    let private_key: PrivateKey = decode_b58(&privateKey).wasm_result().map(Into::into)?;
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
     let options: SignatureOptions = options.0.clone();
-    let private: PrivateKey = decode_b58(&privateKey).wasm_result().map(Into::into)?;
 
     self
       .0
-      .sign_data(&mut data, &private, &methodQuery, options)
+      .sign_data(&mut data, &private_key, &method_query, options)
       .wasm_result()?;
 
     JsValue::from_serde(&data).wasm_result()
