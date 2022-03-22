@@ -5,21 +5,12 @@ use std::sync::Arc;
 
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Storage;
-use identity_account_storage::storage::Stronghold;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::tangle::Network;
 use rand::Rng;
 
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
-
-// There's a bug in our stronghold wrapper that makes multiple `Stronghold`s not work concurrently,
-// so we're using a static instance as a temporary workaround, until we've upgraded.
-pub(super) static TEST_STRONGHOLD: once_cell::sync::Lazy<Arc<dyn Storage>> = once_cell::sync::Lazy::new(|| {
-  let temp_file = temporary_random_path();
-  let stronghold: Stronghold = futures::executor::block_on(Stronghold::new(&temp_file, "password", None)).unwrap();
-  Arc::new(stronghold)
-});
 
 pub(super) async fn account_setup(network: Network) -> AccountSetup {
   account_setup_storage(Arc::new(MemStore::new()), network).await
@@ -40,7 +31,8 @@ pub(super) async fn account_setup_storage(storage: Arc<dyn Storage>, network: Ne
   )
 }
 
-fn temporary_random_path() -> String {
+// TODO: Unused for now, used to generate a temporary stronghold file path.
+fn _temporary_random_path() -> String {
   let mut file = std::env::temp_dir();
   file.push("test_strongholds/");
   file.push(
@@ -54,6 +46,7 @@ fn temporary_random_path() -> String {
   file.to_str().unwrap().to_owned()
 }
 
-pub(super) async fn storages() -> [Arc<dyn Storage>; 2] {
-  [Arc::new(MemStore::new()), Arc::clone(&TEST_STRONGHOLD)]
+// TODO: This should also return a `Stronghold`.
+pub(super) async fn storages() -> [Arc<dyn Storage>; 1] {
+  [Arc::new(MemStore::new())]
 }
