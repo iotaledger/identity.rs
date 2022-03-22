@@ -62,7 +62,7 @@ impl NapiStronghold {
   #[napi]
   pub async fn key_new(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
     let public_key: PublicKey = self.0.key_new(&did.0, &location.0).await.napi_result()?;
-    let public_key: Vec<u8> = (&public_key).into();
+    let public_key: Vec<u8> = public_key.as_ref().to_vec();
     Ok(public_key.into_iter().map(u32::from).collect())
   }
 
@@ -75,7 +75,7 @@ impl NapiStronghold {
       .key_insert(&did.0, &location.0, private_key)
       .await
       .napi_result()?;
-    let public_key: Vec<u8> = (&public_key).into();
+    let public_key: Vec<u8> = public_key.as_ref().to_vec();
     Ok(public_key.into_iter().map(u32::from).collect())
   }
 
@@ -83,7 +83,7 @@ impl NapiStronghold {
   #[napi]
   pub async fn key_get(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
     let public_key: PublicKey = self.0.key_get(&did.0, &location.0).await.napi_result()?;
-    let public_key: Vec<u8> = (&public_key).into();
+    let public_key: Vec<u8> = public_key.as_ref().to_vec();
     Ok(public_key.into_iter().map(u32::from).collect())
   }
 
