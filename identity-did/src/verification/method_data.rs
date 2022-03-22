@@ -76,9 +76,6 @@ impl Hash for MethodData {
         std::mem::discriminant(self).hash(state);
         string.hash(state);
       }
-      MethodData::PublicKeyJwk(_) => {
-        unimplemented!("MethodData::PublicKeyJwk does currently not supported hashing")
-      }
     }
   }
 }
