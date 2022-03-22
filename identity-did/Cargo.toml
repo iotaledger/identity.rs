@@ -21,8 +21,8 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dev-dependencies]
-serde_json = { version = "1.0", default-features = false }
 proptest = { version = "1.0" }
+serde_json = { version = "1.0", default-features = false }
 
 [package.metadata.docs.rs]
 # To build locally:
