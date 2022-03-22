@@ -4,7 +4,8 @@
 mod context;
 mod error;
 mod hint;
-mod records;
+// TODO: Remove or refactor for key deletion.
+//mod records;
 mod snapshot;
 mod status;
 mod store;
@@ -13,7 +14,6 @@ mod vault;
 pub use self::context::*;
 pub use self::error::*;
 pub use self::hint::*;
-pub use self::records::*;
 pub use self::snapshot::*;
 pub use self::status::*;
 pub use self::store::*;

@@ -9,7 +9,6 @@ use std::time::Duration;
 use crate::stronghold::Context;
 use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Password;
-use crate::stronghold::Records;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
@@ -56,13 +55,6 @@ impl Snapshot {
     T: AsRef<[u8]> + ?Sized,
   {
     Store::new(&self.path, name, flags)
-  }
-
-  pub fn records<T>(&self, name: &T, flags: &[StrongholdFlags]) -> Records<'_>
-  where
-    T: AsRef<[u8]> + ?Sized,
-  {
-    Records::new(&self.path, name, flags)
   }
 
   pub async fn status(&self) -> IotaStrongholdResult<SnapshotStatus> {
