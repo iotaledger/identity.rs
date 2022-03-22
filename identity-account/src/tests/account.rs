@@ -7,9 +7,12 @@ use std::sync::Arc;
 use futures::Future;
 
 use identity_account_storage::identity::ChainState;
+use identity_account_storage::storage::AccountId;
 use identity_account_storage::storage::MemStore;
+use identity_account_storage::types::KeyLocation;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::SignatureOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
@@ -562,5 +565,23 @@ async fn test_storage_index() {
       account2.storage().index_get(account2.did()).await.unwrap(),
       Some(account2.account_id)
     );
+  }
+}
+
+#[tokio::test]
+async fn test_storage_key_move_deletes_old_location() {
+  for storage in storages().await {
+    let account_id: AccountId = AccountId::new_v4();
+    let source: KeyLocation = KeyLocation::random(KeyType::Ed25519);
+    let target: KeyLocation = KeyLocation::random(KeyType::Ed25519);
+
+    storage.key_generate(&account_id, &source).await.unwrap();
+
+    assert!(storage.key_exists(&account_id, &source).await.unwrap());
+
+    storage.key_move(&account_id, &source, &target).await.unwrap();
+
+    assert!(!storage.key_exists(&account_id, &source).await.unwrap());
+    assert!(storage.key_exists(&account_id, &target).await.unwrap());
   }
 }

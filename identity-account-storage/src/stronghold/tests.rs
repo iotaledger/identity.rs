@@ -30,7 +30,7 @@ const TEST_DIR: &str = "./test-storage";
 const RANDOM_FILENAME_SIZE: usize = 10;
 
 fn location(name: &str) -> Location {
-  Location::generic(name, name)
+  Location::generic("$fixed_vault_path", name)
 }
 
 fn rand_string(chars: usize) -> String {
