@@ -9,6 +9,7 @@
   "napi": {
     "name": "identity-stronghold-nodejs",
     "triples": {
+      "defaults": false,
       "additional": [
         "aarch64-apple-darwin",
         "x86_64-apple-darwin",
