@@ -48,7 +48,7 @@ impl KeyPair {
   /// The private key for [`Ed25519`][`KeyType::Ed25519`] must be a 32-byte seed in compliance
   /// with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-  pub fn try_from_private_key_bytes(private_key_bytes: &[u8], key_type: KeyType) -> Result<Self, crypto::Error> {
+  pub fn try_from_private_key_bytes(key_type: KeyType, private_key_bytes: &[u8]) -> Result<Self> {
     let (public, private) = match key_type {
       KeyType::Ed25519 => {
         let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
@@ -155,7 +155,7 @@ mod tests {
   fn test_try_from_private_key_bytes() {
     for key_type in [KeyType::Ed25519, KeyType::X25519] {
       let keypair: KeyPair = KeyPair::new(key_type).unwrap();
-      let reconstructed: KeyPair = KeyPair::try_from_private_key_bytes(keypair.private.as_ref(), key_type).unwrap();
+      let reconstructed: KeyPair = KeyPair::try_from_private_key_bytes(key_type, keypair.private.as_ref()).unwrap();
       assert_eq!(keypair.private.as_ref(), reconstructed.private.as_ref());
       assert_eq!(keypair.public.as_ref(), reconstructed.public.as_ref());
     }

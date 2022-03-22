@@ -77,7 +77,7 @@ pub(crate) async fn create_identity(
           private_key.as_ref().len()
         ))
       );
-      KeyPair::try_from_private_key_bytes(private_key.as_ref(), KeyType::Ed25519)?
+      KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?
     }
     _ => {
       return Err(UpdateError::InvalidMethodSecret("expected None or Ed25519 private key".to_owned()).into());

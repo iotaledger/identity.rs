@@ -2570,6 +2570,7 @@ Deserializes a JSON object as `KeyLocation`.
         * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
         * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.tryFromPrivateKeyBytes(keyType, privateKeyBytes)](#KeyPair.tryFromPrivateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -2624,6 +2625,22 @@ Parses a `KeyPair` object from base58-encoded public/private keys.
 | type_ | <code>number</code> | 
 | public_key | <code>string</code> | 
 | private_key | <code>string</code> | 
+
+<a name="KeyPair.tryFromPrivateKeyBytes"></a>
+
+### KeyPair.tryFromPrivateKeyBytes(keyType, privateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
+Reconstructs a `KeyPair` from the bytes of a private key.
+
+The private key for `Ed25519` must be a 32-byte seed in compliance
+with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
+
+**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
+
+| Param | Type |
+| --- | --- |
+| keyType | <code>number</code> | 
+| privateKeyBytes | <code>Uint8Array</code> | 
 
 <a name="KeyPair.fromJSON"></a>
 
