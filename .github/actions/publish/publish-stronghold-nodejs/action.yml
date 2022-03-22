@@ -24,11 +24,17 @@ runs:
       working-directory: bindings/stronghold-nodejs
       run: npm ci --ignore-scripts --legacy-peer-deps
 
-    - name: Download all artifacts
+    - name: Download binary artifacts
       uses: actions/download-artifact@v2
       with:
         name: ${{ inputs.input-artifact-name }}
         path: bindings/stronghold-nodejs/artifacts
+
+    - name: Download dist artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.input-artifact-name }}-dist
+        path: bindings/stronghold-nodejs/dist
 
     - name: Create npm folder
       shell: sh
