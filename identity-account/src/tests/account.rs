@@ -7,8 +7,8 @@ use std::sync::Arc;
 use futures::Future;
 
 use identity_account_storage::identity::ChainState;
-use identity_account_storage::storage::AccountId;
 use identity_account_storage::storage::MemStore;
+use identity_account_storage::types::AccountId;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -571,7 +571,7 @@ async fn test_storage_index() {
 #[tokio::test]
 async fn test_storage_key_move_deletes_old_location() {
   for storage in storages().await {
-    let account_id: AccountId = AccountId::new_v4();
+    let account_id: AccountId = AccountId::random();
     let source: KeyLocation = KeyLocation::random(KeyType::Ed25519);
     let target: KeyLocation = KeyLocation::random(KeyType::Ed25519);
 

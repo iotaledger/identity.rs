@@ -25,11 +25,10 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
+use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
-
-use super::AccountId;
 
 type MemVault = HashMap<KeyLocation, KeyPair>;
 

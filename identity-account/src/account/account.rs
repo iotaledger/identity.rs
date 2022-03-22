@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use identity_account_storage::crypto::remote_sign_data;
 use identity_account_storage::identity::ChainState;
-use identity_account_storage::storage::AccountId;
 use identity_account_storage::storage::Storage;
+use identity_account_storage::types::AccountId;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::SetSignature;

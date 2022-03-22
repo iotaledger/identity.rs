@@ -3,9 +3,9 @@
 
 use crypto::keys::x25519;
 use crypto::signatures::ed25519;
-use identity_account_storage::storage::AccountId;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::method_to_key_type;
+use identity_account_storage::types::AccountId;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
@@ -58,7 +58,7 @@ pub(crate) async fn create_identity(
     UpdateError::InvalidMethodType(method_type)
   );
 
-  let account_id: AccountId = AccountId::new_v4();
+  let account_id: AccountId = AccountId::random();
 
   let tmp_location: KeyLocation = KeyLocation::random(setup.key_type);
 

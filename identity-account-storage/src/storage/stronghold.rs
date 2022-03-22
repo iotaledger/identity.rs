@@ -27,11 +27,11 @@ use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
+use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
-use super::AccountId;
 use super::StoreKey;
 
 // The name of the stronghold client used for indexing, which is global for a storage instance.

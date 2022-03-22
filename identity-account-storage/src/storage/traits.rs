@@ -9,15 +9,14 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
-use uuid::Uuid;
 
 use crate::error::Result;
 use crate::identity::ChainState;
+use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
 pub type StoreKey = String;
-pub type AccountId = Uuid;
 
 #[cfg(not(feature = "send-sync-storage"))]
 mod storage_sub_trait {

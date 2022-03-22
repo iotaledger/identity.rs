@@ -21,8 +21,8 @@ use identity_did::did::DID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
 
-use crate::storage::AccountId;
 use crate::storage::Storage;
+use crate::types::AccountId;
 use crate::types::KeyLocation;
 
 pub struct RemoteEd25519;
