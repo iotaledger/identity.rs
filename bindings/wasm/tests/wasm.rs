@@ -405,14 +405,13 @@ fn test_validations() {
 
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
-  // sign the credential with the issuer's DID Document
-  let issuer_method: Object = Object::from_json(
-    &json::object! {
-      method: "#sign-0",
-      public: issuer_keys.public(),
-      private: issuer_keys.private()
-    }
-    .dump(),
+  let issuer_method = Object::from_json(
+    &serde_json::json!({
+      "method": "#sign-0",
+      "public": issuer_keys.public(),
+      "private": issuer_keys.private()
+    })
+    .to_string(),
   )
   .unwrap();
 
@@ -451,11 +450,11 @@ fn test_validations() {
   .unwrap();
 
   let subject_method: Object = Object::from_json(
-    &json::object! {
-      method: "#sign-0",
-      private: subject_keys.private()
-    }
-    .dump(),
+    &serde_json::json!({
+      "method": "#sign-0",
+      "private": subject_keys.private()
+    })
+    .to_string(),
   )
   .unwrap();
 
