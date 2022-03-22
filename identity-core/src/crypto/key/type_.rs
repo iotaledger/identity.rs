@@ -5,10 +5,6 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
 
-use crate::crypto::merkle_key::MerkleDigest;
-use crate::crypto::merkle_key::MerkleKey;
-use crate::crypto::merkle_tree::Hash;
-use crate::crypto::Ed25519;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -27,17 +23,6 @@ impl KeyType {
     match self {
       Self::Ed25519 => "Ed25519",
       Self::X25519 => "X25519",
-    }
-  }
-
-  /// Creates a DID Document public key value for the given Merkle `root`.
-  pub fn encode_merkle_key<D>(&self, root: &Hash<D>) -> Vec<u8>
-  where
-    D: MerkleDigest,
-  {
-    match self {
-      Self::Ed25519 => MerkleKey::encode_key::<D, Ed25519>(root),
-      _ => panic!("X25519 not supported for MerkleKeyCollection"),
     }
   }
 }
