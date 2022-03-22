@@ -204,5 +204,8 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
     with:
       input-artifact-name: identity-wasm-bindings-build
+      upload-binaries-as-artifacts: true # TODO: remove
+      output-artifact-name: identity-stronghold-nodejs-bindings-build # TODO: remove
+
 
      

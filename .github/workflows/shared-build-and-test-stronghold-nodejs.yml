@@ -56,6 +56,7 @@ jobs:
               test: |
                 npm run test
             - host: ubuntu-latest
+              generate-dist: true
               target: x86_64-unknown-linux-gnu
               architecture: x64
               build: |
@@ -135,12 +136,23 @@ jobs:
           run: ${{ matrix.settings.test-docker }}
           working-directory: ./
 
-        - name: Upload artifact
+        - name: Upload binary artifact
           if: ${{inputs.upload-binaries-as-artifacts}}
           uses: actions/upload-artifact@v2
           with:
             name: ${{ inputs.output-artifact-name }}
             path: ${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
+            if-no-files-found: error
+            retention-days: 1
+
+        - name: Upload dist artifact
+          if: ${{inputs.upload-binaries-as-artifacts && matrix.settings.generate-dist}}
+          uses: actions/upload-artifact@v2
+          with:
+            name: ${{ inputs.output-artifact-name }}-dist
+            path: |
+              ${{ env.WORKING_DIRECTORY }}/dist/
+              !${{ env.WORKING_DIRECTORY }}/dist/${{ env.APP_NAME }}.*.node
             if-no-files-found: error
             retention-days: 1
 
