@@ -35,6 +35,8 @@ use crate::identity::IdentitySetup;
 use crate::Error;
 use crate::Result;
 
+use super::util::*;
+
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
   let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
@@ -523,38 +525,42 @@ async fn test_assert_account_futures_are_send() -> Result<()> {
 
 #[tokio::test]
 async fn test_storage_index() {
-  let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
+  for storage in storages().await {
+    let setup: AccountSetup = account_setup_storage(storage, Network::Mainnet).await;
 
-  let account1: Account = builder.create_identity(IdentitySetup::default()).await.unwrap();
+    let account1 = Account::create_identity(setup.clone(), IdentitySetup::default())
+      .await
+      .unwrap();
 
-  let index: Vec<IotaDID> = account1.storage().index().await.unwrap();
+    let index: Vec<IotaDID> = account1.storage().index().await.unwrap();
 
-  assert_eq!(index.len(), 1);
-  assert!(index.contains(account1.did()));
+    assert_eq!(index.len(), 1);
+    assert!(index.contains(account1.did()));
 
-  let account2: Account = builder.create_identity(IdentitySetup::default()).await.unwrap();
+    let account2: Account = Account::create_identity(setup, IdentitySetup::default()).await.unwrap();
 
-  let index: Vec<IotaDID> = account2.storage().index().await.unwrap();
+    let index: Vec<IotaDID> = account2.storage().index().await.unwrap();
 
-  assert_eq!(index.len(), 2);
-  assert!(index.contains(account1.did()));
-  assert!(index.contains(account2.did()));
+    assert_eq!(index.len(), 2);
+    assert!(index.contains(account1.did()));
+    assert!(index.contains(account2.did()));
 
-  assert_eq!(
-    account2.storage().index_get(account1.did()).await.unwrap(),
-    Some(account1.account_id)
-  );
-  assert_eq!(
-    account2.storage().index_get(account2.did()).await.unwrap(),
-    Some(account2.account_id)
-  );
+    assert_eq!(
+      account2.storage().index_get(account1.did()).await.unwrap(),
+      Some(account1.account_id)
+    );
+    assert_eq!(
+      account2.storage().index_get(account2.did()).await.unwrap(),
+      Some(account2.account_id)
+    );
 
-  let account1_did: IotaDID = account1.did().to_owned();
-  account1.delete_identity().await.unwrap();
+    let account1_did: IotaDID = account1.did().to_owned();
+    account1.delete_identity().await.unwrap();
 
-  assert!(account2.storage().index_get(&account1_did).await.unwrap().is_none());
-  assert_eq!(
-    account2.storage().index_get(account2.did()).await.unwrap(),
-    Some(account2.account_id)
-  );
+    assert!(account2.storage().index_get(&account1_did).await.unwrap().is_none());
+    assert_eq!(
+      account2.storage().index_get(account2.did()).await.unwrap(),
+      Some(account2.account_id)
+    );
+  }
 }

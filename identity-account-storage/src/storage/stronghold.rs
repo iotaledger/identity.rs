@@ -35,7 +35,7 @@ use super::AccountId;
 use super::StoreKey;
 
 // The name of the stronghold client used for indexing, which is global for a storage instance.
-static INDEX_CLIENT_PATH: &str = "$index";
+static INDEX_PATH: &str = "$index";
 
 #[derive(Debug)]
 pub struct Stronghold {
@@ -202,25 +202,39 @@ impl Storage for Stronghold {
   }
 
   async fn purge(&self, did: &IotaDID) -> Result<()> {
-    // TODO: Will be re-implemented later with the key location refactor
-    todo!("stronghold purge not implemented");
+    let account_id: AccountId = match self.index_get(did).await? {
+      Some(account_id) => account_id,
+      None => return Ok(()),
+    };
+
+    // Remove index entry.
+    let store: Store<'_> = self.store(INDEX_PATH);
+    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
+    let mut index = get_index(&store).await?;
+    index.remove(did);
+    set_index(&store, index).await?;
+    std::mem::drop(index_lock);
+
+    let store: Store<'_> = self.store(&fmt_account_id(&account_id));
+
+    store.del(location_document()).await?;
+    store.del(location_chain_state()).await?;
+
+    // TODO: Remove leftover keys.
+
+    Ok(())
   }
 
   async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
 
-    let store: Store<'_> = self.store(INDEX_CLIENT_PATH);
+    let store: Store<'_> = self.store(INDEX_PATH);
 
-    let mut index: HashMap<IotaDID, AccountId> = match store.get(INDEX_CLIENT_PATH).await? {
-      Some(index_vec) => HashMap::<IotaDID, AccountId>::from_json_slice(&index_vec)?,
-      None => HashMap::new(),
-    };
+    let mut index = get_index(&store).await?;
 
     index.insert(did, account_id);
 
-    let index_vec: Vec<u8> = index.to_json_vec()?;
-
-    store.set(INDEX_CLIENT_PATH, index_vec, None).await?;
+    set_index(&store, index).await?;
 
     std::mem::drop(index_lock);
 
@@ -230,15 +244,11 @@ impl Storage for Stronghold {
   async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let store: Store<'_> = self.store(INDEX_CLIENT_PATH);
+    let store: Store<'_> = self.store(INDEX_PATH);
 
-    let lookup: Option<AccountId> = match store.get(INDEX_CLIENT_PATH).await? {
-      Some(index_vec) => {
-        let index: HashMap<IotaDID, AccountId> = HashMap::from_json_slice(&index_vec)?;
-        index.get(did).cloned()
-      }
-      None => None,
-    };
+    let index = get_index(&store).await?;
+
+    let lookup: Option<AccountId> = index.get(did).cloned();
 
     // Explicitly drop the lock so it's not considered unused,
     // and possibly optimized away.
@@ -250,15 +260,11 @@ impl Storage for Stronghold {
   async fn index(&self) -> Result<Vec<IotaDID>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let store: Store<'_> = self.store(INDEX_CLIENT_PATH);
+    let store: Store<'_> = self.store(INDEX_PATH);
 
-    let dids: Vec<IotaDID> = match store.get(INDEX_CLIENT_PATH).await? {
-      Some(index_vec) => {
-        let index: HashMap<IotaDID, AccountId> = HashMap::from_json_slice(&index_vec)?;
-        index.keys().cloned().collect()
-      }
-      None => Vec::new(),
-    };
+    let index = get_index(&store).await?;
+
+    let dids: Vec<IotaDID> = index.keys().cloned().collect();
 
     std::mem::drop(index_lock);
 
@@ -327,10 +333,28 @@ async fn move_key(vault: &Vault<'_>, from: Location, to: Location) -> Result<()>
   Ok(())
 }
 
+async fn get_index(store: &Store<'_>) -> Result<HashMap<IotaDID, AccountId>> {
+  let index: HashMap<IotaDID, AccountId> = match store.get(INDEX_PATH).await? {
+    Some(index_vec) => HashMap::<IotaDID, AccountId>::from_json_slice(&index_vec)?,
+    None => HashMap::new(),
+  };
+
+  Ok(index)
+}
+
+async fn set_index(store: &Store<'_>, index: HashMap<IotaDID, AccountId>) -> Result<()> {
+  let index_vec: Vec<u8> = index.to_json_vec()?;
+
+  store.set(INDEX_PATH, index_vec, None).await?;
+
+  Ok(())
+}
+
 fn location_chain_state() -> StoreKey {
   "$chain_state".to_owned()
 }
 
+// TODO: Turn static.
 fn location_document() -> StoreKey {
   "$document".to_owned()
 }

@@ -4,8 +4,6 @@
 use std::sync::Arc;
 
 use identity_account_storage::storage::MemStore;
-use identity_account_storage::storage::Storage;
-use identity_account_storage::storage::Stronghold;
 use identity_account_storage::types::method_to_key_type;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
@@ -27,7 +25,6 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::Network;
-use rand::Rng;
 
 use crate::account::Account;
 use crate::account::AccountConfig;
@@ -39,61 +36,7 @@ use crate::types::MethodSecret;
 use crate::updates::Update;
 use crate::updates::UpdateError;
 
-// There's a bug in our stronghold wrapper that makes multiple `Stronghold`s not work concurrently,
-// so we're using a static instance as a temporary workaround, until we've upgraded.
-static TEST_STRONGHOLD: once_cell::sync::Lazy<Arc<dyn Storage>> = once_cell::sync::Lazy::new(|| {
-  let temp_file = temporary_random_path();
-  let stronghold: Stronghold = futures::executor::block_on(Stronghold::new(&temp_file, "password", None)).unwrap();
-  Arc::new(stronghold)
-});
-
-async fn account_setup(network: Network) -> AccountSetup {
-  AccountSetup::new(
-    Arc::new(MemStore::new()),
-    Arc::new(
-      ClientBuilder::new()
-        .network(network)
-        .node_sync_disabled()
-        .build()
-        .await
-        .unwrap(),
-    ),
-    AccountConfig::new().testmode(true),
-  )
-}
-
-async fn account_setup_storage(storage: Arc<dyn Storage>, network: Network) -> AccountSetup {
-  AccountSetup::new(
-    storage,
-    Arc::new(
-      ClientBuilder::new()
-        .network(network)
-        .node_sync_disabled()
-        .build()
-        .await
-        .unwrap(),
-    ),
-    AccountConfig::new().testmode(true),
-  )
-}
-
-fn temporary_random_path() -> String {
-  let mut file = std::env::temp_dir();
-  file.push("test_strongholds/");
-  file.push(
-    rand::thread_rng()
-      .sample_iter(rand::distributions::Alphanumeric)
-      .take(32)
-      .map(char::from)
-      .collect::<String>(),
-  );
-  file.set_extension("stronghold");
-  file.to_str().unwrap().to_owned()
-}
-
-async fn storages() -> [Arc<dyn Storage>; 2] {
-  [Arc::new(MemStore::new()), Arc::clone(&TEST_STRONGHOLD)]
-}
+use super::util::*;
 
 #[tokio::test]
 async fn test_create_identity() -> Result<()> {
