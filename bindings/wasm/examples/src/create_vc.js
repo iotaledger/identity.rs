@@ -1,7 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Credential, CredentialValidator, SignatureOptions, CredentialValidationOptions, FailFast} from '@iota/identity-wasm';
+import {
+    Credential,
+    CredentialValidationOptions,
+    CredentialValidator,
+    FailFast,
+    SignatureOptions
+} from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
 
@@ -36,11 +42,12 @@ async function createVC(clientConfig) {
     });
 
     // Sign the credential with the Issuer's newKey
-    const signedVc = issuer.doc.signCredential(unsignedVc, {
-        method: issuer.doc.id().toString() + "#newKey",
-        public: issuer.newKey.public(),
-        private: issuer.newKey.private(),
-    }, SignatureOptions.default());
+    const signedVc = issuer.doc.signCredential(
+        unsignedVc,
+        issuer.newKey.private(),
+        "#newKey",
+        SignatureOptions.default()
+    );
 
     // Before sending this credential to the holder the issuer wants to validate that some properties
     // of the credential satisfy their expectations.

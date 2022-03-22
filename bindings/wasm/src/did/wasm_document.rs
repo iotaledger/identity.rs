@@ -8,16 +8,10 @@ use identity::core::OneOrMany;
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
 use identity::core::Url;
-use identity::crypto::merkle_key::MerkleDigestTag;
-use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::Sha256;
-use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
-use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
-use identity::iota_core::Error;
 use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::IotaVerificationMethod;
@@ -297,13 +291,6 @@ impl WasmDocument {
     ))
   }
 
-  #[wasm_bindgen(js_name = revokeMerkleKey)]
-  pub fn revoke_merkle_key(&mut self, query: &UDIDUrlQuery, index: u32) -> Result<bool> {
-    let method_query: String = query.into_serde().wasm_result()?;
-    let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
-    method.revoke_merkle_key(index).wasm_result()
-  }
-
   /// Attaches the relationship to the given method, if the method exists.
   ///
   /// Note: The method needs to be in the set of verification methods,
@@ -378,27 +365,35 @@ impl WasmDocument {
       .wasm_result()
   }
 
+  /// Creates a signature for the given `Credential` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signCredential)]
   pub fn sign_credential(
     &self,
     data: &JsValue,
-    args: &JsValue,
+    privateKey: String,
+    methodQuery: String,
     options: &WasmSignatureOptions,
   ) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, args, options)?;
+    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmCredential = WasmCredential::from_json(&json)?;
 
     Ok(data)
   }
 
+  /// Creates a signature for the given `Presentation` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signPresentation)]
   pub fn sign_presentation(
     &self,
     data: &JsValue,
-    args: &JsValue,
+    privateKey: String,
+    methodQuery: String,
     options: &WasmSignatureOptions,
   ) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, args, options)?;
+    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmPresentation = WasmPresentation::from_json(&json)?;
 
     Ok(data)
@@ -407,78 +402,24 @@ impl WasmDocument {
   /// Creates a signature for the given `data` with the specified DID Document
   /// Verification Method.
   ///
-  /// An additional `proof` property is required if using a Merkle Key
-  /// Collection verification Method.
-  ///
   /// NOTE: use `signSelf` or `signDocument` for DID Documents.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: &WasmSignatureOptions) -> Result<JsValue> {
-    // TODO: clean this up and annotate types if possible.
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Args {
-      MerkleKey {
-        method: String,
-        public: String,
-        private: String,
-        proof: String,
-      },
-      Default {
-        method: String,
-        private: String,
-      },
-    }
-
+  pub fn sign_data(
+    &self,
+    data: &JsValue,
+    privateKey: String,
+    methodQuery: String,
+    options: &WasmSignatureOptions,
+  ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let args: Args = args.into_serde().wasm_result()?;
     let options: SignatureOptions = options.0.clone();
+    let private: PrivateKey = decode_b58(&privateKey).wasm_result().map(Into::into)?;
 
-    match args {
-      Args::MerkleKey {
-        method,
-        public,
-        private,
-        proof,
-      } => {
-        let merkle_key: Vec<u8> = self
-          .0
-          .try_resolve_method(&*method)
-          .and_then(|method| method.data().try_decode().map_err(Error::InvalidDoc))
-          .wasm_result()?;
-
-        let public: PublicKey = decode_b58(&public).map(Into::into).wasm_result()?;
-        let private: PrivateKey = decode_b58(&private).map(Into::into).wasm_result()?;
-
-        let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
-        let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
-
-        match digest {
-          MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
-            Some(proof) => self
-              .0
-              .signer(&private)
-              .method(&method)
-              .options(options)
-              .merkle_key((&public, &proof))
-              .sign(&mut data)
-              .wasm_result()?,
-            None => return Err("Invalid Public Key Proof".into()),
-          },
-          _ => return Err("Invalid Merkle Key Digest".into()),
-        }
-      }
-      Args::Default { method, private } => {
-        let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
-
-        self
-          .0
-          .signer(&private)
-          .method(&method)
-          .options(options)
-          .sign(&mut data)
-          .wasm_result()?;
-      }
-    }
+    self
+      .0
+      .sign_data(&mut data, &private, &methodQuery, options)
+      .wasm_result()?;
 
     JsValue::from_serde(&data).wasm_result()
   }
