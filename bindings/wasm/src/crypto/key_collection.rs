@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::decode_b58;
 use identity::core::encode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
@@ -26,8 +25,8 @@ pub struct WasmKeyCollectionData {
 
 #[derive(Deserialize, Serialize)]
 struct WasmKeyData {
-  public: String,
-  private: String,
+  public: Vec<u8>,
+  private: Vec<u8>,
 }
 
 // =============================================================================
@@ -63,16 +62,16 @@ impl WasmKeyCollection {
     self.0.keypair(index).map(WasmKeyPair)
   }
 
-  /// Returns the public key at the specified `index` as a base58-encoded string.
+  /// Returns the public key at the specified `index` as a `UInt8Array`.
   #[wasm_bindgen]
-  pub fn public(&self, index: usize) -> Option<String> {
-    self.0.public(index).map(encode_b58)
+  pub fn public(&self, index: usize) -> Option<Vec<u8>> {
+    self.0.public(index).map(|public_key| public_key.as_ref().to_vec())
   }
 
-  /// Returns the private key at the specified `index` as a base58-encoded string.
+  /// Returns the private key at the specified `index` as a `UInt8Array`.
   #[wasm_bindgen]
-  pub fn private(&self, index: usize) -> Option<String> {
-    self.0.private(index).map(encode_b58)
+  pub fn private(&self, index: usize) -> Option<Vec<u8>> {
+    self.0.private(index).map(|public_key| public_key.as_ref().to_vec())
   }
 
   #[wasm_bindgen(js_name = merkleRoot)]
@@ -128,8 +127,8 @@ impl From<&WasmKeyCollection> for WasmKeyCollectionData {
     let keys: Vec<WasmKeyData> = public
       .zip(private)
       .map(|(public, private)| WasmKeyData {
-        public: encode_b58(public),
-        private: encode_b58(private),
+        public: public.as_ref().to_vec(),
+        private: private.as_ref().to_vec(),
       })
       .collect();
 
@@ -144,10 +143,9 @@ impl TryFrom<WasmKeyCollectionData> for WasmKeyCollection {
   type Error = JsValue;
 
   fn try_from(data: WasmKeyCollectionData) -> std::result::Result<Self, Self::Error> {
-    // TODO: throw decoding errors instead unless we plan on removing KeyCollection.
-    let iter: _ = data.keys.iter().flat_map(|data| {
-      let public_key: PublicKey = decode_b58(&data.public).ok()?.into();
-      let private_key: PrivateKey = decode_b58(&data.private).ok()?.into();
+    let iter: _ = data.keys.into_iter().flat_map(|data| {
+      let public_key: PublicKey = data.public.into();
+      let private_key: PrivateKey = data.private.into();
 
       Some((public_key, private_key))
     });
