@@ -22,13 +22,19 @@ runs:
     - name: Install dependencies
       shell: sh
       working-directory: bindings/stronghold-nodejs
-      run: npm ci --ignore-scripts
+      run: npm ci --ignore-scripts --legacy-peer-deps
 
-    - name: Download all artifacts
+    - name: Download binary artifacts
       uses: actions/download-artifact@v2
       with:
         name: ${{ inputs.input-artifact-name }}
         path: bindings/stronghold-nodejs/artifacts
+
+    - name: Download dist artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.input-artifact-name }}-dist
+        path: bindings/stronghold-nodejs/dist
 
     - name: Create npm folder
       shell: sh
@@ -52,4 +58,6 @@ runs:
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
       # will publish 'latest' tag if no tag is passed
-      run: npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
+      run: |
+        echo "//registry.npmjs.org/:_authToken=${{ inputs.npm-token }}" >> ~/.npmrc
+        npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public

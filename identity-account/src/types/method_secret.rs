@@ -7,5 +7,6 @@ use identity_core::crypto::PrivateKey;
 #[derive(Clone, Debug)]
 pub enum MethodSecret {
   Ed25519(PrivateKey),
+  X25519(PrivateKey),
   MerkleKeyCollection(KeyCollection),
 }

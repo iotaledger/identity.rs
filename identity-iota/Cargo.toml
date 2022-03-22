@@ -1,6 +1,6 @@
 [package]
 name = "identity-iota"
-version = "0.5.0-dev.4"
+version = "0.5.0-dev.5"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -16,10 +16,10 @@ bee-rest-api = { version = "0.1.7", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-features = false }
-identity-credential = { version = "=0.5.0-dev.4", path = "../identity-credential" }
-identity-did = { version = "=0.5.0-dev.4", path = "../identity-did" }
-identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
+identity-core = { version = "=0.5.0-dev.5", path = "../identity-core", default-features = false }
+identity-credential = { version = "=0.5.0-dev.5", path = "../identity-credential" }
+identity-did = { version = "=0.5.0-dev.5", path = "../identity-did" }
+identity-iota-core = { version = "=0.5.0-dev.5", path = "../identity-iota-core", default-features = false }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }

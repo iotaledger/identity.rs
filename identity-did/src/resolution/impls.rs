@@ -453,8 +453,8 @@ mod test {
     VerificationMethod::builder(Default::default())
       .id(did.to_url().join(fragment).unwrap())
       .controller(did.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_base58(fragment.as_bytes()))
       .build()
       .unwrap()
   }

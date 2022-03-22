@@ -344,8 +344,8 @@ mod test {
     MethodBuilder::default()
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }
@@ -807,8 +807,8 @@ mod test {
     let method_ref: MethodRef = MethodBuilder::default()
       .id(first)
       .controller(new.id.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(b"key_material"))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(b"key_material"))
       .build()
       .unwrap()
       .into();

@@ -52,16 +52,6 @@ impl NapiStronghold {
     self.0.set_dropsave(dropsave);
   }
 
-  /// Sets the account password.
-  #[napi]
-  pub async fn set_password(&self, password: Vec<u32>) -> Result<()> {
-    let password: [u8; 32] = password
-      .try_into_bytes()?
-      .try_into()
-      .map_err(|_| Error::from_reason("Invalid password type. Expected [u8; 32]".to_owned()))?;
-    self.0.set_password(password).await.napi_result()
-  }
-
   /// Write any unsaved changes to disk.
   #[napi]
   pub async fn flush_changes(&self) -> Result<()> {

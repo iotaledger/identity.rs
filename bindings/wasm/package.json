@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-wasm",
-  "version": "0.5.0-dev.4",
+  "version": "0.5.0-dev.5",
   "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "repository": {
     "type": "git",
@@ -18,11 +18,10 @@
     "build:docs": "node ./build/docs",
     "build:examples": "webpack --config ./examples/webpack.config.js --mode=production",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
-    "prepublishOnly": "npm run build",
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "example:account": "ts-node ./examples-account/src/node.ts",
-    "test": "npm run test:unit && test:examples",
+    "test": "npm run test:unit && npm run test:examples",
     "test:examples": "concurrently -g --timings \"npm:test:node\" \"npm:test:account:node\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:account:node": "ts-mocha ./examples-account/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",

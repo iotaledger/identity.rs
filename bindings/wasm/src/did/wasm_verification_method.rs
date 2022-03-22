@@ -9,10 +9,11 @@ use identity::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::KeyType;
 use crate::crypto::WasmKeyCollection;
+use crate::crypto::WasmKeyType;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
+use crate::did::WasmMethodData;
 use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -27,11 +28,11 @@ impl WasmVerificationMethod {
   #[wasm_bindgen(constructor)]
   pub fn new(
     did: &WasmDID,
-    key_type: KeyType,
+    key_type: WasmKeyType,
     public_key: Vec<u8>,
     fragment: String,
   ) -> Result<WasmVerificationMethod> {
-    let public_key: PublicKey = public_key.into();
+    let public_key: PublicKey = PublicKey::from(public_key);
     IotaVerificationMethod::new(did.0.clone(), key_type.into(), &public_key, &fragment)
       .map(Self)
       .map_err(wasm_error)
@@ -77,13 +78,13 @@ impl WasmVerificationMethod {
   /// Returns a copy of the `VerificationMethod` type.
   #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> String {
-    self.0.key_type().as_str().into()
+    self.0.type_().as_str().into()
   }
 
   /// Returns a copy of the `VerificationMethod` public key data.
   #[wasm_bindgen]
-  pub fn data(&self) -> Result<JsValue> {
-    JsValue::from_serde(self.0.key_data()).wasm_result()
+  pub fn data(&self) -> WasmMethodData {
+    WasmMethodData::from(self.0.data().clone())
   }
 
   /// Serializes a `VerificationMethod` object as a JSON object.

@@ -67,6 +67,10 @@ name = "manipulate_did"
 path = "low-level-api/manipulate_did.rs"
 
 [[example]]
+name = "key_exchange"
+path = "low-level-api/key_exchange.rs"
+
+[[example]]
 name = "merkle_key"
 path = "low-level-api/merkle_key.rs"
 

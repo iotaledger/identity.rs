@@ -14,7 +14,6 @@ use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::types::KeyLocation;
 use crate::types::Signature;
-use crate::utils::EncryptionKey;
 
 #[cfg(not(feature = "send-sync-storage"))]
 mod storage_sub_trait {
@@ -34,9 +33,6 @@ mod storage_sub_trait {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
-  /// Sets the account password.
-  async fn set_password(&self, password: EncryptionKey) -> Result<()>;
-
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
 

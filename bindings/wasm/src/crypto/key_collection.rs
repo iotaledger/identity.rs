@@ -11,15 +11,15 @@ use identity::crypto::PublicKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
-use crate::crypto::KeyType;
 use crate::crypto::WasmKeyPair;
+use crate::crypto::WasmKeyType;
 use crate::error::Result;
 use crate::error::WasmResult;
 
 #[derive(Deserialize, Serialize)]
 pub struct WasmKeyCollectionData {
   #[serde(rename = "type")]
-  type_: KeyType,
+  type_: WasmKeyType,
   keys: Vec<WasmKeyData>,
 }
 
@@ -40,7 +40,7 @@ pub struct WasmKeyCollection(pub(crate) KeyCollection);
 impl WasmKeyCollection {
   /// Creates a new `KeyCollection` with the specified key type.
   #[wasm_bindgen(constructor)]
-  pub fn new(type_: KeyType, count: usize) -> Result<WasmKeyCollection> {
+  pub fn new(type_: WasmKeyType, count: usize) -> Result<WasmKeyCollection> {
     KeyCollection::new(type_.into(), count).map(Self).wasm_result()
   }
 

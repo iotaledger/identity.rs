@@ -158,12 +158,15 @@ where
     let method: &VerificationMethod<D, U> = self.document.try_resolve_method(query)?;
     let method_uri: String = X::try_method(method)?;
 
-    match method.key_type() {
+    match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref(), self.options.clone())?;
       }
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(Error::InvalidMethodType);
+      }
       MethodType::MerkleKeyCollection2021 => {
-        let data: Vec<u8> = method.key_data().try_decode()?;
+        let data: Vec<u8> = method.data().try_decode()?;
 
         match MerkleKey::extract_tags(&data)? {
           (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
