@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity_account_storage::storage::AccountId;
 use identity_account_storage::storage::Storage;
@@ -48,6 +49,7 @@ pub(crate) async fn create_identity(
 ) -> Result<(AccountId, IotaDocument)> {
   let method_type = match setup.key_type {
     KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
+    KeyType::X25519 => MethodType::X25519KeyAgreementKey2019,
   };
 
   // The method type must be able to sign document updates.
@@ -311,6 +313,28 @@ async fn insert_method_secret(
       ensure!(
         matches!(key_type, KeyType::Ed25519),
         UpdateError::InvalidMethodSecret("KeyType::Ed25519 can only be used with an ed25519 method secret".to_owned(),)
+      );
+
+      store
+        .key_insert(&account_id, location, private_key)
+        .await
+        .map_err(Into::into)
+    }
+    MethodSecret::X25519(private_key) => {
+      ensure!(
+        private_key.as_ref().len() == x25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodSecret(format!(
+          "an ed25519 private key requires {} bytes, found {}",
+          x25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+
+      ensure!(
+        matches!(key_type, KeyType::X25519),
+        UpdateError::InvalidMethodSecret(
+          "MethodType::X25519KeyAgreementKey2019 can only be used with an x25519 method secret".to_owned(),
+        )
       );
 
       store

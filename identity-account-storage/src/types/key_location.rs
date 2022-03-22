@@ -84,9 +84,9 @@ impl IotaVerificationMethodExt for IotaVerificationMethod {
       .id()
       .fragment()
       .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
-    let method_data: &MethodData = self.key_data();
+    let method_data: &MethodData = self.data();
 
-    let key_type: KeyType = method_to_key_type(self.key_type());
+    let key_type: KeyType = method_to_key_type(self.type_());
 
     Ok(KeyLocation::new(key_type, fragment.to_owned(), method_data))
   }
@@ -95,6 +95,7 @@ impl IotaVerificationMethodExt for IotaVerificationMethod {
 pub fn method_to_key_type(method_type: MethodType) -> KeyType {
   match method_type {
     MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+    MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
     MethodType::MerkleKeyCollection2021 => todo!(),
   }
 }

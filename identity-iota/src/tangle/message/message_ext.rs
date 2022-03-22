@@ -152,7 +152,7 @@ mod test {
 
   #[test]
   fn test_pack_did_message() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(
@@ -174,7 +174,7 @@ mod test {
 
   #[test]
   fn test_pack_did_message_diff() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut doc1: IotaDocument = IotaDocument::new(&keypair).unwrap();
     doc1
       .sign_self(keypair.private(), doc1.default_signing_method().unwrap().id().clone())

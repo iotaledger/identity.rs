@@ -61,7 +61,7 @@ async fn test_create_identity() -> Result<()> {
     // Ensure we can retrieve the correct location for the key.
     assert_eq!(
       location,
-      KeyLocation::new(KeyType::Ed25519, expected_fragment.to_owned(), method.key_data())
+      KeyLocation::new(KeyType::Ed25519, expected_fragment.to_owned(), method.data())
     );
 
     // Ensure the key exists in storage.
@@ -126,7 +126,7 @@ async fn test_create_identity_network() -> Result<()> {
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
   for storage in storages().await {
-    let keypair = KeyPair::new_ed25519()?;
+    let keypair = KeyPair::new(KeyType::Ed25519)?;
     let identity_create = IdentitySetup::default()
       .key_type(KeyType::Ed25519)
       .method_secret(MethodSecret::Ed25519(keypair.private().clone()));
@@ -205,7 +205,7 @@ async fn test_create_method() -> Result<()> {
     let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
     // Ensure existence and key type
-    assert_eq!(method.key_type(), method_type);
+    assert_eq!(method.type_(), method_type);
 
     // Still only the default relationship.
     assert_eq!(document.core_document().verification_relationships().count(), 1);
@@ -216,7 +216,7 @@ async fn test_create_method() -> Result<()> {
     // Ensure we can retrieve the correct location for the key.
     assert_eq!(
       location,
-      KeyLocation::new(method_to_key_type(method_type), fragment, method.key_data())
+      KeyLocation::new(method_to_key_type(method_type), fragment, method.data())
     );
 
     // Ensure the key exists in storage.
@@ -330,7 +330,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
     .await
     .unwrap();
 
-    let keypair = KeyPair::new_ed25519().unwrap();
+    let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
     let fragment = "key-1".to_owned();
     let method_type = MethodType::Ed25519VerificationKey2018;
 
@@ -714,10 +714,10 @@ async fn test_remove_service() -> Result<()> {
 async fn test_set_controller() -> Result<()> {
   let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let iota_did1: IotaDID = IotaDID::new(keypair1.public().as_ref()).unwrap();
 
-  let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let iota_did2: IotaDID = IotaDID::new(keypair2.public().as_ref()).unwrap();
 
   // Set one controller.

@@ -723,7 +723,7 @@ where
 
     // Check method type.
     if let Some(ref method_types) = options.method_type {
-      if !method_types.is_empty() && !method_types.contains(&method.key_type) {
+      if !method_types.is_empty() && !method_types.contains(&method.type_) {
         return Err(Error::InvalidSignature("invalid method type"));
       }
     }
@@ -765,11 +765,14 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let public_key: Vec<u8> = method.key_data().try_decode()?;
+    let public_key: Vec<u8> = method.data().try_decode()?;
 
-    match method.key_type() {
+    match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
+      }
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(Error::InvalidMethodType);
       }
       MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&public_key)? {
         (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
@@ -862,8 +865,8 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }

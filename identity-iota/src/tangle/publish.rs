@@ -38,6 +38,7 @@ mod test {
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_did::did::DID;
   use identity_did::verification::MethodScope;
   use identity_iota_core::did::IotaDIDUrl;
@@ -50,10 +51,10 @@ mod test {
   // Returns a document with an embedded capability invocation method, and a generic verification method,
   // that also has as an attached capability invocation verification relationship.
   fn document() -> IotaDocument {
-    let initial_keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let initial_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut old_doc: IotaDocument = IotaDocument::new_with_options(&initial_keypair, None, Some("embedded")).unwrap();
 
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::new(old_doc.id().to_owned(), keypair.type_(), keypair.public(), "generic").unwrap();
 
@@ -77,7 +78,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::new(old_doc.id().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
@@ -99,7 +100,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::new(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "embedded")?;
 
@@ -124,7 +125,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let method_updated: IotaVerificationMethod =
       IotaVerificationMethod::new(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "generic")?;
 
@@ -147,7 +148,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::new(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 

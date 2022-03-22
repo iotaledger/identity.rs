@@ -22,6 +22,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dev-dependencies]
 proptest = { version = "1.0" }
+serde_json = { version = "1.0", default-features = false }
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -91,7 +91,9 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => generate_ed25519(&vault, location).await?,
+      KeyType::Ed25519 | KeyType::X25519 => {
+        generate_private_key(&vault, location).await?;
+      }
     }
 
     Ok(())
@@ -120,7 +122,7 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => retrieve_ed25519(&vault, location.into()).await,
+      KeyType::Ed25519 | KeyType::X25519 => retrieve_public_key(&vault, location.into()).await,
     }
   }
 
@@ -128,7 +130,7 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => {
+      KeyType::Ed25519 | KeyType::X25519 => {
         vault.delete(location.into(), true).await?;
       }
     }
@@ -141,6 +143,7 @@ impl Storage for Stronghold {
 
     match location.key_type {
       KeyType::Ed25519 => sign_ed25519(&vault, data, location.into()).await,
+      KeyType::X25519 => Err(identity_did::Error::InvalidMethodType.into()),
     }
   }
 
@@ -280,7 +283,7 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<()> {
+async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<()> {
   let location: Location = location.into();
 
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
@@ -294,16 +297,17 @@ async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<(
   Ok(())
 }
 
-async fn retrieve_ed25519(vault: &Vault<'_>, location: Location) -> Result<PublicKey> {
+async fn retrieve_public_key(vault: &Vault<'_>, location: Location) -> Result<PublicKey> {
   let procedure: procedures::PublicKey = procedures::PublicKey {
     ty: procedures::KeyType::Ed25519,
     private_key: location,
   };
+
   Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: Location) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_ed25519(vault, location.clone()).await?;
+  let public_key: PublicKey = retrieve_public_key(vault, location.clone()).await?;
   let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
     private_key: location,
     msg: payload,

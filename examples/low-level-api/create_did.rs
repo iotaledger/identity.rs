@@ -15,7 +15,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   let client: Client = Client::new().await?;
 
   // Generate a new Ed25519 public/private key pair.
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
   // Create a DID Document (an identity) from the generated key pair.
   let mut document: IotaDocument = IotaDocument::new(&keypair)?;

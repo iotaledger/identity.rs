@@ -83,6 +83,7 @@ impl KeyCollection {
 
     let keys: Vec<(PublicKey, PrivateKey)> = match type_ {
       KeyType::Ed25519 => generate_ed25519_keypairs(count_next_power)?,
+      KeyType::X25519 => unimplemented!("x25519 not supported"),
     };
 
     Self::from_iterator(type_, keys.into_iter())

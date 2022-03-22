@@ -65,6 +65,9 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
+<dt><a href="#MethodData">MethodData</a></dt>
+<dd><p>Supported verification method data formats.</p>
+</dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -116,13 +119,14 @@ See <code>ISignatureOptions</code>.</p>
 <dd><p>Holds additional signature verification options.
 See <code>IVerifierOptions</code>.</p>
 </dd>
+<dt><a href="#X25519">X25519</a></dt>
+<dd><p>An implementation of <code>X25519</code> Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.</p>
+</dd>
 </dl>
 
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
@@ -152,6 +156,8 @@ This variant is the default used if no other variant is specified when construct
 </dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
@@ -175,9 +181,8 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -192,43 +197,36 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
-<a name="Account+deleteService"></a>
+<a name="Account+attachMethodRelationships"></a>
 
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
+| options | <code>AttachMethodRelationshipOptions</code> | 
 
-<a name="Account+setController"></a>
+<a name="Account+detachMethodRelationships"></a>
 
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>SetControllerOptions</code> | 
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -368,6 +366,39 @@ Deletes a verification method if the method exists.
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
 
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
+
 <a name="Account+createMethod"></a>
 
 ### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -389,31 +420,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -2564,6 +2570,7 @@ Deserializes a JSON object as `KeyLocation`.
         * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
         * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.tryFromPrivateKeyBytes(keyType, privateKeyBytes)](#KeyPair.tryFromPrivateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -2619,12 +2626,102 @@ Parses a `KeyPair` object from base58-encoded public/private keys.
 | public_key | <code>string</code> | 
 | private_key | <code>string</code> | 
 
+<a name="KeyPair.tryFromPrivateKeyBytes"></a>
+
+### KeyPair.tryFromPrivateKeyBytes(keyType, privateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
+Reconstructs a `KeyPair` from the bytes of a private key.
+
+The private key for `Ed25519` must be a 32-byte seed in compliance
+with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
+
+**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
+
+| Param | Type |
+| --- | --- |
+| keyType | <code>number</code> | 
+| privateKeyBytes | <code>Uint8Array</code> | 
+
 <a name="KeyPair.fromJSON"></a>
 
 ### KeyPair.fromJSON(json) ⇒ [<code>KeyPair</code>](#KeyPair)
 Deserializes a `KeyPair` object from a JSON object.
 
 **Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="MethodData"></a>
+
+## MethodData
+Supported verification method data formats.
+
+**Kind**: global class  
+
+* [MethodData](#MethodData)
+    * _instance_
+        * [.tryDecode()](#MethodData+tryDecode) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#MethodData+toJSON) ⇒ <code>any</code>
+        * [.clone()](#MethodData+clone) ⇒ [<code>MethodData</code>](#MethodData)
+    * _static_
+        * [.newBase58(data)](#MethodData.newBase58) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.newMultibase(data)](#MethodData.newMultibase) ⇒ [<code>MethodData</code>](#MethodData)
+        * [.fromJSON(json)](#MethodData.fromJSON) ⇒ [<code>MethodData</code>](#MethodData)
+
+<a name="MethodData+tryDecode"></a>
+
+### methodData.tryDecode() ⇒ <code>Uint8Array</code>
+Returns a `UInt8Array` containing the decoded bytes of the `MethodData`.
+
+This is generally a public key identified by a `MethodData` value.
+
+### Errors
+Decoding can fail if `MethodData` has invalid content or cannot be
+represented as a vector of bytes.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
+<a name="MethodData+toJSON"></a>
+
+### methodData.toJSON() ⇒ <code>any</code>
+Serializes a `MethodData` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
+<a name="MethodData+clone"></a>
+
+### methodData.clone() ⇒ [<code>MethodData</code>](#MethodData)
+Deep clones the object.
+
+**Kind**: instance method of [<code>MethodData</code>](#MethodData)  
+<a name="MethodData.newBase58"></a>
+
+### MethodData.newBase58(data) ⇒ [<code>MethodData</code>](#MethodData)
+Creates a new `MethodData` variant with Base58-BTC encoded content.
+
+**Kind**: static method of [<code>MethodData</code>](#MethodData)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="MethodData.newMultibase"></a>
+
+### MethodData.newMultibase(data) ⇒ [<code>MethodData</code>](#MethodData)
+Creates a new `MethodData` variant with Multibase-encoded content.
+
+**Kind**: static method of [<code>MethodData</code>](#MethodData)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Uint8Array</code> | 
+
+<a name="MethodData.fromJSON"></a>
+
+### MethodData.fromJSON(json) ⇒ [<code>MethodData</code>](#MethodData)
+Deserializes a `MethodData` object from a JSON object.
+
+**Kind**: static method of [<code>MethodData</code>](#MethodData)  
 
 | Param | Type |
 | --- | --- |
@@ -2769,6 +2866,7 @@ Supported verification method types.
         * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
+        * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
         * [.MerkleKeyCollection2021()](#MethodType.MerkleKeyCollection2021) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
@@ -2787,6 +2885,10 @@ Deep clones the object.
 <a name="MethodType.Ed25519VerificationKey2018"></a>
 
 ### MethodType.Ed25519VerificationKey2018() ⇒ [<code>MethodType</code>](#MethodType)
+**Kind**: static method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType.X25519KeyAgreementKey2019"></a>
+
+### MethodType.X25519KeyAgreementKey2019() ⇒ [<code>MethodType</code>](#MethodType)
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.MerkleKeyCollection2021"></a>
 
@@ -3776,7 +3878,7 @@ Deserializes a `Timestamp` from a JSON object.
         * [.controller()](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
         * [.SetController(did)](#VerificationMethod+SetController)
         * [.type()](#VerificationMethod+type) ⇒ <code>string</code>
-        * [.data()](#VerificationMethod+data) ⇒ <code>any</code>
+        * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
     * _static_
@@ -3828,7 +3930,7 @@ Returns a copy of the `VerificationMethod` type.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+data"></a>
 
-### verificationMethod.data() ⇒ <code>any</code>
+### verificationMethod.data() ⇒ [<code>MethodData</code>](#MethodData)
 Returns a copy of the `VerificationMethod` public key data.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -3927,10 +4029,25 @@ Deserializes a `VerifierOptions` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="KeyType"></a>
+<a name="X25519"></a>
 
-## KeyType
-**Kind**: global variable  
+## X25519
+An implementation of `X25519` Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
+
+**Kind**: global class  
+<a name="X25519.keyExchange"></a>
+
+### X25519.keyExchange(privateKey, publicKey) ⇒ <code>Uint8Array</code>
+Performs a cryptographic key exchange process (e.g. Diffie-Hellman) using the private key
+of the first party with with the public key of the second party, resulting in a shared secret.
+
+**Kind**: static method of [<code>X25519</code>](#X25519)  
+
+| Param | Type |
+| --- | --- |
+| privateKey | <code>string</code> | 
+| publicKey | <code>Uint8Array</code> | 
+
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -3985,6 +4102,10 @@ Return after the first error occurs.
 <a name="Digest"></a>
 
 ## Digest
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
