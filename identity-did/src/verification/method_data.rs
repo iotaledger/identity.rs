@@ -10,7 +10,6 @@ use core::fmt::Formatter;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use identity_core::common::Object;
 use identity_core::utils::decode_b58;
 use identity_core::utils::decode_multibase;
 use identity_core::utils::encode_b58;
@@ -26,7 +25,6 @@ use crate::error::Result;
 pub enum MethodData {
   PublicKeyMultibase(String),
   PublicKeyBase58(String),
-  PublicKeyJwk(Object),
 }
 
 impl MethodData {
@@ -54,7 +52,6 @@ impl MethodData {
     match self {
       Self::PublicKeyMultibase(input) => decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase),
       Self::PublicKeyBase58(input) => decode_b58(input).map_err(|_| Error::InvalidKeyDataBase58),
-      Self::PublicKeyJwk(_) => Err(Error::InvalidKeyData),
     }
   }
 }
@@ -64,7 +61,6 @@ impl Debug for MethodData {
     match self {
       Self::PublicKeyMultibase(inner) => f.write_fmt(format_args!("PublicKeyMultibase({})", inner)),
       Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),
-      Self::PublicKeyJwk(inner) => f.debug_tuple("PublicKeyJwk").field(inner).finish(),
     }
   }
 }

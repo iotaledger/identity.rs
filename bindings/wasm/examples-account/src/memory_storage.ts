@@ -17,8 +17,6 @@ class MemStore implements Storage {
         this._vaults = new Map();
     }
 
-    public async setPassword(_encryptionKey: Uint8Array): Promise<void> {}
-
     public async flushChanges(): Promise<void> {}
 
     public async keyNew(did: DID, keyLocation: KeyLocation): Promise<string> {

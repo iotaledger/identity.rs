@@ -30,7 +30,6 @@ use crate::stronghold::Vault;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
-use crate::utils::EncryptionKey;
 
 use super::AccountId;
 use super::StoreKey;
@@ -88,11 +87,6 @@ impl Stronghold {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
-  async fn set_password(&self, password: EncryptionKey) -> Result<()> {
-    self.snapshot.set_password(password).await?;
-    Ok(())
-  }
-
   async fn flush_changes(&self) -> Result<()> {
     self.snapshot.save().await?;
     Ok(())

@@ -9,7 +9,7 @@ use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::Signature;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -27,8 +27,6 @@ pub struct IotaDocumentMetadata {
     skip_serializing_if = "MessageId::is_null"
   )]
   pub previous_message_id: MessageId,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
   #[serde(flatten)]
   pub properties: Object,
 }
@@ -42,7 +40,6 @@ impl IotaDocumentMetadata {
       created: now,
       updated: now,
       previous_message_id: MessageId::null(),
-      proof: None,
       properties: Object::default(),
     }
   }
