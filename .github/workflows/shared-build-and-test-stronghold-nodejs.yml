@@ -136,6 +136,7 @@ jobs:
           run: ${{ matrix.settings.test-docker }}
           working-directory: ./
 
+        # Optionally uploads binary artifact for current matrix target for later release.
         - name: Upload binary artifact
           if: ${{inputs.upload-binaries-as-artifacts}}
           uses: actions/upload-artifact@v2
@@ -145,6 +146,7 @@ jobs:
             if-no-files-found: error
             retention-days: 1
 
+        # Optionally uploads js / ts dist artifact for later release. Since js is cross-platform it only needs to be uploaded from one matrix target.
         - name: Upload dist artifact
           if: ${{inputs.upload-binaries-as-artifacts && matrix.settings.generate-dist}}
           uses: actions/upload-artifact@v2
