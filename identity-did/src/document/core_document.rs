@@ -598,14 +598,6 @@ where
     }
   }
 
-  // #[inline(Always)]
-  // pub fn resolve_method_ref_mut<'a, 'b>(&'a mut self, method_ref: &'b mut MethodRef<D, U>) -> Option<&'a mut
-  // VerificationMethod<D, U>> {   match method_ref {
-  //     MethodRef::Embed(method) => Some(method),
-  //     MethodRef::Refer(ref did) => self.verification_method.query_mut(did),
-  //   }
-  // }
-
   fn resolve_method_inner(&self, query: DIDUrlQuery<'_>) -> Option<&VerificationMethod<D, U>> {
     let mut method: Option<&MethodRef<D, U>> = None;
 
