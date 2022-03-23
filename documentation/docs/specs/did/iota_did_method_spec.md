@@ -297,6 +297,28 @@ In order to create a valid Integration DID message, the following steps are to b
 
 In order to deactivate a DID document, a valid Integration DID message must be published that removes all content from a DID Document, effectively deactivating the DID Document. Keep in mind that this operation is irreversible. 
 
+## IOTA Identity standards
+
+The `did:iota` method is implemented in the [IOTA Identity framework](https://github.com/iotaledger/identity.rs). This framework supports a number of operations that are standardized, some are standardized across the SSI community, and some are the invention of the IOTA Foundation.
+
+### Standardized Verification Method Types
+
+The IOTA Identity framework currently supports two Verification Method Types:
+
+* `Ed25519VerificationKey2018`: can be used to sign DID Document updates, Verifiable Credentials, Verifiable Presentations, and arbitrary data with a `JcsEd25519Signature2020`.
+* `X25519KeyAgreementKey2019`: can be used to perform [Diffie-Hellman key exchange](https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange) operations to derive a shared secret between two parties.
+
+### Revocation
+
+Revocation of Verifiable Credentials and signatures is currently achieved through revoking public keys in the IOTA Identity framework. Alternatively, developers should consider using the [`credentialStatus` property](https://www.w3.org/TR/vc-data-model/#status) when issuing and revoking Verifiable Credentials at scale.
+
+### Standardized Services
+
+The IOTA Identity framework also standardized certain `services` that are embedded in the DID Document. It is RECOMMENDED to implement these when implementing the `did:iota` method.
+
+Currently standardized `services`:
+* Nothing yet.
+
 ## Security Considerations
 
 The `did:iota` method is implemented on the [IOTA Tangle](https://iota.org), a public permissionless and feeless Distributed Ledger Technology (DLT), making it resistant against almost all censorship attack vectors. Up until the `Coordicide` update for the IOTA network, a reliability on the coordinator exists for resolving ordering conflicts. This has a minor censorship possibility, that, in the worst case, can prevent ordering conflicts from resolving to a DID. However, these can only be published by the owner of the private key and therefore does not constitute a usable attack vector. Lastly, a node may decide to censor DID messages locally, however a user can easily use another node. 
