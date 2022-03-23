@@ -5,6 +5,7 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
 #[derive(Clone, Copy, Debug)]
 pub enum PublishType {
   Integration,

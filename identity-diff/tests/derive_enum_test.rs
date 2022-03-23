@@ -3,6 +3,7 @@
 
 #![cfg(feature = "derive")]
 #![allow(unused_variables)]
+#![allow(deprecated)]
 
 use identity_diff::Diff;
 use serde::Deserialize;

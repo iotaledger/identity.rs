@@ -11,6 +11,7 @@ use serde::Serialize;
 pub struct ChainState {
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_integration_message_id: MessageId,
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_diff_message_id: MessageId,
 }
@@ -33,6 +34,7 @@ impl ChainState {
   /// Returns the diff message id of the last published update.
   ///
   /// Note: [`MessageId`] has a built-in `null` variant that needs to be checked for.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn last_diff_message_id(&self) -> &MessageId {
     &self.last_diff_message_id
   }
@@ -47,6 +49,7 @@ impl ChainState {
   }
 
   /// Sets the last diff message id.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn set_last_diff_message_id(&mut self, message: MessageId) {
     self.last_diff_message_id = message;
   }
