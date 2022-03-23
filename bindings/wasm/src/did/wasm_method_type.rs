@@ -30,11 +30,6 @@ impl WasmMethodType {
     WasmMethodType(MethodType::X25519KeyAgreementKey2019)
   }
 
-  #[wasm_bindgen(js_name = MerkleKeyCollection2021)]
-  pub fn merkle_key_collection_2021() -> WasmMethodType {
-    WasmMethodType(MethodType::MerkleKeyCollection2021)
-  }
-
   /// Serializes a `MethodType` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {

@@ -18,7 +18,7 @@ impl WasmSignature {
     WasmSignature(Signature::new(data))
   }
 
-  // Returns a copy of the signature as a vec of bytes.
+  /// Returns a copy of the signature as a `UInt8Array`.
   #[wasm_bindgen(js_name = asBytes)]
   pub fn as_bytes(&self) -> Vec<u8> {
     self.0.as_bytes().to_vec()

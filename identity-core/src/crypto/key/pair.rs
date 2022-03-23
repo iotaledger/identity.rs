@@ -7,13 +7,11 @@ use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
-use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::error::Result;
 use crate::utils::ed25519_private_try_from_bytes;
-use crate::utils::generate_ed25519_keypair;
 
 /// A convenient type for representing a pair of cryptographic keys.
 // TODO: refactor with exact types for each key type? E.g. Ed25519KeyPair, X25519KeyPair etc.
@@ -30,7 +28,15 @@ impl KeyPair {
   /// Creates a new [`KeyPair`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType) -> Result<Self> {
     let (public, private): (PublicKey, PrivateKey) = match type_ {
-      KeyType::Ed25519 => generate_ed25519_keypair()?,
+      KeyType::Ed25519 => {
+        let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
+        let public: ed25519::PublicKey = secret.public_key();
+
+        let private: PrivateKey = secret.to_bytes().to_vec().into();
+        let public: PublicKey = public.to_bytes().to_vec().into();
+
+        (public, private)
+      }
       KeyType::X25519 => {
         let secret: x25519::SecretKey = x25519::SecretKey::generate()?;
         let public: x25519::PublicKey = secret.public_key();
@@ -89,19 +95,9 @@ impl KeyPair {
     &self.public
   }
 
-  /// Returns the public key as a [`KeyRef`] object.
-  pub fn public_ref(&self) -> KeyRef<'_> {
-    KeyRef::new(self.type_, self.public.as_ref())
-  }
-
   /// Returns a reference to the [`PrivateKey`] object.
   pub const fn private(&self) -> &PrivateKey {
     &self.private
-  }
-
-  /// Returns the private key as a [`KeyRef`] object.
-  pub fn private_ref(&self) -> KeyRef<'_> {
-    KeyRef::new(self.type_, self.private.as_ref())
   }
 }
 

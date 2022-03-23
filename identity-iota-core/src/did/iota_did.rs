@@ -118,7 +118,7 @@ impl IotaDID {
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
-    if segments.is_empty() || segments.len() > 3 {
+    if segments.is_empty() || segments.len() > 2 {
       return Err(Error::InvalidDID(DIDError::InvalidMethodId));
     }
 
@@ -397,6 +397,7 @@ mod tests {
     assert!(IotaDID::parse("did:iota:").is_err());
     // Too many components is invalid.
     assert!(IotaDID::parse(format!("did:iota:custom:shard-1:random:{}", TAG)).is_err());
+    assert!(IotaDID::parse(format!("did:iota:custom:random:{}", TAG)).is_err());
     // Explicit empty network name is invalid (omitting it is still fine)
     assert!(IotaDID::parse(format!("did:iota::{}", TAG)).is_err());
     // Invalid network name is invalid.

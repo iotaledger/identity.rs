@@ -8,12 +8,9 @@ use serde::de;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::common::BitSet;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::merkle_key::MerkleDigest;
-use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 
@@ -22,7 +19,6 @@ use crate::did::DIDUrl;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::verifiable::Revocation;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodRef;
@@ -192,7 +188,7 @@ where
 impl<D, T> VerificationMethod<D, T>
 where
   D: DID,
-  T: Revocation + Default,
+  T: Default,
 {
   // ===========================================================================
   // Constructors
@@ -219,47 +215,6 @@ where
       }
     }
     builder.build()
-  }
-
-  /// Creates a new [`MerkleKeyCollection2021`](MethodType::MerkleKeyCollection2021) method from
-  /// the given key collection.
-  pub fn new_merkle_key<M>(did: D, keys: &KeyCollection, fragment: &str) -> Result<Self>
-  where
-    M: MerkleDigest,
-  {
-    let method_fragment: String = if fragment.starts_with('#') {
-      fragment.to_owned()
-    } else {
-      format!("#{}", fragment)
-    };
-    let id: DIDUrl<D> = did.to_url().join(method_fragment)?;
-
-    MethodBuilder::default()
-      .id(id)
-      .controller(did)
-      .type_(MethodType::MerkleKeyCollection2021)
-      .data(MethodData::new_multibase(&keys.encode_merkle_key::<M>()))
-      .build()
-      .map_err(Into::into)
-  }
-
-  /// Revokes the public key of a Merkle Key Collection at the specified `index`.
-  ///
-  /// # Errors
-  ///
-  /// - if this is called on a `VerificationMethod` with a type other than [`MethodType::MerkleKeyCollection2021`].
-  pub fn revoke_merkle_key(&mut self, index: u32) -> Result<bool> {
-    let method_type: MethodType = self.type_();
-    if method_type != MethodType::MerkleKeyCollection2021 {
-      return Err(Error::InvalidMethodRevocation(method_type));
-    }
-
-    let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
-    let revoked: bool = revocation.insert(index);
-
-    self.set_revocation(Some(revocation))?;
-
-    Ok(revoked)
   }
 }
 

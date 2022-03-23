@@ -16,8 +16,6 @@ use identity_wasm::credential::WasmFailFast;
 use identity_wasm::credential::WasmPresentation;
 use identity_wasm::credential::WasmPresentationValidationOptions;
 use identity_wasm::credential::WasmPresentationValidator;
-use identity_wasm::crypto::Digest;
-use identity_wasm::crypto::WasmKeyCollection;
 use identity_wasm::crypto::WasmKeyPair;
 use identity_wasm::crypto::WasmKeyType;
 use identity_wasm::crypto::WasmSignatureOptions;
@@ -49,35 +47,6 @@ fn test_keypair() {
 
   assert_eq!(from2.public(), key2.public());
   assert_eq!(from2.private(), key2.private());
-}
-
-#[wasm_bindgen_test]
-fn test_key_collection() {
-  let size = 1 << 5;
-  let keys = WasmKeyCollection::new(WasmKeyType::Ed25519, size).unwrap();
-
-  assert_eq!(keys.length(), size);
-  assert!(!keys.is_empty());
-
-  for index in 0..keys.length() {
-    let key = keys.keypair(index).unwrap();
-
-    assert_eq!(key.public(), keys.public(index).unwrap());
-    assert_eq!(key.private(), keys.private(index).unwrap());
-
-    assert!(keys.merkle_proof(Digest::Sha256, index).is_some());
-  }
-
-  assert!(keys.keypair(keys.length()).is_none());
-  assert!(keys.merkle_proof(Digest::Sha256, keys.length()).is_none());
-
-  let json = keys.to_json().unwrap();
-  let from = WasmKeyCollection::from_json(&json).unwrap();
-
-  for index in 0..keys.length() {
-    assert_eq!(keys.public(index).unwrap(), from.public(index).unwrap());
-    assert_eq!(keys.private(index).unwrap(), from.private(index).unwrap());
-  }
 }
 
 #[wasm_bindgen_test]
@@ -405,20 +374,12 @@ fn test_validations() {
 
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
-  let issuer_method = Object::from_json(
-    &serde_json::json!({
-      "method": "#sign-0",
-      "public": issuer_keys.public(),
-      "private": issuer_keys.private()
-    })
-    .to_string(),
-  )
-  .unwrap();
-
+  // Sign the credential with the issuer's DID Document.
   let signed_credential: WasmCredential = issuer_doc
     .sign_credential(
       &JsValue::from(&credential.to_json().unwrap()),
-      &JsValue::from_serde(&issuer_method).unwrap(),
+      issuer_keys.private(),
+      &JsValue::from_str("#sign-0").unchecked_into(),
       &WasmSignatureOptions::default(),
     )
     .unwrap();
@@ -445,23 +406,15 @@ fn test_validations() {
     &subject_doc,
     signed_credential.to_json().unwrap(),
     Some("VerifiablePresentation".to_owned()),
-    Some("http://example.org/credentials/3732".to_owned()),
-  )
-  .unwrap();
-
-  let subject_method: Object = Object::from_json(
-    &serde_json::json!({
-      "method": "#sign-0",
-      "private": subject_keys.private()
-    })
-    .to_string(),
+    Some("https://example.org/credentials/3732".to_owned()),
   )
   .unwrap();
 
   let signed_presentation: WasmPresentation = subject_doc
     .sign_presentation(
       &presentation.to_json().unwrap(),
-      &JsValue::from_serde(&subject_method).unwrap(),
+      subject_keys.private(),
+      &JsValue::from_str("#sign-0").unchecked_into(),
       &WasmSignatureOptions::default(),
     )
     .unwrap();

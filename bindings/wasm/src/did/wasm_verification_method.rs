@@ -1,20 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::merkle_key::Blake2b256;
-use identity::crypto::merkle_key::Sha256;
 use identity::crypto::PublicKey;
-use identity::iota_core::IotaDID;
 use identity::iota_core::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::Digest;
-use crate::crypto::WasmKeyCollection;
 use crate::crypto::WasmKeyType;
-use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
+use crate::did::WasmDIDUrl;
 use crate::did::WasmMethodData;
-use crate::error::wasm_error;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -35,26 +29,7 @@ impl WasmVerificationMethod {
     let public_key: PublicKey = PublicKey::from(public_key);
     IotaVerificationMethod::new(did.0.clone(), key_type.into(), &public_key, &fragment)
       .map(Self)
-      .map_err(wasm_error)
-  }
-
-  /// Creates a new `MerkleKeyCollection2021` method from the given key collection.
-  #[wasm_bindgen(js_name = newMerkleKey)]
-  pub fn new_merkle_key(
-    digest: Digest,
-    did: &WasmDID,
-    keys: &WasmKeyCollection,
-    fragment: &str,
-  ) -> Result<WasmVerificationMethod> {
-    let did: IotaDID = did.0.clone();
-    match digest {
-      Digest::Sha256 => IotaVerificationMethod::new_merkle_key::<Sha256>(did, &keys.0, fragment)
-        .map_err(wasm_error)
-        .map(Self),
-      Digest::Blake2b256 => IotaVerificationMethod::new_merkle_key::<Blake2b256>(did, &keys.0, fragment)
-        .map_err(wasm_error)
-        .map(Self),
-    }
+      .wasm_result()
   }
 
   /// Returns a copy of the `id` `DIDUrl` of the `VerificationMethod` object.

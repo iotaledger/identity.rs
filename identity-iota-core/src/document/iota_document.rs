@@ -358,7 +358,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, IotaDID> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, IotaDID> {
     self.document.signer(private_key)
   }
 
@@ -429,16 +429,9 @@ impl IotaDocument {
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
       MethodType::X25519KeyAgreementKey2019 => {
-        // Merkle Key Collections cannot be used to sign documents.
+        // X25519 cannot be used to sign documents.
         return Err(Error::DocumentSignError(
-          "X25519KeyAgreementKey2019 not allowed to sign documents",
-          None,
-        ));
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        // Merkle Key Collections cannot be used to sign documents.
-        return Err(Error::DocumentSignError(
-          "MerkleKeyCollection2021 not allowed to sign documents",
+          "X25519KeyAgreementKey2019 cannot sign documents",
           None,
         ));
       }
@@ -685,8 +678,6 @@ mod tests {
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-  use identity_core::crypto::merkle_key::Sha256;
-  use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyType;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
@@ -1056,18 +1047,16 @@ mod tests {
       assert!(IotaDocument::verify_root_document(&document).is_err());
     }
 
-    // INVALID - try sign using a Merkle Key Collection
+    // INVALID - try sign using a X25519 key.
     {
       let (mut document, _) = generate_document();
-      let key_collection: KeyCollection = KeyCollection::new_ed25519(8).unwrap();
-      let merkle_key_method =
-        IotaVerificationMethod::new_merkle_key::<Sha256>(document.id().clone(), &key_collection, "merkle-key").unwrap();
+      let x25519: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
+      let x25519_method =
+        IotaVerificationMethod::new(document.id().clone(), x25519.type_(), x25519.public(), "kex-0").unwrap();
       document
-        .insert_method(merkle_key_method, MethodScope::capability_invocation())
+        .insert_method(x25519_method, MethodScope::capability_invocation())
         .unwrap();
-      assert!(document
-        .sign_self(key_collection.private(0).unwrap(), "merkle-key")
-        .is_err());
+      assert!(document.sign_self(x25519.private(), "kex-0").is_err());
       assert!(document.verify_document(&document).is_err());
     }
   }

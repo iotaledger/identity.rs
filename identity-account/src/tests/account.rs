@@ -14,6 +14,7 @@ use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
+use identity_did::verification::MethodType;
 use identity_iota::chain::DocumentChain;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
@@ -245,9 +246,11 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
 
   let auth_method = "auth-method";
   let signing_method = "singing-method-2";
+  let invalid_signing_method = "invalid-signing-method";
 
   let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
 
+  // Add an Authentication method unable to sign DID Document updates.
   account
     .update_identity()
     .create_method()
@@ -256,6 +259,7 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
     .apply()
     .await?;
 
+  // Add a valid CapabilityInvocation method able to sign DID Document updates.
   account
     .update_identity()
     .create_method()
@@ -264,6 +268,17 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
     .apply()
     .await?;
 
+  // Add a CapabilityInvocation method unable to sign DID Document updates.
+  account
+    .update_identity()
+    .create_method()
+    .type_(MethodType::X25519KeyAgreementKey2019)
+    .fragment(invalid_signing_method)
+    .scope(MethodScope::capability_invocation())
+    .apply()
+    .await?;
+
+  // INVALID: try sign with a non-existent method.
   assert!(matches!(
     account
       .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
@@ -274,6 +289,7 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
     ))
   ));
 
+  // INVALID: try sign with with an Authentication method.
   assert!(matches!(
     account
       .publish_with_options(PublishOptions::default().sign_with(auth_method))
@@ -284,8 +300,14 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
     ))
   ));
 
-  // TODO: Once implemented, add a merkle key collection method with capability invocation relationship and test for
-  // Error::IotaError(identity_iota::Error::InvalidDocumentSigningMethodType).
+  // INVALID: try sign with a CapabilityInvocation method with an invalid MethodType.
+  assert!(matches!(
+    account
+      .publish_with_options(PublishOptions::default().sign_with(invalid_signing_method))
+      .await
+      .unwrap_err(),
+    Error::IotaCoreError(identity_iota_core::Error::InvalidDocumentSigningMethodType),
+  ));
 
   assert!(account
     .publish_with_options(PublishOptions::default().sign_with(signing_method))

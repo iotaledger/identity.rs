@@ -8,7 +8,6 @@ import {resolution} from "./resolution";
 import {createVC} from "./create_vc";
 import {createVP} from "./create_vp";
 import {revokeVC} from "./revoke_vc";
-import {merkleKey} from "./merkle_key";
 import {CLIENT_CONFIG} from "./config";
 import {resolveHistory} from "./resolve_history";
 import {createDiff} from "./diff_chain";
@@ -35,8 +34,6 @@ async function main() {
             return await revokeVC(CLIENT_CONFIG);
         case "create_vp":
             return await createVP(CLIENT_CONFIG);
-        case "merkle_key":
-            return await merkleKey(CLIENT_CONFIG);
         case "key_exchange":
             return await keyExchange(CLIENT_CONFIG);
         case "private_tangle":
@@ -55,7 +52,6 @@ async function main() {
             await keyExchange(CLIENT_CONFIG);
             await revokeVC(CLIENT_CONFIG);
             await createVP(CLIENT_CONFIG);
-            await merkleKey(CLIENT_CONFIG);
             await resolveHistory(CLIENT_CONFIG);
             await createDiff(CLIENT_CONFIG);
 

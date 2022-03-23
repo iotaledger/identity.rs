@@ -91,7 +91,6 @@ impl Storage for Stronghold {
       MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
         generate_private_key(&vault, location).await?
       }
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
     };
 
     Ok(public)
@@ -108,7 +107,6 @@ impl Storage for Stronghold {
       MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
         retrieve_public_key(&vault, location).await
       }
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_insert] Handle MerkleKeyCollection2021"),
     }
   }
 
@@ -119,7 +117,6 @@ impl Storage for Stronghold {
       MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
         retrieve_public_key(&vault, location).await
       }
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_get] Handle MerkleKeyCollection2021"),
     }
   }
 
@@ -133,7 +130,6 @@ impl Storage for Stronghold {
 
         // TODO: Garbage Collection (?)
       }
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_del] Handle MerkleKeyCollection2021"),
     }
 
     Ok(())
@@ -145,7 +141,6 @@ impl Storage for Stronghold {
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location).await,
       MethodType::X25519KeyAgreementKey2019 => Err(identity_did::Error::InvalidMethodType.into()),
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_sign] Handle MerkleKeyCollection2021"),
     }
   }
 
@@ -156,7 +151,6 @@ impl Storage for Stronghold {
       MethodType::Ed25519VerificationKey2018 | MethodType::X25519KeyAgreementKey2019 => {
         vault.exists(location_skey(location)).await
       }
-      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
     }?)
   }
 
@@ -268,7 +262,6 @@ fn location_key_type(location: &KeyLocation) -> iota_stronghold::procedures::Key
   match location.method() {
     MethodType::Ed25519VerificationKey2018 => iota_stronghold::procedures::KeyType::Ed25519,
     MethodType::X25519KeyAgreementKey2019 => iota_stronghold::procedures::KeyType::X25519,
-    MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
   }
 }
 

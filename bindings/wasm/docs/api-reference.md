@@ -59,8 +59,6 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
-<dt><a href="#KeyCollection">KeyCollection</a></dt>
-<dd></dd>
 <dt><a href="#KeyLocation">KeyLocation</a></dt>
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
@@ -127,8 +125,6 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
@@ -156,9 +152,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -181,10 +177,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -200,55 +192,12 @@ publishing to the Tangle.
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+did"></a>
 
@@ -399,16 +348,27 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
-<a name="Account+createService"></a>
+<a name="Account+setAlsoKnownAs"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>CreateServiceOptions</code> | 
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -420,6 +380,42 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -1360,14 +1356,13 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
-        * [.signCredential(data, args, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signPresentation(data, args, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
-        * [.signData(data, args, options)](#Document+signData) ⇒ <code>any</code>
+        * [.signCredential(data, privateKey, methodQuery, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
+        * [.signPresentation(data, privateKey, methodQuery, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
+        * [.signData(data, privateKey, methodQuery, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.verifyDocument(signed)](#Document+verifyDocument)
         * [.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
@@ -1574,16 +1569,6 @@ Attempts to resolve the given method query into a method capable of signing a do
 | --- | --- |
 | query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
-<a name="Document+revokeMerkleKey"></a>
-
-### document.revokeMerkleKey(query, index) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| index | <code>number</code> | 
-
 <a name="Document+attachMethodRelationship"></a>
 
 ### document.attachMethodRelationship(did_url, relationship) ⇒ <code>boolean</code>
@@ -1652,34 +1637,39 @@ verification method. See [Document.verifyDocument](Document.verifyDocument).
 
 <a name="Document+signCredential"></a>
 
-### document.signCredential(data, args, options) ⇒ [<code>Credential</code>](#Credential)
+### document.signCredential(data, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
+Creates a signature for the given `Credential` with the specified DID Document
+Verification Method.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-| args | <code>any</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+signPresentation"></a>
 
-### document.signPresentation(data, args, options) ⇒ [<code>Presentation</code>](#Presentation)
+### document.signPresentation(data, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
+Creates a signature for the given `Presentation` with the specified DID Document
+Verification Method.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-| args | <code>any</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+signData"></a>
 
-### document.signData(data, args, options) ⇒ <code>any</code>
+### document.signData(data, privateKey, methodQuery, options) ⇒ <code>any</code>
 Creates a signature for the given `data` with the specified DID Document
 Verification Method.
-
-An additional `proof` property is required if using a Merkle Key
-Collection verification Method.
 
 NOTE: use `signSelf` or `signDocument` for DID Documents.
 
@@ -1688,7 +1678,8 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-| args | <code>any</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>SignatureOptions</code>](#SignatureOptions) | 
 
 <a name="Document+verifyData"></a>
@@ -2357,124 +2348,6 @@ Deserializes from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="KeyCollection"></a>
-
-## KeyCollection
-**Kind**: global class  
-
-* [KeyCollection](#KeyCollection)
-    * [new KeyCollection(type_, count)](#new_KeyCollection_new)
-    * _instance_
-        * [.length](#KeyCollection+length) ⇒ <code>number</code>
-        * [.isEmpty()](#KeyCollection+isEmpty) ⇒ <code>boolean</code>
-        * [.keypair(index)](#KeyCollection+keypair) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
-        * [.public(index)](#KeyCollection+public) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
-        * [.private(index)](#KeyCollection+private) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
-        * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
-        * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
-        * [.clone()](#KeyCollection+clone) ⇒ [<code>KeyCollection</code>](#KeyCollection)
-    * _static_
-        * [.fromJSON(json)](#KeyCollection.fromJSON) ⇒ [<code>KeyCollection</code>](#KeyCollection)
-
-<a name="new_KeyCollection_new"></a>
-
-### new KeyCollection(type_, count)
-Creates a new `KeyCollection` with the specified key type.
-
-
-| Param | Type |
-| --- | --- |
-| type_ | <code>number</code> | 
-| count | <code>number</code> | 
-
-<a name="KeyCollection+length"></a>
-
-### keyCollection.length ⇒ <code>number</code>
-Returns the number of keys in the collection.
-
-**Kind**: instance property of [<code>KeyCollection</code>](#KeyCollection)  
-<a name="KeyCollection+isEmpty"></a>
-
-### keyCollection.isEmpty() ⇒ <code>boolean</code>
-Returns `true` if the collection contains no keys.
-
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-<a name="KeyCollection+keypair"></a>
-
-### keyCollection.keypair(index) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
-Returns the keypair at the specified `index`.
-
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="KeyCollection+public"></a>
-
-### keyCollection.public(index) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
-Returns the public key at the specified `index` as a `UInt8Array`.
-
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="KeyCollection+private"></a>
-
-### keyCollection.private(index) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
-Returns the private key at the specified `index` as a `UInt8Array`.
-
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="KeyCollection+merkleRoot"></a>
-
-### keyCollection.merkleRoot(digest) ⇒ <code>string</code>
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-
-| Param | Type |
-| --- | --- |
-| digest | <code>number</code> | 
-
-<a name="KeyCollection+merkleProof"></a>
-
-### keyCollection.merkleProof(digest, index) ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-
-| Param | Type |
-| --- | --- |
-| digest | <code>number</code> | 
-| index | <code>number</code> | 
-
-<a name="KeyCollection+toJSON"></a>
-
-### keyCollection.toJSON() ⇒ <code>any</code>
-Serializes a `KeyCollection` object as a JSON object.
-
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-<a name="KeyCollection+clone"></a>
-
-### keyCollection.clone() ⇒ [<code>KeyCollection</code>](#KeyCollection)
-Deep clones the object.
-
-**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
-<a name="KeyCollection.fromJSON"></a>
-
-### KeyCollection.fromJSON(json) ⇒ [<code>KeyCollection</code>](#KeyCollection)
-Deserializes a `KeyCollection` object from a JSON object.
-
-**Kind**: static method of [<code>KeyCollection</code>](#KeyCollection)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
 <a name="KeyLocation"></a>
 
 ## KeyLocation
@@ -2797,8 +2670,8 @@ Deserializes a `MethodScope` object from a JSON object.
     * _instance_
         * [.toJSON()](#MethodSecret+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.ed25519Base58(private_key)](#MethodSecret.ed25519Base58) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-        * [.merkleKeyCollection(collection)](#MethodSecret.merkleKeyCollection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+        * [.ed25519(privateKey)](#MethodSecret.ed25519) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+        * [.x25519(privateKey)](#MethodSecret.x25519) ⇒ [<code>MethodSecret</code>](#MethodSecret)
         * [.fromJSON(json_value)](#MethodSecret.fromJSON) ⇒ [<code>MethodSecret</code>](#MethodSecret)
 
 <a name="MethodSecret+toJSON"></a>
@@ -2807,27 +2680,27 @@ Deserializes a `MethodScope` object from a JSON object.
 Serializes a `MethodSecret` as a JSON object.
 
 **Kind**: instance method of [<code>MethodSecret</code>](#MethodSecret)  
-<a name="MethodSecret.ed25519Base58"></a>
+<a name="MethodSecret.ed25519"></a>
 
-### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from a `UInt8Array`.
-
-**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
-
-| Param | Type |
-| --- | --- |
-| private_key | <code>Uint8Array</code> | 
-
-<a name="MethodSecret.merkleKeyCollection"></a>
-
-### MethodSecret.merkleKeyCollection(collection) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from [KeyCollection](#KeyCollection).
+### MethodSecret.ed25519(privateKey) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Creates an Ed25519 [MethodSecret](#MethodSecret) from a `UInt8Array`.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
 | Param | Type |
 | --- | --- |
-| collection | [<code>KeyCollection</code>](#KeyCollection) | 
+| privateKey | <code>Uint8Array</code> | 
+
+<a name="MethodSecret.x25519"></a>
+
+### MethodSecret.x25519(privateKey) ⇒ [<code>MethodSecret</code>](#MethodSecret)
+Creates an X25519 [MethodSecret](#MethodSecret) from a `UInt8Array`.
+
+**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
+
+| Param | Type |
+| --- | --- |
+| privateKey | <code>Uint8Array</code> | 
 
 <a name="MethodSecret.fromJSON"></a>
 
@@ -2854,7 +2727,6 @@ Supported verification method types.
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
         * [.X25519KeyAgreementKey2019()](#MethodType.X25519KeyAgreementKey2019) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.MerkleKeyCollection2021()](#MethodType.MerkleKeyCollection2021) ⇒ [<code>MethodType</code>](#MethodType)
         * [.fromJSON(json)](#MethodType.fromJSON) ⇒ [<code>MethodType</code>](#MethodType)
 
 <a name="MethodType+toJSON"></a>
@@ -2876,10 +2748,6 @@ Deep clones the object.
 <a name="MethodType.X25519KeyAgreementKey2019"></a>
 
 ### MethodType.X25519KeyAgreementKey2019() ⇒ [<code>MethodType</code>](#MethodType)
-**Kind**: static method of [<code>MethodType</code>](#MethodType)  
-<a name="MethodType.MerkleKeyCollection2021"></a>
-
-### MethodType.MerkleKeyCollection2021() ⇒ [<code>MethodType</code>](#MethodType)
 **Kind**: static method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType.fromJSON"></a>
 
@@ -3704,6 +3572,8 @@ Creates a new `Signature`.
 <a name="Signature+asBytes"></a>
 
 ### signature.asBytes() ⇒ <code>Uint8Array</code>
+Returns a copy of the signature as a `UInt8Array`.
+
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature+toJSON"></a>
 
@@ -3859,7 +3729,6 @@ Deserializes a `Timestamp` from a JSON object.
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
     * _static_
-        * [.newMerkleKey(digest, did, keys, fragment)](#VerificationMethod.newMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
@@ -3922,20 +3791,6 @@ Serializes a `VerificationMethod` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
-<a name="VerificationMethod.newMerkleKey"></a>
-
-### VerificationMethod.newMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Creates a new `MerkleKeyCollection2021` method from the given key collection.
-
-**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
-
-| Param | Type |
-| --- | --- |
-| digest | <code>number</code> | 
-| did | [<code>DID</code>](#DID) | 
-| keys | [<code>KeyCollection</code>](#KeyCollection) | 
-| fragment | <code>string</code> | 
-
 <a name="VerificationMethod.fromJSON"></a>
 
 ### VerificationMethod.fromJSON(value) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -4056,10 +3911,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -4111,13 +3962,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
