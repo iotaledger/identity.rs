@@ -74,7 +74,7 @@ impl Storage for MemStore {
 
     let keypair: KeyPair = KeyPair::new(location.key_type)?;
 
-    vault.insert(location.clone(), keypair);
+    vault.insert(location.to_owned(), keypair);
 
     Ok(())
   }
@@ -109,7 +109,7 @@ impl Storage for MemStore {
         let public_key: PublicKey = public.to_bytes().to_vec().into();
 
         let keypair: KeyPair = KeyPair::from((KeyType::X25519, public_key, private_key));
-        vault.insert(location.clone(), keypair);
+        vault.insert(location.to_owned(), keypair);
 
         Ok(())
       }
@@ -122,7 +122,7 @@ impl Storage for MemStore {
     if let Some(vault) = vaults.get_mut(account_id) {
       match vault.remove(source) {
         Some(key) => {
-          vault.insert(target.clone(), key);
+          vault.insert(target.to_owned(), key);
           Ok(())
         }
         None => Err(Error::KeyNotFound),
@@ -245,6 +245,7 @@ impl Debug for MemStore {
         .field("chain_states", &self.chain_states)
         .field("states", &self.documents)
         .field("vaults", &self.vaults)
+        .field("index", &self.index)
         .finish()
     } else {
       f.write_str("MemStore")
