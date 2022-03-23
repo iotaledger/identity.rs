@@ -477,8 +477,9 @@ impl IotaDocument {
       .try_signature()
       .map_err(|err| Error::InvalidRootDocument(err.into()))?;
     let method: &IotaVerificationMethod = document
-    let public: PublicKey = method.data().try_decode()?.into();
+      .resolve_method(signature, None)
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))?;
+    let public: PublicKey = method.data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
       return Err(Error::InvalidRootDocument(
         "DID tag does not match any verification method",
