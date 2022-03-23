@@ -305,19 +305,22 @@ impl IotaDocument {
     self.document.resolve_method(query, scope)
   }
 
-  #[doc(hidden)]
+
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
+  ///
+  /// WARNING: improper usage of this allows violating the uniqueness of the verification method sets.
   pub fn resolve_method_mut<'query, Q>(
     &mut self,
     query: Q,
     scope: Option<MethodScope>,
-  ) -> Result<&mut IotaVerificationMethod>
+  ) -> Option<&mut IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .document
       .resolve_method_mut(query, scope)
-      .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.

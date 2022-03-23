@@ -73,7 +73,8 @@ pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   pub(crate) properties: T,
 }
 
-macro_rules! method_mut_ref {
+// Workaround for lifetime issues with a mutable reference to self preventing closures from being used.
+macro_rules! method_ref_mut_helper {
   ($doc:ident, $method: ident, $query: ident) => {
     match $doc.$method.query_mut($query.into())? {
       MethodRef::Embed(method) => Some(method),
@@ -571,19 +572,19 @@ where
       Some(scope) => match scope {
         MethodScope::VerificationMethod => self.verification_method.query_mut(query.into()),
         MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
-          method_mut_ref!(self, authentication, query)
+          method_ref_mut_helper!(self, authentication, query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
-          method_mut_ref!(self, assertion_method, query)
+          method_ref_mut_helper!(self, assertion_method, query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-          method_mut_ref!(self, key_agreement, query)
+          method_ref_mut_helper!(self, key_agreement, query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
-          method_mut_ref!(self, capability_delegation, query)
+          method_ref_mut_helper!(self, capability_delegation, query)
         }
         MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
-          method_mut_ref!(self, capability_invocation, query)
+          method_ref_mut_helper!(self, capability_invocation, query)
         }
       },
       None => self.resolve_method_mut_inner(query.into()),
