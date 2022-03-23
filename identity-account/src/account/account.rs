@@ -131,13 +131,13 @@ where
 
     let account_id: AccountId = setup.storage.index_get(&did).await?.ok_or(Error::IdentityNotFound)?;
 
-    // Ensure the did exists in storage
+    // Ensure the identity exists in storage
     let document: IotaDocument = setup
       .storage
       .document(&account_id)
       .await?
       .ok_or(Error::IdentityNotFound)?;
-    let chain_state = setup
+    let chain_state: ChainState = setup
       .storage
       .chain_state(&account_id)
       .await?
@@ -291,12 +291,11 @@ where
     Ok(())
   }
 
-  // TODO: Rename to fetch_document?
-  /// Fetches the latest changes from the tangle and **overwrites** the local document.
+  /// Fetches the latest document from the tangle and **overwrites** the local document.
   ///
   /// If a DID is managed from distributed accounts, this should be called before making changes
   /// to the identity, to avoid publishing updates that would be ignored.
-  pub async fn fetch_state(&mut self) -> Result<()> {
+  pub async fn fetch_document(&mut self) -> Result<()> {
     let iota_did: &IotaDID = self.did();
     let mut document_chain: DocumentChain = self.client.read_document_chain(iota_did).await?;
 
