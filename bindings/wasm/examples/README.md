@@ -49,9 +49,8 @@ The following examples are currently available:
 |  6  | [create_vp](src/create_vp.js)             | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verifies it.                                                                                                                          |
 |  7  | [revoke_vc](src/revoke_vc.js)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.                                                                                      |
 |  8  | [resolution](src/resolution.js)           | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
-|  9   | [key_exchange](src/key_exchange.js) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
-|  10  | [merkle_key](src/merkle_key.js)           | Adds a MerkleKeyCollection verification method to an issuer's DID Document and signs a Verifiable Credential with one of its keys. Afterwards the key is deactivated, revoking the VC.                                                     |
-|  11 | [private_tangle](src/private_tangle.js)   | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
+|  9   | [key_exchange](src/key_exchange.js) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. | |
+|  10 | [private_tangle](src/private_tangle.js)   | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
 
 
 ### Browser Examples

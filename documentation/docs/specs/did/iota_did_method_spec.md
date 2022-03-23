@@ -295,44 +295,29 @@ In order to create a valid Integration DID message, the following steps are to b
 
 ### Delete
 
-In order to deactivate a DID document, a valid Integration DID message must be published that removes all content from a DID Document, effectively deactivating the DID Document. Keep in mind that this operation is irreversible.
+In order to deactivate a DID document, a valid Integration DID message must be published that removes all content from a DID Document, effectively deactivating the DID Document. Keep in mind that this operation is irreversible. 
 
 ## IOTA Identity standards
 
-The `did:iota` method is implemented in the [IOTA Identity framework](https://github.com/iotaledger/identity.rs). This framework supports a number of operations that are standardized, some are standardized across the SSI community, and some are the invention of the IOTA Foundation. 
+The `did:iota` method is implemented in the [IOTA Identity framework](https://github.com/iotaledger/identity.rs). This framework supports a number of operations that are standardized, some are standardized across the SSI community, and some are the invention of the IOTA Foundation.
 
 ### Standardized Verification Method Types
 
-We support two different Verification Method Types. Verification methods that can be used for signing DID Documents, and verification methods that are only used for signing [W3C standardized Verifiable Credentials](https://www.w3.org/TR/vc-data-model/). This set differs as the IOTA Identity implements revocation of Verifiable Credentials through public key removal, which requires every credential to be signed by a different keypair. We create collection of keypairs in a Merkle Tree in order to save space in the DID Document.
+The IOTA Identity framework currently supports two Verification Method Types:
 
-Verification Methods that can be used to sign DID Documents and do other repeatable activities:
-* `Ed25519VerificationKey2018` to create a `JcsEd25519Signature2020`.
-
-Verification Methods that can be used to sign Verifiable Credentials:
-* `MerkleKeyCollection2021` to create a `MerkleKeySignature2021`.
+* `Ed25519VerificationKey2018`: can be used to sign DID Document updates, Verifiable Credentials, Verifiable Presentations, and arbitrary data with a `JcsEd25519Signature2020`.
+* `X25519KeyAgreementKey2019`: can be used to perform [Diffie-Hellman key exchange](https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange) operations to derive a shared secret between two parties.
 
 ### Revocation
 
-As mentioned above, revocation of Verifiable Credentials is done through revoking public keys in the IOTA Identity framework. IOTA Identity has a highly scalable solution since some identities might sign and want to revoke thousands if not millions of Verifiable Credentials. It is also GDPR compliant, leaving no trace, not even a hash, of a verifiable credential on the Tangle. Below will be a brief overview of how this mechanism works, but you may read all the details in the [MerkleKeyCollection standardization document](./merkle_key_collection.md). 
-
-#### Key Collections
-
-Instead of storing individual public keys in a DID Document, IOTA Identity introduces the `MerkleKeyCollection2021` verification method. It supports a REQUIRED `publicKeyMultibase` field that MUST contain the top hash of a Merkle Tree. In this Merkle Tree all the individual leaves are public keys using the signature algorithm of choice and digest algorithm of choice for the Merkle Tree process. This process allows the creation of millions of public keys within a single verification method and without bloating the DID Document. Specific info such as the maximum depth of the Merkle Tree, supported signature algorithms and digest algorithms can be found [in the specification document](./merkle_key_collection.md). 
-
-#### Verifiable Credential Proofs
-
-In addition to the normal signature, a `MerkleKeySignature2021` requires additional proof data to validate the signature's origin and validity. The public key itself needs to be revealed inside the `signatureValue` field, but also the individual hashes inside the Merkle Tree and their relative location in the path to create a valid `Proof of Inclusion`. 
-
-#### Revocation List
-
-In order to revoke a public key, and therefore any Verifiable Credential or other statements, the DID Document must be updated with a revocation list. The REQUIRED `revocation` field is introduced inside the `MerkleKeyCollection2021` verification method, which lists the indices from the leaves of the Merkle Tree that are revoked. These indices are further compressed via [Roaring Bitmaps](https://roaringbitmap.org/).
+Revocation of Verifiable Credentials and signatures is currently achieved through revoking public keys in the IOTA Identity framework. Alternatively, developers should consider using the [`credentialStatus` property](https://www.w3.org/TR/vc-data-model/#status) when issuing and revoking Verifiable Credentials at scale.
 
 ### Standardized Services
 
-The IOTA Identity framework also standardized certain `services` that are embedded in the DID Document. It is RECOMMENDED to implement these when implementing the `did:iota` method. 
+The IOTA Identity framework also standardized certain `services` that are embedded in the DID Document. It is RECOMMENDED to implement these when implementing the `did:iota` method.
 
 Currently standardized `services`:
-* Nothing yet. 
+* Nothing yet.
 
 ## Security Considerations
 
@@ -356,7 +341,7 @@ IOTA nodes provide pagination for more then 100 messages on an index, requiring 
 
 ### Quantum Computer Threats
 
-The `did:iota` method is not more vulnerable to quantum computers than other DID methods. The IOTA Identity framework currently utilizes elliptic curve based cryptographic suites, however adding support for quantum secure cryptographic suites in the future is very easy. The `MerkleKeyCollection2021` verification method is quantum secure in the sense that public keys are only revealed to the holders and verifiers of the Verifiable Credentials, keeping the exposure to this very limited. 
+The `did:iota` method is no more vulnerable to quantum computers than other DID methods. The IOTA Identity framework currently utilizes elliptic curve based cryptographic suites, however adding support for quantum secure cryptographic suites in the future is very easy.
 
 ### Private Key Management
 

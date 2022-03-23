@@ -7,8 +7,7 @@
 //! from the DID Document of the Issuer.
 //! As such, the Verifiable Credential can no longer be validated.
 //! This would invalidate every Verifiable Credential signed with the same public key, therefore the
-//! issuer would have to sign every VC with a different key. Have a look at the Merkle Key example
-//! on how to do that practically.
+//! issuer would have to sign every VC with a different key.
 //!
 //! cargo run --example did_history
 

@@ -183,8 +183,13 @@ impl Update {
           storage.key_new(did, &location).await.map_err(Into::into)
         }?;
 
+        let key_type: KeyType = match type_ {
+          MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+          MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+        };
+
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
+          IotaVerificationMethod::new(did.to_owned(), key_type, &public, location.fragment().name())?;
 
         state.store_method_generations(location.fragment().clone());
 
@@ -345,16 +350,6 @@ async fn insert_method_secret(
       );
 
       store.key_insert(did, location, private_key).await.map_err(Into::into)
-    }
-    MethodSecret::MerkleKeyCollection(_) => {
-      ensure!(
-        matches!(method_type, MethodType::MerkleKeyCollection2021),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
-        )
-      );
-
-      todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
     }
   }
 }
