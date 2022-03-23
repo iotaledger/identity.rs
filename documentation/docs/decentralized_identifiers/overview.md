@@ -47,7 +47,7 @@ The following and later sections require some basic knowledge of Asymmetric Encr
 
 A DID Document contains two important pieces of data: public keys and services. The public keys can be used to prove ownership over the identity by cryptographically signing something with the associated private key. The public key can be used to verify that the identity subject signed the data and therefore controls the private key. Ownership over the private keys, therefore, proves ownership over the identity. This also means that it is very important to keep the private keys safe and secure. Additionally, the public keys allow users to send encrypted data to the identity, using their public key, that only the identity owner can decrypt.
 
-:::note
+:::warning
 
 Never share your private keys, seeds, passphrases with anyone. Not even with IOTA Foundation members. This may lead to loss of IOTA funds or control over your own digital identity.
 
