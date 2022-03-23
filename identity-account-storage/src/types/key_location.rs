@@ -18,6 +18,7 @@ use std::hash::Hasher;
 
 /// The storage location of a verification method key.
 #[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[non_exhaustive]
 pub struct KeyLocation {
   pub key_type: KeyType,
   pub fragment: String,
@@ -37,7 +38,7 @@ impl KeyLocation {
     }
   }
 
-  /// Generates a random location for a key of the given [`MethodType`].
+  /// Generates a random location for a key of the given [`KeyType`].
   pub fn random(key_type: KeyType) -> Self {
     let mut thread_rng: ThreadRng = rand::thread_rng();
     let fragment: String = (&mut thread_rng)
