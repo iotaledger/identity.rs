@@ -466,6 +466,8 @@ impl WasmDocument {
 
   /// Generate a `DiffMessage` between two DID Documents and sign it using the specified
   /// `key` and `method`.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen]
   pub fn diff(
     &self,
@@ -495,12 +497,16 @@ impl WasmDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = verifyDiff)]
   pub fn verify_diff(&self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.verify_diff(&diff.0).wasm_result()
   }
 
   /// Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = mergeDiff)]
   pub fn merge_diff(&mut self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.merge_diff(&diff.0).wasm_result()
@@ -525,6 +531,8 @@ impl WasmDocument {
   /// published on the integration chain.
   ///
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
     let message_id = MessageId::from_str(message_id)

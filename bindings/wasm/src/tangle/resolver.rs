@@ -118,6 +118,8 @@ impl WasmResolver {
   /// integration chain.
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
   pub fn resolve_diff_history(&self, document: &WasmResolvedDocument) -> Result<PromiseDiffChainHistory> {
     let resolved_document: ResolvedIotaDocument = document.0.clone();

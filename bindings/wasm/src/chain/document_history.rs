@@ -78,6 +78,8 @@ impl WasmDocumentHistory {
   /// Returns an `Array` of diff chain `DiffMessages`.
   ///
   /// NOTE: clones the data.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffChainData)]
   pub fn diff_chain_data(&self) -> ArrayDiffMessage {
     self
@@ -95,6 +97,8 @@ impl WasmDocumentHistory {
   /// as the diff chain.
   ///
   /// NOTE: clones the data.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffChainSpam)]
   pub fn diff_chain_spam(&self) -> ArrayString {
     self
@@ -133,6 +137,7 @@ impl From<DocumentHistory> for WasmDocumentHistory {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IntegrationChainHistory(ChainHistory<ResolvedIotaDocument>);
 
+/// @deprecated since 0.5.0, diff chain features are slated for removal.
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiffChainHistory(ChainHistory<DiffMessage>);
