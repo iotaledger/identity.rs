@@ -36,9 +36,7 @@ use wasm_bindgen_test::*;
 #[wasm_bindgen_test]
 fn test_keypair() {
   let key1 = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let public_key = key1.public();
-  let private_key = key1.private();
-  let key2 = WasmKeyPair::from_base58(WasmKeyType::Ed25519, &public_key, &private_key).unwrap();
+  let key2 = WasmKeyPair::from_keys(WasmKeyType::Ed25519, key1.public(), key1.private()).unwrap();
 
   let json1 = key1.to_json().unwrap();
   let json2 = key2.to_json().unwrap();
@@ -93,7 +91,7 @@ fn test_js_error_from_wasm_error() {
 #[wasm_bindgen_test]
 fn test_did() {
   let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key, None).unwrap();
+  let did = WasmDID::new(&key.public(), None).unwrap();
 
   assert_eq!(did.network_name(), "main");
 
@@ -101,8 +99,7 @@ fn test_did() {
 
   assert_eq!(did.to_string(), parsed.to_string());
 
-  let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("dev".to_owned())).unwrap();
+  let base58 = WasmDID::new(&key.public(), Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_name(), "dev");
@@ -112,7 +109,7 @@ fn test_did() {
 fn test_did_url() {
   // Base DID Url
   let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key, None).unwrap();
+  let did = WasmDID::new(&key.public(), None).unwrap();
   let did_url = did.to_url();
 
   assert_eq!(did.to_string(), did_url.to_string());
@@ -408,20 +405,13 @@ fn test_validations() {
 
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
-  // sign the credential with the issuer's DID Document
-
-  let issuer_method: Object = Object::from_json(
-    format!(
-      r#"{{
-    "method": "{}",
-    "public": "{}",
-    "private": "{}"
-  }}"#,
-      "#sign-0",
-      issuer_keys.public(),
-      issuer_keys.private()
-    )
-    .as_str(),
+  let issuer_method = Object::from_json(
+    &serde_json::json!({
+      "method": "#sign-0",
+      "public": issuer_keys.public(),
+      "private": issuer_keys.private()
+    })
+    .to_string(),
   )
   .unwrap();
 
@@ -460,15 +450,11 @@ fn test_validations() {
   .unwrap();
 
   let subject_method: Object = Object::from_json(
-    format!(
-      r#"{{
-    "method": "{}",
-    "private": "{}"
-  }}"#,
-      "#sign-0",
-      subject_keys.private()
-    )
-    .as_str(),
+    &serde_json::json!({
+      "method": "#sign-0",
+      "private": subject_keys.private()
+    })
+    .to_string(),
   )
   .unwrap();
 

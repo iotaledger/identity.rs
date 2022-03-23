@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::decode_b58;
 use identity::crypto::X25519;
 use wasm_bindgen::prelude::*;
 
@@ -18,10 +17,8 @@ impl WasmX25519 {
   /// of the first party with the public key of the second party, resulting in a shared secret.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = keyExchange)]
-  // TODO: refactor private key type to UInt8Array
-  pub fn key_exchange(privateKey: String, publicKey: Vec<u8>) -> Result<Vec<u8>> {
-    let private: Vec<u8> = decode_b58(&privateKey).wasm_result()?;
-    X25519::key_exchange(&private, &publicKey)
+  pub fn key_exchange(privateKey: Vec<u8>, publicKey: Vec<u8>) -> Result<Vec<u8>> {
+    X25519::key_exchange(&privateKey, &publicKey)
       .map(|bytes| bytes.to_vec())
       .wasm_result()
   }

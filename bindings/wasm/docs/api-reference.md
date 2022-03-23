@@ -129,6 +129,8 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -154,8 +156,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
@@ -932,7 +932,7 @@ Validate that the relationship between the `holder` and the credential subjects 
 **Kind**: global class  
 
 * [DID](#DID)
-    * [new DID(key, network)](#new_DID_new)
+    * [new DID(public_key, network)](#new_DID_new)
     * _instance_
         * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.network()](#DID+network) ⇒ [<code>Network</code>](#Network)
@@ -944,19 +944,18 @@ Validate that the relationship between the `holder` and the credential subjects 
         * [.toJSON()](#DID+toJSON) ⇒ <code>any</code>
         * [.clone()](#DID+clone) ⇒ [<code>DID</code>](#DID)
     * _static_
-        * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
         * [.fromJSON(json_value)](#DID.fromJSON) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
-### new DID(key, network)
-Creates a new `DID` from a `KeyPair` object.
+### new DID(public_key, network)
+Creates a new `DID` from a public key.
 
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| public_key | <code>Uint8Array</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DID+networkName"></a>
@@ -1018,18 +1017,6 @@ Serializes a `DID` as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID.fromBase58"></a>
-
-### DID.fromBase58(key, network) ⇒ [<code>DID</code>](#DID)
-Creates a new `DID` from a base58-encoded public key.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
 <a name="DID.parse"></a>
 
 ### DID.parse(input) ⇒ [<code>DID</code>](#DID)
@@ -2143,14 +2130,14 @@ Deserializes a `Duration` from a JSON object.
 <a name="Ed25519.sign"></a>
 
 ### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
-Signs the given `message` with a base58 encoded `key`.
+Signs the `message` with the given `Key`.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
 
 | Param | Type |
 | --- | --- |
 | message | <code>Uint8Array</code> | 
-| key | <code>string</code> | 
+| key | <code>Uint8Array</code> | 
 
 <a name="Ed25519.verify"></a>
 
@@ -2161,7 +2148,7 @@ Signs the given `message` with a base58 encoded `key`.
 | --- | --- |
 | message | <code>Uint8Array</code> | 
 | signature | <code>Uint8Array</code> | 
-| key | <code>string</code> | 
+| key | <code>Uint8Array</code> | 
 
 <a name="Ed25519PrivateKey"></a>
 
@@ -2170,26 +2157,26 @@ Signs the given `message` with a base58 encoded `key`.
 
 * [Ed25519PrivateKey](#Ed25519PrivateKey)
     * _instance_
-        * [.publicKey()](#Ed25519PrivateKey+publicKey) ⇒ <code>string</code>
+        * [.publicKey()](#Ed25519PrivateKey+publicKey) ⇒ <code>Uint8Array</code>
     * _static_
         * [.fromBase58(private_key)](#Ed25519PrivateKey.fromBase58) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
 
 <a name="Ed25519PrivateKey+publicKey"></a>
 
-### ed25519PrivateKey.publicKey() ⇒ <code>string</code>
-Returns a base58 encoded string that represents the PublicKey.
+### ed25519PrivateKey.publicKey() ⇒ <code>Uint8Array</code>
+Returns the PublicKey as a `UInt8Array`.
 
 **Kind**: instance method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 <a name="Ed25519PrivateKey.fromBase58"></a>
 
 ### Ed25519PrivateKey.fromBase58(private_key) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
-Create a new `Ed25519PrivateKey` from a base58 encoded string.
+Create a new `Ed25519PrivateKey` from a 'UInt8Array'.
 
 **Kind**: static method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 
 | Param | Type |
 | --- | --- |
-| private_key | <code>string</code> | 
+| private_key | <code>Uint8Array</code> | 
 
 <a name="ExplorerUrl"></a>
 
@@ -2381,8 +2368,8 @@ Deserializes from a JSON object.
         * [.length](#KeyCollection+length) ⇒ <code>number</code>
         * [.isEmpty()](#KeyCollection+isEmpty) ⇒ <code>boolean</code>
         * [.keypair(index)](#KeyCollection+keypair) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
-        * [.public(index)](#KeyCollection+public) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.private(index)](#KeyCollection+private) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.public(index)](#KeyCollection+public) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
+        * [.private(index)](#KeyCollection+private) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
         * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
         * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
@@ -2426,8 +2413,8 @@ Returns the keypair at the specified `index`.
 
 <a name="KeyCollection+public"></a>
 
-### keyCollection.public(index) ⇒ <code>string</code> \| <code>undefined</code>
-Returns the public key at the specified `index` as a base58-encoded string.
+### keyCollection.public(index) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
+Returns the public key at the specified `index` as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 
@@ -2437,8 +2424,8 @@ Returns the public key at the specified `index` as a base58-encoded string.
 
 <a name="KeyCollection+private"></a>
 
-### keyCollection.private(index) ⇒ <code>string</code> \| <code>undefined</code>
-Returns the private key at the specified `index` as a base58-encoded string.
+### keyCollection.private(index) ⇒ <code>Uint8Array</code> \| <code>undefined</code>
+Returns the private key at the specified `index` as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 
@@ -2564,12 +2551,12 @@ Deserializes a JSON object as `KeyLocation`.
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
         * [.type()](#KeyPair+type) ⇒ <code>number</code>
-        * [.public()](#KeyPair+public) ⇒ <code>string</code>
-        * [.private()](#KeyPair+private) ⇒ <code>string</code>
+        * [.public()](#KeyPair+public) ⇒ <code>Uint8Array</code>
+        * [.private()](#KeyPair+private) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
         * [.clone()](#KeyPair+clone) ⇒ [<code>KeyPair</code>](#KeyPair)
     * _static_
-        * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.fromKeys(type_, public_key, private_key)](#KeyPair.fromKeys) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.tryFromPrivateKeyBytes(keyType, privateKeyBytes)](#KeyPair.tryFromPrivateKeyBytes) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
@@ -2586,19 +2573,19 @@ Generates a new `KeyPair` object.
 <a name="KeyPair+type"></a>
 
 ### keyPair.type() ⇒ <code>number</code>
-Returns a copy of the private key as a base58-encoded string.
+Returns the `KeyType` of the `KeyPair` object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+public"></a>
 
-### keyPair.public() ⇒ <code>string</code>
-Returns a copy of the public key as a base58-encoded string.
+### keyPair.public() ⇒ <code>Uint8Array</code>
+Returns a copy of the public key as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+private"></a>
 
-### keyPair.private() ⇒ <code>string</code>
-Returns a copy of the private key as a base58-encoded string.
+### keyPair.private() ⇒ <code>Uint8Array</code>
+Returns a copy of the private key as a `UInt8Array`.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+toJSON"></a>
@@ -2613,18 +2600,18 @@ Serializes a `KeyPair` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair.fromBase58"></a>
+<a name="KeyPair.fromKeys"></a>
 
-### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
-Parses a `KeyPair` object from base58-encoded public/private keys.
+### KeyPair.fromKeys(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
+Parses a `KeyPair` object from the public/private keys.
 
 **Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
 
 | Param | Type |
 | --- | --- |
 | type_ | <code>number</code> | 
-| public_key | <code>string</code> | 
-| private_key | <code>string</code> | 
+| public_key | <code>Uint8Array</code> | 
+| private_key | <code>Uint8Array</code> | 
 
 <a name="KeyPair.tryFromPrivateKeyBytes"></a>
 
@@ -2823,13 +2810,13 @@ Serializes a `MethodSecret` as a JSON object.
 <a name="MethodSecret.ed25519Base58"></a>
 
 ### MethodSecret.ed25519Base58(private_key) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates a [MethodSecret](#MethodSecret) object from a Base58-BTC encoded Ed25519 private key.
+Creates a [MethodSecret](#MethodSecret) object from a `UInt8Array`.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
 | Param | Type |
 | --- | --- |
-| private_key | <code>string</code> | 
+| private_key | <code>Uint8Array</code> | 
 
 <a name="MethodSecret.merkleKeyCollection"></a>
 
@@ -3699,7 +3686,7 @@ Deserializes a `Service` object from a JSON object.
 * [Signature](#Signature)
     * [new Signature(pkey, data)](#new_Signature_new)
     * _instance_
-        * [.pkey()](#Signature+pkey) ⇒ <code>string</code>
+        * [.pkey()](#Signature+pkey) ⇒ <code>Uint8Array</code>
         * [.data()](#Signature+data) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
     * _static_
@@ -3713,13 +3700,13 @@ Creates a new `Signature`.
 
 | Param | Type |
 | --- | --- |
-| pkey | <code>string</code> | 
+| pkey | <code>Uint8Array</code> | 
 | data | <code>Uint8Array</code> | 
 
 <a name="Signature+pkey"></a>
 
-### signature.pkey() ⇒ <code>string</code>
-Returns a copy of the public key, encoded as a base58 string, used to verify this signature.
+### signature.pkey() ⇒ <code>Uint8Array</code>
+Returns a copy of the public key used to verify this signature.
 
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature+data"></a>
@@ -3888,15 +3875,14 @@ Deserializes a `Timestamp` from a JSON object.
 <a name="new_VerificationMethod_new"></a>
 
 ### new VerificationMethod(did, key_type, public_key, fragment)
-Creates a new `VerificationMethod` object from the given `did` and
-Base58-BTC encoded public key.
+Creates a new `VerificationMethod` object from the given `did` and public key.
 
 
 | Param | Type |
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
 | key_type | <code>number</code> | 
-| public_key | <code>string</code> | 
+| public_key | <code>Uint8Array</code> | 
 | fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
@@ -4035,22 +4021,58 @@ Deserializes a `VerifierOptions` from a JSON object.
 An implementation of `X25519` Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
 
 **Kind**: global class  
+
+* [X25519](#X25519)
+    * [.keyExchange(privateKey, publicKey)](#X25519.keyExchange) ⇒ <code>Uint8Array</code>
+    * [.Ed25519toX25519Private(privateKey)](#X25519.Ed25519toX25519Private) ⇒ <code>Uint8Array</code>
+    * [.Ed25519toX25519Public(publicKey)](#X25519.Ed25519toX25519Public) ⇒ <code>Uint8Array</code>
+
 <a name="X25519.keyExchange"></a>
 
 ### X25519.keyExchange(privateKey, publicKey) ⇒ <code>Uint8Array</code>
 Performs a cryptographic key exchange process (e.g. Diffie-Hellman) using the private key
-of the first party with with the public key of the second party, resulting in a shared secret.
+of the first party with the public key of the second party, resulting in a shared secret.
 
 **Kind**: static method of [<code>X25519</code>](#X25519)  
 
 | Param | Type |
 | --- | --- |
-| privateKey | <code>string</code> | 
+| privateKey | <code>Uint8Array</code> | 
+| publicKey | <code>Uint8Array</code> | 
+
+<a name="X25519.Ed25519toX25519Private"></a>
+
+### X25519.Ed25519toX25519Private(privateKey) ⇒ <code>Uint8Array</code>
+Transforms an `Ed25519` private key to an `X25519` private key.
+
+This is possible because Ed25519 is birationally equivalent to Curve25519 used by X25519.
+
+**Kind**: static method of [<code>X25519</code>](#X25519)  
+
+| Param | Type |
+| --- | --- |
+| privateKey | <code>Uint8Array</code> | 
+
+<a name="X25519.Ed25519toX25519Public"></a>
+
+### X25519.Ed25519toX25519Public(publicKey) ⇒ <code>Uint8Array</code>
+Transforms an `Ed25519` public key to an `X25519` public key.
+
+This is possible because Ed25519 is birationally equivalent to Curve25519 used by X25519.
+
+**Kind**: static method of [<code>X25519</code>](#X25519)  
+
+| Param | Type |
+| --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -4098,10 +4120,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
 **Kind**: global variable  
 <a name="KeyType"></a>
 
