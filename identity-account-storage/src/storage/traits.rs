@@ -38,9 +38,9 @@ mod storage_sub_trait {
 /// can be stored in its own partition. Keys belonging to an account are identified by [`KeyLocation`]s
 /// in that partition.
 /// An `IotaDID` can be resolved to an `AccountId` using the index, which is a global data structure.
-/// Therefore, index operations need to be carefully synchronized per [`Storage`] instance, while other operations
-/// only need to be synchronized within the same `AccountId`.
-/// For example, two `key_generate` operations with different account ids can be executed concurrently.
+/// Therefore, index operations need to be carefully synchronized per [`Storage`] instance.
+/// Other operations don't need to be synchronized globally, as it is a user error to create
+/// more than one `Account` for the same identity.
 ///
 /// See [`MemStore`][crate::storage::MemStore] for a test/example implementation.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
