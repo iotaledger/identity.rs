@@ -22,7 +22,7 @@ The [Identity Initiative](https://github.com/iota-community/X-Team_IOTA_Identity
 - Documentation.
 - Code samples.
 
-If you would like to get involved, join the #experience channel on [Discord](https://discord.iota.org).
+If you would like to get involved, join the [#x-team-identity](https://discord.com/channels/397872799483428865/773274309861834782) channel on [Discord](https://discord.iota.org).
 
 ## Contribute to the Project's GitHub Repository
 
