@@ -71,7 +71,7 @@ async fn test_create_identity() -> Result<()> {
       .await
       .unwrap());
 
-    // Enure the state was written to storage.
+    // Ensure the state was written to storage.
     assert!(account.load_document().await.is_ok());
 
     // Ensure timestamps were recently set.
@@ -547,40 +547,37 @@ async fn test_detach_method_relationship() -> Result<()> {
   Ok(())
 }
 
-// TODO: With the change from `MethodType` to `KeyType` in `KeyLocation`, this test is fully broken.
-// #[tokio::test]
-// async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
-//   let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+#[tokio::test]
+async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-//   let private_bytes: Box<[u8]> = Box::new([0; 32]);
-//   let private_key = PrivateKey::from(private_bytes);
+  let private_bytes: Box<[u8]> = Box::new([0; 32]);
+  let private_key = PrivateKey::from(private_bytes);
 
-//   let update: Update = Update::CreateMethod {
-//     scope: MethodScope::default(),
-//     method_secret: Some(MethodSecret::Ed25519(private_key)),
-//     type_: MethodType::MerkleKeyCollection2021,
-//     fragment: "key-1".to_owned(),
-//   };
+  let update: Update = Update::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: Some(MethodSecret::Ed25519(private_key.clone())),
+    type_: MethodType::X25519KeyAgreementKey2019,
+    fragment: "key-1".to_owned(),
+  };
 
-//   let err = account.process_update(update).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
-//   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
-//   let key_collection = KeyCollection::new_ed25519(4).unwrap();
+  let update: Update = Update::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: Some(MethodSecret::X25519(private_key)),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-2".to_owned(),
+  };
 
-//   let update: Update = Update::CreateMethod {
-//     scope: MethodScope::default(),
-//     method_secret: Some(MethodSecret::MerkleKeyCollection(key_collection)),
-//     type_: MethodType::Ed25519VerificationKey2018,
-//     fragment: "key-2".to_owned(),
-//   };
+  let err = account.process_update(update).await.unwrap_err();
 
-//   let err = account.process_update(update).await.unwrap_err();
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
-//   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
-
-//   Ok(())
-// }
+  Ok(())
+}
 
 #[tokio::test]
 async fn test_delete_method() -> Result<()> {

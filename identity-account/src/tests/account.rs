@@ -339,7 +339,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
       let mut account = create_account(network).await;
 
       // Case 0: Since nothing has been published to the tangle, read_document must return DID not found
-      assert!(account.fetch_state().await.is_err());
+      assert!(account.fetch_document().await.is_err());
 
       // Case 1: Tangle and account are synched
       account.publish().await.unwrap();
@@ -347,7 +347,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
       let old_document: IotaDocument = account.document().clone();
       let old_chain_state: ChainState = account.chain_state().clone();
 
-      account.fetch_state().await.unwrap();
+      account.fetch_document().await.unwrap();
 
       assert_eq!(&old_document, account.document());
       assert_eq!(&old_chain_state, account.chain_state());
@@ -365,7 +365,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
       let old_document: IotaDocument = account.document().clone();
       let old_chain_state: ChainState = account.chain_state().clone();
 
-      account.fetch_state().await.unwrap();
+      account.fetch_document().await.unwrap();
 
       assert_eq!(&old_document, account.document());
       assert_eq!(&old_chain_state, account.chain_state());
@@ -402,7 +402,7 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       client.publish_document(&new_doc).await.unwrap();
       let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
 
-      account.fetch_state().await.unwrap();
+      account.fetch_document().await.unwrap();
       assert!(account.document().properties().contains_key("foo"));
       assert!(account.document().properties().contains_key("bar"));
       assert_eq!(
@@ -454,7 +454,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
 
       let old_chain_state: ChainState = account.chain_state().clone();
-      account.fetch_state().await.unwrap();
+      account.fetch_document().await.unwrap();
       assert!(account.document().properties().contains_key("foo"));
       assert!(account.document().properties().contains_key("bar"));
       assert_eq!(
