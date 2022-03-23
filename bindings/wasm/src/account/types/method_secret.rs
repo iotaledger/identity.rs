@@ -31,14 +31,14 @@ pub struct WasmMethodSecret(WasmMethodSecretInner);
 
 #[wasm_bindgen(js_class = MethodSecret)]
 impl WasmMethodSecret {
-  /// Creates an Ed25519 {@link MethodSecret} from a `UInt8Array`.
+  /// Creates an Ed25519 {@link MethodSecret} from a `Uint8Array`.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = ed25519)]
   pub fn ed25519(privateKey: Vec<u8>) -> WasmMethodSecret {
     Self(WasmMethodSecretInner::Ed25519(privateKey))
   }
 
-  /// Creates an X25519 {@link MethodSecret} from a `UInt8Array`.
+  /// Creates an X25519 {@link MethodSecret} from a `Uint8Array`.
   #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = x25519)]
   pub fn x25519(privateKey: Vec<u8>) -> WasmMethodSecret {

@@ -2155,13 +2155,13 @@ Signs the `message` with the given `Key`.
 <a name="Ed25519PrivateKey+publicKey"></a>
 
 ### ed25519PrivateKey.publicKey() ⇒ <code>Uint8Array</code>
-Returns the PublicKey as a `UInt8Array`.
+Returns the PublicKey as a `Uint8Array`.
 
 **Kind**: instance method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 <a name="Ed25519PrivateKey.fromBase58"></a>
 
 ### Ed25519PrivateKey.fromBase58(private_key) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
-Create a new `Ed25519PrivateKey` from a 'UInt8Array'.
+Create a new `Ed25519PrivateKey` from a 'Uint8Array'.
 
 **Kind**: static method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
 
@@ -2452,13 +2452,13 @@ Returns the `KeyType` of the `KeyPair` object.
 <a name="KeyPair+public"></a>
 
 ### keyPair.public() ⇒ <code>Uint8Array</code>
-Returns a copy of the public key as a `UInt8Array`.
+Returns a copy of the public key as a `Uint8Array`.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+private"></a>
 
 ### keyPair.private() ⇒ <code>Uint8Array</code>
-Returns a copy of the private key as a `UInt8Array`.
+Returns a copy of the private key as a `Uint8Array`.
 
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+toJSON"></a>
@@ -2533,7 +2533,7 @@ Supported verification method data formats.
 <a name="MethodData+tryDecode"></a>
 
 ### methodData.tryDecode() ⇒ <code>Uint8Array</code>
-Returns a `UInt8Array` containing the decoded bytes of the `MethodData`.
+Returns a `Uint8Array` containing the decoded bytes of the `MethodData`.
 
 This is generally a public key identified by a `MethodData` value.
 
@@ -2683,7 +2683,7 @@ Serializes a `MethodSecret` as a JSON object.
 <a name="MethodSecret.ed25519"></a>
 
 ### MethodSecret.ed25519(privateKey) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates an Ed25519 [MethodSecret](#MethodSecret) from a `UInt8Array`.
+Creates an Ed25519 [MethodSecret](#MethodSecret) from a `Uint8Array`.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 
@@ -2694,7 +2694,7 @@ Creates an Ed25519 [MethodSecret](#MethodSecret) from a `UInt8Array`.
 <a name="MethodSecret.x25519"></a>
 
 ### MethodSecret.x25519(privateKey) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates an X25519 [MethodSecret](#MethodSecret) from a `UInt8Array`.
+Creates an X25519 [MethodSecret](#MethodSecret) from a `Uint8Array`.
 
 **Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
 

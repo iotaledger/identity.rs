@@ -28,7 +28,7 @@ use crate::error::JsValueResult;
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<void>")]
   pub type PromiseUnit;
-  #[wasm_bindgen(typescript_type = "Promise<UInt8Array>")]
+  #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
   pub type PromiseSignature;
@@ -216,17 +216,17 @@ interface Storage {
 
   /** Creates a new keypair at the specified `location`,
    * and returns its public key.*/
-  keyNew: (did: DID, keyLocation: KeyLocation) => Promise<UInt8Array>;
+  keyNew: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
 
   /** Inserts a private key at the specified `location`,
    * and returns its public key.*/
-  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: UInt8Array) => Promise<UInt8Array>;
+  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<Uint8Array>;
 
   /** Returns `true` if a keypair exists at the specified `location`.*/
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
   /** Retrieves the public key from the specified `location`.*/
-  keyGet: (did: DID, keyLocation: KeyLocation) => Promise<UInt8Array>;
+  keyGet: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
 
   /** Deletes the keypair specified by the given `location`. Nothing happens if the key is not found.*/
   keyDel: (did: DID, keyLocation: KeyLocation) => Promise<void>;

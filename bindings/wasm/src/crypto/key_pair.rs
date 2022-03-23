@@ -57,13 +57,13 @@ impl WasmKeyPair {
     WasmKeyType::from(self.0.type_())
   }
 
-  /// Returns a copy of the public key as a `UInt8Array`.
+  /// Returns a copy of the public key as a `Uint8Array`.
   #[wasm_bindgen]
   pub fn public(&self) -> Vec<u8> {
     self.0.public().as_ref().to_vec()
   }
 
-  /// Returns a copy of the private key as a `UInt8Array`.
+  /// Returns a copy of the private key as a `Uint8Array`.
   #[wasm_bindgen]
   pub fn private(&self) -> Vec<u8> {
     self.0.private().as_ref().to_vec()
