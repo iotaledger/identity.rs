@@ -45,8 +45,8 @@ use super::AccountConfig;
 /// publishing to the Tangle.
 #[derive(Debug)]
 pub struct Account<C = Arc<Client>>
-  where
-    C: SharedPtr<Client>,
+where
+  C: SharedPtr<Client>,
 {
   config: AccountConfig,
   storage: Arc<dyn Storage>,
@@ -57,8 +57,8 @@ pub struct Account<C = Arc<Client>>
 }
 
 impl<C> Account<C>
-  where
-    C: SharedPtr<Client>,
+where
+  C: SharedPtr<Client>,
 {
   // ===========================================================================
   // Constructors
@@ -93,7 +93,7 @@ impl<C> Account<C>
       account_setup.client.deref().network().name(),
       account_setup.storage.deref(),
     )
-      .await?;
+    .await?;
 
     let mut account = Self::with_setup(account_setup, ChainState::new(), state).await?;
 
@@ -237,8 +237,8 @@ impl<C> Account<C>
 
   /// Signs `data` with the key specified by `fragment`.
   pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
-    where
-      U: Serialize + SetSignature,
+  where
+    U: Serialize + SetSignature,
   {
     let state: &IdentityState = self.state();
 
@@ -283,7 +283,7 @@ impl<C> Account<C>
     // Checks if the local document is up to date
     if document_chain.integration_message_id() == self.chain_state.last_integration_message_id()
       && (document_chain.diff().is_empty()
-      || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
+        || document_chain.diff_message_id() == self.chain_state.last_diff_message_id())
     {
       return Ok(());
     }
