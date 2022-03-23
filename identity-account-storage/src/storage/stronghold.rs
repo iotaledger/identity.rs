@@ -121,7 +121,7 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 | KeyType::X25519 => retrieve_public_key(&vault, location.into()).await,
+      KeyType::Ed25519 | KeyType::X25519 => retrieve_public_key(&vault, location).await,
     }
   }
 
@@ -141,7 +141,7 @@ impl Storage for Stronghold {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {
-      KeyType::Ed25519 => sign_ed25519(&vault, data, location.into()).await,
+      KeyType::Ed25519 => sign_ed25519(&vault, data, location).await,
       KeyType::X25519 => Err(identity_did::Error::InvalidMethodType.into()),
     }
   }
@@ -207,9 +207,10 @@ impl Storage for Stronghold {
     // Remove index entry.
     let store: Store<'_> = self.store(INDEX_PATH);
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-    let mut index = get_index(&store).await?;
+    let mut index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
     index.remove(did);
     set_index(&store, index).await?;
+    // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
     let store: Store<'_> = self.store(&fmt_account_id(&account_id));
@@ -227,12 +228,13 @@ impl Storage for Stronghold {
 
     let store: Store<'_> = self.store(INDEX_PATH);
 
-    let mut index = get_index(&store).await?;
+    let mut index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
 
     index.insert(did, account_id);
 
     set_index(&store, index).await?;
 
+    // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
     Ok(())
@@ -243,12 +245,11 @@ impl Storage for Stronghold {
 
     let store: Store<'_> = self.store(INDEX_PATH);
 
-    let index = get_index(&store).await?;
+    let index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
 
     let lookup: Option<AccountId> = index.get(did).cloned();
 
-    // Explicitly drop the lock so it's not considered unused,
-    // and possibly optimized away.
+    // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
     Ok(lookup)
@@ -259,10 +260,11 @@ impl Storage for Stronghold {
 
     let store: Store<'_> = self.store(INDEX_PATH);
 
-    let index = get_index(&store).await?;
+    let index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
 
     let dids: Vec<IotaDID> = index.keys().cloned().collect();
 
+    // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
     Ok(dids)
@@ -283,11 +285,9 @@ impl Drop for Stronghold {
 }
 
 async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<()> {
-  let location: Location = location.into();
-
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
-    ty: procedures::KeyType::Ed25519,
-    output: location,
+    ty: location_key_type(location),
+    output: location.into(),
     hint: default_hint(),
   };
 
@@ -296,19 +296,19 @@ async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Resu
   Ok(())
 }
 
-async fn retrieve_public_key(vault: &Vault<'_>, location: Location) -> Result<PublicKey> {
+async fn retrieve_public_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   let procedure: procedures::PublicKey = procedures::PublicKey {
-    ty: procedures::KeyType::Ed25519,
-    private_key: location,
+    ty: location_key_type(location),
+    private_key: location.into(),
   };
 
   Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
 }
 
-async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: Location) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_public_key(vault, location.clone()).await?;
+async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
+  let public_key: PublicKey = retrieve_public_key(vault, location).await?;
   let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
-    private_key: location,
+    private_key: location.into(),
     msg: payload,
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;
@@ -316,18 +316,18 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: Location) -
   Ok(Signature::new(public_key, signature.into()))
 }
 
-// Moves a key from one location to another, thus deleting the old one.
-async fn move_key(vault: &Vault<'_>, from: Location, to: Location) -> Result<()> {
+// Moves a key from one location to another, deleting the old one.
+async fn move_key(vault: &Vault<'_>, source: Location, target: Location) -> Result<()> {
   let copy_record = procedures::CopyRecord {
-    source: from.clone(),
-    target: to,
+    source: source.clone(),
+    target,
     hint: default_hint(),
   };
 
   vault.execute(copy_record).await?;
 
   let revoke_data = procedures::RevokeData {
-    location: from,
+    location: source,
     should_gc: true,
   };
 
@@ -361,5 +361,12 @@ impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
     let bytes: Vec<u8> = format!("{}:{}", key_location.fragment, key_location.key_hash).into_bytes();
     Location::generic("$vault".as_bytes().to_vec(), bytes)
+  }
+}
+
+fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
+  match location.key_type {
+    KeyType::Ed25519 => procedures::KeyType::Ed25519,
+    KeyType::X25519 => procedures::KeyType::X25519,
   }
 }
