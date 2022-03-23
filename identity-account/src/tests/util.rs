@@ -34,7 +34,7 @@ pub(super) async fn account_setup_storage(storage: Arc<dyn Storage>, network: Ne
 // TODO: Unused for now, used to generate a temporary stronghold file path.
 fn _temporary_random_path() -> String {
   let mut file = std::env::temp_dir();
-  file.push("test_strongholds/");
+  file.push("test_strongholds");
   file.push(
     rand::thread_rng()
       .sample_iter(rand::distributions::Alphanumeric)
