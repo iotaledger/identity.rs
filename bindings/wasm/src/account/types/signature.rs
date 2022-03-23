@@ -12,22 +12,16 @@ pub struct WasmSignature(pub(crate) Signature);
 
 #[wasm_bindgen(js_class = Signature)]
 impl WasmSignature {
-  #[wasm_bindgen(constructor)]
   /// Creates a new `Signature`.
-  pub fn new(pkey: Vec<u8>, data: Vec<u8>) -> Result<WasmSignature> {
-    Ok(WasmSignature(Signature::new(pkey.into(), data)))
+  #[wasm_bindgen(constructor)]
+  pub fn new(data: Vec<u8>) -> WasmSignature {
+    WasmSignature(Signature::new(data))
   }
 
-  #[wasm_bindgen]
-  /// Returns a copy of the public key used to verify this signature.
-  pub fn pkey(&self) -> Vec<u8> {
-    self.0.pkey().as_ref().to_vec()
-  }
-
-  #[wasm_bindgen]
-  /// Returns a copy of the signature data as a vec of bytes.
-  pub fn data(&self) -> Vec<u8> {
-    self.0.data().to_vec()
+  // Returns a copy of the signature as a vec of bytes.
+  #[wasm_bindgen(js_name = asBytes)]
+  pub fn as_bytes(&self) -> Vec<u8> {
+    self.0.as_bytes().to_vec()
   }
 
   /// Serializes a `Signature` as a JSON object.

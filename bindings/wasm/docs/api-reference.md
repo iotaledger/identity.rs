@@ -127,9 +127,9 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
-<dt><a href="#Digest">Digest</a></dt>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
@@ -156,9 +156,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -183,6 +183,8 @@ publishing to the Tangle.
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -198,10 +200,8 @@ publishing to the Tangle.
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -227,6 +227,28 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -377,27 +399,16 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
-<a name="Account+setAlsoKnownAs"></a>
+<a name="Account+createService"></a>
 
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>SetControllerOptions</code> | 
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -409,17 +420,6 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -3684,36 +3684,26 @@ Deserializes a `Service` object from a JSON object.
 **Kind**: global class  
 
 * [Signature](#Signature)
-    * [new Signature(pkey, data)](#new_Signature_new)
+    * [new Signature(data)](#new_Signature_new)
     * _instance_
-        * [.pkey()](#Signature+pkey) ⇒ <code>Uint8Array</code>
-        * [.data()](#Signature+data) ⇒ <code>Uint8Array</code>
+        * [.asBytes()](#Signature+asBytes) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
 
 <a name="new_Signature_new"></a>
 
-### new Signature(pkey, data)
+### new Signature(data)
 Creates a new `Signature`.
 
 
 | Param | Type |
 | --- | --- |
-| pkey | <code>Uint8Array</code> | 
 | data | <code>Uint8Array</code> | 
 
-<a name="Signature+pkey"></a>
+<a name="Signature+asBytes"></a>
 
-### signature.pkey() ⇒ <code>Uint8Array</code>
-Returns a copy of the public key used to verify this signature.
-
-**Kind**: instance method of [<code>Signature</code>](#Signature)  
-<a name="Signature+data"></a>
-
-### signature.data() ⇒ <code>Uint8Array</code>
-Returns a copy of the signature data as a vec of bytes.
-
+### signature.asBytes() ⇒ <code>Uint8Array</code>
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature+toJSON"></a>
 
@@ -4066,13 +4056,13 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
-**Kind**: global variable  
-<a name="Digest"></a>
-
-## Digest
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -4121,13 +4111,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
+**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
-**Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
