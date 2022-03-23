@@ -32,10 +32,10 @@ use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
-use super::StoreKey;
-
 // The name of the stronghold client used for indexing, which is global for a storage instance.
 static INDEX_PATH: &str = "$index";
+static CHAIN_STATE_PATH: &str = "$chain_state";
+static DOCUMENT_PATH: &str = "$document";
 
 #[derive(Debug)]
 pub struct Stronghold {
@@ -99,7 +99,6 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  // TODO: Let take reference to account id?
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let vault = self.vault(account_id);
 
@@ -154,7 +153,7 @@ impl Storage for Stronghold {
   async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_account_id(account_id));
-    let data: Option<Vec<u8>> = store.get(location_chain_state()).await?;
+    let data: Option<Vec<u8>> = store.get(CHAIN_STATE_PATH).await?;
 
     match data {
       None => return Ok(None),
@@ -168,7 +167,7 @@ impl Storage for Stronghold {
 
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
-    store.set(location_chain_state(), json, None).await?;
+    store.set(CHAIN_STATE_PATH, json, None).await?;
 
     Ok(())
   }
@@ -178,7 +177,7 @@ impl Storage for Stronghold {
     let store: Store<'_> = self.store(&fmt_account_id(account_id));
 
     // Read the state from the stronghold snapshot
-    let data: Option<Vec<u8>> = store.get(location_document()).await?;
+    let data: Option<Vec<u8>> = store.get(DOCUMENT_PATH).await?;
 
     match data {
       None => return Ok(None),
@@ -194,7 +193,7 @@ impl Storage for Stronghold {
     let json: Vec<u8> = document.to_json_vec()?;
 
     // Write the state to the stronghold snapshot
-    store.set(location_document(), json, None).await?;
+    store.set(DOCUMENT_PATH, json, None).await?;
 
     Ok(())
   }
@@ -215,8 +214,8 @@ impl Storage for Stronghold {
 
     let store: Store<'_> = self.store(&fmt_account_id(&account_id));
 
-    store.del(location_document()).await?;
-    store.del(location_chain_state()).await?;
+    store.del(DOCUMENT_PATH).await?;
+    store.del(CHAIN_STATE_PATH).await?;
 
     // TODO: Remove leftover keys.
 
@@ -352,15 +351,6 @@ async fn set_index(store: &Store<'_>, index: HashMap<IotaDID, AccountId>) -> Res
   store.set(INDEX_PATH, index_vec, None).await?;
 
   Ok(())
-}
-
-fn location_chain_state() -> StoreKey {
-  "$chain_state".to_owned()
-}
-
-// TODO: Turn static.
-fn location_document() -> StoreKey {
-  "$document".to_owned()
 }
 
 fn fmt_account_id(account_id: &AccountId) -> String {

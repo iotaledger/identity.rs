@@ -16,8 +16,6 @@ use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
-pub type StoreKey = String;
-
 #[cfg(not(feature = "send-sync-storage"))]
 mod storage_sub_trait {
   pub trait StorageSendSyncMaybe {}
