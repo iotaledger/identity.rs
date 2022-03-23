@@ -265,22 +265,22 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: OptionMethodScope) -> Result<Option<WasmVerificationMethod>> {
+  pub fn resolve_method(
+    &self,
+    query: &UDIDUrlQuery,
+    scope: OptionMethodScope,
+  ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
 
     let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
-      self
-        .0
-        .resolve_method(&method_query, Some(scope))
+      self.0.resolve_method(&method_query, Some(scope))
     } else {
-      self
-        .0
-        .resolve_method(&method_query, None)
+      self.0.resolve_method(&method_query, None)
     };
     match method {
       None => Ok(None),
-      Some(method) => Ok(Some(WasmVerificationMethod(method.clone())))
+      Some(method) => Ok(Some(WasmVerificationMethod(method.clone()))),
     }
   }
 
