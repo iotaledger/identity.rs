@@ -85,6 +85,16 @@ pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   pub(crate) properties: T,
 }
 
+#[macro_export]
+macro_rules! method_mut_ref {
+  ($doc:ident, $method: ident, $query: ident) => {
+    match $doc.$method.query_mut($query.into())? {
+      MethodRef::Embed(method) => Some(method),
+      MethodRef::Refer(ref did) => $doc.verification_method.query_mut(did),
+    }
+  };
+}
+
 impl<D, T, U, V> CoreDocument<D, T, U, V>
 where
   D: DID + KeyComparable,
@@ -562,11 +572,35 @@ where
 
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
   /// matching the provided `query`.
-  pub fn resolve_method_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<D, U>>
+  pub fn resolve_method_mut<'query, 'me, Q>(
+    &'me mut self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&'me mut VerificationMethod<D, U>>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.resolve_method_mut_inner(query.into())
+    match scope {
+      Some(scope) => match scope {
+        MethodScope::VerificationMethod => self.verification_method.query_mut(query.into()),
+        MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
+          method_mut_ref!(self, authentication, query)
+        }
+        MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
+          method_mut_ref!(self, assertion_method, query)
+        }
+        MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
+          method_mut_ref!(self, key_agreement, query)
+        }
+        MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
+          method_mut_ref!(self, capability_delegation, query)
+        }
+        MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
+          method_mut_ref!(self, capability_invocation, query)
+        }
+      },
+      None => self.resolve_method_mut_inner(query.into()),
+    }
   }
 
   #[doc(hidden)]
@@ -576,6 +610,14 @@ where
       MethodRef::Refer(did) => self.verification_method.query(did),
     }
   }
+
+  // #[inline(Always)]
+  // pub fn resolve_method_ref_mut<'a, 'b>(&'a mut self, method_ref: &'b mut MethodRef<D, U>) -> Option<&'a mut
+  // VerificationMethod<D, U>> {   match method_ref {
+  //     MethodRef::Embed(method) => Some(method),
+  //     MethodRef::Refer(ref did) => self.verification_method.query_mut(did),
+  //   }
+  // }
 
   fn resolve_method_inner(&self, query: DIDUrlQuery<'_>) -> Option<&VerificationMethod<D, U>> {
     let mut method: Option<&MethodRef<D, U>> = None;
@@ -855,6 +897,37 @@ mod tests {
     assert_eq!(document.resolve_method("did:example:1234#key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
     assert_eq!(document.resolve_method("did:example:1234#key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
     assert_eq!(document.resolve_method("did:example:1234#key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
+
+    // Scope.
+    assert_eq!(
+      document.resolve_method("#key-1", Some(MethodScope::VerificationMethod)).unwrap().id().to_string(), "did:example:1234#key-1"
+    );
+  }
+
+  #[rustfmt::skip]
+  #[test]
+  fn test_resolve_method_mut() {
+    let mut document: CoreDocument = document();
+
+    // Resolve methods by fragment.
+    assert_eq!(document.resolve_method_mut("#key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.resolve_method_mut("#key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
+    assert_eq!(document.resolve_method_mut("#key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
+
+    // Fine to omit the octothorpe.
+    assert_eq!(document.resolve_method_mut("key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.resolve_method_mut("key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
+    assert_eq!(document.resolve_method_mut("key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
+
+    // Resolve methods by full DID Url id.
+    assert_eq!(document.resolve_method_mut("did:example:1234#key-1", None).unwrap().id().to_string(), "did:example:1234#key-1");
+    assert_eq!(document.resolve_method_mut("did:example:1234#key-2", None).unwrap().id().to_string(), "did:example:1234#key-2");
+    assert_eq!(document.resolve_method_mut("did:example:1234#key-3", None).unwrap().id().to_string(), "did:example:1234#key-3");
+
+    // Resolve with scope.
+    assert_eq!(
+      document.resolve_method_mut("#key-1", Some(MethodScope::VerificationMethod)).unwrap().id().to_string(), "did:example:1234#key-1"
+    );
   }
 
   #[test]
@@ -869,6 +942,32 @@ mod tests {
 
     // Resolving an empty string returns None.
     assert_eq!(document.resolve_method("", None), None);
+
+    // Resolve with scope.
+    assert_eq!(
+      document.resolve_method("#key-1", Some(MethodScope::key_agreement())),
+      None
+    );
+  }
+
+  #[test]
+  fn test_resolve_method_mut_fails() {
+    let mut document: CoreDocument = document();
+
+    // Resolving an existing reference to a missing method returns None.
+    assert_eq!(document.resolve_method_mut("#key-4", None), None);
+
+    // Resolving a plain DID returns None.
+    assert_eq!(document.resolve_method_mut("did:example:1234", None), None);
+
+    // Resolving an empty string returns None.
+    assert_eq!(document.resolve_method_mut("", None), None);
+
+    // Resolve with scope.
+    assert_eq!(
+      document.resolve_method_mut("#key-1", Some(MethodScope::key_agreement())),
+      None
+    );
   }
 
   #[rustfmt::skip]

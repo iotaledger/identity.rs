@@ -309,7 +309,7 @@ impl IotaDocument {
   {
     self
       .document
-      .resolve_method_mut(query)
+      .resolve_method_mut(query, None)
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
   }
 
