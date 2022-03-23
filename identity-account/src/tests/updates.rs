@@ -191,7 +191,7 @@ async fn test_create_method() -> Result<()> {
     let state: &IdentityState = account.state();
 
     // Ensure existence and method type
-    assert_eq!(state.document().resolve_method(&fragment).unwrap().type_(), method_type);
+    assert_eq!(state.document().resolve_method(&fragment, None).unwrap().type_(), method_type);
 
     // Still only the default relationship.
     assert_eq!(state.document().core_document().verification_relationships().count(), 1);

@@ -73,7 +73,6 @@ pub struct CoreDocument<D = CoreDID, T = Object, U = Object, V = Object>
   pub(crate) properties: T,
 }
 
-#[macro_export]
 macro_rules! method_mut_ref {
   ($doc:ident, $method: ident, $query: ident) => {
     match $doc.$method.query_mut($query.into())? {
