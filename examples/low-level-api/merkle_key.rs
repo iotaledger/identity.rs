@@ -88,7 +88,7 @@ async fn main() -> Result<()> {
 
   // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
   issuer_doc
-    .try_resolve_method_mut("merkle-key")?
+    .resolve_method_mut("merkle-key", None)?
     .revoke_merkle_key(index as u32)?;
   issuer_doc.metadata.previous_message_id = *receipt.message_id();
   issuer_doc.metadata.updated = Timestamp::now_utc();

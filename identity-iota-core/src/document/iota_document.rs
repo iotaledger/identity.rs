@@ -303,13 +303,17 @@ impl IotaDocument {
   }
 
   #[doc(hidden)]
-  pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut IotaVerificationMethod>
+  pub fn resolve_method_mut<'query, Q>(
+    &mut self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Result<&mut IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
     self
       .document
-      .resolve_method_mut(query, None)
+      .resolve_method_mut(query, scope)
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
   }
 
