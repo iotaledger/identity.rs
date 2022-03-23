@@ -53,12 +53,6 @@ impl KeyLocation {
       key_hash,
     }
   }
-
-  // TODO: Should probably be removed here and put into an extension trait for Stronghold?
-  // Returns a byte representation of the `fragment` and `key_hash`.
-  pub fn to_bytes(&self) -> Vec<u8> {
-    format!("{}:{}", self.fragment, self.key_hash).into_bytes()
-  }
 }
 
 impl Display for KeyLocation {
