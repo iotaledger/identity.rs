@@ -265,24 +265,23 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: OptionMethodScope) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: OptionMethodScope) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
 
-    let method: &IotaVerificationMethod = if let Some(scope) = method_scope {
+    let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
       self
         .0
         .resolve_method(&method_query, Some(scope))
-        .ok_or(identity::did::Error::MethodNotFound)
-        .wasm_result()?
     } else {
       self
         .0
         .resolve_method(&method_query, None)
-        .ok_or(identity::did::Error::MethodNotFound)
-        .wasm_result()?
     };
-    Ok(WasmVerificationMethod(method.clone()))
+    match method {
+      None => Ok(None),
+      Some(method) => Ok(Some(WasmVerificationMethod(method.clone())))
+    }
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.
