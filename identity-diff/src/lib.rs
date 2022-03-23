@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
-
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
-
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]

@@ -3,7 +3,6 @@
 
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
-
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
