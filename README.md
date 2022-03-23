@@ -83,7 +83,7 @@ edition = "2021"
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}
 pretty_env_logger = { version = "0.4" }
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.14", features = ["full"] }
 ```
 *main.*<span></span>*rs*
 ```rust

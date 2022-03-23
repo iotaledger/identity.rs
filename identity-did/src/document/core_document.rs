@@ -7,7 +7,6 @@ use core::fmt::Formatter;
 
 use serde::Serialize;
 
-use identity_core::common::BitSet;
 use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
@@ -15,15 +14,6 @@ use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::merkle_key::Blake2b256;
-use identity_core::crypto::merkle_key::MerkleDigest;
-use identity_core::crypto::merkle_key::MerkleDigestTag;
-use identity_core::crypto::merkle_key::MerkleKey;
-use identity_core::crypto::merkle_key::MerkleSignature;
-use identity_core::crypto::merkle_key::MerkleSignatureTag;
-use identity_core::crypto::merkle_key::MerkleVerifier;
-use identity_core::crypto::merkle_key::Sha256;
-use identity_core::crypto::merkle_key::VerificationKey;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
@@ -31,7 +21,6 @@ use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::Verifier;
-use identity_core::crypto::Verify;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
@@ -43,7 +32,6 @@ use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
 use crate::verifiable::DocumentSigner;
-use crate::verifiable::Revocation;
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodRef;
 use crate::verification::MethodRelationship;
@@ -680,7 +668,7 @@ where
   }
 }
 
-impl<D, T, U: Revocation, V> CoreDocument<D, T, U, V>
+impl<D, T, U, V> CoreDocument<D, T, U, V>
 where
   D: DID + KeyComparable,
 {
@@ -718,7 +706,7 @@ where
 
     // Check method type.
     if let Some(ref method_types) = options.method_type {
-      if !method_types.is_empty() && !method_types.contains(&method.key_type) {
+      if !method_types.is_empty() && !method_types.contains(&method.type_) {
         return Err(Error::InvalidSignature("invalid method type"));
       }
     }
@@ -760,47 +748,19 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let public_key: Vec<u8> = method.key_data().try_decode()?;
+    let public_key: Vec<u8> = method.data().try_decode()?;
 
-    match method.key_type() {
+    match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::verify_signature(data, &public_key)?;
       }
-      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&public_key)? {
-        (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
-          merkle_key_verify::<D, X, Sha256, Ed25519, U>(data, method, &public_key)?;
-        }
-        (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
-          merkle_key_verify::<D, X, Blake2b256, Ed25519, U>(data, method, &public_key)?;
-        }
-        (_, _) => {
-          return Err(Error::InvalidMethodType);
-        }
-      },
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(Error::InvalidMethodType);
+      }
     }
 
     Ok(())
   }
-}
-
-fn merkle_key_verify<D, X, M, S, U>(that: &X, method: &VerificationMethod<D, U>, data: &[u8]) -> Result<()>
-where
-  D: DID,
-  X: Serialize + TrySignature,
-  M: MerkleDigest,
-  S: MerkleSignature + Verify<Public = [u8]>,
-  U: Revocation,
-{
-  let revocation: Option<BitSet> = method.revocation()?;
-  let mut vkey: VerificationKey<'_> = VerificationKey::from_borrowed(data);
-
-  if let Some(revocation) = revocation.as_ref() {
-    vkey.set_revocation(revocation);
-  }
-
-  MerkleVerifier::<M, S>::verify_signature(that, &vkey)?;
-
-  Ok(())
 }
 
 // =============================================================================
@@ -813,7 +773,7 @@ where
 {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, D, T, U, V> {
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, D, T, U, V> {
     DocumentSigner::new(self, private)
   }
 }
@@ -857,8 +817,8 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }

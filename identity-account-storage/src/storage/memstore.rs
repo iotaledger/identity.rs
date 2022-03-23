@@ -4,6 +4,8 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use async_trait::async_trait;
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
@@ -24,10 +26,8 @@ use crate::error::Result;
 use crate::identity::ChainState;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
-use crate::utils::EncryptionKey;
 use crate::utils::Shared;
 
 type MemVault = HashMap<KeyLocation, KeyPair>;
@@ -35,11 +35,9 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 type ChainStates = HashMap<IotaDID, ChainState>;
 type States = HashMap<IotaDID, IdentityState>;
 type Vaults = HashMap<IotaDID, MemVault>;
-type PublishedGenerations = HashMap<IotaDID, Generation>;
 
 pub struct MemStore {
   expand: bool,
-  published_generations: Shared<PublishedGenerations>,
   chain_states: Shared<ChainStates>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -49,7 +47,6 @@ impl MemStore {
   pub fn new() -> Self {
     Self {
       expand: false,
-      published_generations: Shared::new(HashMap::new()),
       chain_states: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
@@ -63,18 +60,11 @@ impl MemStore {
   pub fn set_expand(&mut self, value: bool) {
     self.expand = value;
   }
-
-  pub fn vaults(&self) -> Result<Vaults> {
-    self.vaults.read().map(|data| data.clone())
-  }
 }
 
-#[async_trait::async_trait]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
-  async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
-    Ok(())
-  }
-
   async fn flush_changes(&self) -> Result<()> {
     Ok(())
   }
@@ -85,15 +75,20 @@ impl Storage for MemStore {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        let keypair: KeyPair = KeyPair::new_ed25519()?;
+        let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
         let public: PublicKey = keypair.public().clone();
 
         vault.insert(location.clone(), keypair);
 
         Ok(public)
       }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_new] Handle MerkleKeyCollection2021")
+      MethodType::X25519KeyAgreementKey2019 => {
+        let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
+        let public: PublicKey = keypair.public().clone();
+
+        vault.insert(location.clone(), keypair);
+
+        Ok(public)
       }
     }
   }
@@ -106,22 +101,30 @@ impl Storage for MemStore {
       MethodType::Ed25519VerificationKey2018 => {
         let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
-
         let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
         private_key_bytes.zeroize();
 
         let public: ed25519::PublicKey = secret.public_key();
-
         let public_key: PublicKey = public.to_bytes().to_vec().into();
 
         let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), private_key));
-
         vault.insert(location.clone(), keypair);
 
         Ok(public_key)
       }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_insert] Handle MerkleKeyCollection2021")
+      MethodType::X25519KeyAgreementKey2019 => {
+        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
+        let secret: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
+        private_key_bytes.zeroize();
+
+        let public: x25519::PublicKey = secret.public_key();
+        let public_key: PublicKey = public.to_bytes().to_vec().into();
+
+        let keypair: KeyPair = KeyPair::from((KeyType::X25519, public_key.clone(), private_key));
+        vault.insert(location.clone(), keypair);
+
+        Ok(public_key)
       }
     }
   }
@@ -168,8 +171,8 @@ impl Storage for MemStore {
 
         Ok(signature)
       }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")
+      MethodType::X25519KeyAgreementKey2019 => {
+        return Err(identity_did::Error::InvalidMethodType.into());
       }
     }
   }
@@ -199,15 +202,6 @@ impl Storage for MemStore {
     let _ = self.vaults.write()?.remove(did);
     let _ = self.chain_states.write()?.remove(did);
 
-    Ok(())
-  }
-
-  async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {
-    Ok(self.published_generations.read()?.get(did).copied())
-  }
-
-  async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
-    self.published_generations.write()?.insert(did.clone(), index);
     Ok(())
   }
 }

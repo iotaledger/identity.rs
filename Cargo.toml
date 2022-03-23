@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "identity",
-  "identity-comm",
+  # "identity-comm",
   "identity-account",
   "identity-account-storage",
   "identity-core",
@@ -16,6 +16,7 @@ members = [
 ]
 
 exclude = [
+  "bindings/stronghold-nodejs",
   "bindings/wasm",
   "libjose",
 ]

@@ -1,6 +1,6 @@
 [package]
 name = "identity-account-storage"
-version = "0.5.0-dev.4"
+version = "0.5.0-dev.5"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -15,9 +15,9 @@ actix = { version = "0.12.0", optional = true }
 async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3", optional = true }
 hashbrown = { version = "0.11", features = ["serde"] }
-identity-core = { version = "=0.5.0-dev.4", path = "../identity-core", default-features = false }
-identity-did = { version = "=0.5.0-dev.4", path = "../identity-did", default-features = false }
-identity-iota-core = { version = "=0.5.0-dev.4", path = "../identity-iota-core", default-features = false }
+identity-core = { version = "=0.5.0-dev.5", path = "../identity-core", default-features = false }
+identity-did = { version = "=0.5.0-dev.5", path = "../identity-did", default-features = false }
+identity-iota-core = { version = "=0.5.0-dev.5", path = "../identity-iota-core", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 parking_lot = { version = "0.12" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
@@ -28,7 +28,8 @@ zeroize = { version = "1.4" }
 
 [dependencies.iota-crypto]
 version = "0.7"
-features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
+default-features = false
+features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "std", "x25519"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
@@ -46,7 +47,8 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-default = ["stronghold"]
+bindings-derive = ["identity-core/bindings-derive"]
+default = ["stronghold", "send-sync-storage"]
 stronghold = [
   "iota_stronghold",
   "stronghold_engine",
@@ -54,3 +56,4 @@ stronghold = [
   "tokio/rt-multi-thread",
   "futures",
 ]
+send-sync-storage = []

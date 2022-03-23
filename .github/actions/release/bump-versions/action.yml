@@ -25,12 +25,11 @@ runs:
         command: install
         args: --version ^0.2 cargo-workspaces
 
-    - name: Install cargo-edit # to use cargo add
+    - name: Install cargo-edit # to use cargo add and set-version
       uses: actions-rs/cargo@v1
-      if: ${{inputs.release-target == 'rust'}}
       with:
         command: install
-        args: -f --no-default-features --features "add" --version ^0.8 cargo-edit
+        args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
 
     - name: Replace identity version in Wasm bindings
       shell: bash
@@ -39,20 +38,34 @@ runs:
       run: |
         cargo add identity@=${{ inputs.version }} --path=../../identity
     
+    - name: Replace identity version in stronghold nodejs bindings
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: bindings/stronghold-nodejs
+      run: |
+        cargo add identity-core@=${{ inputs.version }} --path=../../identity-core
+        cargo add identity-iota-core@=${{ inputs.version }} --path=../../identity-iota-core
+        cargo add identity-account-storage@=${{ inputs.version }} --path=../../identity-account-storage
+    
     - name: Bump Rust crate version
       shell: bash
-      # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'rust'}}
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
 
     - name: Bump Wasm bindings crate version
       shell: bash
-      # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/wasm
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+
+    - name: Bump stronghold nodejs bindings crate version
+      shell: bash
+      if: ${{inputs.release-target == 'wasm'}}
+      working-directory: bindings/stronghold-nodejs
+      run: |
+        cargo set-version ${{ inputs.version }}
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
@@ -67,3 +80,12 @@ runs:
       working-directory: bindings/wasm
       run: |
         npm version ${{ inputs.version }}
+
+    - name: Bump stronghold nodejs npm package version
+      shell: bash
+      if: ${{inputs.release-target == 'wasm'}}
+      working-directory: bindings/stronghold-nodejs
+      run: |
+        npm version ${{ inputs.version }}
+        # set peer dependency version
+        echo "`jq '.peerDependencies."@iota/identity-wasm"="${{ inputs.version }}"' package.json`" > package.json

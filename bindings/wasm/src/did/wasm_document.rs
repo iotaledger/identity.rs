@@ -3,21 +3,14 @@
 
 use std::str::FromStr;
 
-use identity::core::decode_b58;
 use identity::core::OneOrMany;
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
 use identity::core::Url;
-use identity::crypto::merkle_key::MerkleDigestTag;
-use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::Sha256;
-use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
-use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
-use identity::iota_core::Error;
 use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::IotaVerificationMethod;
@@ -31,6 +24,7 @@ use crate::credential::WasmPresentation;
 use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmSignatureOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
+use crate::did::OptionMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
@@ -96,8 +90,8 @@ impl WasmDocument {
   // Properties
   // ===========================================================================
 
-  /// Returns the DID Document `id`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the DID Document `id`.
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
   }
@@ -300,13 +294,6 @@ impl WasmDocument {
     ))
   }
 
-  #[wasm_bindgen(js_name = revokeMerkleKey)]
-  pub fn revoke_merkle_key(&mut self, query: &UDIDUrlQuery, index: u32) -> Result<bool> {
-    let method_query: String = query.into_serde().wasm_result()?;
-    let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
-    method.revoke_merkle_key(index).wasm_result()
-  }
-
   /// Attaches the relationship to the given method, if the method exists.
   ///
   /// Note: The method needs to be in the set of verification methods,
@@ -381,27 +368,35 @@ impl WasmDocument {
       .wasm_result()
   }
 
+  /// Creates a signature for the given `Credential` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signCredential)]
   pub fn sign_credential(
     &self,
     data: &JsValue,
-    args: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, args, options)?;
+    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmCredential = WasmCredential::from_json(&json)?;
 
     Ok(data)
   }
 
+  /// Creates a signature for the given `Presentation` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signPresentation)]
   pub fn sign_presentation(
     &self,
     data: &JsValue,
-    args: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, args, options)?;
+    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmPresentation = WasmPresentation::from_json(&json)?;
 
     Ok(data)
@@ -410,79 +405,26 @@ impl WasmDocument {
   /// Creates a signature for the given `data` with the specified DID Document
   /// Verification Method.
   ///
-  /// An additional `proof` property is required if using a Merkle Key
-  /// Collection verification Method.
-  ///
   /// NOTE: use `signSelf` or `signDocument` for DID Documents.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: &WasmSignatureOptions) -> Result<JsValue> {
-    // TODO: clean this up and annotate types if possible.
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Args {
-      MerkleKey {
-        method: String,
-        public: String,
-        private: String,
-        proof: String,
-      },
-      Default {
-        method: String,
-        private: String,
-      },
-    }
-
+  pub fn sign_data(
+    &self,
+    data: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UDIDUrlQuery,
+    options: &WasmSignatureOptions,
+  ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let args: Args = args.into_serde().wasm_result()?;
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
     let options: SignatureOptions = options.0.clone();
 
-    match args {
-      Args::MerkleKey {
-        method,
-        public,
-        private,
-        proof,
-      } => {
-        let merkle_key: Vec<u8> = self
-          .0
-          .resolve_method(&*method, None)
           .ok_or(Error::InvalidDoc(identity::did::Error::MethodNotFound))
-          .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
-          .wasm_result()?;
-
-        let public: PublicKey = decode_b58(&public).map(Into::into).wasm_result()?;
-        let private: PrivateKey = decode_b58(&private).map(Into::into).wasm_result()?;
-
-        let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
-        let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
-
-        match digest {
-          MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
-            Some(proof) => self
-              .0
-              .signer(&private)
-              .method(&method)
-              .options(options)
-              .merkle_key((&public, &proof))
-              .sign(&mut data)
-              .wasm_result()?,
-            None => return Err("Invalid Public Key Proof".into()),
-          },
-          _ => return Err("Invalid Merkle Key Digest".into()),
-        }
-      }
-      Args::Default { method, private } => {
-        let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
-
-        self
-          .0
-          .signer(&private)
-          .method(&method)
-          .options(options)
-          .sign(&mut data)
-          .wasm_result()?;
-      }
-    }
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
 
     JsValue::from_serde(&data).wasm_result()
   }
@@ -600,47 +542,47 @@ impl WasmDocument {
   // Metadata
   // ===========================================================================
 
-  /// Returns the metadata associated with this document.
+  /// Returns a copy of the metadata associated with this document.
   ///
-  /// NOTE: clones the data. Use the `metadataCreated`, `metadataUpdated`,
-  /// `metadataPreviousMessageId`, `metadataProof` properties instead.
-  #[wasm_bindgen(getter)]
+  /// NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
+  /// `metadataPreviousMessageId`, `metadataProof` if only a subset of the metadata required.
+  #[wasm_bindgen]
   pub fn metadata(&self) -> WasmDocumentMetadata {
     WasmDocumentMetadata::from(self.0.metadata.clone())
   }
 
-  /// Returns the timestamp of when the DID document was created.
-  #[wasm_bindgen(getter = metadataCreated)]
+  /// Returns a copy of the timestamp of when the DID document was created.
+  #[wasm_bindgen(js_name = metadataCreated)]
   pub fn metadata_created(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.metadata.created)
   }
 
   /// Sets the timestamp of when the DID document was created.
-  #[wasm_bindgen(setter = metadataCreated)]
+  #[wasm_bindgen(js_name = setMetadataCreated)]
   pub fn set_metadata_created(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.created = timestamp.0;
   }
 
-  /// Returns the timestamp of the last DID document update.
-  #[wasm_bindgen(getter = metadataUpdated)]
+  /// Returns a copy of the timestamp of the last DID document update.
+  #[wasm_bindgen(js_name = metadataUpdated)]
   pub fn metadata_updated(&self) -> WasmTimestamp {
     WasmTimestamp::from(self.0.metadata.updated)
   }
 
   /// Sets the timestamp of the last DID document update.
-  #[wasm_bindgen(setter = metadataUpdated)]
+  #[wasm_bindgen(js_name = setMetadataUpdated)]
   pub fn set_metadata_updated(&mut self, timestamp: &WasmTimestamp) {
     self.0.metadata.updated = timestamp.0;
   }
 
-  /// Returns the previous integration chain message id.
-  #[wasm_bindgen(getter = metadataPreviousMessageId)]
+  /// Returns a copy of the previous integration chain message id.
+  #[wasm_bindgen(js_name = metadataPreviousMessageId)]
   pub fn metadata_previous_message_id(&self) -> String {
     self.0.metadata.previous_message_id.to_string()
   }
 
   /// Sets the previous integration chain message id.
-  #[wasm_bindgen(setter = metadataPreviousMessageId)]
+  #[wasm_bindgen(js_name = setMetadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
       .map_err(identity::iota_core::Error::InvalidMessage)
@@ -649,11 +591,11 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns the `proof` object.
-  #[wasm_bindgen(getter = metadataProof)]
-  pub fn metadata_proof(&self) -> Result<JsValue> {
-    // TODO: implement proper bindings for the proof
-    match &self.0.metadata.proof {
+  /// Returns a copy of the `proof` object.
+  #[wasm_bindgen]
+  pub fn proof(&self) -> Result<JsValue> {
+    // TODO: implement proper bindings for the proof.
+    match &self.0.proof {
       Some(proof) => JsValue::from_serde(proof).wasm_result(),
       None => Ok(JsValue::NULL),
     }
@@ -684,6 +626,11 @@ impl From<IotaDocument> for WasmDocument {
   }
 }
 
+impl From<WasmDocument> for IotaDocument {
+  fn from(wasm_document: WasmDocument) -> Self {
+    wasm_document.0
+  }
+}
 /// Duck-typed union to pass either a string or WasmDIDUrl as a parameter.
 #[wasm_bindgen]
 extern "C" {
@@ -710,7 +657,4 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
-
-  #[wasm_bindgen(typescript_type = "MethodScope | undefined")]
-  pub type OptionMethodScope;
 }

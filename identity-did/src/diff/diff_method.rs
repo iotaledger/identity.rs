@@ -28,10 +28,10 @@ where
   id: Option<<DIDUrl<D> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   controller: Option<<D as Diff>::Type>,
+  #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+  type_: Option<MethodType>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_type: Option<MethodType>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  key_data: Option<DiffMethodData>,
+  data: Option<DiffMethodData>,
   #[serde(skip_serializing_if = "Option::is_none")]
   properties: Option<<T as Diff>::Type>,
 }
@@ -55,15 +55,15 @@ where
       } else {
         Some(self.controller().diff(other.controller())?)
       },
-      key_type: if self.key_type() == other.key_type() {
+      type_: if self.type_() == other.type_() {
         None
       } else {
-        Some(self.key_type().diff(&other.key_type())?)
+        Some(self.type_().diff(&other.type_())?)
       },
-      key_data: if self.key_data() == other.key_data() {
+      data: if self.data() == other.data() {
         None
       } else {
-        Some(self.key_data().diff(other.key_data())?)
+        Some(self.data().diff(other.data())?)
       },
       properties: if self.properties() == other.properties() {
         None
@@ -86,17 +86,17 @@ where
       .transpose()?
       .unwrap_or_else(|| self.controller().clone());
 
-    let key_data: MethodData = diff
-      .key_data
-      .map(|value| self.key_data().merge(value))
+    let data: MethodData = diff
+      .data
+      .map(|value| self.data().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.key_data().clone());
+      .unwrap_or_else(|| self.data().clone());
 
-    let key_type: MethodType = diff
-      .key_type
-      .map(|value| self.key_type().merge(value))
+    let type_: MethodType = diff
+      .type_
+      .map(|value| self.type_().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.key_type());
+      .unwrap_or_else(|| self.type_());
 
     let properties: T = diff
       .properties
@@ -108,8 +108,8 @@ where
     MethodBuilder::new(properties)
       .id(id)
       .controller(controller)
-      .key_type(key_type)
-      .key_data(key_data)
+      .type_(type_)
+      .data(data)
       .build()
       .map_err(Error::merge)
   }
@@ -127,17 +127,17 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.controller`"))?;
 
-    let key_type: MethodType = diff
-      .key_type
+    let type_: MethodType = diff
+      .type_
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `method.key_type`"))?;
+      .ok_or_else(|| Error::convert("Missing field `method.type`"))?;
 
-    let key_data: MethodData = diff
-      .key_data
+    let data: MethodData = diff
+      .data
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `method.key_data`"))?;
+      .ok_or_else(|| Error::convert("Missing field `method.data`"))?;
 
     let properties: T = diff.properties.map(Diff::from_diff).transpose()?.unwrap_or_default();
 
@@ -145,8 +145,8 @@ where
     MethodBuilder::new(properties)
       .id(id)
       .controller(controller)
-      .key_type(key_type)
-      .key_data(key_data)
+      .type_(type_)
+      .data(data)
       .build()
       .map_err(Error::convert)
   }
@@ -155,8 +155,8 @@ where
     Ok(DiffMethod {
       id: Some(self.id.into_diff()?),
       controller: Some(self.controller.into_diff()?),
-      key_type: Some(self.key_type.into_diff()?),
-      key_data: Some(self.key_data.into_diff()?),
+      type_: Some(self.type_.into_diff()?),
+      data: Some(self.data.into_diff()?),
       properties: if self.properties == Default::default() {
         None
       } else {
@@ -180,8 +180,8 @@ mod test {
     VerificationMethod::builder(Default::default())
       .id("did:example:123#key".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyMultibase("".into()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap()
   }
@@ -193,8 +193,8 @@ mod test {
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_data.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.data.is_none());
+    assert!(diff.type_.is_none());
     assert!(diff.properties.is_none());
   }
 
@@ -211,8 +211,8 @@ mod test {
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_data.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.data.is_none());
+    assert!(diff.type_.is_none());
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -225,8 +225,8 @@ mod test {
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_data.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.data.is_none());
+    assert!(diff.type_.is_none());
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -239,8 +239,8 @@ mod test {
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_data.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.data.is_none());
+    assert!(diff.type_.is_none());
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -254,8 +254,8 @@ mod test {
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.controller.is_none());
-    assert!(diff.key_data.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.data.is_none());
+    assert!(diff.type_.is_none());
     assert!(diff.properties.is_none());
     assert_eq!(diff.id, Some(DiffString(Some("did:diff:123#key".to_string()))));
 
@@ -271,8 +271,8 @@ mod test {
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
-    assert!(diff.key_data.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.data.is_none());
+    assert!(diff.type_.is_none());
     assert!(diff.properties.is_none());
     assert_eq!(diff.controller, Some(DiffString(Some("did:diff:123".to_string()))));
 
@@ -281,35 +281,35 @@ mod test {
   }
 
   #[test]
-  fn test_key_type() {
+  fn test_type() {
     let method = test_method();
     let mut new = method.clone();
-    *new.key_type_mut() = MethodType::MerkleKeyCollection2021;
+    *new.type_mut() = MethodType::X25519KeyAgreementKey2019;
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_data.is_none());
+    assert!(diff.data.is_none());
     assert!(diff.properties.is_none());
-    assert_eq!(diff.key_type, Some(MethodType::MerkleKeyCollection2021));
+    assert_eq!(diff.type_, Some(MethodType::X25519KeyAgreementKey2019));
 
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
 
   #[test]
-  fn test_key_data_base58() {
+  fn test_data_base58() {
     let method = test_method();
     let mut new = method.clone();
-    *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
+    *new.data_mut() = MethodData::PublicKeyBase58("diff".into());
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.type_.is_none());
     assert!(diff.properties.is_none());
     assert_eq!(
-      diff.key_data,
+      diff.data,
       Some(DiffMethodData::PublicKeyBase58(Some(DiffString(Some(
         "diff".to_string()
       )))))
@@ -320,18 +320,18 @@ mod test {
   }
 
   #[test]
-  fn test_key_data_multibase() {
+  fn test_data_multibase() {
     let method = test_method();
     let mut new = method.clone();
-    *new.key_data_mut() = MethodData::PublicKeyMultibase("diff".into());
+    *new.data_mut() = MethodData::PublicKeyMultibase("diff".into());
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.controller.is_none());
-    assert!(diff.key_type.is_none());
+    assert!(diff.type_.is_none());
     assert!(diff.properties.is_none());
     assert_eq!(
-      diff.key_data,
+      diff.data,
       Some(DiffMethodData::PublicKeyMultibase(Some(DiffString(Some(
         "diff".to_string()
       )))))
@@ -371,14 +371,14 @@ mod test {
     let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
-    // add key_type
-    *new.key_type_mut() = MethodType::MerkleKeyCollection2021;
+    // add type_
+    *new.type_mut() = MethodType::X25519KeyAgreementKey2019;
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
-    // add key_data
-    *new.key_data_mut() = MethodData::PublicKeyMultibase("diff".into());
+    // add data
+    *new.data_mut() = MethodData::PublicKeyMultibase("diff".into());
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff.clone());
     assert!(diff_method.is_ok());

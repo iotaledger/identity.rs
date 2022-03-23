@@ -9,7 +9,7 @@ use crate::error::WasmResult;
 
 /// Holds additional signature verification options.
 /// See `IVerifierOptions`.
-#[wasm_bindgen(js_name = VerifierOptions)]
+#[wasm_bindgen(js_name = VerifierOptions, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmVerifierOptions(pub(crate) VerifierOptions);
 
@@ -76,7 +76,7 @@ interface IVerifierOptions {
 
     /** Verify the signing verification method type matches one specified.
     *
-    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.MerkleKeyCollection2021()]`
+    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.X25519KeyAgreementKey2019()]`
     */
     readonly methodType?: Array<MethodType>;
 

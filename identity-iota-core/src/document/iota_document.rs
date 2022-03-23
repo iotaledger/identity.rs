@@ -65,6 +65,8 @@ pub struct IotaDocument {
   pub(crate) document: IotaCoreDocument,
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub proof: Option<Signature>,
 }
 
 impl TryMethod for IotaDocument {
@@ -88,11 +90,11 @@ impl IotaDocument {
   /// Example:
   ///
   /// ```
-  /// # use identity_core::crypto::KeyPair;
+  /// # use identity_core::crypto::{KeyPair, KeyType};
   /// # use identity_iota_core::document::IotaDocument;
   /// #
   /// // Create a DID Document from a new Ed25519 keypair.
-  /// let keypair = KeyPair::new_ed25519().unwrap();
+  /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
   /// let document = IotaDocument::new(&keypair).unwrap();
   /// ```
   pub fn new(keypair: &KeyPair) -> Result<Self> {
@@ -114,11 +116,12 @@ impl IotaDocument {
   ///
   /// ```
   /// # use identity_core::crypto::KeyPair;
+  /// # use identity_core::crypto::KeyType;
   /// # use identity_iota_core::document::IotaDocument;
   /// # use identity_iota_core::tangle::Network;
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
-  /// let keypair = KeyPair::new_ed25519().unwrap();
+  /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
   /// let document = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key")).unwrap();
   /// assert_eq!(document.id().network_str(), "dev");
   /// assert_eq!(
@@ -151,7 +154,7 @@ impl IotaDocument {
   /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_self`].
   pub fn from_verification_method(method: IotaVerificationMethod) -> Result<Self> {
     // Ensure the verification method key type is allowed to sign document updates.
-    if !Self::is_signing_method_type(method.key_type()) {
+    if !Self::is_signing_method_type(method.type_()) {
       return Err(Error::InvalidDocumentSigningMethodType);
     }
 
@@ -160,7 +163,7 @@ impl IotaDocument {
       .capability_invocation(MethodRef::Embed(method))
       .build()?;
     let metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    Ok(Self::from((document, metadata)))
+    Ok(Self::from((document, metadata, None)))
   }
 
   /// Returns whether the given [`MethodType`] can be used to sign document updates.
@@ -326,7 +329,7 @@ impl IotaDocument {
       .resolve_method(query, Some(MethodScope::capability_invocation()))
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
       .and_then(|method| {
-        if Self::is_signing_method_type(method.key_type()) {
+        if Self::is_signing_method_type(method.type_()) {
           Ok(method)
         } else {
           Err(Error::InvalidDocumentSigningMethodType)
@@ -340,7 +343,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, IotaDID> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, IotaDID> {
     self.document.signer(private_key)
   }
 
@@ -405,15 +408,15 @@ impl IotaDocument {
     };
 
     // Sign document.
-    match method.key_type() {
+    match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
-      MethodType::MerkleKeyCollection2021 => {
-        // Merkle Key Collections cannot be used to sign documents.
+      MethodType::X25519KeyAgreementKey2019 => {
+        // X25519 cannot be used to sign documents.
         return Err(Error::DocumentSignError(
-          "MerkleKeyCollection2021 not allowed to sign documents",
+          "X25519KeyAgreementKey2019 cannot sign documents",
           None,
         ));
       }
@@ -474,9 +477,8 @@ impl IotaDocument {
       .try_signature()
       .map_err(|err| Error::InvalidRootDocument(err.into()))?;
     let method: &IotaVerificationMethod = document
-      .resolve_method(signature, None)
+    let public: PublicKey = method.data().try_decode()?.into();
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))?;
-    let public: PublicKey = method.key_data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
       return Err(Error::InvalidRootDocument(
         "DID tag does not match any verification method",
@@ -592,7 +594,7 @@ impl IotaDocument {
       })
       .filter(|method| {
         if let Some(method) = method {
-          IotaDocument::is_signing_method_type(method.key_type())
+          IotaDocument::is_signing_method_type(method.type_())
         } else {
           true
         }
@@ -603,9 +605,13 @@ impl IotaDocument {
 
 impl<'a, 'b, 'c> IotaDocument {}
 
-impl From<(IotaCoreDocument, IotaDocumentMetadata)> for IotaDocument {
-  fn from((document, metadata): (IotaCoreDocument, IotaDocumentMetadata)) -> Self {
-    Self { document, metadata }
+impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)> for IotaDocument {
+  fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)) -> Self {
+    Self {
+      document,
+      metadata,
+      proof,
+    }
   }
 }
 
@@ -623,19 +629,19 @@ impl Display for IotaDocument {
 
 impl TrySignature for IotaDocument {
   fn signature(&self) -> Option<&Signature> {
-    self.metadata.proof.as_ref()
+    self.proof.as_ref()
   }
 }
 
 impl TrySignatureMut for IotaDocument {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.metadata.proof.as_mut()
+    self.proof.as_mut()
   }
 }
 
 impl SetSignature for IotaDocument {
   fn set_signature(&mut self, signature: Signature) {
-    self.metadata.proof = Some(signature)
+    self.proof = Some(signature)
   }
 }
 
@@ -658,8 +664,6 @@ mod tests {
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-  use identity_core::crypto::merkle_key::Sha256;
-  use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyType;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
@@ -690,8 +694,8 @@ mod tests {
     VerificationMethod::builder(Default::default())
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }
@@ -711,7 +715,7 @@ mod tests {
       .build()
       .unwrap();
 
-    IotaDocument::from((document, metadata))
+    IotaDocument::from((document, metadata, None))
   }
 
   fn generate_testkey() -> KeyPair {
@@ -736,11 +740,11 @@ mod tests {
 
     assert_eq!(default_signing_method.id().to_string(), DID_METHOD_ID);
     assert_eq!(
-      document.default_signing_method().unwrap().key_type(),
+      document.default_signing_method().unwrap().type_(),
       MethodType::Ed25519VerificationKey2018
     );
     assert_eq!(
-      document.default_signing_method().unwrap().key_data(),
+      document.default_signing_method().unwrap().data(),
       &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
@@ -753,11 +757,11 @@ mod tests {
       DID_DEVNET_METHOD_ID
     );
     assert_eq!(
-      document.default_signing_method().unwrap().key_type(),
+      document.default_signing_method().unwrap().type_(),
       MethodType::Ed25519VerificationKey2018
     );
     assert_eq!(
-      document.default_signing_method().unwrap().key_data(),
+      document.default_signing_method().unwrap().data(),
       &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
@@ -848,8 +852,8 @@ mod tests {
     let expected = IotaVerificationMethod::builder(Default::default())
       .id(DID_METHOD_ID.parse().unwrap())
       .controller(valid_did())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyMultibase(
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::PublicKeyMultibase(
         "zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
       ))
       .build()
@@ -1031,18 +1035,16 @@ mod tests {
       assert!(IotaDocument::verify_root_document(&document).is_err());
     }
 
-    // INVALID - try sign using a Merkle Key Collection
+    // INVALID - try sign using a X25519 key.
     {
       let (mut document, _) = generate_document();
-      let key_collection: KeyCollection = KeyCollection::new_ed25519(8).unwrap();
-      let merkle_key_method =
-        IotaVerificationMethod::new_merkle_key::<Sha256>(document.id().clone(), &key_collection, "merkle-key").unwrap();
+      let x25519: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
+      let x25519_method =
+        IotaVerificationMethod::new(document.id().clone(), x25519.type_(), x25519.public(), "kex-0").unwrap();
       document
-        .insert_method(merkle_key_method, MethodScope::capability_invocation())
+        .insert_method(x25519_method, MethodScope::capability_invocation())
         .unwrap();
-      assert!(document
-        .sign_self(key_collection.private(0).unwrap(), "merkle-key")
-        .is_err());
+      assert!(document.sign_self(x25519.private(), "kex-0").is_err());
       assert!(document.verify_document(&document).is_err());
     }
   }
@@ -1416,7 +1418,7 @@ mod tests {
     let signing_method: IotaVerificationMethod = document.default_signing_method().unwrap().clone();
 
     // Ensure signing method has an appropriate type.
-    assert!(IotaDocument::is_signing_method_type(signing_method.key_type()));
+    assert!(IotaDocument::is_signing_method_type(signing_method.type_()));
 
     // Ensure signing method has a capability invocation relationship.
     let capability_invocation: &IotaVerificationMethod = document
@@ -1554,13 +1556,13 @@ mod tests {
 
   #[test]
   fn test_document_equality() {
-    let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let original_doc: IotaDocument = IotaDocument::new_with_options(&keypair1, None, Some("test-0")).unwrap();
 
     let mut doc1 = original_doc.clone();
 
     // Update the key material of the existing verification method test-0.
-    let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::new(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
@@ -1576,7 +1578,7 @@ mod tests {
     assert_ne!(original_doc, doc1);
 
     let mut doc2 = doc1.clone();
-    let keypair3: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair3: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let method3: IotaVerificationMethod =
       IotaVerificationMethod::new(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 

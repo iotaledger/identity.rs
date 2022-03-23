@@ -1,0 +1,22 @@
+[package]
+name = "identity-stronghold-nodejs"
+version = "0.5.0-dev.5"
+edition = "2021"
+publish = false
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+identity-account-storage = { version = "=0.5.0-dev.5", path = "../../identity-account-storage", default-features = false, features = ["stronghold", "send-sync-storage", "bindings-derive"] }
+identity-core = { version = "=0.5.0-dev.5", path = "../../identity-core", default-features = false, features = ["bindings-derive"] }
+identity-iota-core = { version = "=0.5.0-dev.5", path = "../../identity-iota-core", default-features = false }
+napi = { version = "2.0.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
+napi-derive = { version = "2.0.7" }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false }
+
+[build-dependencies]
+napi-build = "1.2.1"
+
+[profile.release]
+lto = true

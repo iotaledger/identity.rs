@@ -108,9 +108,7 @@ impl IdentityState {
       MethodType::Ed25519VerificationKey2018 => {
         RemoteEd25519::create_signature(data, method_url.to_string(), &private, options).await?;
       }
-      MethodType::MerkleKeyCollection2021 => {
-        todo!("Handle MerkleKeyCollection2021")
-      }
+      MethodType::X25519KeyAgreementKey2019 => return Err(identity_did::Error::InvalidMethodType.into()),
     }
 
     Ok(())
