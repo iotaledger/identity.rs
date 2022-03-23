@@ -420,7 +420,6 @@ impl WasmDocument {
     let method_query: String = methodQuery.into_serde().wasm_result()?;
     let options: SignatureOptions = options.0.clone();
 
-          .ok_or(Error::InvalidDoc(identity::did::Error::MethodNotFound))
     self
       .0
       .sign_data(&mut data, &private_key, &method_query, options)
