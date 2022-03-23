@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::Location;
 use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 use std::time::Duration;
@@ -71,12 +70,5 @@ impl Store<'_> {
       .delete_from_store(key.into())
       .await?;
     Ok(())
-  }
-
-  // TODO: This function is implemented incorrectly, remove, probably.
-  /// Returns true if the specified location exists.
-  pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
-    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    Ok(scope.record_exists(location).await?)
   }
 }
