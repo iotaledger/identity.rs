@@ -289,7 +289,7 @@ impl WasmDocument {
   pub fn resolve_signing_method(&mut self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
     let method_query: String = query.into_serde().wasm_result()?;
     Ok(WasmVerificationMethod(
-      self.0.try_resolve_signing_method(&method_query).wasm_result()?.clone(),
+      self.0.resolve_signing_method(&method_query).wasm_result()?.clone(),
     ))
   }
 

@@ -305,7 +305,6 @@ impl IotaDocument {
     self.document.resolve_method(query, scope)
   }
 
-
   /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
@@ -318,13 +317,11 @@ impl IotaDocument {
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self
-      .document
-      .resolve_method_mut(query, scope)
+    self.document.resolve_method_mut(query, scope)
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.
-  pub fn try_resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
+  pub fn resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
@@ -396,7 +393,7 @@ impl IotaDocument {
   {
     // Ensure method is permitted to sign document updates.
     // TODO: re-map this error
-    let method: &IotaVerificationMethod = self.try_resolve_signing_method(method_query.into())?;
+    let method: &IotaVerificationMethod = self.resolve_signing_method(method_query.into())?;
 
     // Specify the full method DID Url if the verification method id does not match the document id.
     let method_did: &IotaDID = method.id().did();
@@ -521,7 +518,7 @@ impl IotaDocument {
 
     // Ensure the method is allowed to sign document updates.
     let method_query: DIDUrlQuery<'_> = method_query.into();
-    let _ = self.try_resolve_signing_method(method_query.clone())?;
+    let _ = self.resolve_signing_method(method_query.clone())?;
 
     self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;
 
@@ -1434,7 +1431,7 @@ mod tests {
     // Ensure try_resolve_signing_method resolves it.
     assert_eq!(
       &signing_method,
-      document.try_resolve_signing_method(signing_method.id()).unwrap()
+      document.resolve_signing_method(signing_method.id()).unwrap()
     );
 
     // Adding a new capability invocation method still returns the original method.
