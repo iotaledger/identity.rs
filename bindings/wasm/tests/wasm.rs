@@ -9,8 +9,8 @@ use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::iota_core::IotaDID;
 use js_sys::Array;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
 
 use identity_wasm::common::WasmTimestamp;
@@ -151,7 +151,7 @@ fn test_document_resolve_method() {
     keypair_new.public(),
     "new-key".to_owned(),
   )
-    .unwrap();
+  .unwrap();
   document
     .insert_method(&method_new, &WasmMethodScope::authentication())
     .unwrap();
@@ -292,7 +292,7 @@ fn test_sign_document() {
     keypair2.public(),
     "#method-2".to_owned(),
   )
-    .unwrap();
+  .unwrap();
   document2
     .insert_method(&method, &WasmMethodScope::capability_invocation())
     .unwrap();
@@ -360,9 +360,9 @@ fn test_validations() {
     }}"#,
       &subject_did.to_string().as_str()
     )
-      .as_str(),
+    .as_str(),
   )
-    .unwrap();
+  .unwrap();
 
   let credential_obj: Object = Object::from_json(
     format!(
@@ -375,9 +375,9 @@ fn test_validations() {
       issuer_did.to_string(),
       subject.to_json().unwrap()
     )
-      .as_str(),
+    .as_str(),
   )
-    .unwrap();
+  .unwrap();
 
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
@@ -398,7 +398,7 @@ fn test_validations() {
     &WasmCredentialValidationOptions::default(),
     WasmFailFast::FirstError,
   )
-    .is_ok());
+  .is_ok());
 
   // check that passing an array to CredentialValidator::verify_signature also works
   let issuers: Array = vec![issuer_doc].into_iter().map(JsValue::from).collect();
@@ -407,7 +407,7 @@ fn test_validations() {
     issuers.unchecked_ref(),
     &WasmVerifierOptions::default(),
   )
-    .is_ok());
+  .is_ok());
 
   let presentation: WasmPresentation = WasmPresentation::new(
     &subject_doc,
@@ -415,7 +415,7 @@ fn test_validations() {
     Some("VerifiablePresentation".to_owned()),
     Some("https://example.org/credentials/3732".to_owned()),
   )
-    .unwrap();
+  .unwrap();
 
   let signed_presentation: WasmPresentation = subject_doc
     .sign_presentation(
@@ -433,7 +433,7 @@ fn test_validations() {
     &subject_doc.to_json().unwrap().unchecked_into(),
     &WasmVerifierOptions::default(),
   )
-    .is_ok());
+  .is_ok());
 
   // validate the presentation
   assert!(WasmPresentationValidator::validate(
@@ -443,5 +443,5 @@ fn test_validations() {
     &WasmPresentationValidationOptions::default(),
     WasmFailFast::FirstError,
   )
-    .is_ok());
+  .is_ok());
 }
