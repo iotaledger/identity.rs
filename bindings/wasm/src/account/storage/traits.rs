@@ -14,8 +14,11 @@ use identity::account_storage::Storage;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota_core::IotaDID;
+use js_sys::Array;
 use js_sys::Promise;
+use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
@@ -96,7 +99,7 @@ impl Storage for WasmStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?
-      .into_serde()
+      .into_vec()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(public_key.into())
   }
@@ -116,7 +119,7 @@ impl Storage for WasmStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?
-      .into_serde()
+      .into_vec()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(public_key.into())
   }
@@ -127,7 +130,7 @@ impl Storage for WasmStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?
-      .into_serde()
+      .into_vec()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(public_key.into())
   }
@@ -249,3 +252,21 @@ interface Storage {
   /** Removes the keys and any state for the identity specified by `did`.*/
   purge: (did: DID) => Promise<void>;
 }"#;
+
+trait Uint8ArrayAsVec {
+  fn into_vec(&self) -> AccountStorageResult<Vec<u8>>;
+}
+
+impl Uint8ArrayAsVec for JsValue {
+  fn into_vec(&self) -> AccountStorageResult<Vec<u8>> {
+    if !JsCast::is_instance_of::<Uint8Array>(self) {
+      return Err(AccountStorageError::SerializationError(
+        "expected Uint8Array".to_owned(),
+      ));
+    }
+    let array_js_value = JsValue::from(Array::from(self));
+    array_js_value
+      .into_serde()
+      .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
+  }
+}
