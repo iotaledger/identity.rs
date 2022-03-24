@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::account::MethodContent;
-use identity::crypto::{PrivateKey, PublicKey};
+use identity::crypto::PrivateKey;
+use identity::crypto::PublicKey;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -91,7 +92,10 @@ impl WasmMethodContent {
   /// Deserializes `MethodContent` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json_value: JsValue) -> Result<WasmMethodContent> {
-    json_value.into_serde::<WasmMethodContentInner>().map(Self).wasm_result()
+    json_value
+      .into_serde::<WasmMethodContentInner>()
+      .map(Self)
+      .wasm_result()
   }
 }
 
@@ -99,7 +103,9 @@ impl From<WasmMethodContent> for MethodContent {
   fn from(content: WasmMethodContent) -> Self {
     match content.0 {
       WasmMethodContentInner::GenerateEd25519 => MethodContent::GenerateEd25519,
-      WasmMethodContentInner::PrivateEd25519(private_key) => MethodContent::PrivateEd25519(PrivateKey::from(private_key)),
+      WasmMethodContentInner::PrivateEd25519(private_key) => {
+        MethodContent::PrivateEd25519(PrivateKey::from(private_key))
+      }
       WasmMethodContentInner::PublicEd25519(public_key) => MethodContent::PublicEd25519(PublicKey::from(public_key)),
       WasmMethodContentInner::GenerateX25519 => MethodContent::GenerateX25519,
       WasmMethodContentInner::PrivateX25519(private_key) => MethodContent::PrivateX25519(PrivateKey::from(private_key)),

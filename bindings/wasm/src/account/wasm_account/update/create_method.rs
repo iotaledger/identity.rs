@@ -5,17 +5,19 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use identity::account::{CreateMethodBuilder, MethodContent};
+use identity::account::CreateMethodBuilder;
 use identity::account::IdentityUpdater;
+use identity::account::MethodContent;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
 use identity::iota::Client;
 use js_sys::Promise;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::account::types::{OptionMethodContent, WasmMethodContent};
+use crate::account::types::OptionMethodContent;
+use crate::account::types::WasmMethodContent;
 use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
@@ -33,7 +35,8 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
     let scope: Option<MethodScope> = options.scope().into_serde().wasm_result()?;
-    let content: MethodContent = options.content()
+    let content: MethodContent = options
+      .content()
       .into_serde::<Option<WasmMethodContent>>()
       .wasm_result()?
       .map(MethodContent::from)
@@ -45,9 +48,8 @@ impl WasmAccount {
       let mut account: RefMut<AccountRc> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
 
-      let mut create_method: CreateMethodBuilder<'_, Rc<Client>> = updater.create_method()
-        .content(content)
-        .fragment(fragment);
+      let mut create_method: CreateMethodBuilder<'_, Rc<Client>> =
+        updater.create_method().content(content).fragment(fragment);
       if let Some(scope) = scope {
         create_method = create_method.scope(scope);
       };
