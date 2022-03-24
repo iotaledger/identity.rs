@@ -124,7 +124,7 @@ where
     X: Serialize + SetSignature + TryMethod,
   {
     let query: DIDUrlQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
-    let method: &VerificationMethod<D, U> = self.document.try_resolve_method(query)?;
+    let method: &VerificationMethod<D, U> = self.document.resolve_method(query, None).ok_or(Error::MethodNotFound)?;
     let method_uri: String = X::try_method(method)?;
 
     match method.type_() {

@@ -208,7 +208,7 @@ async fn test_account_autopublish() -> Result<()> {
   assert_eq!(doc.methods().count(), 2);
 
   for method in ["sign-0", "new-method"] {
-    assert!(doc.resolve_method(method).is_some());
+    assert!(doc.resolve_method(method, None).is_some());
   }
 
   // ===========================================================================

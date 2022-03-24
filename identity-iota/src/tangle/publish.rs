@@ -163,7 +163,7 @@ mod test {
   fn test_publish_type_add_non_capability_invocation_relationship() -> Result<()> {
     let old_doc: IotaDocument = document();
     let mut new_doc: IotaDocument = old_doc.clone();
-    let method_url: IotaDIDUrl = new_doc.resolve_method("generic").unwrap().id().clone();
+    let method_url: IotaDIDUrl = new_doc.resolve_method("generic", None).unwrap().id().clone();
 
     new_doc
       .attach_method_relationship(

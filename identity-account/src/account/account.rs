@@ -244,7 +244,7 @@ where
 
     let method: &IotaVerificationMethod = state
       .document()
-      .resolve_method(fragment)
+      .resolve_method(fragment, None)
       .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
     let location: KeyLocation = state.method_location(method.type_(), fragment.to_owned())?;
@@ -342,7 +342,7 @@ where
     };
 
     let signing_method: &IotaVerificationMethod = match signing_method_query {
-      Some(fragment) => signing_state.document().try_resolve_signing_method(fragment)?,
+      Some(fragment) => signing_state.document().resolve_signing_method(fragment)?,
       None => signing_state.document().default_signing_method()?,
     };
 
@@ -486,7 +486,7 @@ where
     let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
     let signing_method: &IotaVerificationMethod = match signing_method_query {
-      Some(fragment) => old_state.document().try_resolve_signing_method(fragment)?,
+      Some(fragment) => old_state.document().resolve_signing_method(fragment)?,
       None => old_state.document().default_signing_method()?,
     };
 

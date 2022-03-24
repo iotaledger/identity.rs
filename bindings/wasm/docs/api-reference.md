@@ -1354,7 +1354,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveMethod(query, scope)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
         * [.resolveSigningMethod(query)](#Document+resolveSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.attachMethodRelationship(did_url, relationship)](#Document+attachMethodRelationship) ⇒ <code>boolean</code>
         * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
@@ -1545,7 +1545,7 @@ Throws an error if no signing method is present.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+resolveMethod"></a>
 
-### document.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### document.resolveMethod(query, scope) ⇒ [<code>VerificationMethod</code>](#VerificationMethod) \| <code>undefined</code>
 Returns a copy of the first `VerificationMethod` with an `id` property
 matching the provided `query`.
 

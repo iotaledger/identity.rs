@@ -163,6 +163,7 @@ fn test_document_resolve_method() {
         JsValue::undefined().unchecked_into()
       )
       .unwrap()
+      .unwrap()
       .id()
       .to_string(),
     default_method.id().to_string()
@@ -173,6 +174,7 @@ fn test_document_resolve_method() {
         &JsValue::from(method_new.id()).unchecked_into(),
         JsValue::undefined().unchecked_into()
       )
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -187,6 +189,7 @@ fn test_document_resolve_method() {
         JsValue::undefined().unchecked_into()
       )
       .unwrap()
+      .unwrap()
       .id()
       .to_string(),
     default_method.id().to_string()
@@ -197,6 +200,7 @@ fn test_document_resolve_method() {
         &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
         JsValue::undefined().unchecked_into()
       )
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -211,6 +215,7 @@ fn test_document_resolve_method() {
         JsValue::undefined().unchecked_into()
       )
       .unwrap()
+      .unwrap()
       .id()
       .to_string(),
     default_method.id().to_string()
@@ -221,6 +226,7 @@ fn test_document_resolve_method() {
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
         JsValue::undefined().unchecked_into()
       )
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),

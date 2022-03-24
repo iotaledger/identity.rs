@@ -173,7 +173,7 @@ impl Update {
 
         let method_url: CoreDIDUrl = did.as_ref().to_url().join(location.fragment().identifier())?;
 
-        if state.document().resolve_method(method_url).is_some() {
+        if state.document().resolve_method(method_url, None).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 

@@ -57,7 +57,7 @@ async fn test_create_identity() -> Result<()> {
 
   let state: &IdentityState = account.state();
 
-  assert!(state.document().resolve_method(&expected_fragment).is_some());
+  assert!(state.document().resolve_method(&expected_fragment, None).is_some());
   assert_eq!(state.document().core_document().verification_relationships().count(), 1);
   assert_eq!(state.document().core_document().methods().count(), 1);
 
@@ -191,7 +191,10 @@ async fn test_create_method() -> Result<()> {
     let state: &IdentityState = account.state();
 
     // Ensure existence and method type
-    assert_eq!(state.document().resolve_method(&fragment).unwrap().type_(), method_type);
+    assert_eq!(
+      state.document().resolve_method(&fragment, None).unwrap().type_(),
+      method_type
+    );
 
     // Still only the default relationship.
     assert_eq!(state.document().core_document().verification_relationships().count(), 1);
@@ -256,20 +259,20 @@ async fn test_create_scoped_method() -> Result<()> {
 
     let contains = match scope {
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::authentication())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::authentication()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::assertion_method())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::assertion_method()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::key_agreement())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::key_agreement()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::capability_delegation())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::capability_delegation()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::capability_invocation())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::capability_invocation()))
+        .is_some(),
       _ => unreachable!(),
     };
 
@@ -338,7 +341,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
   let state: &IdentityState = account.state();
 
-  assert!(state.document().resolve_method(&fragment).is_some());
+  assert!(state.document().resolve_method(&fragment, None).is_some());
 
   let location = state.method_location(method_type, fragment).unwrap();
   let public_key = account.storage().key_get(account.did(), &location).await?;
@@ -592,7 +595,7 @@ async fn test_delete_method() -> Result<()> {
   account.process_update(update).await?;
 
   // Ensure it was added.
-  assert!(account.state().document().resolve_method(&fragment).is_some());
+  assert!(account.state().document().resolve_method(&fragment, None).is_some());
 
   let update: Update = Update::DeleteMethod {
     fragment: "key-1".to_owned(),
@@ -603,7 +606,7 @@ async fn test_delete_method() -> Result<()> {
   let state: &IdentityState = account.state();
 
   // Ensure it no longer exists.
-  assert!(state.document().resolve_method(&fragment).is_none());
+  assert!(state.document().resolve_method(&fragment, None).is_none());
 
   // Still only the default relationship.
   assert_eq!(state.document().core_document().verification_relationships().count(), 1);
