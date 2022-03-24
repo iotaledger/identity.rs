@@ -31,8 +31,11 @@ const { Stronghold } = require('@iota/identity-stronghold-nodejs')
 
 
 async function main() {
-    
-    const stronghold = await Stronghold.build("./example-strong.hodl", "my-password", true);
+    // Stronghold settings for the Account storage.
+    // This will load an existing Stronghold or create a new one automatically.
+    const filepath = "./example-strong.hodl";
+    const password = "my-password";
+    const stronghold = await Stronghold.build(filepath, password);
     
     // The creation step generates a keypair, builds an identity
     // and publishes it to the IOTA mainnet.
