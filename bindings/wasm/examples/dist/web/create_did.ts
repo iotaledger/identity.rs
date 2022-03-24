@@ -6,14 +6,7 @@
  * using the Account.
  */
 
-import { AccountBuilder, ExplorerUrl, Storage } from '@iota/identity-wasm';
-
-import { Stronghold } from '@iota/identity-stronghold-nodejs';
-
-const strongholdPath = "./example-strong.hodl";
-const password = "my-password";
-const stronghold = await Stronghold.build(strongholdPath, password, true);
-
+import { AccountBuilder, ExplorerUrl, Storage } from '@iota/identity-wasm/web';
 // The creation step generates a keypair, builds an identity
 // and publishes it to the IOTA mainnet.
 const builder = new AccountBuilder({
