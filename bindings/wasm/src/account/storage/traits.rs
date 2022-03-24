@@ -97,10 +97,7 @@ impl Storage for WasmStorage {
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result
-      .account_err()?
-      .as_vec()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    let public_key: Vec<u8> = result.account_err()?.as_vec()?;
     Ok(public_key.into())
   }
 
@@ -117,10 +114,7 @@ impl Storage for WasmStorage {
       private_key.as_ref().to_vec(),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result
-      .account_err()?
-      .as_vec()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    let public_key: Vec<u8> = result.account_err()?.as_vec()?;
     Ok(public_key.into())
   }
 
@@ -128,10 +122,7 @@ impl Storage for WasmStorage {
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_get(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result
-      .account_err()?
-      .as_vec()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    let public_key: Vec<u8> = result.account_err()?.as_vec()?;
     Ok(public_key.into())
   }
 
