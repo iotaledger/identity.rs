@@ -39,8 +39,8 @@ use identity_iota_core::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::IdentitySetup;
-use crate::updates::MethodContent;
+use crate::types::IdentitySetup;
+use crate::types::MethodContent;
 use crate::updates::UpdateError;
 
 pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";

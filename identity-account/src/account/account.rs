@@ -7,6 +7,8 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+use serde::Serialize;
+
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
@@ -24,12 +26,11 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::MessageIdExt;
-use serde::Serialize;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::identity::IdentitySetup;
-use crate::identity::IdentityUpdater;
+use crate::types::IdentitySetup;
+use crate::types::IdentityUpdater;
 use crate::updates::create_identity;
 use crate::updates::Update;
 use crate::Error;

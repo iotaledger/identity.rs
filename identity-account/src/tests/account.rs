@@ -30,9 +30,8 @@ use crate::account::AccountSetup;
 use crate::account::AccountStorage;
 use crate::account::AutoSave;
 use crate::account::PublishOptions;
-use crate::identity::IdentitySetup;
-
-use crate::updates::MethodContent;
+use crate::types::IdentitySetup;
+use crate::types::MethodContent;
 use crate::Error;
 use crate::Result;
 
@@ -99,6 +98,7 @@ async fn test_account_chain_state() {
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("my-new-key")
     .scope(MethodScope::capability_invocation())
     .apply()

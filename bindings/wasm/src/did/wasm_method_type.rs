@@ -7,12 +7,6 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "MethodType | undefined")]
-  pub type OptionMethodType;
-}
-
 /// Supported verification method types.
 #[wasm_bindgen(js_name = MethodType, inspectable)]
 #[derive(Clone, Debug)]

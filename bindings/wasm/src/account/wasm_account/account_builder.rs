@@ -97,8 +97,7 @@ impl WasmAccountBuilder {
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
     let setup: IdentitySetup = identity_setup
-      .map(IdentitySetup::try_from)
-      .transpose()?
+      .map(IdentitySetup::from)
       .unwrap_or_default();
 
     let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();

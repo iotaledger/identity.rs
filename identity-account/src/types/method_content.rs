@@ -10,23 +10,30 @@ use identity_did::verification::MethodType;
 #[derive(Clone, Debug)]
 pub enum MethodContent {
   /// Generate and store a new Ed25519 keypair for a new
-  /// [`Ed25519VerificationKey2018`](identity_did::verification::MethodType::Ed25519VerificationKey2018) method.
+  /// [`Ed25519VerificationKey2018`](identity_did::verification::MethodType::Ed25519VerificationKey2018)
+  /// method.
   GenerateEd25519,
   /// Store an existing Ed25519 private key and derive a public key from it for a new
   /// [`Ed25519VerificationKey2018`](identity_did::verification::MethodType::Ed25519VerificationKey2018)
   /// method.
   PrivateEd25519(PrivateKey),
-  /// Insert an existing Ed25519 public key into the new verification method directly,
-  /// without generating or storing a private key.
+  /// Insert an existing Ed25519 public key into a new
+  /// [`Ed25519VerificationKey2018`](identity_did::verification::MethodType::Ed25519VerificationKey2018)
+  /// method, without generating or storing a private key.
   ///
   /// NOTE: the method will be unable to be used to sign anything without a private key.
   PublicEd25519(PublicKey),
-  /// Generate and store a new X25519 keypair.
+  /// Generate and store a new X25519 keypair for a new
+  /// [`X25519KeyAgreementKey2019`](identity_did::verification::MethodType::X25519KeyAgreementKey2019)
+  /// method.
   GenerateX25519,
-  /// Store an existing X25519 private key and derive a public key from it.
+  /// Store an existing X25519 private key and derive a public key from it for a new
+  /// [`X25519KeyAgreementKey2019`](identity_did::verification::MethodType::X25519KeyAgreementKey2019)
+  /// method.
   PrivateX25519(PrivateKey),
-  /// Insert an existing X25519 public key into the new verification method directly,
-  /// without generating or storing a private key.
+  /// Insert an existing X25519 public key into a new
+  /// [`X25519KeyAgreementKey2019`](identity_did::verification::MethodType::X25519KeyAgreementKey2019)
+  /// method, without generating or storing a private key.
   ///
   /// NOTE: the method will be unable to be used for key exchange without a private key.
   PublicX25519(PublicKey),

@@ -4,10 +4,9 @@
 use identity_core::crypto::PrivateKey;
 
 /// Configuration used to create a new Identity.
-/// Allows providing a pre-existing private key using `method_secret`.
 #[derive(Clone, Debug)]
 pub struct IdentitySetup {
-  /// Pre-generated Ed25519 private key.
+  /// Use a pre-generated Ed25519 private key for the DID.
   pub(crate) private_key: Option<PrivateKey>,
 }
 
