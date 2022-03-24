@@ -37,8 +37,8 @@ async function main() {
     const password = "my-password";
     const stronghold = await Stronghold.build(filepath, password);
     
-    // The creation step generates a keypair, builds an identity
-    // and publishes it to the IOTA mainnet.
+    // This generates a new keypair stored securely in the above Stronghold, 
+    // constructs a new DID Document, and publishes it to the IOTA Mainnet.
     let builder = new AccountBuilder({
         storage: stronghold,
     });
