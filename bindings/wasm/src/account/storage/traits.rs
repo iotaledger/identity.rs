@@ -99,7 +99,7 @@ impl Storage for WasmStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?
-      .into_vec()
+      .as_vec()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(public_key.into())
   }
@@ -119,7 +119,7 @@ impl Storage for WasmStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?
-      .into_vec()
+      .as_vec()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(public_key.into())
   }
@@ -130,7 +130,7 @@ impl Storage for WasmStorage {
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result
       .account_err()?
-      .into_vec()
+      .as_vec()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(public_key.into())
   }
@@ -254,11 +254,11 @@ interface Storage {
 }"#;
 
 trait Uint8ArrayAsVec {
-  fn into_vec(&self) -> AccountStorageResult<Vec<u8>>;
+  fn as_vec(&self) -> AccountStorageResult<Vec<u8>>;
 }
 
 impl Uint8ArrayAsVec for JsValue {
-  fn into_vec(&self) -> AccountStorageResult<Vec<u8>> {
+  fn as_vec(&self) -> AccountStorageResult<Vec<u8>> {
     if !JsCast::is_instance_of::<Uint8Array>(self) {
       return Err(AccountStorageError::SerializationError(
         "expected Uint8Array".to_owned(),
