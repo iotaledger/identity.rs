@@ -3602,35 +3602,27 @@ Deserializes a `Service` object from a JSON object.
 **Kind**: global class  
 
 * [Signature](#Signature)
-    * [new Signature(pkey, data)](#new_Signature_new)
+    * [new Signature(data)](#new_Signature_new)
     * _instance_
-        * [.pkey()](#Signature+pkey) ⇒ <code>Uint8Array</code>
-        * [.data()](#Signature+data) ⇒ <code>Uint8Array</code>
+        * [.asBytes()](#Signature+asBytes) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
 
 <a name="new_Signature_new"></a>
 
-### new Signature(pkey, data)
+### new Signature(data)
 Creates a new `Signature`.
 
 
 | Param | Type |
 | --- | --- |
-| pkey | <code>Uint8Array</code> | 
 | data | <code>Uint8Array</code> | 
 
-<a name="Signature+pkey"></a>
+<a name="Signature+asBytes"></a>
 
-### signature.pkey() ⇒ <code>Uint8Array</code>
-Returns a copy of the public key used to verify this signature.
-
-**Kind**: instance method of [<code>Signature</code>](#Signature)  
-<a name="Signature+data"></a>
-
-### signature.data() ⇒ <code>Uint8Array</code>
-Returns a copy of the signature data as a vec of bytes.
+### signature.asBytes() ⇒ <code>Uint8Array</code>
+Returns a copy of the signature as a `UInt8Array`.
 
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature+toJSON"></a>

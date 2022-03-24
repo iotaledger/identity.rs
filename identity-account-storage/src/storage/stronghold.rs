@@ -250,14 +250,12 @@ async fn retrieve_public_key(vault: &Vault<'_>, location: &KeyLocation) -> Resul
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_public_key(vault, location).await?;
   let procedure: Ed25519Sign = Ed25519Sign {
     private_key: location_skey(location),
     msg: payload,
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;
-
-  Ok(Signature::new(public_key, signature.into()))
+  Ok(Signature::new(signature.into()))
 }
 
 fn location_key_type(location: &KeyLocation) -> iota_stronghold::procedures::KeyType {
