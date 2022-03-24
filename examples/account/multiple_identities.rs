@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
     account2
       .update_identity()
       .create_method()
-      .content(MethodContent::GenerateEd25519)
+      .content(MethodContent::GenerateX25519)
       .fragment("my-other-key")
       .apply()
       .await

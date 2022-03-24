@@ -39,7 +39,7 @@ async function multipleIdentities(storage?: Storage) {
         fragment: "my_key"
     })
     const account2Promise = account2.createMethod({
-        content: MethodContent.GenerateEd25519(),
+        content: MethodContent.GenerateX25519(),
         fragment: "my_other_key"
     })
 
