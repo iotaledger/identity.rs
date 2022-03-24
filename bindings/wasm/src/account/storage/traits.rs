@@ -97,7 +97,7 @@ impl Storage for WasmStorage {
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_new(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result.account_err()?.as_vec()?;
+    let public_key: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
     Ok(public_key.into())
   }
 
@@ -114,7 +114,7 @@ impl Storage for WasmStorage {
       private_key.as_ref().to_vec(),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result.account_err()?.as_vec()?;
+    let public_key: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
     Ok(public_key.into())
   }
 
@@ -122,7 +122,7 @@ impl Storage for WasmStorage {
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_get(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result.account_err()?.as_vec()?;
+    let public_key: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
     Ok(public_key.into())
   }
 
@@ -244,20 +244,14 @@ interface Storage {
   purge: (did: DID) => Promise<void>;
 }"#;
 
-trait Uint8ArrayAsVec {
-  fn as_vec(&self) -> AccountStorageResult<Vec<u8>>;
-}
-
-impl Uint8ArrayAsVec for JsValue {
-  fn as_vec(&self) -> AccountStorageResult<Vec<u8>> {
-    if !JsCast::is_instance_of::<Uint8Array>(self) {
-      return Err(AccountStorageError::SerializationError(
-        "expected Uint8Array".to_owned(),
-      ));
-    }
-    let array_js_value = JsValue::from(Array::from(self));
-    array_js_value
-      .into_serde()
-      .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
+fn uint8array_to_bytes(value: JsValue) -> AccountStorageResult<Vec<u8>> {
+  if !JsCast::is_instance_of::<Uint8Array>(&value) {
+    return Err(AccountStorageError::SerializationError(
+      "expected Uint8Array".to_owned(),
+    ));
   }
+  let array_js_value = JsValue::from(Array::from(&value));
+  array_js_value
+    .into_serde()
+    .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
 }
