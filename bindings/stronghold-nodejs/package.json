@@ -39,7 +39,7 @@
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "npm run build:napi && npm run build:ts",
-    "build:ts": "rollup -c",
+    "build:ts": "rollup -c --failAfterWarnings",
     "build:napi": "cross-env-shell napi build --platform --release --js napi-dist/napi.js --dts napi.d.ts $NPM_BUILD_NAPI_ARGS napi-dist",
     "build:napi:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm --skip-gh-release",
