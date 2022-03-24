@@ -44,17 +44,16 @@ async function main() {
     });
     let account = await builder.createIdentity();
 
-    // Retrieve the DID of the newly created identity.
-    let did = account.did();
+    // Print the DID of the newly created identity.
+    const did = account.did();
+    console.log(did.toString());
 
-    // Print the DID of the created Identity.
-    console.log(did.toString())
-
-    // Print the local state of the DID Document
-    console.log(account.document());
+    // Print the local state of the DID Document.
+    const document = account.document();
+    console.log(JSON.stringify(document, null, 2));
 
     // Print the Explorer URL for the DID.
-    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
+    console.log(`Explorer URL:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
 main()
