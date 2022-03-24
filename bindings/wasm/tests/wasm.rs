@@ -8,7 +8,12 @@ use identity::core::Object;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::iota_core::IotaDID;
-use identity_wasm::account::wasm_account::WasmAccount;
+use js_sys::Array;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_test::*;
+
+use identity_wasm::common::WasmTimestamp;
 use identity_wasm::credential::WasmCredential;
 use identity_wasm::credential::WasmCredentialValidationOptions;
 use identity_wasm::credential::WasmCredentialValidator;
@@ -26,10 +31,6 @@ use identity_wasm::did::WasmMethodScope;
 use identity_wasm::did::WasmVerificationMethod;
 use identity_wasm::did::WasmVerifierOptions;
 use identity_wasm::error::WasmError;
-use js_sys::Array;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_test::*;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -150,7 +151,7 @@ fn test_document_resolve_method() {
     keypair_new.public(),
     "new-key".to_owned(),
   )
-  .unwrap();
+    .unwrap();
   document
     .insert_method(&method_new, &WasmMethodScope::authentication())
     .unwrap();
@@ -160,7 +161,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from(default_method.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -172,7 +173,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from(method_new.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -186,7 +187,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -198,7 +199,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -212,7 +213,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -224,7 +225,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -291,7 +292,7 @@ fn test_sign_document() {
     keypair2.public(),
     "#method-2".to_owned(),
   )
-  .unwrap();
+    .unwrap();
   document2
     .insert_method(&method, &WasmMethodScope::capability_invocation())
     .unwrap();
@@ -359,9 +360,9 @@ fn test_validations() {
     }}"#,
       &subject_did.to_string().as_str()
     )
-    .as_str(),
+      .as_str(),
   )
-  .unwrap();
+    .unwrap();
 
   let credential_obj: Object = Object::from_json(
     format!(
@@ -374,9 +375,9 @@ fn test_validations() {
       issuer_did.to_string(),
       subject.to_json().unwrap()
     )
-    .as_str(),
+      .as_str(),
   )
-  .unwrap();
+    .unwrap();
 
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
@@ -395,18 +396,18 @@ fn test_validations() {
     &signed_credential,
     &issuer_doc.to_json().unwrap().unchecked_into(),
     &WasmCredentialValidationOptions::default(),
-    WasmFailFast::FirstError
+    WasmFailFast::FirstError,
   )
-  .is_ok());
+    .is_ok());
 
   // check that passing an array to CredentialValidator::verify_signature also works
   let issuers: Array = vec![issuer_doc].into_iter().map(JsValue::from).collect();
   assert!(WasmCredentialValidator::verify_signature(
     &signed_credential,
     issuers.unchecked_ref(),
-    &WasmVerifierOptions::default()
+    &WasmVerifierOptions::default(),
   )
-  .is_ok());
+    .is_ok());
 
   let presentation: WasmPresentation = WasmPresentation::new(
     &subject_doc,
@@ -414,7 +415,7 @@ fn test_validations() {
     Some("VerifiablePresentation".to_owned()),
     Some("https://example.org/credentials/3732".to_owned()),
   )
-  .unwrap();
+    .unwrap();
 
   let signed_presentation: WasmPresentation = subject_doc
     .sign_presentation(
@@ -430,9 +431,9 @@ fn test_validations() {
   assert!(WasmPresentationValidator::verify_presentation_signature(
     &signed_presentation,
     &subject_doc.to_json().unwrap().unchecked_into(),
-    &WasmVerifierOptions::default()
+    &WasmVerifierOptions::default(),
   )
-  .is_ok());
+    .is_ok());
 
   // validate the presentation
   assert!(WasmPresentationValidator::validate(
@@ -440,7 +441,7 @@ fn test_validations() {
     &subject_doc.to_json().unwrap().unchecked_into(),
     issuers.unchecked_ref(),
     &WasmPresentationValidationOptions::default(),
-    WasmFailFast::FirstError
+    WasmFailFast::FirstError,
   )
-  .is_ok());
+    .is_ok());
 }
