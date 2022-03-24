@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! cargo run --example account_multiple
@@ -9,6 +9,7 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
+use identity::account::MethodContent;
 use identity::account::Result;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
@@ -54,6 +55,7 @@ async fn main() -> Result<()> {
     account1
       .update_identity()
       .create_method()
+      .content(MethodContent::GenerateEd25519)
       .fragment("my-key")
       .apply()
       .await
@@ -63,6 +65,7 @@ async fn main() -> Result<()> {
     account2
       .update_identity()
       .create_method()
+      .content(MethodContent::GenerateEd25519)
       .fragment("my-other-key")
       .apply()
       .await

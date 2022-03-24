@@ -1,39 +1,26 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
 
-use crate::types::MethodSecret;
 /// Configuration used to create a new Identity.
 /// Allows providing a pre-existing private key using `method_secret`.
 #[derive(Clone, Debug)]
 pub struct IdentitySetup {
-  pub(crate) key_type: KeyType,
-  pub(crate) method_secret: Option<MethodSecret>,
+  /// Pre-generated Ed25519 private key.
+  pub(crate) private_key: Option<PrivateKey>,
 }
 
 impl IdentitySetup {
   /// Creates a new `IdentitySetup` instance.
   pub const fn new() -> Self {
-    Self {
-      key_type: KeyType::Ed25519,
-      method_secret: None,
-    }
+    Self { private_key: None }
   }
 
-  /// Sets the key type of the initial verification method.
+  /// Sets the Ed25519 private key to use for Identity creation.
   #[must_use]
-  pub fn key_type(mut self, value: KeyType) -> Self {
-    self.key_type = value;
-    self
-  }
-
-  /// Sets the [`MethodSecret`] for the Identity creation.
-  ///
-  /// Note that only [`MethodSecret::Ed25519`] is currently supported.
-  #[must_use]
-  pub fn method_secret(mut self, value: MethodSecret) -> Self {
-    self.method_secret = Some(value);
+  pub fn private_key(mut self, value: PrivateKey) -> Self {
+    self.private_key = Some(value);
     self
   }
 }

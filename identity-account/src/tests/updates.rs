@@ -30,7 +30,7 @@ use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
-use crate::types::MethodSecret;
+use crate::updates::MethodContent;
 use crate::updates::Update;
 use crate::updates::UpdateError;
 
@@ -126,9 +126,7 @@ async fn test_create_identity_network() -> Result<()> {
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
   let keypair = KeyPair::new(KeyType::Ed25519)?;
-  let identity_create = IdentitySetup::default()
-    .key_type(KeyType::Ed25519)
-    .method_secret(MethodSecret::Ed25519(keypair.private().clone()));
+  let identity_create = IdentitySetup::default().private_key(keypair.private().clone());
   let account_setup = account_setup(Network::Mainnet).await;
 
   let account = Account::create_identity(account_setup.clone(), identity_create.clone()).await?;
@@ -154,24 +152,22 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
   let private_bytes: Box<[u8]> = Box::new([0; 33]);
   let private_key: PrivateKey = PrivateKey::from(private_bytes);
 
-  let id_create = IdentitySetup::new()
-    .key_type(KeyType::Ed25519)
-    .method_secret(MethodSecret::Ed25519(private_key));
+  let id_create = IdentitySetup::new().private_key(private_key);
 
   let err = Account::create_identity(account_setup(Network::Mainnet).await, id_create)
     .await
     .unwrap_err();
 
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodContent(_))));
 
   Ok(())
 }
 
 #[tokio::test]
-async fn test_create_method() -> Result<()> {
-  for method_type in [
-    MethodType::Ed25519VerificationKey2018,
-    MethodType::X25519KeyAgreementKey2019,
+async fn test_create_method_content_generate() -> Result<()> {
+  for (method_type, method_content) in [
+    (MethodType::Ed25519VerificationKey2018, MethodContent::GenerateEd25519),
+    (MethodType::X25519KeyAgreementKey2019, MethodContent::GenerateX25519),
   ] {
     let mut account: Account =
       Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
@@ -181,8 +177,7 @@ async fn test_create_method() -> Result<()> {
     let fragment = "key-1".to_owned();
     let update: Update = Update::CreateMethod {
       scope: MethodScope::default(),
-      method_secret: None,
-      type_: method_type,
+      content: method_content,
       fragment: fragment.clone(),
     };
 
@@ -242,8 +237,7 @@ async fn test_create_scoped_method() -> Result<()> {
 
     let update: Update = Update::CreateMethod {
       scope: *scope,
-      method_secret: None,
-      type_: MethodType::Ed25519VerificationKey2018,
+      content: MethodContent::GenerateEd25519,
       fragment: fragment.clone(),
     };
 
@@ -283,7 +277,7 @@ async fn test_create_scoped_method() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_method_duplicate_fragment() -> Result<()> {
+async fn test_create_method_duplicate_fragment() {
   let mut account_setup = account_setup(Network::Mainnet).await;
   account_setup.config = account_setup.config.testmode(true).autopublish(false);
 
@@ -293,8 +287,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: "key-1".to_owned(),
   };
 
@@ -309,7 +302,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   ));
 
   // This increments the generation internally.
-  account.publish().await?;
+  account.publish().await.unwrap();
 
   let output = account.process_update(update).await;
 
@@ -318,8 +311,6 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
     output.unwrap_err(),
     Error::DIDError(identity_did::Error::MethodAlreadyExists)
   ));
-
-  Ok(())
 }
 
 #[tokio::test]
@@ -332,8 +323,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(keypair.private().clone())),
-    type_: method_type,
+    content: MethodContent::GenerateEd25519,
     fragment: fragment.clone(),
   };
 
@@ -360,14 +350,13 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(private_key)),
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::PrivateEd25519(private_key),
     fragment: "key-1".to_owned(),
   };
 
   let err = account.process_update(update).await.unwrap_err();
 
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodContent(_))));
 
   Ok(())
 }
@@ -380,8 +369,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: fragment.clone(),
   };
 
@@ -484,8 +472,7 @@ async fn test_detach_method_relationship() -> Result<()> {
   // Add an embedded method.
   let update: Update = Update::CreateMethod {
     scope: MethodScope::authentication(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: embedded_fragment.clone(),
   };
 
@@ -514,8 +501,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: generic_fragment.clone(),
   };
 
@@ -545,50 +531,16 @@ async fn test_detach_method_relationship() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
-
-  let private_bytes: Box<[u8]> = Box::new([0; 32]);
-  let private_key = PrivateKey::from(private_bytes);
-
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(private_key)),
-    type_: MethodType::X25519KeyAgreementKey2019,
-    fragment: "key-1".to_owned(),
-  };
-
-  let err = account.process_update(update).await.unwrap_err();
-
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
-
-  let keypair: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::X25519(keypair.private().clone())),
-    type_: MethodType::Ed25519VerificationKey2018,
-    fragment: "key-2".to_owned(),
-  };
-
-  let err = account.process_update(update).await.unwrap_err();
-
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
-
-  Ok(())
-}
-
-#[tokio::test]
 async fn test_delete_method() -> Result<()> {
   let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
   let fragment = "key-1".to_owned();
-  let method_type = MethodType::Ed25519VerificationKey2018;
   let initial_state = account.state().to_owned();
+  let content: MethodContent = MethodContent::GenerateEd25519;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: method_type,
+    content: content.clone(),
     fragment: fragment.clone(),
   };
 
@@ -613,7 +565,7 @@ async fn test_delete_method() -> Result<()> {
 
   assert_eq!(state.document().core_document().methods().count(), 1);
 
-  let location = state.method_location(method_type, fragment.clone()).unwrap();
+  let location: KeyLocation = state.method_location(content.method_type(), fragment.clone()).unwrap();
 
   // Ensure the key still exists in storage - deletion in storage happens after successful publication.
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
