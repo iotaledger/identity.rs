@@ -55,10 +55,6 @@ name = "create_vp"
 path = "low-level-api/create_vp.rs"
 
 [[example]]
-name = "diff_chain"
-path = "low-level-api/diff_chain.rs"
-
-[[example]]
 name = "resolve_history"
 path = "low-level-api/resolve_history.rs"
 

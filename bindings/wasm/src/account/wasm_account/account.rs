@@ -287,6 +287,8 @@ export type PublishOptions = {
      * for identities with many updates.
      *
      * See the IOTA DID method specification for more details.
+     *
+     * @deprecated since 0.5.0, diff chain features are slated for removal.
      */
      forceIntegrationUpdate?: boolean,
 

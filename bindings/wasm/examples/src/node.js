@@ -10,7 +10,6 @@ import {createVP} from "./create_vp";
 import {revokeVC} from "./revoke_vc";
 import {CLIENT_CONFIG} from "./config";
 import {resolveHistory} from "./resolve_history";
-import {createDiff} from "./diff_chain";
 import {keyExchange} from "./key_exchange";
 
 async function main() {
@@ -40,8 +39,6 @@ async function main() {
             return await privateTangle();
         case "resolve_history":
             return await resolveHistory(CLIENT_CONFIG);
-        case "diff_chain":
-            return await createDiff(CLIENT_CONFIG);
         case "all":
             console.log(">>> Run All Examples");
 
@@ -53,7 +50,6 @@ async function main() {
             await revokeVC(CLIENT_CONFIG);
             await createVP(CLIENT_CONFIG);
             await resolveHistory(CLIENT_CONFIG);
-            await createDiff(CLIENT_CONFIG);
 
             console.log(">>> End All Examples");
             return "all";

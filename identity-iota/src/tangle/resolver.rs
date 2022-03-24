@@ -91,6 +91,7 @@ where
   /// integration chain.
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub async fn resolve_diff_history(&self, document: &ResolvedIotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let client: &Client = self.get_client_for_did(document.document.id())?.deref();
     client.resolve_diff_history(document).await
