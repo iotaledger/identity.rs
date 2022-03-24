@@ -13,6 +13,49 @@ Development Release: this version matches the dev branch of this repository, may
 ```bash
 npm install @iota/identity-stronghold-nodejs@dev
 ```
+## Usage
+<!-- 
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+Replace imports with local paths for txm:
+!test program
+cat \
+| sed -e "s#require('@iota/identity-wasm/node')#require('../wasm/node/identity_wasm.js')#" \
+| sed -e "s#require('@iota/identity-stronghold-nodejs')#require('./dist/index.js')#" \
+| node
+-->
+<!-- !test check Nodejs Example -->
+```javascript
+const { AccountBuilder, ExplorerUrl } = require('@iota/identity-wasm/node')
+const { Stronghold } = require('@iota/identity-stronghold-nodejs')
+
+
+async function main() {
+    
+    const stronghold = await Stronghold.build("./example-strong.hodl", "my-password", true);
+    
+    // The creation step generates a keypair, builds an identity
+    // and publishes it to the IOTA mainnet.
+    let builder = new AccountBuilder({
+        storage: stronghold,
+    });
+    let account = await builder.createIdentity();
+
+    // Retrieve the DID of the newly created identity.
+    let did = account.did();
+
+    // Print the DID of the created Identity.
+    console.log(did.toString())
+
+    // Print the local state of the DID Document
+    console.log(account.document());
+
+    // Print the Explorer URL for the DID.
+    console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
+}
+
+main()
+```
 
 ## Build
 
