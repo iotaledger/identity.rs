@@ -155,50 +155,27 @@ impl Update {
 
         // Generate or extract the private key and/or retrieve the public key.
         let key_type: KeyType = content.key_type();
+        let method_type: MethodType = content.method_type();
         let public: PublicKey = match content {
           MethodContent::GenerateEd25519 => {
-            let location: KeyLocation = create_method_key_location(
-              did,
-              storage,
-              state,
-              MethodType::Ed25519VerificationKey2018,
-              method_fragment.clone(),
-            )
-            .await?;
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
             storage.key_new(did, &location).await?
           }
           MethodContent::PrivateEd25519(private_key) => {
-            let location: KeyLocation = create_method_key_location(
-              did,
-              storage,
-              state,
-              MethodType::Ed25519VerificationKey2018,
-              method_fragment.clone(),
-            )
-            .await?;
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
             insert_method_secret(storage, did, &location, private_key).await?
           }
           MethodContent::PublicEd25519(public_key) => public_key,
           MethodContent::GenerateX25519 => {
-            let location: KeyLocation = create_method_key_location(
-              did,
-              storage,
-              state,
-              MethodType::X25519KeyAgreementKey2019,
-              method_fragment.clone(),
-            )
-            .await?;
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
             storage.key_new(did, &location).await?
           }
           MethodContent::PrivateX25519(private_key) => {
-            let location: KeyLocation = create_method_key_location(
-              did,
-              storage,
-              state,
-              MethodType::X25519KeyAgreementKey2019,
-              method_fragment.clone(),
-            )
-            .await?;
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
             insert_method_secret(storage, did, &location, private_key).await?
           }
           MethodContent::PublicX25519(public_key) => public_key,

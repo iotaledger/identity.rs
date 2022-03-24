@@ -41,7 +41,7 @@ pub enum MethodContent {
 
 impl MethodContent {
   /// Returns the [`MethodType`] associated with the `MethodContent` variant.
-  pub fn method_type(&self) -> MethodType {
+  pub(crate) fn method_type(&self) -> MethodType {
     match self {
       MethodContent::GenerateEd25519 => MethodType::Ed25519VerificationKey2018,
       MethodContent::PrivateEd25519(_) => MethodType::Ed25519VerificationKey2018,
@@ -53,7 +53,7 @@ impl MethodContent {
   }
 
   /// Returns the [`MethodType`] associated with the `MethodContent` variant.
-  pub fn key_type(&self) -> KeyType {
+  pub(crate) fn key_type(&self) -> KeyType {
     match self {
       MethodContent::GenerateEd25519 => KeyType::Ed25519,
       MethodContent::PrivateEd25519(_) => KeyType::Ed25519,

@@ -8,6 +8,7 @@ use identity::core::Object;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::iota_core::IotaDID;
+use identity::prelude::KeyType;
 use identity_wasm::common::WasmTimestamp;
 use identity_wasm::credential::WasmCredential;
 use identity_wasm::credential::WasmCredentialValidationOptions;
@@ -30,6 +31,7 @@ use js_sys::Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
+use identity_wasm::account::wasm_account::WasmAccount;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
