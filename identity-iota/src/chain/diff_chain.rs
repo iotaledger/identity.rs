@@ -26,6 +26,7 @@ use crate::tangle::MessageIndex;
 use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
 
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct DiffChain {

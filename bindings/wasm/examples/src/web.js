@@ -7,7 +7,6 @@ import {resolution} from "./resolution.js";
 import {createVP} from "./create_vp.js";
 import {revokeVC} from "./revoke_vc.js";
 import {privateTangle} from "./private_tangle.js";
-import {createDiff} from "./diff_chain.js";
 import {resolveHistory} from "./resolve_history.js";
 
 export {
@@ -21,7 +20,6 @@ export {
     createVP,
     revokeVC,
     privateTangle,
-    createDiff,
     resolveHistory,
 };
 
@@ -79,11 +77,6 @@ window.onload = async () => {
     document
         .querySelector("#key_exchange_btn")
         .addEventListener("click", () => keyExchange(CLIENT_CONFIG));
-
-    //handle diff chain on click event
-    document
-        .querySelector("#diff_chain_btn")
-        .addEventListener("click", () => createDiff(CLIENT_CONFIG));
 
     //handle resolve history on click event
     document

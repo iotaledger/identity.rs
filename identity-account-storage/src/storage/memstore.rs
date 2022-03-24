@@ -165,10 +165,8 @@ impl Storage for MemStore {
       MethodType::Ed25519VerificationKey2018 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
-        let public: PublicKey = keypair.public().clone();
         let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
-        let signature: Signature = Signature::new(public, signature.to_vec());
-
+        let signature: Signature = Signature::new(signature.to_vec());
         Ok(signature)
       }
       MethodType::X25519KeyAgreementKey2019 => {

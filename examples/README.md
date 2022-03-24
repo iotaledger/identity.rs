@@ -37,11 +37,10 @@ The following examples are available for using the low-level APIs, which provide
 | :--: | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
 | 1 | [create_did](./low-level-api/create_did.rs) | A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity. |
 | 2 | [manipulate_did](low-level-api/manipulate_did.rs) | This example demonstrates how to perform a basic update to the integration chain of a DID Document. |
-| 3 | [diff_chain](low-level-api/diff_chain.rs) | This example demonstrates how to perform a basic update to the diff chain of a DID Document. |
-| 4 | [resolve_history](low-level-api/resolve_history.rs) | Advanced example that performs multiple diff chain and integration chain updates and demonstrates how to resolve the DID Document history to view these chains. |
-| 5 | [create_vc](./low-level-api/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
-| 6 | [create_vp](./low-level-api/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
-| 7 | [resolution](./low-level-api/resolution.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
-| 8 | [revoke_vc](./low-level-api/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
-| 9 | [key_exchange](./low-level-api/key_exchange.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
-| 10 | [private_tangle](./low-level-api/private_tangle.rs) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
+| 3 | [resolve_history](low-level-api/resolve_history.rs) | Advanced example that performs multiple updates and demonstrates how to resolve the DID Document history to view them. |
+| 4 | [create_vc](./low-level-api/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
+| 5 | [create_vp](./low-level-api/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
+| 6 | [resolution](./low-level-api/resolution.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
+| 7 | [revoke_vc](./low-level-api/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
+| 8 | [key_exchange](./low-level-api/key_exchange.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
+| 9 | [private_tangle](./low-level-api/private_tangle.rs) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |

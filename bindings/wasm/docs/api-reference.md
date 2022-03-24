@@ -31,9 +31,9 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
 <dd></dd>
-<dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
+<dt><del><a href="#DiffChainHistory">DiffChainHistory</a></del></dt>
 <dd></dd>
-<dt><a href="#DiffMessage">DiffMessage</a></dt>
+<dt><del><a href="#DiffMessage">DiffMessage</a></del></dt>
 <dd><p>Defines the difference between two DID <code>Document</code>s&#39; JSON representations.</p>
 </dd>
 <dt><a href="#Document">Document</a></dt>
@@ -190,13 +190,13 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+did"></a>
@@ -326,17 +326,6 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -370,6 +359,17 @@ Sets the controllers of the DID document.
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
 
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -380,17 +380,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -405,6 +394,17 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -566,12 +566,12 @@ Deserializes a JSON object as `ChainState`.
     * _instance_
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
         * [.publishDocument(document)](#Client+publishDocument) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * ~~[.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+        * ~~[.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
     * _static_
         * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Promise.&lt;Client&gt;</code>](#Client)
 
@@ -599,7 +599,9 @@ Publishes an `IotaDocument` to the Tangle.
 
 <a name="Client+publishDiff"></a>
 
-### client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+### ~~client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
+***Deprecated***
+
 Publishes a `DiffMessage` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -661,7 +663,9 @@ Returns the message history of the given DID.
 
 <a name="Client+resolveDiffHistory"></a>
 
-### client.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+### ~~client.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
+***Deprecated***
+
 Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 
@@ -1170,10 +1174,12 @@ Parses a `DIDUrl` from the input string.
 
 <a name="DiffChainHistory"></a>
 
-## DiffChainHistory
+## ~~DiffChainHistory~~
+***Deprecated***
+
 **Kind**: global class  
 
-* [DiffChainHistory](#DiffChainHistory)
+* ~~[DiffChainHistory](#DiffChainHistory)~~
     * _instance_
         * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
         * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
@@ -1216,30 +1222,34 @@ Deserializes from a JSON object.
 
 <a name="DiffMessage"></a>
 
-## DiffMessage
+## ~~DiffMessage~~
+***Deprecated***
+
 Defines the difference between two DID `Document`s' JSON representations.
 
 **Kind**: global class  
 
-* [DiffMessage](#DiffMessage)
+* ~~[DiffMessage](#DiffMessage)~~
     * _instance_
-        * [.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)
-        * [.did()](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)
-        * [.diff()](#DiffMessage+diff) ⇒ <code>string</code>
-        * [.messageId()](#DiffMessage+messageId) ⇒ <code>string</code>
-        * [.setMessageId(message_id)](#DiffMessage+setMessageId)
-        * [.previousMessageId()](#DiffMessage+previousMessageId) ⇒ <code>string</code>
-        * [.setPreviousMessageId(message_id)](#DiffMessage+setPreviousMessageId)
-        * [.proof()](#DiffMessage+proof) ⇒ <code>any</code>
-        * [.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)
-        * [.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>
+        * ~~[.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)~~
+        * ~~[.did()](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)~~
+        * ~~[.diff()](#DiffMessage+diff) ⇒ <code>string</code>~~
+        * ~~[.messageId()](#DiffMessage+messageId) ⇒ <code>string</code>~~
+        * ~~[.setMessageId(message_id)](#DiffMessage+setMessageId)~~
+        * ~~[.previousMessageId()](#DiffMessage+previousMessageId) ⇒ <code>string</code>~~
+        * ~~[.setPreviousMessageId(message_id)](#DiffMessage+setPreviousMessageId)~~
+        * ~~[.proof()](#DiffMessage+proof) ⇒ <code>any</code>~~
+        * ~~[.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)~~
+        * ~~[.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>~~
         * [.clone()](#DiffMessage+clone) ⇒ [<code>DiffMessage</code>](#DiffMessage)
     * _static_
-        * [.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+        * ~~[.fromJSON(json)](#DiffMessage.fromJSON) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
 
 <a name="DiffMessage+id"></a>
 
-### diffMessage.id() ⇒ [<code>DID</code>](#DID)
+### ~~diffMessage.id() ⇒ [<code>DID</code>](#DID)~~
+***Deprecated***
+
 Returns the DID of the associated DID Document.
 
 NOTE: clones the data.
@@ -1247,25 +1257,33 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+did"></a>
 
-### diffMessage.did() ⇒ [<code>DID</code>](#DID)
+### ~~diffMessage.did() ⇒ [<code>DID</code>](#DID)~~
+***Deprecated***
+
 Returns a copy of the DID of the associated DID Document.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+diff"></a>
 
-### diffMessage.diff() ⇒ <code>string</code>
+### ~~diffMessage.diff() ⇒ <code>string</code>~~
+***Deprecated***
+
 Returns a copy of the raw contents of the DID Document diff as a JSON string.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+messageId"></a>
 
-### diffMessage.messageId() ⇒ <code>string</code>
+### ~~diffMessage.messageId() ⇒ <code>string</code>~~
+***Deprecated***
+
 Returns a copy of the message_id of the DID Document diff.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+setMessageId"></a>
 
-### diffMessage.setMessageId(message_id)
+### ~~diffMessage.setMessageId(message_id)~~
+***Deprecated***
+
 Sets the message_id of the DID Document diff.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
@@ -1276,13 +1294,17 @@ Sets the message_id of the DID Document diff.
 
 <a name="DiffMessage+previousMessageId"></a>
 
-### diffMessage.previousMessageId() ⇒ <code>string</code>
+### ~~diffMessage.previousMessageId() ⇒ <code>string</code>~~
+***Deprecated***
+
 Returns a copy of the Tangle message id of the previous DID Document diff.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+setPreviousMessageId"></a>
 
-### diffMessage.setPreviousMessageId(message_id)
+### ~~diffMessage.setPreviousMessageId(message_id)~~
+***Deprecated***
+
 Sets the Tangle message id of the previous DID Document diff.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
@@ -1293,13 +1315,17 @@ Sets the Tangle message id of the previous DID Document diff.
 
 <a name="DiffMessage+proof"></a>
 
-### diffMessage.proof() ⇒ <code>any</code>
+### ~~diffMessage.proof() ⇒ <code>any</code>~~
+***Deprecated***
+
 Returns a copy of the `proof` object.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+merge"></a>
 
-### diffMessage.merge(document) ⇒ [<code>Document</code>](#Document)
+### ~~diffMessage.merge(document) ⇒ [<code>Document</code>](#Document)~~
+***Deprecated***
+
 Returns a new DID Document which is the result of merging `self`
 with the given Document.
 
@@ -1311,7 +1337,9 @@ with the given Document.
 
 <a name="DiffMessage+toJSON"></a>
 
-### diffMessage.toJSON() ⇒ <code>any</code>
+### ~~diffMessage.toJSON() ⇒ <code>any</code>~~
+***Deprecated***
+
 Serializes a `DiffMessage` as a JSON object.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
@@ -1323,7 +1351,9 @@ Deep clones the object.
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage.fromJSON"></a>
 
-### DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+### ~~DiffMessage.fromJSON(json) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
+***Deprecated***
+
 Deserializes a `DiffMessage` from a JSON object.
 
 **Kind**: static method of [<code>DiffMessage</code>](#DiffMessage)  
@@ -1365,9 +1395,9 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.signData(data, privateKey, methodQuery, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.verifyDocument(signed)](#Document+verifyDocument)
-        * [.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
-        * [.verifyDiff(diff)](#Document+verifyDiff)
-        * [.mergeDiff(diff)](#Document+mergeDiff)
+        * ~~[.diff(other, message_id, key, method_query)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
+        * ~~[.verifyDiff(diff)](#Document+verifyDiff)~~
+        * ~~[.mergeDiff(diff)](#Document+mergeDiff)~~
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.metadata()](#Document+metadata) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
         * [.metadataCreated()](#Document+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -1383,7 +1413,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
         * [.isSigningMethodType(method_type)](#Document.isSigningMethodType) ⇒ <code>boolean</code>
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
-        * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
+        * ~~[.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>~~
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
 <a name="new_Document_new"></a>
@@ -1716,7 +1746,9 @@ Fails if:
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message_id, key, method_query) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+### ~~document.diff(other, message_id, key, method_query) ⇒ [<code>DiffMessage</code>](#DiffMessage)~~
+***Deprecated***
+
 Generate a `DiffMessage` between two DID Documents and sign it using the specified
 `key` and `method`.
 
@@ -1731,7 +1763,9 @@ Generate a `DiffMessage` between two DID Documents and sign it using the specifi
 
 <a name="Document+verifyDiff"></a>
 
-### document.verifyDiff(diff)
+### ~~document.verifyDiff(diff)~~
+***Deprecated***
+
 Verifies the signature of the `diff` was created using a capability invocation method
 in this DID Document.
 
@@ -1747,7 +1781,9 @@ Fails if an unsupported verification method is used or the verification operatio
 
 <a name="Document+mergeDiff"></a>
 
-### document.mergeDiff(diff)
+### ~~document.mergeDiff(diff)~~
+***Deprecated***
+
 Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1886,7 +1922,9 @@ the DID tag.
 
 <a name="Document.diffIndex"></a>
 
-### Document.diffIndex(message_id) ⇒ <code>string</code>
+### ~~Document.diffIndex(message_id) ⇒ <code>string</code>~~
+***Deprecated***
+
 Returns the Tangle index of the DID diff chain. This should only be called on documents
 published on the integration chain.
 
@@ -1920,8 +1958,8 @@ A DID Document's history and current state.
     * _instance_
         * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
-        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
+        * ~~[.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)~~
+        * ~~[.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>~~
         * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
         * [.clone()](#DocumentHistory+clone) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
     * _static_
@@ -1946,7 +1984,9 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainData"></a>
 
-### documentHistory.diffChainData() ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
+### ~~documentHistory.diffChainData() ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)~~
+***Deprecated***
+
 Returns an `Array` of diff chain `DiffMessages`.
 
 NOTE: clones the data.
@@ -1954,7 +1994,9 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainSpam"></a>
 
-### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+### ~~documentHistory.diffChainSpam() ⇒ <code>Array.&lt;string&gt;</code>~~
+***Deprecated***
+
 Returns an `Array` of message id strings for "spam" messages on the same index
 as the diff chain.
 
@@ -3204,11 +3246,11 @@ merged with one or more `DiffMessages`.
 
 * [ResolvedDocument](#ResolvedDocument)
     * _instance_
-        * [.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)
+        * ~~[.mergeDiffMessage(diff_message)](#ResolvedDocument+mergeDiffMessage)~~
         * [.document()](#ResolvedDocument+document) ⇒ [<code>Document</code>](#Document)
         * [.intoDocument()](#ResolvedDocument+intoDocument) ⇒ [<code>Document</code>](#Document)
-        * [.diffMessageId()](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>
-        * [.setDiffMessageId(value)](#ResolvedDocument+setDiffMessageId)
+        * ~~[.diffMessageId()](#ResolvedDocument+diffMessageId) ⇒ <code>string</code>~~
+        * ~~[.setDiffMessageId(value)](#ResolvedDocument+setDiffMessageId)~~
         * [.integrationMessageId()](#ResolvedDocument+integrationMessageId) ⇒ <code>string</code>
         * [.setIntegrationMessageId(value)](#ResolvedDocument+setIntegrationMessageId)
         * [.toJSON()](#ResolvedDocument+toJSON) ⇒ <code>any</code>
@@ -3218,7 +3260,9 @@ merged with one or more `DiffMessages`.
 
 <a name="ResolvedDocument+mergeDiffMessage"></a>
 
-### resolvedDocument.mergeDiffMessage(diff_message)
+### ~~resolvedDocument.mergeDiffMessage(diff_message)~~
+***Deprecated***
+
 Attempts to merge changes from a `DiffMessage` into this document and
 updates the `ResolvedDocument::diffMessageId`.
 
@@ -3256,13 +3300,17 @@ NOTE: trying to use the `ResolvedDocument` after calling this will throw an erro
 **Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 <a name="ResolvedDocument+diffMessageId"></a>
 
-### resolvedDocument.diffMessageId() ⇒ <code>string</code>
+### ~~resolvedDocument.diffMessageId() ⇒ <code>string</code>~~
+***Deprecated***
+
 Returns a copy of the diff chain message id.
 
 **Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
 <a name="ResolvedDocument+setDiffMessageId"></a>
 
-### resolvedDocument.setDiffMessageId(value)
+### ~~resolvedDocument.setDiffMessageId(value)~~
+***Deprecated***
+
 Sets the diff chain message id.
 
 **Kind**: instance method of [<code>ResolvedDocument</code>](#ResolvedDocument)  
@@ -3322,7 +3370,7 @@ Deserializes a `Document` object from a JSON object.
         * [.getClient(network_name)](#Resolver+getClient) ⇒ [<code>Client</code>](#Client) \| <code>undefined</code>
         * [.resolve(did)](#Resolver+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Resolver+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
-        * [.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+        * ~~[.resolveDiffHistory(document)](#Resolver+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
         * [.resolveCredentialIssuer(credential)](#Resolver+resolveCredentialIssuer) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolvePresentationIssuers(presentation)](#Resolver+resolvePresentationIssuers) ⇒ <code>Promise.&lt;Array.&lt;ResolvedDocument&gt;&gt;</code>
         * [.resolvePresentationHolder(presentation)](#Resolver+resolvePresentationHolder) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
@@ -3371,7 +3419,9 @@ Fetches the `DocumentHistory` of the given `DID`.
 
 <a name="Resolver+resolveDiffHistory"></a>
 
-### resolver.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+### ~~resolver.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
+***Deprecated***
+
 Returns the `DiffChainHistory` of a diff chain starting from a `Document` on the
 integration chain.
 
@@ -3598,35 +3648,27 @@ Deserializes a `Service` object from a JSON object.
 **Kind**: global class  
 
 * [Signature](#Signature)
-    * [new Signature(pkey, data)](#new_Signature_new)
+    * [new Signature(data)](#new_Signature_new)
     * _instance_
-        * [.pkey()](#Signature+pkey) ⇒ <code>Uint8Array</code>
-        * [.data()](#Signature+data) ⇒ <code>Uint8Array</code>
+        * [.asBytes()](#Signature+asBytes) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#Signature+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json_value)](#Signature.fromJSON) ⇒ [<code>Signature</code>](#Signature)
 
 <a name="new_Signature_new"></a>
 
-### new Signature(pkey, data)
+### new Signature(data)
 Creates a new `Signature`.
 
 
 | Param | Type |
 | --- | --- |
-| pkey | <code>Uint8Array</code> | 
 | data | <code>Uint8Array</code> | 
 
-<a name="Signature+pkey"></a>
+<a name="Signature+asBytes"></a>
 
-### signature.pkey() ⇒ <code>Uint8Array</code>
-Returns a copy of the public key used to verify this signature.
-
-**Kind**: instance method of [<code>Signature</code>](#Signature)  
-<a name="Signature+data"></a>
-
-### signature.data() ⇒ <code>Uint8Array</code>
-Returns a copy of the signature data as a vec of bytes.
+### signature.asBytes() ⇒ <code>Uint8Array</code>
+Returns a copy of the signature as a `UInt8Array`.
 
 **Kind**: instance method of [<code>Signature</code>](#Signature)  
 <a name="Signature+toJSON"></a>
