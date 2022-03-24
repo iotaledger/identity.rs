@@ -52,7 +52,7 @@ impl MethodContent {
     }
   }
 
-  /// Returns the [`MethodType`] associated with the `MethodContent` variant.
+  /// Returns the [`KeyType`] associated with the `MethodContent` variant.
   pub(crate) fn key_type(&self) -> KeyType {
     match self {
       MethodContent::GenerateEd25519 => KeyType::Ed25519,
