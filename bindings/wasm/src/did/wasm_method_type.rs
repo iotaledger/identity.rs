@@ -35,6 +35,14 @@ impl WasmMethodType {
   pub fn from_json(json: &JsValue) -> Result<WasmMethodType> {
     json.into_serde().map(Self).wasm_result()
   }
+
+  /// Returns the `MethodType` as a string.
+  #[allow(clippy::inherent_to_string)]
+  #[wasm_bindgen(js_name = toString)]
+  pub fn to_string(&self) -> String {
+    // Prevents the automatically derived toString which adds quotation marks due to using toJSON.
+    self.0.to_string()
+  }
 }
 
 impl From<WasmMethodType> for MethodType {

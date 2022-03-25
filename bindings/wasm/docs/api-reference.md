@@ -2811,6 +2811,7 @@ Supported verification method types.
 * [MethodType](#MethodType)
     * _instance_
         * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
+        * [.toString()](#MethodType+toString) ⇒ <code>string</code>
         * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
@@ -2821,6 +2822,12 @@ Supported verification method types.
 
 ### methodType.toJSON() ⇒ <code>any</code>
 Serializes a `MethodType` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType+toString"></a>
+
+### methodType.toString() ⇒ <code>string</code>
+Returns the `MethodType` as a string.
 
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+clone"></a>
@@ -3820,7 +3827,7 @@ Deserializes a `Timestamp` from a JSON object.
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller()](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
         * [.SetController(did)](#VerificationMethod+SetController)
-        * [.type()](#VerificationMethod+type) ⇒ <code>string</code>
+        * [.type()](#VerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
         * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -3865,7 +3872,7 @@ Sets the `controller` `DID` of the `VerificationMethod` object.
 
 <a name="VerificationMethod+type"></a>
 
-### verificationMethod.type() ⇒ <code>string</code>
+### verificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
 Returns a copy of the `VerificationMethod` type.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
