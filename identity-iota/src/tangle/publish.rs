@@ -5,6 +5,7 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
 #[derive(Clone, Copy, Debug)]
 pub enum PublishType {
   Integration,
@@ -35,8 +36,6 @@ impl PublishType {
 
 #[cfg(test)]
 mod test {
-  use identity_core::crypto::merkle_key::Sha256;
-  use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_did::did::DID;
@@ -165,7 +164,7 @@ mod test {
   fn test_publish_type_add_non_capability_invocation_relationship() -> Result<()> {
     let old_doc: IotaDocument = document();
     let mut new_doc: IotaDocument = old_doc.clone();
-    let method_url: IotaDIDUrl = new_doc.resolve_method("generic").unwrap().id().clone();
+    let method_url: IotaDIDUrl = new_doc.resolve_method("generic", None).unwrap().id().clone();
 
     new_doc
       .attach_method_relationship(
@@ -185,9 +184,9 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let collection = KeyCollection::new_ed25519(8)?;
+    let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
     let method: IotaVerificationMethod =
-      IotaVerificationMethod::new_merkle_key::<Sha256>(new_doc.id().to_owned(), &collection, "merkle")?;
+      IotaVerificationMethod::new(new_doc.id().to_owned(), keypair.type_(), keypair.public(), "kex-0")?;
 
     new_doc.insert_method(method, MethodScope::authentication()).unwrap();
 
@@ -200,9 +199,9 @@ mod test {
   fn test_publish_type_update_method_with_non_update_method_type2() -> Result<()> {
     let mut old_doc = document();
 
-    let collection = KeyCollection::new_ed25519(8)?;
+    let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
     let method: IotaVerificationMethod =
-      IotaVerificationMethod::new_merkle_key::<Sha256>(old_doc.id().to_owned(), &collection, "merkle")?;
+      IotaVerificationMethod::new(old_doc.id().to_owned(), keypair.type_(), keypair.public(), "kex-0")?;
 
     old_doc
       .insert_method(method, MethodScope::capability_invocation())
@@ -210,11 +209,15 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    // Replace the key collection.
-    let new_collection = KeyCollection::new_ed25519(8)?;
+    // Replace the key material in the new method.
+    let keypair_new: KeyPair = KeyPair::new(KeyType::X25519)?;
 
-    let method_new: IotaVerificationMethod =
-      IotaVerificationMethod::new_merkle_key::<Sha256>(new_doc.id().to_owned(), &new_collection, "merkle")?;
+    let method_new: IotaVerificationMethod = IotaVerificationMethod::new(
+      new_doc.id().to_owned(),
+      keypair_new.type_(),
+      keypair_new.public(),
+      "kex-0",
+    )?;
 
     assert!(new_doc
       .core_document_mut()

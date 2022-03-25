@@ -32,7 +32,8 @@ zeroize = { version = "1.4" }
 
 [dependencies.iota-crypto]
 version = "0.7"
-features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
+default-features = false
+features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "std", "x25519"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
@@ -52,7 +53,6 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-bindings-derive = ["identity-core/bindings-derive"]
 default = ["stronghold", "send-sync-storage"]
 stronghold = [
   "iota_stronghold",

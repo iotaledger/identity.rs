@@ -50,7 +50,7 @@ async fn test_create_identity() -> Result<()> {
     let document: &IotaDocument = account.document();
 
     let expected_fragment = IotaDocument::DEFAULT_METHOD_FRAGMENT;
-    let method: &IotaVerificationMethod = document.resolve_method(expected_fragment).unwrap();
+    let method: &IotaVerificationMethod = document.resolve_method(expected_fragment, None).unwrap();
 
     assert_eq!(document.core_document().verification_relationships().count(), 1);
     assert_eq!(document.core_document().methods().count(), 1);
@@ -179,15 +179,19 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 #[tokio::test]
 async fn test_create_method() -> Result<()> {
   for storage in storages().await {
+    for method_type in [
+      MethodType::Ed25519VerificationKey2018,
+      MethodType::X25519KeyAgreementKey2019,
+    ] {
+
     let mut account = Account::create_identity(
-      account_setup_storage(storage, Network::Mainnet).await,
+      account_setup_storage(Arc::clone(&storage), Network::Mainnet).await,
       IdentitySetup::default(),
     )
     .await
     .unwrap();
 
     let initial_document: IotaDocument = account.document().to_owned();
-    let method_type = MethodType::Ed25519VerificationKey2018;
 
     let fragment = "key-1".to_owned();
     let update: Update = Update::CreateMethod {
@@ -201,9 +205,10 @@ async fn test_create_method() -> Result<()> {
 
     let document: &IotaDocument = account.document();
 
-    let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
+    // Ensure existence.
+    let method: &IotaVerificationMethod = document.resolve_method(&fragment, None).unwrap();
 
-    // Ensure existence and key type
+    // Ensure key type.
     assert_eq!(method.type_(), method_type);
 
     // Still only the default relationship.
@@ -230,8 +235,32 @@ async fn test_create_method() -> Result<()> {
 
     // Ensure `updated` was recently set.
     assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-  }
+  }}
 
+  //   let location = state.method_location(method_type, fragment.clone()).unwrap();
+
+  //   // Ensure we can retrieve the correct location for the key.
+  //   assert_eq!(
+  //     location,
+  //     KeyLocation::new(
+  //       method_type,
+  //       fragment,
+  //       // `create_identity` calls publish, which increments the generation.
+  //       Generation::new().try_increment().unwrap(),
+  //     )
+  //   );
+
+  //   // Ensure the key exists in storage.
+  //   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+
+  //   // Ensure `created` wasn't updated.
+  //   assert_eq!(
+  //     initial_state.document().metadata.created,
+  //     state.document().metadata.created
+  //   );
+  //   // Ensure `updated` was recently set.
+  //   assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  // }
   Ok(())
 }
 
@@ -267,20 +296,20 @@ async fn test_create_scoped_method() -> Result<()> {
 
     let contains = match scope {
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::authentication())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::authentication()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::assertion_method())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::assertion_method()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::key_agreement())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::key_agreement()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::capability_delegation())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::capability_delegation()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::capability_invocation())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::capability_invocation()))
+        .is_some(),
       _ => unreachable!(),
     };
 
@@ -344,7 +373,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
     let document: &IotaDocument = account.document();
 
-    let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
+    let method: &IotaVerificationMethod = document.resolve_method(&fragment, None).unwrap();
 
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
@@ -556,7 +585,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(private_key.clone())),
+    method_secret: Some(MethodSecret::Ed25519(private_key)),
     type_: MethodType::X25519KeyAgreementKey2019,
     fragment: "key-1".to_owned(),
   };
@@ -565,9 +594,10 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
+  let keypair: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::X25519(private_key)),
+    method_secret: Some(MethodSecret::X25519(keypair.private().clone())),
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-2".to_owned(),
   };
@@ -597,7 +627,7 @@ async fn test_delete_method() -> Result<()> {
   account.process_update(update).await?;
 
   // Ensure it was added.
-  let method: &IotaVerificationMethod = account.document().resolve_method(&fragment).unwrap();
+  let method: &IotaVerificationMethod = account.document().resolve_method(&fragment, None).unwrap();
   let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
   let update: Update = Update::DeleteMethod {
@@ -609,7 +639,7 @@ async fn test_delete_method() -> Result<()> {
   let document: &IotaDocument = account.document();
 
   // Ensure it no longer exists.
-  assert!(document.resolve_method(&fragment).is_none());
+  assert!(document.resolve_method(&fragment, None).is_none());
 
   // Still only the default relationship.
   assert_eq!(document.core_document().verification_relationships().count(), 1);

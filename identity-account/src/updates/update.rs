@@ -160,7 +160,7 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
         let method_url: CoreDIDUrl = did.as_ref().to_url().join(fragment.identifier())?;
 
-        if document.resolve_method(method_url).is_some() {
+        if document.resolve_method(method_url, None).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
@@ -174,8 +174,13 @@ impl Update {
 
         let public_key: PublicKey = storage.key_public(&account_id, &tmp_location).await?;
 
+        let key_type: KeyType = match type_ {
+          MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+          MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+        };
+
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;
+          IotaVerificationMethod::new(did.clone(), key_type, &public_key, fragment.name())?;
 
         let location: KeyLocation = KeyLocation::from_verification_method(&method)?;
 
@@ -346,9 +351,6 @@ async fn insert_method_secret(
         .await
         .map_err(Into::into)
     }
-    MethodSecret::MerkleKeyCollection(_) => {
-      todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
-    }
   }
 }
 
@@ -356,7 +358,6 @@ pub(crate) fn method_to_key_type(method_type: MethodType) -> KeyType {
   match method_type {
     MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
     MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
-    MethodType::MerkleKeyCollection2021 => todo!(),
   }
 }
 

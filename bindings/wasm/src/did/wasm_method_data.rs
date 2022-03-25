@@ -26,7 +26,7 @@ impl WasmMethodData {
     Self(MethodData::new_multibase(data))
   }
 
-  /// Returns a `UInt8Array` containing the decoded bytes of the `MethodData`.
+  /// Returns a `Uint8Array` containing the decoded bytes of the `MethodData`.
   ///
   /// This is generally a public key identified by a `MethodData` value.
   ///

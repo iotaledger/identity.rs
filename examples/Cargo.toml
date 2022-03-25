@@ -55,10 +55,6 @@ name = "create_vp"
 path = "low-level-api/create_vp.rs"
 
 [[example]]
-name = "diff_chain"
-path = "low-level-api/diff_chain.rs"
-
-[[example]]
 name = "resolve_history"
 path = "low-level-api/resolve_history.rs"
 
@@ -69,10 +65,6 @@ path = "low-level-api/manipulate_did.rs"
 [[example]]
 name = "key_exchange"
 path = "low-level-api/key_exchange.rs"
-
-[[example]]
-name = "merkle_key"
-path = "low-level-api/merkle_key.rs"
 
 [[example]]
 name = "resolution"

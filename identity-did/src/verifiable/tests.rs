@@ -2,17 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Timestamp;
-use identity_core::crypto::merkle_key::MerkleKey;
-use identity_core::crypto::merkle_key::Sha256;
-use identity_core::crypto::merkle_tree::Hash;
-use identity_core::crypto::merkle_tree::Proof;
-use identity_core::crypto::Ed25519;
-use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
-use identity_core::crypto::PrivateKey;
 use identity_core::crypto::ProofPurpose;
-use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
@@ -99,51 +91,6 @@ fn test_sign_verify_data_ed25519() {
   }
 }
 
-#[test]
-fn test_sign_verify_data_merkle_key_ed25519_sha256() {
-  for method_data_base in [MethodData::new_base58, MethodData::new_multibase] {
-    let total: usize = 1 << 11;
-    let index: usize = 1 << 9;
-
-    let keys: KeyCollection = KeyCollection::new_ed25519(total).unwrap();
-    let controller: CoreDID = "did:example:1234".parse().unwrap();
-
-    let root: Hash<Sha256> = keys.merkle_root();
-    let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
-    let mkey: Vec<u8> = MerkleKey::encode_key::<Sha256, Ed25519>(&root);
-
-    let method: VerificationMethod = VerificationMethod::builder(Default::default())
-      .id(controller.to_url().join("#key-collection").unwrap())
-      .controller(controller.clone())
-      .type_(MethodType::MerkleKeyCollection2021)
-      .data(method_data_base(mkey))
-      .build()
-      .unwrap();
-
-    let document: CoreDocument = CoreDocument::builder(Default::default())
-      .id(controller)
-      .verification_method(method)
-      .build()
-      .unwrap();
-
-    let public: &PublicKey = keys.public(index).unwrap();
-    let private: &PrivateKey = keys.private(index).unwrap();
-
-    let mut data: MockObject = MockObject::new(123);
-
-    assert!(document.verify_data(&data, &VerifierOptions::default()).is_err());
-
-    document
-      .signer(private)
-      .method("#key-collection")
-      .merkle_key((public, &proof))
-      .sign(&mut data)
-      .unwrap();
-
-    assert!(document.verify_data(&data, &VerifierOptions::default()).is_ok());
-  }
-}
-
 // ===========================================================================
 // Test DocumentVerifier
 // ===========================================================================
@@ -196,7 +143,7 @@ fn test_sign_verify_method_type() {
       &data,
       &VerifierOptions::default().method_type(vec![
         MethodType::Ed25519VerificationKey2018,
-        MethodType::MerkleKeyCollection2021,
+        MethodType::X25519KeyAgreementKey2019,
       ]),
     )
     .unwrap();
@@ -204,7 +151,7 @@ fn test_sign_verify_method_type() {
     .verify_data(
       &data,
       &VerifierOptions::default().method_type(vec![
-        MethodType::MerkleKeyCollection2021,
+        MethodType::X25519KeyAgreementKey2019,
         MethodType::Ed25519VerificationKey2018,
       ]),
     )
@@ -214,7 +161,7 @@ fn test_sign_verify_method_type() {
   assert!(document
     .verify_data(
       &data,
-      &VerifierOptions::default().method_type(vec![MethodType::MerkleKeyCollection2021]),
+      &VerifierOptions::default().method_type(vec![MethodType::X25519KeyAgreementKey2019]),
     )
     .is_err());
 }

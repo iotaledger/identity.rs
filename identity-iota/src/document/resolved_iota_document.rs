@@ -35,6 +35,7 @@ pub struct ResolvedIotaDocument {
   pub integration_message_id: MessageId,
 
   /// [`MessageId`] of the last diff chain message merged into this during resolution, or null.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[serde(
     rename = "diffMessageId",
     default = "MessageId::null",
@@ -56,6 +57,7 @@ impl ResolvedIotaDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature verification on the diff fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn merge_diff_message(&mut self, diff_message: &DiffMessage) -> Result<()> {
     self.document.merge_diff(diff_message)?;
     self.diff_message_id = *diff_message.message_id();

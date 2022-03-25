@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity::account::MethodSecret;
 use identity::crypto::PrivateKey;
@@ -8,8 +9,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::WasmKeyCollection;
-use crate::crypto::WasmKeyCollectionData;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -23,7 +22,7 @@ extern "C" {
 #[derive(Serialize, Deserialize)]
 enum WasmMethodSecretInner {
   Ed25519(Vec<u8>),
-  MerkleKeyCollection(WasmKeyCollectionData),
+  X25519(Vec<u8>),
 }
 
 #[wasm_bindgen(js_name = MethodSecret)]
@@ -32,18 +31,18 @@ pub struct WasmMethodSecret(WasmMethodSecretInner);
 
 #[wasm_bindgen(js_class = MethodSecret)]
 impl WasmMethodSecret {
-  /// Creates a {@link MethodSecret} object from a `UInt8Array`.
-  #[wasm_bindgen(js_name = ed25519Base58)]
-  pub fn ed25519_base58(private_key: Vec<u8>) -> WasmMethodSecret {
-    Self(WasmMethodSecretInner::Ed25519(private_key))
+  /// Creates an Ed25519 {@link MethodSecret} from a `Uint8Array`.
+  #[allow(non_snake_case)]
+  #[wasm_bindgen(js_name = ed25519)]
+  pub fn ed25519(privateKey: Vec<u8>) -> WasmMethodSecret {
+    Self(WasmMethodSecretInner::Ed25519(privateKey))
   }
 
-  /// Creates a {@link MethodSecret} object from {@link KeyCollection}.
-  #[wasm_bindgen(js_name = merkleKeyCollection)]
-  pub fn merkle_key_collection(collection: &WasmKeyCollection) -> WasmMethodSecret {
-    Self(WasmMethodSecretInner::MerkleKeyCollection(WasmKeyCollectionData::from(
-      collection,
-    )))
+  /// Creates an X25519 {@link MethodSecret} from a `Uint8Array`.
+  #[allow(non_snake_case)]
+  #[wasm_bindgen(js_name = x25519)]
+  pub fn x25519(privateKey: Vec<u8>) -> WasmMethodSecret {
+    Self(WasmMethodSecretInner::X25519(privateKey))
   }
 
   /// Serializes a `MethodSecret` as a JSON object.
@@ -75,9 +74,16 @@ impl TryFrom<WasmMethodSecret> for MethodSecret {
         };
         Ok(MethodSecret::Ed25519(private_key))
       }
-      WasmMethodSecretInner::MerkleKeyCollection(data) => {
-        let collection: WasmKeyCollection = WasmKeyCollection::try_from(data)?;
-        Ok(MethodSecret::MerkleKeyCollection(collection.0))
+      WasmMethodSecretInner::X25519(private_key) => {
+        let private_key: PrivateKey = private_key.into();
+        if private_key.as_ref().len() != x25519::SECRET_KEY_LENGTH {
+          return Err(identity::core::Error::InvalidKeyLength(
+            private_key.as_ref().len(),
+            x25519::SECRET_KEY_LENGTH,
+          ))
+          .wasm_result();
+        };
+        Ok(MethodSecret::X25519(private_key))
       }
     }
   }

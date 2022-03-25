@@ -3,21 +3,14 @@
 
 use std::str::FromStr;
 
-use identity::core::decode_b58;
 use identity::core::OneOrMany;
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
 use identity::core::Url;
-use identity::crypto::merkle_key::MerkleDigestTag;
-use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::Sha256;
-use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
-use identity::crypto::PublicKey;
 use identity::crypto::SignatureOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
-use identity::iota_core::Error;
 use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::IotaVerificationMethod;
@@ -272,20 +265,23 @@ impl WasmDocument {
   ///
   /// Throws an error if the method is not found.
   #[wasm_bindgen(js_name = resolveMethod)]
-  pub fn resolve_method(&self, query: &UDIDUrlQuery, scope: OptionMethodScope) -> Result<WasmVerificationMethod> {
+  pub fn resolve_method(
+    &self,
+    query: &UDIDUrlQuery,
+    scope: OptionMethodScope,
+  ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
     let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
 
-    let method: &IotaVerificationMethod = if let Some(scope) = method_scope {
-      self
-        .0
-        .resolve_method_with_scope(&method_query, scope)
-        .ok_or(identity::did::Error::MethodNotFound)
-        .wasm_result()?
+    let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
+      self.0.resolve_method(&method_query, Some(scope))
     } else {
-      self.0.try_resolve_method(&method_query).wasm_result()?
+      self.0.resolve_method(&method_query, None)
     };
-    Ok(WasmVerificationMethod(method.clone()))
+    match method {
+      None => Ok(None),
+      Some(method) => Ok(Some(WasmVerificationMethod(method.clone()))),
+    }
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.
@@ -293,15 +289,8 @@ impl WasmDocument {
   pub fn resolve_signing_method(&mut self, query: &UDIDUrlQuery) -> Result<WasmVerificationMethod> {
     let method_query: String = query.into_serde().wasm_result()?;
     Ok(WasmVerificationMethod(
-      self.0.try_resolve_signing_method(&method_query).wasm_result()?.clone(),
+      self.0.resolve_signing_method(&method_query).wasm_result()?.clone(),
     ))
-  }
-
-  #[wasm_bindgen(js_name = revokeMerkleKey)]
-  pub fn revoke_merkle_key(&mut self, query: &UDIDUrlQuery, index: u32) -> Result<bool> {
-    let method_query: String = query.into_serde().wasm_result()?;
-    let method: &mut IotaVerificationMethod = self.0.try_resolve_method_mut(&method_query).wasm_result()?;
-    method.revoke_merkle_key(index).wasm_result()
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -378,27 +367,35 @@ impl WasmDocument {
       .wasm_result()
   }
 
+  /// Creates a signature for the given `Credential` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signCredential)]
   pub fn sign_credential(
     &self,
     data: &JsValue,
-    args: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, args, options)?;
+    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmCredential = WasmCredential::from_json(&json)?;
 
     Ok(data)
   }
 
+  /// Creates a signature for the given `Presentation` with the specified DID Document
+  /// Verification Method.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signPresentation)]
   pub fn sign_presentation(
     &self,
     data: &JsValue,
-    args: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UDIDUrlQuery,
     options: &WasmSignatureOptions,
   ) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, args, options)?;
+    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmPresentation = WasmPresentation::from_json(&json)?;
 
     Ok(data)
@@ -407,78 +404,25 @@ impl WasmDocument {
   /// Creates a signature for the given `data` with the specified DID Document
   /// Verification Method.
   ///
-  /// An additional `proof` property is required if using a Merkle Key
-  /// Collection verification Method.
-  ///
   /// NOTE: use `signSelf` or `signDocument` for DID Documents.
+  #[allow(non_snake_case)]
   #[wasm_bindgen(js_name = signData)]
-  pub fn sign_data(&self, data: &JsValue, args: &JsValue, options: &WasmSignatureOptions) -> Result<JsValue> {
-    // TODO: clean this up and annotate types if possible.
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Args {
-      MerkleKey {
-        method: String,
-        public: Vec<u8>,
-        private: Vec<u8>,
-        proof: String,
-      },
-      Default {
-        method: String,
-        private: Vec<u8>,
-      },
-    }
-
+  pub fn sign_data(
+    &self,
+    data: &JsValue,
+    privateKey: Vec<u8>,
+    methodQuery: &UDIDUrlQuery,
+    options: &WasmSignatureOptions,
+  ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
-    let args: Args = args.into_serde().wasm_result()?;
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
     let options: SignatureOptions = options.0.clone();
 
-    match args {
-      Args::MerkleKey {
-        method,
-        public,
-        private,
-        proof,
-      } => {
-        let merkle_key: Vec<u8> = self
-          .0
-          .try_resolve_method(&*method)
-          .and_then(|method| method.data().try_decode().map_err(Error::InvalidDoc))
-          .wasm_result()?;
-
-        let public: PublicKey = public.into();
-        let private: PrivateKey = private.into();
-
-        let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
-        let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
-
-        match digest {
-          MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
-            Some(proof) => self
-              .0
-              .signer(&private)
-              .method(&method)
-              .options(options)
-              .merkle_key((&public, &proof))
-              .sign(&mut data)
-              .wasm_result()?,
-            None => return Err("Invalid Public Key Proof".into()),
-          },
-          _ => return Err("Invalid Merkle Key Digest".into()),
-        }
-      }
-      Args::Default { method, private } => {
-        let private: PrivateKey = private.into();
-
-        self
-          .0
-          .signer(&private)
-          .method(&method)
-          .options(options)
-          .sign(&mut data)
-          .wasm_result()?;
-      }
-    }
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
 
     JsValue::from_serde(&data).wasm_result()
   }
@@ -525,6 +469,8 @@ impl WasmDocument {
 
   /// Generate a `DiffMessage` between two DID Documents and sign it using the specified
   /// `key` and `method`.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen]
   pub fn diff(
     &self,
@@ -554,12 +500,16 @@ impl WasmDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = verifyDiff)]
   pub fn verify_diff(&self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.verify_diff(&diff.0).wasm_result()
   }
 
   /// Verifies a `DiffMessage` signature and attempts to merge the changes into `self`.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = mergeDiff)]
   pub fn merge_diff(&mut self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.merge_diff(&diff.0).wasm_result()
@@ -584,6 +534,8 @@ impl WasmDocument {
   /// published on the integration chain.
   ///
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
     let message_id = MessageId::from_str(message_id)

@@ -306,14 +306,12 @@ async fn retrieve_public_key(vault: &Vault<'_>, location: &KeyLocation) -> Resul
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_public_key(vault, location).await?;
   let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
     private_key: location.into(),
     msg: payload,
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;
-
-  Ok(Signature::new(public_key, signature.into()))
+  Ok(Signature::new(signature.into()))
 }
 
 // Moves a key from one location to another, deleting the old one.

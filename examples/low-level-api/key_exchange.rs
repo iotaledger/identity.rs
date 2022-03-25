@@ -68,7 +68,7 @@ pub async fn run() -> Result<()> {
     let bob_document: ResolvedIotaDocument = client.resolve(&bob_did).await?;
     let bob_method: &IotaVerificationMethod = bob_document
       .document
-      .resolve_method_with_scope("kex-0", MethodScope::key_agreement())
+      .resolve_method("kex-0", Some(MethodScope::key_agreement()))
       .unwrap();
     let bob_public_key: Vec<u8> = bob_method.data().try_decode()?;
 
@@ -81,7 +81,7 @@ pub async fn run() -> Result<()> {
     let alice_document: ResolvedIotaDocument = client.resolve(&alice_did).await?;
     let alice_method: &IotaVerificationMethod = alice_document
       .document
-      .resolve_method_with_scope("kex-0", MethodScope::key_agreement())
+      .resolve_method("kex-0", Some(MethodScope::key_agreement()))
       .unwrap();
     let alice_public_key: Vec<u8> = alice_method.data().try_decode()?;
 

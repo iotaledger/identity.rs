@@ -33,9 +33,11 @@ pub struct DocumentHistory {
   #[serde(rename = "integrationChainSpam")]
   pub integration_chain_spam: Vec<MessageId>,
   /// List of diffs for the last integration chain document.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[serde(rename = "diffChainData")]
   pub diff_chain_data: Vec<DiffMessage>,
   /// List of "spam" messages on the diff chain index.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[serde(rename = "diffChainSpam")]
   pub diff_chain_spam: Vec<MessageId>,
 }

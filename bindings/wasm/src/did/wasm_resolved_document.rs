@@ -52,6 +52,8 @@ impl WasmResolvedDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature verification on the diff fails.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = "mergeDiffMessage")]
   pub fn merge_diff_message(&mut self, diff_message: &WasmDiffMessage) -> Result<()> {
     self.0.merge_diff_message(&diff_message.0).wasm_result()?;
@@ -80,12 +82,16 @@ impl WasmResolvedDocument {
   }
 
   /// Returns a copy of the diff chain message id.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffMessageId)]
   pub fn diff_message_id(&self) -> String {
     self.0.diff_message_id.to_string()
   }
 
   /// Sets the diff chain message id.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = setDiffMessageId)]
   pub fn set_diff_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)

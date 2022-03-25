@@ -3,9 +3,7 @@
 
 //! Cryptographic Utilities
 
-pub use self::key::KeyCollection;
 pub use self::key::KeyPair;
-pub use self::key::KeyRef;
 pub use self::key::KeyType;
 pub use self::key::PrivateKey;
 pub use self::key::PublicKey;
@@ -28,6 +26,3 @@ pub use self::signature::Verify;
 mod key;
 mod proof;
 mod signature;
-
-pub mod merkle_key;
-pub mod merkle_tree;

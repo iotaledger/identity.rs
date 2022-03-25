@@ -296,52 +296,37 @@ impl IotaDocument {
     Ok(self.document.detach_method_relationship(did_url, relationship)?)
   }
 
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property
-  /// matching the provided `query`.
-  pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
+  pub fn resolve_method<'query, Q>(&self, query: Q, scope: Option<MethodScope>) -> Option<&IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    self.document.resolve_method(query)
+    self.document.resolve_method(query, scope)
   }
 
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property
-  /// matching the provided `query`.
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// provided `query` and the verification relationship specified by `scope` if present.
   ///
-  /// # Errors
-  ///
-  /// Fails if no matching verification [`IotaVerificationMethod`] is found.
-  pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
+  /// WARNING: improper usage of this allows violating the uniqueness of the verification method sets.
+  pub fn resolve_method_mut<'query, Q>(
+    &mut self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&mut IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
-    Ok(self.document.try_resolve_method(query)?)
-  }
-
-  #[doc(hidden)]
-  pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut IotaVerificationMethod>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.document.try_resolve_method_mut(query).map_err(Into::into)
-  }
-
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the provided `query`
-  /// and the verification relationship specified by `scope`.
-  pub fn resolve_method_with_scope<'query, Q>(&self, query: Q, scope: MethodScope) -> Option<&IotaVerificationMethod>
-  where
-    Q: Into<DIDUrlQuery<'query>>,
-  {
-    self.document.resolve_method_with_scope(query, scope)
+    self.document.resolve_method_mut(query, scope)
   }
 
   /// Attempts to resolve the given method query into a method capable of signing a document update.
-  pub fn try_resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
+  pub fn resolve_signing_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
     Q: Into<DIDUrlQuery<'query>>,
   {
     self
-      .resolve_method_with_scope(query, MethodScope::capability_invocation())
+      .resolve_method(query, Some(MethodScope::capability_invocation()))
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))
       .and_then(|method| {
         if Self::is_signing_method_type(method.type_()) {
@@ -358,7 +343,7 @@ impl IotaDocument {
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital signatures
   /// from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, IotaDID> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> DocumentSigner<'base, '_, IotaDID> {
     self.document.signer(private_key)
   }
 
@@ -408,7 +393,7 @@ impl IotaDocument {
   {
     // Ensure method is permitted to sign document updates.
     // TODO: re-map this error
-    let method: &IotaVerificationMethod = self.try_resolve_signing_method(method_query.into())?;
+    let method: &IotaVerificationMethod = self.resolve_signing_method(method_query.into())?;
 
     // Specify the full method DID Url if the verification method id does not match the document id.
     let method_did: &IotaDID = method.id().did();
@@ -429,16 +414,9 @@ impl IotaDocument {
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
       MethodType::X25519KeyAgreementKey2019 => {
-        // Merkle Key Collections cannot be used to sign documents.
+        // X25519 cannot be used to sign documents.
         return Err(Error::DocumentSignError(
-          "X25519KeyAgreementKey2019 not allowed to sign documents",
-          None,
-        ));
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        // Merkle Key Collections cannot be used to sign documents.
-        return Err(Error::DocumentSignError(
-          "MerkleKeyCollection2021 not allowed to sign documents",
+          "X25519KeyAgreementKey2019 cannot sign documents",
           None,
         ));
       }
@@ -498,7 +476,9 @@ impl IotaDocument {
     let signature: &Signature = document
       .try_signature()
       .map_err(|err| Error::InvalidRootDocument(err.into()))?;
-    let method: &IotaVerificationMethod = document.try_resolve_method(signature)?;
+    let method: &IotaVerificationMethod = document
+      .resolve_method(signature, None)
+      .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))?;
     let public: PublicKey = method.data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
       return Err(Error::InvalidRootDocument(
@@ -524,6 +504,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the diff operation or signature operation fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff<'query, 's: 'query, Q>(
     &'query self,
     other: &Self,
@@ -538,7 +519,7 @@ impl IotaDocument {
 
     // Ensure the method is allowed to sign document updates.
     let method_query: DIDUrlQuery<'_> = method_query.into();
-    let _ = self.try_resolve_signing_method(method_query.clone())?;
+    let _ = self.resolve_signing_method(method_query.clone())?;
 
     self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;
 
@@ -551,6 +532,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn verify_diff(&self, diff: &DiffMessage) -> Result<()> {
     // Ensure signing method is allowed to sign document updates.
     let options = VerifierOptions::default()
@@ -569,6 +551,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature operation fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn merge_diff(&mut self, diff: &DiffMessage) -> Result<()> {
     self.verify_diff(diff)?;
 
@@ -596,6 +579,7 @@ impl IotaDocument {
   /// from documents published on the integration chain.
   ///
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff_index(message_id: &MessageId) -> Result<String> {
     if message_id.is_null() {
       return Err(Error::InvalidDocumentMessageId);
@@ -611,7 +595,7 @@ impl IotaDocument {
       .iter()
       .map(|method_ref| match method_ref {
         MethodRef::Embed(method) => Some(method),
-        MethodRef::Refer(did_url) => self.core_document().resolve_method(did_url),
+        MethodRef::Refer(did_url) => self.core_document().resolve_method(did_url, None),
       })
       .filter(|method| {
         if let Some(method) = method {
@@ -685,8 +669,6 @@ mod tests {
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
-  use identity_core::crypto::merkle_key::Sha256;
-  use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyType;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
@@ -975,16 +957,18 @@ mod tests {
     // VALID - resolving the fragment alone should return the first matching method in the list.
     let default_signing_method: &IotaVerificationMethod = document.default_signing_method().unwrap();
     assert_eq!(
-      document.resolve_method(IotaDocument::DEFAULT_METHOD_FRAGMENT).unwrap(),
+      document
+        .resolve_method(IotaDocument::DEFAULT_METHOD_FRAGMENT, None)
+        .unwrap(),
       default_signing_method
     );
     // VALID - resolving the entire id should return the exact method.
     assert_eq!(
-      document.resolve_method(default_signing_method.id()).unwrap(),
+      document.resolve_method(default_signing_method.id(), None).unwrap(),
       default_signing_method
     );
     assert_eq!(
-      document.resolve_method(controller_method.id()).unwrap(),
+      document.resolve_method(controller_method.id(), None).unwrap(),
       &controller_method
     );
 
@@ -1056,18 +1040,16 @@ mod tests {
       assert!(IotaDocument::verify_root_document(&document).is_err());
     }
 
-    // INVALID - try sign using a Merkle Key Collection
+    // INVALID - try sign using a X25519 key.
     {
       let (mut document, _) = generate_document();
-      let key_collection: KeyCollection = KeyCollection::new_ed25519(8).unwrap();
-      let merkle_key_method =
-        IotaVerificationMethod::new_merkle_key::<Sha256>(document.id().clone(), &key_collection, "merkle-key").unwrap();
+      let x25519: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
+      let x25519_method =
+        IotaVerificationMethod::new(document.id().clone(), x25519.type_(), x25519.public(), "kex-0").unwrap();
       document
-        .insert_method(merkle_key_method, MethodScope::capability_invocation())
+        .insert_method(x25519_method, MethodScope::capability_invocation())
         .unwrap();
-      assert!(document
-        .sign_self(key_collection.private(0).unwrap(), "merkle-key")
-        .is_err());
+      assert!(document.sign_self(x25519.private(), "kex-0").is_err());
       assert!(document.verify_document(&document).is_err());
     }
   }
@@ -1093,8 +1075,8 @@ mod tests {
       assert!(doc1.insert_method(method_new, scope).is_ok());
       assert!(doc1
         .core_document()
-        .try_resolve_method_with_scope(method_fragment.as_str(), scope)
-        .is_ok());
+        .resolve_method(method_fragment.as_str(), Some(scope))
+        .is_some());
 
       // Add a service to an updated document.
       let mut doc2: IotaDocument = doc1.clone();
@@ -1446,14 +1428,14 @@ mod tests {
     // Ensure signing method has a capability invocation relationship.
     let capability_invocation: &IotaVerificationMethod = document
       .core_document()
-      .try_resolve_method_with_scope(signing_method.id(), MethodScope::capability_invocation())
+      .resolve_method(signing_method.id(), Some(MethodScope::capability_invocation()))
       .unwrap();
     assert_eq!(&signing_method, capability_invocation);
 
     // Ensure try_resolve_signing_method resolves it.
     assert_eq!(
       &signing_method,
-      document.try_resolve_signing_method(signing_method.id()).unwrap()
+      document.resolve_signing_method(signing_method.id()).unwrap()
     );
 
     // Adding a new capability invocation method still returns the original method.
@@ -1552,7 +1534,7 @@ mod tests {
   fn test_new_document_verification_relationships() {
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-    let verification_method: &IotaVerificationMethod = document.resolve_method("#sign-0").unwrap();
+    let verification_method: &IotaVerificationMethod = document.resolve_method("#sign-0", None).unwrap();
     let expected_did_url: IotaDIDUrl = document.id().to_url().join("#sign-0").unwrap();
 
     // Ensure capability invocation relationship.

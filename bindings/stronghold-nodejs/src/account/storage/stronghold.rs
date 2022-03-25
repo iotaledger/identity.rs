@@ -162,6 +162,6 @@ impl TryIntoBytes for Vec<u32> {
       .into_iter()
       .map(u8::try_from)
       .collect::<std::result::Result<Vec<u8>, _>>()
-      .map_err(|err| Error::from_reason(format!("invalid data type, expected UInt8Array: {}", err)))
+      .map_err(|err| Error::from_reason(format!("invalid data type, expected Uint8Array: {}", err)))
   }
 }

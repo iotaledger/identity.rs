@@ -66,7 +66,6 @@ impl KeyLocation {
     let key_type: KeyType = match method.type_() {
       MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
       MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
-      MethodType::MerkleKeyCollection2021 => todo!(),
     };
 
     Ok(KeyLocation::new(key_type, fragment.to_owned(), method_data))

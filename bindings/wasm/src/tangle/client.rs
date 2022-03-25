@@ -86,6 +86,8 @@ impl WasmClient {
   }
 
   /// Publishes a `DiffMessage` to the Tangle.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id)
@@ -199,6 +201,8 @@ impl WasmClient {
   ///
   /// NOTE: the document must have been published to the tangle and have a valid message id and
   /// capability invocation method.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
   pub fn resolve_diff_history(&self, document: &WasmResolvedDocument) -> Result<PromiseDiffChainHistory> {
     let resolved_document: ResolvedIotaDocument = document.0.clone();

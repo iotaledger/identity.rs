@@ -76,7 +76,7 @@ interface IVerifierOptions {
 
     /** Verify the signing verification method type matches one specified.
     *
-    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.MerkleKeyCollection2021()]`
+    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.X25519KeyAgreementKey2019()]`
     */
     readonly methodType?: Array<MethodType>;
 
