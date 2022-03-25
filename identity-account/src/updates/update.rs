@@ -4,7 +4,6 @@
 use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity_account_storage::storage::Storage;
-use identity_account_storage::types::method_to_key_type;
 use identity_account_storage::types::AccountId;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
@@ -351,6 +350,14 @@ async fn insert_method_secret(
     MethodSecret::MerkleKeyCollection(_) => {
       todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
     }
+  }
+}
+
+pub(crate) fn method_to_key_type(method_type: MethodType) -> KeyType {
+  match method_type {
+    MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+    MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+    MethodType::MerkleKeyCollection2021 => todo!(),
   }
 }
 

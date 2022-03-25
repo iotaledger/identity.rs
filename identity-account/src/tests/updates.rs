@@ -4,7 +4,6 @@
 use std::sync::Arc;
 
 use identity_account_storage::storage::MemStore;
-use identity_account_storage::types::method_to_key_type;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
@@ -33,6 +32,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
 use crate::types::MethodSecret;
+use crate::updates::method_to_key_type;
 use crate::updates::Update;
 use crate::updates::UpdateError;
 
