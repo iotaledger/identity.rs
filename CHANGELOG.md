@@ -1,5 +1,30 @@
 # Changelog
 
+## [v0.5.0-dev.6](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.6) (2022-03-25)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.5...v0.5.0-dev.6)
+ 
+Note that all features related to diff chain updates are now marked as deprecated. Diff chains are a useful optimisation when publishing many updates to a DID Document. However, their design may be incompatible with upcoming changes to the IOTA network and should be considered unstable. Another major change is the removal of the `MerkleKeyCollection` verification method type, which provided a compact representation for issuing and revoking Verifiable Credentials with multiple cryptographic keys. The `MerkleKeyCollection` suffered from disadvantages which limited scalability when managing more than a few thousand keys. While these disadvantages could be mitigated somewhat, the decision was made to replace it with one or more alternatives not affected by its fundamental limitations, upcoming in the next major release.
+
+### Changed
+
+- Refactor Storage Signature [\#738](https://github.com/iotaledger/identity.rs/pull/738)
+- Add X25519 key and verification method support [\#735](https://github.com/iotaledger/identity.rs/pull/735)
+- Combine resolve\_method functions [\#709](https://github.com/iotaledger/identity.rs/pull/709)
+
+### Patch
+
+- Fix panic when parsing an `IotaDID` with more than 2 method id segments [\#758](https://github.com/iotaledger/identity.rs/pull/758)
+
+### Deprecated
+
+- Deprecate diff chain features [\#759](https://github.com/iotaledger/identity.rs/pull/759)
+
+### Removed
+
+- Remove `MerkleKeyCollection` [\#755](https://github.com/iotaledger/identity.rs/pull/755)
+- Remove `Storage::set_password` [\#733](https://github.com/iotaledger/identity.rs/pull/733)
+
 ## [v0.5.0-dev.5](https://github.com/iotaledger/identity.rs/tree/v0.5.0-dev.5) (2022-03-21)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0-dev.4...v0.5.0-dev.5)
