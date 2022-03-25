@@ -86,6 +86,12 @@ pub(crate) async fn create_identity(
   )?;
   let location: KeyLocation = method.key_location()?;
 
+  // The key location must be available.
+  if store.key_exists(&account_id, &location).await? {
+    store.key_del(&account_id, &tmp_location).await?;
+    return Err(UpdateError::DuplicateKeyLocation(location).into());
+  }
+
   store.key_move(&account_id, &tmp_location, &location).await?;
 
   store.index_set(did, account_id).await?;
@@ -176,10 +182,10 @@ impl Update {
         let location: KeyLocation = method.key_location()?;
 
         // The key location must be available.
-        ensure!(
-          !storage.key_exists(&account_id, &location).await?,
-          UpdateError::DuplicateKeyLocation(location)
-        );
+        if storage.key_exists(&account_id, &location).await? {
+          storage.key_del(&account_id, &tmp_location).await?;
+          return Err(UpdateError::DuplicateKeyLocation(location).into());
+        }
 
         // Move the key from the tmp to the expected location.
         storage.key_move(&account_id, &tmp_location, &location).await?;
