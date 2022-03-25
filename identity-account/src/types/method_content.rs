@@ -7,6 +7,7 @@ use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodType;
 
 /// Method content for creating new verification methods.
+#[non_exhaustive]
 #[derive(Clone, Debug)]
 pub enum MethodContent {
   /// Generate and store a new Ed25519 keypair for a new
