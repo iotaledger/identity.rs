@@ -1,6 +1,6 @@
 [package]
 name = "identity-diff"
-version = "0.5.0-dev.5"
+version = "0.5.0-dev.6"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -11,7 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "The `Diff` trait for the identity-rs library."
 
 [dependencies]
-identity-diff-derive = { version = "=0.5.0-dev.5", path = "derive", optional = true }
+identity-diff-derive = { version = "=0.5.0-dev.6", path = "derive", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 strum = { version = "0.21", features = ["derive"] }

@@ -54,7 +54,7 @@ jobs:
               build: |
                 npm run build
               test: |
-                npm run test
+                npm run test:examples
             - host: ubuntu-latest
               generate-dist: true
               target: x86_64-unknown-linux-gnu
