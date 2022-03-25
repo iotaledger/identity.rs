@@ -151,7 +151,7 @@ impl Storage for Stronghold {
     self.vault(account_id).exists(location.into()).await.map_err(Into::into)
   }
 
-  async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
+  async fn chain_state_get(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_account_id(account_id));
     let data: Option<Vec<u8>> = store.get(CHAIN_STATE_PATH).await?;
@@ -162,7 +162,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn set_chain_state(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
+  async fn chain_state_set(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_account_id(account_id));
 
@@ -173,7 +173,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn document(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
+  async fn document_get(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_account_id(account_id));
 
@@ -186,7 +186,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn set_document(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
+  async fn document_set(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_account_id(account_id));
 

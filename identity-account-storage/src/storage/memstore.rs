@@ -164,24 +164,24 @@ impl Storage for MemStore {
     }
   }
 
-  async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
+  async fn chain_state_get(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
     self.chain_states.read().map(|states| states.get(account_id).cloned())
   }
 
-  async fn set_chain_state(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
+  async fn chain_state_set(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
     self.chain_states.write()?.insert(*account_id, chain_state.clone());
 
     Ok(())
   }
 
-  async fn document(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
+  async fn document_get(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
     self
       .documents
       .read()
       .map(|documents| documents.get(account_id).cloned())
   }
 
-  async fn set_document(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
+  async fn document_set(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
     self.documents.write()?.insert(*account_id, document.clone());
 
     Ok(())

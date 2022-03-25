@@ -71,16 +71,16 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool>;
 
   /// Returns the chain state of the identity specified by `account_id`.
-  async fn chain_state(&self, account_id: &AccountId) -> Result<Option<ChainState>>;
+  async fn chain_state_get(&self, account_id: &AccountId) -> Result<Option<ChainState>>;
 
   /// Set the chain state of the identity specified by `account_id`.
-  async fn set_chain_state(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()>;
+  async fn chain_state_set(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()>;
 
   /// Returns the [`IotaDocument`] of the identity specified by `account_id`.
-  async fn document(&self, account_id: &AccountId) -> Result<Option<IotaDocument>>;
+  async fn document_get(&self, account_id: &AccountId) -> Result<Option<IotaDocument>>;
 
   /// Sets a new state for the identity specified by `account_id`.
-  async fn set_document(&self, account_id: &AccountId, state: &IotaDocument) -> Result<()>;
+  async fn document_set(&self, account_id: &AccountId, state: &IotaDocument) -> Result<()>;
 
   /// Removes the keys and any state for the identity specified by `did`.
   ///
