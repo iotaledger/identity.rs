@@ -20,7 +20,7 @@ identity-did = { version = "=0.5.0-dev.5", path = "../identity-did", default-fea
 identity-iota-core = { version = "=0.5.0-dev.5", path = "../identity-iota-core", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 parking_lot = { version = "0.12" }
-rand = { version = "0.8" }
+rand = { version = "0.8", default-features = false }
 seahash = { version = "4.1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 serde_json = { version = "1.0", default-features = false }
