@@ -16,8 +16,8 @@ on:
       - '.github/actions/**'
       - '**.rs'
       - '**.toml'
-      - 'bindings/wasm/**'
-      - '!bindings/wasm/**.md'
+      - 'bindings/**'
+      - '!bindings/**.md'
 
 env:
   RUST_BACKTRACE: full
