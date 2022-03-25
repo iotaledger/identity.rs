@@ -26,9 +26,9 @@ pub struct KeyLocation {
 }
 
 impl KeyLocation {
-  pub fn new(key_type: KeyType, fragment: String, method_data: &MethodData) -> Self {
+  pub fn new(key_type: KeyType, fragment: String, public_key: &[u8]) -> Self {
     let mut hasher = SeaHasher::new();
-    method_data.hash(&mut hasher);
+    public_key.hash(&mut hasher);
     let key_hash = hasher.finish();
 
     Self {
@@ -68,7 +68,9 @@ impl KeyLocation {
       MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
     };
 
-    Ok(KeyLocation::new(key_type, fragment.to_owned(), method_data))
+    let public_key: Vec<u8> = method_data.try_decode()?;
+
+    Ok(KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref()))
   }
 }
 

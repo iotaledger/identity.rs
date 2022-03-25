@@ -87,16 +87,23 @@ impl Stronghold {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
-  async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_generate(&self, account_id: &AccountId, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     let vault: Vault<'_> = self.vault(account_id);
 
-    match location.key_type {
+    let tmp_location: KeyLocation = KeyLocation::random(key_type);
+
+    match key_type {
       KeyType::Ed25519 | KeyType::X25519 => {
-        generate_private_key(&vault, location).await?;
+        generate_private_key(&vault, &tmp_location).await?;
       }
     }
 
-    Ok(())
+    let public_key: PublicKey = self.key_public(account_id, &tmp_location).await?;
+
+    let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
+    move_key(&vault, (&tmp_location).into(), (&location).into()).await?;
+
+    Ok(location)
   }
 
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
@@ -109,12 +116,6 @@ impl Storage for Stronghold {
       .await?;
 
     Ok(())
-  }
-
-  async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
-    let vault: Vault<'_> = self.vault(account_id);
-
-    move_key(&vault, source.into(), target.into()).await
   }
 
   async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey> {

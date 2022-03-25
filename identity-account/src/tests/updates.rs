@@ -60,7 +60,11 @@ async fn test_create_identity() -> Result<()> {
     // Ensure we can retrieve the correct location for the key.
     assert_eq!(
       location,
-      KeyLocation::new(KeyType::Ed25519, expected_fragment.to_owned(), method.data())
+      KeyLocation::new(
+        KeyType::Ed25519,
+        expected_fragment.to_owned(),
+        method.data().try_decode().unwrap().as_ref()
+      )
     );
 
     // Ensure the key exists in storage.
@@ -183,84 +187,63 @@ async fn test_create_method() -> Result<()> {
       MethodType::Ed25519VerificationKey2018,
       MethodType::X25519KeyAgreementKey2019,
     ] {
-
-    let mut account = Account::create_identity(
-      account_setup_storage(Arc::clone(&storage), Network::Mainnet).await,
-      IdentitySetup::default(),
-    )
-    .await
-    .unwrap();
-
-    let initial_document: IotaDocument = account.document().to_owned();
-
-    let fragment = "key-1".to_owned();
-    let update: Update = Update::CreateMethod {
-      scope: MethodScope::default(),
-      method_secret: None,
-      type_: method_type,
-      fragment: fragment.clone(),
-    };
-
-    account.process_update(update).await.unwrap();
-
-    let document: &IotaDocument = account.document();
-
-    // Ensure existence.
-    let method: &IotaVerificationMethod = document.resolve_method(&fragment, None).unwrap();
-
-    // Ensure key type.
-    assert_eq!(method.type_(), method_type);
-
-    // Still only the default relationship.
-    assert_eq!(document.core_document().verification_relationships().count(), 1);
-    assert_eq!(document.core_document().methods().count(), 2);
-
-    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
-
-    // Ensure we can retrieve the correct location for the key.
-    assert_eq!(
-      location,
-      KeyLocation::new(method_to_key_type(method_type), fragment, method.data())
-    );
-
-    // Ensure the key exists in storage.
-    assert!(account
-      .storage()
-      .key_exists(&account.account_id, &location)
+      let mut account = Account::create_identity(
+        account_setup_storage(Arc::clone(&storage), Network::Mainnet).await,
+        IdentitySetup::default(),
+      )
       .await
-      .unwrap());
+      .unwrap();
 
-    // Ensure `created` wasn't updated.
-    assert_eq!(initial_document.metadata.created, document.metadata.created);
+      let initial_document: IotaDocument = account.document().to_owned();
 
-    // Ensure `updated` was recently set.
-    assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-  }}
+      let fragment = "key-1".to_owned();
+      let update: Update = Update::CreateMethod {
+        scope: MethodScope::default(),
+        method_secret: None,
+        type_: method_type,
+        fragment: fragment.clone(),
+      };
 
-  //   let location = state.method_location(method_type, fragment.clone()).unwrap();
+      account.process_update(update).await.unwrap();
 
-  //   // Ensure we can retrieve the correct location for the key.
-  //   assert_eq!(
-  //     location,
-  //     KeyLocation::new(
-  //       method_type,
-  //       fragment,
-  //       // `create_identity` calls publish, which increments the generation.
-  //       Generation::new().try_increment().unwrap(),
-  //     )
-  //   );
+      let document: &IotaDocument = account.document();
 
-  //   // Ensure the key exists in storage.
-  //   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+      // Ensure existence.
+      let method: &IotaVerificationMethod = document.resolve_method(&fragment, None).unwrap();
 
-  //   // Ensure `created` wasn't updated.
-  //   assert_eq!(
-  //     initial_state.document().metadata.created,
-  //     state.document().metadata.created
-  //   );
-  //   // Ensure `updated` was recently set.
-  //   assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-  // }
+      // Ensure key type.
+      assert_eq!(method.type_(), method_type);
+
+      // Still only the default relationship.
+      assert_eq!(document.core_document().verification_relationships().count(), 1);
+      assert_eq!(document.core_document().methods().count(), 2);
+
+      let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
+
+      // Ensure we can retrieve the correct location for the key.
+      assert_eq!(
+        location,
+        KeyLocation::new(
+          method_to_key_type(method_type),
+          fragment,
+          method.data().try_decode().unwrap().as_ref()
+        )
+      );
+
+      // Ensure the key exists in storage.
+      assert!(account
+        .storage()
+        .key_exists(&account.account_id, &location)
+        .await
+        .unwrap());
+
+      // Ensure `created` wasn't updated.
+      assert_eq!(initial_document.metadata.created, document.metadata.created);
+
+      // Ensure `updated` was recently set.
+      assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+    }
+  }
   Ok(())
 }
 

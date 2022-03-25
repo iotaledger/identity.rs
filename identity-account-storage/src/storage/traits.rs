@@ -5,6 +5,7 @@ use core::fmt::Debug;
 
 use async_trait::async_trait;
 
+use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
@@ -49,17 +50,12 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Generates a new key for the given `account_id` at `location`.
   ///
   /// If a key at `location` exists, it is overwritten.
-  async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()>;
+  async fn key_generate(&self, account_id: &AccountId, key_type: KeyType, fragment: &str) -> Result<KeyLocation>;
 
   /// Inserts a private key at the specified `location`.
   ///
   /// If a key at `location` exists, it is overwritten.
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()>;
-
-  /// Moves a key from `source` to `target`.
-  ///
-  /// The key at the source location is removed. If a key at the `target` exists, it is overwritten.
-  async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()>;
 
   /// Retrieves the public key from `location`.
   async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey>;

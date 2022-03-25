@@ -68,15 +68,17 @@ impl MemStore {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
-  async fn key_generate(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_generate(&self, account_id: &AccountId, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(*account_id).or_default();
 
-    let keypair: KeyPair = KeyPair::new(location.key_type)?;
+    let keypair: KeyPair = KeyPair::new(key_type)?;
 
-    vault.insert(location.to_owned(), keypair);
+    let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
 
-    Ok(())
+    vault.insert(location.clone(), keypair);
+
+    Ok(location)
   }
 
   async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
@@ -113,22 +115,6 @@ impl Storage for MemStore {
 
         Ok(())
       }
-    }
-  }
-
-  async fn key_move(&self, account_id: &AccountId, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
-    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-
-    if let Some(vault) = vaults.get_mut(account_id) {
-      match vault.remove(source) {
-        Some(key) => {
-          vault.insert(target.to_owned(), key);
-          Ok(())
-        }
-        None => Err(Error::KeyNotFound),
-      }
-    } else {
-      Err(Error::KeyVaultNotFound)
     }
   }
 
