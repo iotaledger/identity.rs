@@ -256,7 +256,7 @@ impl Storage for Stronghold {
     Ok(lookup)
   }
 
-  async fn index(&self) -> Result<Vec<IotaDID>> {
+  async fn index_keys(&self) -> Result<Vec<IotaDID>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
     let store: Store<'_> = self.store(INDEX_PATH);

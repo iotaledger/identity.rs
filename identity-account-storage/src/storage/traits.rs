@@ -47,9 +47,8 @@ mod storage_sub_trait {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
-  /// Generates a new key for the given `account_id` at `location`.
-  ///
-  /// If a key at `location` exists, it is overwritten.
+  /// Generates a new key for the given `account_id` with the given `key_type` and `fragment` identifier
+  /// and returns the location of the newly generated key.
   async fn key_generate(&self, account_id: &AccountId, key_type: KeyType, fragment: &str) -> Result<KeyLocation>;
 
   /// Inserts a private key at the specified `location`.
@@ -98,7 +97,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>>;
 
   /// Retrieves the list of [`IotaDID`]s stored in the index.
-  async fn index(&self) -> Result<Vec<IotaDID>>;
+  async fn index_keys(&self) -> Result<Vec<IotaDID>>;
 
   /// Persists any unsaved changes.
   async fn flush_changes(&self) -> Result<()>;

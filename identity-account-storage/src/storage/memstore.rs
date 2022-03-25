@@ -213,7 +213,7 @@ impl Storage for MemStore {
     Ok(index.get(did).cloned())
   }
 
-  async fn index(&self) -> Result<Vec<IotaDID>> {
+  async fn index_keys(&self) -> Result<Vec<IotaDID>> {
     Ok(self.index.read()?.keys().cloned().collect())
   }
 

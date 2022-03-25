@@ -554,14 +554,14 @@ async fn test_storage_index() {
       .await
       .unwrap();
 
-    let index: Vec<IotaDID> = account1.storage().index().await.unwrap();
+    let index: Vec<IotaDID> = account1.storage().index_keys().await.unwrap();
 
     assert_eq!(index.len(), 1);
     assert!(index.contains(account1.did()));
 
     let account2: Account = Account::create_identity(setup, IdentitySetup::default()).await.unwrap();
 
-    let index: Vec<IotaDID> = account2.storage().index().await.unwrap();
+    let index: Vec<IotaDID> = account2.storage().index_keys().await.unwrap();
 
     assert_eq!(index.len(), 2);
     assert!(index.contains(account1.did()));
