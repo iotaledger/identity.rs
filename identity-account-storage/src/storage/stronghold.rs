@@ -126,7 +126,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_del(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let vault: Vault<'_> = self.vault(account_id);
 
     match location.key_type {

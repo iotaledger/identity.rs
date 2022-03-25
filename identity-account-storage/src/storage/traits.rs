@@ -62,7 +62,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Deletes the key at `location`.
   ///
   /// This operation is idempotent: it does not fail if the key does not exist.
-  async fn key_del(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()>;
+  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()>;
 
   /// Signs `data` with the private key at the specified `location`.
   async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;

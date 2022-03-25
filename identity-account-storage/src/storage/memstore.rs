@@ -136,7 +136,7 @@ impl Storage for MemStore {
     Ok(keypair.public().clone())
   }
 
-  async fn key_del(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.get_mut(account_id).ok_or(Error::KeyVaultNotFound)?;
 
