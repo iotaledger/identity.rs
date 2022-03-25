@@ -7,20 +7,25 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use identity_account_storage::crypto::remote_sign_data;
+use identity_account_storage::crypto::RemoteEd25519;
+use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::AccountId;
 use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
+use identity_core::common::Fragment;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
+use identity_did::did::DID;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::PublishType;
 use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
@@ -261,15 +266,9 @@ where
 
     let location: KeyLocation = method.key_location()?;
 
-    remote_sign_data(
-      self.document(),
-      &self.account_id,
-      self.storage().deref(),
-      &location,
-      data,
-      options,
-    )
-    .await?;
+    self
+      .remote_sign_data(self.document(), &self.account_id, &location, data, options)
+      .await?;
 
     Ok(())
   }
@@ -371,15 +370,15 @@ where
 
     let signing_key_location: KeyLocation = signing_method.key_location()?;
 
-    remote_sign_data(
-      signing_doc,
-      &self.account_id,
-      self.storage().deref(),
-      &signing_key_location,
-      document,
-      SignatureOptions::default(),
-    )
-    .await?;
+    self
+      .remote_sign_data(
+        signing_doc,
+        &self.account_id,
+        &signing_key_location,
+        document,
+        SignatureOptions::default(),
+      )
+      .await?;
 
     Ok(())
   }
@@ -502,15 +501,15 @@ where
 
     let signing_key_location: KeyLocation = signing_method.key_location()?;
 
-    remote_sign_data(
-      old_doc,
-      &self.account_id,
-      self.storage().deref(),
-      &signing_key_location,
-      &mut diff,
-      SignatureOptions::default(),
-    )
-    .await?;
+    self
+      .remote_sign_data(
+        old_doc,
+        &self.account_id,
+        &signing_key_location,
+        &mut diff,
+        SignatureOptions::default(),
+      )
+      .await?;
 
     log::debug!(
       "[publish_diff_change] publishing on index {}",
@@ -544,6 +543,35 @@ where
         self.storage().deref().flush_changes().await?;
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
+    }
+
+    Ok(())
+  }
+
+  // Helper function for remote signing.
+  pub(crate) async fn remote_sign_data<D>(
+    &self,
+    doc: &IotaDocument,
+    account_id: &AccountId,
+    location: &KeyLocation,
+    data: &mut D,
+    options: SignatureOptions,
+  ) -> crate::Result<()>
+  where
+    D: Serialize + SetSignature,
+  {
+    // Create a private key suitable for identity_core::crypto
+    let private: RemoteKey<'_> = RemoteKey::new(account_id, location, self.storage().deref());
+
+    // Create the Verification Method identifier
+    let fragment: Fragment = Fragment::new(location.fragment.clone());
+    let method_url: IotaDIDUrl = doc.id().to_url().join(fragment.identifier())?;
+
+    match location.key_type {
+      KeyType::Ed25519 => {
+        RemoteEd25519::create_signature(data, method_url.to_string(), &private, options).await?;
+      }
+      KeyType::X25519 => return Err(identity_did::Error::InvalidMethodType.into()),
     }
 
     Ok(())

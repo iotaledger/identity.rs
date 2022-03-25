@@ -3,7 +3,6 @@
 
 use core::marker::PhantomData;
 
-use identity_core::crypto::KeyType;
 use serde::Serialize;
 
 use identity_core::convert::ToJson;
@@ -15,11 +14,6 @@ use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
-
-use identity_core::common::Fragment;
-use identity_did::did::DID;
-use identity_iota_core::did::IotaDIDUrl;
-use identity_iota_core::document::IotaDocument;
 
 use crate::storage::Storage;
 use crate::types::AccountId;
@@ -103,32 +97,4 @@ impl<'a> RemoteSign<'a> {
       .map_err(|_| Error::InvalidProofValue("remote sign"))
       .map(|signature| signature.data)
   }
-}
-
-pub async fn remote_sign_data<D>(
-  doc: &IotaDocument,
-  account_id: &AccountId,
-  store: &dyn Storage,
-  location: &KeyLocation,
-  data: &mut D,
-  options: SignatureOptions,
-) -> crate::Result<()>
-where
-  D: Serialize + SetSignature,
-{
-  // Create a private key suitable for identity_core::crypto
-  let private: RemoteKey<'_> = RemoteKey::new(account_id, location, store);
-
-  // Create the Verification Method identifier
-  let fragment: Fragment = Fragment::new(location.fragment.clone());
-  let method_url: IotaDIDUrl = doc.id().to_url().join(fragment.identifier())?;
-
-  match location.key_type {
-    KeyType::Ed25519 => {
-      RemoteEd25519::create_signature(data, method_url.to_string(), &private, options).await?;
-    }
-    KeyType::X25519 => return Err(identity_did::Error::InvalidMethodType.into()),
-  }
-
-  Ok(())
 }
