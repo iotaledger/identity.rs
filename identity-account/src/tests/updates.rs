@@ -141,7 +141,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
     let initial_state = account_setup
       .storage
-      .document(&account.account_id)
+      .document_get(&account.account_id)
       .await
       .unwrap()
       .unwrap();
@@ -156,7 +156,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
     // Ensure nothing was overwritten in storage
     assert_eq!(
       initial_state,
-      account_setup.storage.document(&account.account_id).await?.unwrap()
+      account_setup.storage.document_get(&account.account_id).await?.unwrap()
     );
   }
   Ok(())

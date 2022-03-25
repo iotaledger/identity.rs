@@ -62,7 +62,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Deletes the key at `location`.
   ///
   /// This operation is idempotent: it does not fail if the key does not exist.
-  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()>;
+  // Returns true if it removed the key, false if it did nothing.
+  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool>;
 
   /// Signs `data` with the private key at the specified `location`.
   async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
@@ -85,7 +86,9 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Removes the keys and any state for the identity specified by `did`.
   ///
   /// This operation is idempotent: it does not fail if the given `did` does not exist.
-  async fn purge(&self, did: &IotaDID) -> Result<()>;
+  ///
+  /// Returns true if it removed the did, false if it did nothing.
+  async fn purge(&self, did: &IotaDID) -> Result<bool>;
 
   /// Adds the `did -> account_id` mapping to the index.
   ///

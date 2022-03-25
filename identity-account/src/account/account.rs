@@ -138,12 +138,12 @@ where
     // Ensure the identity exists in storage
     let document: IotaDocument = setup
       .storage
-      .document(&account_id)
+      .document_get(&account_id)
       .await?
       .ok_or(Error::IdentityNotFound)?;
     let chain_state: ChainState = setup
       .storage
-      .chain_state(&account_id)
+      .chain_state_get(&account_id)
       .await?
       .ok_or(Error::IdentityNotFound)?;
 
@@ -331,7 +331,7 @@ where
     self
       .storage()
       .deref()
-      .document(&self.account_id)
+      .document_get(&self.account_id)
       .await?
       .ok_or(Error::IdentityNotFound)
   }
@@ -432,10 +432,10 @@ where
   }
 
   async fn store_state(&self) -> Result<()> {
-    self.storage.set_document(&self.account_id, &self.document).await?;
+    self.storage.document_set(&self.account_id, &self.document).await?;
     self
       .storage
-      .set_chain_state(&self.account_id, self.chain_state())
+      .chain_state_set(&self.account_id, self.chain_state())
       .await?;
 
     self.save(false).await?;

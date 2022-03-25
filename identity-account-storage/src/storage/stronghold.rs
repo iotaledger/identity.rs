@@ -24,8 +24,10 @@ use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
+use crate::stronghold::Context;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
+use crate::stronghold::StrongholdError;
 use crate::stronghold::Vault;
 use crate::types::AccountId;
 use crate::types::KeyLocation;
@@ -126,16 +128,25 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
-    let vault: Vault<'_> = self.vault(account_id);
+  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
+    // Explicitly implemented to hold the lock across the existence check & removal.
+    let context: _ = Context::scope(self.snapshot.path(), fmt_account_id(account_id).as_ref(), &[]).await?;
 
-    match location.key_type {
-      KeyType::Ed25519 | KeyType::X25519 => {
-        vault.delete(location.into(), true).await?;
-      }
-    }
+    let exists: bool = context
+      .record_exists(location.into())
+      .await
+      .map_err(StrongholdError::from)?;
 
-    Ok(())
+    context
+      .runtime_exec(procedures::RevokeData {
+        location: location.into(),
+        should_gc: true,
+      })
+      .await
+      .map_err(StrongholdError::from)?
+      .map_err(StrongholdError::from)?;
+
+    Ok(exists)
   }
 
   async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
@@ -199,17 +210,19 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn purge(&self, did: &IotaDID) -> Result<()> {
+  async fn purge(&self, did: &IotaDID) -> Result<bool> {
     let account_id: AccountId = match self.index_get(did).await? {
       Some(account_id) => account_id,
-      None => return Ok(()),
+      None => return Ok(false),
     };
 
     // Remove index entry.
     let store: Store<'_> = self.store(INDEX_PATH);
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
     let mut index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
-    index.remove(did);
+    if index.remove(did).is_none() {
+      return Ok(false);
+    }
     set_index(&store, index).await?;
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
@@ -221,7 +234,7 @@ impl Storage for Stronghold {
 
     // TODO: Remove leftover keys.
 
-    Ok(())
+    Ok(true)
   }
 
   async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {

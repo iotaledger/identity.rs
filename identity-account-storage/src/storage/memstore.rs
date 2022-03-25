@@ -136,13 +136,11 @@ impl Storage for MemStore {
     Ok(keypair.public().clone())
   }
 
-  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<()> {
+  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.get_mut(account_id).ok_or(Error::KeyVaultNotFound)?;
 
-    vault.remove(location);
-
-    Ok(())
+    Ok(vault.remove(location).is_some())
   }
 
   async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
@@ -187,16 +185,17 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn purge(&self, did: &IotaDID) -> Result<()> {
+  async fn purge(&self, did: &IotaDID) -> Result<bool> {
     if let Some(account_id) = self.index_get(did).await? {
       let _ = self.documents.write()?.remove(&account_id);
       let _ = self.vaults.write()?.remove(&account_id);
       let _ = self.chain_states.write()?.remove(&account_id);
 
       self.index.write()?.remove(did);
+      Ok(true)
+    } else {
+      Ok(false)
     }
-
-    Ok(())
   }
 
   async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {
