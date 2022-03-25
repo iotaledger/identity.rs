@@ -571,7 +571,7 @@ async fn test_storage_index() {
 #[tokio::test]
 async fn test_storage_key_move_deletes_old_location() {
   for storage in storages().await {
-    let account_id: AccountId = AccountId::random();
+    let account_id: AccountId = AccountId::generate();
     let source: KeyLocation = KeyLocation::random(KeyType::Ed25519);
     let target: KeyLocation = KeyLocation::random(KeyType::Ed25519);
 

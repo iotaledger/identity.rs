@@ -58,7 +58,7 @@ pub(crate) async fn create_identity(
     UpdateError::InvalidMethodType(method_type)
   );
 
-  let account_id: AccountId = AccountId::random();
+  let account_id: AccountId = AccountId::generate();
 
   let tmp_location: KeyLocation = KeyLocation::random(setup.key_type);
 

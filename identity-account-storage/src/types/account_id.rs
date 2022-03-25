@@ -9,14 +9,25 @@ use uuid::Uuid;
 pub struct AccountId(Uuid);
 
 impl AccountId {
-  /// Creates a new random identifier.
-  pub fn random() -> Self {
+  /// Generates a new random identifier.
+  pub fn generate() -> Self {
     Self(Uuid::new_v4())
+  }
+
+  /// Returns the slice of bytes making up the identifier.
+  pub fn as_bytes(&self) -> &[u8] {
+    self.0.as_bytes()
   }
 }
 
 impl Display for AccountId {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.0)
+  }
+}
+
+impl From<[u8; 16]> for AccountId {
+  fn from(bytes: [u8; 16]) -> Self {
+    Self(Uuid::from_bytes(bytes))
   }
 }
