@@ -4,7 +4,6 @@
 use std::sync::Arc;
 
 use identity_account_storage::storage::MemStore;
-use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -56,7 +55,7 @@ async fn test_create_identity() -> Result<()> {
     assert_eq!(document.core_document().verification_relationships().count(), 1);
     assert_eq!(document.core_document().methods().count(), 1);
 
-    let location: KeyLocation = method.key_location().unwrap();
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
     // Ensure we can retrieve the correct location for the key.
     assert_eq!(
@@ -211,7 +210,7 @@ async fn test_create_method() -> Result<()> {
     assert_eq!(document.core_document().verification_relationships().count(), 1);
     assert_eq!(document.core_document().methods().count(), 2);
 
-    let location = method.key_location().unwrap();
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
     // Ensure we can retrieve the correct location for the key.
     assert_eq!(
@@ -347,7 +346,8 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
     let method: &IotaVerificationMethod = document.resolve_method(&fragment).unwrap();
 
-    let location = method.key_location().unwrap();
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
+
     let public_key = account
       .storage()
       .key_public(&account.account_id, &location)
@@ -598,7 +598,7 @@ async fn test_delete_method() -> Result<()> {
 
   // Ensure it was added.
   let method: &IotaVerificationMethod = account.document().resolve_method(&fragment).unwrap();
-  let location = method.key_location().unwrap();
+  let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
   let update: Update = Update::DeleteMethod {
     fragment: "key-1".to_owned(),

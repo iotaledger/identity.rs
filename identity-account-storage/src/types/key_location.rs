@@ -54,6 +54,23 @@ impl KeyLocation {
       key_hash,
     }
   }
+
+  /// Create the [`KeyLocation`] of an [`IotaVerificationMethod`].
+  pub fn from_verification_method(method: &IotaVerificationMethod) -> crate::Result<Self> {
+    let fragment: &str = method
+      .id()
+      .fragment()
+      .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
+    let method_data: &MethodData = method.data();
+
+    let key_type: KeyType = match method.type_() {
+      MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+      MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+      MethodType::MerkleKeyCollection2021 => todo!(),
+    };
+
+    Ok(KeyLocation::new(key_type, fragment.to_owned(), method_data))
+  }
 }
 
 impl Display for KeyLocation {
@@ -65,28 +82,5 @@ impl Display for KeyLocation {
 impl Debug for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_fmt(format_args!("KeyLocation{}", self))
-  }
-}
-
-pub trait IotaVerificationMethodExt {
-  /// Returns the [`KeyLocation`] of an [`IotaVerificationMethod`].
-  fn key_location(&self) -> crate::Result<KeyLocation>;
-}
-
-impl IotaVerificationMethodExt for IotaVerificationMethod {
-  fn key_location(&self) -> crate::Result<KeyLocation> {
-    let fragment: &str = self
-      .id()
-      .fragment()
-      .ok_or(crate::Error::DIDError(identity_did::Error::MissingIdFragment))?;
-    let method_data: &MethodData = self.data();
-
-    let key_type: KeyType = match self.type_() {
-      MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
-      MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
-      MethodType::MerkleKeyCollection2021 => todo!(),
-    };
-
-    Ok(KeyLocation::new(key_type, fragment.to_owned(), method_data))
   }
 }

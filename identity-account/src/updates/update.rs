@@ -5,7 +5,6 @@ use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::AccountId;
-use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
@@ -83,7 +82,7 @@ pub(crate) async fn create_identity(
     &public_key,
     IotaDocument::DEFAULT_METHOD_FRAGMENT,
   )?;
-  let location: KeyLocation = method.key_location()?;
+  let location: KeyLocation = KeyLocation::from_verification_method(&method)?;
 
   // The key location must be available.
   if store.key_exists(&account_id, &location).await? {
@@ -178,7 +177,7 @@ impl Update {
         let method: IotaVerificationMethod =
           IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment.name())?;
 
-        let location: KeyLocation = method.key_location()?;
+        let location: KeyLocation = KeyLocation::from_verification_method(&method)?;
 
         // The key location must be available.
         if storage.key_exists(&account_id, &location).await? {

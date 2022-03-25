@@ -12,7 +12,6 @@ use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::AccountId;
-use identity_account_storage::types::IotaVerificationMethodExt;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
@@ -264,7 +263,7 @@ where
       .resolve_method(fragment)
       .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
-    let location: KeyLocation = method.key_location()?;
+    let location: KeyLocation = KeyLocation::from_verification_method(method)?;
 
     self
       .remote_sign_data(self.document(), &self.account_id, &location, data, options)
@@ -368,7 +367,7 @@ where
       None => signing_doc.default_signing_method()?,
     };
 
-    let signing_key_location: KeyLocation = signing_method.key_location()?;
+    let signing_key_location: KeyLocation = KeyLocation::from_verification_method(signing_method)?;
 
     self
       .remote_sign_data(
@@ -499,7 +498,7 @@ where
       None => old_doc.default_signing_method()?,
     };
 
-    let signing_key_location: KeyLocation = signing_method.key_location()?;
+    let signing_key_location: KeyLocation = KeyLocation::from_verification_method(signing_method)?;
 
     self
       .remote_sign_data(
