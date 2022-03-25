@@ -13,11 +13,8 @@ use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
-use iota_stronghold::procedures::Chain;
 use iota_stronghold::procedures::Ed25519Sign;
-use iota_stronghold::procedures::Slip10Derive;
-use iota_stronghold::procedures::Slip10DeriveInput;
-use iota_stronghold::procedures::Slip10Generate;
+use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::Location;
 
 use crate::error::Result;
@@ -217,21 +214,12 @@ impl Drop for Stronghold {
 }
 
 async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
-  // Generate a SLIP10 seed as the private key
-  let procedure: Slip10Generate = Slip10Generate {
-    output: location_seed(location),
-    hint: default_hint(),
-    size_bytes: None,
+  let key_type: iota_stronghold::procedures::KeyType = match location.method() {
+    MethodType::Ed25519VerificationKey2018 => iota_stronghold::procedures::KeyType::Ed25519,
+    MethodType::X25519KeyAgreementKey2019 => iota_stronghold::procedures::KeyType::X25519,
   };
-  vault.execute(procedure).await?;
-
-  let chain: Chain = Chain::from_u32_hardened(vec![0, 0, 0]);
-  let seed: Slip10DeriveInput = Slip10DeriveInput::Seed(location_seed(location));
-
-  // Use the SLIP10 seed to derive a child key
-  let procedure: Slip10Derive = Slip10Derive {
-    chain,
-    input: seed,
+  let procedure = GenerateKey {
+    ty: key_type,
     output: location_skey(location),
     hint: default_hint(),
   };
