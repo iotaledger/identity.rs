@@ -11,9 +11,9 @@ use identity_core::diff::DiffOption;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
-use serde::Serialize;
 use serde::Deserialize;
 use serde::Deserializer;
+use serde::Serialize;
 
 use crate::document::IotaDocumentMetadata;
 
