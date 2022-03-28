@@ -3,9 +3,10 @@
 
 use std::str::FromStr;
 
-use identity::core::{OneOrMany, Timestamp};
+use identity::core::OneOrMany;
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
+use identity::core::Timestamp;
 use identity::core::Url;
 use identity::crypto::PrivateKey;
 use identity::crypto::SignatureOptions;
@@ -565,7 +566,7 @@ impl WasmDocument {
 
   /// Sets the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = setMetadataCreated)]
-  pub fn set_metadata_created(&mut self, timestamp: OptionTimestamp)-> Result<()>  {
+  pub fn set_metadata_created(&mut self, timestamp: OptionTimestamp) -> Result<()> {
     let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
     self.0.metadata.created = timestamp;
     Ok(())
