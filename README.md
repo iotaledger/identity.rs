@@ -93,20 +93,22 @@ use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::account_storage::Stronghold;
 use identity::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // The Stronghold settings for the storage.
+  // Stronghold settings.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None); 
 
   // Create a new identity with default settings and
   // Stronghold as the storage.
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
 
