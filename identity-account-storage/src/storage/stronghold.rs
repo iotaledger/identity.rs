@@ -371,8 +371,7 @@ fn fmt_account_id(account_id: &AccountId) -> String {
 
 impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
-    let bytes: Vec<u8> = format!("{}:{}", key_location.fragment, key_location.key_hash).into_bytes();
-    Location::generic("$vault".as_bytes().to_vec(), bytes)
+    Location::generic(b"$vault".to_vec(), key_location.to_string().into_bytes())
   }
 }
 

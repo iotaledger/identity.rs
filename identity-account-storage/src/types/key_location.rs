@@ -76,12 +76,12 @@ impl KeyLocation {
 
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!("({}:{})", self.fragment, self.key_hash))
+    f.write_fmt(format_args!("{}:{}", self.fragment, self.key_hash))
   }
 }
 
 impl Debug for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!("KeyLocation{}", self))
+    f.write_fmt(format_args!("KeyLocation({})", self))
   }
 }
