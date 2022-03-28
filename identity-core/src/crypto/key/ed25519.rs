@@ -1,12 +1,9 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
 use core::marker::PhantomData;
 use crypto::signatures::ed25519;
-use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
-use crypto::signatures::ed25519::SECRET_KEY_LENGTH;
-use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
 use crate::crypto::Sign;
 use crate::crypto::Verify;
@@ -17,18 +14,27 @@ use crate::error::Result;
 #[derive(Clone, Copy, Debug)]
 pub struct Ed25519<T: ?Sized = [u8]>(PhantomData<T>);
 
+impl Ed25519 {
+  /// Length in bytes of an Ed25519 private key.
+  pub const PRIVATE_KEY_LENGTH: usize = ed25519::SECRET_KEY_LENGTH;
+  /// Length in bytes of an Ed25519 public key.
+  pub const PUBLIC_KEY_LENGTH: usize = ed25519::PUBLIC_KEY_LENGTH;
+  /// Length in bytes of an Ed25519 signature.
+  pub const SIGNATURE_LENGTH: usize = ed25519::SIGNATURE_LENGTH;
+}
+
 impl<T> Sign for Ed25519<T>
 where
   T: AsRef<[u8]> + ?Sized,
 {
   type Private = T;
-  type Output = [u8; SIGNATURE_LENGTH];
-  /// Computes an EdDSA/Ed25519 signature.
+  type Output = [u8; Ed25519::SIGNATURE_LENGTH];
+  /// Computes an EdDSA signature using an Ed25519 private key.
   ///
-  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
-    parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
+    ed25519_private_try_from_bytes(key.as_ref()).map(|key| key.sign(message).to_bytes())
   }
 }
 
@@ -38,8 +44,9 @@ where
 {
   type Public = T;
 
+  /// Verifies an EdDSA signature against an Ed25519 public key.
   fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<()> {
-    let key: ed25519::PublicKey = parse_public(key.as_ref())?;
+    let key: ed25519::PublicKey = ed25519_public_try_from_bytes(key.as_ref())?;
     let sig: ed25519::Signature = parse_signature(signature)?;
 
     if key.verify(&sig, message) {
@@ -50,35 +57,33 @@ where
   }
 }
 
-fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
-  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
-    .try_into()
-    .map_err(|_| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
-
-  ed25519::PublicKey::try_from_bytes(bytes).map_err(Into::into)
-}
-
-fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
-  let bytes: [u8; SECRET_KEY_LENGTH] = slice
-    .try_into()
-    .map_err(|_| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
-
-  Ok(ed25519::SecretKey::from_bytes(bytes))
-}
-
 fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {
-  let bytes: [u8; SIGNATURE_LENGTH] = slice
+  let bytes: [u8; Ed25519::SIGNATURE_LENGTH] = slice
     .try_into()
-    .map_err(|_| Error::InvalidSigLength(slice.len(), SIGNATURE_LENGTH))?;
+    .map_err(|_| Error::InvalidSigLength(slice.len(), Ed25519::SIGNATURE_LENGTH))?;
 
   Ok(ed25519::Signature::from_bytes(bytes))
 }
 
+/// Reconstructs an Ed25519 private key from a byte array.
+pub(crate) fn ed25519_private_try_from_bytes(bytes: &[u8]) -> Result<ed25519::SecretKey> {
+  let private_key_bytes: [u8; Ed25519::PRIVATE_KEY_LENGTH] = bytes
+    .try_into()
+    .map_err(|_| crate::Error::InvalidKeyLength(bytes.len(), Ed25519::PRIVATE_KEY_LENGTH))?;
+  Ok(ed25519::SecretKey::from_bytes(private_key_bytes))
+}
+
+/// Reconstructs an Ed25519 public key from a byte array.
+pub(crate) fn ed25519_public_try_from_bytes(bytes: &[u8]) -> Result<ed25519::PublicKey> {
+  let public_key_bytes: [u8; Ed25519::PUBLIC_KEY_LENGTH] = bytes
+    .try_into()
+    .map_err(|_| crate::Error::InvalidKeyLength(bytes.len(), Ed25519::PUBLIC_KEY_LENGTH))?;
+  ed25519::PublicKey::try_from_bytes(public_key_bytes).map_err(Into::into)
+}
+
 #[cfg(test)]
 mod tests {
-  use crate::crypto::Ed25519;
-  use crate::crypto::Sign;
-  use crate::crypto::Verify;
+  use super::*;
 
   // The following test vector is taken from [Test 3 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
   const PUBLIC_KEY_HEX: &str = "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";

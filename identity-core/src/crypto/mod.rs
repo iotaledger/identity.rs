@@ -3,13 +3,13 @@
 
 //! Cryptographic Utilities
 
+pub use self::key::Ed25519;
 pub use self::key::KeyPair;
 pub use self::key::KeyType;
 pub use self::key::PrivateKey;
 pub use self::key::PublicKey;
 pub use self::key::X25519;
 pub use self::proof::JcsEd25519;
-pub use self::signature::Ed25519;
 pub use self::signature::Named;
 pub use self::signature::ProofPurpose;
 pub use self::signature::SetSignature;
