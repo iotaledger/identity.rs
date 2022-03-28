@@ -33,9 +33,9 @@ impl NapiStronghold {
 
   /// Creates an instance of `Stronghold`.
   #[napi]
-  pub async fn new(snapshot: String, password: String, dropsave: Option<bool>) -> Result<NapiStronghold> {
+  pub async fn new(snapshot: String, password: Option<String>, dropsave: Option<bool>) -> Result<NapiStronghold> {
     Ok(NapiStronghold(
-      Stronghold::new(&snapshot, &*password, dropsave).await.napi_result()?,
+      Stronghold::new(&snapshot, password, dropsave).await.napi_result()?,
     ))
   }
 
