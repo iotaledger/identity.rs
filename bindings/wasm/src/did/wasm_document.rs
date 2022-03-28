@@ -3,7 +3,7 @@
 
 use std::str::FromStr;
 
-use identity::core::OneOrMany;
+use identity::core::{OneOrMany, Timestamp};
 use identity::core::OneOrSet;
 use identity::core::OrderedSet;
 use identity::core::Url;
@@ -551,26 +551,30 @@ impl WasmDocument {
 
   /// Returns a copy of the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = metadataCreated)]
-  pub fn metadata_created(&self) -> WasmTimestamp {
-    WasmTimestamp::from(self.0.metadata.created)
+  pub fn metadata_created(&self) -> Option<WasmTimestamp> {
+    self.0.metadata.created.map(WasmTimestamp::from)
   }
 
   /// Sets the timestamp of when the DID document was created.
   #[wasm_bindgen(js_name = setMetadataCreated)]
-  pub fn set_metadata_created(&mut self, timestamp: &WasmTimestamp) {
-    self.0.metadata.created = timestamp.0;
+  pub fn set_metadata_created(&mut self, timestamp: OptionTimestamp)-> Result<()>  {
+    let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
+    self.0.metadata.created = timestamp;
+    Ok(())
   }
 
   /// Returns a copy of the timestamp of the last DID document update.
   #[wasm_bindgen(js_name = metadataUpdated)]
-  pub fn metadata_updated(&self) -> WasmTimestamp {
-    WasmTimestamp::from(self.0.metadata.updated)
+  pub fn metadata_updated(&self) -> Option<WasmTimestamp> {
+    self.0.metadata.updated.map(WasmTimestamp::from)
   }
 
   /// Sets the timestamp of the last DID document update.
   #[wasm_bindgen(js_name = setMetadataUpdated)]
-  pub fn set_metadata_updated(&mut self, timestamp: &WasmTimestamp) {
-    self.0.metadata.updated = timestamp.0;
+  pub fn set_metadata_updated(&mut self, timestamp: OptionTimestamp) -> Result<()> {
+    let timestamp: Option<Timestamp> = timestamp.into_serde().wasm_result()?;
+    self.0.metadata.updated = timestamp;
+    Ok(())
   }
 
   /// Returns a copy of the previous integration chain message id.
@@ -655,4 +659,7 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Map<string, any>")]
   pub type MapStringAny;
+
+  #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
+  pub type OptionTimestamp;
 }

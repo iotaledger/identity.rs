@@ -43,7 +43,7 @@ pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair)
     let new: IotaDocument = {
       let mut this: IotaDocument = chain.current().clone().document;
       this.properties_mut().insert(i.to_string(), 123.into());
-      this.metadata.updated = Timestamp::now_utc();
+      this.metadata.updated = Some(Timestamp::now_utc());
       this
     };
 
@@ -87,7 +87,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
       .authentication_mut()
       .append(authentication);
 
-    new.document.metadata.updated = Timestamp::now_utc();
+    new.document.metadata.updated = Some(Timestamp::now_utc());
     new.document.metadata.previous_message_id = *chain.integration_message_id();
 
     chain

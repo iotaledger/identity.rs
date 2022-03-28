@@ -400,7 +400,7 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       new_doc.properties_mut().insert("foo".into(), 123.into());
       new_doc.properties_mut().insert("bar".into(), 456.into());
       new_doc.metadata.previous_message_id = *account.chain_state().last_integration_message_id();
-      new_doc.metadata.updated = Timestamp::now_utc();
+      new_doc.metadata.updated = Some(Timestamp::now_utc());
       account
         .sign(
           IotaDocument::DEFAULT_METHOD_FRAGMENT,
@@ -442,7 +442,7 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       let mut new_doc: IotaDocument = account.document().clone();
       new_doc.properties_mut().insert("foo".into(), 123.into());
       new_doc.properties_mut().insert("bar".into(), 456.into());
-      new_doc.metadata.updated = Timestamp::now_utc();
+      new_doc.metadata.updated = Some(Timestamp::now_utc());
       let mut diff_msg: DiffMessage = DiffMessage::new(
         account.document(),
         &new_doc,

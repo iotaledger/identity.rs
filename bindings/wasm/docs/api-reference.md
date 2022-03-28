@@ -1370,9 +1370,9 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.mergeDiff(diff)](#Document+mergeDiff)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.metadata()](#Document+metadata) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
-        * [.metadataCreated()](#Document+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.metadataCreated()](#Document+metadataCreated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.setMetadataCreated(timestamp)](#Document+setMetadataCreated)
-        * [.metadataUpdated()](#Document+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.metadataUpdated()](#Document+metadataUpdated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
         * [.setMetadataUpdated(timestamp)](#Document+setMetadataUpdated)
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
@@ -1778,7 +1778,7 @@ NOTE: Copies all the metadata. See also `metadataCreated`, `metadataUpdated`,
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+metadataCreated"></a>
 
-### document.metadataCreated() ⇒ [<code>Timestamp</code>](#Timestamp)
+### document.metadataCreated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Returns a copy of the timestamp of when the DID document was created.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1791,11 +1791,11 @@ Sets the timestamp of when the DID document was created.
 
 | Param | Type |
 | --- | --- |
-| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
 
 <a name="Document+metadataUpdated"></a>
 
-### document.metadataUpdated() ⇒ [<code>Timestamp</code>](#Timestamp)
+### document.metadataUpdated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Returns a copy of the timestamp of the last DID document update.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1808,7 +1808,7 @@ Sets the timestamp of the last DID document update.
 
 | Param | Type |
 | --- | --- |
-| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+| timestamp | [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code> | 
 
 <a name="Document+metadataPreviousMessageId"></a>
 
@@ -1993,8 +1993,8 @@ Additional attributes related to an IOTA DID Document.
 
 * [DocumentMetadata](#DocumentMetadata)
     * [.previousMessageId](#DocumentMetadata+previousMessageId) ⇒ <code>string</code>
-    * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp)
-    * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp)
+    * [.created()](#DocumentMetadata+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+    * [.updated()](#DocumentMetadata+updated) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
     * [.clone()](#DocumentMetadata+clone) ⇒ [<code>DocumentMetadata</code>](#DocumentMetadata)
 
 <a name="DocumentMetadata+previousMessageId"></a>
@@ -2003,13 +2003,13 @@ Additional attributes related to an IOTA DID Document.
 **Kind**: instance property of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="DocumentMetadata+created"></a>
 
-### documentMetadata.created() ⇒ [<code>Timestamp</code>](#Timestamp)
+### documentMetadata.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Returns a copy of the timestamp of when the DID document was created.
 
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  
 <a name="DocumentMetadata+updated"></a>
 
-### documentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp)
+### documentMetadata.updated() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
 Returns a copy of the timestamp of the last DID document update.
 
 **Kind**: instance method of [<code>DocumentMetadata</code>](#DocumentMetadata)  

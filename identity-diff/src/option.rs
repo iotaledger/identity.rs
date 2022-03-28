@@ -38,9 +38,11 @@ where
 
   /// Merges a `DiffOption<T>`; `diff` type with an `Option<T>` type; `self`.
   fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
+    println!("self {:?}", self);
+    println!("diff {:?}", &diff);
     match (self, diff) {
       (None, DiffOption::None) => Ok(None),
-      (Some(_), DiffOption::None) => Ok(self.clone()),
+      (Some(_), DiffOption::None) => Ok(None),
       (None, DiffOption::Some(ref d)) => Ok(Some(<T>::from_diff(d.clone())?)),
       (Some(t), DiffOption::Some(ref d)) => Ok(Some(t.merge(d.clone())?)),
     }

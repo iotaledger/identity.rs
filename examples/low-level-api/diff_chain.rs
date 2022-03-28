@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
       "serviceEndpoint": "https://example.com/"
     }))?;
     assert!(doc.insert_service(service));
-    doc.metadata.updated = Timestamp::now_utc();
+    doc.metadata.updated = Some(Timestamp::now_utc());
     doc
   };
 

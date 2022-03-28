@@ -686,8 +686,8 @@ mod tests {
 
   fn valid_metadata() -> IotaDocumentMetadata {
     let mut metadata: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    metadata.created = Timestamp::parse("2020-01-02T00:00:00Z").unwrap();
-    metadata.updated = Timestamp::parse("2020-01-02T00:00:00Z").unwrap();
+    metadata.created = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
+    metadata.updated = Some(Timestamp::parse("2020-01-02T00:00:00Z").unwrap());
     metadata
   }
 
