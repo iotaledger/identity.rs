@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-wasm",
-  "version": "0.5.0-dev.5",
+  "version": "0.5.0-dev.6",
   "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "example:account": "ts-node ./examples-account/src/node.ts",
-    "test": "npm run test:unit && npm run test:examples",
+    "test": "npm run test:unit && npm run test:unit:node && npm run test:examples",
     "test:examples": "concurrently -g --timings \"npm:test:node\" \"npm:test:account:node\" \"npm:test:browser:parallel\" \"npm:test:readme\"",
     "test:node": "mocha ./examples/dist/tests/node/*.js --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
     "test:account:node": "ts-mocha ./examples-account/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
@@ -29,6 +29,7 @@
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
     "test:unit": "wasm-pack test --release --node",
+    "test:unit:node": "mocha ./tests/account.js --parallel --exit",
     "cypress": "cypress open"
   },
   "contributors": [

@@ -13,7 +13,6 @@ use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
 use identity_iota::chain::DocumentChain;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
@@ -31,8 +30,8 @@ use crate::account::AccountSetup;
 use crate::account::AccountStorage;
 use crate::account::AutoSave;
 use crate::account::PublishOptions;
-use crate::identity::IdentitySetup;
-
+use crate::types::IdentitySetup;
+use crate::types::MethodContent;
 use crate::Error;
 use crate::Result;
 
@@ -69,10 +68,10 @@ async fn test_account_builder() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_account_chain_state() -> Result<()> {
+async fn test_account_chain_state() {
   let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
 
-  let mut account: Account = builder.create_identity(IdentitySetup::default()).await?;
+  let mut account: Account = builder.create_identity(IdentitySetup::default()).await.unwrap();
 
   let last_int_id = *account.chain_state().last_integration_message_id();
 
@@ -87,9 +86,10 @@ async fn test_account_chain_state() -> Result<()> {
     .create_service()
     .fragment("my-service-1")
     .type_("MyCustomService")
-    .endpoint(Url::parse("https://example.com")?)
+    .endpoint(Url::parse("https://example.com").unwrap())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   // A diff update does not overwrite the int message id.
   assert_eq!(&last_int_id, account.chain_state().last_integration_message_id());
@@ -100,28 +100,30 @@ async fn test_account_chain_state() -> Result<()> {
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("my-new-key")
     .scope(MethodScope::capability_invocation())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   // Int message id was overwritten.
   assert_ne!(&last_int_id, account.chain_state().last_integration_message_id());
-
-  Ok(())
 }
 
 #[tokio::test]
-async fn test_account_autopublish() -> Result<()> {
+async fn test_account_autopublish() {
   // ===========================================================================
   // Create, update and "publish" an identity
   // ===========================================================================
 
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let client = ClientBuilder::new().node_sync_disabled().build().await.unwrap();
   let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
-  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new())
+    .await
+    .unwrap();
 
   account
     .update_identity()
@@ -130,7 +132,8 @@ async fn test_account_autopublish() -> Result<()> {
     .type_("LinkedDomains")
     .endpoint(Url::parse("https://example.org").unwrap())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   account
     .update_identity()
@@ -139,12 +142,13 @@ async fn test_account_autopublish() -> Result<()> {
     .type_("LinkedDomains")
     .endpoint(Url::parse("https://example.org").unwrap())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   assert!(account.chain_state().last_integration_message_id().is_null());
   assert!(account.chain_state().last_diff_message_id().is_null());
 
-  account.publish().await?;
+  account.publish().await.unwrap();
 
   let last_int_message_id = *account.chain_state().last_integration_message_id();
 
@@ -173,23 +177,27 @@ async fn test_account_autopublish() -> Result<()> {
     .delete_service()
     .fragment("my-service")
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   account
     .update_identity()
     .delete_service()
     .fragment("my-other-service")
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("new-method")
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
-  account.publish().await?;
+  account.publish().await.unwrap();
 
   // No integration message was published
   assert_eq!(
@@ -220,13 +228,15 @@ async fn test_account_autopublish() -> Result<()> {
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("signing-key")
     // Forces an integration update by adding a method able to update the document.
     .scope(MethodScope::capability_invocation())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
-  account.publish().await?;
+  account.publish().await.unwrap();
 
   // Another int update was published.
   assert_ne!(
@@ -236,49 +246,54 @@ async fn test_account_autopublish() -> Result<()> {
 
   // Diff message id was reset.
   assert!(account.chain_state().last_diff_message_id().is_null());
-
-  Ok(())
 }
 
 #[tokio::test]
-async fn test_account_publish_options_sign_with() -> Result<()> {
+async fn test_account_publish_options_sign_with() {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let client = ClientBuilder::new().node_sync_disabled().build().await.unwrap();
   let account_config = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
 
   let auth_method = "auth-method";
   let signing_method = "singing-method-2";
   let invalid_signing_method = "invalid-signing-method";
 
-  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+  let mut account = Account::create_identity(account_config, IdentitySetup::new())
+    .await
+    .unwrap();
 
   // Add an Authentication method unable to sign DID Document updates.
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment(auth_method)
     .scope(MethodScope::authentication())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   // Add a valid CapabilityInvocation method able to sign DID Document updates.
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment(signing_method)
     .scope(MethodScope::capability_invocation())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   // Add a CapabilityInvocation method unable to sign DID Document updates.
   account
     .update_identity()
     .create_method()
-    .type_(MethodType::X25519KeyAgreementKey2019)
+    .content(MethodContent::GenerateX25519)
     .fragment(invalid_signing_method)
     .scope(MethodScope::capability_invocation())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   // INVALID: try sign with a non-existent method.
   assert!(matches!(
@@ -315,16 +330,16 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
     .publish_with_options(PublishOptions::default().sign_with(signing_method))
     .await
     .is_ok());
-
-  Ok(())
 }
 
 #[tokio::test]
-async fn test_account_publish_options_force_integration() -> Result<()> {
+async fn test_account_publish_options_force_integration() {
   let config = AccountConfig::default().autopublish(false).testmode(true);
-  let client = ClientBuilder::new().node_sync_disabled().build().await?;
+  let client = ClientBuilder::new().node_sync_disabled().build().await.unwrap();
   let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
-  let mut account = Account::create_identity(account_setup, IdentitySetup::new()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new())
+    .await
+    .unwrap();
 
   account.publish().await.unwrap();
 
@@ -333,10 +348,12 @@ async fn test_account_publish_options_force_integration() -> Result<()> {
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("test-auth")
     .scope(MethodScope::authentication())
     .apply()
-    .await?;
+    .await
+    .unwrap();
 
   account
     .publish_with_options(PublishOptions::default().force_integration_update(true))
@@ -346,8 +363,6 @@ async fn test_account_publish_options_force_integration() -> Result<()> {
   // Ensure update was published on integration chain.
   assert_ne!(account.chain_state().last_integration_message_id(), &last_int_id);
   assert_eq!(account.chain_state().last_diff_message_id(), &MessageId::null());
-
-  Ok(())
 }
 
 #[tokio::test]
@@ -379,7 +394,7 @@ async fn test_account_sync_no_changes() -> Result<()> {
         .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
         .apply()
-        .await?;
+        .await.unwrap();
 
       let old_document: IotaDocument = account.document().clone();
       let old_chain_state: ChainState = account.chain_state().clone();
@@ -392,12 +407,13 @@ async fn test_account_sync_no_changes() -> Result<()> {
       Ok(())
     })
   })
-  .await?;
+  .await
+  .unwrap();
   Ok(())
 }
 
 #[tokio::test]
-async fn test_account_sync_integration_msg_update() -> Result<()> {
+async fn test_account_sync_integration_msg_update() {
   network_resilient_test(2, |n| {
     Box::pin(async move {
       let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
@@ -430,17 +446,17 @@ async fn test_account_sync_integration_msg_update() -> Result<()> {
       );
       assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
       // Ensure state was written into storage.
-      let storage_document: IotaDocument = account.load_document().await?;
+      let storage_document: IotaDocument = account.load_document().await.unwrap();
       assert_eq!(&storage_document, account.document());
       Ok(())
     })
   })
-  .await?;
-  Ok(())
+  .await
+  .unwrap();
 }
 
 #[tokio::test]
-async fn test_account_sync_diff_msg_update() -> Result<()> {
+async fn test_account_sync_diff_msg_update() {
   network_resilient_test(2, |n| {
     Box::pin(async move {
       let network = if n % 2 == 0 { Network::Devnet } else { Network::Mainnet };
@@ -482,13 +498,13 @@ async fn test_account_sync_diff_msg_update() -> Result<()> {
       );
       assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
       // Ensure state was written into storage.
-      let storage_document: IotaDocument = account.load_document().await?;
+      let storage_document: IotaDocument = account.load_document().await.unwrap();
       assert_eq!(&storage_document, account.document());
       Ok(())
     })
   })
-  .await?;
-  Ok(())
+  .await
+  .unwrap();
 }
 
 async fn create_account(network: Network) -> Account {

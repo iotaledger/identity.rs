@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
+import { AccountBuilder, ExplorerUrl, Storage } from '../../node';
 
 /**
  * This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle

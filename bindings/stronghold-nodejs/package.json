@@ -1,6 +1,6 @@
 {
   "name": "@iota/identity-stronghold-nodejs",
-  "version": "0.5.0-dev.5",
+  "version": "0.5.0-dev.6",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -31,7 +31,8 @@
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-dts": "^4.1.0",
     "ts-mocha": "^9.0.2",
-    "ts-node": "^10.5.0"
+    "ts-node": "^10.5.0",
+    "txm": "^8.0.1"
   },
   "engines": {
     "node": ">= 16"
@@ -39,14 +40,16 @@
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "npm run build:napi && npm run build:ts",
-    "build:ts": "rollup -c",
+    "build:ts": "rollup -c --failAfterWarnings",
     "build:napi": "cross-env-shell napi build --platform --release --js napi-dist/napi.js --dts napi.d.ts $NPM_BUILD_NAPI_ARGS napi-dist",
     "build:napi:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm --skip-gh-release",
     "create-npm-dir": "napi create-npm-dir --target ./ ",
-    "test": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit"
+    "test": "npm run test:readme && npm run test:examples",
+    "test:examples": "ts-mocha ./examples/src/tests/*.ts --parallel --jobs 4 --retries 3 --timeout 180000 --exit",
+    "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit"
   },
   "peerDependencies": {
-    "@iota/identity-wasm": "0.5.0-dev.5"
+    "@iota/identity-wasm": "0.5.0-dev.6"
   }
 }

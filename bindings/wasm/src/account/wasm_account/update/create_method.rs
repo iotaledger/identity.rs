@@ -7,23 +7,21 @@ use std::rc::Rc;
 
 use identity::account::CreateMethodBuilder;
 use identity::account::IdentityUpdater;
-use identity::account::MethodSecret;
+use identity::account::MethodContent;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::did::MethodScope;
-use identity::did::MethodType;
 use identity::iota::Client;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::account::types::OptionMethodSecret;
-use crate::account::types::WasmMethodSecret;
+use crate::account::types::OptionMethodContent;
+use crate::account::types::WasmMethodContent;
 use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
 use crate::common::PromiseVoid;
 use crate::did::OptionMethodScope;
-use crate::did::OptionMethodType;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -32,32 +30,28 @@ impl WasmAccount {
   /// Adds a new verification method to the DID document.
   #[wasm_bindgen(js_name = createMethod)]
   pub fn create_method(&mut self, options: &CreateMethodOptions) -> Result<PromiseVoid> {
-    let method_type: Option<MethodType> = options.methodType().into_serde().wasm_result()?;
-
     let fragment: String = options
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
-
-    let method_scope: Option<MethodScope> = options.methodScope().into_serde().wasm_result()?;
-    let method_secret: Option<WasmMethodSecret> = options.methodSecret().into_serde().wasm_result()?;
+    let scope: Option<MethodScope> = options.scope().into_serde().wasm_result()?;
+    let content: MethodContent = options
+      .content()
+      .into_serde::<Option<WasmMethodContent>>()
+      .wasm_result()?
+      .map(MethodContent::from)
+      .ok_or(MissingRequiredField("content"))
+      .wasm_result()?;
 
     let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
       let mut account: RefMut<AccountRc> = account.borrow_mut();
       let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
-      let mut create_method: CreateMethodBuilder<'_, Rc<Client>> = updater.create_method().fragment(fragment);
 
-      if let Some(type_) = method_type {
-        create_method = create_method.type_(type_);
-      };
-
-      if let Some(scope) = method_scope {
+      let mut create_method: CreateMethodBuilder<'_, Rc<Client>> =
+        updater.create_method().content(content).fragment(fragment);
+      if let Some(scope) = scope {
         create_method = create_method.scope(scope);
-      };
-
-      if let Some(method_secret) = method_secret.map(MethodSecret::try_from).transpose()? {
-        create_method = create_method.method_secret(method_secret);
       };
 
       create_method.apply().await.wasm_result().map(|_| JsValue::undefined())
@@ -76,13 +70,10 @@ extern "C" {
   pub fn fragment(this: &CreateMethodOptions) -> Option<String>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn methodScope(this: &CreateMethodOptions) -> OptionMethodScope;
+  pub fn scope(this: &CreateMethodOptions) -> OptionMethodScope;
 
   #[wasm_bindgen(getter, method)]
-  pub fn methodType(this: &CreateMethodOptions) -> OptionMethodType;
-
-  #[wasm_bindgen(getter, method)]
-  pub fn methodSecret(this: &CreateMethodOptions) -> OptionMethodSecret;
+  pub fn content(this: &CreateMethodOptions) -> OptionMethodContent;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -99,16 +90,11 @@ export type CreateMethodOptions = {
     /**
      * The scope of the method, defaults to VerificationMethod.
      */
-    methodScope?: MethodScope,
+    scope?: MethodScope,
 
     /**
-     * The type of the method, defaults to Ed25519VerificationKey2018.
+     * Method content for the new method.
      */
-    methodType?: MethodType,
-
-    /**
-     * The private key to use for the method, optional. A new private key will be generated if omitted.
-     */
-    methodSecret?: MethodSecret
+    content: MethodContent
   };
 "#;
