@@ -227,14 +227,14 @@ impl WasmAccount {
   ///
   /// If a DID is managed from distributed accounts, this should be called before making changes
   /// to the identity, to avoid publishing updates that would be ignored.
-  #[wasm_bindgen(js_name = fetchState)]
-  pub fn fetch_state(&mut self) -> PromiseVoid {
+  #[wasm_bindgen(js_name = fetchDocument)]
+  pub fn fetch_document(&mut self) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
       account
         .as_ref()
         .borrow_mut()
-        .fetch_state()
+        .fetch_document()
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
