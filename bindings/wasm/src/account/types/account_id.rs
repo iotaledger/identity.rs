@@ -20,6 +20,7 @@ impl WasmAccountId {
   }
 
   /// Returns a string representation of the identifier.
+  #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.0.to_string()
@@ -34,9 +35,7 @@ impl WasmAccountId {
   /// Constructs an `AccountId` from 16 bytes.
   #[wasm_bindgen(js_name = fromBytes)]
   pub fn from_bytes(bytes: Vec<u8>) -> Result<WasmAccountId> {
-    let bytes: [u8; 16] = bytes
-      .try_into()
-      .map_err(|_| JsValue::from_str("expected 16 bytes"))?;
+    let bytes: [u8; 16] = bytes.try_into().map_err(|_| JsValue::from_str("expected 16 bytes"))?;
 
     Ok(Self(AccountId::from(bytes)))
   }
