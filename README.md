@@ -90,7 +90,6 @@ tokio = { version = "1.14", features = ["full"] }
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::account_storage::Stronghold;
@@ -103,7 +102,7 @@ async fn main() -> Result<()> {
   // Stronghold settings.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
-  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None); 
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None).await?;
 
   // Create a new identity with default settings and
   // Stronghold as the storage.
