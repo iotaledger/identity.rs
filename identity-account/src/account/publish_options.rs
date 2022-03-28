@@ -25,6 +25,7 @@ impl PublishOptions {
   /// for identities with many updates.
   ///
   /// See the IOTA DID method specification for more details.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[must_use]
   pub fn force_integration_update(mut self, force: bool) -> Self {
     self.force_integration_update = force;

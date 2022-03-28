@@ -1,6 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod method_secret;
+pub use self::identity_setup::*;
+pub use self::identity_updater::*;
+pub use self::method_content::*;
 
-pub use self::method_secret::*;
+mod identity_setup;
+mod identity_updater;
+mod method_content;

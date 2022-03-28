@@ -9,6 +9,7 @@ use crate::crypto::WasmKeyType;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmMethodData;
+use crate::did::WasmMethodType;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -52,8 +53,8 @@ impl WasmVerificationMethod {
 
   /// Returns a copy of the `VerificationMethod` type.
   #[wasm_bindgen(js_name = type)]
-  pub fn type_(&self) -> String {
-    self.0.type_().as_str().into()
+  pub fn type_(&self) -> WasmMethodType {
+    WasmMethodType::from(self.0.type_())
   }
 
   /// Returns a copy of the `VerificationMethod` public key data.

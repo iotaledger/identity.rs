@@ -21,18 +21,21 @@ use crate::error::Result;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
   chain_i: IntegrationChain,
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   chain_d: DiffChain,
   #[serde(skip_serializing_if = "Option::is_none")]
   document: Option<ResolvedIotaDocument>,
 }
 
 impl DocumentChain {
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub(crate) fn __diff_message_id<'a>(chain_i: &'a IntegrationChain, diff: &'a DiffChain) -> &'a MessageId {
     diff
       .current_message_id()
       .unwrap_or_else(|| chain_i.current_message_id())
   }
 
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub(crate) fn __fold(chain_i: &IntegrationChain, chain_d: &DiffChain) -> Result<ResolvedIotaDocument> {
     let mut document: ResolvedIotaDocument = chain_i.current().clone();
 
@@ -53,6 +56,7 @@ impl DocumentChain {
   }
 
   /// Creates a new [`DocumentChain`] from given the [`IntegrationChain`] and [`DiffChain`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn new_with_diff_chain(chain_i: IntegrationChain, chain_d: DiffChain) -> Result<Self> {
     let document: Option<ResolvedIotaDocument> = if chain_d.is_empty() {
       None
@@ -83,11 +87,13 @@ impl DocumentChain {
   }
 
   /// Returns a reference to the [`DiffChain`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff(&self) -> &DiffChain {
     &self.chain_d
   }
 
   /// Returns a mutable reference to the [`DiffChain`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff_mut(&mut self) -> &mut DiffChain {
     &mut self.chain_d
   }
@@ -114,6 +120,7 @@ impl DocumentChain {
   }
 
   /// Returns the Tangle [`MessageId`] of the latest diff or integration [`ResolvedIotaDocument`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff_message_id(&self) -> &MessageId {
     Self::__diff_message_id(&self.chain_i, &self.chain_d)
   }
@@ -137,6 +144,7 @@ impl DocumentChain {
   /// # Errors
   ///
   /// Fails if the diff is invalid.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn try_push_diff(&mut self, diff: DiffMessage) -> Result<()> {
     // Use the latest document state to validate the diff.
     let integration_document: &ResolvedIotaDocument = self.document.as_ref().unwrap_or_else(|| self.chain_i.current());

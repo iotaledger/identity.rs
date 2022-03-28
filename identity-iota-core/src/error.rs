@@ -5,6 +5,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[error("{0}")]
   DiffError(#[from] identity_core::diff::Error),
   #[error("{0}")]

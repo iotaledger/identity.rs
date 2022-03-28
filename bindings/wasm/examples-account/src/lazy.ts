@@ -4,11 +4,6 @@
 import {
     AccountBuilder,
     ExplorerUrl,
-    KeyPair,
-    KeyType,
-    MethodScope,
-    MethodSecret,
-    MethodType,
     Storage
 } from '../../node';
 

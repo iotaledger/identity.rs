@@ -1,9 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::module_inception)]
 
-pub use self::ed25519::Ed25519;
 pub use self::signature::Signature;
 pub use self::signature_options::ProofPurpose;
 pub use self::signature_options::SignatureOptions;
@@ -17,7 +16,6 @@ pub use self::traits::TrySignatureMut;
 pub use self::traits::Verifier;
 pub use self::traits::Verify;
 
-mod ed25519;
 mod signature;
 mod signature_options;
 mod signature_value;

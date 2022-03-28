@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExplorerUrl, AccountBuilder, MethodRelationship, Storage } from './../../node/identity_wasm.js';
+import {AccountBuilder, ExplorerUrl, MethodContent, MethodRelationship, Storage} from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates how to manipulate a DID Document by adding/removing
@@ -25,6 +25,7 @@ async function manipulateIdentity(storage?: Storage) {
 
     // Add another Ed25519 verification method to the identity.
     await account.createMethod({
+        content: MethodContent.GenerateEd25519(),
         fragment: "my-next-key"
     })
 
@@ -45,7 +46,7 @@ async function manipulateIdentity(storage?: Storage) {
     })
 
     // Remove the Ed25519 verification method.
-    await account.deleteMethod({ fragment: "my-next-key" })
+    await account.deleteMethod({fragment: "my-next-key"})
 
     // Retrieve the DID of the newly created identity.
     let did = account.did();
@@ -54,4 +55,4 @@ async function manipulateIdentity(storage?: Storage) {
     console.log(`Explorer Url:`, ExplorerUrl.mainnet().resolverUrl(did));
 }
 
-export { manipulateIdentity };
+export {manipulateIdentity};

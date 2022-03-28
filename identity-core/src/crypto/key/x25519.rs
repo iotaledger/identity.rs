@@ -4,18 +4,23 @@
 use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 
+use crate::crypto::key::ed25519::ed25519_private_try_from_bytes;
+use crate::crypto::key::ed25519::ed25519_public_try_from_bytes;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::utils::ed25519_private_try_from_bytes;
-use crate::utils::ed25519_public_try_from_bytes;
 use crate::Result;
 
-/// An implementation of `X25519` Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
+/// An implementation of X25519 Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
 pub struct X25519;
 
 impl X25519 {
-  /// Performs a cryptographic key exchange process (e.g. Diffie-Hellman) using the private key
-  /// of the first party with the public key of the second party, resulting in a shared secret.
+  /// Length in bytes of an X25519 private key.
+  pub const PRIVATE_KEY_LENGTH: usize = x25519::SECRET_KEY_LENGTH;
+  /// Length in bytes of an X25519 public key.
+  pub const PUBLIC_KEY_LENGTH: usize = x25519::PUBLIC_KEY_LENGTH;
+
+  /// Performs Diffie-Hellman key exchange using the private key of the first party with the
+  /// public key of the second party, resulting in a shared secret.
   pub fn key_exchange<PRV, PUB>(private: &PRV, public: &PUB) -> Result<[u8; 32]>
   where
     PRV: AsRef<[u8]> + ?Sized,
@@ -55,9 +60,10 @@ impl X25519 {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use crate::crypto::KeyPair;
   use crate::crypto::KeyType;
+
+  use super::*;
 
   #[test]
   fn test_x25519_test_vector() {

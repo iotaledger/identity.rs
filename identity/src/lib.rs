@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
+#![allow(deprecated)]
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]
@@ -26,6 +27,7 @@ pub mod core {
   pub use identity_core::error::*;
   pub use identity_core::utils::*;
 
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[doc(inline)]
   pub use identity_core::diff;
 
@@ -96,7 +98,6 @@ pub mod account {
 
   pub use identity_account::account::*;
   pub use identity_account::error::*;
-  pub use identity_account::identity::*;
   pub use identity_account::types::*;
   pub use identity_account::updates::*;
 }

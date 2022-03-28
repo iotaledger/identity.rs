@@ -7,6 +7,8 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+use serde::Serialize;
+
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
@@ -24,12 +26,11 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::MessageIdExt;
-use serde::Serialize;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::identity::IdentitySetup;
-use crate::identity::IdentityUpdater;
+use crate::types::IdentitySetup;
+use crate::types::IdentityUpdater;
 use crate::updates::create_identity;
 use crate::updates::Update;
 use crate::Error;
@@ -383,10 +384,18 @@ where
       let old_state: IdentityState = self.load_state().await?;
       let new_state: &IdentityState = self.state();
 
+      // NOTE: always publish an integration update (if needed); diff chain slated for removal.
       let publish_type: Option<PublishType> = if options.force_integration_update {
         Some(PublishType::Integration)
+      } else if let Some(publish_type) = PublishType::new(old_state.document(), new_state.document()) {
+        if self.config.testmode {
+          // Allow tests to pass as normal.
+          Some(publish_type)
+        } else {
+          Some(PublishType::Integration)
+        }
       } else {
-        PublishType::new(old_state.document(), new_state.document())
+        None
       };
 
       match publish_type {
@@ -450,8 +459,7 @@ where
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
-      let mut bytes: [u8; 32] = [0; 32];
-      crypto::utils::rand::fill(&mut bytes)?;
+      let bytes: [u8; 32] = rand::random();
       MessageId::new(bytes)
     } else {
       self.client.publish_document(&new_doc).await?.into()
@@ -517,8 +525,7 @@ where
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
-      let mut bytes: [u8; 32] = [0; 32];
-      crypto::utils::rand::fill(&mut bytes)?;
+      let bytes: [u8; 32] = rand::random();
       MessageId::new(bytes)
     } else {
       self

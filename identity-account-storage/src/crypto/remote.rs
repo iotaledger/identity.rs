@@ -18,6 +18,7 @@ use identity_iota_core::did::IotaDID;
 
 use crate::storage::Storage;
 use crate::types::KeyLocation;
+use crate::types::Signature as StorageSignature;
 
 pub struct RemoteEd25519;
 
@@ -51,7 +52,7 @@ impl RemoteEd25519 {
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
-    let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?;
+    let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?.into();
     let signature: String = encode_b58(&signature);
     Ok(SignatureValue::Signature(signature))
   }
@@ -85,12 +86,11 @@ pub struct RemoteSign<'a> {
 }
 
 impl<'a> RemoteSign<'a> {
-  pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<Vec<u8>> {
+  pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<StorageSignature> {
     key
       .store
       .key_sign(key.did, key.location, message.to_vec())
       .await
       .map_err(|_| Error::InvalidProofValue("remote sign"))
-      .map(|signature| signature.data)
   }
 }

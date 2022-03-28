@@ -504,6 +504,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the diff operation or signature operation fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff<'query, 's: 'query, Q>(
     &'query self,
     other: &Self,
@@ -531,6 +532,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn verify_diff(&self, diff: &DiffMessage) -> Result<()> {
     // Ensure signing method is allowed to sign document updates.
     let options = VerifierOptions::default()
@@ -549,6 +551,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature operation fails.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn merge_diff(&mut self, diff: &DiffMessage) -> Result<()> {
     self.verify_diff(diff)?;
 
@@ -576,6 +579,7 @@ impl IotaDocument {
   /// from documents published on the integration chain.
   ///
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff_index(message_id: &MessageId) -> Result<String> {
     if message_id.is_null() {
       return Err(Error::InvalidDocumentMessageId);

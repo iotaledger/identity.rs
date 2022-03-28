@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
+#![allow(deprecated)]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
@@ -15,12 +16,13 @@
   // clippy::missing_errors_doc
 )]
 
-pub mod account;
-pub mod error;
-pub mod identity;
-#[cfg(test)]
-mod tests;
-pub mod types;
-pub mod updates;
 pub use self::error::Error;
 pub use self::error::Result;
+
+#[cfg(test)]
+mod tests;
+
+pub mod account;
+pub mod error;
+pub mod types;
+pub mod updates;

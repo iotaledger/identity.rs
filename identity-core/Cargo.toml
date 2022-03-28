@@ -1,6 +1,6 @@
 [package]
 name = "identity-core"
-version = "0.5.0-dev.5"
+version = "0.5.0-dev.6"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -12,7 +12,7 @@ description = "The core traits and types for the identity-rs library."
 
 [dependencies]
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
-identity-diff = { version = "=0.5.0-dev.5", path = "../identity-diff", default-features = false }
+identity-diff = { version = "=0.5.0-dev.6", path = "../identity-diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_jcs = { version = "0.1", default-features = false }
@@ -36,9 +36,6 @@ hex = { version = "0.4", default-features = false }
 proptest = { version = "1.0.0" }
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
-
-[features]
-bindings-derive = []
 
 [package.metadata.docs.rs]
 # To build locally:

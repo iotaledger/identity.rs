@@ -15,8 +15,8 @@ pub enum UpdateError {
   InvalidMethodType(MethodType),
   #[error("invalid method fragment - {0}")]
   InvalidMethodFragment(&'static str),
-  #[error("invalid method secret: {0}")]
-  InvalidMethodSecret(String),
+  #[error("invalid method content: {0}")]
+  InvalidMethodContent(String),
   #[error("missing required field - {0}")]
   MissingRequiredField(&'static str),
   #[error("duplicate key location - {0}")]

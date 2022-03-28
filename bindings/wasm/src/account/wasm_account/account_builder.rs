@@ -96,10 +96,7 @@ impl WasmAccountBuilder {
   /// @See {@link IdentitySetup} to customize the identity creation.
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
-    let setup: IdentitySetup = identity_setup
-      .map(IdentitySetup::try_from)
-      .transpose()?
-      .unwrap_or_default();
+    let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
 
     let builder: Rc<RefCell<AccountBuilderRc>> = self.0.clone();
     let promise: Promise = future_to_promise(async move {

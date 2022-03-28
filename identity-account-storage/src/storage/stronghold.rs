@@ -13,11 +13,8 @@ use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
-use iota_stronghold::procedures::Chain;
 use iota_stronghold::procedures::Ed25519Sign;
-use iota_stronghold::procedures::Slip10Derive;
-use iota_stronghold::procedures::Slip10DeriveInput;
-use iota_stronghold::procedures::Slip10Generate;
+use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::Location;
 
 use crate::error::Result;
@@ -217,21 +214,12 @@ impl Drop for Stronghold {
 }
 
 async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
-  // Generate a SLIP10 seed as the private key
-  let procedure: Slip10Generate = Slip10Generate {
-    output: location_seed(location),
-    hint: default_hint(),
-    size_bytes: None,
+  let key_type: iota_stronghold::procedures::KeyType = match location.method() {
+    MethodType::Ed25519VerificationKey2018 => iota_stronghold::procedures::KeyType::Ed25519,
+    MethodType::X25519KeyAgreementKey2019 => iota_stronghold::procedures::KeyType::X25519,
   };
-  vault.execute(procedure).await?;
-
-  let chain: Chain = Chain::from_u32_hardened(vec![0, 0, 0]);
-  let seed: Slip10DeriveInput = Slip10DeriveInput::Seed(location_seed(location));
-
-  // Use the SLIP10 seed to derive a child key
-  let procedure: Slip10Derive = Slip10Derive {
-    chain,
-    input: seed,
+  let procedure = GenerateKey {
+    ty: key_type,
     output: location_skey(location),
     hint: default_hint(),
   };
@@ -250,14 +238,12 @@ async fn retrieve_public_key(vault: &Vault<'_>, location: &KeyLocation) -> Resul
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_public_key(vault, location).await?;
   let procedure: Ed25519Sign = Ed25519Sign {
     private_key: location_skey(location),
     msg: payload,
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;
-
-  Ok(Signature::new(public_key, signature.into()))
+  Ok(Signature::new(signature.into()))
 }
 
 fn location_key_type(location: &KeyLocation) -> iota_stronghold::procedures::KeyType {

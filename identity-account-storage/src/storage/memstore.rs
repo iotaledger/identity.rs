@@ -5,8 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use async_trait::async_trait;
-use crypto::keys::x25519;
-use crypto::signatures::ed25519;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
@@ -16,7 +14,6 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
-use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
@@ -93,37 +90,27 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<PublicKey> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
-          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
-        let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
-        private_key_bytes.zeroize();
+        let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
+        private_key.zeroize();
+        let public_key: PublicKey = keypair.public().clone();
 
-        let public: ed25519::PublicKey = secret.public_key();
-        let public_key: PublicKey = public.to_bytes().to_vec().into();
-
-        let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), private_key));
         vault.insert(location.clone(), keypair);
-
         Ok(public_key)
       }
       MethodType::X25519KeyAgreementKey2019 => {
-        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
-          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
-        let secret: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
-        private_key_bytes.zeroize();
+        let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::X25519, private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
+        private_key.zeroize();
+        let public_key: PublicKey = keypair.public().clone();
 
-        let public: x25519::PublicKey = secret.public_key();
-        let public_key: PublicKey = public.to_bytes().to_vec().into();
-
-        let keypair: KeyPair = KeyPair::from((KeyType::X25519, public_key.clone(), private_key));
         vault.insert(location.clone(), keypair);
-
         Ok(public_key)
       }
     }
@@ -165,10 +152,8 @@ impl Storage for MemStore {
       MethodType::Ed25519VerificationKey2018 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
-        let public: PublicKey = keypair.public().clone();
         let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
-        let signature: Signature = Signature::new(public, signature.to_vec());
-
+        let signature: Signature = Signature::new(signature.to_vec());
         Ok(signature)
       }
       MethodType::X25519KeyAgreementKey2019 => {

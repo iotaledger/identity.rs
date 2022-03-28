@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::keys::x25519;
-use crypto::signatures::ed25519;
 use log::debug;
 use log::trace;
 
@@ -16,10 +14,12 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::did::CoreDIDUrl;
+use identity_core::crypto::X25519;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
@@ -39,8 +39,8 @@ use identity_iota_core::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::IdentitySetup;
-use crate::types::MethodSecret;
+use crate::types::IdentitySetup;
+use crate::types::MethodContent;
 use crate::updates::UpdateError;
 
 pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
@@ -50,62 +50,43 @@ pub(crate) async fn create_identity(
   network: NetworkName,
   store: &dyn Storage,
 ) -> Result<IdentityState> {
-  let method_type: MethodType = match setup.key_type {
-    KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
-    KeyType::X25519 => MethodType::X25519KeyAgreementKey2019,
-  };
-
-  // The method type must be able to sign document updates.
-  ensure!(
-    IotaDocument::is_signing_method_type(method_type),
-    UpdateError::InvalidMethodType(method_type)
-  );
-
-  let generation = Generation::new();
-  let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
-
-  let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
-
-  let keypair: KeyPair = match &setup.method_secret {
+  let keypair: KeyPair = match setup.private_key {
     None => KeyPair::new(KeyType::Ed25519)?,
-    Some(MethodSecret::Ed25519(private_key)) => {
+    Some(private_key) => {
       ensure!(
-        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-        UpdateError::InvalidMethodSecret(format!(
+        private_key.as_ref().len() == Ed25519::PRIVATE_KEY_LENGTH,
+        UpdateError::InvalidMethodContent(format!(
           "an Ed25519 private key requires {} bytes, found {}",
-          ed25519::SECRET_KEY_LENGTH,
+          Ed25519::PRIVATE_KEY_LENGTH,
           private_key.as_ref().len()
         ))
       );
       KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?
-    }
-    _ => {
-      return Err(UpdateError::InvalidMethodSecret("expected None or Ed25519 private key".to_owned()).into());
     }
   };
 
   // Generate a new DID from the public key
   let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
 
+  // Store the private key.
+  let generation: Generation = Generation::new();
+  let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
+  let location: KeyLocation = KeyLocation::new(MethodType::Ed25519VerificationKey2018, fragment, generation);
   ensure!(
     !store.key_exists(&did, &location).await?,
     UpdateError::DocumentAlreadyExists
   );
-
-  let private_key = keypair.private().to_owned();
+  let private_key: PrivateKey = keypair.private().to_owned();
   std::mem::drop(keypair);
+  let public_key: PublicKey = insert_method_secret(store, &did, &location, private_key).await?;
 
-  let public: PublicKey =
-    insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
-
-  let method_fragment = location.fragment().to_owned();
-
+  // Construct a new DID Document.
+  let method_fragment: Fragment = location.fragment().to_owned();
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did, setup.key_type, &public, method_fragment.name())?;
+    IotaVerificationMethod::new(did, KeyType::Ed25519, &public_key, method_fragment.name())?;
 
-  let document = IotaDocument::from_verification_method(method)?;
-
-  let mut state = IdentityState::new(document);
+  let document: IotaDocument = IotaDocument::from_verification_method(method)?;
+  let mut state: IdentityState = IdentityState::new(document);
 
   // Store the generations at which the method was added
   state.store_method_generations(method_fragment);
@@ -117,9 +98,8 @@ pub(crate) async fn create_identity(
 pub(crate) enum Update {
   CreateMethod {
     scope: MethodScope,
-    type_: MethodType,
+    content: MethodContent,
     fragment: String,
-    method_secret: Option<MethodSecret>,
   },
   DeleteMethod {
     fragment: String,
@@ -157,42 +137,53 @@ impl Update {
 
     match self {
       Self::CreateMethod {
-        type_,
         scope,
+        content,
         fragment,
-        method_secret,
       } => {
-        let location: KeyLocation = state.key_location(type_, fragment)?;
+        let method_fragment: String = if !fragment.starts_with('#') {
+          format!("#{}", fragment)
+        } else {
+          fragment
+        };
 
-        // The key location must be available.
-        // TODO: config: strict
-        ensure!(
-          !storage.key_exists(did, &location).await?,
-          UpdateError::DuplicateKeyLocation(location)
-        );
-
-        let method_url: CoreDIDUrl = did.as_ref().to_url().join(location.fragment().identifier())?;
-
+        // Check method identifier is not duplicated.
+        let method_url: IotaDIDUrl = did.to_url().join(&method_fragment)?;
         if state.document().resolve_method(method_url, None).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
-        let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(storage, did, &location, type_, method_private_key).await
-        } else {
-          storage.key_new(did, &location).await.map_err(Into::into)
-        }?;
-
-        let key_type: KeyType = match type_ {
-          MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
-          MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+        // Generate or extract the private key and/or retrieve the public key.
+        let key_type: KeyType = content.key_type();
+        let method_type: MethodType = content.method_type();
+        let public: PublicKey = match content {
+          MethodContent::GenerateEd25519 => {
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
+            storage.key_new(did, &location).await?
+          }
+          MethodContent::PrivateEd25519(private_key) => {
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
+            insert_method_secret(storage, did, &location, private_key).await?
+          }
+          MethodContent::PublicEd25519(public_key) => public_key,
+          MethodContent::GenerateX25519 => {
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
+            storage.key_new(did, &location).await?
+          }
+          MethodContent::PrivateX25519(private_key) => {
+            let location: KeyLocation =
+              create_method_key_location(did, storage, state, method_type, method_fragment.clone()).await?;
+            insert_method_secret(storage, did, &location, private_key).await?
+          }
+          MethodContent::PublicX25519(public_key) => public_key,
         };
 
+        // Insert a new method.
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::new(did.to_owned(), key_type, &public, location.fragment().name())?;
-
-        state.store_method_generations(location.fragment().clone());
-
+          IotaVerificationMethod::new(did.clone(), key_type, &public, &method_fragment)?;
         state.document_mut().insert_method(method, scope)?;
       }
       Self::DeleteMethod { fragment } => {
@@ -305,72 +296,70 @@ impl Update {
   }
 }
 
+/// Helper function to create a new key location and ensure it is available.
+async fn create_method_key_location(
+  did: &IotaDID,
+  storage: &dyn Storage,
+  state: &mut IdentityState,
+  method_type: MethodType,
+  method_fragment: String,
+) -> Result<KeyLocation> {
+  let location: KeyLocation = state.key_location(method_type, method_fragment)?;
+  ensure!(
+    !storage.key_exists(did, &location).await?,
+    UpdateError::DuplicateKeyLocation(location)
+  );
+  state.store_method_generations(location.fragment().clone());
+  Ok(location)
+}
+
 async fn insert_method_secret(
   store: &dyn Storage,
   did: &IotaDID,
   location: &KeyLocation,
-  method_type: MethodType,
-  method_secret: MethodSecret,
+  private_key: PrivateKey,
 ) -> Result<PublicKey> {
-  match method_secret {
-    MethodSecret::Ed25519(private_key) => {
+  match location.method() {
+    MethodType::Ed25519VerificationKey2018 => {
       ensure!(
-        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-        UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 private key requires {} bytes, found {}",
-          ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == Ed25519::PRIVATE_KEY_LENGTH,
+        UpdateError::InvalidMethodContent(format!(
+          "an ed25519 private key requires {} bytes, got {}",
+          Ed25519::PRIVATE_KEY_LENGTH,
           private_key.as_ref().len()
         ))
       );
-
-      ensure!(
-        matches!(method_type, MethodType::Ed25519VerificationKey2018),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
-        )
-      );
-
       store.key_insert(did, location, private_key).await.map_err(Into::into)
     }
-    MethodSecret::X25519(private_key) => {
+    MethodType::X25519KeyAgreementKey2019 => {
       ensure!(
-        private_key.as_ref().len() == x25519::SECRET_KEY_LENGTH,
-        UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 private key requires {} bytes, found {}",
-          x25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == X25519::PRIVATE_KEY_LENGTH,
+        UpdateError::InvalidMethodContent(format!(
+          "an x25519 private key requires {} bytes, got {}",
+          X25519::PRIVATE_KEY_LENGTH,
           private_key.as_ref().len()
         ))
       );
-
-      ensure!(
-        matches!(method_type, MethodType::X25519KeyAgreementKey2019),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::X25519KeyAgreementKey2019 can only be used with an x25519 method secret".to_owned(),
-        )
-      );
-
       store.key_insert(did, location, private_key).await.map_err(Into::into)
     }
   }
 }
 
 // =============================================================================
-// Update Builders
-// =============================================================================
 
+// =============================================================================
+// Update Builders
 impl_update_builder!(
 /// Create a new method on an identity.
 ///
 /// # Parameters
-/// - `type_`: the type of the method, defaults to [`MethodType::Ed25519VerificationKey2018`].
 /// - `scope`: the scope of the method, defaults to [`MethodScope::default`].
 /// - `fragment`: the identifier of the method in the document, required.
-/// - `method_secret`: the secret key to use for the method, optional. Will be generated when omitted.
+/// - `content`: the key material to use for the method or key type to generate.
 CreateMethod {
-  @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
-  @optional method_secret MethodSecret
+  @required content MethodContent,
 });
 
 impl_update_builder!(
