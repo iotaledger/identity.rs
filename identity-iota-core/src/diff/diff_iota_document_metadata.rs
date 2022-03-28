@@ -23,14 +23,14 @@ use crate::document::IotaDocumentMetadata;
 pub struct DiffIotaDocumentMetadata {
   #[serde(
     skip_serializing_if = "Option::is_none",
-    deserialize_with = "double_option",
-    default = "Default::default"
+    deserialize_with = "deserialize_double_option_diff",
+    default
   )]
   created: Option<DiffOption<Timestamp>>,
   #[serde(
     skip_serializing_if = "Option::is_none",
-    deserialize_with = "double_option",
-    default = "Default::default"
+    deserialize_with = "deserialize_double_option_diff",
+    default
   )]
   updated: Option<DiffOption<Timestamp>>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -39,8 +39,10 @@ pub struct DiffIotaDocumentMetadata {
   properties: Option<<Object as Diff>::Type>,
 }
 
-// Workaround for deserialize 'null' as `Some(DiffOption::None)` instead of `None`.
-fn double_option<'de, T: Diff, D>(de: D) -> Result<Option<DiffOption<T>>, D::Error>
+// Workaround for deserializing 'null' as `Some(DiffOption::None)` instead of `None`,
+// otherwise it's impossible to unset the option. Only works if `Option::None` is
+// skipped during serialization.
+fn deserialize_double_option_diff<'de, T: Diff, D>(de: D) -> Result<Option<DiffOption<T>>, D::Error>
 where
   D: Deserializer<'de>,
   T: Deserialize<'de>,
@@ -285,6 +287,41 @@ mod test {
     updated.previous_message_id = MessageId::new([1; 32]);
     updated.created = Some(Timestamp::from_unix(1).unwrap());
     updated.updated = Some(Timestamp::from_unix(100000).unwrap());
+    let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+    let merge: IotaDocumentMetadata = Diff::merge(&original, de).unwrap();
+    assert_eq!(merge, updated);
+  }
+
+  #[test]
+  fn test_serde_timestamp_to_none() {
+    let original: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    let mut updated: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    updated.previous_message_id = MessageId::new([1; 32]);
+    updated.created = Some(Timestamp::from_unix(1).unwrap());
+    updated.updated = None;
+    let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
+
+    let ser: String = diff.to_json().unwrap();
+    let de: DiffIotaDocumentMetadata = DiffIotaDocumentMetadata::from_json(&ser).unwrap();
+    assert_eq!(diff, de);
+    let merge: IotaDocumentMetadata = Diff::merge(&original, de).unwrap();
+    assert_eq!(merge, updated);
+  }
+
+  #[test]
+  fn test_serde_timestamp_from_none() {
+    let mut original: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    original.updated = None;
+    original.created = None;
+
+    let mut updated: IotaDocumentMetadata = IotaDocumentMetadata::new();
+    updated.previous_message_id = MessageId::new([1; 32]);
+    updated.created = Some(Timestamp::from_unix(1).unwrap());
+    updated.updated = None;
     let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
 
     let ser: String = diff.to_json().unwrap();
