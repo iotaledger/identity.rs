@@ -18,9 +18,7 @@ impl X25519 {
   pub const PRIVATE_KEY_LENGTH: usize = x25519::SECRET_KEY_LENGTH;
   /// Length in bytes of an X25519 public key.
   pub const PUBLIC_KEY_LENGTH: usize = x25519::PUBLIC_KEY_LENGTH;
-}
 
-impl X25519 {
   /// Performs Diffie-Hellman key exchange using the private key of the first party with the
   /// public key of the second party, resulting in a shared secret.
   pub fn key_exchange<PRV, PUB>(private: &PRV, public: &PUB) -> Result<[u8; 32]>
