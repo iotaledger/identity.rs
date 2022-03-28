@@ -23,7 +23,6 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
@@ -154,9 +153,9 @@ impl Update {
             storage.key_public(&account_id, &location).await?
           }
           MethodContent::PrivateEd25519(private_key) | MethodContent::PrivateX25519(private_key) => {
-            let location: KeyLocation = insert_method_secret(storage, account_id, key_type, fragment.name(), private_key).await?;
+            let location: KeyLocation =
+              insert_method_secret(storage, account_id, key_type, fragment.name(), private_key).await?;
             storage.key_public(&account_id, &location).await?
-
           }
           MethodContent::PublicEd25519(public_key) => public_key,
           MethodContent::PublicX25519(public_key) => public_key,
@@ -316,13 +315,6 @@ async fn insert_method_secret(
   store.key_insert(&account_id, &location, private_key).await?;
 
   Ok(location)
-}
-
-pub(crate) fn method_to_key_type(method_type: MethodType) -> KeyType {
-  match method_type {
-    MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
-    MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
-  }
 }
 
 // =============================================================================

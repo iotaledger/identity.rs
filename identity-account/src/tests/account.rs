@@ -394,7 +394,8 @@ async fn test_account_sync_no_changes() -> Result<()> {
         .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
         .apply()
-        .await.unwrap();
+        .await
+        .unwrap();
 
       let old_document: IotaDocument = account.document().clone();
       let old_chain_state: ChainState = account.chain_state().clone();

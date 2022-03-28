@@ -30,7 +30,6 @@ use crate::account::AccountConfig;
 use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
-use crate::updates::method_to_key_type;
 use crate::types::IdentitySetup;
 use crate::types::MethodContent;
 use crate::updates::Update;
@@ -181,22 +180,22 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 #[tokio::test]
 async fn test_create_method_content_generate() -> Result<()> {
   for storage in storages().await {
-  for method_content in [MethodContent::GenerateEd25519, MethodContent::GenerateX25519] {
-    let mut account: Account =
-      Account::create_identity(
+    for method_content in [MethodContent::GenerateEd25519, MethodContent::GenerateX25519] {
+      let mut account: Account = Account::create_identity(
         account_setup_storage(Arc::clone(&storage), Network::Mainnet).await,
-        IdentitySetup::default()
-      ).await?;
+        IdentitySetup::default(),
+      )
+      .await?;
 
       let initial_document: IotaDocument = account.document().to_owned();
 
-    let method_type: MethodType = method_content.method_type();
-    let fragment = "key-1".to_owned();
-    let update: Update = Update::CreateMethod {
-      scope: MethodScope::default(),
-      content: method_content,
-      fragment: fragment.clone(),
-    };
+      let method_type: MethodType = method_content.method_type();
+      let fragment = "key-1".to_owned();
+      let update: Update = Update::CreateMethod {
+        scope: MethodScope::default(),
+        content: method_content,
+        fragment: fragment.clone(),
+      };
 
       account.process_update(update).await.unwrap();
 
@@ -266,8 +265,12 @@ async fn test_create_method_content_public() -> Result<()> {
     assert_eq!(method.data().try_decode().unwrap().as_slice(), bytes);
 
     // Ensure no key exists in storage.
-    let location: KeyLocation = KeyLocation::from_verification_method(&method).unwrap();
-    assert!(!account.storage().key_exists(&account.account_id, &location).await.unwrap());
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
+    assert!(!account
+      .storage()
+      .key_exists(&account.account_id, &location)
+      .await
+      .unwrap());
   }
   Ok(())
 }
@@ -362,16 +365,16 @@ async fn test_create_method_from_private_key() {
     .await
     .unwrap();
 
-  let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let fragment = "key-1".to_owned();
+    let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let fragment = "key-1".to_owned();
 
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    content: MethodContent::PrivateEd25519(keypair.private().clone()),
-    fragment: fragment.clone(),
-  };
+    let update: Update = Update::CreateMethod {
+      scope: MethodScope::default(),
+      content: MethodContent::PrivateEd25519(keypair.private().clone()),
+      fragment: fragment.clone(),
+    };
 
-  account.process_update(update).await.unwrap();
+    account.process_update(update).await.unwrap();
 
     let document: &IotaDocument = account.document();
 
@@ -757,4 +760,11 @@ async fn test_set_also_known_as() -> Result<()> {
   assert_eq!(account.document().also_known_as().len(), 0);
 
   Ok(())
+}
+
+pub(crate) fn method_to_key_type(method_type: MethodType) -> KeyType {
+  match method_type {
+    MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
+    MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
+  }
 }
