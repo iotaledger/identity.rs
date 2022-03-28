@@ -22,7 +22,6 @@ paste = { version = "1.0" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
-zeroize = { version = "1.4", optional = true }
 
 [dependencies.iota-crypto]
 version = "0.7"
@@ -38,6 +37,6 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros", "r
 [features]
 default = ["stronghold", "async", "send-sync-storage"]
 mem-client = []
-stronghold = ["identity-account-storage/stronghold", "zeroize"]
+stronghold = ["identity-account-storage/stronghold"]
 async = ["identity-iota/async"]
 send-sync-storage = ["identity-account-storage/send-sync-storage"]

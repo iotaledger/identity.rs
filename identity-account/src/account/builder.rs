@@ -1,17 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "stronghold")]
-use std::path::PathBuf;
 use std::sync::Arc;
-
-#[cfg(feature = "stronghold")]
-use zeroize::Zeroize;
 
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Storage;
-#[cfg(feature = "stronghold")]
-use identity_account_storage::storage::Stronghold;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::SharedPtr;
@@ -24,18 +17,6 @@ use crate::types::IdentitySetup;
 use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
-
-/// The storage adapter used by an [`Account`].
-///
-/// Note that [`AccountStorage::Stronghold`] is only available if the `stronghold` feature is
-/// activated, which it is by default.
-#[derive(Debug)]
-pub enum AccountStorage {
-  Memory,
-  #[cfg(feature = "stronghold")]
-  Stronghold(PathBuf, Option<String>, Option<bool>),
-  Custom(Arc<dyn Storage>),
-}
 
 /// An [`Account`] builder for easy account configuration.
 ///
@@ -51,7 +32,6 @@ where
   C: SharedPtr<Client>,
 {
   config: AccountConfig,
-  storage_template: Option<AccountStorage>,
   storage: Option<Arc<dyn Storage>>,
   client_builder: Option<ClientBuilder>,
   client: Option<C>,
@@ -65,8 +45,7 @@ where
   pub fn new() -> Self {
     Self {
       config: AccountConfig::new(),
-      storage_template: Some(AccountStorage::Memory),
-      storage: Some(Arc::new(MemStore::new())),
+      storage: None,
       client_builder: None,
       client: None,
     }
@@ -101,39 +80,28 @@ where
 
   /// Sets the account storage adapter.
   #[must_use]
-  pub fn storage(mut self, value: AccountStorage) -> Self {
-    self.storage_template = Some(value);
+  pub fn storage<S: Storage + 'static>(mut self, value: S) -> Self {
+    self.storage = Some(Arc::new(value));
     self
   }
 
-  async fn get_storage(&mut self) -> Result<Arc<dyn Storage>> {
-    match self.storage_template.take() {
-      Some(AccountStorage::Memory) => {
-        let storage = Arc::new(MemStore::new());
-        self.storage = Some(storage);
-      }
-      #[cfg(feature = "stronghold")]
-      Some(AccountStorage::Stronghold(snapshot, password, dropsave)) => {
-        let passref: Option<&str> = password.as_deref();
-        let adapter: Stronghold = Stronghold::new(&snapshot, passref, dropsave).await?;
+  /// Sets the account storage adapter from a shared pointer.
+  #[must_use]
+  pub fn storage_shared(mut self, value: Arc<dyn Storage>) -> Self {
+    self.storage = Some(value);
+    self
+  }
 
-        if let Some(mut password) = password {
-          password.zeroize();
-        }
-
-        let storage = Arc::new(adapter);
-        self.storage = Some(storage);
-      }
-      Some(AccountStorage::Custom(storage)) => {
-        self.storage = Some(storage);
-      }
-      None => (),
-    };
-
-    // unwrap is fine, since by default, storage_template is `Some`,
-    // which results in storage being `Some`.
-    // Overwriting storage_template always produces `Some` storage.
-    Ok(Arc::clone(self.storage.as_ref().unwrap()))
+  fn get_storage(&mut self) -> Arc<dyn Storage> {
+    if let Some(storage) = self.storage.as_ref() {
+      Arc::clone(storage)
+    } else {
+      // TODO: throw an error or log a warning that MemStore is not persistent and should not
+      //       be used in production?
+      let storage: Arc<dyn Storage> = Arc::new(MemStore::new());
+      self.storage = Some(Arc::clone(&storage));
+      storage
+    }
   }
 
   /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
@@ -180,11 +148,7 @@ where
   async fn build_setup(&mut self) -> Result<AccountSetup<C>> {
     let client: C = self.get_or_build_client().await?;
 
-    Ok(AccountSetup::<C>::new(
-      self.get_storage().await?,
-      client,
-      self.config.clone(),
-    ))
+    Ok(AccountSetup::<C>::new(self.get_storage(), client, self.config.clone()))
   }
 
   /// Creates a new identity based on the builder configuration and returns

@@ -6,6 +6,11 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use futures::executor;
+use iota_stronghold::procedures::Ed25519Sign;
+use iota_stronghold::procedures::GenerateKey;
+use iota_stronghold::Location;
+use zeroize::Zeroize;
+
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PrivateKey;
@@ -13,9 +18,6 @@ use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
-use iota_stronghold::procedures::Ed25519Sign;
-use iota_stronghold::procedures::GenerateKey;
-use iota_stronghold::Location;
 
 use crate::error::Result;
 use crate::identity::ChainState;
@@ -36,15 +38,23 @@ pub struct Stronghold {
 }
 
 impl Stronghold {
+  /// Constructs a Stronghold storage instance.
+  ///
+  /// Arguments:
+  ///
+  /// * snapshot: path to a local Stronghold file, will be created if it does not exist.
+  /// * password: password for the Stronghold file, optional.
+  /// * dropsave: save all changes when the instance is dropped. Default: true.
   pub async fn new<'a, T, U>(snapshot: &T, password: U, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
-    U: Into<Option<&'a str>>,
+    U: Into<Option<String>>,
   {
     let snapshot: Snapshot = Snapshot::new(snapshot);
 
-    if let Some(password) = password.into() {
-      snapshot.load(derive_encryption_key(password)).await?;
+    if let Some(mut password) = password.into() {
+      snapshot.load(derive_encryption_key(&password)).await?;
+      password.zeroize();
     }
 
     Ok(Self {

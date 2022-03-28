@@ -6,9 +6,9 @@
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::account_storage::Stronghold;
 use identity::core::Timestamp;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
@@ -24,13 +24,14 @@ async fn main() -> Result<()> {
   // It implements best practices for security and is the recommended way of handling private keys.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None).await?;
 
   // Create a new identity using Stronghold as local storage.
   //
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
+    .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
 
