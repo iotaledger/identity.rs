@@ -4,7 +4,6 @@
 //! cargo run --example account_manipulate
 
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use identity::account::Account;
 use identity::account::IdentitySetup;
@@ -31,7 +30,7 @@ async fn main() -> Result<()> {
 
   // Create a new Account with the default configuration
   let mut account: Account = Account::builder()
-    .storage_shared(Arc::new(stronghold))
+    .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
 
