@@ -63,14 +63,14 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
+<dt><a href="#MethodContent">MethodContent</a></dt>
+<dd></dd>
 <dt><a href="#MethodData">MethodData</a></dt>
 <dd><p>Supported verification method data formats.</p>
 </dd>
 <dt><a href="#MethodScope">MethodScope</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
-<dt><a href="#MethodSecret">MethodSecret</a></dt>
-<dd></dd>
 <dt><a href="#MethodType">MethodType</a></dt>
 <dd><p>Supported verification method types.</p>
 </dd>
@@ -177,7 +177,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -191,27 +190,14 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -340,17 +326,6 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -384,16 +359,16 @@ Sets the controllers of the DID document.
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
 
-<a name="Account+createMethod"></a>
+<a name="Account+deleteMethod"></a>
 
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>CreateMethodOptions</code> | 
+| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+createService"></a>
 
@@ -405,6 +380,31 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -2555,6 +2555,104 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="MethodContent"></a>
+
+## MethodContent
+**Kind**: global class  
+
+* [MethodContent](#MethodContent)
+    * _instance_
+        * [.toJSON()](#MethodContent+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.GenerateEd25519()](#MethodContent.GenerateEd25519) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.PrivateEd25519(privateKey)](#MethodContent.PrivateEd25519) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.PublicEd25519(publicKey)](#MethodContent.PublicEd25519) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.GenerateX25519()](#MethodContent.GenerateX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.PrivateX25519(privateKey)](#MethodContent.PrivateX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.PublicX25519(publicKey)](#MethodContent.PublicX25519) ⇒ [<code>MethodContent</code>](#MethodContent)
+        * [.fromJSON(json_value)](#MethodContent.fromJSON) ⇒ [<code>MethodContent</code>](#MethodContent)
+
+<a name="MethodContent+toJSON"></a>
+
+### methodContent.toJSON() ⇒ <code>any</code>
+Serializes `MethodContent` as a JSON object.
+
+**Kind**: instance method of [<code>MethodContent</code>](#MethodContent)  
+<a name="MethodContent.GenerateEd25519"></a>
+
+### MethodContent.GenerateEd25519() ⇒ [<code>MethodContent</code>](#MethodContent)
+Generate and store a new Ed25519 keypair for a new `Ed25519VerificationKey2018` method.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+<a name="MethodContent.PrivateEd25519"></a>
+
+### MethodContent.PrivateEd25519(privateKey) ⇒ [<code>MethodContent</code>](#MethodContent)
+Store an existing Ed25519 private key and derive a public key from it for a new
+`Ed25519VerificationKey2018` method.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+
+| Param | Type |
+| --- | --- |
+| privateKey | <code>Uint8Array</code> | 
+
+<a name="MethodContent.PublicEd25519"></a>
+
+### MethodContent.PublicEd25519(publicKey) ⇒ [<code>MethodContent</code>](#MethodContent)
+Insert an existing Ed25519 public key into a new `Ed25519VerificationKey2018` method,
+without generating or storing a private key.
+
+NOTE: the method will be unable to be used to sign anything without a private key.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+
+| Param | Type |
+| --- | --- |
+| publicKey | <code>Uint8Array</code> | 
+
+<a name="MethodContent.GenerateX25519"></a>
+
+### MethodContent.GenerateX25519() ⇒ [<code>MethodContent</code>](#MethodContent)
+Generate and store a new X25519 keypair for a new `X25519KeyAgreementKey2019` method.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+<a name="MethodContent.PrivateX25519"></a>
+
+### MethodContent.PrivateX25519(privateKey) ⇒ [<code>MethodContent</code>](#MethodContent)
+Store an existing X25519 private key and derive a public key from it for a new
+`X25519KeyAgreementKey2019` method.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+
+| Param | Type |
+| --- | --- |
+| privateKey | <code>Uint8Array</code> | 
+
+<a name="MethodContent.PublicX25519"></a>
+
+### MethodContent.PublicX25519(publicKey) ⇒ [<code>MethodContent</code>](#MethodContent)
+Insert an existing X25519 public key into a new `X25519KeyAgreementKey2019` method,
+without generating or storing a private key.
+
+NOTE: the method will be unable to be used for key exchange without a private key.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+
+| Param | Type |
+| --- | --- |
+| publicKey | <code>Uint8Array</code> | 
+
+<a name="MethodContent.fromJSON"></a>
+
+### MethodContent.fromJSON(json_value) ⇒ [<code>MethodContent</code>](#MethodContent)
+Deserializes `MethodContent` from a JSON object.
+
+**Kind**: static method of [<code>MethodContent</code>](#MethodContent)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="MethodData"></a>
 
 ## MethodData
@@ -2703,58 +2801,6 @@ Deserializes a `MethodScope` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="MethodSecret"></a>
-
-## MethodSecret
-**Kind**: global class  
-
-* [MethodSecret](#MethodSecret)
-    * _instance_
-        * [.toJSON()](#MethodSecret+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.ed25519(privateKey)](#MethodSecret.ed25519) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-        * [.x25519(privateKey)](#MethodSecret.x25519) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-        * [.fromJSON(json_value)](#MethodSecret.fromJSON) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-
-<a name="MethodSecret+toJSON"></a>
-
-### methodSecret.toJSON() ⇒ <code>any</code>
-Serializes a `MethodSecret` as a JSON object.
-
-**Kind**: instance method of [<code>MethodSecret</code>](#MethodSecret)  
-<a name="MethodSecret.ed25519"></a>
-
-### MethodSecret.ed25519(privateKey) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates an Ed25519 [MethodSecret](#MethodSecret) from a `Uint8Array`.
-
-**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="MethodSecret.x25519"></a>
-
-### MethodSecret.x25519(privateKey) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Creates an X25519 [MethodSecret](#MethodSecret) from a `Uint8Array`.
-
-**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
-
-| Param | Type |
-| --- | --- |
-| privateKey | <code>Uint8Array</code> | 
-
-<a name="MethodSecret.fromJSON"></a>
-
-### MethodSecret.fromJSON(json_value) ⇒ [<code>MethodSecret</code>](#MethodSecret)
-Deserializes a `MethodSecret` from a JSON object.
-
-**Kind**: static method of [<code>MethodSecret</code>](#MethodSecret)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
 <a name="MethodType"></a>
 
 ## MethodType
@@ -2765,6 +2811,7 @@ Supported verification method types.
 * [MethodType](#MethodType)
     * _instance_
         * [.toJSON()](#MethodType+toJSON) ⇒ <code>any</code>
+        * [.toString()](#MethodType+toString) ⇒ <code>string</code>
         * [.clone()](#MethodType+clone) ⇒ [<code>MethodType</code>](#MethodType)
     * _static_
         * [.Ed25519VerificationKey2018()](#MethodType.Ed25519VerificationKey2018) ⇒ [<code>MethodType</code>](#MethodType)
@@ -2775,6 +2822,12 @@ Supported verification method types.
 
 ### methodType.toJSON() ⇒ <code>any</code>
 Serializes a `MethodType` object as a JSON object.
+
+**Kind**: instance method of [<code>MethodType</code>](#MethodType)  
+<a name="MethodType+toString"></a>
+
+### methodType.toString() ⇒ <code>string</code>
+Returns the `MethodType` as a string.
 
 **Kind**: instance method of [<code>MethodType</code>](#MethodType)  
 <a name="MethodType+clone"></a>
@@ -3774,7 +3827,7 @@ Deserializes a `Timestamp` from a JSON object.
         * [.id()](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller()](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
         * [.SetController(did)](#VerificationMethod+SetController)
-        * [.type()](#VerificationMethod+type) ⇒ <code>string</code>
+        * [.type()](#VerificationMethod+type) ⇒ [<code>MethodType</code>](#MethodType)
         * [.data()](#VerificationMethod+data) ⇒ [<code>MethodData</code>](#MethodData)
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
         * [.clone()](#VerificationMethod+clone) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -3819,7 +3872,7 @@ Sets the `controller` `DID` of the `VerificationMethod` object.
 
 <a name="VerificationMethod+type"></a>
 
-### verificationMethod.type() ⇒ <code>string</code>
+### verificationMethod.type() ⇒ [<code>MethodType</code>](#MethodType)
 Returns a copy of the `VerificationMethod` type.
 
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  

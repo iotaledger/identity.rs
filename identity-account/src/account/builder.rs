@@ -5,6 +5,9 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+#[cfg(feature = "stronghold")]
+use zeroize::Zeroize;
+
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Storage;
 #[cfg(feature = "stronghold")]
@@ -13,15 +16,14 @@ use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
-#[cfg(feature = "stronghold")]
-use zeroize::Zeroize;
+
+use crate::account::Account;
+use crate::error::Result;
+use crate::types::IdentitySetup;
 
 use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
-use crate::account::Account;
-use crate::error::Result;
-use crate::identity::IdentitySetup;
 
 /// The storage adapter used by an [`Account`].
 ///

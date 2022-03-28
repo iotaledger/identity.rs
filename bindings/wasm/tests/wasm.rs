@@ -8,6 +8,11 @@ use identity::core::Object;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::iota_core::IotaDID;
+use js_sys::Array;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_test::*;
+
 use identity_wasm::common::WasmTimestamp;
 use identity_wasm::credential::WasmCredential;
 use identity_wasm::credential::WasmCredentialValidationOptions;
@@ -26,10 +31,6 @@ use identity_wasm::did::WasmMethodScope;
 use identity_wasm::did::WasmVerificationMethod;
 use identity_wasm::did::WasmVerifierOptions;
 use identity_wasm::error::WasmError;
-use js_sys::Array;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_test::*;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -160,7 +161,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from(default_method.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -172,7 +173,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from(method_new.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -186,7 +187,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -198,7 +199,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -212,7 +213,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -224,7 +225,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        JsValue::undefined().unchecked_into(),
       )
       .unwrap()
       .unwrap()
@@ -395,7 +396,7 @@ fn test_validations() {
     &signed_credential,
     &issuer_doc.to_json().unwrap().unchecked_into(),
     &WasmCredentialValidationOptions::default(),
-    WasmFailFast::FirstError
+    WasmFailFast::FirstError,
   )
   .is_ok());
 
@@ -404,7 +405,7 @@ fn test_validations() {
   assert!(WasmCredentialValidator::verify_signature(
     &signed_credential,
     issuers.unchecked_ref(),
-    &WasmVerifierOptions::default()
+    &WasmVerifierOptions::default(),
   )
   .is_ok());
 
@@ -430,7 +431,7 @@ fn test_validations() {
   assert!(WasmPresentationValidator::verify_presentation_signature(
     &signed_presentation,
     &subject_doc.to_json().unwrap().unchecked_into(),
-    &WasmVerifierOptions::default()
+    &WasmVerifierOptions::default(),
   )
   .is_ok());
 
@@ -440,7 +441,7 @@ fn test_validations() {
     &subject_doc.to_json().unwrap().unchecked_into(),
     issuers.unchecked_ref(),
     &WasmPresentationValidationOptions::default(),
-    WasmFailFast::FirstError
+    WasmFailFast::FirstError,
   )
   .is_ok());
 }

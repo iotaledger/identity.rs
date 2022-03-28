@@ -79,7 +79,7 @@ macro_rules! impl_update_builder {
         }
       }
 
-      impl<'account, C> $crate::identity::IdentityUpdater<'account, C>
+      impl<'account, C> $crate::types::IdentityUpdater<'account, C>
       where
         C: identity_iota::tangle::SharedPtr<Client>,
       {

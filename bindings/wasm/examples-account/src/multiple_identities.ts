@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountBuilder, ExplorerUrl, Storage } from './../../node/identity_wasm.js';
+import {AccountBuilder, ExplorerUrl, MethodContent, Storage} from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates how to create multiple identities from a builder
@@ -35,9 +35,11 @@ async function multipleIdentities(storage?: Storage) {
     // Now we can make modifications to the identity.
     // We can even do so concurrently.
     const account1Promise = account1Reconstructed.createMethod({
+        content: MethodContent.GenerateEd25519(),
         fragment: "my_key"
     })
     const account2Promise = account2.createMethod({
+        content: MethodContent.GenerateX25519(),
         fragment: "my_other_key"
     })
 

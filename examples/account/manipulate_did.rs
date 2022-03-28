@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! cargo run --example account_manipulate
@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
+use identity::account::MethodContent;
 use identity::account::Result;
 use identity::core::Url;
 use identity::did::MethodRelationship;
@@ -40,6 +41,7 @@ async fn main() -> Result<()> {
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("my-next-key")
     .apply()
     .await?;

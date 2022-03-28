@@ -2,7 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    ExplorerUrl, AccountBuilder, KeyPair, KeyType, DID, Credential, VerifierOptions, SignatureOptions, Storage
+    AccountBuilder,
+    Credential,
+    DID,
+    ExplorerUrl,
+    KeyPair,
+    KeyType,
+    MethodContent,
+    SignatureOptions,
+    Storage,
+    VerifierOptions
 } from './../../node/identity_wasm.js';
 
 /**
@@ -27,12 +36,13 @@ async function signing(storage?: Storage) {
 
     // Add a new Ed25519 Verification Method to the identity.
     await account.createMethod({
+        content: MethodContent.GenerateEd25519(),
         fragment: "key_1"
     })
 
     // Create a subject DID for the recipient of a `UniversityDegree` credential.
     let keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-    let subjectDid = new DID(keyPair);
+    let subjectDid = new DID(keyPair.public());
 
     // Prepare a credential subject indicating the degree earned by Alice.
     let credentialSubject = {
@@ -75,4 +85,4 @@ async function signing(storage?: Storage) {
     console.log("[Example] Credential Verified = ", verified);
 }
 
-export { signing };
+export {signing};
