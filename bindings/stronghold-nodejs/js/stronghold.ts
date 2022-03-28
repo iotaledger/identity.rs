@@ -10,7 +10,7 @@ export class Stronghold implements Storage {
         this.napiStronghold = await NapiStronghold.new(snapshot, password, dropsave);
     }
 
-    public static async build (snapshot: string, password: string, dropsave?: boolean) {
+    public static async build(snapshot: string, password?: string, dropsave?: boolean) {
         const stronghold = new Stronghold();
         await stronghold.init(snapshot, password, dropsave)
         return stronghold
