@@ -5,6 +5,7 @@ use std::fmt::Display;
 
 use uuid::Uuid;
 
+/// A unique storage identifier for an account.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, serde::Serialize, serde::Deserialize)]
 pub struct AccountId(Uuid);
 

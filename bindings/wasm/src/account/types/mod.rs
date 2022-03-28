@@ -7,9 +7,11 @@ pub use identity_setup::WasmIdentitySetup;
 pub use key_location::WasmKeyLocation;
 pub use method_content::*;
 pub use signature::WasmSignature;
+pub use account_id::WasmAccountId;
 
 mod auto_save;
 mod identity_setup;
 mod key_location;
 mod method_content;
 mod signature;
+mod account_id;
