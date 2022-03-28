@@ -49,8 +49,6 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
-<dt><a href="#Ed25519PrivateKey">Ed25519PrivateKey</a></dt>
-<dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#Generation">Generation</a></dt>
@@ -190,10 +188,10 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -326,6 +324,17 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -358,17 +367,6 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+createService"></a>
 
@@ -2157,59 +2155,63 @@ Deserializes a `Duration` from a JSON object.
 **Kind**: global class  
 
 * [Ed25519](#Ed25519)
-    * [.sign(message, key)](#Ed25519.sign) ⇒ <code>Uint8Array</code>
-    * [.verify(message, signature, key)](#Ed25519.verify)
+    * [.PRIVATE_KEY_LENGTH()](#Ed25519.PRIVATE_KEY_LENGTH) ⇒ <code>number</code>
+    * [.PUBLIC_KEY_LENGTH()](#Ed25519.PUBLIC_KEY_LENGTH) ⇒ <code>number</code>
+    * [.SIGNATURE_LENGTH()](#Ed25519.SIGNATURE_LENGTH) ⇒ <code>number</code>
+    * [.sign(message, privateKey)](#Ed25519.sign) ⇒ <code>Uint8Array</code>
+    * [.verify(message, signature, publicKey)](#Ed25519.verify)
 
+<a name="Ed25519.PRIVATE_KEY_LENGTH"></a>
+
+### Ed25519.PRIVATE\_KEY\_LENGTH() ⇒ <code>number</code>
+Length in bytes of an Ed25519 private key.
+
+**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
+<a name="Ed25519.PUBLIC_KEY_LENGTH"></a>
+
+### Ed25519.PUBLIC\_KEY\_LENGTH() ⇒ <code>number</code>
+Length in bytes of an Ed25519 public key.
+
+**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
+<a name="Ed25519.SIGNATURE_LENGTH"></a>
+
+### Ed25519.SIGNATURE\_LENGTH() ⇒ <code>number</code>
+Length in bytes of an Ed25519 signature.
+
+**Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
 <a name="Ed25519.sign"></a>
 
-### Ed25519.sign(message, key) ⇒ <code>Uint8Array</code>
-Signs the `message` with the given `Key`.
+### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
+Computes an EdDSA signature using an Ed25519 private key.
+
+NOTE: this differs from [Document.signData](Document.signData) which uses JCS
+to canonicalize JSON messages.
+
+The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
 
 | Param | Type |
 | --- | --- |
 | message | <code>Uint8Array</code> | 
-| key | <code>Uint8Array</code> | 
+| privateKey | <code>Uint8Array</code> | 
 
 <a name="Ed25519.verify"></a>
 
-### Ed25519.verify(message, signature, key)
+### Ed25519.verify(message, signature, publicKey)
+Verifies an EdDSA signature against an Ed25519 public key.
+
+NOTE: this differs from [Document.verifyData](Document.verifyData) which uses JCS
+to canonicalize JSON messages.
+
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
 
 | Param | Type |
 | --- | --- |
 | message | <code>Uint8Array</code> | 
 | signature | <code>Uint8Array</code> | 
-| key | <code>Uint8Array</code> | 
-
-<a name="Ed25519PrivateKey"></a>
-
-## Ed25519PrivateKey
-**Kind**: global class  
-
-* [Ed25519PrivateKey](#Ed25519PrivateKey)
-    * _instance_
-        * [.publicKey()](#Ed25519PrivateKey+publicKey) ⇒ <code>Uint8Array</code>
-    * _static_
-        * [.fromBase58(private_key)](#Ed25519PrivateKey.fromBase58) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
-
-<a name="Ed25519PrivateKey+publicKey"></a>
-
-### ed25519PrivateKey.publicKey() ⇒ <code>Uint8Array</code>
-Returns the PublicKey as a `Uint8Array`.
-
-**Kind**: instance method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
-<a name="Ed25519PrivateKey.fromBase58"></a>
-
-### Ed25519PrivateKey.fromBase58(private_key) ⇒ [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)
-Create a new `Ed25519PrivateKey` from a 'Uint8Array'.
-
-**Kind**: static method of [<code>Ed25519PrivateKey</code>](#Ed25519PrivateKey)  
-
-| Param | Type |
-| --- | --- |
-| private_key | <code>Uint8Array</code> | 
+| publicKey | <code>Uint8Array</code> | 
 
 <a name="ExplorerUrl"></a>
 
@@ -3971,15 +3973,29 @@ An implementation of `X25519` Elliptic-curve Diffie-Hellman (ECDH) cryptographic
 **Kind**: global class  
 
 * [X25519](#X25519)
+    * [.PRIVATE_KEY_LENGTH()](#X25519.PRIVATE_KEY_LENGTH) ⇒ <code>number</code>
+    * [.PUBLIC_KEY_LENGTH()](#X25519.PUBLIC_KEY_LENGTH) ⇒ <code>number</code>
     * [.keyExchange(privateKey, publicKey)](#X25519.keyExchange) ⇒ <code>Uint8Array</code>
     * [.Ed25519toX25519Private(privateKey)](#X25519.Ed25519toX25519Private) ⇒ <code>Uint8Array</code>
     * [.Ed25519toX25519Public(publicKey)](#X25519.Ed25519toX25519Public) ⇒ <code>Uint8Array</code>
 
+<a name="X25519.PRIVATE_KEY_LENGTH"></a>
+
+### X25519.PRIVATE\_KEY\_LENGTH() ⇒ <code>number</code>
+Length in bytes of an X25519 private key.
+
+**Kind**: static method of [<code>X25519</code>](#X25519)  
+<a name="X25519.PUBLIC_KEY_LENGTH"></a>
+
+### X25519.PUBLIC\_KEY\_LENGTH() ⇒ <code>number</code>
+Length in bytes of an X25519 public key.
+
+**Kind**: static method of [<code>X25519</code>](#X25519)  
 <a name="X25519.keyExchange"></a>
 
 ### X25519.keyExchange(privateKey, publicKey) ⇒ <code>Uint8Array</code>
-Performs a cryptographic key exchange process (e.g. Diffie-Hellman) using the private key
-of the first party with the public key of the second party, resulting in a shared secret.
+Performs Diffie-Hellman key exchange using the private key of the first party with the
+public key of the second party, resulting in a shared secret.
 
 **Kind**: static method of [<code>X25519</code>](#X25519)  
 

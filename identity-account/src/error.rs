@@ -9,9 +9,6 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
-  /// Caused by errors from the [crypto] crate.
-  #[error(transparent)]
-  CryptoError(#[from] crypto::Error),
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),

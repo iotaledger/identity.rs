@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::keys::x25519;
-use crypto::signatures::ed25519;
 use log::debug;
 use log::trace;
 
@@ -16,10 +14,12 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::X25519;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
@@ -54,10 +54,10 @@ pub(crate) async fn create_identity(
     None => KeyPair::new(KeyType::Ed25519)?,
     Some(private_key) => {
       ensure!(
-        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == Ed25519::PRIVATE_KEY_LENGTH,
         UpdateError::InvalidMethodContent(format!(
           "an Ed25519 private key requires {} bytes, found {}",
-          ed25519::SECRET_KEY_LENGTH,
+          Ed25519::PRIVATE_KEY_LENGTH,
           private_key.as_ref().len()
         ))
       );
@@ -322,10 +322,10 @@ async fn insert_method_secret(
   match location.method() {
     MethodType::Ed25519VerificationKey2018 => {
       ensure!(
-        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == Ed25519::PRIVATE_KEY_LENGTH,
         UpdateError::InvalidMethodContent(format!(
           "an ed25519 private key requires {} bytes, got {}",
-          ed25519::SECRET_KEY_LENGTH,
+          Ed25519::PRIVATE_KEY_LENGTH,
           private_key.as_ref().len()
         ))
       );
@@ -333,10 +333,10 @@ async fn insert_method_secret(
     }
     MethodType::X25519KeyAgreementKey2019 => {
       ensure!(
-        private_key.as_ref().len() == x25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == X25519::PRIVATE_KEY_LENGTH,
         UpdateError::InvalidMethodContent(format!(
           "an x25519 private key requires {} bytes, got {}",
-          x25519::SECRET_KEY_LENGTH,
+          X25519::PRIVATE_KEY_LENGTH,
           private_key.as_ref().len()
         ))
       );

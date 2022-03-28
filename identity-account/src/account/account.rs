@@ -459,8 +459,7 @@ where
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
-      let mut bytes: [u8; 32] = [0; 32];
-      crypto::utils::rand::fill(&mut bytes)?;
+      let bytes: [u8; 32] = rand::random();
       MessageId::new(bytes)
     } else {
       self.client.publish_document(&new_doc).await?.into()
@@ -526,8 +525,7 @@ where
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
-      let mut bytes: [u8; 32] = [0; 32];
-      crypto::utils::rand::fill(&mut bytes)?;
+      let bytes: [u8; 32] = rand::random();
       MessageId::new(bytes)
     } else {
       self
