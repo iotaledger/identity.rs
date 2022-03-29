@@ -9,6 +9,7 @@ use async_trait::async_trait;
 use futures::executor;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
+use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
@@ -27,7 +28,6 @@ use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
 use crate::stronghold::Context;
-use crate::stronghold::Database;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::StrongholdError;
@@ -36,7 +36,6 @@ use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
-static GENERATION_PATH: &str = "$generation";
 // The name of the stronghold client used for indexing, which is global for a storage instance.
 static INDEX_PATH: &str = "$index";
 static CHAIN_STATE_PATH: &str = "$chain_state";
@@ -77,10 +76,6 @@ impl Stronghold {
     self.snapshot.vault(&fmt_did(&did), &[])
   }
 
-  fn did_vault(&self, string: &str) -> Vault<'_> {
-    self.snapshot.vault(string, &[])
-  }
-
   /// Returns whether save-on-drop is enabled.
   pub fn dropsave(&self) -> bool {
     self.dropsave
@@ -105,29 +100,13 @@ impl Storage for Stronghold {
     fragment: &str,
     private_key: Option<PrivateKey>,
   ) -> Result<(IotaDID, KeyLocation)> {
-    // Generate a random, temporary location for the initial key.
-    let tmp_location: KeyLocation = KeyLocation::random(KeyType::Ed25519);
-    // Load the "generation" client, i.e. the client we use to generate keys for DIDs before we move them.
-    let vault: Vault<'_> = self.did_vault(GENERATION_PATH);
+    // TODO: Temporarily implemented via in-memory generation as opposed to using stronghold procedures.
+    let keypair: KeyPair = match private_key {
+      Some(private_key) => KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?,
+      None => KeyPair::new(KeyType::Ed25519)?,
+    };
 
-    // Insert a given key or generate a new one if `None` was given.
-    match private_key {
-      Some(private_key) => {
-        let stronghold_location: Location = (&tmp_location).into();
-
-        vault
-          .insert(stronghold_location, private_key.as_ref(), default_hint(), &[])
-          .await?;
-      }
-      None => {
-        generate_private_key(&vault, &tmp_location).await?;
-      }
-    }
-
-    // Get the public key and create the DID and verification method.
-    let public_key: PublicKey = retrieve_public_key(&vault, &tmp_location).await?;
-
-    let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
+    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
 
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
     let store: Store<'_> = self.store(INDEX_PATH);
@@ -143,30 +122,17 @@ impl Storage for Stronghold {
     // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
-    // Now that we have the DID, we can move (=sync) the vault from the generation client to the
-    // actual client where we want the key to reside, i.e. the client identified by the DID.
-    let mut stronghold: tokio::sync::MutexGuard<'_, Database> = self.snapshot.stronghold().await?;
-    stronghold
-      .sync_clients(
-        GENERATION_PATH.into(),
-        fmt_did(&did).into(),
-        iota_stronghold::sync::SelectOrMerge::Replace,
-        None,
+    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
+    let vault: Vault<'_> = self.vault(&did);
+
+    vault
+      .insert(
+        (&location).into(),
+        keypair.private().as_ref().to_vec(),
+        default_hint(),
+        &[],
       )
-      .await
-      .map_err(StrongholdError::from)?
-      .map_err(StrongholdError::from)?;
-
-    std::mem::drop(stronghold);
-
-    self.flush_changes().await?;
-
-    // Within the DID client, move the key from the temporary location to the location
-    // where we expect the key to be based on the public key.
-    let vault: Vault<'_> = self.did_vault(&fmt_did(&did));
-    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), public_key.as_ref());
-
-    move_key(&vault, tmp_location.into(), location.clone().into()).await?;
+      .await?;
 
     Ok((did, location))
   }
