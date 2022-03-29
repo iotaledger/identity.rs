@@ -9,6 +9,7 @@ use futures::Future;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::MemStore;
+use identity_account_storage::storage::Stronghold;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::SignatureOptions;
@@ -27,7 +28,6 @@ use crate::account::Account;
 use crate::account::AccountBuilder;
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
-use crate::account::AccountStorage;
 use crate::account::AutoSave;
 use crate::account::PublishOptions;
 use crate::types::IdentitySetup;
@@ -56,9 +56,6 @@ async fn test_account_builder() -> Result<()> {
     builder.load_identity(did2).await.unwrap_err(),
     crate::Error::IdentityNotFound
   ));
-
-  // Relase the lease on did1.
-  std::mem::drop(account1);
 
   assert!(builder.load_identity(did1).await.is_ok());
 
@@ -501,11 +498,11 @@ async fn test_account_sync_diff_msg_update() {
 
 async fn create_account(network: Network) -> Account {
   Account::builder()
-    .storage(AccountStorage::Stronghold(
-      "./example-strong.hodl".into(),
-      Some("my-password".into()),
-      None,
-    ))
+    .storage(
+      Stronghold::new("./example-strong.hodl", "my-password".to_owned(), None)
+        .await
+        .unwrap(),
+    )
     .autopublish(false)
     .autosave(AutoSave::Every)
     .client_builder(ClientBuilder::new().network(network.clone()))
