@@ -13,7 +13,6 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::did::DID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
@@ -38,9 +37,13 @@ use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
 // The name of the stronghold client used for indexing, which is global for a storage instance.
-static INDEX_PATH: &str = "$index";
-static CHAIN_STATE_PATH: &str = "$chain_state";
-static DOCUMENT_PATH: &str = "$document";
+static INDEX_CLIENT_PATH: &str = "$index";
+// The key in the index store that contains the serialized index.
+// This happens to be the same as the client path, but for explicitness we define them separately.
+static INDEX_STORE_KEY: &str = INDEX_CLIENT_PATH;
+static CHAIN_STATE_CLIENT_PATH: &str = "$chain_state";
+static DOCUMENT_CLIENT_PATH: &str = "$document";
+static VAULT_PATH: &[u8; 6] = b"$vault";
 
 #[derive(Debug)]
 pub struct Stronghold {
@@ -69,8 +72,8 @@ impl Stronghold {
     })
   }
 
-  fn store(&self, client_path: impl Into<ClientPath>) -> Store<'_> {
-    self.snapshot.store(client_path.into())
+  fn store(&self, client_path: ClientPath) -> Store<'_> {
+    self.snapshot.store(client_path)
   }
 
   fn vault(&self, did: &IotaDID) -> Vault<'_> {
@@ -92,9 +95,6 @@ impl Stronghold {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
-  /// Creates a new identity for the given `network` with the given Ed25519 `private_key`.
-  /// If the latter is `None`, a new Ed25519 keypair is generated. Returns the generated
-  /// DID and the location at which the key was stored.
   async fn did_create(
     &self,
     network: NetworkName,
@@ -110,7 +110,7 @@ impl Storage for Stronghold {
     let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
 
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-    let store: Store<'_> = self.store(INDEX_PATH);
+    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
     let mut index: BTreeSet<IotaDID> = get_index(&store).await?;
 
     if index.contains(&did) {
@@ -141,7 +141,7 @@ impl Storage for Stronghold {
   async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
     // Remove index entry if present.
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-    let store: Store<'_> = self.store(INDEX_PATH);
+    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
     let mut index: BTreeSet<IotaDID> = get_index(&store).await?;
 
     if !index.remove(did) {
@@ -152,12 +152,12 @@ impl Storage for Stronghold {
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
-    let store: Store<'_> = self.store(did);
+    let store: Store<'_> = self.store(ClientPath::from(did));
 
-    store.del(DOCUMENT_PATH).await?;
-    store.del(CHAIN_STATE_PATH).await?;
+    store.del(DOCUMENT_CLIENT_PATH).await?;
+    store.del(CHAIN_STATE_CLIENT_PATH).await?;
 
-    // TODO: Remove leftover keys.
+    // TODO: Remove leftover keys (#757).
 
     Ok(true)
   }
@@ -203,7 +203,7 @@ impl Storage for Stronghold {
 
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     // Explicitly implemented to hold the lock across the existence check & removal.
-    let context: _ = Context::scope(self.snapshot.path(), fmt_did(did).as_ref(), &[]).await?;
+    let context: _ = Context::scope(self.snapshot.path(), ClientPath::from(did).0.as_ref(), &[]).await?;
 
     let exists: bool = context
       .record_exists(location.into())
@@ -237,8 +237,8 @@ impl Storage for Stronghold {
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(did);
-    let data: Option<Vec<u8>> = store.get(CHAIN_STATE_PATH).await?;
+    let store: Store<'_> = self.store(ClientPath::from(did));
+    let data: Option<Vec<u8>> = store.get(CHAIN_STATE_CLIENT_PATH).await?;
 
     match data {
       None => return Ok(None),
@@ -248,21 +248,21 @@ impl Storage for Stronghold {
 
   async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(did);
+    let store: Store<'_> = self.store(ClientPath::from(did));
 
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
-    store.set(CHAIN_STATE_PATH, json, None).await?;
+    store.set(CHAIN_STATE_CLIENT_PATH, json, None).await?;
 
     Ok(())
   }
 
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(did);
+    let store: Store<'_> = self.store(ClientPath::from(did));
 
     // Read the state from the stronghold snapshot
-    let data: Option<Vec<u8>> = store.get(DOCUMENT_PATH).await?;
+    let data: Option<Vec<u8>> = store.get(DOCUMENT_CLIENT_PATH).await?;
 
     match data {
       None => return Ok(None),
@@ -272,13 +272,13 @@ impl Storage for Stronghold {
 
   async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(did);
+    let store: Store<'_> = self.store(ClientPath::from(did));
 
     // Serialize the state
     let json: Vec<u8> = document.to_json_vec()?;
 
     // Write the state to the stronghold snapshot
-    store.set(DOCUMENT_PATH, json, None).await?;
+    store.set(DOCUMENT_CLIENT_PATH, json, None).await?;
 
     Ok(())
   }
@@ -286,7 +286,7 @@ impl Storage for Stronghold {
   async fn index_has(&self, did: &IotaDID) -> Result<bool> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let store: Store<'_> = self.store(INDEX_PATH);
+    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
@@ -301,7 +301,7 @@ impl Storage for Stronghold {
   async fn index(&self) -> Result<Vec<IotaDID>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let store: Store<'_> = self.store(INDEX_PATH);
+    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
@@ -376,7 +376,7 @@ async fn move_key(vault: &Vault<'_>, source: Location, target: Location) -> Resu
 }
 
 async fn get_index(store: &Store<'_>) -> Result<BTreeSet<IotaDID>> {
-  let index: BTreeSet<IotaDID> = match store.get(INDEX_PATH).await? {
+  let index: BTreeSet<IotaDID> = match store.get(INDEX_STORE_KEY).await? {
     Some(index_vec) => BTreeSet::<IotaDID>::from_json_slice(&index_vec)?,
     None => BTreeSet::new(),
   };
@@ -387,24 +387,14 @@ async fn get_index(store: &Store<'_>) -> Result<BTreeSet<IotaDID>> {
 async fn set_index(store: &Store<'_>, index: BTreeSet<IotaDID>) -> Result<()> {
   let index_vec: Vec<u8> = index.to_json_vec()?;
 
-  store.set(INDEX_PATH, index_vec, None).await?;
+  store.set(INDEX_STORE_KEY, index_vec, None).await?;
 
   Ok(())
 }
 
-fn fmt_did(did: &IotaDID) -> String {
-  format!("$identity:{}", did.authority())
-}
-
 impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
-    Location::generic(b"$vault".to_vec(), key_location.to_string().into_bytes())
-  }
-}
-
-impl From<KeyLocation> for Location {
-  fn from(key_location: KeyLocation) -> Self {
-    Location::from(&key_location)
+    Location::generic(VAULT_PATH.to_vec(), key_location.to_string().into_bytes())
   }
 }
 

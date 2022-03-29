@@ -63,12 +63,12 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Removes the keys and any other state for the given `did`.
   ///
-  /// This operation is idempotent: it does not fail if the given `did` does not exist.
+  /// This operation is idempotent: it does not fail if the given `did` does not (or no longer) exist.
   ///
-  /// Returns `true` if the did was removed, false if nothing was done.
+  /// Returns `true` if the did and its associated data was removed, `false` if nothing was done.
   async fn did_purge(&self, did: &IotaDID) -> Result<bool>;
 
-  /// Generates a new key for the given `account_id` with the given `key_type` and `fragment` identifier
+  /// Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
   /// and returns the location of the newly generated key.
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation>;
 
@@ -83,7 +83,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Deletes the key at `location`.
   ///
   /// This operation is idempotent: it does not fail if the key does not exist.
-  /// Returns true if it removed the key, false if it did nothing.
+  ///
+  /// Returns `true` if it removed the key, `false` if nothing was done.
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
 
   /// Signs `data` with the private key at the specified `location`.
@@ -92,16 +93,16 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Returns `true` if a key exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
 
-  /// Returns the chain state of the identity specified by `account_id`.
+  /// Returns the chain state of the identity specified by `did`.
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>>;
 
-  /// Set the chain state of the identity specified by `account_id`.
+  /// Set the chain state of the identity specified by `did`.
   async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
 
-  /// Returns the [`IotaDocument`] of the identity specified by `account_id`.
+  /// Returns the [`IotaDocument`] of the identity specified by `did`.
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>>;
 
-  /// Sets a new state for the identity specified by `account_id`.
+  /// Sets a new state for the identity specified by `did`.
   async fn document_set(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
 
   /// Returns `true` if the index contains the given `did`.
