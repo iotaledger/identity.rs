@@ -241,7 +241,7 @@ mod test {
         .capability_invocation_mut()
         .append(signing_method);
 
-      new.document.metadata.updated = Timestamp::now_utc();
+      new.document.metadata.updated = Some(Timestamp::now_utc());
       new.document.metadata.previous_message_id = *chain.integration_message_id();
 
       // Sign the update using the old document.
@@ -275,7 +275,7 @@ mod test {
         let mut this: ResolvedIotaDocument = chain.current().clone();
         this.document.properties_mut().insert("foo".into(), 123.into());
         this.document.properties_mut().insert("bar".into(), 456.into());
-        this.document.metadata.updated = Timestamp::now_utc();
+        this.document.metadata.updated = Some(Timestamp::now_utc());
         this
       };
 
@@ -315,7 +315,7 @@ mod test {
       .core_document_mut()
       .capability_invocation_mut()
       .clear();
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -353,7 +353,7 @@ mod test {
       .document
       .insert_method(new_signing_method, MethodScope::capability_invocation())
       .unwrap();
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -394,7 +394,7 @@ mod test {
       }
       MethodRef::Refer(_) => unreachable!(),
     };
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -450,7 +450,7 @@ mod test {
       .head_mut()
       .unwrap();
     *updated_method.data_mut() = MethodData::new_multibase([3u8; 32]);
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =

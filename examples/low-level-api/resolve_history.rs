@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
     // This is REQUIRED in order for the messages to form a chain.
     // Skipping / forgetting this will render the publication useless.
     int_doc_1.metadata.previous_message_id = *original_receipt.message_id();
-    int_doc_1.metadata.updated = Timestamp::now_utc();
+    int_doc_1.metadata.updated = Some(Timestamp::now_utc());
 
     // Sign the DID Document with the original private key.
     int_doc_1.sign_self(keypair.private(), int_doc_1.default_signing_method()?.id().clone())?;
@@ -130,7 +130,7 @@ async fn main() -> Result<()> {
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update.
     int_doc_2.metadata.previous_message_id = *int_receipt_1.message_id();
-    int_doc_2.metadata.updated = Timestamp::now_utc();
+    int_doc_2.metadata.updated = Some(Timestamp::now_utc());
 
     int_doc_2.sign_self(keypair.private(), int_doc_2.default_signing_method()?.id().clone())?;
     int_doc_2

@@ -40,7 +40,7 @@ where
   fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
     match (self, diff) {
       (None, DiffOption::None) => Ok(None),
-      (Some(_), DiffOption::None) => Ok(self.clone()),
+      (Some(_), DiffOption::None) => Ok(None),
       (None, DiffOption::Some(ref d)) => Ok(Some(<T>::from_diff(d.clone())?)),
       (Some(t), DiffOption::Some(ref d)) => Ok(Some(t.merge(d.clone())?)),
     }

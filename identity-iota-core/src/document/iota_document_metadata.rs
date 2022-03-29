@@ -19,8 +19,10 @@ use crate::tangle::MessageIdExt;
 /// Additional attributes related to an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IotaDocumentMetadata {
-  pub created: Timestamp,
-  pub updated: Timestamp,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub created: Option<Timestamp>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub updated: Option<Timestamp>,
   #[serde(
     rename = "previousMessageId",
     default = "MessageId::null",
@@ -37,8 +39,8 @@ impl IotaDocumentMetadata {
   pub fn new() -> Self {
     let now: Timestamp = Timestamp::now_utc();
     Self {
-      created: now,
-      updated: now,
+      created: Some(now),
+      updated: Some(now),
       previous_message_id: MessageId::null(),
       properties: Object::default(),
     }

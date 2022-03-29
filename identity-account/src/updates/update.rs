@@ -290,7 +290,7 @@ impl Update {
       }
     }
 
-    state.document_mut().metadata.updated = Timestamp::now_utc();
+    state.document_mut().metadata.updated = Some(Timestamp::now_utc());
 
     Ok(())
   }

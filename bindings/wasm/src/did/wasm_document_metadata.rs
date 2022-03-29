@@ -20,14 +20,14 @@ pub struct WasmDocumentMetadata(pub(crate) IotaDocumentMetadata);
 impl WasmDocumentMetadata {
   /// Returns a copy of the timestamp of when the DID document was created.
   #[wasm_bindgen]
-  pub fn created(&self) -> WasmTimestamp {
-    WasmTimestamp::from(self.0.created)
+  pub fn created(&self) -> Option<WasmTimestamp> {
+    self.0.created.map(WasmTimestamp::from)
   }
 
   /// Returns a copy of the timestamp of the last DID document update.
   #[wasm_bindgen]
-  pub fn updated(&self) -> WasmTimestamp {
-    WasmTimestamp::from(self.0.updated)
+  pub fn updated(&self) -> Option<WasmTimestamp> {
+    self.0.updated.map(WasmTimestamp::from)
   }
 
   #[wasm_bindgen(getter = previousMessageId)]

@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
   // Override the updated field timestamp to 24 hours (= 86400 seconds) in the future,
   // because we can. This is usually set automatically by Account::update_identity.
   let timestamp: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() + 86400)?;
-  document.metadata.updated = timestamp;
+  document.metadata.updated = Some(timestamp);
 
   // Update the identity without validation and publish the result to the Tangle
   // (depending on the account's autopublish setting).
