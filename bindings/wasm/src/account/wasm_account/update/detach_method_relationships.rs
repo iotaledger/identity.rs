@@ -2,15 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::cell::RefCell;
-use std::cell::RefMut;
 use std::rc::Rc;
 
-use identity::account::DetachMethodRelationshipBuilder;
-use identity::account::IdentityUpdater;
 use identity::account::UpdateError::MissingRequiredField;
 use identity::core::OneOrMany;
 use identity::did::MethodRelationship;
-use identity::iota::Client;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -48,16 +44,12 @@ impl WasmAccount {
       if relationships.is_empty() {
         return Ok(JsValue::undefined());
       }
-      let mut account: RefMut<AccountRc> = account.borrow_mut();
-      let mut updater: IdentityUpdater<'_, Rc<Client>> = account.update_identity();
-      let mut detach_relationship: DetachMethodRelationshipBuilder<'_, Rc<Client>> =
-        updater.detach_method_relationship().fragment(fragment);
-
-      for relationship in relationships {
-        detach_relationship = detach_relationship.relationship(relationship);
-      }
-
-      detach_relationship
+      account
+        .borrow_mut()
+        .update_identity()
+        .detach_method_relationship()
+        .fragment(fragment)
+        .relationships(relationships)
         .apply()
         .await
         .wasm_result()
