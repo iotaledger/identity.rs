@@ -300,7 +300,6 @@ mod test {
   fn test_serde_timestamp_to_none() {
     let original: IotaDocumentMetadata = IotaDocumentMetadata::new();
     let mut updated: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    updated.previous_message_id = MessageId::new([1; 32]);
     updated.created = Some(Timestamp::from_unix(1).unwrap());
     updated.updated = None;
     let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
@@ -319,7 +318,6 @@ mod test {
     original.created = None;
 
     let mut updated: IotaDocumentMetadata = IotaDocumentMetadata::new();
-    updated.previous_message_id = MessageId::new([1; 32]);
     updated.created = Some(Timestamp::from_unix(1).unwrap());
     updated.updated = None;
     let diff: DiffIotaDocumentMetadata = Diff::diff(&original, &updated).unwrap();
