@@ -3,6 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
+use std::collections::HashSet;
 
 use async_trait::async_trait;
 use crypto::keys::x25519;
@@ -16,6 +17,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::NetworkName;
 use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
@@ -25,17 +27,16 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
-use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
 
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
-type ChainStates = HashMap<AccountId, ChainState>;
-type States = HashMap<AccountId, IotaDocument>;
-type Vaults = HashMap<AccountId, MemVault>;
-type Index = HashMap<IotaDID, AccountId>;
+type ChainStates = HashMap<IotaDID, ChainState>;
+type States = HashMap<IotaDID, IotaDocument>;
+type Vaults = HashMap<IotaDID, MemVault>;
+type Index = HashSet<IotaDID>;
 
 pub struct MemStore {
   expand: bool,
@@ -52,7 +53,7 @@ impl MemStore {
       chain_states: Shared::new(HashMap::new()),
       documents: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
-      index: Shared::new(HashMap::new()),
+      index: Shared::new(HashSet::new()),
     }
   }
 
@@ -68,9 +69,53 @@ impl MemStore {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
-  async fn key_generate(&self, account_id: &AccountId, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
+  async fn did_create(
+    &self,
+    network: NetworkName,
+    fragment: &str,
+    private_key: Option<PrivateKey>,
+  ) -> Result<(IotaDID, KeyLocation)> {
+    let keypair: KeyPair = match private_key {
+      Some(private_key) => KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?,
+      None => KeyPair::new(KeyType::Ed25519)?,
+    };
+
+    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
+
+    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
+
+    let mut index: RwLockWriteGuard<'_, _> = self.index.write()?;
+
+    if index.contains(&did) {
+      return Err(Error::IdentityAlreadyExists);
+    } else {
+      index.insert(did.clone());
+    }
+
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.entry(*account_id).or_default();
+
+    let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
+
+    vault.insert(location.clone(), keypair);
+
+    Ok((did, location))
+  }
+
+  async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
+    if self.index.write()?.remove(did) {
+      let _ = self.documents.write()?.remove(did);
+      let _ = self.vaults.write()?.remove(did);
+      let _ = self.chain_states.write()?.remove(did);
+
+      Ok(true)
+    } else {
+      Ok(false)
+    }
+  }
+
+  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
     let keypair: KeyPair = KeyPair::new(key_type)?;
 
@@ -81,9 +126,9 @@ impl Storage for MemStore {
     Ok(location)
   }
 
-  async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.entry(*account_id).or_default();
+    let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
     match location.key_type {
       KeyType::Ed25519 => {
@@ -118,34 +163,34 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
-    if let Some(vault) = vaults.get(account_id) {
+    if let Some(vault) = vaults.get(did) {
       return Ok(vault.contains_key(location));
     }
 
     Ok(false)
   }
 
-  async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(account_id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
     Ok(keypair.public().clone())
   }
 
-  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
+  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.get_mut(account_id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
 
     Ok(vault.remove(location).is_some())
   }
 
-  async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(account_id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
     match location.key_type {
@@ -162,58 +207,32 @@ impl Storage for MemStore {
     }
   }
 
-  async fn chain_state_get(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
-    self.chain_states.read().map(|states| states.get(account_id).cloned())
+  async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
+    self.chain_states.read().map(|states| states.get(did).cloned())
   }
 
-  async fn chain_state_set(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
-    self.chain_states.write()?.insert(*account_id, chain_state.clone());
+  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
+    self.chain_states.write()?.insert(did.clone(), chain_state.clone());
 
     Ok(())
   }
 
-  async fn document_get(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
-    self
-      .documents
-      .read()
-      .map(|documents| documents.get(account_id).cloned())
+  async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+    self.documents.read().map(|documents| documents.get(did).cloned())
   }
 
-  async fn document_set(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
-    self.documents.write()?.insert(*account_id, document.clone());
+  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
+    self.documents.write()?.insert(did.clone(), document.clone());
 
     Ok(())
   }
 
-  async fn purge(&self, did: &IotaDID) -> Result<bool> {
-    if let Some(account_id) = self.index_get(did).await? {
-      let _ = self.documents.write()?.remove(&account_id);
-      let _ = self.vaults.write()?.remove(&account_id);
-      let _ = self.chain_states.write()?.remove(&account_id);
-
-      self.index.write()?.remove(did);
-      Ok(true)
-    } else {
-      Ok(false)
-    }
+  async fn index_has(&self, did: &IotaDID) -> Result<bool> {
+    Ok(self.index.read()?.contains(did))
   }
 
-  async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {
-    let mut index = self.index.write()?;
-
-    index.insert(did, account_id);
-
-    Ok(())
-  }
-
-  async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>> {
-    let index = self.index.read()?;
-
-    Ok(index.get(did).cloned())
-  }
-
-  async fn index_keys(&self) -> Result<Vec<IotaDID>> {
-    Ok(self.index.read()?.keys().cloned().collect())
+  async fn index(&self) -> Result<Vec<IotaDID>> {
+    Ok(self.index.read()?.iter().cloned().collect())
   }
 
   async fn flush_changes(&self) -> Result<()> {

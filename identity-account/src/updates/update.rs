@@ -4,7 +4,6 @@
 use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use identity_account_storage::storage::Storage;
-use identity_account_storage::types::AccountId;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
@@ -12,6 +11,7 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -44,36 +44,37 @@ pub(crate) async fn create_identity(
   setup: IdentitySetup,
   network: NetworkName,
   store: &dyn Storage,
-) -> Result<(AccountId, IotaDocument)> {
-  let account_id: AccountId = AccountId::generate();
+) -> Result<IotaDocument> {
   let fragment: &str = IotaDocument::DEFAULT_METHOD_FRAGMENT;
 
-  let location: KeyLocation = if let Some(private_key) = setup.private_key {
-    insert_method_secret(store, account_id, KeyType::Ed25519, fragment, private_key).await?
-  } else {
-    store
-      .key_generate(&account_id, KeyType::Ed25519, IotaDocument::DEFAULT_METHOD_FRAGMENT)
-      .await?
+  let keypair: KeyPair = match setup.private_key {
+    None => KeyPair::new(KeyType::Ed25519)?,
+    Some(private_key) => {
+      ensure!(
+        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodContent(format!(
+          "an Ed25519 private key requires {} bytes, found {}",
+          ed25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+      KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?
+    }
   };
 
-  let public_key: PublicKey = store.key_public(&account_id, &location).await?;
+  let private_key: PrivateKey = keypair.private().to_owned();
+  std::mem::drop(keypair);
 
-  // Generate a new DID from the public key
-  let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
+  let (did, location) = store.did_create(network.clone(), fragment, Some(private_key)).await?;
 
-  ensure!(
-    store.index_get(&did).await?.is_none(),
-    UpdateError::DocumentAlreadyExists
-  );
+  let public_key: PublicKey = store.key_public(&did, &location).await?;
 
   let method: IotaVerificationMethod =
     IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
 
-  store.index_set(did, account_id).await?;
-
   let document = IotaDocument::from_verification_method(method)?;
 
-  Ok((account_id, document))
+  Ok(document)
 }
 
 #[derive(Clone, Debug)]
@@ -112,13 +113,7 @@ pub(crate) enum Update {
 }
 
 impl Update {
-  pub(crate) async fn process(
-    self,
-    did: &IotaDID,
-    account_id: AccountId,
-    document: &mut IotaDocument,
-    storage: &dyn Storage,
-  ) -> Result<()> {
+  pub(crate) async fn process(self, did: &IotaDID, document: &mut IotaDocument, storage: &dyn Storage) -> Result<()> {
     debug!("[Update::process] Update = {:?}", self);
     trace!("[Update::process] State = {:?}", document);
     trace!("[Update::process] Store = {:?}", storage);
@@ -129,12 +124,6 @@ impl Update {
         content,
         fragment,
       } => {
-        // let method_fragment: String = if !fragment.starts_with('#') {
-        //   format!("#{}", fragment)
-        // } else {
-        //   fragment
-        // };
-
         let fragment: Fragment = Fragment::new(fragment);
 
         // Check method identifier is not duplicated.
@@ -145,17 +134,16 @@ impl Update {
 
         // Generate or extract the private key and/or retrieve the public key.
         let key_type: KeyType = content.key_type();
-        // TODO: Is MethodContent::method_type still needed?
-        // let method_type: MethodType = content.method_type();
+
         let public: PublicKey = match content {
           MethodContent::GenerateEd25519 | MethodContent::GenerateX25519 => {
-            let location: KeyLocation = storage.key_generate(&account_id, key_type, fragment.name()).await?;
-            storage.key_public(&account_id, &location).await?
+            let location: KeyLocation = storage.key_generate(&did, key_type, fragment.name()).await?;
+            storage.key_public(&did, &location).await?
           }
           MethodContent::PrivateEd25519(private_key) | MethodContent::PrivateX25519(private_key) => {
             let location: KeyLocation =
-              insert_method_secret(storage, account_id, key_type, fragment.name(), private_key).await?;
-            storage.key_public(&account_id, &location).await?
+              insert_method_secret(storage, did, key_type, fragment.name(), private_key).await?;
+            storage.key_public(&did, &location).await?
           }
           MethodContent::PublicEd25519(public_key) => public_key,
           MethodContent::PublicX25519(public_key) => public_key,
@@ -275,7 +263,7 @@ impl Update {
 
 async fn insert_method_secret(
   store: &dyn Storage,
-  account_id: AccountId,
+  did: &IotaDID,
   key_type: KeyType,
   fragment: &str,
   private_key: PrivateKey,
@@ -308,11 +296,11 @@ async fn insert_method_secret(
   let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
 
   ensure!(
-    !store.key_exists(&account_id, &location).await?,
+    !store.key_exists(&did, &location).await?,
     UpdateError::DuplicateKeyLocation(location)
   );
 
-  store.key_insert(&account_id, &location, private_key).await?;
+  store.key_insert(&did, &location, private_key).await?;
 
   Ok(location)
 }

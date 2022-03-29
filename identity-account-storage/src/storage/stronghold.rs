@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashMap;
+use std::collections::BTreeSet;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -12,8 +12,10 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_did::did::DID;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::NetworkName;
 use iota_stronghold::procedures;
 use iota_stronghold::Location;
 use tokio::sync::RwLock;
@@ -25,15 +27,16 @@ use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
 use crate::stronghold::Context;
+use crate::stronghold::Database;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::Vault;
-use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
+static GENERATION_PATH: &str = "$generation";
 // The name of the stronghold client used for indexing, which is global for a storage instance.
 static INDEX_PATH: &str = "$index";
 static CHAIN_STATE_PATH: &str = "$chain_state";
@@ -70,8 +73,12 @@ impl Stronghold {
     self.snapshot.store(name, &[])
   }
 
-  fn vault(&self, id: &AccountId) -> Vault<'_> {
-    self.snapshot.vault(&fmt_account_id(id), &[])
+  fn vault(&self, did: &IotaDID) -> Vault<'_> {
+    self.snapshot.vault(&fmt_did(&did), &[])
+  }
+
+  fn did_vault(&self, string: &str) -> Vault<'_> {
+    self.snapshot.vault(string, &[])
   }
 
   /// Returns whether save-on-drop is enabled.
@@ -89,8 +96,107 @@ impl Stronghold {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
-  async fn key_generate(&self, account_id: &AccountId, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
-    let vault: Vault<'_> = self.vault(account_id);
+  /// Creates a new identity for the given `network` with the given Ed25519 `private_key`.
+  /// If the latter is `None`, a new Ed25519 keypair is generated. Returns the generated
+  /// DID and the location at which the key was stored.
+  async fn did_create(
+    &self,
+    network: NetworkName,
+    fragment: &str,
+    private_key: Option<PrivateKey>,
+  ) -> Result<(IotaDID, KeyLocation)> {
+    // Generate a random, temporary location for the initial key.
+    let tmp_location: KeyLocation = KeyLocation::random(KeyType::Ed25519);
+    // Load the "generation" client, i.e. the client we use to generate keys for DIDs before we move them.
+    let vault: Vault<'_> = self.did_vault(GENERATION_PATH);
+
+    // Insert a given key or generate a new one if `None` was given.
+    match private_key {
+      Some(private_key) => {
+        let stronghold_location: Location = (&tmp_location).into();
+
+        vault
+          .insert(stronghold_location, private_key.as_ref(), default_hint(), &[])
+          .await?;
+      }
+      None => {
+        generate_private_key(&vault, &tmp_location).await?;
+      }
+    }
+
+    // Get the public key and create the DID and verification method.
+    let public_key: PublicKey = retrieve_public_key(&vault, &tmp_location).await?;
+
+    let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)?;
+
+    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
+    let store: Store<'_> = self.store(INDEX_PATH);
+    let mut index: BTreeSet<IotaDID> = get_index(&store).await?;
+
+    if index.contains(&did) {
+      return Err(crate::Error::IdentityAlreadyExists);
+    } else {
+      index.insert(did.clone());
+    }
+
+    set_index(&store, index).await?;
+    // Explicitly drop the lock so it's not considered unused.
+    std::mem::drop(index_lock);
+
+    // Now that we have the DID, we can move (=sync) the vault from the generation client to the
+    // actual client where we want the key to reside, i.e. the client identified by the DID.
+    let mut stronghold: tokio::sync::MutexGuard<'_, Database> = self.snapshot.stronghold().await?;
+    stronghold
+      .sync_clients(
+        GENERATION_PATH.into(),
+        fmt_did(&did).into(),
+        iota_stronghold::sync::SelectOrMerge::Replace,
+        None,
+      )
+      .await
+      .map_err(StrongholdError::from)?
+      .map_err(StrongholdError::from)?;
+
+    std::mem::drop(stronghold);
+
+    self.flush_changes().await?;
+
+    // Within the DID client, move the key from the temporary location to the location
+    // where we expect the key to be based on the public key.
+    let vault: Vault<'_> = self.did_vault(&fmt_did(&did));
+    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), public_key.as_ref());
+
+    move_key(&vault, tmp_location.into(), location.clone().into()).await?;
+
+    Ok((did, location))
+  }
+
+  async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
+    // Remove index entry if present.
+    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
+    let store: Store<'_> = self.store(INDEX_PATH);
+    let mut index: BTreeSet<IotaDID> = get_index(&store).await?;
+
+    if !index.remove(did) {
+      return Ok(false);
+    }
+
+    set_index(&store, index).await?;
+    // Explicitly release the lock early.
+    std::mem::drop(index_lock);
+
+    let store: Store<'_> = self.store(&fmt_did(did));
+
+    store.del(DOCUMENT_PATH).await?;
+    store.del(CHAIN_STATE_PATH).await?;
+
+    // TODO: Remove leftover keys.
+
+    Ok(true)
+  }
+
+  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
+    let vault: Vault<'_> = self.vault(did);
 
     let tmp_location: KeyLocation = KeyLocation::random(key_type);
 
@@ -100,7 +206,7 @@ impl Storage for Stronghold {
       }
     }
 
-    let public_key: PublicKey = self.key_public(account_id, &tmp_location).await?;
+    let public_key: PublicKey = self.key_public(did, &tmp_location).await?;
 
     let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
     move_key(&vault, (&tmp_location).into(), (&location).into()).await?;
@@ -108,8 +214,8 @@ impl Storage for Stronghold {
     Ok(location)
   }
 
-  async fn key_insert(&self, account_id: &AccountId, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
-    let vault = self.vault(account_id);
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
+    let vault: Vault<'_> = self.vault(did);
 
     let stronghold_location: Location = location.into();
 
@@ -120,17 +226,17 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> Result<PublicKey> {
-    let vault: Vault<'_> = self.vault(account_id);
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault(did);
 
     match location.key_type {
       KeyType::Ed25519 | KeyType::X25519 => retrieve_public_key(&vault, location).await,
     }
   }
 
-  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
+  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     // Explicitly implemented to hold the lock across the existence check & removal.
-    let context: _ = Context::scope(self.snapshot.path(), fmt_account_id(account_id).as_ref(), &[]).await?;
+    let context: _ = Context::scope(self.snapshot.path(), fmt_did(did).as_ref(), &[]).await?;
 
     let exists: bool = context
       .record_exists(location.into())
@@ -149,8 +255,8 @@ impl Storage for Stronghold {
     Ok(exists)
   }
 
-  async fn key_sign(&self, account_id: &AccountId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
-    let vault: Vault<'_> = self.vault(account_id);
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+    let vault: Vault<'_> = self.vault(did);
 
     match location.key_type {
       KeyType::Ed25519 => sign_ed25519(&vault, data, location).await,
@@ -158,13 +264,13 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> Result<bool> {
-    self.vault(account_id).exists(location.into()).await.map_err(Into::into)
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+    self.vault(did).exists(location.into()).await.map_err(Into::into)
   }
 
-  async fn chain_state_get(&self, account_id: &AccountId) -> Result<Option<ChainState>> {
+  async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_account_id(account_id));
+    let store: Store<'_> = self.store(&fmt_did(did));
     let data: Option<Vec<u8>> = store.get(CHAIN_STATE_PATH).await?;
 
     match data {
@@ -173,9 +279,9 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn chain_state_set(&self, account_id: &AccountId, chain_state: &ChainState) -> Result<()> {
+  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_account_id(account_id));
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
@@ -184,9 +290,9 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn document_get(&self, account_id: &AccountId) -> Result<Option<IotaDocument>> {
+  async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_account_id(account_id));
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     // Read the state from the stronghold snapshot
     let data: Option<Vec<u8>> = store.get(DOCUMENT_PATH).await?;
@@ -197,9 +303,9 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn document_set(&self, account_id: &AccountId, document: &IotaDocument) -> Result<()> {
+  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_account_id(account_id));
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     // Serialize the state
     let json: Vec<u8> = document.to_json_vec()?;
@@ -210,78 +316,32 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn purge(&self, did: &IotaDID) -> Result<bool> {
-    let account_id: AccountId = match self.index_get(did).await? {
-      Some(account_id) => account_id,
-      None => return Ok(false),
-    };
-
-    // Remove index entry.
-    let store: Store<'_> = self.store(INDEX_PATH);
-    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-    let mut index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
-    if index.remove(did).is_none() {
-      return Ok(false);
-    }
-    set_index(&store, index).await?;
-    // Explicitly release the lock early.
-    std::mem::drop(index_lock);
-
-    let store: Store<'_> = self.store(&fmt_account_id(&account_id));
-
-    store.del(DOCUMENT_PATH).await?;
-    store.del(CHAIN_STATE_PATH).await?;
-
-    // TODO: Remove leftover keys.
-
-    Ok(true)
-  }
-
-  async fn index_set(&self, did: IotaDID, account_id: AccountId) -> Result<()> {
-    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-
-    let store: Store<'_> = self.store(INDEX_PATH);
-
-    let mut index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
-
-    index.insert(did, account_id);
-
-    set_index(&store, index).await?;
-
-    // Explicitly drop the lock so it's not considered unused.
-    std::mem::drop(index_lock);
-
-    Ok(())
-  }
-
-  async fn index_get(&self, did: &IotaDID) -> Result<Option<AccountId>> {
+  async fn index_has(&self, did: &IotaDID) -> Result<bool> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
     let store: Store<'_> = self.store(INDEX_PATH);
 
-    let index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
+    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
-    let lookup: Option<AccountId> = index.get(did).cloned();
+    let has_did: bool = dids.contains(did);
 
     // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
-    Ok(lookup)
+    Ok(has_did)
   }
 
-  async fn index_keys(&self) -> Result<Vec<IotaDID>> {
+  async fn index(&self) -> Result<Vec<IotaDID>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
     let store: Store<'_> = self.store(INDEX_PATH);
 
-    let index: HashMap<IotaDID, AccountId> = get_index(&store).await?;
-
-    let dids: Vec<IotaDID> = index.keys().cloned().collect();
+    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
     // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
-    Ok(dids)
+    Ok(dids.into_iter().collect())
   }
 
   async fn flush_changes(&self) -> Result<()> {
@@ -348,16 +408,16 @@ async fn move_key(vault: &Vault<'_>, source: Location, target: Location) -> Resu
   Ok(())
 }
 
-async fn get_index(store: &Store<'_>) -> Result<HashMap<IotaDID, AccountId>> {
-  let index: HashMap<IotaDID, AccountId> = match store.get(INDEX_PATH).await? {
-    Some(index_vec) => HashMap::<IotaDID, AccountId>::from_json_slice(&index_vec)?,
-    None => HashMap::new(),
+async fn get_index(store: &Store<'_>) -> Result<BTreeSet<IotaDID>> {
+  let index: BTreeSet<IotaDID> = match store.get(INDEX_PATH).await? {
+    Some(index_vec) => BTreeSet::<IotaDID>::from_json_slice(&index_vec)?,
+    None => BTreeSet::new(),
   };
 
   Ok(index)
 }
 
-async fn set_index(store: &Store<'_>, index: HashMap<IotaDID, AccountId>) -> Result<()> {
+async fn set_index(store: &Store<'_>, index: BTreeSet<IotaDID>) -> Result<()> {
   let index_vec: Vec<u8> = index.to_json_vec()?;
 
   store.set(INDEX_PATH, index_vec, None).await?;
@@ -365,13 +425,19 @@ async fn set_index(store: &Store<'_>, index: HashMap<IotaDID, AccountId>) -> Res
   Ok(())
 }
 
-fn fmt_account_id(account_id: &AccountId) -> String {
-  format!("$identity:{}", account_id)
+fn fmt_did(did: &IotaDID) -> String {
+  format!("$identity:{}", did.authority())
 }
 
 impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
     Location::generic(b"$vault".to_vec(), key_location.to_string().into_bytes())
+  }
+}
+
+impl From<KeyLocation> for Location {
+  fn from(key_location: KeyLocation) -> Self {
+    Location::from(&key_location)
   }
 }
 

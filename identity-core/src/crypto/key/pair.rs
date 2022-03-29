@@ -68,7 +68,7 @@ impl KeyPair {
       KeyType::X25519 => {
         let private_key_bytes: [u8; x25519::SECRET_KEY_LENGTH] = private_key_bytes
           .try_into()
-          .map_err(|_| crate::Error::InvalidKeyLength(private_key_bytes.len(), ed25519::SECRET_KEY_LENGTH))?;
+          .map_err(|_| crate::Error::InvalidKeyLength(private_key_bytes.len(), x25519::SECRET_KEY_LENGTH))?;
         let private_key: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
         let public_key: x25519::PublicKey = private_key.public_key();
 

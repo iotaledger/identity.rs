@@ -13,6 +13,8 @@ use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
 
+use super::Database;
+
 #[derive(Debug)]
 pub struct Snapshot {
   path: PathBuf,
@@ -55,6 +57,10 @@ impl Snapshot {
     T: AsRef<[u8]> + ?Sized,
   {
     Store::new(&self.path, name, flags)
+  }
+
+  pub async fn stronghold(&self) -> IotaStrongholdResult<tokio::sync::MutexGuard<'static, Database>> {
+    Context::scope(&self.path, "doesntmatter".as_ref(), &[]).await
   }
 
   pub async fn status(&self) -> IotaStrongholdResult<SnapshotStatus> {

@@ -68,11 +68,7 @@ async fn test_create_identity() -> Result<()> {
     );
 
     // Ensure the key exists in storage.
-    assert!(account
-      .storage()
-      .key_exists(&account.account_id, &location)
-      .await
-      .unwrap());
+    assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
     // Ensure the state was written to storage.
     assert!(account.load_document().await.is_ok());
@@ -82,10 +78,7 @@ async fn test_create_identity() -> Result<()> {
     assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
     // Ensure the DID was added to the index.
-    assert_eq!(
-      account.storage().index_get(account.did()).await.unwrap().unwrap(),
-      account.account_id
-    );
+    assert!(account.storage().index_has(account.did()).await.unwrap());
   }
 
   Ok(())
@@ -140,7 +133,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
     let initial_state = account_setup
       .storage
-      .document_get(&account.account_id)
+      .document_get(account.did())
       .await
       .unwrap()
       .unwrap();
@@ -149,13 +142,13 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
     assert!(matches!(
       output.unwrap_err(),
-      Error::UpdateError(UpdateError::DocumentAlreadyExists),
+      Error::AccountCoreError(identity_account_storage::Error::IdentityAlreadyExists)
     ));
 
     // Ensure nothing was overwritten in storage
     assert_eq!(
       initial_state,
-      account_setup.storage.document_get(&account.account_id).await?.unwrap()
+      account_setup.storage.document_get(account.did()).await?.unwrap()
     );
   }
   Ok(())
@@ -224,11 +217,7 @@ async fn test_create_method_content_generate() -> Result<()> {
       );
 
       // Ensure the key exists in storage.
-      assert!(account
-        .storage()
-        .key_exists(&account.account_id, &location)
-        .await
-        .unwrap());
+      assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
       // Ensure `created` wasn't updated.
       assert_eq!(initial_document.metadata.created, document.metadata.created);
@@ -266,11 +255,7 @@ async fn test_create_method_content_public() -> Result<()> {
 
     // Ensure no key exists in storage.
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
-    assert!(!account
-      .storage()
-      .key_exists(&account.account_id, &location)
-      .await
-      .unwrap());
+    assert!(!account.storage().key_exists(account.did(), &location).await.unwrap());
   }
   Ok(())
 }
@@ -382,11 +367,7 @@ async fn test_create_method_from_private_key() {
 
     let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
-    let public_key = account
-      .storage()
-      .key_public(&account.account_id, &location)
-      .await
-      .unwrap();
+    let public_key = account.storage().key_public(account.did(), &location).await.unwrap();
 
     assert_eq!(public_key.as_ref(), keypair.public().as_ref());
   }
@@ -613,11 +594,7 @@ async fn test_delete_method() -> Result<()> {
   assert_eq!(document.core_document().methods().count(), 1);
 
   // Ensure the key still exists in storage.
-  assert!(account
-    .storage()
-    .key_exists(&account.account_id, &location)
-    .await
-    .unwrap());
+  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.
   assert_eq!(initial_document.metadata.created, document.metadata.created);

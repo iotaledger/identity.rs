@@ -21,6 +21,7 @@ use std::hash::Hasher;
 #[non_exhaustive]
 pub struct KeyLocation {
   pub key_type: KeyType,
+  // TODO: Use `Fragment`?
   pub fragment: String,
   pub key_hash: u64,
 }

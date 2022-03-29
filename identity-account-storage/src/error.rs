@@ -12,6 +12,9 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
+  /// Caused by errors from the [identity_core] crate.
+  #[error(transparent)]
+  IotaCoreError(#[from] identity_iota_core::Error),
   /// Caused by errors from the [identity_did] crate.
   #[error(transparent)]
   DIDError(#[from] identity_did::Error),
@@ -38,6 +41,9 @@ pub enum Error {
   /// Caused by attempting to write a poisoned shared resource.
   #[error("Shared resource poisoned: write")]
   SharedWritePoisoned,
+  /// Caused by attempting to create a DID that already exists.
+  #[error("identity already exists")]
+  IdentityAlreadyExists,
   #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
   #[error("JsValue serialization error: {0}")]
   SerializationError(String),

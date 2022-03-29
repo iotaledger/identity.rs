@@ -3,6 +3,7 @@
 
 use core::marker::PhantomData;
 
+use identity_iota_core::did::IotaDID;
 use serde::Serialize;
 
 use identity_core::convert::ToJson;
@@ -16,7 +17,6 @@ use identity_core::error::Result;
 use identity_core::utils::encode_b58;
 
 use crate::storage::Storage;
-use crate::types::AccountId;
 use crate::types::KeyLocation;
 use crate::types::Signature as StorageSignature;
 
@@ -61,19 +61,15 @@ impl RemoteEd25519 {
 /// A reference to a storage instance and identity key location.
 #[derive(Debug)]
 pub struct RemoteKey<'a> {
-  account_id: &'a AccountId,
+  did: &'a IotaDID,
   location: &'a KeyLocation,
   store: &'a dyn Storage,
 }
 
 impl<'a> RemoteKey<'a> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(account_id: &'a AccountId, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
-    Self {
-      account_id,
-      location,
-      store,
-    }
+  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
+    Self { did, location, store }
   }
 }
 
@@ -93,7 +89,7 @@ impl<'a> RemoteSign<'a> {
   pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<StorageSignature> {
     key
       .store
-      .key_sign(key.account_id, key.location, message.to_vec())
+      .key_sign(key.did, key.location, message.to_vec())
       .await
       .map_err(|_| Error::InvalidProofValue("remote sign"))
   }
