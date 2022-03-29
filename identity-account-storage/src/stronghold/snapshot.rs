@@ -5,15 +5,13 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
+use crate::stronghold::ClientPath;
 use crate::stronghold::Context;
 use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Password;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
-
-use super::ClientPath;
-use super::Database;
 
 #[derive(Debug)]
 pub struct Snapshot {
@@ -51,10 +49,6 @@ impl Snapshot {
 
   pub fn store(&self, client_path: ClientPath) -> Store<'_> {
     Store::new(&self.path, client_path, &[])
-  }
-
-  pub async fn stronghold(&self) -> IotaStrongholdResult<tokio::sync::MutexGuard<'static, Database>> {
-    Context::scope(&self.path, "doesntmatter".as_ref(), &[]).await
   }
 
   pub async fn status(&self) -> IotaStrongholdResult<SnapshotStatus> {

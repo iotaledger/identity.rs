@@ -183,7 +183,7 @@ impl Context {
 // =============================================================================
 // =============================================================================
 
-pub struct Database {
+pub(crate) struct Database {
   // Stronghold client adapter
   stronghold: Stronghold,
   // Set of clients with initialized actors
