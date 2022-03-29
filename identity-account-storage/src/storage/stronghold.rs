@@ -203,7 +203,7 @@ impl Storage for Stronghold {
 
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     // Explicitly implemented to hold the lock across the existence check & removal.
-    let context: _ = Context::scope(self.snapshot.path(), ClientPath::from(did).0.as_ref(), &[]).await?;
+    let context: _ = Context::scope(self.snapshot.path(), ClientPath::from(did).as_ref(), &[]).await?;
 
     let exists: bool = context
       .record_exists(location.into())

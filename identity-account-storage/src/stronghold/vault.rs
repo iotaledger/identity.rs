@@ -45,7 +45,7 @@ impl Vault<'_> {
 
   /// Returns the client path of the vault.
   pub fn client_path(&self) -> &[u8] {
-    self.client_path.0.as_ref()
+    self.client_path.as_ref()
   }
 
   /// Returns the vault policy options.
