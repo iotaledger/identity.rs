@@ -21,13 +21,13 @@ impl WasmKeyLocation {
   /// Returns a copy of the key type of the key location.
   #[wasm_bindgen(js_name = keyType)]
   pub fn key_type(&self) -> WasmKeyType {
-    self.0.key_type.into()
+    self.0.key_type().into()
   }
 
   /// Returns a copy of the fragment name of the key location.
   #[wasm_bindgen]
   pub fn fragment(&self) -> String {
-    self.0.fragment.clone()
+    self.0.fragment().to_owned()
   }
 
   /// Serializes `KeyLocation` as a JSON object.

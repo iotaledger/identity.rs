@@ -4,7 +4,6 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
-use identity::account_storage::AccountId;
 use identity::account_storage::ChainState;
 use identity::account_storage::Error as AccountStorageError;
 use identity::account_storage::KeyLocation;
@@ -14,6 +13,7 @@ use identity::account_storage::Storage;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::iota_core::IotaDID;
+use identity::iota_core::NetworkName;
 use identity::prelude::IotaDocument;
 use identity::prelude::KeyType;
 use js_sys::Array;
@@ -24,7 +24,6 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
-use crate::account::types::WasmAccountId;
 use crate::account::types::WasmKeyLocation;
 use crate::crypto::WasmKeyType;
 use crate::did::WasmDID;
@@ -47,61 +46,52 @@ extern "C" {
   pub type PromiseOptionDocument;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
-  #[wasm_bindgen(typescript_type = "Promise<AccountId | undefined | null>")]
-  pub type PromiseOptionAccountId;
   #[wasm_bindgen(typescript_type = "Promise<Array<WasmDID>>")]
   pub type PromiseArrayDID;
+  #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
+  pub type PromiseDIDKeyLocation;
 }
 
 #[wasm_bindgen]
 extern "C" {
   pub type WasmStorage;
 
+  #[wasm_bindgen(method, js_name = didCreate)]
+  pub fn did_create(
+    this: &WasmStorage,
+    network: &str,
+    fragment: &str,
+    private_key: Option<Vec<u8>>,
+  ) -> PromiseDIDKeyLocation;
+  #[wasm_bindgen(method, js_name = didPurge)]
+  pub fn did_purge(this: &WasmStorage, did: WasmDID) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = keyGenerate)]
-  pub fn key_generate(
-    this: &WasmStorage,
-    account_id: WasmAccountId,
-    key_type: WasmKeyType,
-    fragment: String,
-  ) -> PromiseKeyLocation;
+  pub fn key_generate(this: &WasmStorage, did: WasmDID, key_type: WasmKeyType, fragment: String) -> PromiseKeyLocation;
   #[wasm_bindgen(method, js_name = keyInsert)]
-  pub fn key_insert(
-    this: &WasmStorage,
-    account_id: WasmAccountId,
-    location: WasmKeyLocation,
-    private_key: Vec<u8>,
-  ) -> PromiseUnit;
+  pub fn key_insert(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, private_key: Vec<u8>) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = keyPublic)]
-  pub fn key_public(this: &WasmStorage, account_id: WasmAccountId, location: WasmKeyLocation) -> PromisePublicKey;
+  pub fn key_public(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method, js_name = keyDelete)]
-  pub fn key_delete(this: &WasmStorage, account_id: WasmAccountId, location: WasmKeyLocation) -> PromiseUnit;
+  pub fn key_delete(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = keySign)]
-  pub fn key_sign(
-    this: &WasmStorage,
-    account_id: WasmAccountId,
-    location: WasmKeyLocation,
-    data: Vec<u8>,
-  ) -> PromiseSignature;
+  pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method, js_name = keyExists)]
-  pub fn key_exists(this: &WasmStorage, account_id: WasmAccountId, location: WasmKeyLocation) -> PromiseBool;
+  pub fn key_exists(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseBool;
   #[wasm_bindgen(method, js_name = chainStateGet)]
-  pub fn chain_state_get(this: &WasmStorage, account_id: WasmAccountId) -> PromiseOptionChainState;
+  pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
   #[wasm_bindgen(method, js_name = chainStateSet)]
-  pub fn chain_state_set(this: &WasmStorage, account_id: WasmAccountId, chain_state: WasmChainState) -> PromiseUnit;
+  pub fn chain_state_set(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = documentGet)]
-  pub fn document_get(this: &WasmStorage, account_id: WasmAccountId) -> PromiseOptionDocument;
+  pub fn document_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionDocument;
   #[wasm_bindgen(method, js_name = documentSet)]
-  pub fn document_set(this: &WasmStorage, account_id: WasmAccountId, document: WasmDocument) -> PromiseUnit;
-  #[wasm_bindgen(method)]
-  pub fn purge(this: &WasmStorage, did: WasmDID) -> PromiseUnit;
+  pub fn document_set(this: &WasmStorage, did: WasmDID, document: WasmDocument) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = indexSet)]
-  pub fn index_set(this: &WasmStorage, did: WasmDID, account_id: WasmAccountId) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = indexGet)]
-  pub fn index_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionAccountId;
-  #[wasm_bindgen(method, js_name = indexKeys)]
-  pub fn index_keys(this: &WasmStorage) -> PromiseArrayDID;
+  pub fn index_has(this: &WasmStorage, did: WasmDID) -> PromiseBool;
+  #[wasm_bindgen(method)]
+  pub fn index(this: &WasmStorage) -> PromiseArrayDID;
 }
 
 impl Debug for WasmStorage {
@@ -112,15 +102,49 @@ impl Debug for WasmStorage {
 
 #[async_trait::async_trait(?Send)]
 impl Storage for WasmStorage {
-  /// Creates a new keypair at the specified `location`, and returns its `PublicKey`.
-  async fn key_generate(
+  async fn did_create(
     &self,
-    account_id: &AccountId,
-    key_type: KeyType,
+    network: NetworkName,
     fragment: &str,
-  ) -> AccountStorageResult<KeyLocation> {
+    private_key: Option<PrivateKey>,
+  ) -> AccountStorageResult<(IotaDID, KeyLocation)> {
+    let private_key: Option<Vec<u8>> = private_key.map(|key| {
+      let key_bytes: Vec<u8> = key.as_ref().to_vec();
+      core::mem::drop(key);
+      key_bytes
+    });
+
+    let promise: Promise = Promise::resolve(&self.did_create(network.as_ref(), fragment, private_key));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let did_location_tuple: js_sys::Array = js_sys::Array::from(&result.account_err()?);
+    let mut did_location_tuple: js_sys::ArrayIter = did_location_tuple.iter();
+
+    let did: IotaDID = did_location_tuple
+      .next()
+      .ok_or_else(|| AccountStorageError::JsError("expected a tuple of size 2".to_owned()))?
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+
+    let location: KeyLocation = did_location_tuple
+      .next()
+      .ok_or_else(|| AccountStorageError::JsError("expected a tuple of size 2".to_owned()))?
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+
+    Ok((did, location))
+  }
+
+  /// Removes the keys and any state for the identity specified by `did`.
+  async fn did_purge(&self, did: &IotaDID) -> AccountStorageResult<bool> {
+    let promise: Promise = Promise::resolve(&self.did_purge(did.clone().into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.into()
+  }
+
+  /// Creates a new keypair at the specified `location`, and returns its `PublicKey`.
+  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> AccountStorageResult<KeyLocation> {
     let promise: Promise =
-      Promise::resolve(&self.key_generate((*account_id).into(), key_type.into(), fragment.to_owned()));
+      Promise::resolve(&self.key_generate(did.clone().into(), key_type.into(), fragment.to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let location: KeyLocation = result
       .account_err()?
@@ -133,12 +157,12 @@ impl Storage for WasmStorage {
   /// Inserts a private key at the specified `location`, and returns its `PublicKey`.
   async fn key_insert(
     &self,
-    account_id: &AccountId,
+    did: &IotaDID,
     location: &KeyLocation,
     private_key: PrivateKey,
   ) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.key_insert(
-      (*account_id).into(),
+      did.clone().into(),
       location.clone().into(),
       private_key.as_ref().to_vec(),
     ));
@@ -147,28 +171,23 @@ impl Storage for WasmStorage {
   }
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_public(&self, account_id: &AccountId, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
-    let promise: Promise = Promise::resolve(&self.key_public((*account_id).into(), location.clone().into()));
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
+    let promise: Promise = Promise::resolve(&self.key_public(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let public_key: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
     Ok(public_key.into())
   }
 
   /// Deletes the keypair specified by `location`.
-  async fn key_delete(&self, account_id: &AccountId, location: &KeyLocation) -> AccountStorageResult<bool> {
-    let promise: Promise = Promise::resolve(&self.key_delete((*account_id).into(), location.clone().into()));
+  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
+    let promise: Promise = Promise::resolve(&self.key_delete(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(
-    &self,
-    account_id: &AccountId,
-    location: &KeyLocation,
-    data: Vec<u8>,
-  ) -> AccountStorageResult<Signature> {
-    let promise: Promise = Promise::resolve(&self.key_sign((*account_id).into(), location.clone().into(), data));
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountStorageResult<Signature> {
+    let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
     let signature: Signature = js_value
@@ -178,15 +197,15 @@ impl Storage for WasmStorage {
   }
 
   /// Returns `true` if a keypair exists at the specified `location`.
-  async fn key_exists(&self, account_id: &AccountId, location: &KeyLocation) -> AccountStorageResult<bool> {
-    let promise: Promise = Promise::resolve(&self.key_exists((*account_id).into(), location.clone().into()));
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
+    let promise: Promise = Promise::resolve(&self.key_exists(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Returns the chain state of the identity specified by `did`.
-  async fn chain_state_get(&self, account_id: &AccountId) -> AccountStorageResult<Option<ChainState>> {
-    let promise: Promise = Promise::resolve(&self.chain_state_get((*account_id).into()));
+  async fn chain_state_get(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
+    let promise: Promise = Promise::resolve(&self.chain_state_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
     if js_value.is_null() || js_value.is_undefined() {
@@ -199,15 +218,15 @@ impl Storage for WasmStorage {
   }
 
   /// Set the chain state of the identity specified by `did`.
-  async fn chain_state_set(&self, account_id: &AccountId, chain_state: &ChainState) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.chain_state_set((*account_id).into(), chain_state.clone().into()));
+  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> AccountStorageResult<()> {
+    let promise: Promise = Promise::resolve(&self.chain_state_set(did.clone().into(), chain_state.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   /// Returns the state of the identity specified by `did`.
-  async fn document_get(&self, account_id: &AccountId) -> AccountStorageResult<Option<IotaDocument>> {
-    let promise: Promise = Promise::resolve(&self.document_get((*account_id).into()));
+  async fn document_get(&self, did: &IotaDID) -> AccountStorageResult<Option<IotaDocument>> {
+    let promise: Promise = Promise::resolve(&self.document_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
     if js_value.is_null() || js_value.is_undefined() {
@@ -220,41 +239,20 @@ impl Storage for WasmStorage {
   }
 
   /// Sets a new state for the identity specified by `did`.
-  async fn document_set(&self, account_id: &AccountId, document: &IotaDocument) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.document_set((*account_id).into(), document.clone().into()));
+  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> AccountStorageResult<()> {
+    let promise: Promise = Promise::resolve(&self.document_set(did.clone().into(), document.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  /// Removes the keys and any state for the identity specified by `did`.
-  async fn purge(&self, did: &IotaDID) -> AccountStorageResult<bool> {
-    let promise: Promise = Promise::resolve(&self.purge(did.clone().into()));
+  async fn index_has(&self, did: &IotaDID) -> AccountStorageResult<bool> {
+    let promise: Promise = Promise::resolve(&self.index_has(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  async fn index_set(&self, did: IotaDID, account_id: AccountId) -> AccountStorageResult<()> {
-    let promise: Promise = Promise::resolve(&self.index_set(did.clone().into(), account_id.into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
-
-  async fn index_get(&self, did: &IotaDID) -> AccountStorageResult<Option<AccountId>> {
-    let promise: Promise = Promise::resolve(&self.index_get(did.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
-
-    if js_value.is_null() || js_value.is_undefined() {
-      return Ok(None);
-    }
-
-    js_value
-      .into_serde()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))
-  }
-
-  async fn index_keys(&self) -> AccountStorageResult<Vec<IotaDID>> {
-    let promise: Promise = Promise::resolve(&self.index_keys());
+  async fn index(&self) -> AccountStorageResult<Vec<IotaDID>> {
+    let promise: Promise = Promise::resolve(&self.index());
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
 
