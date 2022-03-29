@@ -6,11 +6,13 @@ mod error;
 mod hint;
 // TODO: Remove or refactor for key deletion.
 //mod records;
+mod client_path;
 mod snapshot;
 mod status;
 mod store;
 mod vault;
 
+pub use self::client_path::*;
 pub use self::context::*;
 pub use self::error::*;
 pub use self::hint::*;

@@ -26,6 +26,7 @@ use tokio::sync::RwLockWriteGuard;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
+use crate::stronghold::ClientPath;
 use crate::stronghold::default_hint;
 use crate::stronghold::Context;
 use crate::stronghold::Snapshot;
@@ -68,12 +69,12 @@ impl Stronghold {
     })
   }
 
-  fn store(&self, name: &str) -> Store<'_> {
-    self.snapshot.store(name, &[])
+  fn store(&self, client_path: impl Into<ClientPath>) -> Store<'_> {
+    self.snapshot.store(client_path.into())
   }
 
   fn vault(&self, did: &IotaDID) -> Vault<'_> {
-    self.snapshot.vault(&fmt_did(&did), &[])
+    self.snapshot.vault(&fmt_did(did))
   }
 
   /// Returns whether save-on-drop is enabled.
@@ -151,7 +152,7 @@ impl Storage for Stronghold {
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(did);
 
     store.del(DOCUMENT_PATH).await?;
     store.del(CHAIN_STATE_PATH).await?;
@@ -236,7 +237,7 @@ impl Storage for Stronghold {
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(did);
     let data: Option<Vec<u8>> = store.get(CHAIN_STATE_PATH).await?;
 
     match data {
@@ -247,7 +248,7 @@ impl Storage for Stronghold {
 
   async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(did);
 
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
@@ -258,7 +259,7 @@ impl Storage for Stronghold {
 
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(did);
 
     // Read the state from the stronghold snapshot
     let data: Option<Vec<u8>> = store.get(DOCUMENT_PATH).await?;
@@ -271,7 +272,7 @@ impl Storage for Stronghold {
 
   async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_did(did));
+    let store: Store<'_> = self.store(did);
 
     // Serialize the state
     let json: Vec<u8> = document.to_json_vec()?;

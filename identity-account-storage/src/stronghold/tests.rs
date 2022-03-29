@@ -75,7 +75,7 @@ rusty_fork_test! {
       // Wait for password to be cleared
       thread::sleep(interval * 3);
 
-      let store: Store<'_> = snapshot.store("", &[]);
+      let store: Store<'_> = snapshot.store("".into());
       let error: StrongholdError = store.get("expires").await.unwrap_err();
 
       assert!(
@@ -104,7 +104,7 @@ rusty_fork_test! {
       snapshot.load(Default::default()).await.unwrap();
       let mut instant: Instant = Instant::now();
 
-      let store: Store<'_> = snapshot.store("", &[]);
+      let store: Store<'_> = snapshot.store("".into());
       for index in 1..=5u8 {
         let location: String = format!("persists{}", index);
 
@@ -162,7 +162,7 @@ rusty_fork_test! {
       let password: EncryptionKey = derive_encryption_key("my-password:test_store_basics");
       let snapshot: Snapshot = open_snapshot(&generate_filename(), password).await;
 
-      let store: Store<'_> = snapshot.store(b"store", &[]);
+      let store: Store<'_> = snapshot.store("store".into());
 
       assert!(store.get("A").await.unwrap().is_none());
       assert!(store.get("B").await.unwrap().is_none());
@@ -195,9 +195,9 @@ rusty_fork_test! {
       let snapshot2: Snapshot = open_snapshot(&generate_filename(), password).await;
       let snapshot3: Snapshot = open_snapshot(&generate_filename(), password).await;
 
-      let store1: Store<'_> = snapshot1.store(b"store1", &[]);
-      let store2: Store<'_> = snapshot2.store(b"store2", &[]);
-      let store3: Store<'_> = snapshot3.store(b"store3", &[]);
+      let store1: Store<'_> = snapshot1.store("store1".into());
+      let store2: Store<'_> = snapshot2.store("store2".into());
+      let store3: Store<'_> = snapshot3.store("store3".into());
       let stores: &[_] = &[&store1, &store2, &store3];
 
       for store in stores {
@@ -245,7 +245,7 @@ rusty_fork_test! {
 
       {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;
-        let store: Store<'_> = snapshot.store(b"persistence", &[]);
+        let store: Store<'_> = snapshot.store("persistence".into());
 
         assert!(store.get("A").await.unwrap().is_none());
         assert!(store.get("B").await.unwrap().is_none());
@@ -264,7 +264,7 @@ rusty_fork_test! {
 
       {
         let snapshot: Snapshot = load_snapshot(&filename, password).await;
-        let store: Store<'_> = snapshot.store(b"persistence", &[]);
+        let store: Store<'_> = snapshot.store("persistence".into());
 
         assert_eq!(store.get("A").await.unwrap(), Some(b"foo".to_vec()));
         assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
@@ -286,7 +286,7 @@ rusty_fork_test! {
 
       {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;
-        let vault = snapshot.vault(b"persistence", &[]);
+        let vault = snapshot.vault(b"persistence");
 
         vault.insert(location("A"), keypair.private().as_ref(), default_hint(), &[]).await.unwrap();
 
@@ -296,7 +296,7 @@ rusty_fork_test! {
       {
         let snapshot: Snapshot = load_snapshot(&filename, password).await;
 
-        let vault = snapshot.vault(b"persistence", &[]);
+        let vault = snapshot.vault(b"persistence");
         assert!(vault.exists(location("A")).await.unwrap());
 
         let procedure = iota_stronghold::procedures::PublicKey{

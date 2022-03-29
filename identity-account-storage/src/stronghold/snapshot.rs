@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -13,6 +12,7 @@ use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
 
+use super::ClientPath;
 use super::Database;
 
 #[derive(Debug)]
@@ -45,18 +45,16 @@ impl Snapshot {
     &self.path
   }
 
-  pub fn vault<T>(&self, name: &T, flags: &[StrongholdFlags]) -> Vault<'_>
+  pub fn vault<T>(&self, name: &T) -> Vault<'_>
   where
     T: AsRef<[u8]> + ?Sized,
   {
-    Vault::new(&self.path, name, flags)
+    Vault::new(&self.path, name, &[])
   }
 
-  pub fn store<T>(&self, name: &T, flags: &[StrongholdFlags]) -> Store<'_>
-  where
-    T: AsRef<[u8]> + ?Sized,
+  pub fn store(&self, client_path: ClientPath) -> Store<'_>
   {
-    Store::new(&self.path, name, flags)
+    Store::new(&self.path, client_path, &[])
   }
 
   pub async fn stronghold(&self) -> IotaStrongholdResult<tokio::sync::MutexGuard<'static, Database>> {

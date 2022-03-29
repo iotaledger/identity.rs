@@ -8,22 +8,23 @@ use std::time::Duration;
 use crate::stronghold::error::IotaStrongholdResult;
 use crate::stronghold::Context;
 
+use super::ClientPath;
+
 #[derive(Debug)]
 pub struct Store<'snapshot> {
   path: &'snapshot Path,
-  name: Vec<u8>,
+  client_path: ClientPath,
   flags: Vec<StrongholdFlags>,
 }
 
 impl<'snapshot> Store<'snapshot> {
-  pub(crate) fn new<P, T>(path: &'snapshot P, name: &T, flags: &[StrongholdFlags]) -> Self
+  pub(crate) fn new<P>(path: &'snapshot P, client_path: ClientPath, flags: &[StrongholdFlags]) -> Self
   where
     P: AsRef<Path> + ?Sized,
-    T: AsRef<[u8]> + ?Sized,
   {
     Self {
       path: path.as_ref(),
-      name: name.as_ref().to_vec(),
+      client_path,
       flags: flags.to_vec(),
     }
   }
@@ -36,8 +37,8 @@ impl Store<'_> {
   }
 
   /// Returns the name of the store.
-  pub fn name(&self) -> &[u8] {
-    &self.name
+  pub fn client_path(&self) -> &[u8] {
+    self.client_path.0.as_ref()
   }
 
   /// Returns the store policy options.
@@ -47,7 +48,7 @@ impl Store<'_> {
 
   /// Gets a record.
   pub async fn get(&self, key: impl Into<Vec<u8>>) -> IotaStrongholdResult<Option<Vec<u8>>> {
-    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let scope: _ = Context::scope(self.path, self.client_path(), &self.flags).await?;
     Ok(scope.read_from_store(key.into()).await?)
   }
 
@@ -56,7 +57,7 @@ impl Store<'_> {
   where
     T: Into<Vec<u8>>,
   {
-    Context::scope(self.path, &self.name, &self.flags)
+    Context::scope(self.path, self.client_path(), &self.flags)
       .await?
       .write_to_store(key.into(), payload.into(), ttl)
       .await?;
@@ -65,7 +66,7 @@ impl Store<'_> {
 
   /// Removes a record.
   pub async fn del(&self, key: impl Into<Vec<u8>>) -> IotaStrongholdResult<()> {
-    Context::scope(self.path, &self.name, &self.flags)
+    Context::scope(self.path, self.client_path(), &self.flags)
       .await?
       .delete_from_store(key.into())
       .await?;
