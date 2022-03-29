@@ -16,7 +16,6 @@ use identity_core::crypto::Sign;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
-use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
@@ -124,7 +123,7 @@ impl Storage for MemStore {
     Ok(location)
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
@@ -133,7 +132,6 @@ impl Storage for MemStore {
         let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
         private_key.zeroize();
-        let public_key: PublicKey = keypair.public().clone();
 
         vault.insert(location.to_owned(), keypair);
 
@@ -143,7 +141,7 @@ impl Storage for MemStore {
         let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::X25519, private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
         private_key.zeroize();
-        let public_key: PublicKey = keypair.public().clone();
+
         vault.insert(location.to_owned(), keypair);
 
         Ok(())

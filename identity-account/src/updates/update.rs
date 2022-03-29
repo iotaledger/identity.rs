@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::keys::x25519;
-use crypto::signatures::ed25519;
 use log::debug;
 use log::trace;
 
@@ -35,8 +33,6 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaService;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::NetworkName;
-use log::debug;
-use log::trace;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -141,13 +137,13 @@ impl Update {
 
         let public: PublicKey = match content {
           MethodContent::GenerateEd25519 | MethodContent::GenerateX25519 => {
-            let location: KeyLocation = storage.key_generate(&did, key_type, fragment.name()).await?;
-            storage.key_public(&did, &location).await?
+            let location: KeyLocation = storage.key_generate(did, key_type, fragment.name()).await?;
+            storage.key_public(did, &location).await?
           }
           MethodContent::PrivateEd25519(private_key) | MethodContent::PrivateX25519(private_key) => {
             let location: KeyLocation =
               insert_method_secret(storage, did, key_type, fragment.name(), private_key).await?;
-            storage.key_public(&did, &location).await?
+            storage.key_public(did, &location).await?
           }
           MethodContent::PublicEd25519(public_key) => public_key,
           MethodContent::PublicX25519(public_key) => public_key,
@@ -300,11 +296,11 @@ async fn insert_method_secret(
   let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
 
   ensure!(
-    !store.key_exists(&did, &location).await?,
+    !store.key_exists(did, &location).await?,
     UpdateError::DuplicateKeyLocation(location)
   );
 
-  store.key_insert(&did, &location, private_key).await?;
+  store.key_insert(did, &location, private_key).await?;
 
   Ok(location)
 }
