@@ -23,8 +23,8 @@ async fn main() -> Result<()> {
   // Stronghold is an encrypted file that manages private keys.
   // It implements best practices for security and is the recommended way of handling private keys.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
-  let password: String = "my-password".into();
-  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None).await?;
+  let password: String = "my-password".to_owned();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, password, None).await?;
 
   // Create a new identity using Stronghold as local storage.
   //

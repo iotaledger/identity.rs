@@ -57,9 +57,6 @@ async fn test_account_builder() -> Result<()> {
     crate::Error::IdentityNotFound
   ));
 
-  // Release the lease on did1.
-  std::mem::drop(account1);
-
   assert!(builder.load_identity(did1).await.is_ok());
 
   Ok(())
@@ -502,7 +499,7 @@ async fn test_account_sync_diff_msg_update() {
 async fn create_account(network: Network) -> Account {
   Account::builder()
     .storage(
-      Stronghold::new("./example-strong.hodl", Some("my-password".to_owned()), None)
+      Stronghold::new("./example-strong.hodl", "my-password".to_owned(), None)
         .await
         .unwrap(),
     )

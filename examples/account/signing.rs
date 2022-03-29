@@ -34,8 +34,8 @@ async fn main() -> Result<()> {
 
   // Stronghold settings
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
-  let password: String = "my-password".into();
-  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None).await?;
+  let password: String = "my-password".to_owned();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, password, None).await?;
 
   // Create a new Account with stronghold storage.
   let mut account: Account = Account::builder()

@@ -43,19 +43,15 @@ impl Stronghold {
   /// Arguments:
   ///
   /// * snapshot: path to a local Stronghold file, will be created if it does not exist.
-  /// * password: password for the Stronghold file, optional.
+  /// * password: password for the Stronghold file.
   /// * dropsave: save all changes when the instance is dropped. Default: true.
-  pub async fn new<'a, T, U>(snapshot: &T, password: U, dropsave: Option<bool>) -> Result<Self>
+  pub async fn new<'a, T>(snapshot: &T, mut password: String, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
-    U: Into<Option<String>>,
   {
     let snapshot: Snapshot = Snapshot::new(snapshot);
-
-    if let Some(mut password) = password.into() {
-      snapshot.load(derive_encryption_key(&password)).await?;
-      password.zeroize();
-    }
+    snapshot.load(derive_encryption_key(&password)).await?;
+    password.zeroize();
 
     Ok(Self {
       snapshot: Arc::new(snapshot),
