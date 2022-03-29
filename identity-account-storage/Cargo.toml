@@ -33,7 +33,7 @@ zeroize = { version = "1.4" }
 [dependencies.iota-crypto]
 version = "0.7"
 default-features = false
-features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "std", "x25519"]
+features = ["blake2b", "hmac", "pbkdf", "sha", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"

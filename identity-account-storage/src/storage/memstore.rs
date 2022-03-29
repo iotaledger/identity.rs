@@ -6,8 +6,6 @@ use core::fmt::Formatter;
 use std::collections::HashSet;
 
 use async_trait::async_trait;
-use crypto::keys::x25519;
-use crypto::signatures::ed25519;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
@@ -132,30 +130,20 @@ impl Storage for MemStore {
 
     match location.key_type {
       KeyType::Ed25519 => {
-        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
-          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
-        let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
-        private_key_bytes.zeroize();
-
-        let public: ed25519::PublicKey = secret.public_key();
-        let public_key: PublicKey = public.to_bytes().to_vec().into();
-
-        let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key, private_key));
+        let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
+        private_key.zeroize();
+        let public_key: PublicKey = keypair.public().clone();
 
         vault.insert(location.to_owned(), keypair);
 
         Ok(())
       }
       KeyType::X25519 => {
-        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
-          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
-        let secret: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
-        private_key_bytes.zeroize();
-
-        let public: x25519::PublicKey = secret.public_key();
-        let public_key: PublicKey = public.to_bytes().to_vec().into();
-
-        let keypair: KeyPair = KeyPair::from((KeyType::X25519, public_key, private_key));
+        let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::X25519, private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
+        private_key.zeroize();
+        let public_key: PublicKey = keypair.public().clone();
         vault.insert(location.to_owned(), keypair);
 
         Ok(())

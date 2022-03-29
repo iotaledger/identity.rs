@@ -74,8 +74,8 @@ async fn test_create_identity() -> Result<()> {
     assert!(account.load_document().await.is_ok());
 
     // Ensure timestamps were recently set.
-    assert!(document.metadata.created > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-    assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+    assert!(document.metadata.created.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+    assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
     // Ensure the DID was added to the index.
     assert!(account.storage().index_has(account.did()).await.unwrap());
@@ -223,7 +223,7 @@ async fn test_create_method_content_generate() -> Result<()> {
       assert_eq!(initial_document.metadata.created, document.metadata.created);
 
       // Ensure `updated` was recently set.
-      assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+      assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
     }
   }
   Ok(())
@@ -599,7 +599,7 @@ async fn test_delete_method() -> Result<()> {
   // Ensure `created` wasn't updated.
   assert_eq!(initial_document.metadata.created, document.metadata.created);
   // Ensure `updated` was recently set.
-  assert!(document.metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   // Deleting a non-existing methods fails.
   let output = account.process_update(update).await;

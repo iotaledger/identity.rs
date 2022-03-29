@@ -7,11 +7,12 @@ use crypto::keys::x25519;
 use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
+use crate::crypto::key::ed25519::ed25519_private_try_from_bytes;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
+use crate::crypto::X25519;
 use crate::error::Result;
-use crate::utils::ed25519_private_try_from_bytes;
 
 /// A convenient type for representing a pair of cryptographic keys.
 // TODO: refactor with exact types for each key type? E.g. Ed25519KeyPair, X25519KeyPair etc.
@@ -66,9 +67,9 @@ impl KeyPair {
         (public, private)
       }
       KeyType::X25519 => {
-        let private_key_bytes: [u8; x25519::SECRET_KEY_LENGTH] = private_key_bytes
+        let private_key_bytes: [u8; X25519::PRIVATE_KEY_LENGTH] = private_key_bytes
           .try_into()
-          .map_err(|_| crate::Error::InvalidKeyLength(private_key_bytes.len(), x25519::SECRET_KEY_LENGTH))?;
+          .map_err(|_| crate::Error::InvalidKeyLength(private_key_bytes.len(), X25519::PRIVATE_KEY_LENGTH))?;
         let private_key: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
         let public_key: x25519::PublicKey = private_key.public_key();
 
