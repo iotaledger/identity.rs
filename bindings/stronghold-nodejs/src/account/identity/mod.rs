@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use chain_state::NapiChainState;
-pub use identity_state::NapiIdentityState;
+pub use did_location_tuple::NapiDIDLocation;
+pub use document::NapiDocument;
 
 mod chain_state;
-mod identity_state;
+mod did_location_tuple;
+mod document;

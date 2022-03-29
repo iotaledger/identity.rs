@@ -3,14 +3,19 @@
 
 use identity_account_storage::storage::Storage;
 use identity_account_storage::storage::Stronghold;
+use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::tangle::NetworkName;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 use napi_derive::napi;
 
+use crate::account::identity::NapiDIDLocation;
+use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
-use crate::account::NapiIdentityState;
+use crate::account::NapiDocument;
 use crate::account::NapiKeyLocation;
 use crate::account::NapiSignature;
 use crate::did::NapiDID;
@@ -52,45 +57,65 @@ impl NapiStronghold {
     self.0.set_dropsave(dropsave);
   }
 
-  /// Write any unsaved changes to disk.
   #[napi]
-  pub async fn flush_changes(&self) -> Result<()> {
-    self.0.flush_changes().await.napi_result()
+  pub async fn did_create(
+    &self,
+    network: String,
+    fragment: String,
+    private_key: Option<Vec<u32>>,
+  ) -> Result<NapiDIDLocation> {
+    let network: NetworkName = NetworkName::try_from(network).napi_result()?;
+    let private_key: Option<PrivateKey> = match private_key {
+      Some(private_key) => Some(private_key.try_into_bytes()?.into()),
+      None => None,
+    };
+
+    let (did, location): (IotaDID, KeyLocation) = self
+      .0
+      .did_create(network, fragment.as_ref(), private_key)
+      .await
+      .napi_result()?;
+
+    Ok(NapiDIDLocation::from((did, location)))
+  }
+
+  /// Removes the keys and any state for the identity specified by `did`.
+  #[napi]
+  pub async fn did_purge(&self, did: &NapiDID) -> Result<bool> {
+    self.0.did_purge(&did.0).await.napi_result()
   }
 
   /// Creates a new keypair at the specified `location`
   #[napi]
-  pub async fn key_new(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
-    let public_key: PublicKey = self.0.key_new(&did.0, &location.0).await.napi_result()?;
-    let public_key: Vec<u8> = public_key.as_ref().to_vec();
-    Ok(public_key.into_iter().map(u32::from).collect())
+  pub async fn key_generate(&self, did: &NapiDID, key_type: &NapiKeyType, fragment: String) -> Result<NapiKeyLocation> {
+    let location: KeyLocation = self
+      .0
+      .key_generate(&did.0, key_type.0, fragment.as_ref())
+      .await
+      .napi_result()?;
+
+    Ok(NapiKeyLocation(location))
   }
 
   /// Inserts a private key at the specified `location`.
   #[napi]
-  pub async fn key_insert(&self, did: &NapiDID, location: &NapiKeyLocation, private_key: Vec<u32>) -> Result<Vec<u32>> {
+  pub async fn key_insert(&self, did: &NapiDID, location: &NapiKeyLocation, private_key: Vec<u32>) -> Result<()> {
     let private_key: PrivateKey = private_key.try_into_bytes()?.into();
-    let public_key: PublicKey = self
-      .0
-      .key_insert(&did.0, &location.0, private_key)
-      .await
-      .napi_result()?;
-    let public_key: Vec<u8> = public_key.as_ref().to_vec();
-    Ok(public_key.into_iter().map(u32::from).collect())
+    self.0.key_insert(&did.0, &location.0, private_key).await.napi_result()
   }
 
   /// Retrieves the public key at the specified `location`.
   #[napi]
-  pub async fn key_get(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
-    let public_key: PublicKey = self.0.key_get(&did.0, &location.0).await.napi_result()?;
+  pub async fn key_public(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
+    let public_key: PublicKey = self.0.key_public(&did.0, &location.0).await.napi_result()?;
     let public_key: Vec<u8> = public_key.as_ref().to_vec();
     Ok(public_key.into_iter().map(u32::from).collect())
   }
 
   /// Deletes the keypair specified by `location`.
   #[napi]
-  pub async fn key_del(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<()> {
-    self.0.key_del(&did.0, &location.0).await.napi_result()
+  pub async fn key_delete(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
+    self.0.key_delete(&did.0, &location.0).await.napi_result()
   }
 
   /// Signs `data` with the private key at the specified `location`.
@@ -113,10 +138,10 @@ impl NapiStronghold {
 
   /// Returns the chain state of the identity specified by `did`.
   #[napi]
-  pub async fn chain_state(&self, did: &NapiDID) -> Result<Option<NapiChainState>> {
+  pub async fn chain_state_get(&self, did: &NapiDID) -> Result<Option<NapiChainState>> {
     self
       .0
-      .chain_state(&did.0)
+      .chain_state_get(&did.0)
       .await
       .napi_result()
       .map(|opt_chain_state| opt_chain_state.map(|chain_state| chain_state.into()))
@@ -124,31 +149,41 @@ impl NapiStronghold {
 
   /// Set the chain state of the identity specified by `did`.
   #[napi]
-  pub async fn set_chain_state(&self, did: &NapiDID, chain_state: &NapiChainState) -> Result<()> {
-    self.0.set_chain_state(&did.0, &chain_state.0).await.napi_result()
+  pub async fn chain_state_set(&self, did: &NapiDID, chain_state: &NapiChainState) -> Result<()> {
+    self.0.chain_state_set(&did.0, &chain_state.0).await.napi_result()
   }
 
   /// Returns the state of the identity specified by `did`.
   #[napi]
-  pub async fn state(&self, did: &NapiDID) -> Result<Option<NapiIdentityState>> {
+  pub async fn document_get(&self, did: &NapiDID) -> Result<Option<NapiDocument>> {
     self
       .0
-      .state(&did.0)
+      .document_get(&did.0)
       .await
       .napi_result()
-      .map(|opt_id_state| opt_id_state.map(|id_state| id_state.into()))
+      .map(|opt_document| opt_document.map(|doc| doc.into()))
   }
 
   /// Sets a new state for the identity specified by `did`.
   #[napi]
-  pub async fn set_state(&self, did: &NapiDID, state: &NapiIdentityState) -> Result<()> {
-    self.0.set_state(&did.0, &state.0).await.napi_result()
+  pub async fn document_set(&self, did: &NapiDID, state: &NapiDocument) -> Result<()> {
+    self.0.document_set(&did.0, &state.0).await.napi_result()
   }
 
-  /// Removes the keys and any state for the identity specified by `did`.
   #[napi]
-  pub async fn purge(&self, did: &NapiDID) -> Result<()> {
-    self.0.purge(&did.0).await.napi_result()
+  pub async fn index_has(&self, did: &NapiDID) -> Result<bool> {
+    self.0.index_has(&did.0).await.napi_result()
+  }
+
+  #[napi]
+  pub async fn index(&self) -> Result<Vec<NapiDID>> {
+    Ok(self.0.index().await.napi_result()?.into_iter().map(NapiDID).collect())
+  }
+
+  /// Write any unsaved changes to disk.
+  #[napi]
+  pub async fn flush_changes(&self) -> Result<()> {
+    self.0.flush_changes().await.napi_result()
   }
 }
 

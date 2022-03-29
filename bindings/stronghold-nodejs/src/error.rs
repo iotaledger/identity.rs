@@ -3,6 +3,7 @@
 
 use identity_account_storage::Result as AccountStorageResult;
 use identity_core::Result as CoreResult;
+use identity_iota_core::Result as IotaCoreResult;
 use napi::bindgen_prelude::Error;
 use napi::Result;
 use serde_json::Result as SerdeResult;
@@ -21,6 +22,12 @@ impl<T> NapiResult<T> for AccountStorageResult<T> {
 impl<T> NapiResult<T> for CoreResult<T> {
   fn napi_result(self) -> Result<T> {
     self.map_err(|core_error| Error::from_reason(core_error.to_string()))
+  }
+}
+
+impl<T> NapiResult<T> for IotaCoreResult<T> {
+  fn napi_result(self) -> Result<T> {
+    self.map_err(|iota_core_error| Error::from_reason(iota_core_error.to_string()))
   }
 }
 
