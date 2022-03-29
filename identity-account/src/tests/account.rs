@@ -592,5 +592,6 @@ async fn test_storage_index() {
 
     assert!(!account2.storage().index_has(&account1_did).await.unwrap());
     assert!(account2.storage().index_has(account2.did()).await.unwrap());
+    assert_eq!(account2.storage().index().await.unwrap().len(), 1);
   }
 }
