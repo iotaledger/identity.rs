@@ -286,7 +286,7 @@ rusty_fork_test! {
 
       {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;
-        let vault = snapshot.vault(b"persistence");
+        let vault = snapshot.vault("persistence".into());
 
         vault.insert(location("A"), keypair.private().as_ref(), default_hint(), &[]).await.unwrap();
 
@@ -296,7 +296,7 @@ rusty_fork_test! {
       {
         let snapshot: Snapshot = load_snapshot(&filename, password).await;
 
-        let vault = snapshot.vault(b"persistence");
+        let vault = snapshot.vault("persistence".into());
         assert!(vault.exists(location("A")).await.unwrap());
 
         let procedure = iota_stronghold::procedures::PublicKey{

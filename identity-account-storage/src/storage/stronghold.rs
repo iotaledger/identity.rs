@@ -26,8 +26,8 @@ use tokio::sync::RwLockWriteGuard;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
-use crate::stronghold::ClientPath;
 use crate::stronghold::default_hint;
+use crate::stronghold::ClientPath;
 use crate::stronghold::Context;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
@@ -74,7 +74,7 @@ impl Stronghold {
   }
 
   fn vault(&self, did: &IotaDID) -> Vault<'_> {
-    self.snapshot.vault(&fmt_did(did))
+    self.snapshot.vault(ClientPath::from(did))
   }
 
   /// Returns whether save-on-drop is enabled.

@@ -45,15 +45,11 @@ impl Snapshot {
     &self.path
   }
 
-  pub fn vault<T>(&self, name: &T) -> Vault<'_>
-  where
-    T: AsRef<[u8]> + ?Sized,
-  {
-    Vault::new(&self.path, name, &[])
+  pub fn vault(&self, client_path: ClientPath) -> Vault<'_> {
+    Vault::new(&self.path, client_path, &[])
   }
 
-  pub fn store(&self, client_path: ClientPath) -> Store<'_>
-  {
+  pub fn store(&self, client_path: ClientPath) -> Store<'_> {
     Store::new(&self.path, client_path, &[])
   }
 

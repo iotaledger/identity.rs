@@ -36,7 +36,7 @@ impl Store<'_> {
     self.path
   }
 
-  /// Returns the name of the store.
+  /// Returns the client path of the store.
   pub fn client_path(&self) -> &[u8] {
     self.client_path.0.as_ref()
   }
