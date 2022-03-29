@@ -87,10 +87,10 @@ impl NapiStronghold {
 
   /// Creates a new keypair at the specified `location`
   #[napi]
-  pub async fn key_generate(&self, did: &NapiDID, key_type: &NapiKeyType, fragment: String) -> Result<NapiKeyLocation> {
+  pub async fn key_generate(&self, did: &NapiDID, key_type: NapiKeyType, fragment: String) -> Result<NapiKeyLocation> {
     let location: KeyLocation = self
       .0
-      .key_generate(&did.0, key_type.0, fragment.as_ref())
+      .key_generate(&did.0, key_type.into(), fragment.as_ref())
       .await
       .napi_result()?;
 
