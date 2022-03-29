@@ -543,7 +543,7 @@ where
     let fragment: String = format!("#{}", location.fragment());
     let method_url: IotaDIDUrl = doc.id().to_url().join(fragment)?;
 
-    match location.key_type {
+    match location.key_type() {
       KeyType::Ed25519 => {
         RemoteEd25519::create_signature(data, method_url.to_string(), &private, options).await?;
       }

@@ -18,12 +18,19 @@ use std::hash::Hash;
 use std::hash::Hasher;
 
 /// The storage location of a verification method key.
+///
+/// A key is uniquely identified by the fragment and a hash of its public key.
+/// Importantly, the fragment alone is insufficient to represent the storage location.
+/// For example, when rotating a key, there will be two keys in storage for the
+/// same identity with the same fragment. The `key_hash` disambiguates the keys in
+/// situations like these.
+///
+/// The string representation of that location can be obtained via `to_string`.
 #[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-#[non_exhaustive]
 pub struct KeyLocation {
-  pub key_type: KeyType,
+  key_type: KeyType,
   fragment: Fragment,
-  pub key_hash: u64,
+  key_hash: u64,
 }
 
 impl KeyLocation {
@@ -56,9 +63,19 @@ impl KeyLocation {
     }
   }
 
+  /// Returns the [`KeyType`] of the key at the location.
+  pub fn key_type(&self) -> KeyType {
+    self.key_type
+  }
+
   /// Returns the fragment without the leading `#`.
   pub fn fragment(&self) -> &str {
     self.fragment.name()
+  }
+
+  /// Returns the hash of the public key at the location.
+  pub fn key_hash(&self) -> u64 {
+    self.key_hash
   }
 
   /// Create the [`KeyLocation`] of an [`IotaVerificationMethod`].
