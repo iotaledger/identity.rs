@@ -14,7 +14,6 @@ use serde::Serialize;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
-use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
@@ -543,8 +542,8 @@ where
     let private: RemoteKey<'_> = RemoteKey::new(doc.id(), location, self.storage().deref());
 
     // Create the Verification Method identifier
-    let fragment: Fragment = Fragment::new(location.fragment.clone());
-    let method_url: IotaDIDUrl = doc.id().to_url().join(fragment.identifier())?;
+    let fragment: String = format!("#{}", location.fragment());
+    let method_url: IotaDIDUrl = doc.id().to_url().join(fragment)?;
 
     match location.key_type {
       KeyType::Ed25519 => {

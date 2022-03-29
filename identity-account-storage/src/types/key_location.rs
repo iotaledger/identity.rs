@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
+use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
@@ -21,8 +22,7 @@ use std::hash::Hasher;
 #[non_exhaustive]
 pub struct KeyLocation {
   pub key_type: KeyType,
-  // TODO: Use `Fragment`?
-  pub fragment: String,
+  fragment: Fragment,
   pub key_hash: u64,
 }
 
@@ -34,7 +34,7 @@ impl KeyLocation {
 
     Self {
       key_type,
-      fragment,
+      fragment: Fragment::new(fragment),
       key_hash,
     }
   }
@@ -51,9 +51,14 @@ impl KeyLocation {
 
     Self {
       key_type,
-      fragment,
+      fragment: Fragment::new(fragment),
       key_hash,
     }
+  }
+
+  /// Returns the fragment without the leading `#`.
+  pub fn fragment(&self) -> &str {
+    self.fragment.name()
   }
 
   /// Create the [`KeyLocation`] of an [`IotaVerificationMethod`].
@@ -77,7 +82,7 @@ impl KeyLocation {
 
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!("{}:{}", self.fragment, self.key_hash))
+    f.write_fmt(format_args!("{}:{}", self.fragment.name(), self.key_hash))
   }
 }
 
