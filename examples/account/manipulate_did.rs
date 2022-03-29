@@ -51,8 +51,10 @@ async fn main() -> Result<()> {
     .update_identity()
     .attach_method_relationship()
     .fragment("my-next-key")
-    .relationship(MethodRelationship::CapabilityDelegation)
-    .relationship(MethodRelationship::CapabilityInvocation)
+    .relationships(vec![
+      MethodRelationship::CapabilityDelegation,
+      MethodRelationship::CapabilityInvocation,
+    ])
     .apply()
     .await?;
 
