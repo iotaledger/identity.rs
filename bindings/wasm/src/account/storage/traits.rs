@@ -46,7 +46,7 @@ extern "C" {
   pub type PromiseOptionDocument;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
-  #[wasm_bindgen(typescript_type = "Promise<Array<WasmDID>>")]
+  #[wasm_bindgen(typescript_type = "Promise<Array<DID>>")]
   pub type PromiseArrayDID;
   #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
   pub type PromiseDIDKeyLocation;
@@ -65,6 +65,12 @@ extern "C" {
   ) -> PromiseDIDKeyLocation;
   #[wasm_bindgen(method, js_name = didPurge)]
   pub fn did_purge(this: &WasmStorage, did: WasmDID) -> PromiseUnit;
+
+  #[wasm_bindgen(method, js_name = didExists)]
+  pub fn did_exists(this: &WasmStorage, did: WasmDID) -> PromiseBool;
+  #[wasm_bindgen(method, js_name = didList)]
+  pub fn did_list(this: &WasmStorage) -> PromiseArrayDID;
+
   #[wasm_bindgen(method, js_name = keyGenerate)]
   pub fn key_generate(this: &WasmStorage, did: WasmDID, key_type: WasmKeyType, fragment: String) -> PromiseKeyLocation;
   #[wasm_bindgen(method, js_name = keyInsert)]
@@ -87,11 +93,6 @@ extern "C" {
   pub fn document_set(this: &WasmStorage, did: WasmDID, document: WasmDocument) -> PromiseUnit;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
-  #[wasm_bindgen(method, js_name = indexSet)]
-  #[wasm_bindgen(method, js_name = indexGet)]
-  pub fn index_has(this: &WasmStorage, did: WasmDID) -> PromiseBool;
-  #[wasm_bindgen(method)]
-  pub fn index(this: &WasmStorage) -> PromiseArrayDID;
 }
 
 impl Debug for WasmStorage {
@@ -141,13 +142,13 @@ impl Storage for WasmStorage {
   }
 
   async fn did_exists(&self, did: &IotaDID) -> AccountStorageResult<bool> {
-    let promise: Promise = Promise::resolve(&self.index_has(did.clone().into()));
+    let promise: Promise = Promise::resolve(&self.did_exists(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
   async fn did_list(&self) -> AccountStorageResult<Vec<IotaDID>> {
-    let promise: Promise = Promise::resolve(&self.index());
+    let promise: Promise = Promise::resolve(&self.did_list());
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let js_value: JsValue = result.account_err()?;
 
