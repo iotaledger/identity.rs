@@ -183,6 +183,7 @@ async fn test_create_method_content_generate() -> Result<()> {
       let initial_document: IotaDocument = account.document().to_owned();
 
       let method_type: MethodType = method_content.method_type();
+      let key_type: KeyType = method_content.key_type();
       let fragment = "key-1".to_owned();
       let update: Update = Update::CreateMethod {
         scope: MethodScope::default(),
@@ -209,11 +210,7 @@ async fn test_create_method_content_generate() -> Result<()> {
       // Ensure we can retrieve the correct location for the key.
       assert_eq!(
         location,
-        KeyLocation::new(
-          method_to_key_type(method_type),
-          fragment,
-          method.data().try_decode().unwrap().as_ref()
-        )
+        KeyLocation::new(key_type, fragment, method.data().try_decode().unwrap().as_ref())
       );
 
       // Ensure the key exists in storage.
@@ -737,11 +734,4 @@ async fn test_set_also_known_as() -> Result<()> {
   assert_eq!(account.document().also_known_as().len(), 0);
 
   Ok(())
-}
-
-pub(crate) fn method_to_key_type(method_type: MethodType) -> KeyType {
-  match method_type {
-    MethodType::Ed25519VerificationKey2018 => KeyType::Ed25519,
-    MethodType::X25519KeyAgreementKey2019 => KeyType::X25519,
-  }
 }
