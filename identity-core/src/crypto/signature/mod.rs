@@ -3,10 +3,10 @@
 
 #![allow(clippy::module_inception)]
 
+pub use self::proof_value::ProofValue;
 pub use self::signature::Signature;
 pub use self::signature_options::ProofPurpose;
 pub use self::signature_options::SignatureOptions;
-pub use self::signature_value::SignatureValue;
 pub use self::traits::Named;
 pub use self::traits::SetSignature;
 pub use self::traits::Sign;
@@ -16,7 +16,7 @@ pub use self::traits::TrySignatureMut;
 pub use self::traits::Verifier;
 pub use self::traits::Verify;
 
+mod proof_value;
 mod signature;
 mod signature_options;
-mod signature_value;
 mod traits;

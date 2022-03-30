@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -13,8 +13,8 @@ use serde::Serialize;
 
 use crate::common::Timestamp;
 use crate::crypto::signature::signature_options::ProofPurpose;
+use crate::crypto::ProofValue;
 use crate::crypto::SignatureOptions;
-use crate::crypto::SignatureValue;
 use crate::error::Result;
 
 /// A digital signature.
@@ -25,7 +25,7 @@ pub struct Signature {
   #[serde(rename = "type")]
   type_: String,
   #[serde(flatten)]
-  value: SignatureValue,
+  value: ProofValue,
   #[serde(rename = "verificationMethod")]
   method: String,
 
@@ -60,7 +60,7 @@ impl Signature {
   pub fn new_with_options(type_: impl Into<String>, method: impl Into<String>, options: SignatureOptions) -> Self {
     Self {
       type_: type_.into(),
-      value: SignatureValue::None,
+      value: ProofValue::None,
       method: method.into(),
       created: options.created,
       expires: options.expires,
@@ -82,23 +82,23 @@ impl Signature {
   }
 
   /// Returns a reference to the signature `value`.
-  pub const fn value(&self) -> &SignatureValue {
+  pub const fn value(&self) -> &ProofValue {
     &self.value
   }
 
   /// Returns a mutable reference to the signature `value`.
-  pub fn value_mut(&mut self) -> &mut SignatureValue {
+  pub fn value_mut(&mut self) -> &mut ProofValue {
     &mut self.value
   }
 
   /// Sets the [`SignatureValue`] of the object.
-  pub fn set_value(&mut self, value: SignatureValue) {
+  pub fn set_value(&mut self, value: ProofValue) {
     self.value = value;
   }
 
   /// Clears the current signature value - all other properties are unchanged.
   pub fn clear_value(&mut self) {
-    self.value = SignatureValue::None;
+    self.value = ProofValue::None;
   }
 
   /// Flag the signature value so it is ignored during serialization
@@ -257,7 +257,7 @@ mod tests {
   fn test_signature_serialise_options() {
     let mut signature: Signature =
       Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
-    signature.set_value(SignatureValue::Signature("somesignaturevalue123456789".to_owned()));
+    signature.set_value(ProofValue::Signature("somesignaturevalue123456789".to_owned()));
     // Compare against JSON to ignore field order.
     let expected = json!({
       "type":"JcsEd25519Signature2020",
@@ -276,7 +276,7 @@ mod tests {
   fn test_signature_json() {
     let mut signature: Signature =
       Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
-    signature.set_value(SignatureValue::Signature("somesignaturevalue123456789".to_owned()));
+    signature.set_value(ProofValue::Signature("somesignaturevalue123456789".to_owned()));
 
     let deserialized: Signature = Signature::from_json(&signature.to_json().unwrap()).unwrap();
     assert_eq!(signature, deserialized);
