@@ -12,10 +12,10 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 
@@ -175,13 +175,13 @@ where
   }
 }
 
-impl<T> TrySignature for Credential<T> {
+impl<T> GetSignature for Credential<T> {
   fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl<T> TrySignatureMut for Credential<T> {
+impl<T> GetSignatureMut for Credential<T> {
   fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }

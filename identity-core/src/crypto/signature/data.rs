@@ -2,36 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::crypto::Proof;
-use crate::error::Error;
-use crate::error::Result;
 
 /// A trait for types that can provide a reference to a [`Proof`].
-pub trait TrySignature {
+pub trait GetSignature {
   /// Returns a reference to the [`Proof`] object, if any.
   fn signature(&self) -> Option<&Proof>;
-
-  /// Returns a reference to the [`Proof`] object.
-  ///
-  /// Errors
-  ///
-  /// Fails if the signature is not found.
-  fn try_signature(&self) -> Result<&Proof> {
-    self.signature().ok_or(Error::MissingSignature)
-  }
 }
 
-impl<'a, T> TrySignature for &'a T
+impl<'a, T> GetSignature for &'a T
 where
-  T: TrySignature,
+  T: GetSignature,
 {
   fn signature(&self) -> Option<&Proof> {
     (**self).signature()
   }
 }
 
-impl<'a, T> TrySignature for &'a mut T
+impl<'a, T> GetSignature for &'a mut T
 where
-  T: TrySignature,
+  T: GetSignature,
 {
   fn signature(&self) -> Option<&Proof> {
     (**self).signature()
@@ -42,23 +31,14 @@ where
 // =============================================================================
 
 /// A trait for types that can provide a mutable reference to a [`Proof`].
-pub trait TrySignatureMut: TrySignature {
-  /// Returns a mutable reference to the [`Proof`] object.
+pub trait GetSignatureMut: GetSignature {
+  /// Returns a mutable reference to the [`Proof`] object, if any.
   fn signature_mut(&mut self) -> Option<&mut Proof>;
-
-  /// Returns a mutable reference to the [`Proof`] object.
-  ///
-  /// Errors
-  ///
-  /// Fails if the signature is not found.
-  fn try_signature_mut(&mut self) -> Result<&mut Proof> {
-    self.signature_mut().ok_or(Error::MissingSignature)
-  }
 }
 
-impl<'a, T> TrySignatureMut for &'a mut T
+impl<'a, T> GetSignatureMut for &'a mut T
 where
-  T: TrySignatureMut,
+  T: GetSignatureMut,
 {
   fn signature_mut(&mut self) -> Option<&mut Proof> {
     (**self).signature_mut()
@@ -69,7 +49,7 @@ where
 // =============================================================================
 
 /// A trait for types that can store a digital [signature][`Proof`].
-pub trait SetSignature: TrySignatureMut {
+pub trait SetSignature: GetSignatureMut {
   /// Sets the [`Proof`] object of `self`.
   fn set_signature(&mut self, signature: Proof);
 }

@@ -14,12 +14,12 @@ pub use self::proof::Proof;
 pub use self::proof::ProofOptions;
 pub use self::proof::ProofPurpose;
 pub use self::proof::ProofValue;
+pub use self::signature::GetSignature;
+pub use self::signature::GetSignatureMut;
 pub use self::signature::Named;
 pub use self::signature::SetSignature;
 pub use self::signature::Sign;
 pub use self::signature::Signer;
-pub use self::signature::TrySignature;
-pub use self::signature::TrySignatureMut;
 pub use self::signature::Verifier;
 pub use self::signature::Verify;
 

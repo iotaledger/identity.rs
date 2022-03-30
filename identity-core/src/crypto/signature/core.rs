@@ -1,13 +1,13 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Serialize;
 
+use crate::crypto::GetSignature;
 use crate::crypto::Proof;
 use crate::crypto::ProofOptions;
 use crate::crypto::ProofValue;
 use crate::crypto::SetSignature;
-use crate::crypto::TrySignature;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -63,7 +63,7 @@ pub trait Signer<Secret: ?Sized>: Named {
     data.set_signature(signature);
 
     let value: ProofValue = Self::sign(&data, secret)?;
-    let write: &mut Proof = data.try_signature_mut()?;
+    let write: &mut Proof = data.signature_mut().ok_or(Error::MissingSignature)?;
     write.set_value(value);
 
     Ok(())
@@ -83,9 +83,9 @@ pub trait Verifier<Public: ?Sized>: Named {
   /// Extracts and verifies a proof [signature][`Proof`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
   where
-    T: Serialize + TrySignature,
+    T: Serialize + GetSignature,
   {
-    let signature: &Proof = data.try_signature()?;
+    let signature: &Proof = data.signature().ok_or(Error::MissingSignature)?;
 
     if signature.type_() != Self::NAME {
       return Err(Error::InvalidProofValue("signature name"));

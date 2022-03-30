@@ -5,10 +5,10 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 
 use identity_core::common::Object;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 
 use crate::verification::MethodUriType;
@@ -87,13 +87,13 @@ impl<T> DerefMut for VerifiableProperties<T> {
   }
 }
 
-impl<T> TrySignature for VerifiableProperties<T> {
+impl<T> GetSignature for VerifiableProperties<T> {
   fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl<T> TrySignatureMut for VerifiableProperties<T> {
+impl<T> GetSignatureMut for VerifiableProperties<T> {
   fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }

@@ -11,6 +11,8 @@ use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
@@ -19,8 +21,6 @@ use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
@@ -438,7 +438,7 @@ impl IotaDocument {
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + TrySignature,
+    X: Serialize + GetSignature,
   {
     self.document.verify_data(data, options).map_err(Into::into)
   }
@@ -474,8 +474,8 @@ impl IotaDocument {
 
     // Validate the hash of the public key matches the DID tag.
     let signature: &Proof = document
-      .try_signature()
-      .map_err(|err| Error::InvalidRootDocument(err.into()))?;
+      .signature()
+      .ok_or(Error::InvalidRootDocument("missing signature"))?;
     let method: &IotaVerificationMethod = document
       .resolve_method(signature, None)
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))?;
@@ -632,13 +632,13 @@ impl Display for IotaDocument {
   }
 }
 
-impl TrySignature for IotaDocument {
+impl GetSignature for IotaDocument {
   fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl TrySignatureMut for IotaDocument {
+impl GetSignatureMut for IotaDocument {
   fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }

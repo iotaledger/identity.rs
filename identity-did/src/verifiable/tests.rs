@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Timestamp;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 
 use crate::did::CoreDID;
 use crate::did::DID;
@@ -35,13 +35,13 @@ impl MockObject {
   }
 }
 
-impl TrySignature for MockObject {
+impl GetSignature for MockObject {
   fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl TrySignatureMut for MockObject {
+impl GetSignatureMut for MockObject {
   fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }

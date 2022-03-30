@@ -40,7 +40,7 @@ impl RemoteEd25519 {
     data.set_signature(signature);
 
     let value: ProofValue = Self::sign(&data, secret).await?;
-    let write: &mut Proof = data.try_signature_mut()?;
+    let write: &mut Proof = data.signature_mut().ok_or(Error::MissingSignature)?;
 
     write.set_value(value);
 

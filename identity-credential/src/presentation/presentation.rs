@@ -11,10 +11,10 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 
@@ -136,13 +136,13 @@ where
   }
 }
 
-impl<T, U> TrySignature for Presentation<T, U> {
+impl<T, U> GetSignature for Presentation<T, U> {
   fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl<T, U> TrySignatureMut for Presentation<T, U> {
+impl<T, U> GetSignatureMut for Presentation<T, U> {
   fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
