@@ -18,7 +18,7 @@ hashbrown = { version = "0.11", features = ["serde"] }
 identity-core = { version = "=0.5.0-dev.6", path = "../identity-core", default-features = false }
 identity-did = { version = "=0.5.0-dev.6", path = "../identity-did", default-features = false }
 identity-iota-core = { version = "=0.5.0-dev.6", path = "../identity-iota-core", default-features = false }
-once_cell = { version = "1.7", default-features = false, features = ["std"] }
+once_cell = { version = "1.7", default-features = false, features = ["std"], optional = true }
 parking_lot = { version = "0.12" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 seahash = { version = "4.1.0", default-features = false }
@@ -55,5 +55,6 @@ stronghold = [
   "actix",
   "tokio/rt-multi-thread",
   "futures",
+  "once_cell",
 ]
 send-sync-storage = []
