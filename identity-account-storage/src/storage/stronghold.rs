@@ -165,7 +165,7 @@ impl Storage for Stronghold {
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     let vault: Vault<'_> = self.vault(did);
 
-    let tmp_location: KeyLocation = KeyLocation::random(key_type);
+    let tmp_location: KeyLocation = random_location(key_type);
 
     match key_type {
       KeyType::Ed25519 | KeyType::X25519 => {
@@ -403,4 +403,15 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
     KeyType::Ed25519 => procedures::KeyType::Ed25519,
     KeyType::X25519 => procedures::KeyType::X25519,
   }
+}
+
+fn random_location(key_type: KeyType) -> KeyLocation {
+  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
+  let fragment: String = rand::Rng::sample_iter(&mut thread_rng, rand::distributions::Alphanumeric)
+    .take(32)
+    .map(char::from)
+    .collect();
+  let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
+
+  KeyLocation::new(key_type, fragment, &public_key)
 }

@@ -10,9 +10,6 @@ use identity_core::crypto::KeyType;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 use identity_iota_core::document::IotaVerificationMethod;
-use rand::distributions::Alphanumeric;
-use rand::prelude::ThreadRng;
-use rand::Rng;
 use seahash::SeaHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
@@ -38,23 +35,6 @@ impl KeyLocation {
     let mut hasher = SeaHasher::new();
     public_key.hash(&mut hasher);
     let key_hash = hasher.finish();
-
-    Self {
-      key_type,
-      fragment: Fragment::new(fragment),
-      key_hash,
-    }
-  }
-
-  /// Generates a random location for a key of the given [`KeyType`].
-  pub fn random(key_type: KeyType) -> Self {
-    let mut thread_rng: ThreadRng = rand::thread_rng();
-    let fragment: String = (&mut thread_rng)
-      .sample_iter(Alphanumeric)
-      .take(32)
-      .map(char::from)
-      .collect();
-    let key_hash: u64 = (&mut thread_rng).gen();
 
     Self {
       key_type,
