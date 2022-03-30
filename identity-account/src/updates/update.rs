@@ -12,12 +12,10 @@ use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::X25519;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
@@ -47,25 +45,12 @@ pub(crate) async fn create_identity(
 ) -> Result<IotaDocument> {
   let fragment: &str = IotaDocument::DEFAULT_METHOD_FRAGMENT;
 
-  let keypair: KeyPair = match setup.private_key {
-    None => KeyPair::new(KeyType::Ed25519)?,
-    Some(private_key) => {
-      ensure!(
-        private_key.as_ref().len() == Ed25519::PRIVATE_KEY_LENGTH,
-        UpdateError::InvalidMethodContent(format!(
-          "an Ed25519 private key requires {} bytes, found {}",
-          Ed25519::PRIVATE_KEY_LENGTH,
-          private_key.as_ref().len()
-        ))
-      );
-      KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?
-    }
+  if let Some(private_key) = &setup.private_key {
+    KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
+      .map_err(|err| UpdateError::InvalidMethodContent(err.to_string()))?;
   };
 
-  let private_key: PrivateKey = keypair.private().to_owned();
-  std::mem::drop(keypair);
-
-  let (did, location) = store.did_create(network.clone(), fragment, Some(private_key)).await?;
+  let (did, location) = store.did_create(network.clone(), fragment, setup.private_key).await?;
 
   let public_key: PublicKey = store.key_public(&did, &location).await?;
 
@@ -268,30 +253,8 @@ async fn insert_method_secret(
   fragment: &str,
   private_key: PrivateKey,
 ) -> Result<KeyLocation> {
-  match key_type {
-    KeyType::Ed25519 => {
-      ensure!(
-        private_key.as_ref().len() == Ed25519::PRIVATE_KEY_LENGTH,
-        UpdateError::InvalidMethodContent(format!(
-          "an ed25519 private key requires {} bytes, got {}",
-          Ed25519::PRIVATE_KEY_LENGTH,
-          private_key.as_ref().len()
-        ))
-      );
-    }
-    KeyType::X25519 => {
-      ensure!(
-        private_key.as_ref().len() == X25519::PRIVATE_KEY_LENGTH,
-        UpdateError::InvalidMethodContent(format!(
-          "an x25519 private key requires {} bytes, got {}",
-          X25519::PRIVATE_KEY_LENGTH,
-          private_key.as_ref().len()
-        ))
-      );
-    }
-  }
-
-  let keypair: KeyPair = KeyPair::try_from_private_key_bytes(key_type, private_key.as_ref())?;
+  let keypair: KeyPair = KeyPair::try_from_private_key_bytes(key_type, private_key.as_ref())
+    .map_err(|err| UpdateError::InvalidMethodContent(err.to_string()))?;
 
   let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
   std::mem::drop(keypair);
