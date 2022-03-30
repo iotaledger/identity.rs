@@ -6,9 +6,11 @@ use core::fmt::Formatter;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
+use serde;
 use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
+use serde::Deserialize;
 use serde::Serialize;
 
 use crate::common::Timestamp;
@@ -133,8 +135,8 @@ impl Debug for Proof {
 
 impl Serialize for Proof {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-      S: Serializer,
+  where
+    S: Serializer,
   {
     let hide: bool = self.__hide();
 

@@ -5,6 +5,10 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 /// A DID Document proof value with a dynamic JSON field name.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum ProofValue {

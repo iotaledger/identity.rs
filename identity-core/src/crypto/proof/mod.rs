@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(clippy::module_inception)]
+
 //! Types and traits for helping ensure the authenticity and integrity of
 //! DID Documents and Verifiable Credentials.
 
