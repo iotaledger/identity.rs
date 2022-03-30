@@ -394,7 +394,8 @@ async fn set_index(store: &Store<'_>, index: BTreeSet<IotaDID>) -> Result<()> {
 
 impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
-    Location::generic(VAULT_PATH.to_vec(), key_location.to_string().into_bytes())
+    let record_path: Vec<u8> = format!("{}:{}", key_location.fragment(), key_location.key_hash()).into_bytes();
+    Location::generic(VAULT_PATH.to_vec(), record_path)
   }
 }
 
