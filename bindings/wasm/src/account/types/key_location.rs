@@ -43,13 +43,13 @@ impl WasmKeyLocation {
     self.0.generation().into()
   }
 
-  /// Serializes `Signature` as a JSON object.
+  /// Serializes `KeyLocation` to a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a JSON object as `KeyLocation`.
+  /// Deserializes `KeyLocation` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json_value: JsValue) -> Result<WasmKeyLocation> {
     json_value.into_serde().map(Self).wasm_result()

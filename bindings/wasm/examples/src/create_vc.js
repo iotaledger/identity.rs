@@ -6,7 +6,7 @@ import {
     CredentialValidationOptions,
     CredentialValidator,
     FailFast,
-    SignatureOptions
+    ProofOptions
 } from '@iota/identity-wasm';
 import {createIdentity} from './create_did';
 import {manipulateIdentity} from './manipulate_did';
@@ -46,7 +46,7 @@ async function createVC(clientConfig) {
         unsignedVc,
         issuer.newKey.private(),
         "#newKey",
-        SignatureOptions.default()
+        ProofOptions.default()
     );
 
     // Before sending this credential to the holder the issuer wants to validate that some properties

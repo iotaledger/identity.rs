@@ -9,7 +9,7 @@ import {
     KeyPair,
     KeyType,
     MethodContent,
-    SignatureOptions,
+    ProofOptions,
     Storage,
     VerifierOptions
 } from './../../node/identity_wasm.js';
@@ -64,7 +64,7 @@ async function signing(storage?: Storage) {
     // ...and sign the Credential with the previously created Verification Method.
     // Note: Different methods are available for different data types,
     // use the Method `createSignedData` to sign arbitrary data.
-    let signedVc = await account.createSignedCredential("key_1", unsignedVc, SignatureOptions.default());
+    let signedVc = await account.createSignedCredential("key_1", unsignedVc, ProofOptions.default());
 
     console.log("[Example] Local Credential", signedVc);
 

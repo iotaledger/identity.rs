@@ -8,8 +8,8 @@ import {
     FailFast,
     Presentation,
     PresentationValidationOptions,
+    ProofOptions,
     Resolver,
-    SignatureOptions,
     SubjectHolderRelationship,
     Timestamp,
     VerifierOptions
@@ -53,7 +53,7 @@ async function createVP(clientConfig) {
     const signedVp = alice.doc.signPresentation(unsignedVp,
         alice.key.private(),
         "#sign-0",
-        new SignatureOptions({
+        new ProofOptions({
             challenge: challenge,
             expires: Timestamp.nowUTC().checkedAdd(Duration.minutes(10))
         }));

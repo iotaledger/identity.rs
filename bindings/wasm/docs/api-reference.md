@@ -85,8 +85,12 @@ the configuration of previously built accounts.</p>
 <dd><p>A digital signature.</p>
 <p>For field definitions see: <a href="https://w3c-ccg.github.io/security-vocab/">https://w3c-ccg.github.io/security-vocab/</a></p>
 </dd>
+<dt><a href="#ProofOptions">ProofOptions</a></dt>
+<dd><p>Holds additional options for creating signatures.
+See <code>IProofOptions</code>.</p>
+</dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
-<dd><p>Associates a purpose with a <a href="#Signature">Signature</a>.</p>
+<dd><p>Associates a purpose with a <a href="#Proof">Proof</a>.</p>
 <p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
 </dd>
 <dt><a href="#Receipt">Receipt</a></dt>
@@ -107,16 +111,12 @@ with a DID subject.</p>
 </dd>
 <dt><a href="#Signature">Signature</a></dt>
 <dd></dd>
-<dt><a href="#SignatureOptions">SignatureOptions</a></dt>
-<dd><p>Holds additional options for creating signatures.
-See <code>ISignatureOptions</code>.</p>
-</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
 <dt><a href="#VerifierOptions">VerifierOptions</a></dt>
-<dd><p>Holds additional signature verification options.
+<dd><p>Holds additional proof verification options.
 See <code>IVerifierOptions</code>.</p>
 </dd>
 <dt><a href="#X25519">X25519</a></dt>
@@ -186,10 +186,10 @@ publishing to the Tangle.
     * [.resolveIdentity()](#Account+resolveIdentity) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
     * [.deleteIdentity()](#Account+deleteIdentity) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.publish(publish_options)](#Account+publish) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createSignedCredential(fragment, credential, signature_options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
-    * [.createSignedDocument(fragment, document, signature_options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
-    * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-    * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createSignedCredential(fragment, credential, options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
+    * [.createSignedDocument(fragment, document, options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+    * [.createSignedPresentation(fragment, presentation, options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
+    * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -252,7 +252,7 @@ Push all unpublished changes to the tangle in a single message.
 
 <a name="Account+createSignedCredential"></a>
 
-### account.createSignedCredential(fragment, credential, signature_options) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
+### account.createSignedCredential(fragment, credential, options) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
 Signs a [Credential](#Credential) with the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -261,11 +261,11 @@ Signs a [Credential](#Credential) with the key specified by `fragment`.
 | --- | --- |
 | fragment | <code>string</code> | 
 | credential | [<code>Credential</code>](#Credential) | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Account+createSignedDocument"></a>
 
-### account.createSignedDocument(fragment, document, signature_options) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+### account.createSignedDocument(fragment, document, options) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
 Signs a [Document](#Document) with the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -274,11 +274,11 @@ Signs a [Document](#Document) with the key specified by `fragment`.
 | --- | --- |
 | fragment | <code>string</code> | 
 | document | [<code>Document</code>](#Document) | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Account+createSignedPresentation"></a>
 
-### account.createSignedPresentation(fragment, presentation, signature_options) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
+### account.createSignedPresentation(fragment, presentation, options) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
 Signs a [Presentation](#Presentation) the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -287,11 +287,11 @@ Signs a [Presentation](#Presentation) the key specified by `fragment`.
 | --- | --- |
 | fragment | <code>string</code> | 
 | presentation | [<code>Presentation</code>](#Presentation) | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Account+createSignedData"></a>
 
-### account.createSignedData(fragment, data, signature_options) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.createSignedData(fragment, data, options) ⇒ <code>Promise.&lt;void&gt;</code>
 Signs arbitrary `data` with the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -300,7 +300,7 @@ Signs arbitrary `data` with the key specified by `fragment`.
 | --- | --- |
 | fragment | <code>string</code> | 
 | data | <code>any</code> | 
-| signature_options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Account+updateDocumentUnchecked"></a>
 
@@ -1320,7 +1320,7 @@ Sets the Tangle message id of the previous DID Document diff.
 ### ~~diffMessage.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>~~
 ***Deprecated***
 
-Returns a copy of the signature.
+Returns a copy of the proof.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+merge"></a>
@@ -1680,7 +1680,7 @@ Verification Method.
 | data | <code>any</code> | 
 | privateKey | <code>Uint8Array</code> | 
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Document+signPresentation"></a>
 
@@ -1695,7 +1695,7 @@ Verification Method.
 | data | <code>any</code> | 
 | privateKey | <code>Uint8Array</code> | 
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Document+signData"></a>
 
@@ -1712,7 +1712,7 @@ NOTE: use `signSelf` or `signDocument` for DID Documents.
 | data | <code>any</code> | 
 | privateKey | <code>Uint8Array</code> | 
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| options | [<code>SignatureOptions</code>](#SignatureOptions) | 
+| options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Document+verifyData"></a>
 
@@ -1868,7 +1868,7 @@ Sets the previous integration chain message id.
 <a name="Document+proof"></a>
 
 ### document.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-Returns a copy of the signature.
+Returns a copy of the proof.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+toJSON"></a>
@@ -2449,13 +2449,13 @@ Returns a copy of the integration generation when this key was created.
 <a name="KeyLocation+toJSON"></a>
 
 ### keyLocation.toJSON() ⇒ <code>any</code>
-Serializes `Signature` as a JSON object.
+Serializes `KeyLocation` to a JSON object.
 
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation.fromJSON"></a>
 
 ### KeyLocation.fromJSON(json_value) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Deserializes a JSON object as `KeyLocation`.
+Deserializes `KeyLocation` from a JSON object.
 
 **Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
 
@@ -3226,10 +3226,49 @@ Deserializes a `Proof` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="ProofOptions"></a>
+
+## ProofOptions
+Holds additional options for creating signatures.
+See `IProofOptions`.
+
+**Kind**: global class  
+
+* [ProofOptions](#ProofOptions)
+    * [new ProofOptions(options)](#new_ProofOptions_new)
+    * _instance_
+        * [.clone()](#ProofOptions+clone) ⇒ [<code>ProofOptions</code>](#ProofOptions)
+    * _static_
+        * [.default()](#ProofOptions.default) ⇒ [<code>ProofOptions</code>](#ProofOptions)
+
+<a name="new_ProofOptions_new"></a>
+
+### new ProofOptions(options)
+Creates a new `ProofOptions` from the given fields.
+
+Throws an error if any of the options are invalid.
+
+
+| Param | Type |
+| --- | --- |
+| options | <code>IProofOptions</code> | 
+
+<a name="ProofOptions+clone"></a>
+
+### proofOptions.clone() ⇒ [<code>ProofOptions</code>](#ProofOptions)
+Deep clones the object.
+
+**Kind**: instance method of [<code>ProofOptions</code>](#ProofOptions)  
+<a name="ProofOptions.default"></a>
+
+### ProofOptions.default() ⇒ [<code>ProofOptions</code>](#ProofOptions)
+Creates a new `ProofOptions` with default options.
+
+**Kind**: static method of [<code>ProofOptions</code>](#ProofOptions)  
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
-Associates a purpose with a [Signature](#Signature).
+Associates a purpose with a [Proof](#Proof).
 
 See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 
@@ -3796,45 +3835,6 @@ Deserializes a JSON object as `Signature`.
 | --- | --- |
 | json_value | <code>any</code> | 
 
-<a name="SignatureOptions"></a>
-
-## SignatureOptions
-Holds additional options for creating signatures.
-See `ISignatureOptions`.
-
-**Kind**: global class  
-
-* [SignatureOptions](#SignatureOptions)
-    * [new SignatureOptions(options)](#new_SignatureOptions_new)
-    * _instance_
-        * [.clone()](#SignatureOptions+clone) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
-    * _static_
-        * [.default()](#SignatureOptions.default) ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
-
-<a name="new_SignatureOptions_new"></a>
-
-### new SignatureOptions(options)
-Creates a new `SignatureOptions` from the given fields.
-
-Throws an error if any of the options are invalid.
-
-
-| Param | Type |
-| --- | --- |
-| options | <code>ISignatureOptions</code> | 
-
-<a name="SignatureOptions+clone"></a>
-
-### signatureOptions.clone() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
-Deep clones the object.
-
-**Kind**: instance method of [<code>SignatureOptions</code>](#SignatureOptions)  
-<a name="SignatureOptions.default"></a>
-
-### SignatureOptions.default() ⇒ [<code>SignatureOptions</code>](#SignatureOptions)
-Creates a new `SignatureOptions` with default options.
-
-**Kind**: static method of [<code>SignatureOptions</code>](#SignatureOptions)  
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -4009,7 +4009,7 @@ Deserializes a `VerificationMethod` object from a JSON object.
 <a name="VerifierOptions"></a>
 
 ## VerifierOptions
-Holds additional signature verification options.
+Holds additional proof verification options.
 See `IVerifierOptions`.
 
 **Kind**: global class  

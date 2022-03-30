@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// Holds additional signature verification options.
+/// Holds additional proof verification options.
 /// See `IVerifierOptions`.
 #[wasm_bindgen(js_name = VerifierOptions, inspectable)]
 #[derive(Clone, Debug)]
@@ -80,20 +80,20 @@ interface IVerifierOptions {
     */
     readonly methodType?: Array<MethodType>;
 
-    /** Verify the `Signature::challenge` field matches this. */
+    /** Verify the `Proof.challenge` field matches this. */
     readonly challenge?: string;
 
-    /** Verify the `Signature::domain` field matches this. */
+    /** Verify the `Proof.domain` field matches this. */
     readonly domain?: string;
 
-    /** Verify the `Signature::purpose` field matches this. Also verifies that the signing
+    /** Verify the `Proof.purpose` field matches this. Also verifies that the signing
     * method has the corresponding verification method relationship.
     *
     * NOTE: `purpose` overrides the `method_scope` option.
     */
     readonly purpose?: ProofPurpose;
 
-    /** Determines whether to error if the current time exceeds the `Signature::expires` field.
+    /** Determines whether to error if the current time exceeds the `Proof.expires` field.
     *
     * Default: false (reject expired signatures).
     */

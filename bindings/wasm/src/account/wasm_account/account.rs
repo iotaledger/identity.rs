@@ -134,10 +134,10 @@ impl WasmAccount {
     &self,
     fragment: String,
     credential: &WasmCredential,
-    signature_options: &WasmProofOptions,
+    options: &WasmProofOptions,
   ) -> PromiseCredential {
     self
-      .create_signed(fragment, credential.0.clone(), signature_options)
+      .create_signed(fragment, credential.0.clone(), options)
       .unchecked_into::<PromiseCredential>()
   }
 
@@ -147,10 +147,10 @@ impl WasmAccount {
     &self,
     fragment: String,
     document: &WasmDocument,
-    signature_options: &WasmProofOptions,
+    options: &WasmProofOptions,
   ) -> PromiseDocument {
     self
-      .create_signed(fragment, document.0.clone(), signature_options)
+      .create_signed(fragment, document.0.clone(), options)
       .unchecked_into::<PromiseDocument>()
   }
 
@@ -160,10 +160,10 @@ impl WasmAccount {
     &self,
     fragment: String,
     presentation: &WasmPresentation,
-    signature_options: &WasmProofOptions,
+    options: &WasmProofOptions,
   ) -> PromisePresentation {
     self
-      .create_signed(fragment, presentation.0.clone(), signature_options)
+      .create_signed(fragment, presentation.0.clone(), options)
       .unchecked_into::<PromisePresentation>()
   }
 
@@ -173,18 +173,18 @@ impl WasmAccount {
     &self,
     fragment: String,
     data: &JsValue,
-    signature_options: &WasmProofOptions,
+    options: &WasmProofOptions,
   ) -> Result<PromiseVoid> {
     let verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.create_signed(fragment, verifiable_properties, signature_options))
+    Ok(self.create_signed(fragment, verifiable_properties, options))
   }
 
-  fn create_signed<U>(&self, fragment: String, mut data: U, signature_options: &WasmProofOptions) -> PromiseVoid
+  fn create_signed<U>(&self, fragment: String, mut data: U, options: &WasmProofOptions) -> PromiseVoid
   where
     U: serde::Serialize + SetSignature + 'static,
   {
     let account = self.0.clone();
-    let options: ProofOptions = signature_options.0.clone();
+    let options: ProofOptions = options.0.clone();
 
     future_to_promise(async move {
       account
