@@ -8,6 +8,7 @@ use identity::iota_core::DiffMessage;
 use identity::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
+use crate::crypto::WasmProof;
 use crate::did::WasmDID;
 use crate::did::WasmDocument;
 use crate::error::Result;
@@ -87,15 +88,12 @@ impl WasmDiffMessage {
     Ok(())
   }
 
-  /// Returns a copy of the `proof` object.
+  /// Returns a copy of the proof.
   ///
   /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen]
-  pub fn proof(&self) -> Result<JsValue> {
-    match self.0.proof() {
-      Some(proof) => JsValue::from_serde(proof).wasm_result(),
-      None => Ok(JsValue::NULL),
-    }
+  pub fn proof(&self) -> Option<WasmProof> {
+    self.0.proof().cloned().map(WasmProof::from)
   }
 
   /// Returns a new DID Document which is the result of merging `self`

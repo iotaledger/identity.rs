@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::crypto::ProofPurpose;
@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// Associates a purpose with a `Signature`.
+/// Associates a purpose with a {@link Signature}.
 ///
 /// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 #[wasm_bindgen(js_name = ProofPurpose, inspectable)]
@@ -30,13 +30,13 @@ impl WasmProofPurpose {
     WasmProofPurpose(ProofPurpose::Authentication)
   }
 
-  /// Serializes a `ProofPurpose` object as a JSON object.
+  /// Serializes a `ProofPurpose` to a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a `ProofPurpose` object from a JSON object.
+  /// Deserializes a `ProofPurpose` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmProofPurpose> {
     json.into_serde().map(Self).wasm_result()
@@ -44,3 +44,9 @@ impl WasmProofPurpose {
 }
 
 impl_wasm_clone!(WasmProofPurpose, ProofPurpose);
+
+impl From<ProofPurpose> for WasmProofPurpose {
+  fn from(purpose: ProofPurpose) -> Self {
+    WasmProofPurpose(purpose)
+  }
+}

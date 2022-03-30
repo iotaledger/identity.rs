@@ -23,6 +23,7 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmKeyPair;
+use crate::crypto::WasmProof;
 use crate::crypto::WasmSignatureOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::OptionMethodScope;
@@ -602,14 +603,10 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a copy of the `proof` object.
+  /// Returns a copy of the proof.
   #[wasm_bindgen]
-  pub fn proof(&self) -> Result<JsValue> {
-    // TODO: implement proper bindings for the proof.
-    match &self.0.proof {
-      Some(proof) => JsValue::from_serde(proof).wasm_result(),
-      None => Ok(JsValue::NULL),
-    }
+  pub fn proof(&self) -> Option<WasmProof> {
+    self.0.proof.clone().map(WasmProof::from)
   }
 
   // ===========================================================================

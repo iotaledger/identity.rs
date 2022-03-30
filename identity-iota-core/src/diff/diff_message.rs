@@ -84,7 +84,7 @@ impl DiffMessage {
     self.previous_message_id = message_id;
   }
 
-  /// Returns a reference to the DID Document proof.
+  /// Returns a reference to the proof.
   pub fn proof(&self) -> Option<&Signature> {
     self.proof.as_ref()
   }

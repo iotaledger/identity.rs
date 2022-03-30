@@ -81,8 +81,12 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#PresentationValidator">PresentationValidator</a></dt>
 <dd></dd>
+<dt><a href="#Proof">Proof</a></dt>
+<dd><p>A digital signature.</p>
+<p>For field definitions see: <a href="https://w3c-ccg.github.io/security-vocab/">https://w3c-ccg.github.io/security-vocab/</a></p>
+</dd>
 <dt><a href="#ProofPurpose">ProofPurpose</a></dt>
-<dd><p>Associates a purpose with a <code>Signature</code>.</p>
+<dd><p>Associates a purpose with a <a href="#Signature">Signature</a>.</p>
 <p>See <a href="https://w3c-ccg.github.io/security-vocab/#proofPurpose">https://w3c-ccg.github.io/security-vocab/#proofPurpose</a></p>
 </dd>
 <dt><a href="#Receipt">Receipt</a></dt>
@@ -193,8 +197,8 @@ publishing to the Tangle.
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+did"></a>
@@ -379,6 +383,17 @@ Adds a new Service to the DID Document.
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
 
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
 <a name="Account+attachMethodRelationships"></a>
 
 ### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -392,17 +407,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -1236,7 +1240,7 @@ Defines the difference between two DID `Document`s' JSON representations.
         * ~~[.setMessageId(message_id)](#DiffMessage+setMessageId)~~
         * ~~[.previousMessageId()](#DiffMessage+previousMessageId) ⇒ <code>string</code>~~
         * ~~[.setPreviousMessageId(message_id)](#DiffMessage+setPreviousMessageId)~~
-        * ~~[.proof()](#DiffMessage+proof) ⇒ <code>any</code>~~
+        * ~~[.proof()](#DiffMessage+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>~~
         * ~~[.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)~~
         * ~~[.toJSON()](#DiffMessage+toJSON) ⇒ <code>any</code>~~
         * [.clone()](#DiffMessage+clone) ⇒ [<code>DiffMessage</code>](#DiffMessage)
@@ -1313,10 +1317,10 @@ Sets the Tangle message id of the previous DID Document diff.
 
 <a name="DiffMessage+proof"></a>
 
-### ~~diffMessage.proof() ⇒ <code>any</code>~~
+### ~~diffMessage.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>~~
 ***Deprecated***
 
-Returns a copy of the `proof` object.
+Returns a copy of the signature.
 
 **Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
 <a name="DiffMessage+merge"></a>
@@ -1404,7 +1408,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.setMetadataUpdated(timestamp)](#Document+setMetadataUpdated)
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
-        * [.proof()](#Document+proof) ⇒ <code>any</code>
+        * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -1863,8 +1867,8 @@ Sets the previous integration chain message id.
 
 <a name="Document+proof"></a>
 
-### document.proof() ⇒ <code>any</code>
-Returns a copy of the `proof` object.
+### document.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+Returns a copy of the signature.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+toJSON"></a>
@@ -3127,10 +3131,105 @@ Validates the semantic structure of the `Presentation`.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 
+<a name="Proof"></a>
+
+## Proof
+A digital signature.
+
+For field definitions see: https://w3c-ccg.github.io/security-vocab/
+
+**Kind**: global class  
+
+* [Proof](#Proof)
+    * _instance_
+        * [.type()](#Proof+type) ⇒ <code>string</code>
+        * [.value()](#Proof+value) ⇒ <code>string</code>
+        * [.verificationMethod()](#Proof+verificationMethod) ⇒ <code>string</code>
+        * [.created()](#Proof+created) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.expires()](#Proof+expires) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.challenge()](#Proof+challenge) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.domain()](#Proof+domain) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.purpose()](#Proof+purpose) ⇒ [<code>ProofPurpose</code>](#ProofPurpose) \| <code>undefined</code>
+        * [.toJSON()](#Proof+toJSON) ⇒ <code>any</code>
+        * [.clone()](#Proof+clone) ⇒ [<code>Proof</code>](#Proof)
+    * _static_
+        * [.fromJSON(json)](#Proof.fromJSON) ⇒ [<code>Proof</code>](#Proof)
+
+<a name="Proof+type"></a>
+
+### proof.type() ⇒ <code>string</code>
+Returns a copy of the proof type.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+value"></a>
+
+### proof.value() ⇒ <code>string</code>
+Returns a copy of the proof value string.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+verificationMethod"></a>
+
+### proof.verificationMethod() ⇒ <code>string</code>
+Returns a copy of the identifier of the DID method used to create this proof.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+created"></a>
+
+### proof.created() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+When the proof was generated.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+expires"></a>
+
+### proof.expires() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+When the proof expires.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+challenge"></a>
+
+### proof.challenge() ⇒ <code>string</code> \| <code>undefined</code>
+Challenge from a proof requester to mitigate replay attacks.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+domain"></a>
+
+### proof.domain() ⇒ <code>string</code> \| <code>undefined</code>
+Domain for which a proof is valid to mitigate replay attacks.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+purpose"></a>
+
+### proof.purpose() ⇒ [<code>ProofPurpose</code>](#ProofPurpose) \| <code>undefined</code>
+Purpose for which the proof was generated.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+toJSON"></a>
+
+### proof.toJSON() ⇒ <code>any</code>
+Serializes a `Proof` to a JSON object.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof+clone"></a>
+
+### proof.clone() ⇒ [<code>Proof</code>](#Proof)
+Deep clones the object.
+
+**Kind**: instance method of [<code>Proof</code>](#Proof)  
+<a name="Proof.fromJSON"></a>
+
+### Proof.fromJSON(json) ⇒ [<code>Proof</code>](#Proof)
+Deserializes a `Proof` from a JSON object.
+
+**Kind**: static method of [<code>Proof</code>](#Proof)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="ProofPurpose"></a>
 
 ## ProofPurpose
-Associates a purpose with a `Signature`.
+Associates a purpose with a [Signature](#Signature).
 
 See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 
@@ -3148,7 +3247,7 @@ See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 <a name="ProofPurpose+toJSON"></a>
 
 ### proofPurpose.toJSON() ⇒ <code>any</code>
-Serializes a `ProofPurpose` object as a JSON object.
+Serializes a `ProofPurpose` to a JSON object.
 
 **Kind**: instance method of [<code>ProofPurpose</code>](#ProofPurpose)  
 <a name="ProofPurpose+clone"></a>
@@ -3174,7 +3273,7 @@ See https://www.w3.org/TR/did-core/#authentication
 <a name="ProofPurpose.fromJSON"></a>
 
 ### ProofPurpose.fromJSON(json) ⇒ [<code>ProofPurpose</code>](#ProofPurpose)
-Deserializes a `ProofPurpose` object from a JSON object.
+Deserializes a `ProofPurpose` from a JSON object.
 
 **Kind**: static method of [<code>ProofPurpose</code>](#ProofPurpose)  
 
