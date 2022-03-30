@@ -3,10 +3,8 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use identity::account::AccountBuilder;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::iota::Client;
 use identity::iota::ClientBuilder;
@@ -61,7 +59,7 @@ impl WasmAccountBuilder {
       };
 
       if let Some(storage) = builder_options.storage() {
-        builder = builder.storage(AccountStorage::Custom(Arc::new(storage)));
+        builder = builder.storage(storage);
       }
     }
 

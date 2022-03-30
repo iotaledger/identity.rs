@@ -7,7 +7,6 @@ use std::sync::Arc;
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
-use identity::account::AccountStorage;
 use identity::account::PublishOptions;
 use identity::account_storage::Storage;
 use identity::crypto::SetSignature;
@@ -99,7 +98,7 @@ impl WasmAccount {
     future_to_promise(async move {
       // Create a new account since `delete_identity` consumes it.
       let account: Result<AccountRc> = AccountBuilder::new()
-        .storage(AccountStorage::Custom(storage))
+        .storage_shared(storage)
         .load_identity(did)
         .await
         .wasm_result();

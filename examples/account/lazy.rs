@@ -5,9 +5,9 @@
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::account_storage::Stronghold;
 use identity::core::Url;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
@@ -18,13 +18,14 @@ async fn main() -> Result<()> {
 
   // Stronghold settings
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
-  let password: String = "my-password".into();
+  let password: String = "my-password".to_owned();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, password, None).await?;
 
   // Create a new Account with auto publishing set to false.
   // This means updates are not pushed to the tangle automatically.
   // Rather, when we publish, multiple updates are batched together.
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
+    .storage(stronghold)
     .autopublish(false)
     .create_identity(IdentitySetup::default())
     .await?;
