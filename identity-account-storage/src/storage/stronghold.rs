@@ -107,7 +107,8 @@ impl Storage for Stronghold {
       None => KeyPair::new(KeyType::Ed25519)?,
     };
 
-    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
+    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
+      .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
 
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
     let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));

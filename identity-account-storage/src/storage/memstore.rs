@@ -79,7 +79,8 @@ impl Storage for MemStore {
 
     let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
 
-    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
+    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
+      .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
 
     let mut index: RwLockWriteGuard<'_, _> = self.index.write()?;
 
