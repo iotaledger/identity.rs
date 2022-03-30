@@ -26,7 +26,7 @@ use std::hash::Hasher;
 /// situations like these.
 ///
 /// The string representation of that location can be obtained via `to_string`.
-#[derive(Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct KeyLocation {
   key_type: KeyType,
   fragment: Fragment,
@@ -100,11 +100,5 @@ impl KeyLocation {
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_fmt(format_args!("{}:{}", self.fragment.name(), self.key_hash))
-  }
-}
-
-impl Debug for KeyLocation {
-  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!("KeyLocation({})", self))
   }
 }
