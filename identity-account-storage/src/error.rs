@@ -12,7 +12,7 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
-  /// Caused by errors from the [identity_core] crate.
+  /// Caused by errors from the [`identity_iota_core`] crate.
   #[error(transparent)]
   IotaCoreError(#[from] identity_iota_core::Error),
   /// Caused by errors from the [identity_did] crate.

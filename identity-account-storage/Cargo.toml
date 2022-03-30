@@ -23,11 +23,9 @@ parking_lot = { version = "0.12" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 seahash = { version = "4.1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-serde_json = { version = "1.0", default-features = false }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
 tokio = { version = "1.17.0", default-features = false, features = ["sync"], optional = true }
-uuid = { version = "0.8", features = ["serde", "v4"], default-features = false }
 zeroize = { version = "1.4" }
 
 [dependencies.iota-crypto]
@@ -44,9 +42,6 @@ optional = true
 git = "https://github.com/iotaledger/stronghold.rs"
 rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
-
-[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
-uuid = { version = "*", features = ["wasm-bindgen"], default-features = false }
 
 [dev-dependencies]
 rusty-fork = { version = "0.3" }

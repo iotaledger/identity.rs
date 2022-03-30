@@ -294,6 +294,7 @@ async fn insert_method_secret(
   let keypair: KeyPair = KeyPair::try_from_private_key_bytes(key_type, private_key.as_ref())?;
 
   let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
+  std::mem::drop(keypair);
 
   ensure!(
     !store.key_exists(did, &location).await?,

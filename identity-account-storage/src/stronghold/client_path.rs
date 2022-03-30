@@ -3,6 +3,8 @@
 
 use identity_iota_core::did::IotaDID;
 
+/// A helper type to ensure a consistently generated client path, for DIDs and strings
+/// to avoid having `Vec<u8>` everywhere.
 #[derive(Debug, Clone)]
 pub struct ClientPath(pub String);
 
