@@ -115,7 +115,7 @@ pub(crate) enum Update {
 impl Update {
   pub(crate) async fn process(self, did: &IotaDID, document: &mut IotaDocument, storage: &dyn Storage) -> Result<()> {
     debug!("[Update::process] Update = {:?}", self);
-    trace!("[Update::process] State = {:?}", document);
+    trace!("[Update::process] Document = {:?}", document);
     trace!("[Update::process] Store = {:?}", storage);
 
     match self {
