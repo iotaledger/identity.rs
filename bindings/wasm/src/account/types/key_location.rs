@@ -10,6 +10,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 // TODO: Documentation.
+#[derive(Debug)]
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
 
