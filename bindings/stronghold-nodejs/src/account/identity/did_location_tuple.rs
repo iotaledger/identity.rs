@@ -6,10 +6,7 @@ use identity_iota_core::did::IotaDID;
 use napi::Result;
 use napi_derive::napi;
 
-use crate::error::NapiResult;
-
-#[napi]
-pub struct NapiDIDLocation(DIDLocation);
+use crate::{account::NapiKeyLocation, did::NapiDID, error::NapiResult};
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct DIDLocation {
@@ -18,9 +15,22 @@ struct DIDLocation {
 }
 
 #[napi]
-impl NapiDIDLocation {
+pub struct NapiDidLocation(DIDLocation);
+
+#[napi]
+impl NapiDidLocation {
+  #[napi]
+  pub fn did(&self) -> NapiDID {
+    NapiDID(self.0.did.clone())
+  }
+
+  #[napi(js_name = keyLocation)]
+  pub fn key_location(&self) -> NapiKeyLocation {
+    NapiKeyLocation(self.0.location.clone())
+  }
+
   #[napi(js_name = fromJSON)]
-  pub fn from_json(json_value: serde_json::Value) -> Result<NapiDIDLocation> {
+  pub fn from_json(json_value: serde_json::Value) -> Result<NapiDidLocation> {
     serde_json::from_value::<DIDLocation>(json_value)
       .map(Self)
       .napi_result()
@@ -32,7 +42,7 @@ impl NapiDIDLocation {
   }
 }
 
-impl From<(IotaDID, KeyLocation)> for NapiDIDLocation {
+impl From<(IotaDID, KeyLocation)> for NapiDidLocation {
   fn from(tuple: (IotaDID, KeyLocation)) -> Self {
     Self(DIDLocation {
       did: tuple.0,

@@ -12,7 +12,7 @@ use napi::bindgen_prelude::Error;
 use napi::Result;
 use napi_derive::napi;
 
-use crate::account::identity::NapiDIDLocation;
+use crate::account::identity::NapiDidLocation;
 use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
 use crate::account::NapiDocument;
@@ -63,7 +63,7 @@ impl NapiStronghold {
     network: String,
     fragment: String,
     private_key: Option<Vec<u32>>,
-  ) -> Result<NapiDIDLocation> {
+  ) -> Result<NapiDidLocation> {
     let network: NetworkName = NetworkName::try_from(network).napi_result()?;
     let private_key: Option<PrivateKey> = match private_key {
       Some(private_key) => Some(private_key.try_into_bytes()?.into()),
@@ -76,13 +76,23 @@ impl NapiStronghold {
       .await
       .napi_result()?;
 
-    Ok(NapiDIDLocation::from((did, location)))
+    Ok(NapiDidLocation::from((did, location)))
   }
 
   /// Removes the keys and any state for the identity specified by `did`.
   #[napi]
   pub async fn did_purge(&self, did: &NapiDID) -> Result<bool> {
     self.0.did_purge(&did.0).await.napi_result()
+  }
+
+  #[napi]
+  pub async fn did_exists(&self, did: &NapiDID) -> Result<bool> {
+    self.0.did_exists(&did.0).await.napi_result()
+  }
+
+  #[napi]
+  pub async fn did_list(&self) -> Result<Vec<NapiDID>> {
+    Ok(self.0.did_list().await.napi_result()?.into_iter().map(NapiDID).collect())
   }
 
   /// Creates a new keypair at the specified `location`
@@ -168,16 +178,6 @@ impl NapiStronghold {
   #[napi]
   pub async fn document_set(&self, did: &NapiDID, state: &NapiDocument) -> Result<()> {
     self.0.document_set(&did.0, &state.0).await.napi_result()
-  }
-
-  #[napi]
-  pub async fn index_has(&self, did: &NapiDID) -> Result<bool> {
-    self.0.index_has(&did.0).await.napi_result()
-  }
-
-  #[napi]
-  pub async fn index(&self) -> Result<Vec<NapiDID>> {
-    Ok(self.0.index().await.napi_result()?.into_iter().map(NapiDID).collect())
   }
 
   /// Write any unsaved changes to disk.
