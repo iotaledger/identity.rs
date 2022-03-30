@@ -29,6 +29,7 @@ pub struct KeyLocation {
   /// The fragment of the key.
   fragment: String,
   /// The hash of the public key.
+  #[serde(with = "key_hash_serialization")]
   key_hash: u64,
 }
 
@@ -95,3 +96,44 @@ impl PartialEq for KeyLocation {
 }
 
 impl Eq for KeyLocation {}
+
+pub(crate) mod key_hash_serialization {
+  //! Provides serialization for the key_hash as a string.
+
+  use serde::de::Visitor;
+  use serde::de::{self};
+  use serde::Deserializer;
+  use serde::Serializer;
+
+  pub(crate) fn serialize<S>(key_hash: &u64, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    serializer.serialize_str(key_hash.to_string().as_str())
+  }
+
+  pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<u64, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    struct KeyHashVisitor;
+
+    impl<'de> Visitor<'de> for KeyHashVisitor {
+      type Value = u64;
+
+      fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("a u64 as a string")
+      }
+
+      fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+      where
+        E: de::Error,
+      {
+        let key_hash: u64 = value.parse().map_err(E::custom)?;
+        Ok(key_hash)
+      }
+    }
+
+    deserializer.deserialize_str(KeyHashVisitor)
+  }
+}
