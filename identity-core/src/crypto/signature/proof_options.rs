@@ -15,7 +15,7 @@ use crate::Error;
 
 /// Holds attributes for a new [`Proof`](crate::crypto::Proof).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct SignatureOptions {
+pub struct ProofOptions {
   /// [`Proof::created`](crate::crypto::Proof::created)
   pub created: Option<Timestamp>,
   /// [`Proof::expires`](crate::crypto::Proof::expires)
@@ -28,8 +28,8 @@ pub struct SignatureOptions {
   pub purpose: Option<ProofPurpose>,
 }
 
-impl SignatureOptions {
-  /// Creates a new `SignatureOptions` with all options unset.
+impl ProofOptions {
+  /// Creates a new `ProofOptions` with all options unset.
   pub fn new() -> Self {
     Self {
       created: None,

@@ -12,9 +12,9 @@ use serde::ser::Serializer;
 use serde::Serialize;
 
 use crate::common::Timestamp;
-use crate::crypto::signature::signature_options::ProofPurpose;
+use crate::crypto::signature::proof_options::ProofPurpose;
+use crate::crypto::ProofOptions;
 use crate::crypto::ProofValue;
-use crate::crypto::SignatureOptions;
 use crate::error::Result;
 
 /// A digital signature.
@@ -53,11 +53,11 @@ impl Proof {
   /// Creates a new [`Proof`] instance with the given `type_` and `method`, with the rest
   /// of its properties left unset.
   pub fn new(type_: impl Into<String>, method: impl Into<String>) -> Self {
-    Self::new_with_options(type_, method, SignatureOptions::default())
+    Self::new_with_options(type_, method, ProofOptions::default())
   }
 
   /// Creates a new [`Proof`] instance with the given properties.
-  pub fn new_with_options(type_: impl Into<String>, method: impl Into<String>, options: SignatureOptions) -> Self {
+  pub fn new_with_options(type_: impl Into<String>, method: impl Into<String>, options: ProofOptions) -> Self {
     Self {
       type_: type_.into(),
       value: ProofValue::None,
@@ -235,8 +235,8 @@ mod tests {
 
   use super::*;
 
-  fn generate_options() -> SignatureOptions {
-    SignatureOptions {
+  fn generate_options() -> ProofOptions {
+    ProofOptions {
       created: Some(Timestamp::from_str("1970-01-01T00:00:00Z").unwrap()),
       expires: Some(Timestamp::from_str("2000-01-01T00:00:00Z").unwrap()),
       challenge: Some("some-challenge".to_owned()),
@@ -247,7 +247,7 @@ mod tests {
 
   #[test]
   fn test_signature_serialise() {
-    let signature: Proof = Proof::new_with_options("JcsEd25519Signature2020", "#sign-0", SignatureOptions::default());
+    let signature: Proof = Proof::new_with_options("JcsEd25519Signature2020", "#sign-0", ProofOptions::default());
     let expected = r##"{"type":"JcsEd25519Signature2020","verificationMethod":"#sign-0"}"##;
     assert_eq!(signature.to_json().unwrap(), expected);
   }

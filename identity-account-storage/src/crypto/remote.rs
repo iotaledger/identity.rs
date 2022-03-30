@@ -8,9 +8,9 @@ use serde::Serialize;
 use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
 use identity_core::crypto::Proof;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofValue;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
@@ -31,7 +31,7 @@ impl RemoteEd25519 {
     data: &mut U,
     method: impl Into<String>,
     secret: &RemoteKey<'_>,
-    options: SignatureOptions,
+    options: ProofOptions,
   ) -> Result<()>
   where
     U: Serialize + SetSignature,

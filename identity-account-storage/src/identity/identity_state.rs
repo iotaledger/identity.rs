@@ -3,8 +3,8 @@
 
 use hashbrown::HashMap;
 use identity_core::common::Fragment;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
@@ -92,7 +92,7 @@ impl IdentityState {
     store: &dyn Storage,
     location: &KeyLocation,
     data: &mut U,
-    options: SignatureOptions,
+    options: ProofOptions,
   ) -> Result<()>
   where
     U: Serialize + SetSignature,

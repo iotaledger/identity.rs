@@ -11,9 +11,9 @@ use identity_core::common::Timestamp;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 
 use crate::document::CoreDocument;
@@ -35,7 +35,7 @@ where
   document: &'base CoreDocument<D, T, U, V>,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
-  options: SignatureOptions,
+  options: ProofOptions,
 }
 
 impl<'base, D, T, U, V> DocumentSigner<'base, '_, D, T, U, V>
@@ -47,13 +47,13 @@ where
       document,
       private,
       method: None,
-      options: SignatureOptions::default(),
+      options: ProofOptions::default(),
     }
   }
 
   /// Overwrites the [`ProofOptions`].
   #[must_use]
-  pub fn options(mut self, options: SignatureOptions) -> Self {
+  pub fn options(mut self, options: ProofOptions) -> Self {
     self.options = options;
     self
   }

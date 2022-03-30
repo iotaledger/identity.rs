@@ -15,9 +15,9 @@ use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::Proof;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
@@ -362,7 +362,7 @@ impl IotaDocument {
     data: &mut X,
     private_key: &'this PrivateKey,
     method_query: Q,
-    options: SignatureOptions,
+    options: ProofOptions,
   ) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
@@ -410,7 +410,7 @@ impl IotaDocument {
     // Sign document.
     match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())
+        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), ProofOptions::default())
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
       MethodType::X25519KeyAgreementKey2019 => {
@@ -521,7 +521,7 @@ impl IotaDocument {
     let method_query: DIDUrlQuery<'_> = method_query.into();
     let _ = self.resolve_signing_method(method_query.clone())?;
 
-    self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;
+    self.sign_data(&mut diff, private_key, method_query, ProofOptions::default())?;
 
     Ok(diff)
   }
@@ -1271,7 +1271,7 @@ mod tests {
           &mut data,
           key_new.private(),
           method_fragment.as_str(),
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .unwrap();
       // Signature should still be valid for every scope.

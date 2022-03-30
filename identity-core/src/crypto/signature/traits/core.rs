@@ -4,9 +4,9 @@
 use serde::Serialize;
 
 use crate::crypto::Proof;
+use crate::crypto::ProofOptions;
 use crate::crypto::ProofValue;
 use crate::crypto::SetSignature;
-use crate::crypto::SignatureOptions;
 use crate::crypto::TrySignature;
 use crate::error::Error;
 use crate::error::Result;
@@ -55,12 +55,7 @@ pub trait Signer<Secret: ?Sized>: Named {
     T: Serialize;
 
   /// Creates and applies a signature [proof][`Proof`] to the given `data`.
-  fn create_signature<T>(
-    data: &mut T,
-    method: impl Into<String>,
-    secret: &Secret,
-    options: SignatureOptions,
-  ) -> Result<()>
+  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret, options: ProofOptions) -> Result<()>
   where
     T: Serialize + SetSignature,
   {

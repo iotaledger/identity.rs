@@ -13,8 +13,8 @@ use identity_account_storage::identity::ChainState;
 use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
@@ -237,7 +237,7 @@ where
   }
 
   /// Signs `data` with the key specified by `fragment`.
-  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
+  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: ProofOptions) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
@@ -363,7 +363,7 @@ where
         self.storage().deref(),
         &signing_key_location,
         document,
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .await?;
 
@@ -514,7 +514,7 @@ where
         self.storage().deref(),
         &signing_key_location,
         &mut diff,
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .await?;
 
