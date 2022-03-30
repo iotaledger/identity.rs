@@ -5,9 +5,11 @@ use identity::account_storage::KeyLocation;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::WasmKeyType;
+use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+// TODO: Documentation.
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
 
@@ -18,16 +20,22 @@ impl WasmKeyLocation {
     WasmKeyLocation(KeyLocation::new(key_type.into(), fragment, public_key.as_ref()))
   }
 
+  #[wasm_bindgen(js_name = fromVerificationMethod)]
+  pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmKeyLocation> {
+    Ok(WasmKeyLocation(
+      KeyLocation::from_verification_method(&method.0).wasm_result()?,
+    ))
+  }
+
+  #[wasm_bindgen(js_name = canonicalRepr)]
+  pub fn canonical_repr(&self) -> String {
+    self.0.canonical_repr()
+  }
+
   /// Returns a copy of the key type of the key location.
   #[wasm_bindgen(js_name = keyType)]
   pub fn key_type(&self) -> WasmKeyType {
-    self.0.key_type().into()
-  }
-
-  /// Returns a copy of the fragment name of the key location.
-  #[wasm_bindgen]
-  pub fn fragment(&self) -> String {
-    self.0.fragment().to_owned()
+    self.0.key_type.into()
   }
 
   /// Serializes `KeyLocation` as a JSON object.
@@ -40,6 +48,12 @@ impl WasmKeyLocation {
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json_value: JsValue) -> Result<WasmKeyLocation> {
     json_value.into_serde().map(Self).wasm_result()
+  }
+
+  #[wasm_bindgen(js_name = toString)]
+  #[allow(clippy::inherent_to_string)]
+  pub fn to_string(&self) -> String {
+    self.0.to_string()
   }
 }
 

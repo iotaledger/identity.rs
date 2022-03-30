@@ -134,14 +134,28 @@ impl Storage for WasmStorage {
     Ok((did, location))
   }
 
-  /// Removes the keys and any state for the identity specified by `did`.
   async fn did_purge(&self, did: &IotaDID) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.did_purge(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  /// Creates a new keypair at the specified `location`, and returns its `PublicKey`.
+  async fn did_exists(&self, did: &IotaDID) -> AccountStorageResult<bool> {
+    let promise: Promise = Promise::resolve(&self.index_has(did.clone().into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    result.into()
+  }
+
+  async fn did_list(&self) -> AccountStorageResult<Vec<IotaDID>> {
+    let promise: Promise = Promise::resolve(&self.index());
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let js_value: JsValue = result.account_err()?;
+
+    js_value
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))
+  }
+
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> AccountStorageResult<KeyLocation> {
     let promise: Promise =
       Promise::resolve(&self.key_generate(did.clone().into(), key_type.into(), fragment.to_owned()));
@@ -154,7 +168,6 @@ impl Storage for WasmStorage {
     Ok(location)
   }
 
-  /// Inserts a private key at the specified `location`, and returns its `PublicKey`.
   async fn key_insert(
     &self,
     did: &IotaDID,
@@ -170,7 +183,6 @@ impl Storage for WasmStorage {
     result.into()
   }
 
-  /// Retrieves the public key at the specified `location`.
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_public(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -178,14 +190,12 @@ impl Storage for WasmStorage {
     Ok(public_key.into())
   }
 
-  /// Deletes the keypair specified by `location`.
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.key_delete(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  /// Signs `data` with the private key at the specified `location`.
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountStorageResult<Signature> {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -196,14 +206,12 @@ impl Storage for WasmStorage {
     Ok(signature)
   }
 
-  /// Returns `true` if a keypair exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<bool> {
     let promise: Promise = Promise::resolve(&self.key_exists(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  /// Returns the chain state of the identity specified by `did`.
   async fn chain_state_get(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
     let promise: Promise = Promise::resolve(&self.chain_state_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -217,14 +225,12 @@ impl Storage for WasmStorage {
     Ok(Some(chain_state))
   }
 
-  /// Set the chain state of the identity specified by `did`.
   async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.chain_state_set(did.clone().into(), chain_state.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  /// Returns the state of the identity specified by `did`.
   async fn document_get(&self, did: &IotaDID) -> AccountStorageResult<Option<IotaDocument>> {
     let promise: Promise = Promise::resolve(&self.document_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -238,30 +244,12 @@ impl Storage for WasmStorage {
     Ok(Some(document))
   }
 
-  /// Sets a new state for the identity specified by `did`.
   async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.document_set(did.clone().into(), document.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     result.into()
   }
 
-  async fn index_has(&self, did: &IotaDID) -> AccountStorageResult<bool> {
-    let promise: Promise = Promise::resolve(&self.index_has(did.clone().into()));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    result.into()
-  }
-
-  async fn index(&self) -> AccountStorageResult<Vec<IotaDID>> {
-    let promise: Promise = Promise::resolve(&self.index());
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
-
-    js_value
-      .into_serde()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))
-  }
-
-  /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> AccountStorageResult<()> {
     let promise: Promise = Promise::resolve(&self.flush_changes());
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -273,43 +261,35 @@ impl Storage for WasmStorage {
 const STORAGE: &'static str = r#"
 /** All methods an object must implement to be used as an account storage. */
 interface Storage {
-  /** Write any unsaved changes to disk.*/
-  flushChanges: () => Promise<void>;
+  didCreate: (network: string, fragment: string, private_key: Uint8Array | undefined | null) => Promise<[DID, KeyLocation]>;
 
-  /** Creates a new keypair at the specified `location`,
-   * and returns its public key.*/
-  keyNew: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
+  didPurge: (did: DID) => Promise<boolean>;
 
-  /** Inserts a private key at the specified `location`,
-   * and returns its public key.*/
-  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<Uint8Array>;
+  didExists: (did: DID) => Promise<boolean>;
 
-  /** Returns `true` if a keypair exists at the specified `location`.*/
-  keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+  didList: () => Promise<Array<DID>>;
 
-  /** Retrieves the public key from the specified `location`.*/
-  keyGet: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
+  keyGenerate: (did: DID, keyType: KeyType, fragment: string) => Promise<KeyLocation>;
 
-  /** Deletes the keypair specified by the given `location`. Nothing happens if the key is not found.*/
-  keyDel: (did: DID, keyLocation: KeyLocation) => Promise<void>;
+  keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<void>;
 
-  /** Signs `data` with the private key at the specified `location`.*/
+  keyPublic: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
+
+  keyDelete: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+
   keySign: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
 
-  /** Returns the chain state of the identity specified by `did`.*/
-  chainState: (did: DID) => Promise<ChainState | undefined | null>;
+  keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
-  /** Set the chain state of the identity specified by `did`.*/
-  setChainState: (did: DID, chainState: ChainState) => Promise<void>;
+  chainStateGet: (did: DID) => Promise<ChainState | undefined | null>;
 
-  /** Returns the state of the identity specified by `did`.*/
-  state: (did: DID) => Promise<IdentityState | undefined | null>;
+  chainStateSet: (did: DID, chainState: ChainState) => Promise<void>;
 
-  /** Sets a new state for the identity specified by `did`.*/
-  setState: (did: DID, identityState: IdentityState) => Promise<void>;
+  documentGet: (did: DID) => Promise<Document | undefined | null>;
 
-  /** Removes the keys and any state for the identity specified by `did`.*/
-  purge: (did: DID) => Promise<void>;
+  documentSet: (did: DID, document: Document) => Promise<void>;
+
+  flushChanges: () => Promise<void>;
 }"#;
 
 fn uint8array_to_bytes(value: JsValue) -> AccountStorageResult<Vec<u8>> {
