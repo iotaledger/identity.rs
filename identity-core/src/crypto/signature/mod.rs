@@ -1,20 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use self::proof::Proof;
-pub use self::proof_options::ProofOptions;
-pub use self::proof_options::ProofPurpose;
-pub use self::proof_value::ProofValue;
-pub use self::traits::Named;
-pub use self::traits::SetSignature;
-pub use self::traits::Sign;
-pub use self::traits::Signer;
-pub use self::traits::TrySignature;
-pub use self::traits::TrySignatureMut;
-pub use self::traits::Verifier;
-pub use self::traits::Verify;
+//! Types and traits related to signatures.
 
-mod proof;
-mod proof_options;
-mod proof_value;
-mod traits;
+pub use self::core::Named;
+pub use self::core::Sign;
+pub use self::core::Signer;
+pub use self::core::Verifier;
+pub use self::core::Verify;
+pub use self::data::SetSignature;
+pub use self::data::TrySignature;
+pub use self::data::TrySignatureMut;
+
+mod core;
+mod data;

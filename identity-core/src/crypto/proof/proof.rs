@@ -12,8 +12,8 @@ use serde::ser::Serializer;
 use serde::Serialize;
 
 use crate::common::Timestamp;
-use crate::crypto::signature::proof_options::ProofPurpose;
 use crate::crypto::ProofOptions;
+use crate::crypto::ProofPurpose;
 use crate::crypto::ProofValue;
 use crate::error::Result;
 
@@ -133,8 +133,8 @@ impl Debug for Proof {
 
 impl Serialize for Proof {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
+    where
+      S: Serializer,
   {
     let hide: bool = self.__hide();
 
