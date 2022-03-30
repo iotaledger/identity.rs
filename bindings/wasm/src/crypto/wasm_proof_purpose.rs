@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// Associates a purpose with a {@link Signature}.
+/// Associates a purpose with a {@link Proof}.
 ///
 /// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 #[wasm_bindgen(js_name = ProofPurpose, inspectable)]

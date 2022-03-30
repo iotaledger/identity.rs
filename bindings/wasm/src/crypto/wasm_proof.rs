@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::Signature;
+use identity::crypto::Proof;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 
@@ -14,7 +14,7 @@ use crate::error::WasmResult;
 ///
 /// For field definitions see: https://w3c-ccg.github.io/security-vocab/
 #[wasm_bindgen(js_name = Proof, inspectable)]
-pub struct WasmProof(pub(crate) Signature);
+pub struct WasmProof(pub(crate) Proof);
 
 #[wasm_bindgen(js_class = Proof)]
 impl WasmProof {
@@ -39,13 +39,13 @@ impl WasmProof {
   /// When the proof was generated.
   #[wasm_bindgen]
   pub fn created(&self) -> Option<WasmTimestamp> {
-    self.0.created.clone().map(WasmTimestamp::from)
+    self.0.created.map(WasmTimestamp::from)
   }
 
   /// When the proof expires.
   #[wasm_bindgen]
   pub fn expires(&self) -> Option<WasmTimestamp> {
-    self.0.expires.clone().map(WasmTimestamp::from)
+    self.0.expires.map(WasmTimestamp::from)
   }
 
   /// Challenge from a proof requester to mitigate replay attacks.
@@ -63,7 +63,7 @@ impl WasmProof {
   /// Purpose for which the proof was generated.
   #[wasm_bindgen]
   pub fn purpose(&self) -> Option<WasmProofPurpose> {
-    self.0.purpose.clone().map(WasmProofPurpose::from)
+    self.0.purpose.map(WasmProofPurpose::from)
   }
 
   /// Serializes a `Proof` to a JSON object.
@@ -81,14 +81,14 @@ impl WasmProof {
 
 impl_wasm_clone!(WasmProof, Proof);
 
-impl From<Signature> for WasmProof {
-  fn from(signature: Signature) -> Self {
-    WasmProof(signature)
+impl From<Proof> for WasmProof {
+  fn from(proof: Proof) -> Self {
+    WasmProof(proof)
   }
 }
 
-impl From<WasmProof> for Signature {
-  fn from(signature: WasmProof) -> Self {
-    signature.0
+impl From<WasmProof> for Proof {
+  fn from(proof: WasmProof) -> Self {
+    proof.0
   }
 }

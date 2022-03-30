@@ -23,7 +23,7 @@ use identity_wasm::credential::WasmPresentationValidationOptions;
 use identity_wasm::credential::WasmPresentationValidator;
 use identity_wasm::crypto::WasmKeyPair;
 use identity_wasm::crypto::WasmKeyType;
-use identity_wasm::crypto::WasmSignatureOptions;
+use identity_wasm::crypto::WasmProofOptions;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
@@ -387,7 +387,7 @@ fn test_validations() {
       &JsValue::from(&credential.to_json().unwrap()),
       issuer_keys.private(),
       &JsValue::from_str("#sign-0").unchecked_into(),
-      &WasmSignatureOptions::default(),
+      &WasmProofOptions::default(),
     )
     .unwrap();
 
@@ -422,7 +422,7 @@ fn test_validations() {
       &presentation.to_json().unwrap(),
       subject_keys.private(),
       &JsValue::from_str("#sign-0").unchecked_into(),
-      &WasmSignatureOptions::default(),
+      &WasmProofOptions::default(),
     )
     .unwrap();
 
