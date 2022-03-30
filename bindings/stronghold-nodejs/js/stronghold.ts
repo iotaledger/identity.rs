@@ -17,19 +17,26 @@ export class Stronghold implements Storage {
     }
 
     public async didCreate(network: string, fragment: string, private_key: Uint8Array | undefined | null): Promise<[DID, KeyLocation]> {
-        const napiDidLocation: NapiDidLocation = await this.napiStronghold.didCreate(network, fragment, Array.from(private_key));
+        let optPrivateKey = undefined;
+        if (private_key) {
+            optPrivateKey = Array.from(private_key)
+        }
 
-        return [DID.fromJSON(napiDidLocation.did().toJSON()),
-        KeyLocation.fromJSON(napiDidLocation.keyLocation().toJSON())]
+        const napiDidLocation: NapiDidLocation = await this.napiStronghold.didCreate(network, fragment, optPrivateKey);
+
+        const did: DID = DID.fromJSON(napiDidLocation.did().toJSON());
+        const location: KeyLocation = KeyLocation.fromJSON(napiDidLocation.keyLocation().toJSON());
+
+        return [did, location];
     }
 
     public async didPurge(did: DID): Promise<boolean> {
-        const napiDID = NapiDID.fromJSON(did.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
         return this.napiStronghold.didPurge(napiDID);
     }
 
     public async didExists(did: DID): Promise<boolean> {
-        const napiDID = NapiDID.fromJSON(did.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
         return this.napiStronghold.didExists(napiDID);
     }
 
@@ -42,7 +49,7 @@ export class Stronghold implements Storage {
     public async keyGenerate(did: DID, keyType: KeyType, fragment: string): Promise<KeyLocation> {
         const napiDID = NapiDID.fromJSON(did.toJSON());
 
-        let napiKeyType;
+        let napiKeyType: NapiKeyType | undefined = undefined;
         switch (keyType) {
             case KeyType.Ed25519:
                 napiKeyType = NapiKeyType.Ed25519
@@ -59,58 +66,58 @@ export class Stronghold implements Storage {
     }
 
     public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: Uint8Array): Promise<void> {
-        let napiDID = NapiDID.fromJSON(did.toJSON());
-        let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation: NapiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         await this.napiStronghold.keyInsert(napiDID, napiKeyLocation, Array.from(privateKey));
     }
 
     public async keyExists(did: DID, keyLocation: KeyLocation): Promise<boolean> {
-        let napiDID = NapiDID.fromJSON(did.toJSON());
-        let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation: NapiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyExists(napiDID, napiKeyLocation)
     }
 
     public async keyPublic(did: DID, keyLocation: KeyLocation): Promise<Uint8Array> {
-        let napiDID = NapiDID.fromJSON(did.toJSON());
-        let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
-        let publicKey = await this.napiStronghold.keyPublic(napiDID, napiKeyLocation);
+        const napiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const publicKey = await this.napiStronghold.keyPublic(napiDID, napiKeyLocation);
         return Uint8Array.from(publicKey);
     }
 
     public async keyDelete(did: DID, keyLocation: KeyLocation): Promise<boolean> {
-        let napiDID = NapiDID.fromJSON(did.toJSON());
-        let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         return this.napiStronghold.keyDelete(napiDID, napiKeyLocation);
     }
 
     public async keySign(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<Signature> {
-        let napiDID = NapiDID.fromJSON(did.toJSON());
-        let napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
-        let napiSignature = await this.napiStronghold.keySign(napiDID, napiKeyLocation, Array.from(data));
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const napiSignature = await this.napiStronghold.keySign(napiDID, napiKeyLocation, Array.from(data));
         return Signature.fromJSON(napiSignature.toJSON());
     }
 
     public async chainStateGet(did: DID): Promise<ChainState | undefined | null> {
-        const napiDID = NapiDID.fromJSON(did.toJSON());
-        const napiChainState = await this.napiStronghold.chainStateGet(napiDID);
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiChainState: NapiChainState = await this.napiStronghold.chainStateGet(napiDID);
         return ChainState.fromJSON(napiChainState.toJSON())
     }
 
     public async chainStateSet(did: DID, chainState: ChainState): Promise<void> {
-        const napiDID = NapiDID.fromJSON(did.toJSON());
-        const napiChainState = NapiChainState.fromJSON(chainState.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiChainState: NapiChainState = NapiChainState.fromJSON(chainState.toJSON());
         return this.napiStronghold.chainStateSet(napiDID, napiChainState);
     }
 
     public async documentGet(did: DID): Promise<Document | undefined | null> {
-        const napiDID = NapiDID.fromJSON(did.toJSON());
-        const napiDocument = await this.napiStronghold.documentGet(napiDID);
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiDocument: NapiDocument = await this.napiStronghold.documentGet(napiDID);
         return Document.fromJSON(napiDocument.toJSON())
     }
 
     public async documentSet(did: DID, document: Document): Promise<void> {
-        const napiDID = NapiDID.fromJSON(did.toJSON());
-        const napiDocument = Document.fromJSON(document.toJSON());
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiDocument: NapiDocument = NapiDocument.fromJSON(document.toJSON());
         return this.napiStronghold.documentSet(napiDID, napiDocument);
     }
 
