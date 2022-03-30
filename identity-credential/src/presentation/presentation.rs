@@ -11,8 +11,8 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
+use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
@@ -54,7 +54,7 @@ pub struct Presentation<T = Object, U = Object> {
   pub properties: T,
   /// Proof(s) used to verify a `Presentation`
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
+  pub proof: Option<Proof>,
 }
 
 impl<T, U> Presentation<T, U> {
@@ -116,12 +116,12 @@ impl<T, U> Presentation<T, U> {
   }
 
   /// Returns a reference to the `Presentation` proof.
-  pub fn proof(&self) -> Option<&Signature> {
+  pub fn proof(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 
   /// Returns a mutable reference to the `Presentation` proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
+  pub fn proof_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
@@ -137,19 +137,19 @@ where
 }
 
 impl<T, U> TrySignature for Presentation<T, U> {
-  fn signature(&self) -> Option<&Signature> {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
 impl<T, U> TrySignatureMut for Presentation<T, U> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl<T, U> SetSignature for Presentation<T, U> {
-  fn set_signature(&mut self, value: Signature) {
+  fn set_signature(&mut self, value: Proof) {
     self.proof.replace(value);
   }
 }

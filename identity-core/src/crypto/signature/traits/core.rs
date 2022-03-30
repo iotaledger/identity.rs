@@ -3,9 +3,9 @@
 
 use serde::Serialize;
 
+use crate::crypto::Proof;
 use crate::crypto::ProofValue;
 use crate::crypto::SetSignature;
-use crate::crypto::Signature;
 use crate::crypto::SignatureOptions;
 use crate::crypto::TrySignature;
 use crate::error::Error;
@@ -54,7 +54,7 @@ pub trait Signer<Secret: ?Sized>: Named {
   where
     T: Serialize;
 
-  /// Creates and applies a [signature][`Signature`] to the given `data`.
+  /// Creates and applies a signature [proof][`Proof`] to the given `data`.
   fn create_signature<T>(
     data: &mut T,
     method: impl Into<String>,
@@ -64,11 +64,11 @@ pub trait Signer<Secret: ?Sized>: Named {
   where
     T: Serialize + SetSignature,
   {
-    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    let signature: Proof = Proof::new_with_options(Self::NAME, method, options);
     data.set_signature(signature);
 
     let value: ProofValue = Self::sign(&data, secret)?;
-    let write: &mut Signature = data.try_signature_mut()?;
+    let write: &mut Proof = data.try_signature_mut()?;
     write.set_value(value);
 
     Ok(())
@@ -85,12 +85,12 @@ pub trait Verifier<Public: ?Sized>: Named {
   where
     T: Serialize;
 
-  /// Extracts and verifies a [signature][`Signature`] from the given `data`.
+  /// Extracts and verifies a proof [signature][`Proof`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
   where
     T: Serialize + TrySignature,
   {
-    let signature: &Signature = data.try_signature()?;
+    let signature: &Proof = data.try_signature()?;
 
     if signature.type_() != Self::NAME {
       return Err(Error::InvalidProofValue("signature name"));

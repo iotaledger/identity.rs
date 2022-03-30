@@ -4,9 +4,9 @@
 use identity_core::common::Timestamp;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 
@@ -26,7 +26,7 @@ use crate::verification::VerificationMethod;
 struct MockObject {
   data: u32,
   #[serde(skip_serializing_if = "Option::is_none")]
-  proof: Option<Signature>,
+  proof: Option<Proof>,
 }
 
 impl MockObject {
@@ -36,19 +36,19 @@ impl MockObject {
 }
 
 impl TrySignature for MockObject {
-  fn signature(&self) -> Option<&Signature> {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
 impl TrySignatureMut for MockObject {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl SetSignature for MockObject {
-  fn set_signature(&mut self, signature: Signature) {
+  fn set_signature(&mut self, signature: Proof) {
     self.proof = Some(signature);
   }
 }

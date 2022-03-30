@@ -17,8 +17,8 @@ use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
-use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::Verifier;
 
@@ -674,7 +674,7 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = data
+    let signature: &Proof = data
       .try_signature()
       .map_err(|_| Error::InvalidSignature("missing signature"))?;
 

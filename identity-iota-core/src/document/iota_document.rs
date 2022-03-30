@@ -14,9 +14,9 @@ use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::Proof;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
 use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
@@ -66,7 +66,7 @@ pub struct IotaDocument {
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
+  pub proof: Option<Proof>,
 }
 
 impl TryMethod for IotaDocument {
@@ -473,7 +473,7 @@ impl IotaDocument {
     }
 
     // Validate the hash of the public key matches the DID tag.
-    let signature: &Signature = document
+    let signature: &Proof = document
       .try_signature()
       .map_err(|err| Error::InvalidRootDocument(err.into()))?;
     let method: &IotaVerificationMethod = document
@@ -610,8 +610,8 @@ impl IotaDocument {
 
 impl<'a, 'b, 'c> IotaDocument {}
 
-impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)> for IotaDocument {
-  fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)) -> Self {
+impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Proof>)> for IotaDocument {
+  fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Proof>)) -> Self {
     Self {
       document,
       metadata,
@@ -633,19 +633,19 @@ impl Display for IotaDocument {
 }
 
 impl TrySignature for IotaDocument {
-  fn signature(&self) -> Option<&Signature> {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
 impl TrySignatureMut for IotaDocument {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl SetSignature for IotaDocument {
-  fn set_signature(&mut self, signature: Signature) {
+  fn set_signature(&mut self, signature: Proof) {
     self.proof = Some(signature)
   }
 }

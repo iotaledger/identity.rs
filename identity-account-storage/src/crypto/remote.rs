@@ -7,9 +7,9 @@ use serde::Serialize;
 
 use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
+use identity_core::crypto::Proof;
 use identity_core::crypto::ProofValue;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
 use identity_core::crypto::SignatureOptions;
 use identity_core::error::Error;
 use identity_core::error::Result;
@@ -36,11 +36,11 @@ impl RemoteEd25519 {
   where
     U: Serialize + SetSignature,
   {
-    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    let signature: Proof = Proof::new_with_options(Self::NAME, method, options);
     data.set_signature(signature);
 
     let value: ProofValue = Self::sign(&data, secret).await?;
-    let write: &mut Signature = data.try_signature_mut()?;
+    let write: &mut Proof = data.try_signature_mut()?;
 
     write.set_value(value);
 
