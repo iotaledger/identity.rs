@@ -135,7 +135,7 @@ impl Storage for MemStore {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
-    match location.key_type() {
+    match location.key_type {
       KeyType::Ed25519 => {
         let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
@@ -187,7 +187,7 @@ impl Storage for MemStore {
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
-    match location.key_type() {
+    match location.key_type {
       KeyType::Ed25519 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 

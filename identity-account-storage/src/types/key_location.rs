@@ -5,7 +5,6 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
@@ -23,14 +22,19 @@ use std::hash::Hasher;
 /// situations like these.
 ///
 /// The string representation of that location can be obtained via `to_string`.
-#[derive(Debug, Clone, Hash, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct KeyLocation {
-  key_type: KeyType,
-  fragment: Fragment,
+  /// The [`KeyType`] of the key.
+  pub key_type: KeyType,
+  /// The fragment of the key.
+  fragment: String,
+  /// The hash of the public key.
   key_hash: u64,
 }
 
 impl KeyLocation {
+  /// Create a location from a [`KeyType`], the fragment of a verification method
+  /// and the bytes of a public key.
   pub fn new(key_type: KeyType, fragment: String, public_key: &[u8]) -> Self {
     let mut hasher = SeaHasher::new();
     public_key.hash(&mut hasher);
@@ -38,24 +42,9 @@ impl KeyLocation {
 
     Self {
       key_type,
-      fragment: Fragment::new(fragment),
+      fragment,
       key_hash,
     }
-  }
-
-  /// Returns the [`KeyType`] of the key at the location.
-  pub fn key_type(&self) -> KeyType {
-    self.key_type
-  }
-
-  /// Returns the fragment without the leading `#`.
-  pub fn fragment(&self) -> &str {
-    self.fragment.name()
-  }
-
-  /// Returns the hash of the public key at the location.
-  pub fn key_hash(&self) -> u64 {
-    self.key_hash
   }
 
   /// Create the [`KeyLocation`] of an [`IotaVerificationMethod`].
@@ -75,10 +64,34 @@ impl KeyLocation {
 
     Ok(KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref()))
   }
+
+  /// Returns the canonical string representation of the location.
+  ///
+  /// This should be used as the representation for storage keys.
+  pub fn canonical_repr(&self) -> String {
+    format!("{}:{}", self.fragment, self.key_hash)
+  }
 }
 
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_fmt(format_args!("{}:{}", self.fragment.name(), self.key_hash))
+    f.write_str(&self.canonical_repr())
   }
 }
+
+// Custom Hash and Equality implementations to not include the key_type.
+
+impl Hash for KeyLocation {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.fragment.hash(state);
+    self.key_hash.hash(state);
+  }
+}
+
+impl PartialEq for KeyLocation {
+  fn eq(&self, other: &Self) -> bool {
+    self.fragment == other.fragment && self.key_hash == other.key_hash
+  }
+}
+
+impl Eq for KeyLocation {}

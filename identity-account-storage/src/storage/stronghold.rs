@@ -224,7 +224,7 @@ impl Storage for Stronghold {
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(did);
 
-    match location.key_type() {
+    match location.key_type {
       KeyType::Ed25519 | KeyType::X25519 => retrieve_public_key(&vault, location).await,
     }
   }
@@ -253,7 +253,7 @@ impl Storage for Stronghold {
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vault: Vault<'_> = self.vault(did);
 
-    match location.key_type() {
+    match location.key_type {
       KeyType::Ed25519 => sign_ed25519(&vault, data, location).await,
       KeyType::X25519 => Err(identity_did::Error::InvalidMethodType.into()),
     }
@@ -394,13 +394,13 @@ async fn set_index(store: &Store<'_>, index: BTreeSet<IotaDID>) -> Result<()> {
 
 impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
-    let record_path: Vec<u8> = format!("{}:{}", key_location.fragment(), key_location.key_hash()).into_bytes();
+    let record_path: Vec<u8> = key_location.canonical_repr().into_bytes();
     Location::generic(VAULT_PATH.to_vec(), record_path)
   }
 }
 
 fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
-  match location.key_type() {
+  match location.key_type {
     KeyType::Ed25519 => procedures::KeyType::Ed25519,
     KeyType::X25519 => procedures::KeyType::X25519,
   }

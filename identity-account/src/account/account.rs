@@ -17,7 +17,6 @@ use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::SignatureOptions;
-use identity_did::did::DID;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
@@ -249,9 +248,9 @@ where
       .resolve_method(fragment, None)
       .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
-    let location: KeyLocation = KeyLocation::from_verification_method(method)?;
-
-    self.remote_sign_data(self.document(), &location, data, options).await?;
+    self
+      .remote_sign_data(self.document().id(), method, data, options)
+      .await?;
 
     Ok(())
   }
@@ -349,15 +348,8 @@ where
       None => signing_doc.default_signing_method()?,
     };
 
-    let signing_key_location: KeyLocation = KeyLocation::from_verification_method(signing_method)?;
-
     self
-      .remote_sign_data(
-        signing_doc,
-        &signing_key_location,
-        document,
-        SignatureOptions::default(),
-      )
+      .remote_sign_data(signing_doc.id(), signing_method, document, SignatureOptions::default())
       .await?;
 
     Ok(())
@@ -483,10 +475,8 @@ where
       None => old_doc.default_signing_method()?,
     };
 
-    let signing_key_location: KeyLocation = KeyLocation::from_verification_method(signing_method)?;
-
     self
-      .remote_sign_data(old_doc, &signing_key_location, &mut diff, SignatureOptions::default())
+      .remote_sign_data(old_doc.id(), signing_method, &mut diff, SignatureOptions::default())
       .await?;
 
     log::debug!(
@@ -528,22 +518,22 @@ where
   // Helper function for remote signing.
   pub(crate) async fn remote_sign_data<D>(
     &self,
-    doc: &IotaDocument,
-    location: &KeyLocation,
+    did: &IotaDID,
+    method: &IotaVerificationMethod,
     data: &mut D,
     options: SignatureOptions,
   ) -> crate::Result<()>
   where
     D: Serialize + SetSignature,
   {
+    let location: KeyLocation = KeyLocation::from_verification_method(method)?;
+
     // Create a private key suitable for identity_core::crypto
-    let private: RemoteKey<'_> = RemoteKey::new(doc.id(), location, self.storage().deref());
+    let private: RemoteKey<'_> = RemoteKey::new(did, &location, self.storage().deref());
 
-    // Create the Verification Method identifier
-    let fragment: String = format!("#{}", location.fragment());
-    let method_url: IotaDIDUrl = doc.id().to_url().join(fragment)?;
+    let method_url: IotaDIDUrl = method.id().to_owned();
 
-    match location.key_type() {
+    match location.key_type {
       KeyType::Ed25519 => {
         RemoteEd25519::create_signature(data, method_url.to_string(), &private, options).await?;
       }
