@@ -87,6 +87,12 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Returns `true` if the did and its associated data was removed, `false` if nothing was done.
   async fn did_purge(&self, did: &IotaDID) -> Result<bool>;
 
+  /// Returns `true` if `did` exists in the list of stored DIDs.
+  async fn did_exists(&self, did: &IotaDID) -> Result<bool>;
+
+  /// Returns the list of stored DIDs.
+  async fn did_list(&self) -> Result<Vec<IotaDID>>;
+
   /// Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
   /// and returns the location of the newly generated key.
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation>;
@@ -123,12 +129,6 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Sets a new state for the identity specified by `did`.
   async fn document_set(&self, did: &IotaDID, state: &IotaDocument) -> Result<()>;
-
-  /// Returns `true` if the index contains the given `did`.
-  async fn index_has(&self, did: &IotaDID) -> Result<bool>;
-
-  /// Retrieves the list of [`IotaDID`]s stored in the index.
-  async fn index(&self) -> Result<Vec<IotaDID>>;
 
   /// Persists any unsaved changes.
   async fn flush_changes(&self) -> Result<()>;

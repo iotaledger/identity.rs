@@ -78,7 +78,7 @@ async fn test_create_identity() -> Result<()> {
     assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
     // Ensure the DID was added to the index.
-    assert!(account.storage().index_has(account.did()).await.unwrap());
+    assert!(account.storage().did_exists(account.did()).await.unwrap());
   }
 
   Ok(())

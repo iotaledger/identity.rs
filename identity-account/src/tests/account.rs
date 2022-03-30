@@ -571,27 +571,27 @@ async fn test_storage_index() {
       .await
       .unwrap();
 
-    let index: Vec<IotaDID> = account1.storage().index().await.unwrap();
+    let index: Vec<IotaDID> = account1.storage().did_list().await.unwrap();
 
     assert_eq!(index.len(), 1);
     assert!(index.contains(account1.did()));
 
     let account2: Account = Account::create_identity(setup, IdentitySetup::default()).await.unwrap();
 
-    let index: Vec<IotaDID> = account2.storage().index().await.unwrap();
+    let index: Vec<IotaDID> = account2.storage().did_list().await.unwrap();
 
     assert_eq!(index.len(), 2);
     assert!(index.contains(account1.did()));
     assert!(index.contains(account2.did()));
 
-    assert!(account2.storage().index_has(account1.did()).await.unwrap());
-    assert!(account2.storage().index_has(account2.did()).await.unwrap());
+    assert!(account2.storage().did_exists(account1.did()).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
 
     let account1_did: IotaDID = account1.did().to_owned();
     account1.delete_identity().await.unwrap();
 
-    assert!(!account2.storage().index_has(&account1_did).await.unwrap());
-    assert!(account2.storage().index_has(account2.did()).await.unwrap());
-    assert_eq!(account2.storage().index().await.unwrap().len(), 1);
+    assert!(!account2.storage().did_exists(&account1_did).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+    assert_eq!(account2.storage().did_list().await.unwrap().len(), 1);
   }
 }

@@ -110,6 +110,14 @@ impl Storage for MemStore {
     }
   }
 
+  async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
+    Ok(self.index.read()?.contains(did))
+  }
+
+  async fn did_list(&self) -> Result<Vec<IotaDID>> {
+    Ok(self.index.read()?.iter().cloned().collect())
+  }
+
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
@@ -211,14 +219,6 @@ impl Storage for MemStore {
     self.documents.write()?.insert(did.clone(), document.clone());
 
     Ok(())
-  }
-
-  async fn index_has(&self, did: &IotaDID) -> Result<bool> {
-    Ok(self.index.read()?.contains(did))
-  }
-
-  async fn index(&self) -> Result<Vec<IotaDID>> {
-    Ok(self.index.read()?.iter().cloned().collect())
   }
 
   async fn flush_changes(&self) -> Result<()> {

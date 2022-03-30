@@ -162,6 +162,34 @@ impl Storage for Stronghold {
     Ok(true)
   }
 
+  async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
+    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
+
+    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
+
+    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
+
+    let has_did: bool = dids.contains(did);
+
+    // Explicitly drop the lock so it's not considered unused.
+    std::mem::drop(index_lock);
+
+    Ok(has_did)
+  }
+
+  async fn did_list(&self) -> Result<Vec<IotaDID>> {
+    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
+
+    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
+
+    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
+
+    // Explicitly drop the lock so it's not considered unused.
+    std::mem::drop(index_lock);
+
+    Ok(dids.into_iter().collect())
+  }
+
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     let vault: Vault<'_> = self.vault(did);
 
@@ -281,34 +309,6 @@ impl Storage for Stronghold {
     store.set(DOCUMENT_CLIENT_PATH, json, None).await?;
 
     Ok(())
-  }
-
-  async fn index_has(&self, did: &IotaDID) -> Result<bool> {
-    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
-
-    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
-
-    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
-
-    let has_did: bool = dids.contains(did);
-
-    // Explicitly drop the lock so it's not considered unused.
-    std::mem::drop(index_lock);
-
-    Ok(has_did)
-  }
-
-  async fn index(&self) -> Result<Vec<IotaDID>> {
-    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
-
-    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
-
-    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
-
-    // Explicitly drop the lock so it's not considered unused.
-    std::mem::drop(index_lock);
-
-    Ok(dids.into_iter().collect())
   }
 
   async fn flush_changes(&self) -> Result<()> {
