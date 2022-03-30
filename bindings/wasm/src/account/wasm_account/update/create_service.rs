@@ -18,6 +18,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::wasm_account::account::AccountRc;
 use crate::account::wasm_account::WasmAccount;
+use crate::common::deserialize_map_or_any;
 use crate::common::PromiseVoid;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -38,7 +39,7 @@ impl WasmAccount {
       .ok_or(MissingRequiredField("endpoint"))
       .wasm_result()?;
     let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
-    let properties: Option<Object> = options.properties().into_serde().wasm_result()?;
+    let properties: Option<Object> = deserialize_map_or_any(&options.properties())?;
 
     let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
@@ -85,24 +86,24 @@ const TS_CREATE_SERVICE_OPTIONS: &'static str = r#"
  * Options for creating a new service on an identity.
  */
 export type CreateServiceOptions = {
-    /**
-     * The identifier of the service in the document.
-     */
-    fragment: string,
+  /**
+   * The identifier of the service in the document.
+   */
+  fragment: string;
 
-    /**
-     * The type of the service.
-     */
-    type: string,
+  /**
+   * The type of the service.
+   */
+  type: string;
 
-    /**
-     * The `ServiceEndpoint` of the service.
-     */
-    endpoint: string,
+  /**
+   * The `ServiceEndpoint` of the service.
+   */
+  endpoint: string;
 
-    /**
-     * Additional properties of the service.
-     */
-    properties?: any,
-  };
+  /**
+   * Additional properties of the service.
+   */
+  properties?: Map<string, any> | Record<string, any>;
+};
 "#;
