@@ -31,17 +31,36 @@ mod storage_sub_trait {
 
 /// An interface for Account storage implementations.
 ///
-/// The [`Storage`] interface is used for secure operations on keys, such as generation and signing,
+/// The [`Storage`] interface is used for secure key operations, such as key generation and signing,
 /// as well as key-value like storage of data structures, such as DID documents.
 ///
-/// This interface works with [`AccountId`] and [`IotaDID`] as the top-level identifiers.
-/// `AccountId` is intended as a partition-key, i.e. everything related to an account
-/// can be stored in its own partition. Keys belonging to an account are identified by [`KeyLocation`]s
-/// in that partition.
-/// An `IotaDID` can be resolved to an `AccountId` using the index, which is a global data structure.
-/// Therefore, index operations need to be carefully synchronized per [`Storage`] instance.
-/// Other operations don't need to be synchronized globally, as it is a user error to create
-/// more than one `Account` for the same identity.
+/// # Identifiers
+///
+/// Implementations of this interface are expected to uniquely identify keys through the
+/// combination of DID _and_ `KeyLocation`.
+///
+/// An implementation recommendation is to use the DID as a partition key. Everything related to a DID
+/// can be stored in a partition identified by that DID. Keys belonging to a DID can then be identified
+/// by [`KeyLocation`]s in that partition.
+///
+/// # DID List
+///
+/// The storage is expected to maintain a list of stored DIDs. DIDs created with `did_create` should be
+/// inserted into the list, and removed when calling `did_purge`.
+/// Other operations on the list are `did_exists` and `did_list`.
+///
+/// # Thread-Safety
+///
+/// Note: This only applies if the `send-sync-storage` feature is enabled.
+///
+/// Since the DID list is a global data structure per storage instance, modifications to that list
+/// need to be carefully synchronized.
+/// Other operations can be executed concurrently and don't need to be synchronized globally,
+/// as it is a user error to create more than one `Account` for the same identity.
+/// Regardless of that, a storage implementation still needs to be thread-safe as defined by
+/// the `Send` and `Sync` traits.
+///
+/// # Implementation example
 ///
 /// See [`MemStore`][crate::storage::MemStore] for a test/example implementation.
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -50,7 +69,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Creates a new identity for the given `network`.
   ///
   /// - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
-  /// - Returns an [`IdentityAlreadyExists`](crate::Error::IdentityAlreadyExists) error if the DID already exists.
+  /// - Returns an error if the DID already exists.
   /// - Adds the newly created DID to an index which can be accessed via [`Storage::index`].
   ///
   /// Returns the generated DID and the location at which the key was stored.
