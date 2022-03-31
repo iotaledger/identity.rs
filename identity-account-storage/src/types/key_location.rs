@@ -29,8 +29,7 @@ pub struct KeyLocation {
   /// The fragment of the key.
   fragment: String,
   /// The hash of the public key.
-  #[serde(with = "key_hash_serialization")]
-  pub(in crate::types::key_location) key_hash: u64,
+  pub(in crate::types::key_location) key_hash: String,
 }
 
 impl KeyLocation {
@@ -44,7 +43,7 @@ impl KeyLocation {
     Self {
       key_type,
       fragment,
-      key_hash,
+      key_hash: key_hash.to_string(),
     }
   }
 
@@ -69,14 +68,14 @@ impl KeyLocation {
   /// Returns the canonical string representation of the location.
   ///
   /// This should be used as the representation for storage keys.
-  pub fn canonical_repr(&self) -> String {
+  pub fn canonical(&self) -> String {
     format!("{}:{}", self.fragment, self.key_hash)
   }
 }
 
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_str(&self.canonical_repr())
+    f.write_str(&self.canonical())
   }
 }
 
@@ -84,8 +83,7 @@ impl Display for KeyLocation {
 
 impl Hash for KeyLocation {
   fn hash<H: Hasher>(&self, state: &mut H) {
-    self.fragment.hash(state);
-    self.key_hash.hash(state);
+    state.write(self.canonical().as_bytes());
   }
 }
 
@@ -96,47 +94,6 @@ impl PartialEq for KeyLocation {
 }
 
 impl Eq for KeyLocation {}
-
-pub(crate) mod key_hash_serialization {
-  //! Provides serialization for the key_hash as a string.
-
-  use serde::de::Visitor;
-  use serde::de::{self};
-  use serde::Deserializer;
-  use serde::Serializer;
-
-  pub(crate) fn serialize<S>(key_hash: &u64, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    serializer.serialize_str(key_hash.to_string().as_str())
-  }
-
-  pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<u64, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    struct KeyHashVisitor;
-
-    impl<'de> Visitor<'de> for KeyHashVisitor {
-      type Value = u64;
-
-      fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("a u64 formatted as a string")
-      }
-
-      fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-      where
-        E: de::Error,
-      {
-        let key_hash: u64 = value.parse().map_err(E::custom)?;
-        Ok(key_hash)
-      }
-    }
-
-    deserializer.deserialize_str(KeyHashVisitor)
-  }
-}
 
 #[cfg(test)]
 mod tests {
@@ -161,7 +118,7 @@ mod tests {
     let location_1 = KeyLocation::new(KeyType::Ed25519, "".to_owned(), &test_vector_1);
     let location_2 = KeyLocation::new(KeyType::Ed25519, "".to_owned(), &test_vector_2);
 
-    assert_eq!(location_1.key_hash, 74874706796298672);
-    assert_eq!(location_2.key_hash, 10201576743536852223);
+    assert_eq!(location_1.key_hash, "74874706796298672");
+    assert_eq!(location_2.key_hash, "10201576743536852223");
   }
 }
