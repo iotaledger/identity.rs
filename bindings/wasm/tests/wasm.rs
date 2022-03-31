@@ -464,6 +464,6 @@ fn test_hash_is_consistent() {
   let location_1 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_1.to_vec());
   let location_2 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_2.to_vec());
 
-  assert!(location_1.to_string().split(":").last().unwrap().contains("74874706796298672"));
-  assert!(location_2.to_string().split(":").last().unwrap().contains("10201576743536852223"));
+  assert_eq!(location_1.to_string().split(':').last().unwrap(), "74874706796298672");
+  assert_eq!(location_2.to_string().split(':').last().unwrap(), "10201576743536852223");
 }
