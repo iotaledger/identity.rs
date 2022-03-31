@@ -9,7 +9,6 @@ use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-
 /// The storage location of a verification method key.
 ///
 /// A key is uniquely identified by the fragment and a hash of its public key.
