@@ -15,8 +15,8 @@ use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
@@ -239,7 +239,7 @@ where
   }
 
   /// Signs `data` with the key specified by `fragment`.
-  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: SignatureOptions) -> Result<()>
+  pub async fn sign<U>(&self, fragment: &str, data: &mut U, options: ProofOptions) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
@@ -349,7 +349,7 @@ where
     };
 
     self
-      .remote_sign_data(signing_doc.id(), signing_method, document, SignatureOptions::default())
+      .remote_sign_data(signing_doc.id(), signing_method, document, ProofOptions::default())
       .await?;
 
     Ok(())
@@ -476,7 +476,7 @@ where
     };
 
     self
-      .remote_sign_data(old_doc.id(), signing_method, &mut diff, SignatureOptions::default())
+      .remote_sign_data(old_doc.id(), signing_method, &mut diff, ProofOptions::default())
       .await?;
 
     log::debug!(
@@ -521,7 +521,7 @@ where
     did: &IotaDID,
     method: &IotaVerificationMethod,
     data: &mut D,
-    options: SignatureOptions,
+    options: ProofOptions,
   ) -> crate::Result<()>
   where
     D: Serialize + SetSignature,

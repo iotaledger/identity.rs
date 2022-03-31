@@ -1,27 +1,27 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
 use std::ops::DerefMut;
 
 use identity_core::common::Object;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
+use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 
-/// A generic container for a [`digital signature`][Signature] and a set of properties.
+/// A generic container for a [`digital signature`][Proof] and a set of properties.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct VerifiableProperties<T = Object> {
   #[serde(flatten)]
   pub properties: T,
   // TODO: Support multiple signatures (?)
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) proof: Option<Signature>,
+  pub(crate) proof: Option<Proof>,
 }
 
 impl<T> VerifiableProperties<T> {
@@ -34,7 +34,7 @@ impl<T> VerifiableProperties<T> {
   }
 
   /// Creates a new `Properties` object with the given `proof`.
-  pub const fn new_with_proof(properties: T, proof: Signature) -> Self {
+  pub const fn new_with_proof(properties: T, proof: Proof) -> Self {
     Self {
       properties,
       proof: Some(proof),
@@ -87,20 +87,20 @@ impl<T> DerefMut for VerifiableProperties<T> {
   }
 }
 
-impl<T> TrySignature for VerifiableProperties<T> {
-  fn signature(&self) -> Option<&Signature> {
+impl<T> GetSignature for VerifiableProperties<T> {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl<T> TrySignatureMut for VerifiableProperties<T> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+impl<T> GetSignatureMut for VerifiableProperties<T> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl<T> SetSignature for VerifiableProperties<T> {
-  fn set_signature(&mut self, signature: Signature) {
+  fn set_signature(&mut self, signature: Proof) {
     self.proof = Some(signature);
   }
 }

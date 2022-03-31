@@ -165,11 +165,11 @@ impl Display for DocumentChain {
 #[cfg(test)]
 mod test {
   use identity_core::common::Timestamp;
+  use identity_core::crypto::GetSignature;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
-  use identity_core::crypto::SignatureOptions;
-  use identity_core::crypto::TrySignature;
+  use identity_core::crypto::ProofOptions;
   use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
@@ -252,7 +252,7 @@ mod test {
           &mut new.document,
           keys[0].private(),
           chain.current().document.default_signing_method().unwrap().id(),
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .is_ok());
       assert_eq!(
@@ -493,7 +493,7 @@ mod test {
         &mut diff_msg,
         key,
         current_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     diff_msg.set_message_id(*chain.diff_message_id());

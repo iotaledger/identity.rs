@@ -1,13 +1,13 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Serialize;
 
+use crate::crypto::GetSignature;
+use crate::crypto::Proof;
+use crate::crypto::ProofOptions;
+use crate::crypto::ProofValue;
 use crate::crypto::SetSignature;
-use crate::crypto::Signature;
-use crate::crypto::SignatureOptions;
-use crate::crypto::SignatureValue;
-use crate::crypto::TrySignature;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -50,25 +50,20 @@ pub trait Named {
 /// A common interface for digital signature creation.
 pub trait Signer<Secret: ?Sized>: Named {
   /// Signs the given `data` and returns a digital signature.
-  fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue>
+  fn sign<T>(data: &T, secret: &Secret) -> Result<ProofValue>
   where
     T: Serialize;
 
-  /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(
-    data: &mut T,
-    method: impl Into<String>,
-    secret: &Secret,
-    options: SignatureOptions,
-  ) -> Result<()>
+  /// Creates and applies a signature [proof][`Proof`] to the given `data`.
+  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret, options: ProofOptions) -> Result<()>
   where
     T: Serialize + SetSignature,
   {
-    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    let signature: Proof = Proof::new_with_options(Self::NAME, method, options);
     data.set_signature(signature);
 
-    let value: SignatureValue = Self::sign(&data, secret)?;
-    let write: &mut Signature = data.try_signature_mut()?;
+    let value: ProofValue = Self::sign(&data, secret)?;
+    let write: &mut Proof = data.signature_mut().ok_or(Error::MissingSignature)?;
     write.set_value(value);
 
     Ok(())
@@ -81,16 +76,16 @@ pub trait Signer<Secret: ?Sized>: Named {
 /// A common interface for digital signature verification
 pub trait Verifier<Public: ?Sized>: Named {
   /// Verifies the authenticity of `data` and `signature`.
-  fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<()>
+  fn verify<T>(data: &T, signature: &ProofValue, public: &Public) -> Result<()>
   where
     T: Serialize;
 
-  /// Extracts and verifies a [signature][`Signature`] from the given `data`.
+  /// Extracts and verifies a proof [signature][`Proof`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
   where
-    T: Serialize + TrySignature,
+    T: Serialize + GetSignature,
   {
-    let signature: &Signature = data.try_signature()?;
+    let signature: &Proof = data.signature().ok_or(Error::MissingSignature)?;
 
     if signature.type_() != Self::NAME {
       return Err(Error::InvalidProofValue("signature name"));

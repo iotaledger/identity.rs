@@ -1,13 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-
 use core::hash::Hash;
 use core::mem::replace;
 use core::ops::Deref;
 use core::slice::from_ref;
+
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
 /// A generic container that stores exactly one or many (0+) values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

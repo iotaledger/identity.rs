@@ -11,9 +11,9 @@ use identity_core::common::Timestamp;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::ProofPurpose;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
 
 use crate::document::CoreDocument;
@@ -35,7 +35,7 @@ where
   document: &'base CoreDocument<D, T, U, V>,
   private: &'base PrivateKey,
   method: Option<DIDUrlQuery<'query>>,
-  options: SignatureOptions,
+  options: ProofOptions,
 }
 
 impl<'base, D, T, U, V> DocumentSigner<'base, '_, D, T, U, V>
@@ -47,25 +47,25 @@ where
       document,
       private,
       method: None,
-      options: SignatureOptions::default(),
+      options: ProofOptions::default(),
     }
   }
 
-  /// Overwrites the [`SignatureOptions`].
+  /// Overwrites the [`ProofOptions`].
   #[must_use]
-  pub fn options(mut self, options: SignatureOptions) -> Self {
+  pub fn options(mut self, options: ProofOptions) -> Self {
     self.options = options;
     self
   }
 
-  /// Sets the [`Signature::created`](identity_core::crypto::Signature::created) field.
+  /// Sets the [`Proof::created`](identity_core::crypto::Proof::created) field.
   #[must_use]
   pub fn created(mut self, created: Timestamp) -> Self {
     self.options = self.options.created(created);
     self
   }
 
-  /// Sets the [`Signature::expires`](identity_core::crypto::Signature::expires) field.
+  /// Sets the [`Proof::expires`](identity_core::crypto::Proof::expires) field.
   /// The signature will fail validation after the specified datetime.
   #[must_use]
   pub fn expires(mut self, expires: Timestamp) -> Self {
@@ -73,21 +73,21 @@ where
     self
   }
 
-  /// Sets the [`Signature::challenge`](identity_core::crypto::Signature::challenge) field.
+  /// Sets the [`Proof::challenge`](identity_core::crypto::Proof::challenge) field.
   #[must_use]
   pub fn challenge(mut self, challenge: String) -> Self {
     self.options = self.options.challenge(challenge);
     self
   }
 
-  /// Sets the [`Signature::domain`](identity_core::crypto::Signature::domain) field.
+  /// Sets the [`Proof::domain`](identity_core::crypto::Proof::domain) field.
   #[must_use]
   pub fn domain(mut self, domain: String) -> Self {
     self.options = self.options.domain(domain);
     self
   }
 
-  /// Sets the [`Signature::purpose`](identity_core::crypto::Signature::purpose) field.
+  /// Sets the [`Proof::purpose`](identity_core::crypto::Proof::purpose) field.
   #[must_use]
   pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.options = self.options.purpose(purpose);

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
@@ -6,26 +6,28 @@ use core::fmt::Formatter;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
+use serde;
 use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
+use serde::Deserialize;
 use serde::Serialize;
 
 use crate::common::Timestamp;
-use crate::crypto::signature::signature_options::ProofPurpose;
-use crate::crypto::SignatureOptions;
-use crate::crypto::SignatureValue;
+use crate::crypto::ProofOptions;
+use crate::crypto::ProofPurpose;
+use crate::crypto::ProofValue;
 use crate::error::Result;
 
 /// A digital signature.
 ///
 /// For field definitions see: https://w3c-ccg.github.io/security-vocab/
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
-pub struct Signature {
+pub struct Proof {
   #[serde(rename = "type")]
   type_: String,
   #[serde(flatten)]
-  value: SignatureValue,
+  value: ProofValue,
   #[serde(rename = "verificationMethod")]
   method: String,
 
@@ -49,18 +51,18 @@ pub struct Signature {
   hidden: AtomicBoolCell,
 }
 
-impl Signature {
-  /// Creates a new [`Signature`] instance with the given `type_` and `method`, with the rest
+impl Proof {
+  /// Creates a new [`Proof`] instance with the given `type_` and `method`, with the rest
   /// of its properties left unset.
   pub fn new(type_: impl Into<String>, method: impl Into<String>) -> Self {
-    Self::new_with_options(type_, method, SignatureOptions::default())
+    Self::new_with_options(type_, method, ProofOptions::default())
   }
 
-  /// Creates a new [`Signature`] instance with the given properties.
-  pub fn new_with_options(type_: impl Into<String>, method: impl Into<String>, options: SignatureOptions) -> Self {
+  /// Creates a new [`Proof`] instance with the given properties.
+  pub fn new_with_options(type_: impl Into<String>, method: impl Into<String>, options: ProofOptions) -> Self {
     Self {
       type_: type_.into(),
-      value: SignatureValue::None,
+      value: ProofValue::None,
       method: method.into(),
       created: options.created,
       expires: options.expires,
@@ -71,42 +73,42 @@ impl Signature {
     }
   }
 
-  /// Returns the `type` property of the signature.
+  /// Returns the `type` property of the proof.
   pub fn type_(&self) -> &str {
     &*self.type_
   }
 
-  /// Returns the identifier of the DID method used to create this signature.
+  /// Returns the identifier of the DID method used to create this proof.
   pub fn verification_method(&self) -> &str {
     &*self.method
   }
 
-  /// Returns a reference to the signature `value`.
-  pub const fn value(&self) -> &SignatureValue {
+  /// Returns a reference to the proof `value`.
+  pub const fn value(&self) -> &ProofValue {
     &self.value
   }
 
-  /// Returns a mutable reference to the signature `value`.
-  pub fn value_mut(&mut self) -> &mut SignatureValue {
+  /// Returns a mutable reference to the proof `value`.
+  pub fn value_mut(&mut self) -> &mut ProofValue {
     &mut self.value
   }
 
-  /// Sets the [`SignatureValue`] of the object.
-  pub fn set_value(&mut self, value: SignatureValue) {
+  /// Sets the [`ProofValue`] of the object.
+  pub fn set_value(&mut self, value: ProofValue) {
     self.value = value;
   }
 
-  /// Clears the current signature value - all other properties are unchanged.
+  /// Clears the current proof value - all other properties are unchanged.
   pub fn clear_value(&mut self) {
-    self.value = SignatureValue::None;
+    self.value = ProofValue::None;
   }
 
-  /// Flag the signature value so it is ignored during serialization
+  /// Flag the proof value so it is ignored during serialization
   pub fn hide_value(&self) {
     self.hidden.set(true);
   }
 
-  /// Restore the signature value state so serialization behaves normally
+  /// Restore the proof value state so serialization behaves normally
   pub fn show_value(&self) {
     self.hidden.set(false);
   }
@@ -116,9 +118,9 @@ impl Signature {
   }
 }
 
-impl Debug for Signature {
+impl Debug for Proof {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-    f.debug_struct("Signature")
+    f.debug_struct("Proof")
       .field("type_", &self.type_)
       .field("value", &self.value)
       .field("method", &self.method)
@@ -131,7 +133,7 @@ impl Debug for Signature {
   }
 }
 
-impl Serialize for Signature {
+impl Serialize for Proof {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
@@ -235,8 +237,8 @@ mod tests {
 
   use super::*;
 
-  fn generate_options() -> SignatureOptions {
-    SignatureOptions {
+  fn generate_options() -> ProofOptions {
+    ProofOptions {
       created: Some(Timestamp::from_str("1970-01-01T00:00:00Z").unwrap()),
       expires: Some(Timestamp::from_str("2000-01-01T00:00:00Z").unwrap()),
       challenge: Some("some-challenge".to_owned()),
@@ -247,17 +249,15 @@ mod tests {
 
   #[test]
   fn test_signature_serialise() {
-    let signature: Signature =
-      Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", SignatureOptions::default());
+    let signature: Proof = Proof::new_with_options("JcsEd25519Signature2020", "#sign-0", ProofOptions::default());
     let expected = r##"{"type":"JcsEd25519Signature2020","verificationMethod":"#sign-0"}"##;
     assert_eq!(signature.to_json().unwrap(), expected);
   }
 
   #[test]
   fn test_signature_serialise_options() {
-    let mut signature: Signature =
-      Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
-    signature.set_value(SignatureValue::Signature("somesignaturevalue123456789".to_owned()));
+    let mut signature: Proof = Proof::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
+    signature.set_value(ProofValue::Signature("somesignaturevalue123456789".to_owned()));
     // Compare against JSON to ignore field order.
     let expected = json!({
       "type":"JcsEd25519Signature2020",
@@ -274,11 +274,10 @@ mod tests {
 
   #[test]
   fn test_signature_json() {
-    let mut signature: Signature =
-      Signature::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
-    signature.set_value(SignatureValue::Signature("somesignaturevalue123456789".to_owned()));
+    let mut signature: Proof = Proof::new_with_options("JcsEd25519Signature2020", "#sign-0", generate_options());
+    signature.set_value(ProofValue::Signature("somesignaturevalue123456789".to_owned()));
 
-    let deserialized: Signature = Signature::from_json(&signature.to_json().unwrap()).unwrap();
+    let deserialized: Proof = Proof::from_json(&signature.to_json().unwrap()).unwrap();
     assert_eq!(signature, deserialized);
   }
 }

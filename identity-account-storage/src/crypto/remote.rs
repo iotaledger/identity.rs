@@ -8,10 +8,10 @@ use serde::Serialize;
 
 use identity_core::convert::ToJson;
 use identity_core::crypto::Named;
+use identity_core::crypto::Proof;
+use identity_core::crypto::ProofOptions;
+use identity_core::crypto::ProofValue;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::SignatureOptions;
-use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
@@ -31,30 +31,30 @@ impl RemoteEd25519 {
     data: &mut U,
     method: impl Into<String>,
     secret: &RemoteKey<'_>,
-    options: SignatureOptions,
+    options: ProofOptions,
   ) -> Result<()>
   where
     U: Serialize + SetSignature,
   {
-    let signature: Signature = Signature::new_with_options(Self::NAME, method, options);
+    let signature: Proof = Proof::new_with_options(Self::NAME, method, options);
     data.set_signature(signature);
 
-    let value: SignatureValue = Self::sign(&data, secret).await?;
-    let write: &mut Signature = data.try_signature_mut()?;
+    let value: ProofValue = Self::sign(&data, secret).await?;
+    let write: &mut Proof = data.signature_mut().ok_or(Error::MissingSignature)?;
 
     write.set_value(value);
 
     Ok(())
   }
 
-  pub async fn sign<X>(data: &X, remote_key: &RemoteKey<'_>) -> Result<SignatureValue>
+  pub async fn sign<X>(data: &X, remote_key: &RemoteKey<'_>) -> Result<ProofValue>
   where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?.into();
     let signature: String = encode_b58(&signature);
-    Ok(SignatureValue::Signature(signature))
+    Ok(ProofValue::Signature(signature))
   }
 }
 

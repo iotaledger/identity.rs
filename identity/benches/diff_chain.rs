@@ -17,7 +17,7 @@ use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::MessageId;
 use identity_core::crypto::KeyType;
-use identity_core::crypto::SignatureOptions;
+use identity_core::crypto::ProofOptions;
 use identity_iota::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
@@ -99,7 +99,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
         &mut new.document,
         keypair.private(),
         chain.current().document.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     chain.try_push_integration(new).unwrap();

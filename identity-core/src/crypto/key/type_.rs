@@ -5,6 +5,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::error::Error;
 use crate::error::Result;
 
@@ -49,8 +52,9 @@ impl Display for KeyType {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use serde_json::Value;
+
+  use super::*;
 
   #[test]
   fn test_key_type_serde() {

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt;
@@ -13,23 +13,23 @@ use crate::common::Timestamp;
 use crate::convert::FmtJson;
 use crate::Error;
 
-/// Holds attributes for a new [`Signature`](crate::crypto::Signature).
+/// Holds attributes for a new [`Proof`](crate::crypto::Proof).
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct SignatureOptions {
-  /// [`Signature::created`](crate::crypto::Signature::created)
+pub struct ProofOptions {
+  /// [`Proof::created`](crate::crypto::Proof::created)
   pub created: Option<Timestamp>,
-  /// [`Signature::expires`](crate::crypto::Signature::expires)
+  /// [`Proof::expires`](crate::crypto::Proof::expires)
   pub expires: Option<Timestamp>,
-  /// [`Signature::challenge`](crate::crypto::Signature::challenge)
+  /// [`Proof::challenge`](crate::crypto::Proof::challenge)
   pub challenge: Option<String>,
-  /// [`Signature::domain`](crate::crypto::Signature::domain)
+  /// [`Proof::domain`](crate::crypto::Proof::domain)
   pub domain: Option<String>,
-  /// [`Signature::purpose`](crate::crypto::Signature::purpose)
+  /// [`Proof::purpose`](crate::crypto::Proof::purpose)
   pub purpose: Option<ProofPurpose>,
 }
 
-impl SignatureOptions {
-  /// Creates a new `SignatureOptions` with all options unset.
+impl ProofOptions {
+  /// Creates a new `ProofOptions` with all options unset.
   pub fn new() -> Self {
     Self {
       created: None,
@@ -40,14 +40,14 @@ impl SignatureOptions {
     }
   }
 
-  /// Sets the [`Signature::created`](crate::crypto::Signature::created) field.
+  /// Sets the [`Proof::created`](crate::crypto::Proof::created) field.
   #[must_use]
   pub fn created(mut self, created: Timestamp) -> Self {
     self.created = Some(created);
     self
   }
 
-  /// Sets the [`Signature::expires`](crate::crypto::Signature::expires) field.
+  /// Sets the [`Proof::expires`](crate::crypto::Proof::expires) field.
   /// The signature will fail validation after the specified datetime.
   #[must_use]
   pub fn expires(mut self, expires: Timestamp) -> Self {
@@ -55,21 +55,21 @@ impl SignatureOptions {
     self
   }
 
-  /// Sets the [`Signature::challenge`](crate::crypto::Signature::challenge) field.
+  /// Sets the [`Proof::challenge`](crate::crypto::Proof::challenge) field.
   #[must_use]
   pub fn challenge(mut self, challenge: String) -> Self {
     self.challenge = Some(challenge);
     self
   }
 
-  /// Sets the [`Signature::domain`](crate::crypto::Signature::domain) field.
+  /// Sets the [`Proof::domain`](crate::crypto::Proof::domain) field.
   #[must_use]
   pub fn domain(mut self, domain: String) -> Self {
     self.domain = Some(domain);
     self
   }
 
-  /// Sets the [`Signature::purpose`](crate::crypto::Signature::purpose) field.
+  /// Sets the [`Proof::purpose`](crate::crypto::Proof::purpose) field.
   #[must_use]
   pub fn purpose(mut self, purpose: ProofPurpose) -> Self {
     self.purpose = Some(purpose);
@@ -77,7 +77,7 @@ impl SignatureOptions {
   }
 }
 
-/// Associates a purpose with a [`Signature`](crate::crypto::Signature).
+/// Associates a purpose with a [`Proof`](crate::crypto::Proof).
 ///
 /// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

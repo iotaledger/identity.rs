@@ -9,7 +9,7 @@ use identity::core::OrderedSet;
 use identity::core::Timestamp;
 use identity::core::Url;
 use identity::crypto::PrivateKey;
-use identity::crypto::SignatureOptions;
+use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
 use identity::iota_core::IotaDID;
@@ -23,7 +23,8 @@ use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
 use crate::crypto::WasmKeyPair;
-use crate::crypto::WasmSignatureOptions;
+use crate::crypto::WasmProof;
+use crate::crypto::WasmProofOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
 use crate::did::OptionMethodScope;
 use crate::did::WasmDID;
@@ -363,7 +364,7 @@ impl WasmDocument {
         &mut document.0,
         key_pair.0.private(),
         &method_query,
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .wasm_result()
   }
@@ -377,7 +378,7 @@ impl WasmDocument {
     data: &JsValue,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
-    options: &WasmSignatureOptions,
+    options: &WasmProofOptions,
   ) -> Result<WasmCredential> {
     let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmCredential = WasmCredential::from_json(&json)?;
@@ -394,7 +395,7 @@ impl WasmDocument {
     data: &JsValue,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
-    options: &WasmSignatureOptions,
+    options: &WasmProofOptions,
   ) -> Result<WasmPresentation> {
     let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
     let data: WasmPresentation = WasmPresentation::from_json(&json)?;
@@ -413,12 +414,12 @@ impl WasmDocument {
     data: &JsValue,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
-    options: &WasmSignatureOptions,
+    options: &WasmProofOptions,
   ) -> Result<JsValue> {
     let mut data: VerifiableProperties = data.into_serde().wasm_result()?;
     let private_key: PrivateKey = privateKey.into();
     let method_query: String = methodQuery.into_serde().wasm_result()?;
-    let options: SignatureOptions = options.0.clone();
+    let options: ProofOptions = options.0.clone();
 
     self
       .0
@@ -602,14 +603,10 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Returns a copy of the `proof` object.
+  /// Returns a copy of the proof.
   #[wasm_bindgen]
-  pub fn proof(&self) -> Result<JsValue> {
-    // TODO: implement proper bindings for the proof.
-    match &self.0.proof {
-      Some(proof) => JsValue::from_serde(proof).wasm_result(),
-      None => Ok(JsValue::NULL),
-    }
+  pub fn proof(&self) -> Option<WasmProof> {
+    self.0.proof.clone().map(WasmProof::from)
   }
 
   // ===========================================================================

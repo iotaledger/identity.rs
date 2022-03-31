@@ -3,7 +3,7 @@
 
 use std::borrow::Cow;
 
-use identity_core::crypto::Signature;
+use identity_core::crypto::Proof;
 
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
@@ -105,8 +105,8 @@ impl<'query> From<&'query RelativeDIDUrl> for DIDUrlQuery<'query> {
   }
 }
 
-impl<'query> From<&'query Signature> for DIDUrlQuery<'query> {
-  fn from(other: &'query Signature) -> Self {
+impl<'query> From<&'query Proof> for DIDUrlQuery<'query> {
+  fn from(other: &'query Proof) -> Self {
     Self(Cow::Borrowed(other.verification_method()))
   }
 }

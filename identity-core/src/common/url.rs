@@ -8,6 +8,10 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use core::str::FromStr;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::common::KeyComparable;
 use crate::diff;
 use crate::diff::Diff;

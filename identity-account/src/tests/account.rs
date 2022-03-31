@@ -11,7 +11,7 @@ use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Stronghold;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::SignatureOptions;
+use identity_core::crypto::ProofOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
@@ -428,7 +428,7 @@ async fn test_account_sync_integration_msg_update() {
         .sign(
           IotaDocument::DEFAULT_METHOD_FRAGMENT,
           &mut new_doc,
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .await
         .unwrap();
@@ -476,7 +476,7 @@ async fn test_account_sync_diff_msg_update() {
         .sign(
           IotaDocument::DEFAULT_METHOD_FRAGMENT,
           &mut diff_msg,
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .await
         .unwrap();

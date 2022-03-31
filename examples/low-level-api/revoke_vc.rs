@@ -13,7 +13,7 @@
 
 use identity::core::Timestamp;
 use identity::credential::Credential;
-use identity::crypto::SignatureOptions;
+use identity::crypto::ProofOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 
@@ -106,7 +106,7 @@ async fn create_vc_helper(
     &mut credential,
     issuer_new_key.private(),
     issuer_doc.default_signing_method()?.id(),
-    SignatureOptions::default(),
+    ProofOptions::default(),
   )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);

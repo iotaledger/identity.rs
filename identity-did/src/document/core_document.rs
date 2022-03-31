@@ -15,11 +15,11 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
+use identity_core::crypto::GetSignature;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::Proof;
 use identity_core::crypto::ProofPurpose;
-use identity_core::crypto::Signature;
-use identity_core::crypto::TrySignature;
 use identity_core::crypto::Verifier;
 
 use crate::did::CoreDID;
@@ -672,11 +672,9 @@ where
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + TrySignature,
+    X: Serialize + GetSignature,
   {
-    let signature: &Signature = data
-      .try_signature()
-      .map_err(|_| Error::InvalidSignature("missing signature"))?;
+    let signature: &Proof = data.signature().ok_or(Error::InvalidSignature("missing signature"))?;
 
     // Retrieve the method used to create the signature and check it has the required verification
     // method relationship (purpose takes precedence over method_scope).
@@ -738,7 +736,7 @@ where
   /// serialization fails, or the verification operation fails.
   fn do_verify<X>(method: &VerificationMethod<D, U>, data: &X) -> Result<()>
   where
-    X: Serialize + TrySignature,
+    X: Serialize + GetSignature,
   {
     let public_key: Vec<u8> = method.data().try_decode()?;
 

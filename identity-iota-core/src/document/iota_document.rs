@@ -11,16 +11,16 @@ use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 use identity_core::crypto::Ed25519;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::Proof;
+use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::Signer;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
@@ -66,7 +66,7 @@ pub struct IotaDocument {
   #[serde(rename = "meta")]
   pub metadata: IotaDocumentMetadata,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
+  pub proof: Option<Proof>,
 }
 
 impl TryMethod for IotaDocument {
@@ -362,7 +362,7 @@ impl IotaDocument {
     data: &mut X,
     private_key: &'this PrivateKey,
     method_query: Q,
-    options: SignatureOptions,
+    options: ProofOptions,
   ) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
@@ -410,7 +410,7 @@ impl IotaDocument {
     // Sign document.
     match method.type_() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), SignatureOptions::default())
+        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref(), ProofOptions::default())
           .map_err(|err| Error::DocumentSignError("Ed25519 signature failed", Some(err)))?;
       }
       MethodType::X25519KeyAgreementKey2019 => {
@@ -438,7 +438,7 @@ impl IotaDocument {
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + TrySignature,
+    X: Serialize + GetSignature,
   {
     self.document.verify_data(data, options).map_err(Into::into)
   }
@@ -473,9 +473,9 @@ impl IotaDocument {
     }
 
     // Validate the hash of the public key matches the DID tag.
-    let signature: &Signature = document
-      .try_signature()
-      .map_err(|err| Error::InvalidRootDocument(err.into()))?;
+    let signature: &Proof = document
+      .signature()
+      .ok_or(Error::InvalidRootDocument("missing signature"))?;
     let method: &IotaVerificationMethod = document
       .resolve_method(signature, None)
       .ok_or(Error::InvalidDoc(identity_did::Error::MethodNotFound))?;
@@ -521,7 +521,7 @@ impl IotaDocument {
     let method_query: DIDUrlQuery<'_> = method_query.into();
     let _ = self.resolve_signing_method(method_query.clone())?;
 
-    self.sign_data(&mut diff, private_key, method_query, SignatureOptions::default())?;
+    self.sign_data(&mut diff, private_key, method_query, ProofOptions::default())?;
 
     Ok(diff)
   }
@@ -610,8 +610,8 @@ impl IotaDocument {
 
 impl<'a, 'b, 'c> IotaDocument {}
 
-impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)> for IotaDocument {
-  fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Signature>)) -> Self {
+impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Proof>)> for IotaDocument {
+  fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Proof>)) -> Self {
     Self {
       document,
       metadata,
@@ -632,20 +632,20 @@ impl Display for IotaDocument {
   }
 }
 
-impl TrySignature for IotaDocument {
-  fn signature(&self) -> Option<&Signature> {
+impl GetSignature for IotaDocument {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl TrySignatureMut for IotaDocument {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+impl GetSignatureMut for IotaDocument {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl SetSignature for IotaDocument {
-  fn set_signature(&mut self, signature: Signature) {
+  fn set_signature(&mut self, signature: Proof) {
     self.proof = Some(signature)
   }
 }
@@ -1271,7 +1271,7 @@ mod tests {
           &mut data,
           key_new.private(),
           method_fragment.as_str(),
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .unwrap();
       // Signature should still be valid for every scope.

@@ -1,13 +1,17 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result;
 
-/// A DID Document signature with a dynamic JSON field name.
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
+/// A DID Document proof value with a dynamic JSON field name.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub enum SignatureValue {
+pub enum ProofValue {
   /// An empty signature value.
   #[serde(skip)]
   None,
@@ -22,28 +26,28 @@ pub enum SignatureValue {
   Signature(String),
 }
 
-impl SignatureValue {
-  /// Returns `true` if the signature data is a `None` type.
+impl ProofValue {
+  /// Returns `true` if the proof data is a `None` type.
   pub const fn is_none(&self) -> bool {
     matches!(self, Self::None)
   }
 
-  /// Returns `true` if the signature data is a `Jws` type.
+  /// Returns `true` if the proof data is a `Jws` type.
   pub const fn is_jws(&self) -> bool {
     matches!(self, Self::Jws(_))
   }
 
-  /// Returns `true` if the signature data is a `Proof` type.
+  /// Returns `true` if the proof data is a `Proof` type.
   pub const fn is_proof(&self) -> bool {
     matches!(self, Self::Proof(_))
   }
 
-  /// Returns `true` if the signature data is a `Signature` type.
+  /// Returns `true` if the proof data is a `Signature` type.
   pub const fn is_signature(&self) -> bool {
     matches!(self, Self::Signature(_))
   }
 
-  /// Returns the signature data as a string slice.
+  /// Returns the proof data as a string slice.
   pub fn as_str(&self) -> &str {
     match self {
       Self::None => "",
@@ -53,7 +57,7 @@ impl SignatureValue {
     }
   }
 
-  /// Consumes the [`SignatureValue`] and returns the data as a [`String`].
+  /// Consumes the value and returns the data as a [`String`].
   pub fn into_string(self) -> String {
     match self {
       Self::None => String::new(),
@@ -63,7 +67,7 @@ impl SignatureValue {
     }
   }
 
-  /// Returns the `Jws` type signature data as a string slice.
+  /// Returns the `Jws` type proof data as a string slice.
   pub fn as_jws(&self) -> Option<&str> {
     match self {
       Self::Jws(inner) => Some(&*inner),
@@ -71,7 +75,7 @@ impl SignatureValue {
     }
   }
 
-  /// Returns the `Proof` type signature data as a string slice.
+  /// Returns the `Proof` type proof data as a string slice.
   pub fn as_proof(&self) -> Option<&str> {
     match self {
       Self::Proof(inner) => Some(&*inner),
@@ -79,7 +83,7 @@ impl SignatureValue {
     }
   }
 
-  /// Returns the `Signature` type signature data as a string slice.
+  /// Returns the `Signature` type proof data as a string slice.
   pub fn as_signature(&self) -> Option<&str> {
     match self {
       Self::Signature(inner) => Some(&*inner),
@@ -88,7 +92,7 @@ impl SignatureValue {
   }
 }
 
-impl Debug for SignatureValue {
+impl Debug for ProofValue {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
       Self::None => f.write_str("None"),

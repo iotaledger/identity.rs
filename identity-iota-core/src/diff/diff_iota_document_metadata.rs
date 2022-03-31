@@ -17,7 +17,7 @@ use serde::Serialize;
 
 use crate::document::IotaDocumentMetadata;
 
-/// NOTE: excludes the `proof` [`Signature`] from the diff to save space on the Tangle and because
+/// NOTE: excludes the `proof` [`Proof`] from the diff to save space on the Tangle and because
 /// a merged signature will be invalid in general.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffIotaDocumentMetadata {

@@ -40,7 +40,7 @@ impl PresentationValidator {
   /// trusted. This section contains more information on additional checks that should be carried out before and after
   /// calling this method.
   ///
-  /// ## The state of the supplied DID Documents.  
+  /// ## The state of the supplied DID Documents.
   /// The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
   /// [`Resolver::resolve_presentation_holder`](crate::tangle::Resolver::resolve_presentation_holder())
   /// and [`Resolver::resolve_presentation_issuers`](crate::tangle::Resolver::resolve_presentation_issuers())
@@ -226,7 +226,7 @@ mod tests {
   use identity_core::common::Timestamp;
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
-  use identity_core::crypto::SignatureOptions;
+  use identity_core::crypto::ProofOptions;
   use identity_credential::credential::Credential;
   use identity_credential::presentation::PresentationBuilder;
   use identity_iota_core::document::IotaDocument;
@@ -308,7 +308,7 @@ mod tests {
           credential_foo,
           issuer_foo_key.private(),
           issuer_foo_doc.default_signing_method().unwrap().id(),
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .unwrap();
 
@@ -317,7 +317,7 @@ mod tests {
           credential_bar,
           issuer_bar_key.private(),
           issuer_bar_doc.default_signing_method().unwrap().id(),
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .unwrap();
       setup
@@ -345,7 +345,7 @@ mod tests {
         &mut presentation,
         subject_foo_key.private(),
         subject_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
+        ProofOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
       )
       .unwrap();
 
@@ -396,7 +396,7 @@ mod tests {
         &mut presentation,
         subject_foo_key.private(),
         subject_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::new().challenge("some challenge".to_owned()),
+        ProofOptions::new().challenge("some challenge".to_owned()),
       )
       .unwrap();
 
@@ -465,7 +465,7 @@ mod tests {
         &mut presentation,
         subject_foo_key.private(),
         subject_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::new().challenge("some challenge".to_owned()),
+        ProofOptions::new().challenge("some challenge".to_owned()),
       )
       .unwrap();
 
@@ -521,7 +521,7 @@ mod tests {
         &mut credential_bar,
         issuer_bar_key.private(),
         issuer_bar_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
 
@@ -536,7 +536,7 @@ mod tests {
         &mut presentation,
         subject_foo_key.private(),
         subject_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::new().challenge("some challenge".to_owned()),
+        ProofOptions::new().challenge("some challenge".to_owned()),
       )
       .unwrap();
 
@@ -634,7 +634,7 @@ mod tests {
         &mut presentation,
         subject_foo_key.private(),
         subject_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::new().challenge("some challenge".to_owned()),
+        ProofOptions::new().challenge("some challenge".to_owned()),
       )
       .unwrap();
 
@@ -710,7 +710,7 @@ mod tests {
         &mut presentation,
         subject_foo_key.private(),
         subject_foo_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::new().challenge("some challenge".to_owned()),
+        ProofOptions::new().challenge("some challenge".to_owned()),
       )
       .unwrap();
 

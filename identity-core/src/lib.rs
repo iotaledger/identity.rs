@@ -19,9 +19,6 @@
   // clippy::missing_errors_doc
 )]
 
-#[macro_use]
-extern crate serde;
-
 #[doc(inline)]
 pub use serde_json::json;
 
