@@ -262,34 +262,66 @@ impl Storage for WasmStorage {
 const STORAGE: &'static str = r#"
 /** All methods an object must implement to be used as an account storage. */
 interface Storage {
+  /** Creates a new identity for the given `network`.
+
+   - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
+   - Returns an error if the DID already exists.
+   - Adds the newly created DID to an index which can be accessed via [`Storage::index`].
+
+   Returns the generated DID and the location at which the key was stored. */
   didCreate: (network: string, fragment: string, private_key: Uint8Array | undefined | null) => Promise<[DID, KeyLocation]>;
 
+  /** Removes the keys and any other state for the given `did`.
+  
+   This operation is idempotent: it does not fail if the given `did` does not (or no longer) exist.
+  
+   Returns `true` if the did and its associated data was removed, `false` if nothing was done. */
   didPurge: (did: DID) => Promise<boolean>;
 
+  /** Returns `true` if `did` exists in the list of stored DIDs. */
   didExists: (did: DID) => Promise<boolean>;
 
+  /** Returns the list of stored DIDs. */
   didList: () => Promise<Array<DID>>;
 
+  /** Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
+   and returns the location of the newly generated key. */
   keyGenerate: (did: DID, keyType: KeyType, fragment: string) => Promise<KeyLocation>;
 
+  /** Inserts a private key at the specified `location`.
+  
+   If a key at `location` exists, it is overwritten. */
   keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<void>;
 
+  /** Retrieves the public key from `location`. */
   keyPublic: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
 
+  /** Deletes the key at `location`.
+  
+   This operation is idempotent: it does not fail if the key does not exist.
+  
+   Returns `true` if it removed the key, `false` if nothing was done. */
   keyDelete: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
+  /** Signs `data` with the private key at the specified `location`. */
   keySign: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<Signature>;
 
+  /** Returns `true` if a key exists at the specified `location`. */
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
+  /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined | null>;
 
+  /** Set the chain state of the identity specified by `did`. */
   chainStateSet: (did: DID, chainState: ChainState) => Promise<void>;
 
+  /** Returns the document of the identity specified by `did`. */
   documentGet: (did: DID) => Promise<Document | undefined | null>;
 
+  /** Sets a new state for the identity specified by `did`. */
   documentSet: (did: DID, document: Document) => Promise<void>;
 
+  /** Persists any unsaved changes. */
   flushChanges: () => Promise<void>;
 }"#;
 
