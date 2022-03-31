@@ -25,6 +25,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::types::WasmKeyLocation;
+use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
 use crate::did::WasmDID;
 use crate::did::WasmDocument;
@@ -32,8 +33,6 @@ use crate::error::JsValueResult;
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<void>")]
-  pub type PromiseUnit;
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
@@ -64,7 +63,7 @@ extern "C" {
     private_key: Option<Vec<u8>>,
   ) -> PromiseDIDKeyLocation;
   #[wasm_bindgen(method, js_name = didPurge)]
-  pub fn did_purge(this: &WasmStorage, did: WasmDID) -> PromiseUnit;
+  pub fn did_purge(this: &WasmStorage, did: WasmDID) -> PromiseVoid;
 
   #[wasm_bindgen(method, js_name = didExists)]
   pub fn did_exists(this: &WasmStorage, did: WasmDID) -> PromiseBool;
@@ -74,11 +73,11 @@ extern "C" {
   #[wasm_bindgen(method, js_name = keyGenerate)]
   pub fn key_generate(this: &WasmStorage, did: WasmDID, key_type: WasmKeyType, fragment: String) -> PromiseKeyLocation;
   #[wasm_bindgen(method, js_name = keyInsert)]
-  pub fn key_insert(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, private_key: Vec<u8>) -> PromiseUnit;
+  pub fn key_insert(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, private_key: Vec<u8>) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = keyPublic)]
   pub fn key_public(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromisePublicKey;
   #[wasm_bindgen(method, js_name = keyDelete)]
-  pub fn key_delete(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseUnit;
+  pub fn key_delete(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = keySign)]
   pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method, js_name = keyExists)]
@@ -86,13 +85,13 @@ extern "C" {
   #[wasm_bindgen(method, js_name = chainStateGet)]
   pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
   #[wasm_bindgen(method, js_name = chainStateSet)]
-  pub fn chain_state_set(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseUnit;
+  pub fn chain_state_set(this: &WasmStorage, did: WasmDID, chain_state: WasmChainState) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = documentGet)]
   pub fn document_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionDocument;
   #[wasm_bindgen(method, js_name = documentSet)]
-  pub fn document_set(this: &WasmStorage, did: WasmDID, document: WasmDocument) -> PromiseUnit;
+  pub fn document_set(this: &WasmStorage, did: WasmDID, document: WasmDocument) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = flushChanges)]
-  pub fn flush_changes(this: &WasmStorage) -> PromiseUnit;
+  pub fn flush_changes(this: &WasmStorage) -> PromiseVoid;
 }
 
 impl Debug for WasmStorage {
