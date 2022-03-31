@@ -9,18 +9,30 @@ use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-// TODO: Documentation.
+
+/// The storage location of a verification method key.
+///
+/// A key is uniquely identified by the fragment and a hash of its public key.
+/// Importantly, the fragment alone is insufficient to represent the storage location.
+/// For example, when rotating a key, there will be two keys in storage for the
+/// same identity with the same fragment. The `key_hash` disambiguates the keys in
+/// situations like these.
+///
+/// The string representation of that location can be obtained via `canonicalRepr`.
 #[derive(Debug)]
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
 
 #[wasm_bindgen(js_class = KeyLocation)]
 impl WasmKeyLocation {
+  /// Create a location from a `KeyType`, the fragment of a verification method
+  /// and the bytes of a public key.
   #[wasm_bindgen(constructor)]
   pub fn new(key_type: WasmKeyType, fragment: String, public_key: Vec<u8>) -> WasmKeyLocation {
     WasmKeyLocation(KeyLocation::new(key_type.into(), fragment, public_key.as_ref()))
   }
 
+  /// Obtain the location of a verification method's key in storage.
   #[wasm_bindgen(js_name = fromVerificationMethod)]
   pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmKeyLocation> {
     Ok(WasmKeyLocation(
@@ -28,6 +40,9 @@ impl WasmKeyLocation {
     ))
   }
 
+  /// Returns the canonical string representation of the location.
+  ///
+  /// This should be used as the representation for storage keys.
   #[wasm_bindgen(js_name = canonicalRepr)]
   pub fn canonical_repr(&self) -> String {
     self.0.canonical_repr()

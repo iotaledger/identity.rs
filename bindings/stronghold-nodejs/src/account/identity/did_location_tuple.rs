@@ -6,7 +6,9 @@ use identity_iota_core::did::IotaDID;
 use napi::Result;
 use napi_derive::napi;
 
-use crate::{account::NapiKeyLocation, did::NapiDID, error::NapiResult};
+use crate::account::NapiKeyLocation;
+use crate::did::NapiDID;
+use crate::error::NapiResult;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct DIDLocation {

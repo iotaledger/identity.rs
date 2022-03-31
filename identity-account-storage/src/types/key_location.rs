@@ -21,7 +21,7 @@ use std::hash::Hasher;
 /// same identity with the same fragment. The `key_hash` disambiguates the keys in
 /// situations like these.
 ///
-/// The string representation of that location can be obtained via `to_string`.
+/// The string representation of that location can be obtained via `canonical_repr`.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct KeyLocation {
   /// The [`KeyType`] of the key.
@@ -48,7 +48,7 @@ impl KeyLocation {
     }
   }
 
-  /// Create the [`KeyLocation`] of an [`IotaVerificationMethod`].
+  /// Obtain the location of a verification method's key in storage.
   pub fn from_verification_method(method: &IotaVerificationMethod) -> crate::Result<Self> {
     let fragment: &str = method
       .id()
@@ -122,7 +122,7 @@ pub(crate) mod key_hash_serialization {
       type Value = u64;
 
       fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("a u64 as a string")
+        formatter.write_str("a u64 formatted as a string")
       }
 
       fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>

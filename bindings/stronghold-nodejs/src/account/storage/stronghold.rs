@@ -105,7 +105,16 @@ impl NapiStronghold {
   /// Returns the list of stored DIDs.
   #[napi]
   pub async fn did_list(&self) -> Result<Vec<NapiDID>> {
-    Ok(self.0.did_list().await.napi_result()?.into_iter().map(NapiDID).collect())
+    Ok(
+      self
+        .0
+        .did_list()
+        .await
+        .napi_result()?
+        .into_iter()
+        .map(NapiDID)
+        .collect(),
+    )
   }
 
   /// Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
