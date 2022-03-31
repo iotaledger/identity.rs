@@ -16,7 +16,7 @@ export class Stronghold implements Storage {
         return stronghold
     }
 
-    public async didCreate(network: string, fragment: string, private_key: Uint8Array | undefined | null): Promise<[DID, KeyLocation]> {
+    public async didCreate(network: string, fragment: string, private_key?: Uint8Array): Promise<[DID, KeyLocation]> {
         let optPrivateKey = undefined;
         if (private_key) {
             optPrivateKey = Array.from(private_key)
