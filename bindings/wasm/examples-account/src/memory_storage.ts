@@ -15,7 +15,7 @@ export class MemStore implements Storage {
         this._vaults = new Map();
     }
 
-    public async didCreate(network: string, fragment: string, privateKey: Uint8Array | undefined | null): Promise<[DID, KeyLocation]> {
+    public async didCreate(network: string, fragment: string, privateKey?: Uint8Array): Promise<[DID, KeyLocation]> {
         let keyPair;
         if (privateKey) {
             keyPair = KeyPair.tryFromPrivateKeyBytes(KeyType.Ed25519, privateKey);

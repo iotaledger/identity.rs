@@ -268,7 +268,7 @@ interface Storage {
    - Adds the newly created DID to a list which can be accessed via `did_list`.
 
    Returns the generated DID and the location at which the key was stored. */
-  didCreate: (network: string, fragment: string, private_key: Uint8Array | undefined | null) => Promise<[DID, KeyLocation]>;
+  didCreate: (network: string, fragment: string, privateKey?: Uint8Array) => Promise<[DID, KeyLocation]>;
 
   /** Removes the keys and any other state for the given `did`.
   

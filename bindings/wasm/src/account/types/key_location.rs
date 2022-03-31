@@ -26,6 +26,7 @@ pub struct WasmKeyLocation(pub(crate) KeyLocation);
 impl WasmKeyLocation {
   /// Create a location from a `KeyType`, the fragment of a verification method
   /// and the bytes of a public key.
+  #[wasm_bindgen(constructor)]
   #[allow(non_snake_case)]
   pub fn new(keyType: WasmKeyType, fragment: String, publicKey: Vec<u8>) -> WasmKeyLocation {
     WasmKeyLocation(KeyLocation::new(keyType.into(), fragment, publicKey.as_ref()))
