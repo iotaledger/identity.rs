@@ -188,56 +188,6 @@ rusty_fork_test! {
   }
 
   #[test]
-  fn test_store_multiple_snapshots() {
-    block_on(async {
-      let password: EncryptionKey = derive_encryption_key("my-password:test_store_multiple_snapshots");
-      let snapshot1: Snapshot = open_snapshot(&generate_filename(), password).await;
-      let snapshot2: Snapshot = open_snapshot(&generate_filename(), password).await;
-      let snapshot3: Snapshot = open_snapshot(&generate_filename(), password).await;
-
-      let store1: Store<'_> = snapshot1.store("store1".into());
-      let store2: Store<'_> = snapshot2.store("store2".into());
-      let store3: Store<'_> = snapshot3.store("store3".into());
-      let stores: &[_] = &[&store1, &store2, &store3];
-
-      for store in stores {
-        assert!(store.get("A").await.unwrap().is_none());
-        assert!(store.get("B").await.unwrap().is_none());
-        assert!(store.get("C").await.unwrap().is_none());
-      }
-
-      for store in stores {
-        store.set("A", b"foo".to_vec(), None).await.unwrap();
-        store.set("B", b"bar".to_vec(), None).await.unwrap();
-        store.set("C", b"baz".to_vec(), None).await.unwrap();
-      }
-
-      for store in stores {
-        assert_eq!(store.get("A").await.unwrap(), Some(b"foo".to_vec()));
-        assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-        assert_eq!(store.get("C").await.unwrap(), Some(b"baz".to_vec()));
-      }
-
-      for store in stores {
-        store.del("A").await.unwrap();
-        store.del("C").await.unwrap();
-      }
-
-      for store in stores {
-        assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-      }
-
-      snapshot1.unload(true).await.unwrap();
-      snapshot2.unload(true).await.unwrap();
-      snapshot3.unload(true).await.unwrap();
-
-      for store in stores {
-        fs::remove_file(store.path()).unwrap();
-      }
-    })
-  }
-
-  #[test]
   fn test_store_persistence() {
     block_on(async {
       let password: EncryptionKey = derive_encryption_key("my-password:test_store_persistence");

@@ -40,6 +40,14 @@ async fn clear_expired_passwords() -> IotaStrongholdResult<()> {
   let this: &'static Context = Context::get().await?;
   let interval: Duration = *this.runtime.password_clear();
 
+  // The interval is 0 by default while waiting for a duration to be set.
+  // During that time, don't busy loop by sleeping for longer.
+  let interval: Duration = if interval.as_nanos() == 0 {
+    Duration::from_millis(100)
+  } else {
+    interval
+  };
+
   tokio::time::sleep(interval).await;
 
   if interval.as_nanos() == 0 {
