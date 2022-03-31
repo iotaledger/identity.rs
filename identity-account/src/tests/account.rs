@@ -7,7 +7,6 @@ use std::sync::Arc;
 use futures::Future;
 
 use identity_account_storage::identity::ChainState;
-use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Stronghold;
 use identity_core::common::Timestamp;
@@ -18,6 +17,7 @@ use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentChain;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::MessageId;
@@ -34,6 +34,8 @@ use crate::types::IdentitySetup;
 use crate::types::MethodContent;
 use crate::Error;
 use crate::Result;
+
+use super::util::*;
 
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
@@ -368,17 +370,20 @@ async fn test_account_sync_no_changes() -> Result<()> {
       let mut account = create_account(network).await;
 
       // Case 0: Since nothing has been published to the tangle, read_document must return DID not found
-      assert!(account.fetch_state().await.is_err());
+      assert!(account.fetch_document().await.is_err());
 
       // Case 1: Tangle and account are synched
       account.publish().await.unwrap();
-      let old_state: IdentityState = account.state().clone();
+
+      let old_document: IotaDocument = account.document().clone();
       let old_chain_state: ChainState = account.chain_state().clone();
-      account.fetch_state().await.unwrap();
-      assert_eq!(old_state.document(), account.state().document());
+
+      account.fetch_document().await.unwrap();
+
+      assert_eq!(&old_document, account.document());
       assert_eq!(&old_chain_state, account.chain_state());
 
-      // Case 2: Local state is ahead of the tangle
+      // Case 2: Local document is ahead of the tangle
       account
         .update_identity()
         .create_service()
@@ -388,11 +393,15 @@ async fn test_account_sync_no_changes() -> Result<()> {
         .apply()
         .await
         .unwrap();
-      let old_state: IdentityState = account.state().clone();
+
+      let old_document: IotaDocument = account.document().clone();
       let old_chain_state: ChainState = account.chain_state().clone();
-      account.fetch_state().await.unwrap();
-      assert_eq!(old_state.document(), account.state().document());
+
+      account.fetch_document().await.unwrap();
+
+      assert_eq!(&old_document, account.document());
       assert_eq!(&old_chain_state, account.chain_state());
+
       Ok(())
     })
   })
@@ -411,8 +420,8 @@ async fn test_account_sync_integration_msg_update() {
 
       let client: Client = Client::builder().network(network).build().await.unwrap();
       let mut new_doc: IotaDocument = account.document().clone();
-      new_doc.properties_mut().insert("foo".into(), 123.into());
-      new_doc.properties_mut().insert("bar".into(), 456.into());
+      new_doc.properties_mut().insert("foo".into(), 123u32.into());
+      new_doc.properties_mut().insert("bar".into(), 456u32.into());
       new_doc.metadata.previous_message_id = *account.chain_state().last_integration_message_id();
       new_doc.metadata.updated = Some(Timestamp::now_utc());
       account
@@ -426,17 +435,17 @@ async fn test_account_sync_integration_msg_update() {
       client.publish_document(&new_doc).await.unwrap();
       let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
 
-      account.fetch_state().await.unwrap();
-      assert!(account.state().document().properties().contains_key("foo"));
-      assert!(account.state().document().properties().contains_key("bar"));
+      account.fetch_document().await.unwrap();
+      assert!(account.document().properties().contains_key("foo"));
+      assert!(account.document().properties().contains_key("bar"));
       assert_eq!(
         account.chain_state().last_integration_message_id(),
         chain.integration_message_id()
       );
       assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
       // Ensure state was written into storage.
-      let storage_state: IdentityState = account.load_state().await.unwrap();
-      assert_eq!(&storage_state, account.state());
+      let storage_document: IotaDocument = account.load_document().await.unwrap();
+      assert_eq!(&storage_document, account.document());
       Ok(())
     })
   })
@@ -454,8 +463,8 @@ async fn test_account_sync_diff_msg_update() {
 
       let client: Client = Client::builder().network(network).build().await.unwrap();
       let mut new_doc: IotaDocument = account.document().clone();
-      new_doc.properties_mut().insert("foo".into(), 123.into());
-      new_doc.properties_mut().insert("bar".into(), 456.into());
+      new_doc.properties_mut().insert("foo".into(), 123u32.into());
+      new_doc.properties_mut().insert("bar".into(), 456u32.into());
       new_doc.metadata.updated = Some(Timestamp::now_utc());
       let mut diff_msg: DiffMessage = DiffMessage::new(
         account.document(),
@@ -478,17 +487,17 @@ async fn test_account_sync_diff_msg_update() {
       let chain: DocumentChain = client.read_document_chain(account.did()).await.unwrap();
 
       let old_chain_state: ChainState = account.chain_state().clone();
-      account.fetch_state().await.unwrap();
-      assert!(account.state().document().properties().contains_key("foo"));
-      assert!(account.state().document().properties().contains_key("bar"));
+      account.fetch_document().await.unwrap();
+      assert!(account.document().properties().contains_key("foo"));
+      assert!(account.document().properties().contains_key("bar"));
       assert_eq!(
         old_chain_state.last_integration_message_id(),
         account.chain_state().last_integration_message_id()
       );
       assert_eq!(account.chain_state().last_diff_message_id(), chain.diff_message_id());
       // Ensure state was written into storage.
-      let storage_state: IdentityState = account.load_state().await.unwrap();
-      assert_eq!(&storage_state, account.state());
+      let storage_document: IotaDocument = account.load_document().await.unwrap();
+      assert_eq!(&storage_document, account.document());
       Ok(())
     })
   })
@@ -548,4 +557,38 @@ async fn test_assert_account_futures_are_send() -> Result<()> {
   assert_future_send(account.update_identity().create_method().apply());
 
   Ok(())
+}
+
+#[tokio::test]
+async fn test_storage_index() {
+  for storage in storages().await {
+    let setup: AccountSetup = account_setup_storage(storage, Network::Mainnet).await;
+
+    let account1 = Account::create_identity(setup.clone(), IdentitySetup::default())
+      .await
+      .unwrap();
+
+    let index: Vec<IotaDID> = account1.storage().did_list().await.unwrap();
+
+    assert_eq!(index.len(), 1);
+    assert!(index.contains(account1.did()));
+
+    let account2: Account = Account::create_identity(setup, IdentitySetup::default()).await.unwrap();
+
+    let index: Vec<IotaDID> = account2.storage().did_list().await.unwrap();
+
+    assert_eq!(index.len(), 2);
+    assert!(index.contains(account1.did()));
+    assert!(index.contains(account2.did()));
+
+    assert!(account2.storage().did_exists(account1.did()).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+
+    let account1_did: IotaDID = account1.did().to_owned();
+    account1.delete_identity().await.unwrap();
+
+    assert!(!account2.storage().did_exists(&account1_did).await.unwrap());
+    assert!(account2.storage().did_exists(account2.did()).await.unwrap());
+    assert_eq!(account2.storage().did_list().await.unwrap().len(), 1);
+  }
 }

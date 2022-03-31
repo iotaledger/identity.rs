@@ -1,15 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
+use crate::stronghold::ClientPath;
 use crate::stronghold::Context;
 use crate::stronghold::IotaStrongholdResult;
 use crate::stronghold::Password;
-use crate::stronghold::Records;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
@@ -44,25 +43,12 @@ impl Snapshot {
     &self.path
   }
 
-  pub fn vault<T>(&self, name: &T, flags: &[StrongholdFlags]) -> Vault<'_>
-  where
-    T: AsRef<[u8]> + ?Sized,
-  {
-    Vault::new(&self.path, name, flags)
+  pub fn vault(&self, client_path: ClientPath) -> Vault<'_> {
+    Vault::new(&self.path, client_path, &[])
   }
 
-  pub fn store<T>(&self, name: &T, flags: &[StrongholdFlags]) -> Store<'_>
-  where
-    T: AsRef<[u8]> + ?Sized,
-  {
-    Store::new(&self.path, name, flags)
-  }
-
-  pub fn records<T>(&self, name: &T, flags: &[StrongholdFlags]) -> Records<'_>
-  where
-    T: AsRef<[u8]> + ?Sized,
-  {
-    Records::new(&self.path, name, flags)
+  pub fn store(&self, client_path: ClientPath) -> Store<'_> {
+    Store::new(&self.path, client_path, &[])
   }
 
   pub async fn status(&self) -> IotaStrongholdResult<SnapshotStatus> {

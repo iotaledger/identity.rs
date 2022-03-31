@@ -3,6 +3,7 @@
 
 use core::marker::PhantomData;
 
+use identity_iota_core::did::IotaDID;
 use serde::Serialize;
 
 use identity_core::convert::ToJson;
@@ -14,7 +15,6 @@ use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
-use identity_iota_core::did::IotaDID;
 
 use crate::storage::Storage;
 use crate::types::KeyLocation;

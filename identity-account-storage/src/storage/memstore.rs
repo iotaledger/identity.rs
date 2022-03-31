@@ -3,6 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
+use std::collections::HashSet;
 
 use async_trait::async_trait;
 use hashbrown::HashMap;
@@ -12,8 +13,9 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
-use identity_did::verification::MethodType;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::NetworkName;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
@@ -21,7 +23,6 @@ use zeroize::Zeroize;
 use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
-use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 use crate::types::Signature;
@@ -30,14 +31,16 @@ use crate::utils::Shared;
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
 type ChainStates = HashMap<IotaDID, ChainState>;
-type States = HashMap<IotaDID, IdentityState>;
+type States = HashMap<IotaDID, IotaDocument>;
 type Vaults = HashMap<IotaDID, MemVault>;
+type Index = HashSet<IotaDID>;
 
 pub struct MemStore {
   expand: bool,
   chain_states: Shared<ChainStates>,
-  states: Shared<States>,
+  documents: Shared<States>,
   vaults: Shared<Vaults>,
+  index: Shared<Index>,
 }
 
 impl MemStore {
@@ -45,8 +48,9 @@ impl MemStore {
     Self {
       expand: false,
       chain_states: Shared::new(HashMap::new()),
-      states: Shared::new(HashMap::new()),
+      documents: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
+      index: Shared::new(HashSet::new()),
     }
   }
 
@@ -62,56 +66,94 @@ impl MemStore {
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for MemStore {
-  async fn flush_changes(&self) -> Result<()> {
-    Ok(())
-  }
+  async fn did_create(
+    &self,
+    network: NetworkName,
+    fragment: &str,
+    private_key: Option<PrivateKey>,
+  ) -> Result<(IotaDID, KeyLocation)> {
+    let keypair: KeyPair = match private_key {
+      Some(private_key) => KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?,
+      None => KeyPair::new(KeyType::Ed25519)?,
+    };
 
-  async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
+
+    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
+      .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
+
+    let mut index: RwLockWriteGuard<'_, _> = self.index.write()?;
+
+    if index.contains(&did) {
+      return Err(Error::IdentityAlreadyExists);
+    } else {
+      index.insert(did.clone());
+    }
+
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
-        let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
-        let public: PublicKey = keypair.public().clone();
+    vault.insert(location.clone(), keypair);
 
-        vault.insert(location.clone(), keypair);
+    Ok((did, location))
+  }
 
-        Ok(public)
-      }
-      MethodType::X25519KeyAgreementKey2019 => {
-        let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
-        let public: PublicKey = keypair.public().clone();
+  async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
+    if self.index.write()?.remove(did) {
+      let _ = self.documents.write()?.remove(did);
+      let _ = self.vaults.write()?.remove(did);
+      let _ = self.chain_states.write()?.remove(did);
 
-        vault.insert(location.clone(), keypair);
-
-        Ok(public)
-      }
+      Ok(true)
+    } else {
+      Ok(false)
     }
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<PublicKey> {
+  async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
+    Ok(self.index.read()?.contains(did))
+  }
+
+  async fn did_list(&self) -> Result<Vec<IotaDID>> {
+    Ok(self.index.read()?.iter().cloned().collect())
+  }
+
+  async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
+    let keypair: KeyPair = KeyPair::new(key_type)?;
+
+    let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
+
+    vault.insert(location.clone(), keypair);
+
+    Ok(location)
+  }
+
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
+
+    match location.key_type {
+      KeyType::Ed25519 => {
         let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
         private_key.zeroize();
-        let public_key: PublicKey = keypair.public().clone();
 
-        vault.insert(location.clone(), keypair);
-        Ok(public_key)
+        vault.insert(location.to_owned(), keypair);
+
+        Ok(())
       }
-      MethodType::X25519KeyAgreementKey2019 => {
+      KeyType::X25519 => {
         let keypair: KeyPair = KeyPair::try_from_private_key_bytes(KeyType::X25519, private_key.as_ref())
           .map_err(|err| Error::InvalidPrivateKey(err.to_string()))?;
         private_key.zeroize();
-        let public_key: PublicKey = keypair.public().clone();
 
-        vault.insert(location.clone(), keypair);
-        Ok(public_key)
+        vault.insert(location.to_owned(), keypair);
+
+        Ok(())
       }
     }
   }
@@ -126,7 +168,7 @@ impl Storage for MemStore {
     Ok(false)
   }
 
-  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
@@ -134,13 +176,11 @@ impl Storage for MemStore {
     Ok(keypair.public().clone())
   }
 
-  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
+  async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
     let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
 
-    vault.remove(location);
-
-    Ok(())
+    Ok(vault.remove(location).is_some())
   }
 
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
@@ -148,45 +188,41 @@ impl Storage for MemStore {
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
-    match location.method() {
-      MethodType::Ed25519VerificationKey2018 => {
+    match location.key_type {
+      KeyType::Ed25519 => {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
         let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
         let signature: Signature = Signature::new(signature.to_vec());
         Ok(signature)
       }
-      MethodType::X25519KeyAgreementKey2019 => {
+      KeyType::X25519 => {
         return Err(identity_did::Error::InvalidMethodType.into());
       }
     }
   }
 
-  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
+  async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     self.chain_states.read().map(|states| states.get(did).cloned())
   }
 
-  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
+  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
     self.chain_states.write()?.insert(did.clone(), chain_state.clone());
 
     Ok(())
   }
 
-  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
-    self.states.read().map(|states| states.get(did).cloned())
+  async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
+    self.documents.read().map(|documents| documents.get(did).cloned())
   }
 
-  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
-    self.states.write()?.insert(did.clone(), state.clone());
+  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
+    self.documents.write()?.insert(did.clone(), document.clone());
 
     Ok(())
   }
 
-  async fn purge(&self, did: &IotaDID) -> Result<()> {
-    let _ = self.states.write()?.remove(did);
-    let _ = self.vaults.write()?.remove(did);
-    let _ = self.chain_states.write()?.remove(did);
-
+  async fn flush_changes(&self) -> Result<()> {
     Ok(())
   }
 }
@@ -196,8 +232,9 @@ impl Debug for MemStore {
     if self.expand {
       f.debug_struct("MemStore")
         .field("chain_states", &self.chain_states)
-        .field("states", &self.states)
+        .field("states", &self.documents)
         .field("vaults", &self.vaults)
+        .field("index", &self.index)
         .finish()
     } else {
       f.write_str("MemStore")
