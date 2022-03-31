@@ -25,18 +25,18 @@ export class MemStore implements Storage {
 
         const keyLocation: KeyLocation = new KeyLocation(KeyType.Ed25519, fragment, keyPair.public());
 
-        let did: DID = new DID(keyPair.public(), network);
+        const did: DID = new DID(keyPair.public(), network);
 
         if (this._vaults.has(did.toString())) {
             throw new Error("identity already exists");
         }
 
-        const vault: Map<string, KeyPair> | undefined = this._vaults.get(did.toString());
+        const vault = this._vaults.get(did.toString());
 
         if (vault) {
             vault.set(keyLocation.toString(), keyPair);
         } else {
-            let newVault = new Map([[keyLocation.toString(), keyPair]]);
+            const newVault = new Map([[keyLocation.toString(), keyPair]]);
             this._vaults.set(did.toString(), newVault);
         }
 
@@ -71,7 +71,7 @@ export class MemStore implements Storage {
         if (vault) {
             vault.set(keyLocation.toString(), keyPair);
         } else {
-            let newVault = new Map([[keyLocation.toString(), keyPair]]);
+            const newVault = new Map([[keyLocation.toString(), keyPair]]);
             this._vaults.set(did.toString(), newVault);
         }
 
@@ -86,7 +86,7 @@ export class MemStore implements Storage {
         if (vault) {
             vault.set(keyLocation.toString(), keyPair);
         } else {
-            let newVault = new Map([[keyLocation.toString(), keyPair]]);
+            const newVault = new Map([[keyLocation.toString(), keyPair]]);
             this._vaults.set(did.toString(), newVault);
         }
     }
@@ -107,6 +107,7 @@ export class MemStore implements Storage {
 
         if (vault) {
             const keyPair: KeyPair | undefined = vault.get(keyLocation.toString());
+
             if (keyPair) {
                 return keyPair.public()
             } else {
@@ -138,7 +139,7 @@ export class MemStore implements Storage {
             const keyPair: KeyPair | undefined = vault.get(keyLocation.toString());
 
             if (keyPair) {
-                let signature: Uint8Array = Ed25519.sign(data, keyPair.private());
+                const signature: Uint8Array = Ed25519.sign(data, keyPair.private());
                 return new Signature(signature)
             } else {
                 throw new Error('Key location not found')
