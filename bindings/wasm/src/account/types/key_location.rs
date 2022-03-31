@@ -42,9 +42,9 @@ impl WasmKeyLocation {
   /// Returns the canonical string representation of the location.
   ///
   /// This should be used as the representation for storage keys.
-  #[wasm_bindgen(js_name = canonicalRepr)]
-  pub fn canonical_repr(&self) -> String {
-    self.0.canonical_repr()
+  #[wasm_bindgen]
+  pub fn canonical(&self) -> String {
+    self.0.canonical()
   }
 
   /// Returns a copy of the key type of the key location.
