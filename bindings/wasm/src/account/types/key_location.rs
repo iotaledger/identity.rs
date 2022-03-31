@@ -26,17 +26,15 @@ pub struct WasmKeyLocation(pub(crate) KeyLocation);
 impl WasmKeyLocation {
   /// Create a location from a `KeyType`, the fragment of a verification method
   /// and the bytes of a public key.
-  #[wasm_bindgen(constructor)]
-  pub fn new(key_type: WasmKeyType, fragment: String, public_key: Vec<u8>) -> WasmKeyLocation {
-    WasmKeyLocation(KeyLocation::new(key_type.into(), fragment, public_key.as_ref()))
+  #[allow(non_snake_case)]
+  pub fn new(keyType: WasmKeyType, fragment: String, publicKey: Vec<u8>) -> WasmKeyLocation {
+    WasmKeyLocation(KeyLocation::new(keyType.into(), fragment, publicKey.as_ref()))
   }
 
   /// Obtain the location of a verification method's key in storage.
   #[wasm_bindgen(js_name = fromVerificationMethod)]
   pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmKeyLocation> {
-    Ok(WasmKeyLocation(
-      KeyLocation::from_verification_method(&method.0).wasm_result()?,
-    ))
+    KeyLocation::from_verification_method(&method.0).map(WasmKeyLocation).wasm_result()
   }
 
   /// Returns the canonical string representation of the location.

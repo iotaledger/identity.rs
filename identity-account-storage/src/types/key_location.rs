@@ -101,24 +101,44 @@ mod tests {
 
   use super::KeyLocation;
 
-  // This test should be matched by a test with equivalent test vector in Wasm
+  // These same test vector should also be tested in Wasm
   // to ensure hashes are consistent across architectures.
-  #[test]
-  fn test_hash_is_consistent() {
-    let test_vector_1: [u8; 32] = [
+
+  static TEST_VECTOR_1: ([u8; 32], &'static str) = (
+    [
       187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
       182, 240, 2, 150, 78, 110, 218,
-    ];
+    ],
+    "74874706796298672",
+  );
 
-    let test_vector_2: [u8; 32] = [
+  static TEST_VECTOR_2: ([u8; 32], &'static str) = (
+    [
       125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16,
       39, 141, 151, 100, 163, 138, 222,
-    ];
+    ],
+    "10201576743536852223",
+  );
 
-    let location_1 = KeyLocation::new(KeyType::Ed25519, "".to_owned(), &test_vector_1);
-    let location_2 = KeyLocation::new(KeyType::Ed25519, "".to_owned(), &test_vector_2);
+  #[test]
+  fn test_key_location_canonical_representation() {
+    for (test_vector, expected_hash) in [TEST_VECTOR_1, TEST_VECTOR_2] {
+      let fragment: String = rand::Rng::sample_iter(rand::thread_rng(), rand::distributions::Alphanumeric)
+        .take(32)
+        .map(char::from)
+        .collect::<String>();
 
-    assert_eq!(location_1.key_hash, "74874706796298672");
-    assert_eq!(location_2.key_hash, "10201576743536852223");
+      let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.clone(), &test_vector);
+
+      let canonical_repr: String = location.canonical();
+
+      let mut parts = canonical_repr.split(':');
+
+      let fragment_str: &str = parts.next().unwrap();
+      let key_hash_str: &str = parts.next().unwrap();
+
+      assert_eq!(fragment_str, &fragment);
+      assert_eq!(key_hash_str, expected_hash);
+    }
   }
 }
