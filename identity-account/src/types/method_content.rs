@@ -4,7 +4,6 @@
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::verification::MethodType;
 
 /// Method content for creating new verification methods.
 #[non_exhaustive]
@@ -41,15 +40,16 @@ pub enum MethodContent {
 }
 
 impl MethodContent {
-  /// Returns the [`MethodType`] associated with the `MethodContent` variant.
-  pub(crate) fn method_type(&self) -> MethodType {
+  /// Returns the [`MethodType`](identity_did::verification::MethodType) associated with the `MethodContent` variant.
+  #[cfg(test)]
+  pub(crate) fn method_type(&self) -> identity_did::verification::MethodType {
     match self {
-      MethodContent::GenerateEd25519 => MethodType::Ed25519VerificationKey2018,
-      MethodContent::PrivateEd25519(_) => MethodType::Ed25519VerificationKey2018,
-      MethodContent::PublicEd25519(_) => MethodType::Ed25519VerificationKey2018,
-      MethodContent::GenerateX25519 => MethodType::X25519KeyAgreementKey2019,
-      MethodContent::PrivateX25519(_) => MethodType::X25519KeyAgreementKey2019,
-      MethodContent::PublicX25519(_) => MethodType::X25519KeyAgreementKey2019,
+      MethodContent::GenerateEd25519 => identity_did::verification::MethodType::Ed25519VerificationKey2018,
+      MethodContent::PrivateEd25519(_) => identity_did::verification::MethodType::Ed25519VerificationKey2018,
+      MethodContent::PublicEd25519(_) => identity_did::verification::MethodType::Ed25519VerificationKey2018,
+      MethodContent::GenerateX25519 => identity_did::verification::MethodType::X25519KeyAgreementKey2019,
+      MethodContent::PrivateX25519(_) => identity_did::verification::MethodType::X25519KeyAgreementKey2019,
+      MethodContent::PublicX25519(_) => identity_did::verification::MethodType::X25519KeyAgreementKey2019,
     }
   }
 

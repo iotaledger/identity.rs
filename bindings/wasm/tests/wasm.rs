@@ -8,6 +8,7 @@ use identity::core::Object;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::iota_core::IotaDID;
+use identity_wasm::account::types::WasmKeyLocation;
 use js_sys::Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -444,4 +445,28 @@ fn test_validations() {
     WasmFailFast::FirstError,
   )
   .is_ok());
+}
+
+// This test should be matched by a test with equivalent test vector in Rust
+// to ensure hashes are consistent across architectures.
+#[wasm_bindgen_test]
+fn test_hash_is_consistent() {
+  let test_vector_1: [u8; 32] = [
+    187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
+    182, 240, 2, 150, 78, 110, 218,
+  ];
+
+  let test_vector_2: [u8; 32] = [
+    125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16, 39,
+    141, 151, 100, 163, 138, 222,
+  ];
+
+  let location_1 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_1.to_vec());
+  let location_2 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_2.to_vec());
+
+  assert_eq!(location_1.to_string().split(':').last().unwrap(), "74874706796298672");
+  assert_eq!(
+    location_2.to_string().split(':').last().unwrap(),
+    "10201576743536852223"
+  );
 }

@@ -111,8 +111,6 @@ pub mod account_storage {
   pub use identity_account_storage::error::*;
   pub use identity_account_storage::identity::*;
   pub use identity_account_storage::storage::*;
-  #[cfg(feature = "stronghold")]
-  pub use identity_account_storage::stronghold::*;
   pub use identity_account_storage::types::*;
   pub use identity_account_storage::utils::*;
 }
