@@ -5,18 +5,14 @@ import { ChainState, DID, Document, Ed25519, KeyLocation, KeyPair, KeyType, Sign
 
 // TODO: add thorough comments explaining what this is and how to use it with an Account.
 export class MemStore implements Storage {
-    // TODO: check if map key comparison works as-expected.
-    //       I.e. does a parsed/deserialized DID map to the same DID object?
-    private _chainStates: Map<DID, ChainState>;
-    private _documents: Map<DID, Document>;
-    private _vaults: Map<DID, Map<KeyLocation, KeyPair>>;
-    private _list: Set<DID>;
+    private _chainStates: Map<string, ChainState>;
+    private _documents: Map<string, Document>;
+    private _vaults: Map<string, Map<string, KeyPair>>;
 
     constructor() {
         this._chainStates = new Map();
         this._documents = new Map();
         this._vaults = new Map();
-        this._list = new Set();
     }
 
     public async didCreate(network: string, fragment: string, privateKey: Uint8Array | undefined | null): Promise<[DID, KeyLocation]> {
@@ -27,35 +23,31 @@ export class MemStore implements Storage {
             keyPair = new KeyPair(KeyType.Ed25519);
         }
 
-
         const keyLocation: KeyLocation = new KeyLocation(KeyType.Ed25519, fragment, keyPair.public());
 
         let did: DID = new DID(keyPair.public(), network);
 
-        if (this._list.has(did)) {
+        if (this._vaults.has(did.toString())) {
             throw new Error("identity already exists");
-        } else {
-            this._list.add(did);
         }
 
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault: Map<string, KeyPair> | undefined = this._vaults.get(did.toString());
 
         if (vault) {
-            vault.set(keyLocation, keyPair);
+            vault.set(keyLocation.toString(), keyPair);
         } else {
-            let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this._vaults.set(did, newVault);
+            let newVault = new Map([[keyLocation.toString(), keyPair]]);
+            this._vaults.set(did.toString(), newVault);
         }
 
         return [did, keyLocation];
     }
 
     public async didPurge(did: DID): Promise<boolean> {
-        if (this._list.has(did)) {
-            this._list.delete(did);
-            this._chainStates.delete(did);
-            this._documents.delete(did);
-            this._vaults.delete(did);
+        if (this._vaults.has(did.toString())) {
+            this._chainStates.delete(did.toString());
+            this._documents.delete(did.toString());
+            this._vaults.delete(did.toString());
             return true;
         }
 
@@ -63,24 +55,24 @@ export class MemStore implements Storage {
     }
 
     public async didExists(did: DID): Promise<boolean> {
-        return this._list.has(did);
+        return this._vaults.has(did.toString());
     }
 
     public async didList(): Promise<Array<DID>> {
-        return Array.from(this._list);
+        return Array.from(this._vaults.keys()).map((did) => DID.parse(did));
     }
 
     public async keyGenerate(did: DID, keyType: KeyType, fragment: string): Promise<KeyLocation> {
         const keyPair: KeyPair = new KeyPair(keyType);
         const keyLocation: KeyLocation = new KeyLocation(KeyType.Ed25519, fragment, keyPair.public());
 
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
 
         if (vault) {
-            vault.set(keyLocation, keyPair);
+            vault.set(keyLocation.toString(), keyPair);
         } else {
-            let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this._vaults.set(did, newVault);
+            let newVault = new Map([[keyLocation.toString(), keyPair]]);
+            this._vaults.set(did.toString(), newVault);
         }
 
         return keyLocation;
@@ -89,31 +81,32 @@ export class MemStore implements Storage {
     public async keyInsert(did: DID, keyLocation: KeyLocation, privateKey: Uint8Array): Promise<void> {
         const keyPair: KeyPair = KeyPair.tryFromPrivateKeyBytes(keyLocation.keyType(), privateKey);
 
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
 
         if (vault) {
-            vault.set(keyLocation, keyPair);
+            vault.set(keyLocation.toString(), keyPair);
         } else {
-            let newVault: Map<KeyLocation, KeyPair> = new Map([[keyLocation, keyPair]]);
-            this._vaults.set(did, newVault);
+            let newVault = new Map([[keyLocation.toString(), keyPair]]);
+            this._vaults.set(did.toString(), newVault);
         }
     }
 
     public async keyExists(did: DID, keyLocation: KeyLocation): Promise<boolean> {
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
 
         if (vault) {
-            return vault.has(keyLocation);
+            return vault.has(keyLocation.toString());
         } else {
             return false
         }
     }
 
     public async keyPublic(did: DID, keyLocation: KeyLocation): Promise<Uint8Array> {
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
+
 
         if (vault) {
-            const keyPair: KeyPair | undefined = vault.get(keyLocation);
+            const keyPair: KeyPair | undefined = vault.get(keyLocation.toString());
             if (keyPair) {
                 return keyPair.public()
             } else {
@@ -125,10 +118,10 @@ export class MemStore implements Storage {
     }
 
     public async keyDelete(did: DID, keyLocation: KeyLocation): Promise<boolean> {
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
 
         if (vault) {
-            return vault.delete(keyLocation);
+            return vault.delete(keyLocation.toString());
         } else {
             return false;
         }
@@ -139,10 +132,10 @@ export class MemStore implements Storage {
             throw new Error('Unsupported Method')
         }
 
-        const vault: Map<KeyLocation, KeyPair> | undefined = this._vaults.get(did);
+        const vault = this._vaults.get(did.toString());
 
         if (vault) {
-            const keyPair: KeyPair | undefined = vault.get(keyLocation);
+            const keyPair: KeyPair | undefined = vault.get(keyLocation.toString());
 
             if (keyPair) {
                 let signature: Uint8Array = Ed25519.sign(data, keyPair.private());
@@ -156,19 +149,19 @@ export class MemStore implements Storage {
     }
 
     public async chainStateGet(did: DID): Promise<ChainState | null | undefined> {
-        return this._chainStates.get(did);
+        return this._chainStates.get(did.toString());
     }
 
     public async chainStateSet(did: DID, chainState: ChainState): Promise<void> {
-        this._chainStates.set(did, chainState);
+        this._chainStates.set(did.toString(), chainState);
     }
 
     public async documentGet(did: DID): Promise<Document | null | undefined> {
-        return this._documents.get(did)
+        return this._documents.get(did.toString())
     }
 
     public async documentSet(did: DID, document: Document): Promise<void> {
-        this._documents.set(did, document);
+        this._documents.set(did.toString(), document);
     }
 
     public async flushChanges(): Promise<void> { }
