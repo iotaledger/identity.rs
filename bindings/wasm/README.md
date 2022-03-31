@@ -65,30 +65,23 @@ cat \
 const identity = require('@iota/identity-wasm/node')
 
 async function main() {
-    // Choose the Tangle network to publish on.
-    const network = identity.Network.mainnet();
-    // const network = identity.Network.devnet();
 
-    // Generate a new Ed25519 KeyPair.
-    const key = new identity.KeyPair(identity.KeyType.Ed25519);
+    // The creation step generates a keypair, builds an identity
+    // and publishes it to the IOTA mainnet.
+    const builder = new identity.AccountBuilder();
+    const account = await builder.createIdentity();
 
-    // Create a new DID Document using the KeyPair for the default VerificationMethod.
-    const doc = new identity.Document(key, network.name());
+    // Retrieve the DID of the newly created identity.
+    const did = account.did();
 
-    // Sign the DID Document with the private key.
-    doc.signSelf(key, doc.defaultSigningMethod().id());
+    // Print the DID of the created Identity.
+    console.log(did.toString())
 
-    // Create a default client instance for the network.
-    const client = await identity.Client.fromConfig({network: network});
-    
-    // Publish the DID Document to the IOTA Tangle.
-    const receipt = await client.publishDocument(doc);
+    // Print the local state of the DID Document
+    console.log(account.document());
 
-    // The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/identity-resolver/<did>
-    const explorer = identity.ExplorerUrl.mainnet();
-    // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
-    console.log("Tangle Message Receipt:", receipt);
-    console.log("Tangle Explorer Url:", explorer.resolverUrl(doc.id()));
+    // Print the Explorer URL for the DID.
+    console.log(`Explorer Url:`, identity.ExplorerUrl.mainnet().resolverUrl(did));
 }
 
 main()
@@ -152,22 +145,43 @@ new CopyWebPlugin({
 import * as identity from "@iota/identity-wasm/web";
 
 identity.init().then(() => {
-  const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = new identity.Document(key)
-  // const doc = new identity.Document(key, "dev") // if using the devnet
-  console.log("Key Pair: ", key)
-  console.log("DID Document: ", doc)
+
+  // The creation step generates a keypair, builds an identity
+  // and publishes it to the IOTA mainnet.
+  let builder = new identity.AccountBuilder();
+  let account = await builder.createIdentity();
+
+  // Retrieve the DID of the newly created identity.
+  const did = account.did();
+
+  // Print the DID of the created Identity.
+  console.log(did.toString())
+
+  // Print the local state of the DID Document
+  console.log(account.document());
+
 });
 
 // or
 
 (async () => {
+  
   await identity.init()
-  const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = new identity.Document(key)
-  // const doc = new identity.Document(key, "dev") // if using the devnet
-  console.log("Key Pair: ", key)
-  console.log("DID Document: ", doc)
+    
+  // The creation step generates a keypair, builds an identity
+  // and publishes it to the IOTA mainnet.
+  let builder = new identity.AccountBuilder();
+  let account = await builder.createIdentity();
+
+  // Retrieve the DID of the newly created identity.
+  const did = account.did();
+
+  // Print the DID of the created Identity.
+  console.log(did.toString())
+
+  // Print the local state of the DID Document
+  console.log(account.document());
+  
 })()
 
 // Default path is "identity_wasm_bg.wasm", but you can override it like this
