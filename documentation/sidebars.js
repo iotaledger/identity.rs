@@ -50,7 +50,6 @@ module.exports = {
                 'verifiable_credentials/overview',
                 'verifiable_credentials/create',
                 'verifiable_credentials/revoke',
-                'verifiable_credentials/merkle_key_collection',
                 'verifiable_credentials/verifiable_presentations',
             ],
             'DID Communication': [
@@ -114,7 +113,6 @@ module.exports = {
               items: [
                 'specs/did/overview',
                 'specs/did/iota_did_method_spec',
-                'specs/did/merkle_key_collection',
               ]
             },
             {
@@ -155,6 +153,7 @@ module.exports = {
         },
         'glossary',
         'contribute',
+        'workflow',
         'contact',
         'faq'
     ],

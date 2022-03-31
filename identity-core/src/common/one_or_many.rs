@@ -1,14 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
-use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use core::hash::Hash;
 use core::mem::replace;
 use core::ops::Deref;
 use core::slice::from_ref;
+
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
 /// A generic container that stores exactly one or many (0+) values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -74,7 +76,11 @@ impl<T> OneOrMany<T> {
         Self::Many(_) => unreachable!(),
       },
       Self::Many(ref mut inner) => {
-        inner.push(value);
+        if inner.is_empty() {
+          *self = Self::One(value);
+        } else {
+          inner.push(value);
+        }
       }
     }
   }
@@ -102,23 +108,10 @@ impl<T> Debug for OneOrMany<T>
 where
   T: Debug,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::One(inner) => Debug::fmt(inner, f),
       Self::Many(inner) => Debug::fmt(inner, f),
-    }
-  }
-}
-
-impl<T> Display for OneOrMany<T>
-where
-  T: Display,
-  Vec<T>: Display,
-{
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    match self {
-      Self::One(inner) => Display::fmt(inner, f),
-      Self::Many(inner) => Display::fmt(inner, f),
     }
   }
 }
@@ -168,6 +161,24 @@ impl<T> From<OneOrMany<T>> for Vec<T> {
   }
 }
 
+impl<T> FromIterator<T> for OneOrMany<T> {
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    let mut iter = iter.into_iter();
+    // if the iterator contains one element or less and a correct size hint is provided we can save an allocation
+    let size_hint = iter.size_hint();
+    if size_hint.1.is_some() && (1, Some(1)) >= size_hint {
+      let mut this = iter.next().map(Self::One).unwrap_or_else(|| Self::Many(Vec::new()));
+      // if the hinted upper bound was incorrect we need to correct for it
+      for next in iter.by_ref() {
+        this.push(next);
+      }
+      this
+    } else {
+      iter.into_iter().collect::<Vec<T>>().into()
+    }
+  }
+}
+
 // =============================================================================
 // Iterator
 // =============================================================================
@@ -189,5 +200,62 @@ impl<'a, T> Iterator for OneOrManyIter<'a, T> {
   fn next(&mut self) -> Option<Self::Item> {
     self.index += 1;
     self.inner.get(self.index - 1)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn from_iterator_empty() {
+    let empty_vec = Vec::<u32>::new();
+    assert_eq!(OneOrMany::from_iter(empty_vec.clone()), OneOrMany::Many(empty_vec));
+  }
+
+  #[test]
+  fn from_iterator_single() {
+    let single_item = [1];
+    assert_eq!(OneOrMany::from_iter(single_item), OneOrMany::One(1));
+  }
+
+  #[test]
+  fn from_iterator_many() {
+    let letters = ["a", "b", "c", "d"];
+    assert_eq!(OneOrMany::from_iter(letters), OneOrMany::Many(vec!["a", "b", "c", "d"]));
+  }
+
+  #[test]
+  fn from_iterator_iter() {
+    let none = OneOrMany::Many(Vec::<u32>::new());
+    assert_eq!(OneOrMany::from_iter(none.iter()), OneOrMany::Many(Vec::<&u32>::new()));
+
+    let one = OneOrMany::One(42);
+    assert_eq!(OneOrMany::from_iter(one.iter()), OneOrMany::One(&42));
+
+    let two = OneOrMany::Many(vec![0, 1]);
+    assert_eq!(OneOrMany::from_iter(two.iter()), OneOrMany::Many(vec![&0, &1]));
+  }
+
+  #[test]
+  fn push_from_zero_elements() {
+    let mut collection = OneOrMany::Many(Vec::<u32>::new());
+    collection.push(42);
+    assert_eq!(collection, OneOrMany::One(42));
+  }
+
+  #[test]
+  fn push_one_element() {
+    let mut collection = OneOrMany::One(42);
+    collection.push(42);
+    assert_eq!(collection, OneOrMany::Many(vec![42, 42]));
+  }
+
+  #[test]
+  fn push_many_elements() {
+    let v: Vec<i32> = (0..42).collect();
+    let mut collection = OneOrMany::Many(v);
+    collection.push(42);
+    assert_eq!(collection, OneOrMany::Many((0..=42).collect()));
   }
 }

@@ -1,16 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use core::str::FromStr;
 use std::hash::Hash;
 
 use did_url::DID as BaseDIDUrl;
 
+use identity_core::common::KeyComparable;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
@@ -58,6 +58,8 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
 
   /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
+  ///
+  /// See [`DIDUrl::join`].
   fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
   where
     Self: Sized;
@@ -192,13 +194,13 @@ impl TryFrom<BaseDIDUrl> for CoreDID {
 }
 
 impl Debug for CoreDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.as_str()))
   }
 }
 
 impl Display for CoreDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.as_str()))
   }
 }
@@ -277,6 +279,15 @@ impl PartialEq<&'_ str> for CoreDID {
 impl PartialEq<&CoreDID> for CoreDID {
   fn eq(&self, other: &&CoreDID) -> bool {
     self == other
+  }
+}
+
+impl KeyComparable for CoreDID {
+  type Key = CoreDID;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self
   }
 }
 

@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - epic/*
     paths:
       - '.github/workflows/format.yml'
       - '**.rs'
@@ -26,7 +27,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2021-09-07
+          toolchain: nightly-2022-03-11
           override: true
           components: rustfmt
 
@@ -45,6 +46,12 @@ jobs:
         with:
           command: fmt
           args: --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
+
+      - name: stronghold-nodejs fmt check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all -- --check
 
       - name: libjose fmt check
         uses: actions-rs/cargo@v1

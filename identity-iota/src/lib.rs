@@ -1,6 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![forbid(unsafe_code)]
+#![allow(deprecated)]
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]
@@ -17,22 +19,13 @@
   // clippy::missing_errors_doc,
 )]
 
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate log;
-
-#[macro_use]
-extern crate serde;
+pub use self::error::Error;
+pub use self::error::Result;
 
 mod resolver;
 
 pub mod chain;
 pub mod credential;
-pub mod did;
+pub mod document;
 pub mod error;
 pub mod tangle;
-
-pub use self::error::Error;
-pub use self::error::Result;

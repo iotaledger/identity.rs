@@ -85,6 +85,15 @@ impl<T> CredentialBuilder<T> {
     self
   }
 
+  /// Adds the values from the iterator to the `credentialSubject` set.
+  #[must_use]
+  pub fn subjects<I: IntoIterator<Item = Subject>>(mut self, values: I) -> Self {
+    for value in values {
+      self.subject.push(value);
+    }
+    self
+  }
+
   /// Sets the value of the `Credential` `issuer`.
   #[must_use]
   pub fn issuer(mut self, value: impl Into<Issuer>) -> Self {

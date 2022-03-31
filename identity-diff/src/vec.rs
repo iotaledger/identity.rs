@@ -6,7 +6,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
 
 /// The Diff Type for `Vec`.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
@@ -108,7 +107,7 @@ where
 
 /// Debug trait for `DiffVec<T>`
 impl<T: Diff> Debug for DiffVec<T> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "DiffVec ")?;
     f.debug_list().entries(self.0.iter()).finish()
   }
@@ -116,7 +115,7 @@ impl<T: Diff> Debug for DiffVec<T> {
 
 /// Debug trait for `InnerVec<T>`
 impl<T: Diff> Debug for InnerVec<T> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self {
       Self::Change { index, item } => f
         .debug_struct("Change")

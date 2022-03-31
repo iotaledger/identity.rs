@@ -1,14 +1,13 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod document;
-mod properties;
-mod traits;
+pub use self::document_signer::DocumentSigner;
+pub use self::properties::VerifiableProperties;
+pub use self::verifier_options::VerifierOptions;
 
-pub use self::document::DocumentSigner;
-pub use self::document::DocumentVerifier;
-pub use self::properties::Properties;
-pub use self::traits::Revocation;
+mod document_signer;
+mod properties;
+mod verifier_options;
 
 #[cfg(test)]
 mod tests;

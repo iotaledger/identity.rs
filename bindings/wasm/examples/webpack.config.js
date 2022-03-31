@@ -1,4 +1,5 @@
 const path = require('path');
+const glob = require('glob');
 const CopyWebPlugin = require('copy-webpack-plugin');
 const serverConfig = {
     target: 'node',
@@ -23,11 +24,14 @@ const serverConfig = {
 
 const serverTestConfig = {
     target: 'node',
-    entry: './examples/src/test.js',
+    entry: glob.sync('./examples/src/tests/node/**.js').reduce(function(obj, el){
+        obj[path.parse(el).name] = el;
+        return obj
+     },{}),
     devtool: "source-map",
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'test.js',
+        filename: 'tests/node/[name].js'
     },
     externals: [
         function ({ context, request }, callback) {

@@ -5,6 +5,8 @@
 
 mod builder;
 mod service;
+mod service_endpoint;
 
 pub use self::builder::ServiceBuilder;
 pub use self::service::Service;
+pub use self::service_endpoint::ServiceEndpoint;

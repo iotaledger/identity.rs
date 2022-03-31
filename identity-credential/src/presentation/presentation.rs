@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
+use serde::Serialize;
+
 use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
+use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
-use serde::Serialize;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
@@ -54,7 +54,7 @@ pub struct Presentation<T = Object, U = Object> {
   pub properties: T,
   /// Proof(s) used to verify a `Presentation`
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
+  pub proof: Option<Proof>,
 }
 
 impl<T, U> Presentation<T, U> {
@@ -116,12 +116,12 @@ impl<T, U> Presentation<T, U> {
   }
 
   /// Returns a reference to the `Presentation` proof.
-  pub fn proof(&self) -> Option<&Signature> {
+  pub fn proof(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 
   /// Returns a mutable reference to the `Presentation` proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
+  pub fn proof_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
@@ -131,29 +131,25 @@ where
   T: Serialize,
   U: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    self.fmt_json(f)
   }
 }
 
-impl<T, U> TrySignature for Presentation<T, U> {
-  fn signature(&self) -> Option<&Signature> {
+impl<T, U> GetSignature for Presentation<T, U> {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl<T, U> TrySignatureMut for Presentation<T, U> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+impl<T, U> GetSignatureMut for Presentation<T, U> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl<T, U> SetSignature for Presentation<T, U> {
-  fn set_signature(&mut self, value: Signature) {
+  fn set_signature(&mut self, value: Proof) {
     self.proof.replace(value);
   }
 }
@@ -164,10 +160,12 @@ impl<T> TryMethod for Presentation<T> {
 
 #[cfg(test)]
 mod tests {
-  use super::Presentation;
+  use identity_core::convert::FromJson;
+
   use crate::credential::Credential;
   use crate::credential::Subject;
-  use identity_core::convert::FromJson;
+
+  use super::Presentation;
 
   const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
 

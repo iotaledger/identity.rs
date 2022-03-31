@@ -2,7 +2,7 @@
 name = "libjose"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
-edition = "2018"
+edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jwm", "jws", "jwt"]
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ zeroize = { version = "1.2", default-features = false, features = ["zeroize_deri
 curve25519-dalek = { version = "3.0", default-features = false }
 num-bigint-dig = { version = "0.7", default-features = false }
 rand = { version = "0.8", default-features = false, features = ["getrandom"] }
-rsa = { version = "0.4", default-features = false, features = ["pem", "std"] }
+rsa = { version = "0.5", default-features = false, features = ["pem", "std"] }
 sha-1 = { version = "0.9", default-features = false }
 subtle = { version = "2.4", default-features = false }
 

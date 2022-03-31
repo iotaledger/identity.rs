@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! The `verification` module contains code for verifying the correctness of core DID-related types.
@@ -8,8 +8,8 @@
 
 mod builder;
 mod method_data;
-mod method_query;
 mod method_ref;
+mod method_relationship;
 mod method_scope;
 mod method_type;
 mod traits;
@@ -17,8 +17,8 @@ mod verification_method;
 
 pub use self::builder::MethodBuilder;
 pub use self::method_data::MethodData;
-pub use self::method_query::MethodQuery;
 pub use self::method_ref::MethodRef;
+pub use self::method_relationship::MethodRelationship;
 pub use self::method_scope::MethodScope;
 pub use self::method_type::MethodType;
 pub use self::traits::MethodUriType;

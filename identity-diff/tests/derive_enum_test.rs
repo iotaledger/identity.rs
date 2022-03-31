@@ -1,7 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(feature = "derive")]
 #![allow(unused_variables)]
+#![allow(deprecated)]
 
 use identity_diff::Diff;
 use serde::Deserialize;

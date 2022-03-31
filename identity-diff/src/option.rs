@@ -6,7 +6,6 @@ use serde::Serialize;
 
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
 
 use crate::Diff;
 
@@ -41,7 +40,7 @@ where
   fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
     match (self, diff) {
       (None, DiffOption::None) => Ok(None),
-      (Some(_), DiffOption::None) => Ok(self.clone()),
+      (Some(_), DiffOption::None) => Ok(None),
       (None, DiffOption::Some(ref d)) => Ok(Some(<T>::from_diff(d.clone())?)),
       (Some(t), DiffOption::Some(ref d)) => Ok(Some(t.merge(d.clone())?)),
     }
@@ -66,7 +65,7 @@ where
 
 /// Debug implementation for `DiffOption<T>`.
 impl<T: Diff> std::fmt::Debug for DiffOption<T> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self {
       Self::Some(d) => write!(f, "DiffOption::Some({:#?})", d),
       Self::None => write!(f, "DiffOption::None"),

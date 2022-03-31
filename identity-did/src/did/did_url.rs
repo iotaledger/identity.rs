@@ -1,11 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use core::str::FromStr;
 use std::cmp::Ordering;
 use std::convert::TryInto;
@@ -14,6 +13,7 @@ use std::hash::Hasher;
 
 use did_url::DID as BaseDIDUrl;
 
+use identity_core::common::KeyComparable;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
@@ -28,15 +28,15 @@ pub type CoreDIDUrl = DIDUrl<CoreDID>;
 ///
 /// E.g. "did:iota:H3C2AVvLMv6gmMNam3uVAjZar3cJCwDwnZn6z3wXmqPV/path?query1=a&query2=b#fragment"
 ///
-/// [DID Url](https://www.w3.org/TR/did-core/#did-url-syntax)
+/// [DID Url]: https://www.w3.org/TR/did-core/#did-url-syntax
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(into = "String", try_from = "String")]
-pub struct DIDUrl<T>
+pub struct DIDUrl<D>
 where
   Self: Sized,
-  T: DID + Sized,
+  D: DID + Sized,
 {
-  did: T,
+  did: D,
   url: RelativeDIDUrl,
 }
 
@@ -49,10 +49,10 @@ where
 /// - `"?query"`
 /// - `"#fragment"`
 ///
-/// [relative DID Url](https://www.w3.org/TR/did-core/#relative-did-urls)
-/// [path](https://www.w3.org/TR/did-core/#path)
-/// [query](https://www.w3.org/TR/did-core/#query)
-/// [fragment](https://www.w3.org/TR/did-core/#fragment)
+/// [relative DID Url]: https://www.w3.org/TR/did-core/#relative-did-urls
+/// [path]: https://www.w3.org/TR/did-core/#path
+/// [query]: https://www.w3.org/TR/did-core/#query
+/// [fragment]: https://www.w3.org/TR/did-core/#fragment
 #[derive(Clone, Default)]
 pub struct RelativeDIDUrl {
   // Path including the leading '/'
@@ -64,7 +64,7 @@ pub struct RelativeDIDUrl {
 }
 
 impl RelativeDIDUrl {
-  /// Create an empty [RelativeDIDUrl].
+  /// Create an empty [`RelativeDIDUrl`].
   pub fn new() -> Self {
     Self {
       path: None,
@@ -80,16 +80,16 @@ impl RelativeDIDUrl {
       && self.fragment.as_deref().unwrap_or_default().is_empty()
   }
 
-  /// Return the [path] component, including the leading '/'.
+  /// Return the [path](https://www.w3.org/TR/did-core/#path) component,
+  /// including the leading '/'.
   ///
   /// E.g. `"/path/sub-path/resource"`
-  ///
-  /// [path](https://www.w3.org/TR/did-core/#path)
   pub fn path(&self) -> Option<&str> {
     self.path.as_deref()
   }
 
-  /// Attempt to set the [path] component. The path must start with a '/'.
+  /// Attempt to set the [path](https://www.w3.org/TR/did-core/#path) component.
+  /// The path must start with a '/'.
   ///
   /// # Example
   ///
@@ -100,8 +100,6 @@ impl RelativeDIDUrl {
   /// assert_eq!(url.path().unwrap(), "/path/sub-path/resource");
   /// assert_eq!(url.to_string(), "/path/sub-path/resource");
   /// ```
-  ///
-  /// [path](https://www.w3.org/TR/did-core/#path)
   pub fn set_path(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.path = value
       .filter(|s| !s.is_empty())
@@ -116,16 +114,16 @@ impl RelativeDIDUrl {
     Ok(())
   }
 
-  /// Return the [path] component, excluding the leading '?' delimiter.
+  /// Return the [path](https://www.w3.org/TR/did-core/#query) component,
+  /// excluding the leading '?' delimiter.
   ///
   /// E.g. `"?query1=a&query2=b" -> "query1=a&query2=b"`
-  ///
-  /// [query](https://www.w3.org/TR/did-core/#query)
   pub fn query(&self) -> Option<&str> {
-    self.query.as_deref().map(|query| query.strip_prefix('?')).flatten()
+    self.query.as_deref().and_then(|query| query.strip_prefix('?'))
   }
 
-  /// Attempt to set the [query] component. A leading '?' is ignored.
+  /// Attempt to set the [query](https://www.w3.org/TR/did-core/#query) component.
+  /// A leading '?' is ignored.
   ///
   /// # Example
   ///
@@ -142,8 +140,6 @@ impl RelativeDIDUrl {
   /// assert_eq!(url.query().unwrap(), "query1=a&query2=b");
   /// assert_eq!(url.to_string(), "?query1=a&query2=b");
   /// ```
-  ///
-  /// [query](https://www.w3.org/TR/did-core/#query)
   pub fn set_query(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.query = value
       .filter(|s| !s.is_empty())
@@ -159,7 +155,7 @@ impl RelativeDIDUrl {
     Ok(())
   }
 
-  /// Return an iterator of (name, value) pairs in the query string.
+  /// Return an iterator of `(name, value)` pairs in the query string.
   ///
   /// E.g. `"query1=a&query2=b" -> [("query1", "a"), ("query2", "b")]`
   ///
@@ -168,20 +164,16 @@ impl RelativeDIDUrl {
     form_urlencoded::parse(self.query().unwrap_or_default().as_bytes())
   }
 
-  /// Return the [fragment] component, excluding the leading '#' delimiter.
+  /// Return the [fragment](https://www.w3.org/TR/did-core/#fragment) component,
+  /// excluding the leading '#' delimiter.
   ///
   /// E.g. `"#fragment" -> "fragment"`
-  ///
-  /// [fragment](https://www.w3.org/TR/did-core/#fragment)
   pub fn fragment(&self) -> Option<&str> {
-    self
-      .fragment
-      .as_deref()
-      .map(|fragment| fragment.strip_prefix('#'))
-      .flatten()
+    self.fragment.as_deref().and_then(|fragment| fragment.strip_prefix('#'))
   }
 
-  /// Attempt to set the [fragment] component. A leading '#' is ignored.
+  /// Attempt to set the [fragment](https://www.w3.org/TR/did-core/#fragment) component.
+  /// A leading '#' is ignored.
   ///
   /// # Example
   ///
@@ -198,8 +190,6 @@ impl RelativeDIDUrl {
   /// assert_eq!(url.fragment().unwrap(), "fragment2");
   /// assert_eq!(url.to_string(), "#fragment2");
   /// ```
-  ///
-  /// [fragment](https://www.w3.org/TR/did-core/#fragment)
   pub fn set_fragment(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.fragment = value
       .filter(|s| !s.is_empty())
@@ -217,7 +207,7 @@ impl RelativeDIDUrl {
 }
 
 impl Display for RelativeDIDUrl {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!(
       "{}{}{}",
       self.path.as_deref().unwrap_or_default(),
@@ -228,8 +218,8 @@ impl Display for RelativeDIDUrl {
 }
 
 impl Debug for RelativeDIDUrl {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
@@ -290,17 +280,19 @@ impl Hash for RelativeDIDUrl {
   }
 }
 
-impl<T> DIDUrl<T>
+impl<D> DIDUrl<D>
 where
-  T: DID + Sized,
+  D: DID + Sized,
 {
-  pub fn new(did: T, url: Option<RelativeDIDUrl>) -> Self {
+  /// Construct a new [`DIDUrl`] with optional [`RelativeDIDUrl`].
+  pub fn new(did: D, url: Option<RelativeDIDUrl>) -> Self {
     Self {
       did,
       url: url.unwrap_or_default(),
     }
   }
 
+  /// Parse a [`DIDUrl`] from a string.
   pub fn parse(input: impl AsRef<str>) -> Result<Self, DIDError> {
     let did_url: BaseDIDUrl = BaseDIDUrl::parse(input)?;
     Self::from_base_did_url(did_url)
@@ -317,40 +309,47 @@ where
     };
 
     // Extract base DID
-    let did: T = {
+    let did: D = {
       let mut base_did: BaseDIDUrl = did_url;
       base_did.set_path("");
       base_did.set_query(None);
       base_did.set_fragment(None);
-      T::try_from(base_did).map_err(|_| DIDError::Other("invalid DID"))?
+      D::try_from(base_did).map_err(|_| DIDError::Other("invalid DID"))?
     };
 
     Ok(Self { did, url })
   }
 
-  pub fn did(&self) -> &T {
+  /// Returns the [`did`][DID].
+  pub fn did(&self) -> &D {
     &self.did
   }
 
+  /// Returns the [`RelativeDIDUrl`].
   pub fn url(&self) -> &RelativeDIDUrl {
     &self.url
   }
 
+  /// Sets the [`RelativeDIDUrl`].
   pub fn set_url(&mut self, url: RelativeDIDUrl) {
     self.url = url
   }
 
-  /// Returns the [`DIDUrl`] method fragment, if any.
+  /// Returns the [`DIDUrl`] `fragment` component.
+  ///
+  /// See [`RelativeDIDUrl::fragment`].
   pub fn fragment(&self) -> Option<&str> {
     self.url.fragment()
   }
 
   /// Sets the `fragment` component of the [`DIDUrl`].
+  ///
+  /// See [`RelativeDIDUrl::set_fragment`].
   pub fn set_fragment(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.url.set_fragment(value)
   }
 
-  /// Returns the [`DIDUrl`] path.
+  /// Returns the [`DIDUrl`] `path` component.
   ///
   /// See [`RelativeDIDUrl::path`].
   pub fn path(&self) -> Option<&str> {
@@ -358,33 +357,41 @@ where
   }
 
   /// Sets the `path` component of the [`DIDUrl`].
+  ///
+  /// See [`RelativeDIDUrl::set_path`].
   pub fn set_path(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.url.set_path(value)
   }
 
-  /// Returns the [`DIDUrl`] method query, if any.
+  /// Returns the [`DIDUrl`] `query` component.
+  ///
+  /// See [`RelativeDIDUrl::query`].
   pub fn query(&self) -> Option<&str> {
     self.url.query()
   }
 
   /// Sets the `query` component of the [`DIDUrl`].
+  ///
+  /// See [`RelativeDIDUrl::set_query`].
   pub fn set_query(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.url.set_query(value)
   }
 
   /// Parses the [`DIDUrl`] query and returns an iterator of (key, value) pairs.
+  ///
+  /// See [`RelativeDIDUrl::query_pairs`].
   pub fn query_pairs(&self) -> form_urlencoded::Parse<'_> {
     self.url.query_pairs()
   }
 
-  /// Append a string representing a path, query, and/or fragment to this [`DIDUrl`].
+  /// Append a string representing a `path`, `query`, and/or `fragment` to this [`DIDUrl`].
   ///
   /// Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
   /// segment and any following segments in order of path, query, then fragment.
   ///
   /// I.e.
-  /// - joining a path will clear the query and fragment.
-  /// - joining a query will clear the fragment.
+  /// - joining a path will overwrite the path and clear the query and fragment.
+  /// - joining a query will overwrite the query and clear the fragment.
   /// - joining a fragment will only overwrite the fragment.
   pub fn join(self, segment: impl AsRef<str>) -> Result<Self, DIDError> {
     let segment: &str = segment.as_ref();
@@ -399,41 +406,63 @@ where
     Self::from_base_did_url(base_did_url)
   }
 
-  /// Attempt to convert a [`DIDUrl`] from a [`DIDUrl`] of a different DID method.
+  /// Construct a `DIDUrl<D>` from a `DIDUrl<U>` of a different DID method.
   ///
   /// Workaround for lack of specialisation preventing a generic `From` implementation.
   pub fn from<U>(other: DIDUrl<U>) -> Self
   where
-    U: DID + Into<T>,
+    U: DID + Into<D>,
   {
-    let did: T = other.did.into();
+    let did: D = other.did.into();
     Self { did, url: other.url }
   }
 
-  /// Attempt to convert a [`DIDUrl`] from a [`DIDUrl`] of a different DID method.
-  ///
-  /// Workaround for lack of specialisation preventing a generic `TryFrom` implementation.
-  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, <U as TryInto<T>>::Error>
+  /// Fallible version of [`DIDUrl::from`].
+  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, <U as TryInto<D>>::Error>
   where
-    U: DID + TryInto<T>,
+    U: DID + TryInto<D>,
   {
-    let did: T = other.did.try_into()?;
+    let did: D = other.did.try_into()?;
     Ok(Self { did, url: other.url })
+  }
+
+  /// Maps `DIDUrl<D>` to `DIDUrl<U>` by applying a function to its [`DID`].
+  pub fn map<U, F>(self, f: F) -> DIDUrl<U>
+  where
+    F: FnOnce(D) -> U,
+    U: DID,
+  {
+    DIDUrl {
+      did: f(self.did),
+      url: self.url,
+    }
+  }
+
+  /// Fallible version of [`DIDUrl::map`].
+  pub fn try_map<U, F, E>(self, f: F) -> Result<DIDUrl<U>, E>
+  where
+    F: FnOnce(D) -> Result<U, E>,
+    U: DID,
+  {
+    Ok(DIDUrl {
+      did: f(self.did)?,
+      url: self.url,
+    })
   }
 }
 
-impl<T> From<T> for DIDUrl<T>
+impl<D> From<D> for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
-  fn from(did: T) -> Self {
+  fn from(did: D) -> Self {
     Self::new(did, None)
   }
 }
 
-impl<T> FromStr for DIDUrl<T>
+impl<D> FromStr for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   type Err = DIDError;
 
@@ -442,9 +471,9 @@ where
   }
 }
 
-impl<T> TryFrom<String> for DIDUrl<T>
+impl<D> TryFrom<String> for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   type Error = DIDError;
 
@@ -453,38 +482,44 @@ where
   }
 }
 
-impl<T> From<DIDUrl<T>> for String
+impl<D> From<DIDUrl<D>> for String
 where
-  T: DID,
+  D: DID,
 {
-  fn from(did_url: DIDUrl<T>) -> Self {
+  fn from(did_url: DIDUrl<D>) -> Self {
     did_url.to_string()
   }
 }
 
-impl<T> AsRef<T> for DIDUrl<T>
+impl<D> AsRef<D> for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
-  fn as_ref(&self) -> &T {
+  fn as_ref(&self) -> &D {
     &self.did
   }
 }
 
-impl<T> PartialEq for DIDUrl<T>
+impl<D: DID> AsRef<DIDUrl<D>> for DIDUrl<D> {
+  fn as_ref(&self) -> &DIDUrl<D> {
+    self
+  }
+}
+
+impl<D> PartialEq for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   fn eq(&self, other: &Self) -> bool {
     self.did().eq(other.did()) && self.url() == other.url()
   }
 }
 
-impl<T> Eq for DIDUrl<T> where T: DID {}
+impl<D> Eq for DIDUrl<D> where D: DID {}
 
-impl<T> PartialOrd for DIDUrl<T>
+impl<D> PartialOrd for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -496,9 +531,9 @@ where
   }
 }
 
-impl<T> Ord for DIDUrl<T>
+impl<D> Ord for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
@@ -509,36 +544,36 @@ where
   }
 }
 
-impl<T> Hash for DIDUrl<T>
+impl<D> Hash for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   fn hash<H: Hasher>(&self, state: &mut H) {
     self.to_string().hash(state)
   }
 }
 
-impl<T> Debug for DIDUrl<T>
+impl<D> Debug for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
-impl<T> Display for DIDUrl<T>
+impl<D> Display for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url.to_string()))
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url))
   }
 }
 
-impl<T> Diff for DIDUrl<T>
+impl<D> Diff for DIDUrl<D>
 where
-  T: DID,
+  D: DID,
 {
   type Type = DiffString;
 
@@ -559,6 +594,17 @@ where
 
   fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
     self.to_string().into_diff()
+  }
+}
+
+impl<D> KeyComparable for DIDUrl<D>
+where
+  D: DID,
+{
+  type Key = Self;
+
+  fn key(&self) -> &Self::Key {
+    self
   }
 }
 

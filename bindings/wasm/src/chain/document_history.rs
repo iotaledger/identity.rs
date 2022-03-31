@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::ChainHistory;
-use identity::iota::DocumentDiff;
 use identity::iota::DocumentHistory;
-use identity::iota::IotaDocument;
+use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::DiffMessage;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
-use crate::did::WasmDocument;
-use crate::did::WasmDocumentDiff;
+use crate::did::WasmDiffMessage;
+use crate::did::WasmResolvedDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -17,29 +18,52 @@ use crate::error::WasmResult;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WasmDocumentHistory(DocumentHistory);
 
+// Workaround for Typescript type annotations on async function returns and arrays.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<DocumentHistory>")]
+  pub type PromiseDocumentHistory;
+
+  #[wasm_bindgen(typescript_type = "Promise<IntegrationChainHistory>")]
+  pub type PromiseIntegrationChainHistory;
+
+  #[wasm_bindgen(typescript_type = "Promise<DiffChainHistory>")]
+  pub type PromiseDiffChainHistory;
+
+  #[wasm_bindgen(typescript_type = "Array<string>")]
+  pub type ArrayString;
+
+  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
+  pub type ArrayResolvedDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<DiffMessage>")]
+  pub type ArrayDiffMessage;
+}
+
 #[wasm_bindgen(js_class = DocumentHistory)]
 impl WasmDocumentHistory {
-  /// Returns a [`js_sys::Array`] of integration chain [`WasmDocuments`](WasmDocument).
+  /// Returns an `Array` of integration chain `Documents`.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = integrationChainData)]
-  pub fn integration_chain_data(&self) -> js_sys::Array {
+  pub fn integration_chain_data(&self) -> ArrayResolvedDocument {
     self
       .0
       .integration_chain_data
       .iter()
       .cloned()
-      .map(WasmDocument::from)
+      .map(WasmResolvedDocument::from)
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayResolvedDocument>()
   }
 
-  /// Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+  /// Returns an `Array` of message id strings for "spam" messages on the same index
   /// as the integration chain.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = integrationChainSpam)]
-  pub fn integration_chain_spam(&self) -> js_sys::Array {
+  pub fn integration_chain_spam(&self) -> ArrayString {
     self
       .0
       .integration_chain_spam
@@ -47,30 +71,36 @@ impl WasmDocumentHistory {
       .cloned()
       .map(|message_id| message_id.to_string())
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
-  /// Returns a [`js_sys::Array`] of diff chain [`WasmDocumentDiffs`](WasmDocumentDiff).
+  /// Returns an `Array` of diff chain `DiffMessages`.
   ///
   /// NOTE: clones the data.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffChainData)]
-  pub fn diff_chain_data(&self) -> js_sys::Array {
+  pub fn diff_chain_data(&self) -> ArrayDiffMessage {
     self
       .0
       .diff_chain_data
       .iter()
       .cloned()
-      .map(WasmDocumentDiff::from)
+      .map(WasmDiffMessage::from)
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayDiffMessage>()
   }
 
-  /// Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+  /// Returns an `Array` of message id strings for "spam" messages on the same index
   /// as the diff chain.
   ///
   /// NOTE: clones the data.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffChainSpam)]
-  pub fn diff_chain_spam(&self) -> js_sys::Array {
+  pub fn diff_chain_spam(&self) -> ArrayString {
     self
       .0
       .diff_chain_spam
@@ -78,21 +108,24 @@ impl WasmDocumentHistory {
       .cloned()
       .map(|message_id| message_id.to_string())
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
-  /// Serializes a [`WasmDocumentHistory`] object as a JSON object.
+  /// Serializes `DocumentHistory` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a [`WasmDocumentHistory`] object from a JSON object.
+  /// Deserializes `DocumentHistory` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmDocumentHistory> {
     json.into_serde().map(Self).wasm_result()
   }
 }
+
+impl_wasm_clone!(WasmDocumentHistory, DocumentHistory);
 
 impl From<DocumentHistory> for WasmDocumentHistory {
   fn from(document_history: DocumentHistory) -> Self {
@@ -102,36 +135,60 @@ impl From<DocumentHistory> for WasmDocumentHistory {
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IntegrationChainHistory(ChainHistory<IotaDocument>);
+pub struct IntegrationChainHistory(ChainHistory<ResolvedIotaDocument>);
 
+/// @deprecated since 0.5.0, diff chain features are slated for removal.
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DiffChainHistory(ChainHistory<DocumentDiff>);
+pub struct DiffChainHistory(ChainHistory<DiffMessage>);
+
+#[wasm_bindgen]
+impl IntegrationChainHistory {
+  /// Returns an `Array` of the integration chain `Documents`.
+  ///
+  /// NOTE: this clones the field.
+  #[wasm_bindgen(js_name = chainData)]
+  pub fn chain_data(&self) -> ArrayResolvedDocument {
+    self
+      .0
+      .chain_data
+      .iter()
+      .cloned()
+      .map(WasmResolvedDocument::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayResolvedDocument>()
+  }
+}
+
+#[wasm_bindgen]
+impl DiffChainHistory {
+  /// Returns an `Array` of the diff chain `DiffMessages`.
+  ///
+  /// NOTE: this clones the field.
+  #[wasm_bindgen(js_name = chainData)]
+  pub fn chain_data(&self) -> ArrayDiffMessage {
+    self
+      .0
+      .chain_data
+      .iter()
+      .cloned()
+      .map(WasmDiffMessage::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayDiffMessage>()
+  }
+}
 
 macro_rules! impl_wasm_chain_history {
   ($ident:ident, $ty:ty, $wasm_ty:ty) => {
     #[wasm_bindgen]
     impl $ident {
-      /// Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
-      ///
-      /// NOTE: this clones the field.
-      #[wasm_bindgen(js_name = chainData)]
-      pub fn chain_data(&self) -> js_sys::Array {
-        self
-          .0
-          .chain_data
-          .iter()
-          .cloned()
-          .map(<$wasm_ty>::from)
-          .map(JsValue::from)
-          .collect()
-      }
-
-      /// Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+      /// Returns an `Array` of `MessageIds` as strings.
       ///
       /// NOTE: this clones the field.
       #[wasm_bindgen]
-      pub fn spam(&self) -> js_sys::Array {
+      pub fn spam(&self) -> ArrayString {
         self
           .0
           .spam
@@ -139,16 +196,17 @@ macro_rules! impl_wasm_chain_history {
           .cloned()
           .map(|message_id| message_id.to_string())
           .map(JsValue::from)
-          .collect()
+          .collect::<js_sys::Array>()
+          .unchecked_into::<ArrayString>()
       }
 
-      /// Serializes a `$ident` object as a JSON object.
+      /// Serializes as a JSON object.
       #[wasm_bindgen(js_name = toJSON)]
       pub fn to_json(&self) -> Result<JsValue> {
         JsValue::from_serde(&self.0).wasm_result()
       }
 
-      /// Deserializes a `$ident` object from a JSON object.
+      /// Deserializes from a JSON object.
       #[wasm_bindgen(js_name = fromJSON)]
       pub fn from_json(json: &JsValue) -> Result<$ident> {
         json.into_serde().map(Self).wasm_result()
@@ -163,5 +221,5 @@ macro_rules! impl_wasm_chain_history {
   };
 }
 
-impl_wasm_chain_history!(IntegrationChainHistory, IotaDocument, WasmDocument);
-impl_wasm_chain_history!(DiffChainHistory, DocumentDiff, WasmDocumentDiff);
+impl_wasm_chain_history!(IntegrationChainHistory, ResolvedIotaDocument, WasmResolvedDocument);
+impl_wasm_chain_history!(DiffChainHistory, DiffMessage, WasmDiffMessage);

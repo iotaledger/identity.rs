@@ -1,14 +1,18 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::ops::DerefMut;
 use core::str::FromStr;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
+use crate::common::KeyComparable;
 use crate::diff;
 use crate::diff::Diff;
 use crate::diff::DiffString;
@@ -39,13 +43,13 @@ impl Url {
 }
 
 impl Debug for Url {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("Url({})", self.0.as_str()))
   }
 }
 
 impl Display for Url {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_str(self.0.as_str())
   }
 }
@@ -107,5 +111,14 @@ impl Diff for Url {
 
   fn into_diff(self) -> diff::Result<Self::Type> {
     self.to_string().into_diff()
+  }
+}
+
+impl KeyComparable for Url {
+  type Key = Url;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self
   }
 }

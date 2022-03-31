@@ -1,29 +1,30 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::Deref;
-use core::ops::DerefMut;
+use std::ops::Deref;
+use std::ops::DerefMut;
+
 use identity_core::common::Object;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
+use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
+use identity_core::diff::Diff;
 
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
 
-/// A generic container for a set of properties (`T`) and a
-/// [`digital signature`][Signature].
+/// A generic container for a [`digital signature`][Proof] and a set of properties.
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub struct Properties<T = Object> {
+pub struct VerifiableProperties<T = Object> {
   #[serde(flatten)]
-  pub(crate) properties: T,
+  pub properties: T,
   // TODO: Support multiple signatures (?)
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) proof: Option<Signature>,
+  pub(crate) proof: Option<Proof>,
 }
 
-impl<T> Properties<T> {
+impl<T> VerifiableProperties<T> {
   /// Creates a new `Properties` object.
   pub const fn new(properties: T) -> Self {
     Self {
@@ -33,30 +34,46 @@ impl<T> Properties<T> {
   }
 
   /// Creates a new `Properties` object with the given `proof`.
-  pub const fn with_proof(properties: T, proof: Signature) -> Self {
+  pub const fn new_with_proof(properties: T, proof: Proof) -> Self {
     Self {
       properties,
       proof: Some(proof),
     }
   }
+}
 
-  /// Returns a reference to the [`proof`][`Signature`].
-  pub fn proof(&self) -> Option<&Signature> {
-    self.proof.as_ref()
+/// NOTE: excludes the `proof` Signature from the diff to save space on the Tangle and because
+/// a merged signature will be invalid in general.
+impl<T> Diff for VerifiableProperties<T>
+where
+  T: Diff,
+{
+  type Type = <T as Diff>::Type;
+
+  fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
+    self.properties.diff(&other.properties)
   }
 
-  /// Returns a mutable reference to the [`proof`][`Signature`].
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
-    self.proof.as_mut()
+  fn merge(&self, diff: Self::Type) -> identity_core::diff::Result<Self> {
+    let mut this: VerifiableProperties<T> = self.clone();
+    this.properties = this.properties.merge(diff)?;
+    Ok(this)
   }
 
-  /// Sets the value of the [`proof`][`Signature`].
-  pub fn set_proof(&mut self, signature: Signature) {
-    self.proof = Some(signature);
+  fn from_diff(diff: Self::Type) -> identity_core::diff::Result<Self> {
+    let properties: T = T::from_diff(diff)?;
+    Ok(VerifiableProperties {
+      properties,
+      proof: None, // proof intentionally excluded
+    })
+  }
+
+  fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
+    self.properties.into_diff()
   }
 }
 
-impl<T> Deref for Properties<T> {
+impl<T> Deref for VerifiableProperties<T> {
   type Target = T;
 
   fn deref(&self) -> &Self::Target {
@@ -64,30 +81,30 @@ impl<T> Deref for Properties<T> {
   }
 }
 
-impl<T> DerefMut for Properties<T> {
+impl<T> DerefMut for VerifiableProperties<T> {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.properties
   }
 }
 
-impl<T> TrySignature for Properties<T> {
-  fn signature(&self) -> Option<&Signature> {
-    self.proof()
+impl<T> GetSignature for VerifiableProperties<T> {
+  fn signature(&self) -> Option<&Proof> {
+    self.proof.as_ref()
   }
 }
 
-impl<T> TrySignatureMut for Properties<T> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.proof_mut()
+impl<T> GetSignatureMut for VerifiableProperties<T> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
+    self.proof.as_mut()
   }
 }
 
-impl<T> SetSignature for Properties<T> {
-  fn set_signature(&mut self, signature: Signature) {
-    self.set_proof(signature)
+impl<T> SetSignature for VerifiableProperties<T> {
+  fn set_signature(&mut self, signature: Proof) {
+    self.proof = Some(signature);
   }
 }
 
-impl<T> TryMethod for Properties<T> {
+impl<T> TryMethod for VerifiableProperties<T> {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }

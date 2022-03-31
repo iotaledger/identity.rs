@@ -1,8 +1,8 @@
 [package]
 name = "identity-diff"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["IOTA Stiftung"]
-edition = "2018"
+edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
@@ -11,8 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "The `Diff` trait for the identity-rs library."
 
 [dependencies]
-did_url = { version = "0.1", default-features = false, features = ["alloc"] }
-identity-derive = { version = "=0.4.1", path = "derive" }
+identity-diff-derive = { version = "=0.5.0", path = "derive", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 strum = { version = "0.21", features = ["derive"] }
@@ -20,6 +19,10 @@ thiserror = { version = "1.0" }
 
 [dev-dependencies]
 serde_json = "1.0"
+
+[features]
+default = ["derive"]
+derive = ["identity-diff-derive"]
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -241,6 +241,7 @@ impl InputModel {
     }
   }
 
+  #[allow(clippy::wrong_self_convention)]
   pub fn from_into(&self) -> bool {
     match self {
       Self::Struct(InputStruct { from_into, .. }) => *from_into,

@@ -1,46 +1,61 @@
 [package]
 name = "identity-iota"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["IOTA Stiftung"]
-edition = "2018"
+edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "An IOTA Tangle intergration for the identity-rs library."
+description = "An IOTA Tangle integration for the identity.rs library."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-dashmap = { version = "4.0" }
+bee-rest-api = { version = "0.1.7", default-features = false }
+brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity-core = { version = "=0.4.1", path = "../identity-core" }
-identity-credential = { version = "=0.4.1", path = "../identity-credential" }
-identity-did = { version = "=0.4.1", path = "../identity-did" }
+identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
+identity-credential = { version = "=0.5.0", path = "../identity-credential" }
+identity-did = { version = "=0.5.0", path = "../identity-did" }
+identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
+itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
+num-derive = { version = "0.3", default-features = false }
+num-traits = { version = "0.2", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde_repr = { version = "0.1", default-features = false }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
-version = "1.1.0"
+git = "https://github.com/iotaledger/iota.rs"
+rev = "994d4073452abcf311a56e929b0617645620bd92"
+features = ["tls"]
 default-features = false
+
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "994d4073452abcf311a56e929b0617645620bd92"
+default-features = false
+features = ["wasm"]
 
 [dependencies.iota-crypto]
 version = "0.7"
 default-features = false
 features = ["blake2b"]
 
+[dev-dependencies]
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
+tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
+
 [features]
 default = ["async"]
 
 # Enables async runtime support (Tokio)
 async = ["iota-client/async"]
-
-# Enables Web Assembly support
-wasm = ["iota-client/wasm"]
 
 [package.metadata.docs.rs]
 # To build locally:

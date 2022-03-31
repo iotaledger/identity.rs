@@ -1,0 +1,4 @@
+[advisories]
+ignore = [
+  "RUSTSEC-2021-0127", # serde_cbor is unmaintained https://github.com/iotaledger/identity.rs/issues/518
+]

@@ -1,10 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::FromJson;
 use identity::core::Object;
 use identity::core::OneOrMany;
-use identity::core::SerdeInto;
 use identity::core::Timestamp;
+use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
@@ -13,17 +14,18 @@ use identity::did::DID;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDocument;
-use crate::error::wasm_error;
+use crate::error::Result;
+use crate::error::WasmResult;
 
-#[wasm_bindgen(inspectable)]
-#[derive(Clone, Debug, PartialEq)]
-pub struct VerifiableCredential(pub(crate) Credential);
+#[wasm_bindgen(js_name = Credential, inspectable)]
+#[derive(Clone, Debug)]
+pub struct WasmCredential(pub(crate) Credential);
 
-#[wasm_bindgen]
-impl VerifiableCredential {
+#[wasm_bindgen(js_class = Credential)]
+impl WasmCredential {
   #[wasm_bindgen]
-  pub fn extend(value: &JsValue) -> Result<VerifiableCredential, JsValue> {
-    let mut base: Object = value.into_serde().map_err(wasm_error)?;
+  pub fn extend(value: &JsValue) -> Result<WasmCredential> {
+    let mut base: Object = value.into_serde().wasm_result()?;
 
     if !base.contains_key("credentialSubject") {
       return Err("Missing property: `credentialSubject`".into());
@@ -36,23 +38,23 @@ impl VerifiableCredential {
     if !base.contains_key("@context") {
       base.insert(
         "@context".into(),
-        Credential::<()>::base_context().serde_into().map_err(wasm_error)?,
+        serde_into(Credential::<()>::base_context()).wasm_result()?,
       );
     }
 
     let mut types: Vec<String> = match base.remove("type") {
-      Some(value) => value.serde_into().map(OneOrMany::into_vec).map_err(wasm_error)?,
+      Some(value) => serde_into(value).map(OneOrMany::into_vec).wasm_result()?,
       None => Vec::new(),
     };
 
     types.insert(0, Credential::<()>::base_type().into());
-    base.insert("type".into(), types.serde_into().map_err(wasm_error)?);
+    base.insert("type".into(), serde_into(types).wasm_result()?);
 
     if !base.contains_key("issuanceDate") {
       base.insert("issuanceDate".into(), Timestamp::now_utc().to_string().into());
     }
 
-    base.serde_into().map_err(wasm_error).map(Self)
+    serde_into(base).map(Self).wasm_result()
   }
 
   #[wasm_bindgen]
@@ -61,9 +63,9 @@ impl VerifiableCredential {
     subject_data: &JsValue,
     credential_type: Option<String>,
     credential_id: Option<String>,
-  ) -> Result<VerifiableCredential, JsValue> {
-    let subjects: OneOrMany<Subject> = subject_data.into_serde().map_err(wasm_error)?;
-    let issuer_url: Url = Url::parse(issuer_doc.0.id().as_str()).map_err(wasm_error)?;
+  ) -> Result<WasmCredential> {
+    let subjects: OneOrMany<Subject> = subject_data.into_serde().wasm_result()?;
+    let issuer_url: Url = Url::parse(issuer_doc.0.id().as_str()).wasm_result()?;
     let mut builder: CredentialBuilder = CredentialBuilder::default().issuer(issuer_url);
 
     for subject in subjects.into_vec() {
@@ -75,21 +77,41 @@ impl VerifiableCredential {
     }
 
     if let Some(credential_id) = credential_id {
-      builder = builder.id(Url::parse(credential_id).map_err(wasm_error)?);
+      builder = builder.id(Url::parse(credential_id).wasm_result()?);
     }
 
-    builder.build().map(Self).map_err(wasm_error)
+    builder.build().map(Self).wasm_result()
   }
 
-  /// Serializes a `VerifiableCredential` object as a JSON object.
+  /// Serializes a `Credential` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(wasm_error)
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a `VerifiableCredential` object from a JSON object.
+  /// Deserializes a `Credential` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<VerifiableCredential, JsValue> {
-    json.into_serde().map_err(wasm_error).map(Self)
+  pub fn from_json(json: &JsValue) -> Result<WasmCredential> {
+    json.into_serde().map(Self).wasm_result()
   }
+}
+
+impl_wasm_clone!(WasmCredential, Credential);
+
+impl From<Credential> for WasmCredential {
+  fn from(credential: Credential) -> WasmCredential {
+    Self(credential)
+  }
+}
+
+/// Converts `T` to `U` by converting to/from JSON.
+///
+/// An escape-hatch for converting between types that represent the same JSON
+/// structure.
+fn serde_into<T, U>(obj: T) -> identity::core::Result<U>
+where
+  T: ToJson,
+  U: FromJson,
+{
+  obj.to_json_value().and_then(U::from_json_value)
 }

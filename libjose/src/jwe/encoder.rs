@@ -234,14 +234,12 @@ impl<'a> Encoder<'a> {
       })
       .collect::<Result<_>>()?;
 
-    let protected_b64: Option<String>;
-
-    if self.format == JweFormat::Compact {
+    let protected_b64: Option<String> = if self.format == JweFormat::Compact {
       assert_eq!(recipients.len(), 1);
-      protected_b64 = Some(encode_b64_json(&recipients[0].1)?);
+      Some(encode_b64_json(&recipients[0].1)?)
     } else {
       assert_eq!(recipients.len(), self.recipients.len());
-      protected_b64 = self.protected.map(encode_b64_json).transpose()?;
+      self.protected.map(encode_b64_json).transpose()?
     };
 
     let aad_b64: Option<String> = self.aad.map(encode_b64);

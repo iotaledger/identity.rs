@@ -1,12 +1,13 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Url;
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
-use crate::error::Result;
-use crate::tangle::Message;
-use crate::tangle::MessageId;
-use crate::tangle::Network;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::Network;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Receipt {
@@ -46,11 +47,6 @@ impl Receipt {
   /// Returns the message `nonce`.
   pub fn nonce(&self) -> u64 {
     self.nonce
-  }
-
-  /// Returns the web explorer URL of the associated `message`.
-  pub fn message_url(&self) -> Result<Url> {
-    self.network.message_url(&self.message_id.to_string())
   }
 }
 

@@ -1,7 +1,0 @@
-            {
-              label: "Identity",
-              to: "identity.rs/intro",
-              className: "icon-identity",
-              activeBaseRegex: 'identity.rs/.*'
-            },
-            

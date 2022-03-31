@@ -1,0 +1,153 @@
+name: Shared / Release
+
+# This workflow creates a GitHub Release. 
+# It is meant to run after a branch with the pattern `release/VERSION` is merged.
+# A changelog, only including the changes in the new version, is generated and used for the GitHub Release.
+# The merge commit is tagged with the version from the release branch name.
+# This job outputs helpful variables that can be used in the adjacent jobs.
+# e.g with ${{ needs.call-create-release-workflow.outputs.is-release }}
+
+
+on:
+  workflow_call:
+    inputs:
+      create-github-release:
+        description: "controls if a GitHub release should be created"
+        required: true
+        type: boolean
+      changelog-config-path:
+        description: "path to the changelog config"
+        required: true
+        type: string
+      main-tag-regex:
+        description: "the regex to find all related main releases"
+        required: true
+        type: string
+      dev-tag-regex:
+        description: "the regex to find all related dev releases"
+        required: true
+        type: string
+    outputs:
+      is-release:
+        description: "is release"
+        value: ${{ jobs.build.outputs.is-release }}
+      is-dev-release:
+        description: "is dev release"
+        value: ${{ jobs.build.outputs.is-dev-release }}
+      previous-version:
+        description: "tag of the previous version"
+        value: ${{ jobs.build.outputs.previous-version }}
+      current-version:
+        description: "tag of the current version"
+        value: ${{ jobs.build.outputs.current-version }}
+    secrets:
+      GPG_PRIVATE_KEY:
+        description: "GPG private key for signing commits and tags"
+        required: true
+      GPG_PASSPHRASE:
+        description: "GPG private passphrase for signing commits and tags"
+        required: true
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      is-release: ${{ steps.determine-version.outputs.is-release }}
+      is-dev-release: ${{ steps.determine-version.outputs.is-dev-release }}
+      previous-version: ${{ steps.determine-version.outputs.previous-version }}
+      current-version: ${{ steps.determine-version.outputs.current-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+          
+      - name: Determine Release Version
+        id: determine-version
+        run: |
+          BRANCHNAME=${{ github.head_ref }}
+          CURRENT_VERSION=${BRANCHNAME##*/}
+          if ! [[  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.dev-tag-regex }}') ||  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.main-tag-regex }}') ]]; then
+            exit 0
+          fi
+          IS_RELEASE=true
+          echo IS_RELEASE=$IS_RELEASE
+          echo IS_RELEASE=$IS_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-release::$IS_RELEASE"
+          if [[ $(echo $CURRENT_VERSION | grep -w -P '${{ inputs.dev-tag-regex }}') ]]; then
+            IS_DEV_RELEASE=true
+            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.dev-tag-regex }}' | head -n 1)
+          else
+            PREVIOUS_VERSION=$(git tag -l --sort=-version:refname --merged $(git log -n 1 refs/remotes/origin/$(git rev-parse --abbrev-ref HEAD) --pretty=format:"%H") | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
+          fi
+
+          # create a list of tags that are unrelated to the current release
+          ALL_TAGS=$(git tag -l)
+          temp_array=()
+          for value in ${ALL_TAGS[@]}
+          do
+              if ! [[ $value != $PREVIOUS_VERSION || $value != $CURRENT_VERSION ]]; then
+                temp_array+=($value)
+              fi
+          done
+          UNRELATED_TAGS=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
+          unset temp_array
+          echo UNRELATED_TAGS=$UNRELATED_TAGS
+          if [[ $UNRELATED_TAGS != '' ]]; then
+            FIRST="--exclude-tags "
+            SECOND=$UNRELATED_TAGS
+            EXCLUDE_ARG=$FIRST$SECOND
+          fi
+          
+          echo IS_DEV_RELEASE=$IS_DEV_RELEASE
+          echo IS_DEV_RELEASE=$IS_DEV_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-dev-release::$IS_DEV_RELEASE"
+          echo CURRENT_VERSION=$CURRENT_VERSION
+          echo CURRENT_VERSION=$CURRENT_VERSION >> $GITHUB_ENV
+          echo "::set-output name=current-version::$CURRENT_VERSION"
+          echo PREVIOUS_VERSION=$PREVIOUS_VERSION
+          echo PREVIOUS_VERSION=$PREVIOUS_VERSION >> $GITHUB_ENV
+          echo "::set-output name=previous-version::$PREVIOUS_VERSION"
+          echo EXCLUDE_ARG=$EXCLUDE_ARG
+          echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
+
+      - name: Import GPG key
+        if: ${{env.IS_RELEASE}}
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Tag Release
+        if: ${{env.IS_RELEASE}}
+        run: |
+          git config user.email "${{ steps.import-gpg.outputs.email }}"
+          git config user.name "${{ steps.import-gpg.outputs.name }}"
+          git tag -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
+          git push --follow-tags
+
+      - name: Run Changelog Generator
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        uses: './.github/actions/release/changelog-generator'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          changelog-path: RELEASE_CHANGELOG.md
+          changelog-config-path: ${{ inputs.changelog-config-path }}
+          output-only-current-release: true
+          future-release: ${{ env.CURRENT_VERSION }}
+          previous-release: ${{ env.PREVIOUS_VERSION }}
+          optional-arg: ${{env.EXCLUDE_ARG}}
+
+      - name: Create GitHub release
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+        with:
+          body_path: RELEASE_CHANGELOG.md
+          prerelease: ${{env.IS_DEV_RELEASE}}
+          tag_name: ${{env.CURRENT_VERSION}}
+      

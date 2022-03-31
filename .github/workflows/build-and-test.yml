@@ -6,24 +6,64 @@ on:
       - main
       - dev
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
       - dev
+      - epic/*
     paths:
       - '.github/workflows/build-and-test.yml'
-      - '.github/actions'
+      - '.github/actions/**'
       - '**.rs'
       - '**.toml'
+      - 'bindings/**'
+      - '!bindings/**.md'
 
 env:
   RUST_BACKTRACE: full
+  CARGO_INCREMENTAL: 0 # disabled to reduce target cache size and improve sccache (https://github.com/mozilla/sccache#known-caveats)
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
 
 jobs:
+  check-for-run-condition:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ !github.event.pull_request || github.event.pull_request.draft == false }}
+    steps:
+      - run: |
+          # this run step does nothing, but is needed to get the job output
+
+  check-for-modification:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    runs-on: ubuntu-latest
+    outputs:
+      core-modified: ${{ steps.change-detection.outputs.core-modified }} # map step output to job output
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run change detection
+        id: change-detection
+        run: |
+          echo comparing $(git rev-parse HEAD^) and $(git rev-parse HEAD)
+          #https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgt--ltpathgt82308203
+          if [[ $(git diff HEAD^ HEAD -- ':!bindings') != '' ]]; then
+              # modified
+              CORE_MODIFIED=true
+          else
+              # unmodified
+             CORE_MODIFIED=false
+          fi
+          echo CORE_MODIFIED=$CORE_MODIFIED
+          echo "::set-output name=core-modified::$CORE_MODIFIED"
+
   build-and-test:
     runs-on: ${{ matrix.os }}
+    needs: [check-for-run-condition, check-for-modification]
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,40 +82,26 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get current date (Windows)
-        uses: './.github/actions/utils/get-current-date-windows'
-        if: matrix.os == 'windows-latest'
-
-      - name: Get current date (Ubuntu/MacOS)
-        uses: './.github/actions/utils/get-current-date-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-
       - name: Setup Rust and cache
         uses: './.github/actions/rust/rust-setup'
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
+          target-cache-enabled: true
+          sccache-enabled: true
           sccache-path: ${{ matrix.sccache-path }}
-          current-date: ${{ env.CURRENT_DATE }}
 
-      - name: Setup sccache (Ubuntu)
-        uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'     
-        if: matrix.os == 'ubuntu-latest'
-        
-      - name: Setup sccache (Windows)
-        uses: './.github/actions/rust/sccache/setup-sccache-windows'        
-        if: matrix.os == 'windows-latest'
+      - name: Setup sccache
+        uses: './.github/actions/rust/sccache/setup-sccache'
+        with:
+          os: ${{matrix.os}}
 
-      - name: Setup sccache (MacOS)
-        uses: './.github/actions/rust/sccache/setup-sccache-macos'
-        if: matrix.os == 'macos-latest'
-     
       - name: Build
         uses: actions-rs/cargo@v1
         with:
           # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
-          command: test
-          args: --all --release --no-run
+          command: build
+          args: --workspace --tests --examples --release
 
       - name: Run tests
         uses: actions-rs/cargo@v1
@@ -83,15 +109,22 @@ jobs:
           command: test
           args: --all --release
 
-      - name: Stop sccache (Windows)
-        uses: './.github/actions/rust/sccache/stop-sccache-windows'
-        if: matrix.os == 'windows-latest'
+      - name: Run Rust examples
+        # run examples only on ubuntu for now
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo read-manifest --manifest-path ./examples/Cargo.toml | \
+          jq -r '.targets[].name' | \
+          parallel -k -j 4 --retries 3 cargo run --example {} --release
 
-      - name: Stop sccache (Ubuntu/MacOS)
-        uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+      - name: Stop sccache
+        uses: './.github/actions/rust/sccache/stop-sccache'
+        with:
+          os: ${{matrix.os}}
 
   build-and-test-libjose:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -121,7 +154,17 @@ jobs:
           command: test
           args: --manifest-path ./libjose/Cargo.toml --release
 
-  build-and-test-wasm:
+  build-wasm:
+    needs: check-for-run-condition
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-wasm.yml@dev
+    with:
+      output-artifact-name: identity-wasm-bindings-build
+
+  test-wasm:
+    needs: build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -129,68 +172,35 @@ jobs:
         os: [ ubuntu-latest ]
         include:
           - os: ubuntu-latest
-            sccache-path: /home/runner/.cache/sccache
-    env:
-      SCCACHE_DIR: ${{ matrix.sccache-path }}
-      CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
-      RUSTC_WRAPPER: sccache
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: Get current date (Ubuntu/MacOS)
-        uses: './.github/actions/utils/get-current-date-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-
-      - uses: './.github/actions/rust/rust-setup'
-        name: rust-setup
-        with:
-          os: ${{ runner.os }}
-          job: ${{ github.job }}
-          sccache-path: ${{ matrix.sccache-path }}
-          current-date: ${{ env.CURRENT_DATE }}
-          target-cache-path: bindings/wasm/target
-
-      - name: Install WASM toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
         
-      - name: Setup sccache (Ubuntu)
-        uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'
-        if: matrix.os == 'ubuntu-latest'
-
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 15.x
-
-      - name: Install wasm-pack
-        run: npm install -g wasm-pack
+          node-version: 16.x
 
       - name: Install JS dependencies
-        run: npm install
+        run: npm ci
         working-directory: bindings/wasm
 
-      - name: Build WASM bindings
-        run: npm run build
-        working-directory: bindings/wasm
-
-      - name: Build Wasm examples
-        run: npm run build:examples
-        working-directory: bindings/wasm
-
-      - name: Run tests
-        uses: actions-rs/cargo@v1
+      - name: Download bindings/wasm artifacts
+        uses: actions/download-artifact@v2
         with:
-          command: test
-          args: --manifest-path ./bindings/wasm/Cargo.toml --release
-
-      - name: Run wasm-bindgen tests # tests annotated with #[wasm_bindgen_test]
-        run: wasm-pack test --node
+          name: identity-wasm-bindings-build
+          path: bindings/wasm
+    
+      - name: Run Wasm examples
+        run: npm run test:examples
         working-directory: bindings/wasm
 
-      - name: Stop sccache (Ubuntu/MacOS) 
-        uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+  build-and-test-stronghold-nodejs:
+    needs: 
+      - check-for-run-condition
+      - build-wasm
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
+    with:
+      input-artifact-name: identity-wasm-bindings-build

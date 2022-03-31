@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
@@ -8,8 +8,6 @@ pub enum Error {
   #[error("{0}")]
   CoreError(#[from] identity_core::Error),
   #[error("{0}")]
-  DiffError(#[from] identity_core::diff::Error),
-  #[error("{0}")]
   CredError(#[from] identity_credential::Error),
   #[error("{0}")]
   InvalidDID(#[from] identity_did::did::DIDError),
@@ -17,44 +15,30 @@ pub enum Error {
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
   ClientError(#[from] iota_client::error::Error),
-  #[error("Invalid Message: {0}")]
-  InvalidMessage(#[from] iota_client::bee_message::Error),
-  #[error("Invalid Document - Missing Message Id")]
-  InvalidDocumentMessageId,
-  #[error("Invalid Document - Authentication Authority Mismatch")]
-  InvalidDocumentAuthAuthority,
-  #[error("Invalid Document - Authentication Missing Fragment")]
-  InvalidDocumentAuthFragment,
-  #[error("Invalid Document - Authentication Type Not Supported")]
-  InvalidDocumentAuthType,
-  #[error("Invalid Network Name")]
-  InvalidNetworkName,
-  #[error("Invalid Tryte Conversion")]
-  InvalidTryteConversion,
-  #[error("Invalid Transaction Bundle")]
-  InvalidTransactionBundle,
-  #[error("Invalid Transaction Hashes")]
-  InvalidTransactionHashes,
-  #[error("Invalid Transaction Trytes")]
-  InvalidTransactionTrytes,
-  #[error("Invalid Bundle Tail")]
-  InvalidBundleTail,
-  #[error("Invalid PResentation Holder")]
-  InvalidPresentationHolder,
+  #[error("{0}")]
+  IotaCoreError(#[from] identity_iota_core::Error),
+
+  #[error("{0}")]
+  DIDNotFound(String),
+  #[error("{0}")]
+  IncompatibleNetwork(String),
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
-  #[error("Missing Verification Method Fragment")]
-  MissingMethodFragment,
-  #[error("Authentication Method Not Found")]
-  MissingAuthenticationMethod,
-  #[error("Cannot Remove Authentication Method")]
-  CannotRemoveAuthMethod,
-  #[error("Cannot Revoke Verification Method")]
-  CannotRevokeMethod,
-  #[error("No Client Nodes Provided")]
+  #[error("no client nodes provided for network")]
   NoClientNodesProvided,
-  #[error("No Explorer URL Set")]
-  NoExplorerURLSet,
   #[error("Invalid Explorer Url")]
   InvalidExplorerURL,
+  #[error("compression error")]
+  CompressionError,
+  #[error("invalid message flags")]
+  InvalidMessageFlags,
+  /// Caused by a single concern credential or presentation validation method failing.
+  #[error("A validation unit failed")]
+  IsolatedValidationError(#[from] crate::credential::ValidationError),
+  /// Caused by one or more failures when validating a credential.
+  #[error("credential validation failed")]
+  CredentialValidationError(#[from] crate::credential::CompoundCredentialValidationError),
+  /// Caused by one or more failures when validating a presentation.
+  #[error("presentation validation failed")]
+  PresentationValidationError(#[from] crate::credential::CompoundPresentationValidationError),
 }

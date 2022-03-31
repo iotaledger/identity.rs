@@ -133,10 +133,14 @@ where
 
 #[cfg(test)]
 mod tests {
+  use serde_json::json;
+  use serde_json::Value;
+
   use identity_core::common::Object;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
@@ -145,8 +149,6 @@ mod tests {
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
-  use serde_json::json;
-  use serde_json::Value;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;
@@ -172,14 +174,14 @@ mod tests {
 
   #[test]
   fn test_presentation_builder_valid() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let controller: CoreDID = "did:example:1234".parse().unwrap();
 
     let method: VerificationMethod = MethodBuilder::default()
       .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(keypair.public()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(keypair.public()))
       .build()
       .unwrap();
 

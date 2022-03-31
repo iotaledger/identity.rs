@@ -1,9 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::hashes::sha::Sha256;
-use crypto::hashes::Digest;
-use crypto::hashes::Output;
+use core::fmt::Formatter;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -37,12 +36,6 @@ pub trait ToJson: Serialize + Sized {
   fn to_jcs(&self) -> Result<Vec<u8>> {
     serde_jcs::to_vec(self).map_err(Error::EncodeJSON)
   }
-
-  /// Returns the given `data` serialized using JSON Canonicalization Scheme and
-  /// hashed using SHA-256.
-  fn to_jcs_sha256(&self) -> Result<Output<Sha256>> {
-    self.to_jcs().map(|json| Sha256::digest(&json))
-  }
 }
 
 impl<T> ToJson for T where T: Serialize {}
@@ -69,3 +62,21 @@ pub trait FromJson: for<'de> Deserialize<'de> + Sized {
 }
 
 impl<T> FromJson for T where T: for<'de> Deserialize<'de> + Sized {}
+
+// =============================================================================
+// =============================================================================
+
+/// A convenience-trait to format types as JSON strings for display.
+pub trait FmtJson: ToJson {
+  /// Format this as a JSON string or pretty-JSON string based on whether the `#` format flag
+  /// was used.
+  fn fmt_json(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    if f.alternate() {
+      f.write_str(&self.to_json_pretty().map_err(|_| core::fmt::Error)?)
+    } else {
+      f.write_str(&self.to_json().map_err(|_| core::fmt::Error)?)
+    }
+  }
+}
+
+impl<T> FmtJson for T where T: ToJson {}

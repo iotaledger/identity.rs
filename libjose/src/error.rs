@@ -5,7 +5,6 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 /// Alias for a `Result` with the error type [Error].
 pub type Result<T, E = Error> = core::result::Result<T, E>;
@@ -32,7 +31,7 @@ pub enum Error {
 }
 
 impl Display for Error {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::InvalidRsaPrime => f.write_str("Invalid Rsa Prime Value"),
       Self::InvalidJson(inner) => f.write_fmt(format_args!("Invalid JSON: {}", inner)),

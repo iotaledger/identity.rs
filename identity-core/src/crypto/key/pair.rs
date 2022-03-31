@@ -1,16 +1,23 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::TryInto;
+
+use crypto::keys::x25519;
+use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
-use crate::crypto::KeyRef;
+use crate::crypto::key::ed25519::ed25519_private_try_from_bytes;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
+use crate::crypto::X25519;
 use crate::error::Result;
-use crate::utils::generate_ed25519_keypair;
 
 /// A convenient type for representing a pair of cryptographic keys.
+// TODO: refactor with exact types for each key type? E.g. Ed25519KeyPair, X25519KeyPair etc.
+//       Maybe a KeyPair trait with associated types? Might need typed key structs
+//       like Ed25519Public, X25519Private etc. to avoid exposing pre-1.0 dependency types.
 #[derive(Clone, Debug)]
 pub struct KeyPair {
   type_: KeyType,
@@ -19,18 +26,64 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-  /// Creates a new [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`].
-  pub fn new_ed25519() -> Result<Self> {
-    Self::new(KeyType::Ed25519)
-  }
-
   /// Creates a new [`KeyPair`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType) -> Result<Self> {
     let (public, private): (PublicKey, PrivateKey) = match type_ {
-      KeyType::Ed25519 => generate_ed25519_keypair()?,
+      KeyType::Ed25519 => {
+        let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
+        let public: ed25519::PublicKey = secret.public_key();
+
+        let private: PrivateKey = secret.to_bytes().to_vec().into();
+        let public: PublicKey = public.to_bytes().to_vec().into();
+
+        (public, private)
+      }
+      KeyType::X25519 => {
+        let secret: x25519::SecretKey = x25519::SecretKey::generate()?;
+        let public: x25519::PublicKey = secret.public_key();
+
+        let private: PrivateKey = secret.to_bytes().to_vec().into();
+        let public: PublicKey = public.to_bytes().to_vec().into();
+        (public, private)
+      }
     };
 
     Ok(Self { type_, public, private })
+  }
+
+  /// Reconstructs a [`KeyPair`] from the bytes of a private key.
+  ///
+  /// The private key for [`Ed25519`][`KeyType::Ed25519`] must be a 32-byte seed in compliance
+  /// with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
+  pub fn try_from_private_key_bytes(key_type: KeyType, private_key_bytes: &[u8]) -> Result<Self> {
+    let (public, private) = match key_type {
+      KeyType::Ed25519 => {
+        let private_key: ed25519::SecretKey = ed25519_private_try_from_bytes(private_key_bytes)?;
+        let public_key: ed25519::PublicKey = private_key.public_key();
+
+        let private: PrivateKey = private_key.to_bytes().to_vec().into();
+        let public: PublicKey = public_key.to_bytes().to_vec().into();
+        (public, private)
+      }
+      KeyType::X25519 => {
+        let private_key_bytes: [u8; X25519::PRIVATE_KEY_LENGTH] = private_key_bytes
+          .try_into()
+          .map_err(|_| crate::Error::InvalidKeyLength(private_key_bytes.len(), X25519::PRIVATE_KEY_LENGTH))?;
+        let private_key: x25519::SecretKey = x25519::SecretKey::from_bytes(private_key_bytes);
+        let public_key: x25519::PublicKey = private_key.public_key();
+
+        let private: PrivateKey = private_key.to_bytes().to_vec().into();
+        let public: PublicKey = public_key.to_bytes().to_vec().into();
+        (public, private)
+      }
+    };
+
+    Ok(Self {
+      type_: key_type,
+      public,
+      private,
+    })
   }
 
   /// Returns the [`type`][`KeyType`] of the `KeyPair` object.
@@ -43,19 +96,9 @@ impl KeyPair {
     &self.public
   }
 
-  /// Returns the public key as a [`KeyRef`] object.
-  pub fn public_ref(&self) -> KeyRef<'_> {
-    KeyRef::new(self.type_, self.public.as_ref())
-  }
-
   /// Returns a reference to the [`PrivateKey`] object.
   pub const fn private(&self) -> &PrivateKey {
     &self.private
-  }
-
-  /// Returns the private key as a [`KeyRef`] object.
-  pub fn private_ref(&self) -> KeyRef<'_> {
-    KeyRef::new(self.type_, self.private.as_ref())
   }
 }
 
@@ -89,9 +132,27 @@ mod tests {
 
   #[test]
   fn test_new_ed25519() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     assert_eq!(keypair.type_(), KeyType::Ed25519);
     assert_eq!(keypair.public().as_ref().len(), 32);
     assert_eq!(keypair.private().as_ref().len(), 32);
+  }
+
+  #[test]
+  fn test_new_x25519() {
+    let keypair: KeyPair = KeyPair::new(KeyType::X25519).unwrap();
+    assert_eq!(keypair.type_(), KeyType::X25519);
+    assert_eq!(keypair.public().as_ref().len(), 32);
+    assert_eq!(keypair.private().as_ref().len(), 32);
+  }
+
+  #[test]
+  fn test_try_from_private_key_bytes() {
+    for key_type in [KeyType::Ed25519, KeyType::X25519] {
+      let keypair: KeyPair = KeyPair::new(key_type).unwrap();
+      let reconstructed: KeyPair = KeyPair::try_from_private_key_bytes(key_type, keypair.private.as_ref()).unwrap();
+      assert_eq!(keypair.private.as_ref(), reconstructed.private.as_ref());
+      assert_eq!(keypair.public.as_ref(), reconstructed.public.as_ref());
+    }
   }
 }

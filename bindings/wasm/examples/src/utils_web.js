@@ -18,14 +18,14 @@ export async function initIdentity(path = "./identity_wasm_bg.wasm") {
  *
  * N.B. initIdentity() must be called prior to this function.
  *
- * @returns {{defaultNodeURL: string, explorerURL: string, network: Network}}
+ * @returns {{network: Network, explorer: ExplorerUrl}}
  */
 export function defaultClientConfig() {
-    const mainNet = identity.Network.mainnet();
+    const mainnet = identity.Network.mainnet();
+    const explorer = identity.ExplorerUrl.mainnet();
     return {
-        network: mainNet,
-        defaultNodeURL: mainNet.defaultNodeURL,
-        explorerURL: mainNet.explorerURL,
+        network: mainnet,
+        explorer: explorer,
     }
 }
 
@@ -48,9 +48,7 @@ export function logToScreen(message) {
  * @returns {string}
  */
 export function linkify(inputText) {
-
     return inputText.replace(LINK_REGEX, '<a href="$1" target="_blank">$1</a>');
-
 }
 
 /**
@@ -64,9 +62,7 @@ export function logObjectToScreen(obj) {
 export function setupDOMLog() {
     var orig = console.log;
 
-    console.log = function() {
-
-        
+    console.log = function () {
         Array.from(arguments).forEach(argument => {
             if (typeof argument === 'object') {
                 return logObjectToScreen(argument);

@@ -1,8 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::time::Instant;
 
+use identity_core::common::KeyComparable;
+use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 
 use crate::did::CoreDID;
@@ -20,8 +22,7 @@ use crate::resolution::Resolution;
 use crate::resolution::ResolverMethod;
 use crate::resolution::Resource;
 use crate::resolution::SecondaryResource;
-use crate::utils::DIDKey;
-use crate::utils::OrderedSet;
+use crate::service::ServiceEndpoint;
 
 /// Resolves a DID into a DID Document by using the "Read" operation of the DID method.
 ///
@@ -120,7 +121,6 @@ where
   // 3. If the original input DID URL contained a fragment, execute the
   //    algorithm for Dereferencing the Secondary Resource.
   if let Some(fragment) = did_url.fragment() {
-    //
     // Dereferencing the Secondary Resource
     //
     match primary {
@@ -230,7 +230,12 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
       .find(|service| matches!(service.id().fragment(), Some(fragment) if fragment == target))
       .map(|service| service.service_endpoint())
       // 1.2. Execute the Service Endpoint Construction algorithm.
-      .map(|url| service_endpoint_ctor(did_url, url))
+      .map(|endpoint| match endpoint {
+        ServiceEndpoint::One(url) => service_endpoint_ctor(did_url, url),
+        // TODO: support service endpoint sets and map? Dereferencing spec does not address them.
+        ServiceEndpoint::Set(_) => Err(Error::InvalidResolutionService),
+        ServiceEndpoint::Map(_) => Err(Error::InvalidResolutionService),
+      })
       .transpose()?
       // 1.3. Return the output service endpoint URL.
       .map(Into::into)
@@ -250,13 +255,13 @@ fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option
   fn dereference<T>(
     base_did: &CoreDID,
     target_fragment: &str,
-    resources: &OrderedSet<DIDKey<T>>,
+    resources: &OrderedSet<T>,
   ) -> Result<Option<SecondaryResource>>
   where
-    T: Clone + AsRef<CoreDIDUrl> + Into<SecondaryResource>,
+    T: Clone + AsRef<CoreDIDUrl> + KeyComparable + Into<SecondaryResource>,
   {
     for resource in resources.iter() {
-      let resource_url: &CoreDIDUrl = resource.as_did_url();
+      let resource_url: &CoreDIDUrl = resource.as_ref();
 
       // Skip objects with different base URLs
       if resource_url.did() != base_did {
@@ -322,7 +327,7 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 
   // The input service endpoint URL MUST be an HTTP(S) URL.
   if url.scheme() != "https" {
-    return Err(Error::InvalidServiceProtocol);
+    return Err(Error::InvalidResolutionService);
   }
 
   // 1. Initialize a string output service endpoint URL to the value of
@@ -381,6 +386,7 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 mod test {
   use crate::did::DID;
   use crate::service::Service;
+  use crate::utils::Queryable;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
   use crate::verification::VerificationMethod;
@@ -415,7 +421,7 @@ mod test {
     .is_ok());
     assert!(service_endpoint_ctor(
       did_url,
-      &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
+      &Url::parse("https://my-service.endpoint.net?query=this").unwrap(),
     )
     .is_ok());
   }
@@ -438,7 +444,7 @@ mod test {
     .is_ok());
     assert!(service_endpoint_ctor(
       did_url,
-      &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
+      &Url::parse("https://my-service.endpoint.net#fragment").unwrap(),
     )
     .is_ok());
   }
@@ -447,8 +453,8 @@ mod test {
     VerificationMethod::builder(Default::default())
       .id(did.to_url().join(fragment).unwrap())
       .controller(did.clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_base58(fragment.as_bytes()))
       .build()
       .unwrap()
   }
@@ -456,7 +462,7 @@ mod test {
   fn generate_service(did: &CoreDID, fragment: &str, url: &str) -> Service {
     Service::builder(Default::default())
       .id(did.to_url().join(fragment).unwrap())
-      .service_endpoint(Url::parse(url).unwrap())
+      .service_endpoint(Url::parse(url).unwrap().into())
       .type_("LinkedDomains")
       .build()
       .unwrap()

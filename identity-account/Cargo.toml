@@ -1,8 +1,8 @@
 [package]
 name = "identity-account"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["IOTA Stiftung"]
-edition = "2018"
+edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
@@ -11,52 +11,27 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
 
 [dependencies]
-actix = { version = "0.12.0", optional = true }
-async-trait = { version = "0.1", default-features = false }
-futures = { version = "0.3" }
-hashbrown = { version = "0.11", features = ["serde"] }
-identity-core = { version = "=0.4.1", path = "../identity-core" }
-identity-credential = { version = "=0.4.1", path = "../identity-credential" }
-identity-did = { version = "=0.4.1", path = "../identity-did" }
-identity-iota = { version = "=0.4.1", path = "../identity-iota", default-features = false }
-itoa = { version = "0.4" }
+identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false }
+identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
+identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
+identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
+identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false }
+identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
 log = { version = "0.4", default-features = false }
-once_cell = { version = "1.7", default-features = false, features = ["std"] }
 paste = { version = "1.0" }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-slog = { version = "2.7" }
-strum = { version = "0.21", features = ["derive"] }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
-tokio = { version = "1.5", features = ["sync"] }
-zeroize = { version = "1.4" }
-
-[dependencies.iota-crypto]
-version = "0.7"
-features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
-
-[dependencies.iota_stronghold]
-git = "https://github.com/iotaledger/stronghold.rs"
-rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
-optional = true
-
-[dependencies.stronghold_engine]
-git = "https://github.com/iotaledger/stronghold.rs"
-rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
-optional = true
 
 [dev-dependencies]
-rand = { version = "0.8" }
+futures = { version = "0.3" }
 rusty-fork = { version = "0.3" }
-tokio = { version = "1.5", features = ["macros", "rt", "rt-multi-thread", "sync"] }
+tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
+default = ["stronghold", "async", "send-sync-storage"]
 mem-client = []
-stronghold = [
-  "iota_stronghold",
-  "stronghold_engine",
-  "actix",
-  "tokio/rt-multi-thread",
-]
-wasm = ["identity-iota/wasm"]
+stronghold = ["identity-account-storage/stronghold"]
 async = ["identity-iota/async"]
-default = ["stronghold", "async"]
+send-sync-storage = ["identity-account-storage/send-sync-storage"]

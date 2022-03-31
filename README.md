@@ -49,8 +49,8 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.51)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51)
+- [Rust](https://www.rust-lang.org/) (>= 1.56.1)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.56.0)
 
 ## Getting Started
 
@@ -78,52 +78,45 @@ cargo doc --document-private-items --no-deps --open
 [package]
 name = "iota_identity_example"
 version = "1.0.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}
 pretty_env_logger = { version = "0.4" }
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.14", features = ["full"] }
 ```
 *main.*<span></span>*rs*
 ```rust
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
-use identity::account::IdentityCreate;
-use identity::account::IdentityState;
+use identity::account::IdentitySetup;
 use identity::account::Result;
-use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
+use identity::account_storage::Stronghold;
+use identity::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // The Stronghold settings for the storage.
-  let snapshot: PathBuf = "./example-strong.hodl".into();
+  // Stronghold settings.
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None).await?;
 
-  // Create a new Account with Stronghold as the storage adapter.
+  // Create a new identity with default settings and
+  // Stronghold as the storage.
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(snapshot, Some(password)))
-    .build()
+    .storage(stronghold)
+    .create_identity(IdentitySetup::default())
     .await?;
 
-  // Create a new Identity with default settings.
-  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
-
-  // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = identity.try_did()?;
-
-  println!("[Example] Local Document = {:#?}", identity.to_document()?);
-  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
+  println!("[Example] Local Document = {:#?}", account.document());
 
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity(did).await?;
+  let resolved: ResolvedIotaDocument = account.resolve_identity().await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
@@ -172,6 +165,8 @@ Afterwards, we are already planning a future update containing privacy enhancing
 
 We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
 
+Please review the [contribution](https://wiki.iota.org/identity.rs/contribute) and [workflow](https://wiki.iota.org/identity.rs/workflow) sections in the [IOTA Wiki](https://wiki.iota.org/).
+
 To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
 
-The best place to get involved in discussions about this framework or to look for support at is the `#identity-discussion` channel on the [IOTA Discord](http://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).
+The best place to get involved in discussions about this framework or to look for support at is the `#identity-discussion` channel on the [IOTA Discord](https://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).

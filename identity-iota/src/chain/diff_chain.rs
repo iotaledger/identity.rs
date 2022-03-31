@@ -1,77 +1,116 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use core::slice::Iter;
 
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
-use crate::chain::DocumentChain;
+use crate::chain::milestone::sort_by_milestone;
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
-use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::Message;
+use crate::tangle::Client;
 use crate::tangle::MessageExt;
-use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
+use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
 
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct DiffChain {
-  inner: Vec<DocumentDiff>,
+  inner: Vec<DiffMessage>,
 }
 
 impl DiffChain {
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from a slice of [`Messages`][Message].
-  pub fn try_from_messages(integration_chain: &IntegrationChain, messages: &[Message]) -> Result<Self> {
-    let did: &IotaDID = integration_chain.current().id();
+  pub async fn try_from_messages(
+    integration_chain: &IntegrationChain,
+    messages: &[Message],
+    client: &Client,
+  ) -> Result<Self> {
+    let did: &IotaDID = integration_chain.current().document.id();
 
-    let index: MessageIndex<DocumentDiff> = messages
+    let index: MessageIndex<DiffMessage> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
-    debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
+    log::debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
 
-    Self::try_from_index(integration_chain, index)
+    Self::try_from_index(integration_chain, index, client).await
   }
 
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
-  pub fn try_from_index(integration_chain: &IntegrationChain, index: MessageIndex<DocumentDiff>) -> Result<Self> {
-    trace!("[Diff] Message Index = {:#?}", index);
-    Self::try_from_index_with_document(integration_chain.current(), index)
+  pub async fn try_from_index(
+    integration_chain: &IntegrationChain,
+    index: MessageIndex<DiffMessage>,
+    client: &Client,
+  ) -> Result<Self> {
+    log::trace!("[Diff] Message Index = {:#?}", index);
+    Self::try_from_index_with_document(integration_chain.current(), index, client).await
   }
 
   /// Constructs a new [`DiffChain`] from the given [`MessageIndex`], using an integration document
   /// to validate.
-  pub(in crate::chain) fn try_from_index_with_document(
-    integration_document: &IotaDocument,
-    mut index: MessageIndex<DocumentDiff>,
+  pub(in crate::chain) async fn try_from_index_with_document(
+    integration_document: &ResolvedIotaDocument,
+    mut index: MessageIndex<DiffMessage>,
+    client: &Client,
   ) -> Result<Self> {
     if index.is_empty() {
       return Ok(Self::new());
     }
 
     let mut this: Self = Self::new();
-    while let Some(mut list) = index.remove(
+    let mut current_document: ResolvedIotaDocument = integration_document.clone();
+    while let Some(diffs) = index.remove(
       this
         .current_message_id()
-        .unwrap_or_else(|| integration_document.message_id()),
+        .unwrap_or_else(|| current_document.message_id()),
     ) {
-      'inner: while let Some(next) = list.pop() {
-        if integration_document.verify_data(&next).is_ok() {
-          this.inner.push(next);
-          break 'inner;
-        }
+      // Extract diffs that reference the last message (either the integration message or the
+      // diff message from the previous iteration). If more than one references the
+      // same message, they are conflicting.
+      let expected_prev_message_id: &MessageId = this
+        .current_message_id()
+        .unwrap_or_else(|| current_document.message_id());
+      // Filter out diffs with invalid signatures.
+      let valid_diffs: Vec<DiffMessage> = diffs
+        .into_iter()
+        .filter(|diff| Self::verify_diff(diff, integration_document, expected_prev_message_id).is_ok())
+        .collect();
+
+      // Sort and apply the diff referenced by the oldest milestone.
+      if let Some((diff, merged_document)) = sort_by_milestone(valid_diffs, client)
+        .await?
+        .into_iter()
+        .filter_map(|diff|
+          // Try merge the diff changes into the document. Important to prevent changes to the
+          // signing verification methods and reject invalid changes to non-existent sections.
+          match Self::try_merge(&diff, &current_document) {
+            Ok(merged_document) => Some((diff, merged_document)),
+            _ => None,
+          })
+        .next()
+      {
+        // Update the document for the next diff to allow updating sections added by previous diffs.
+        current_document = merged_document;
+        // Checked by verify_diff and try_merge above.
+        this.push_unchecked(diff);
       }
+      // If no diff is appended, the chain ends.
     }
 
     Ok(this)
@@ -97,8 +136,8 @@ impl DiffChain {
     self.inner.clear();
   }
 
-  /// Returns an iterator yielding references to [`DocumentDiffs`][DocumentDiff].
-  pub fn iter(&self) -> Iter<'_, DocumentDiff> {
+  /// Returns an iterator yielding references to [`DiffMessages`][DiffMessage].
+  pub fn iter(&self) -> Iter<'_, DiffMessage> {
     self.inner.iter()
   }
 
@@ -107,80 +146,106 @@ impl DiffChain {
     self.inner.last().map(|diff| diff.message_id())
   }
 
-  /// Adds a new diff to the [`DiffChain`].
+  /// Adds a new diff to the [`DiffChain`] while merging it with the given integration document.
+  /// Returns the merged document if valid.
   ///
   /// # Errors
   ///
-  /// Fails if the diff signature is invalid or the Tangle message
-  /// references within the diff are invalid.
-  pub fn try_push(&mut self, integration_chain: &IntegrationChain, diff: DocumentDiff) -> Result<()> {
-    self.check_valid_addition(integration_chain, &diff)?;
+  /// Fails if the diff signature is invalid, the Tangle message
+  /// references within the diff are invalid, or the merge fails.
+  pub fn try_push_and_merge(
+    &mut self,
+    diff: DiffMessage,
+    integration_document: &ResolvedIotaDocument,
+  ) -> Result<ResolvedIotaDocument> {
+    let expected_prev_message_id: &MessageId = self
+      .current_message_id()
+      .unwrap_or_else(|| integration_document.message_id());
+    let updated_document: ResolvedIotaDocument =
+      Self::check_valid_addition(&diff, integration_document, expected_prev_message_id)?;
+    self.push_unchecked(diff);
 
-    // SAFETY: we performed the necessary validation in `check_validity`.
-    unsafe {
-      self.push_unchecked(diff);
-    }
-
-    Ok(())
+    Ok(updated_document)
   }
 
-  /// Adds a new diff to the [`DiffChain`] with performing validation checks.
-  ///
-  /// # Safety
-  ///
-  /// This function is unsafe because it does not check the validity of
-  /// the signature or Tangle references of the [`DocumentDiff`].
-  pub unsafe fn push_unchecked(&mut self, diff: DocumentDiff) {
+  /// Adds a new diff to the [`DiffChain`] without performing any validation checks on
+  /// the [`DiffMessage`].
+  fn push_unchecked(&mut self, diff: DiffMessage) {
     self.inner.push(diff);
   }
 
-  /// Returns `true` if the [`DocumentDiff`] can be added to the [`DiffChain`].
-  pub fn is_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
-    self.check_valid_addition(integration_chain, diff).is_ok()
-  }
-
-  /// Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
+  /// Checks whether the [`DiffMessage`] attributes and signature are valid.
   ///
-  /// # Errors
-  ///
-  /// Fails if the [`DocumentDiff`] is not a valid addition.
-  pub fn check_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
-    let current_document: &IotaDocument = integration_chain.current();
-    let expected_prev_message_id: &MessageId = DocumentChain::__diff_message_id(integration_chain, self);
-    Self::__check_valid_addition(diff, current_document, expected_prev_message_id)
-  }
-
-  /// Validates the [`DocumentDiff`] is signed by the document and may form part of its diff chain.
-  pub(in crate::chain) fn __check_valid_addition(
-    diff: &DocumentDiff,
-    document: &IotaDocument,
+  /// NOTE: does not verify the changes contained in the diff are valid.
+  /// See [`DiffChain::try_merge`].
+  pub fn verify_diff(
+    diff: &DiffMessage,
+    document: &ResolvedIotaDocument,
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
-    if document.verify_data(diff).is_err() {
-      return Err(Error::ChainError {
-        error: "Invalid Signature",
-      });
+    if document.document.id() != diff.id() {
+      return Err(Error::ChainError { error: "invalid DID" });
     }
 
     if diff.message_id().is_null() {
       return Err(Error::ChainError {
-        error: "Invalid Message Id",
+        error: "invalid message id",
       });
     }
 
     if diff.previous_message_id().is_null() {
       return Err(Error::ChainError {
-        error: "Invalid Previous Message Id",
+        error: "invalid previous message id",
       });
     }
 
     if diff.previous_message_id() != expected_prev_message_id {
       return Err(Error::ChainError {
-        error: "Invalid Previous Message Id",
+        error: "invalid previous message id",
+      });
+    }
+
+    if document.document.verify_diff(diff).is_err() {
+      return Err(Error::ChainError {
+        error: "invalid diff signature",
       });
     }
 
     Ok(())
+  }
+
+  /// Attempts to merge the [`DiffMessage`] changes into the given document and returns the
+  /// resulting [`ResolvedIotaDocument`] if valid.
+  ///
+  /// NOTE: does not verify the signature and attributes.
+  /// See [`DiffChain::verify_diff`].
+  pub fn try_merge(diff: &DiffMessage, document: &ResolvedIotaDocument) -> Result<ResolvedIotaDocument> {
+    let mut updated_document: ResolvedIotaDocument = document.clone();
+    updated_document.merge_diff_message(diff)?;
+    if let Some(PublishType::Integration) = PublishType::new(&document.document, &updated_document.document) {
+      return Err(Error::ChainError {
+        error: "diff cannot alter update signing methods",
+      });
+    }
+
+    Ok(updated_document)
+  }
+
+  /// Checks if the [`DiffMessage`] can be added to the [`DiffChain`]. Returns the merged
+  /// document if valid.
+  ///
+  /// Equivalent to calling [`DiffChain::verify_diff`] then [`DiffChain::verify_merge`].
+  ///
+  /// # Errors
+  ///
+  /// Fails if the [`DiffMessage`] is not a valid addition.
+  pub fn check_valid_addition(
+    diff: &DiffMessage,
+    document: &ResolvedIotaDocument,
+    expected_prev_message_id: &MessageId,
+  ) -> Result<ResolvedIotaDocument> {
+    Self::verify_diff(diff, document, expected_prev_message_id)?;
+    Self::try_merge(diff, document)
   }
 }
 
@@ -191,112 +256,174 @@ impl Default for DiffChain {
 }
 
 impl Display for DiffChain {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    self.fmt_json(f)
   }
 }
 
-impl From<DiffChain> for Vec<DocumentDiff> {
+impl From<DiffChain> for Vec<DiffMessage> {
   fn from(diff_chain: DiffChain) -> Self {
     diff_chain.inner
   }
 }
 
 #[cfg(test)]
-mod test {
-  use identity_core::common::Timestamp;
+mod tests {
+  use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
-  use identity_did::did::CoreDIDUrl;
+  use identity_core::crypto::KeyType;
+  use identity_core::json;
   use identity_did::did::DID;
-  use identity_did::verification::MethodBuilder;
-  use identity_did::verification::MethodData;
-  use identity_did::verification::MethodRef;
-  use identity_did::verification::MethodType;
+  use identity_did::service::Service;
+  use identity_iota_core::diff::DiffMessage;
+  use identity_iota_core::document::IotaDocument;
+  use identity_iota_core::document::IotaService;
+  use identity_iota_core::tangle::MessageId;
 
-  use crate::chain::DocumentChain;
-  use crate::chain::IntegrationChain;
-  use crate::did::DocumentDiff;
-  use crate::did::IotaDocument;
-  use crate::tangle::MessageId;
+  use crate::document::ResolvedIotaDocument;
+  use crate::tangle::ClientBuilder;
+  use crate::tangle::MessageIndex;
   use crate::tangle::TangleRef;
 
-  #[test]
-  fn test_diff_chain() {
-    let mut chain: DocumentChain;
-    let mut keys: Vec<KeyPair> = Vec::new();
+  use super::*;
 
-    // =========================================================================
-    // Create Initial Document
-    // =========================================================================
+  fn create_document() -> (ResolvedIotaDocument, KeyPair) {
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    document
+      .sign_self(
+        keypair.private(),
+        document.default_signing_method().unwrap().id().clone(),
+      )
+      .unwrap();
+    let mut resolved: ResolvedIotaDocument = ResolvedIotaDocument::from(document);
+    resolved.set_message_id(MessageId::new([1; 32]));
+    (resolved, keypair)
+  }
 
-    {
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-      let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-      document.sign(keypair.private()).unwrap();
-      document.set_message_id(MessageId::new([8; 32]));
-      chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
-      keys.push(keypair);
+  #[tokio::test]
+  async fn test_diff_chain_add_remove_service() {
+    let (original, keypair) = create_document();
+
+    // Add a new service in a diff update.
+    let mut updated1: IotaDocument = original.document.clone();
+    let service: IotaService = Service::from_json_value(json!({
+      "id": updated1.id().to_url().join("#linked-domain").unwrap(),
+      "type": "LinkedDomains",
+      "serviceEndpoint": "https://iota.org"
+    }))
+    .unwrap();
+    assert!(updated1.insert_service(service));
+    let mut diff_add: DiffMessage = original
+      .document
+      .diff(
+        &updated1,
+        original.integration_message_id,
+        keypair.private(),
+        original.document.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
+    diff_add.set_message_id(MessageId::new([2; 32]));
+
+    // Remove the same service in a diff update.
+    let mut updated2: IotaDocument = updated1.clone();
+    assert!(updated2
+      .remove_service(&updated1.id().to_url().join("#linked-domain").unwrap())
+      .is_ok());
+    let mut diff_delete: DiffMessage = updated1
+      .diff(
+        &updated2,
+        *diff_add.message_id(),
+        keypair.private(),
+        updated1.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
+    diff_delete.set_message_id(MessageId::new([3; 32]));
+
+    // Ensure both diffs are resolved by the DiffChain.
+    let mut message_index: MessageIndex<DiffMessage> = MessageIndex::new();
+    message_index.insert(diff_add.clone());
+    message_index.insert(diff_delete.clone());
+    let client: Client = ClientBuilder::new().node_sync_disabled().build().await.unwrap();
+    let diff_chain: DiffChain = DiffChain::try_from_index_with_document(&original, message_index, &client)
+      .await
+      .unwrap();
+    assert_eq!(diff_chain.len(), 2);
+    assert_eq!(diff_chain.inner.get(0), Some(&diff_add));
+    assert_eq!(diff_chain.inner.get(1), Some(&diff_delete));
+
+    // Ensure the merged result does not have the service.
+    let mut merged: ResolvedIotaDocument = original.clone();
+    for diff in diff_chain.iter() {
+      merged.merge_diff_message(diff).unwrap();
     }
+    assert!(merged.document.service().is_empty());
+  }
 
-    assert_eq!(
-      chain.current().proof().unwrap().verification_method(),
-      "#authentication"
-    );
+  #[tokio::test]
+  async fn test_diff_chain_add_edit_service() {
+    let (original, keypair) = create_document();
 
-    // =========================================================================
-    // Push Integration Chain Update
-    // =========================================================================
-    {
-      let mut new: IotaDocument = chain.current().clone();
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    // Add a new service in a diff update.
+    let mut updated1: IotaDocument = original.document.clone();
+    let service: IotaService = Service::from_json_value(json!({
+      "id": updated1.id().to_url().join("#linked-domain").unwrap(),
+      "type": "LinkedDomains",
+      "serviceEndpoint": "https://iota.org"
+    }))
+    .unwrap();
+    assert!(updated1.insert_service(service.clone()));
+    let mut diff_add: DiffMessage = original
+      .document
+      .diff(
+        &updated1,
+        original.integration_message_id,
+        keypair.private(),
+        original.document.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
+    diff_add.set_message_id(MessageId::new([2; 32]));
 
-      let authentication: MethodRef = MethodBuilder::default()
-        .id(CoreDIDUrl::from(chain.id().to_url().join("#key-2").unwrap()))
-        .controller(chain.id().clone().into())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_multibase(keypair.public()))
-        .build()
-        .map(Into::into)
-        .unwrap();
+    // Edit the same service in a diff update.
+    let mut updated2: IotaDocument = updated1.clone();
+    let service_updated: IotaService = Service::from_json_value(json!({
+      "id": updated1.id().to_url().join("#linked-domain").unwrap(),
+      "type": "LinkedDomains",
+      "serviceEndpoint": ["https://example.com", "https://example.org"],
+    }))
+    .unwrap();
+    updated2
+      .core_document_mut()
+      .service_mut()
+      .replace(&service, service_updated.clone());
+    let mut diff_edit: DiffMessage = updated1
+      .diff(
+        &updated2,
+        *diff_add.message_id(),
+        keypair.private(),
+        updated1.default_signing_method().unwrap().id(),
+      )
+      .unwrap();
+    diff_edit.set_message_id(MessageId::new([3; 32]));
 
-      unsafe {
-        new.as_document_mut().authentication_mut().clear();
-        new.as_document_mut().authentication_mut().append(authentication.into());
-      }
+    // Ensure both diffs are resolved by the DiffChain.
+    let mut message_index: MessageIndex<DiffMessage> = MessageIndex::new();
+    message_index.insert(diff_add.clone());
+    message_index.insert(diff_edit.clone());
+    let client: Client = ClientBuilder::new().node_sync_disabled().build().await.unwrap();
+    let diff_chain: DiffChain = DiffChain::try_from_index_with_document(&original, message_index, &client)
+      .await
+      .unwrap();
+    assert_eq!(diff_chain.len(), 2);
+    assert_eq!(diff_chain.inner.get(0), Some(&diff_add));
+    assert_eq!(diff_chain.inner.get(1), Some(&diff_edit));
 
-      new.set_updated(Timestamp::now_utc());
-      new.set_previous_message_id(*chain.integration_message_id());
-
-      assert!(chain.current().sign_data(&mut new, keys[0].private()).is_ok());
-      assert_eq!(
-        chain.current().proof().unwrap().verification_method(),
-        "#authentication"
-      );
-
-      keys.push(keypair);
-      assert!(chain.try_push_integration(new).is_ok());
+    // Ensure the merged result has the updated service.
+    let mut merged: ResolvedIotaDocument = original.clone();
+    for diff in diff_chain.iter() {
+      merged.merge_diff_message(diff).unwrap();
     }
-
-    // =========================================================================
-    // Push Diff Chain Update
-    // =========================================================================
-    {
-      let new: IotaDocument = {
-        let mut this: IotaDocument = chain.current().clone();
-        this.properties_mut().insert("foo".into(), 123.into());
-        this.properties_mut().insert("bar".into(), 456.into());
-        this.set_updated(Timestamp::now_utc());
-        this
-      };
-
-      let message_id = *chain.diff_message_id();
-      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].private()).unwrap();
-      diff.set_message_id(message_id);
-      assert!(chain.try_push_diff(diff).is_ok());
-    }
+    assert_ne!(merged.document.service().first().unwrap(), &service);
+    assert_eq!(merged.document.service().first().unwrap(), &service_updated);
   }
 }

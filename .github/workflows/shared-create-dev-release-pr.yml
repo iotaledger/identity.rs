@@ -1,0 +1,194 @@
+name: Shared / Create Dev Release PR
+
+# This workflow creates a Pull Request meant for creating `dev` releases. 
+# In this workflow the version of the `dev` release is determined automatically from a passed in base.
+# A changelog, including the new `dev` version, is generated and version strings in relevant files are replaced. 
+# All these changes are committed and submitted as a Pull Request.
+
+on:
+  workflow_call:
+    inputs:
+      tag-prefix:
+        description: "will be pre-pended to tag-base"
+        required: false
+        type: string
+      tag-base:
+        description: "the base version of the dev release"
+        required: true
+        type: string
+      tag-postfix:
+        description: "will be appended to tag-base, marks the kind of dev release"
+        required: true
+        type: string
+      main-tag-regex:
+        description: "the regex to find all related main releases"
+        required: true
+        type: string
+      changelog-path:
+        description: "path to the changelog file"
+        required: false
+        default: ./CHANGELOG.md
+        type: string
+      changelog-config-path:
+        description: "path to the changelog config"
+        required: true
+        type: string
+      pr-body-text:
+        description: "text to be included in the PR"
+        required: false
+        type: string
+      release-target:
+        description: "target of the release (rust|wasm)"
+        required: true
+        type: string
+    secrets:
+      GPG_PRIVATE_KEY:
+        description: "GPG private key for signing commits and tags"
+        required: true
+      GPG_PASSPHRASE:
+        description: "GPG private passphrase for signing commits and tags"
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+          ref: dev
+
+      - name: Validate version
+        run: |
+          VERSION=${{ inputs.tag-prefix }}${{ inputs.tag-base }}
+          if ! [[ $VERSION =~ ${{ inputs.main-tag-regex }} ]]; then
+            echo unrecognized version $VERSION, must match ${{ inputs.main-tag-regex }}
+            exit 1
+          fi
+
+      - name: Determine Next Version And Excluded Tags
+        run: |
+
+          TAG_PREFIX=${{ inputs.tag-prefix }}
+          TAG_BASE=${{ inputs.tag-base }}
+          TAG_POSTFIX=${{ inputs.tag-postfix }}
+
+          # create a list of tags that are unrelated to the current release
+          ALL_TAGS=$(git tag -l)
+          temp_array=()
+          for value in ${ALL_TAGS[@]}
+          do
+              # Exclude any tags not matching the type of release or hotfix tags not on dev or main
+              if ! [[ ( $value == $TAG_PREFIX$TAG_BASE$TAG_POSTFIX* || $value =~ ${{ inputs.main-tag-regex }} ) && $(git branch -a --contains $value | grep -E 'remotes/origin/dev|remotes/origin/main') ]]; then
+                temp_array+=($value)
+              fi
+          done
+          UNRELATED_TAGS=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
+          unset temp_array
+          echo UNRELATED_TAGS=$UNRELATED_TAGS
+          
+          # determine if there is a previous dev version or this is the first dev release
+          LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" | head -n 1)
+          echo LATEST_DEV_TAG=$LATEST_DEV_TAG
+          if [[ $LATEST_DEV_TAG == '' ]]; then
+            NEW_DEV_TAG=$TAG_PREFIX$TAG_BASE$TAG_POSTFIX
+            NEW_DEV_TAG+="1"
+            LATEST_DEV_TAG=$NEW_DEV_TAG
+            FIRST="--exclude-tags "
+            SECOND=$UNRELATED_TAGS
+            EXCLUDE_ARG=$FIRST$SECOND
+          else
+            NEW_DEV_TAG=$(.github/workflows/scripts/updateVersion.sh $LATEST_DEV_TAG)
+
+            # exclude dev version already merged in main
+            ALL_DEV_TAGS_IN_MAIN=$(git tag -l "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" --merged $(git log -n 1 refs/remotes/origin/main --pretty=format:"%H"))
+            temp_array=()
+            for value in "${ALL_DEV_TAGS_IN_MAIN[@]}"
+            do
+                [[ $value != $LATEST_DEV_TAG ]] && temp_array+=($value)
+            done
+            FIRST="--exclude-tags "
+            SECOND=$(.github/workflows/scripts/array.sh joinBy , "${temp_array[@]}")
+            if [[ $SECOND != '' ]]; then
+              SECOND+=,
+            fi
+            THIRD=$UNRELATED_TAGS
+            unset temp_array
+            EXCLUDE_ARG=$FIRST$SECOND$THIRD
+          fi
+          
+          # set variables
+          echo NEW_DEV_TAG=$NEW_DEV_TAG
+          NEXTVERSION=$NEW_DEV_TAG
+
+          echo NEXTVERSION=$NEXTVERSION
+          echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
+          
+          NEXTVERSION_WITHOUT_PREFIX=$(echo "$NEXTVERSION" | sed "s/$TAG_PREFIX*//")
+          echo NEXTVERSION_WITHOUT_PREFIX=$NEXTVERSION_WITHOUT_PREFIX
+          echo NEXTVERSION_WITHOUT_PREFIX=$NEXTVERSION_WITHOUT_PREFIX >> $GITHUB_ENV
+
+          echo EXCLUDE_ARG=$EXCLUDE_ARG
+          echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
+
+      - name: Run Changelog Generator
+        uses: './.github/actions/release/changelog-generator'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          changelog-path: ${{ inputs.changelog-path }}
+          changelog-config-path: ${{ inputs.changelog-config-path }}
+          future-release: ${{ env.NEXTVERSION }} 
+          optional-arg: ${{env.EXCLUDE_ARG}}
+
+      - name: Check Changelog For Modification
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+
+      - name: Import GPG key
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Bump Versions
+        uses: './.github/actions/release/bump-versions'
+        with:
+          release-target: ${{inputs.release-target}}
+          version: ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
+
+      - name: Commit changes
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+          git commit -m "changelog and versions"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@67df31e08a133c6a77008b89689677067fef169e
+        with:
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          branch: release/${{ env.NEXTVERSION }}
+          delete-branch: true
+          title: 'Release ${{ env.NEXTVERSION }}'
+          body: |
+            This automatically generated PR contains changes for the `${{ env.NEXTVERSION }}` version.
+            ${{inputs.pr-body-text}}
+            If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR. 
+          labels: |
+            No changelog
+
+
+      

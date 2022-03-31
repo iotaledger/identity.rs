@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
+use serde::Serialize;
+
 use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
+use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
-use serde::Serialize;
 
 use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
@@ -81,7 +81,7 @@ pub struct Credential<T = Object> {
   pub properties: T,
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
+  pub proof: Option<Proof>,
 }
 
 impl<T> Credential<T> {
@@ -156,12 +156,12 @@ impl<T> Credential<T> {
   }
 
   /// Returns a reference to the proof.
-  pub fn proof(&self) -> Option<&Signature> {
+  pub fn proof(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 
   /// Returns a mutable reference to the proof.
-  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
+  pub fn proof_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
@@ -170,29 +170,25 @@ impl<T> Display for Credential<T>
 where
   T: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    self.fmt_json(f)
   }
 }
 
-impl<T> TrySignature for Credential<T> {
-  fn signature(&self) -> Option<&Signature> {
+impl<T> GetSignature for Credential<T> {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl<T> TrySignatureMut for Credential<T> {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+impl<T> GetSignatureMut for Credential<T> {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl<T> SetSignature for Credential<T> {
-  fn set_signature(&mut self, value: Signature) {
+  fn set_signature(&mut self, value: Proof) {
     self.proof.replace(value);
   }
 }

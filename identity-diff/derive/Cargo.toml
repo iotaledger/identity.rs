@@ -1,8 +1,8 @@
 [package]
-name = "identity-derive"
-version = "0.4.1"
+name = "identity-diff-derive"
+version = "0.5.0"
 authors = ["IOTA Stiftung"]
-edition = "2018"
+edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
@@ -11,7 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Derive `Diff` support for the identity-rs library."
 
 [lib]
-name = "identity_derive"
+name = "identity_diff_derive"
 proc-macro = true
 
 [dependencies]

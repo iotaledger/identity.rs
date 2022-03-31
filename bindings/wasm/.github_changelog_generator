@@ -1,0 +1,16 @@
+issues=false
+pr-wo-labels=false
+author=false
+breaking-label=### Changed
+breaking-labels=Breaking change
+enhancement-label=### Added
+enhancement-labels=Added
+bugs-label=### Patch
+bug-labels=Patch
+deprecated-prefix=### Deprecated
+deprecated-labels=Deprecated
+removed-prefix=### Removed
+removed-labels=Removed
+exclude-labels=Documentation,No changelog
+include-labels=Wasm
+verbose=true

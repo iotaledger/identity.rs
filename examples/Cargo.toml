@@ -1,14 +1,14 @@
 [package]
 name = "examples"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [dependencies]
-identity = { path = "../identity", features = ["account"] }
+identity = { path = "../identity", features = ["account", "stronghold"] }
 pretty_env_logger = { version = "0.4" }
 rand = { version = "0.8" }
-tokio = { version = "1.10", features = ["full"] }
+tokio = { version = "1.17.0", features = ["full"] }
 
 [[example]]
 name = "getting_started"
@@ -35,6 +35,14 @@ name = "account_signing"
 path = "account/signing.rs"
 
 [[example]]
+name = "account_multiple"
+path = "account/multiple_identities.rs"
+
+[[example]]
+name = "account_unchecked"
+path = "account/unchecked.rs"
+
+[[example]]
 name = "create_did"
 path = "low-level-api/create_did.rs"
 
@@ -47,10 +55,6 @@ name = "create_vp"
 path = "low-level-api/create_vp.rs"
 
 [[example]]
-name = "diff_chain"
-path = "low-level-api/diff_chain.rs"
-
-[[example]]
 name = "resolve_history"
 path = "low-level-api/resolve_history.rs"
 
@@ -59,8 +63,8 @@ name = "manipulate_did"
 path = "low-level-api/manipulate_did.rs"
 
 [[example]]
-name = "merkle_key"
-path = "low-level-api/merkle_key.rs"
+name = "key_exchange"
+path = "low-level-api/key_exchange.rs"
 
 [[example]]
 name = "resolution"

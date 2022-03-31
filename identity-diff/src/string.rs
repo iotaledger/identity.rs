@@ -7,7 +7,6 @@ use serde::Serialize;
 use crate::Diff;
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
 
 /// The Diff Type for a `String` type.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
@@ -55,7 +54,7 @@ impl Diff for String {
 
 /// Debug trait implementation for DiffString.
 impl Debug for DiffString {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self.0 {
       Some(val) => write!(f, "DiffString({:#?})", val),
       None => write!(f, "DiffString None"),

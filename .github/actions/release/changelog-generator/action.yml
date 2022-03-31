@@ -1,0 +1,85 @@
+name: 'changelog-generator'
+description: 'Runs github changelog generator'
+inputs:
+  changelog-path:
+    description: "path to the changelog file"
+    required: false
+    default: ./CHANGELOG.md
+  changelog-config-path:
+    description: "path to the changelog config"
+    required: true
+  future-release:
+    description: "release name (e.g. `v1.2.3-dev.1`)"
+    required: true
+  previous-release:
+    description: "release name of previous release (e.g. `v1.2.3-dev.1`), if set will only generate the changelog up to and including this version"
+    required: false
+  output-only-current-release:
+    description: "cut output to only show changes from future release (this requires previous-release to be set)"
+    required: false
+  optional-arg:
+    description: "optional argument for the generator command"
+    required: false
+  github-token:
+    description: "token used to call github API"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Determine since arg
+      shell: bash
+      run: |
+        PREVIOUS_RELEASE=${{ inputs.previous-release }}
+        if [[ $PREVIOUS_RELEASE != '' ]]; then
+          SINCE_ARG="--since-tag $PREVIOUS_RELEASE"
+        fi
+        echo SINCE_ARG=$SINCE_ARG
+        echo SINCE_ARG=$SINCE_ARG >> $GITHUB_ENV
+    
+    - name: Prepare Repository For Changelog Generator
+      shell: bash
+      run: |
+        GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+        GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+
+        echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+        echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+
+        echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+        echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+
+    - name: Run github-changelog-generator
+      uses: docker://eiha/github-changelog-generator:latest
+      with:
+        args: >
+          --output ${{ inputs.changelog-path }}
+          --config-file ${{ inputs.changelog-config-path }}
+          --user ${{ env.GITHUB_REPOSITORY_USER }}
+          --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+          --token ${{ inputs.github-token }} 
+          --future-release ${{ inputs.future-release }} 
+          ${{ env.SINCE_ARG }}
+          ${{ inputs.optional-arg }}
+
+    - name: Populate changelog descriptions
+      shell: bash
+      run: |
+        .github/workflows/scripts/populate-changelog-descriptions.sh ${{ inputs.changelog-path }}
+
+    - name: Cut other releases
+      if: ${{ inputs.output-only-current-release }}
+      shell: bash
+      run: |
+        CURRENT_VERSION=${{ inputs.future-release }}
+        ESCAPED_CURRENT_VERSION=${CURRENT_VERSION//./\\.}
+        # cut everything before the current release changes
+        sed -n -z -E "s/.*$ESCAPED_CURRENT_VERSION\)(.*)/\1/p" -i ${{ inputs.changelog-path }}
+        
+        # cut everything after the current release changes based on the footer text
+        sed -n -z -E 's/(.*)(\\\* \*This.*)/\1/p' -i ${{ inputs.changelog-path }}
+
+    - name: Log ${{ inputs.changelog-path }}
+      shell: bash
+      run: cat ${{ inputs.changelog-path }}

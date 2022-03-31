@@ -1,50 +1,45 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::Network as IotaNetwork;
+use identity::iota_core::Network;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Network)]
-#[derive(Clone, Debug)]
-pub struct WasmNetwork(IotaNetwork);
+pub struct WasmNetwork(pub(crate) Network);
 
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {
-  /// Parses the provided string to a [`WasmNetwork`].
-  #[wasm_bindgen]
+  /// Parses the provided string to a `Network`.
+  ///
+  /// Errors if the name is invalid.
+  #[wasm_bindgen(js_name = tryFromName)]
   pub fn try_from_name(name: String) -> Result<WasmNetwork> {
-    IotaNetwork::try_from_name(name).map(Self).wasm_result()
+    Network::try_from_name(name).map(Self).wasm_result()
   }
 
   #[wasm_bindgen]
   pub fn mainnet() -> WasmNetwork {
-    Self(IotaNetwork::Mainnet)
+    Self(Network::Mainnet)
   }
 
   #[wasm_bindgen]
   pub fn devnet() -> WasmNetwork {
-    Self(IotaNetwork::Devnet)
+    Self(Network::Devnet)
   }
 
-  /// Returns the node URL of the Tangle network.
-  #[wasm_bindgen(getter = defaultNodeURL)]
+  /// Returns a copy of the network name.
+  #[wasm_bindgen]
+  pub fn name(&self) -> String {
+    self.0.name_str().to_owned()
+  }
+
+  /// Returns a copy of the node URL of the Tangle network.
+  #[wasm_bindgen(js_name = defaultNodeURL)]
   pub fn default_node_url(&self) -> Option<String> {
     self.0.default_node_url().map(ToString::to_string)
-  }
-
-  /// Returns the web explorer URL of the Tangle network.
-  #[wasm_bindgen(getter = explorerURL)]
-  pub fn explorer_url(&self) -> Option<String> {
-    self.0.explorer_url().map(ToString::to_string)
-  }
-
-  /// Returns the web explorer URL of the given `message`.
-  #[wasm_bindgen(js_name = messageURL)]
-  pub fn message_url(&self, message_id: &str) -> Result<String> {
-    self.0.message_url(message_id).map(|url| url.to_string()).wasm_result()
   }
 
   #[allow(clippy::inherent_to_string, clippy::wrong_self_convention)]
@@ -52,22 +47,30 @@ impl WasmNetwork {
   pub fn to_string(&self) -> String {
     self.0.name_str().to_owned()
   }
-}
 
-impl Default for WasmNetwork {
-  fn default() -> Self {
-    IotaNetwork::default().into()
+  /// Serializes a `Network` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `Network` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmNetwork> {
+    json.into_serde().map(Self).wasm_result()
   }
 }
 
-impl From<WasmNetwork> for IotaNetwork {
+impl_wasm_clone!(WasmNetwork, Network);
+
+impl From<WasmNetwork> for Network {
   fn from(other: WasmNetwork) -> Self {
     other.0
   }
 }
 
-impl From<IotaNetwork> for WasmNetwork {
-  fn from(other: IotaNetwork) -> Self {
+impl From<Network> for WasmNetwork {
+  fn from(other: Network) -> Self {
     Self(other)
   }
 }
