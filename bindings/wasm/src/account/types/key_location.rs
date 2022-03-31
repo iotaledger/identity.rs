@@ -34,7 +34,9 @@ impl WasmKeyLocation {
   /// Obtain the location of a verification method's key in storage.
   #[wasm_bindgen(js_name = fromVerificationMethod)]
   pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmKeyLocation> {
-    KeyLocation::from_verification_method(&method.0).map(WasmKeyLocation).wasm_result()
+    KeyLocation::from_verification_method(&method.0)
+      .map(WasmKeyLocation)
+      .wasm_result()
   }
 
   /// Returns the canonical string representation of the location.
