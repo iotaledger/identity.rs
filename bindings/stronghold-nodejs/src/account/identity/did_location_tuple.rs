@@ -10,6 +10,7 @@ use crate::account::NapiKeyLocation;
 use crate::did::NapiDID;
 use crate::error::NapiResult;
 
+/// Workaround for lack of tuple support in Napi.
 #[derive(serde::Serialize, serde::Deserialize)]
 struct DIDLocation {
   did: IotaDID,

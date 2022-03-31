@@ -266,7 +266,7 @@ interface Storage {
 
    - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
    - Returns an error if the DID already exists.
-   - Adds the newly created DID to an index which can be accessed via [`Storage::index`].
+   - Adds the newly created DID to a list which can be accessed via `did_list`.
 
    Returns the generated DID and the location at which the key was stored. */
   didCreate: (network: string, fragment: string, private_key: Uint8Array | undefined | null) => Promise<[DID, KeyLocation]>;
