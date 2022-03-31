@@ -30,7 +30,7 @@ pub struct KeyLocation {
   fragment: String,
   /// The hash of the public key.
   #[serde(with = "key_hash_serialization")]
-  key_hash: u64,
+  pub(in crate::types::key_location) key_hash: u64,
 }
 
 impl KeyLocation {
@@ -38,8 +38,8 @@ impl KeyLocation {
   /// and the bytes of a public key.
   pub fn new(key_type: KeyType, fragment: String, public_key: &[u8]) -> Self {
     let mut hasher = SeaHasher::new();
-    public_key.hash(&mut hasher);
-    let key_hash = hasher.finish();
+    hasher.write(public_key);
+    let key_hash: u64 = hasher.finish();
 
     Self {
       key_type,
@@ -135,5 +135,33 @@ pub(crate) mod key_hash_serialization {
     }
 
     deserializer.deserialize_str(KeyHashVisitor)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_core::crypto::KeyType;
+
+  use super::KeyLocation;
+
+  // This test should be matched by a test with equivalent test vector in Wasm
+  // to ensure hashes are consistent across architectures.
+  #[test]
+  fn test_hash_is_consistent() {
+    let test_vector_1: [u8; 32] = [
+      187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
+      182, 240, 2, 150, 78, 110, 218,
+    ];
+
+    let test_vector_2: [u8; 32] = [
+      125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16,
+      39, 141, 151, 100, 163, 138, 222,
+    ];
+
+    let location_1 = KeyLocation::new(KeyType::Ed25519, "".to_owned(), &test_vector_1);
+    let location_2 = KeyLocation::new(KeyType::Ed25519, "".to_owned(), &test_vector_2);
+
+    assert_eq!(location_1.key_hash, 74874706796298672);
+    assert_eq!(location_2.key_hash, 10201576743536852223);
   }
 }
