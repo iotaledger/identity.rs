@@ -57,6 +57,13 @@ impl NapiStronghold {
     self.0.set_dropsave(dropsave);
   }
 
+  /// Creates a new identity for the given `network`.
+  ///
+  /// - Uses the given Ed25519 `private_key` or generates a new key if it's `None`.
+  /// - Returns an error if the DID already exists.
+  /// - Adds the newly created DID to an index which can be accessed via [`Storage::index`].
+  ///
+  /// Returns the generated DID and the location at which the key was stored.
   #[napi]
   pub async fn did_create(
     &self,
@@ -79,23 +86,30 @@ impl NapiStronghold {
     Ok(NapiDidLocation::from((did, location)))
   }
 
-  /// Removes the keys and any state for the identity specified by `did`.
+  /// Removes the keys and any other state for the given `did`.
+  ///
+  /// This operation is idempotent: it does not fail if the given `did` does not (or no longer) exist.
+  ///
+  /// Returns `true` if the did and its associated data was removed, `false` if nothing was done.
   #[napi]
   pub async fn did_purge(&self, did: &NapiDID) -> Result<bool> {
     self.0.did_purge(&did.0).await.napi_result()
   }
 
+  /// Returns `true` if `did` exists in the list of stored DIDs.
   #[napi]
   pub async fn did_exists(&self, did: &NapiDID) -> Result<bool> {
     self.0.did_exists(&did.0).await.napi_result()
   }
 
+  /// Returns the list of stored DIDs.
   #[napi]
   pub async fn did_list(&self) -> Result<Vec<NapiDID>> {
     Ok(self.0.did_list().await.napi_result()?.into_iter().map(NapiDID).collect())
   }
 
-  /// Creates a new keypair at the specified `location`
+  /// Generates a new key for the given `did` with the given `key_type` and `fragment` identifier
+  /// and returns the location of the newly generated key.
   #[napi]
   pub async fn key_generate(&self, did: &NapiDID, key_type: NapiKeyType, fragment: String) -> Result<NapiKeyLocation> {
     let location: KeyLocation = self
@@ -108,13 +122,15 @@ impl NapiStronghold {
   }
 
   /// Inserts a private key at the specified `location`.
+  ///
+  /// If a key at `location` exists, it is overwritten.
   #[napi]
   pub async fn key_insert(&self, did: &NapiDID, location: &NapiKeyLocation, private_key: Vec<u32>) -> Result<()> {
     let private_key: PrivateKey = private_key.try_into_bytes()?.into();
     self.0.key_insert(&did.0, &location.0, private_key).await.napi_result()
   }
 
-  /// Retrieves the public key at the specified `location`.
+  /// Retrieves the public key from `location`.
   #[napi]
   pub async fn key_public(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<Vec<u32>> {
     let public_key: PublicKey = self.0.key_public(&did.0, &location.0).await.napi_result()?;
@@ -122,7 +138,11 @@ impl NapiStronghold {
     Ok(public_key.into_iter().map(u32::from).collect())
   }
 
-  /// Deletes the keypair specified by `location`.
+  /// Deletes the key at `location`.
+  ///
+  /// This operation is idempotent: it does not fail if the key does not exist.
+  ///
+  /// Returns `true` if it removed the key, `false` if nothing was done.
   #[napi]
   pub async fn key_delete(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_delete(&did.0, &location.0).await.napi_result()
@@ -140,7 +160,7 @@ impl NapiStronghold {
       .map(|signature| signature.into())
   }
 
-  /// Returns `true` if a keypair exists at the specified `location`.
+  /// Returns `true` if a key exists at the specified `location`.
   #[napi]
   pub async fn key_exists(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
@@ -163,7 +183,7 @@ impl NapiStronghold {
     self.0.chain_state_set(&did.0, &chain_state.0).await.napi_result()
   }
 
-  /// Returns the state of the identity specified by `did`.
+  /// Returns the document of the identity specified by `did`.
   #[napi]
   pub async fn document_get(&self, did: &NapiDID) -> Result<Option<NapiDocument>> {
     self
@@ -180,7 +200,7 @@ impl NapiStronghold {
     self.0.document_set(&did.0, &state.0).await.napi_result()
   }
 
-  /// Write any unsaved changes to disk.
+  /// Persists any unsaved changes.
   #[napi]
   pub async fn flush_changes(&self) -> Result<()> {
     self.0.flush_changes().await.napi_result()
