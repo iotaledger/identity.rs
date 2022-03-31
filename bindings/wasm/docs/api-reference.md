@@ -51,14 +51,17 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
-<dt><a href="#Generation">Generation</a></dt>
-<dd></dd>
-<dt><a href="#IdentityState">IdentityState</a></dt>
-<dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#KeyLocation">KeyLocation</a></dt>
-<dd></dd>
+<dd><p>The storage location of a verification method key.</p>
+<p>A key is uniquely identified by the fragment and a hash of its public key.
+Importantly, the fragment alone is insufficient to represent the storage location.
+For example, when rotating a key, there will be two keys in storage for the
+same identity with the same fragment. The <code>key_hash</code> disambiguates the keys in
+situations like these.</p>
+<p>The string representation of that location can be obtained via <code>canonicalRepr</code>.</p>
+</dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#MethodContent">MethodContent</a></dt>
@@ -175,6 +178,10 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -187,15 +194,55 @@ publishing to the Tangle.
     * [.createSignedPresentation(fragment, presentation, signature_options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
     * [.createSignedData(fragment, data, signature_options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.fetchState()](#Account+fetchState) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -315,9 +362,9 @@ understand the implications!
 | --- | --- |
 | document | [<code>Document</code>](#Document) | 
 
-<a name="Account+fetchState"></a>
+<a name="Account+fetchDocument"></a>
 
-### account.fetchState() ⇒ <code>Promise.&lt;void&gt;</code>
+### account.fetchDocument() ⇒ <code>Promise.&lt;void&gt;</code>
 Fetches the latest changes from the tangle and **overwrites** the local document.
 
 If a DID is managed from distributed accounts, this should be called before making changes
@@ -334,39 +381,6 @@ Deletes a verification method if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+createService"></a>
 
@@ -403,17 +417,6 @@ Adds a new verification method to the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -2284,68 +2287,6 @@ Returns the Tangle explorer URL for the mainnet.
 Returns the Tangle explorer URL for the devnet.
 
 **Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
-<a name="Generation"></a>
-
-## Generation
-**Kind**: global class  
-
-* [Generation](#Generation)
-    * [new Generation()](#new_Generation_new)
-    * _instance_
-        * [.toUnsignedInteger()](#Generation+toUnsignedInteger) ⇒ <code>number</code>
-    * _static_
-        * [.fromUnsignedInteger(value)](#Generation.fromUnsignedInteger) ⇒ [<code>Generation</code>](#Generation)
-
-<a name="new_Generation_new"></a>
-
-### new Generation()
-Creates a new `WasmGeneration`.
-
-<a name="Generation+toUnsignedInteger"></a>
-
-### generation.toUnsignedInteger() ⇒ <code>number</code>
-Returns the `WasmGeneration` as a 32-bit integer.
-
-**Kind**: instance method of [<code>Generation</code>](#Generation)  
-<a name="Generation.fromUnsignedInteger"></a>
-
-### Generation.fromUnsignedInteger(value) ⇒ [<code>Generation</code>](#Generation)
-Creates a new `WasmGeneration` from a 32-bit integer.
-
-**Kind**: static method of [<code>Generation</code>](#Generation)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="IdentityState"></a>
-
-## IdentityState
-**Kind**: global class  
-
-* [IdentityState](#IdentityState)
-    * _instance_
-        * [.toJSON()](#IdentityState+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#IdentityState.fromJSON) ⇒ [<code>IdentityState</code>](#IdentityState)
-
-<a name="IdentityState+toJSON"></a>
-
-### identityState.toJSON() ⇒ <code>any</code>
-Serializes a `IdentityState` object as a JSON object.
-
-**Kind**: instance method of [<code>IdentityState</code>](#IdentityState)  
-<a name="IdentityState.fromJSON"></a>
-
-### IdentityState.fromJSON(json_value) ⇒ [<code>IdentityState</code>](#IdentityState)
-Deserializes a JSON object as `IdentityState`.
-
-**Kind**: static method of [<code>IdentityState</code>](#IdentityState)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -2395,63 +2336,82 @@ Deserializes from a JSON object.
 <a name="KeyLocation"></a>
 
 ## KeyLocation
+The storage location of a verification method key.
+
+A key is uniquely identified by the fragment and a hash of its public key.
+Importantly, the fragment alone is insufficient to represent the storage location.
+For example, when rotating a key, there will be two keys in storage for the
+same identity with the same fragment. The `key_hash` disambiguates the keys in
+situations like these.
+
+The string representation of that location can be obtained via `canonicalRepr`.
+
 **Kind**: global class  
 
 * [KeyLocation](#KeyLocation)
-    * [new KeyLocation(method, fragment, generation)](#new_KeyLocation_new)
     * _instance_
-        * [.method()](#KeyLocation+method) ⇒ [<code>MethodType</code>](#MethodType)
-        * [.fragment()](#KeyLocation+fragment) ⇒ <code>string</code>
-        * [.fragmentName()](#KeyLocation+fragmentName) ⇒ <code>string</code>
-        * [.generation()](#KeyLocation+generation) ⇒ [<code>Generation</code>](#Generation)
+        * [.canonical()](#KeyLocation+canonical) ⇒ <code>string</code>
+        * [.keyType()](#KeyLocation+keyType) ⇒ <code>number</code>
         * [.toJSON()](#KeyLocation+toJSON) ⇒ <code>any</code>
+        * [.toString()](#KeyLocation+toString) ⇒ <code>string</code>
     * _static_
+        * [.new(keyType, fragment, publicKey)](#KeyLocation.new) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+        * [.fromVerificationMethod(method)](#KeyLocation.fromVerificationMethod) ⇒ [<code>KeyLocation</code>](#KeyLocation)
         * [.fromJSON(json_value)](#KeyLocation.fromJSON) ⇒ [<code>KeyLocation</code>](#KeyLocation)
 
-<a name="new_KeyLocation_new"></a>
+<a name="KeyLocation+canonical"></a>
 
-### new KeyLocation(method, fragment, generation)
+### keyLocation.canonical() ⇒ <code>string</code>
+Returns the canonical string representation of the location.
 
-| Param | Type |
-| --- | --- |
-| method | [<code>MethodType</code>](#MethodType) | 
-| fragment | <code>string</code> | 
-| generation | [<code>Generation</code>](#Generation) | 
-
-<a name="KeyLocation+method"></a>
-
-### keyLocation.method() ⇒ [<code>MethodType</code>](#MethodType)
-Returns a copy of the method type of the key location.
+This should be used as the representation for storage keys.
 
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+fragment"></a>
+<a name="KeyLocation+keyType"></a>
 
-### keyLocation.fragment() ⇒ <code>string</code>
-Returns a copy of the fragment name of the key location.
-
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+fragmentName"></a>
-
-### keyLocation.fragmentName() ⇒ <code>string</code>
-Returns a copy of the fragment name of the key location.
-
-**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
-<a name="KeyLocation+generation"></a>
-
-### keyLocation.generation() ⇒ [<code>Generation</code>](#Generation)
-Returns a copy of the integration generation when this key was created.
+### keyLocation.keyType() ⇒ <code>number</code>
+Returns a copy of the key type of the key location.
 
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
 <a name="KeyLocation+toJSON"></a>
 
 ### keyLocation.toJSON() ⇒ <code>any</code>
-Serializes `Signature` as a JSON object.
+Serializes `KeyLocation` as a JSON object.
 
 **Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation+toString"></a>
+
+### keyLocation.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>KeyLocation</code>](#KeyLocation)  
+<a name="KeyLocation.new"></a>
+
+### KeyLocation.new(keyType, fragment, publicKey) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+Create a location from a `KeyType`, the fragment of a verification method
+and the bytes of a public key.
+
+**Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
+
+| Param | Type |
+| --- | --- |
+| keyType | <code>number</code> | 
+| fragment | <code>string</code> | 
+| publicKey | <code>Uint8Array</code> | 
+
+<a name="KeyLocation.fromVerificationMethod"></a>
+
+### KeyLocation.fromVerificationMethod(method) ⇒ [<code>KeyLocation</code>](#KeyLocation)
+Obtain the location of a verification method's key in storage.
+
+**Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
+
+| Param | Type |
+| --- | --- |
+| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
 <a name="KeyLocation.fromJSON"></a>
 
 ### KeyLocation.fromJSON(json_value) ⇒ [<code>KeyLocation</code>](#KeyLocation)
-Deserializes a JSON object as `KeyLocation`.
+Deserializes a JSON object into a `KeyLocation`.
 
 **Kind**: static method of [<code>KeyLocation</code>](#KeyLocation)  
 
