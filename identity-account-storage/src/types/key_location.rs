@@ -104,7 +104,7 @@ mod tests {
   // These same test vector should also be tested in Wasm
   // to ensure hashes are consistent across architectures.
 
-  static TEST_VECTOR_1: ([u8; 32], &'static str) = (
+  static TEST_VECTOR_1: ([u8; 32], &str) = (
     [
       187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
       182, 240, 2, 150, 78, 110, 218,
@@ -112,7 +112,7 @@ mod tests {
     "74874706796298672",
   );
 
-  static TEST_VECTOR_2: ([u8; 32], &'static str) = (
+  static TEST_VECTOR_2: ([u8; 32], &str) = (
     [
       125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16,
       39, 141, 151, 100, 163, 138, 222,
