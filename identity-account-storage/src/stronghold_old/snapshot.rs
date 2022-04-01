@@ -5,13 +5,13 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use crate::stronghold::ClientPath;
-use crate::stronghold::Context;
-use crate::stronghold::IotaStrongholdResult;
-use crate::stronghold::Password;
-use crate::stronghold::SnapshotStatus;
-use crate::stronghold::Store;
-use crate::stronghold::Vault;
+use crate::stronghold_old::ClientPath;
+use crate::stronghold_old::Context;
+use crate::stronghold_old::IotaStrongholdResult;
+use crate::stronghold_old::Password;
+use crate::stronghold_old::SnapshotStatus;
+use crate::stronghold_old::Store;
+use crate::stronghold_old::Vault;
 
 #[derive(Debug)]
 pub struct Snapshot {

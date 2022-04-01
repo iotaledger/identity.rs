@@ -24,7 +24,7 @@ pub enum Error {
   /// Caused by errors from the [iota_stronghold] crate.
   #[cfg(feature = "stronghold")]
   #[error(transparent)]
-  StrongholdError(#[from] crate::stronghold::StrongholdError),
+  StrongholdError(#[from] crate::stronghold_old::StrongholdError),
   /// Caused by providing bytes that cannot be used as a private key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]

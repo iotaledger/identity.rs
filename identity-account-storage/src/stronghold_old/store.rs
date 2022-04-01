@@ -5,8 +5,8 @@ use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 use std::time::Duration;
 
-use crate::stronghold::error::IotaStrongholdResult;
-use crate::stronghold::Context;
+use crate::stronghold_old::error::IotaStrongholdResult;
+use crate::stronghold_old::Context;
 
 use super::ClientPath;
 

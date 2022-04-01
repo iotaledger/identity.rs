@@ -23,9 +23,9 @@ use tokio::sync::MutexGuard as AsyncMutexGuard;
 use zeroize::Zeroize;
 
 use crate::error::Result;
-use crate::stronghold::error::IotaStrongholdResult;
-use crate::stronghold::SnapshotStatus;
-use crate::stronghold::StrongholdError;
+use crate::stronghold_old::error::IotaStrongholdResult;
+use crate::stronghold_old::SnapshotStatus;
+use crate::stronghold_old::StrongholdError;
 use crate::utils::fs;
 use crate::utils::EncryptionKey;
 

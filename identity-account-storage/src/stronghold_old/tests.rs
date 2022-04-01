@@ -16,12 +16,12 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::stronghold::default_hint;
-use crate::stronghold::IotaStrongholdResult;
-use crate::stronghold::Snapshot;
-use crate::stronghold::SnapshotStatus;
-use crate::stronghold::Store;
-use crate::stronghold::StrongholdError;
+use crate::stronghold_old::default_hint;
+use crate::stronghold_old::IotaStrongholdResult;
+use crate::stronghold_old::Snapshot;
+use crate::stronghold_old::SnapshotStatus;
+use crate::stronghold_old::Store;
+use crate::stronghold_old::StrongholdError;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
 use identity_core::crypto::KeyPair;

@@ -10,8 +10,8 @@ use iota_stronghold::StrongholdFlags;
 use iota_stronghold::VaultFlags;
 use std::path::Path;
 
-use crate::stronghold::Context;
-use crate::stronghold::IotaStrongholdResult;
+use crate::stronghold_old::Context;
+use crate::stronghold_old::IotaStrongholdResult;
 
 use super::ClientPath;
 
