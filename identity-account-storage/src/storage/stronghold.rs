@@ -5,6 +5,8 @@ use std::collections::BTreeSet;
 
 use async_trait::async_trait;
 use futures::executor;
+use iota_stronghold::sync::MergePolicy;
+use iota_stronghold::sync::SyncClientsConfig;
 use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
 use iota_stronghold::Location;
@@ -15,7 +17,6 @@ use zeroize::Zeroize;
 
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
-use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
@@ -29,6 +30,7 @@ use tokio::sync::RwLockWriteGuard;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
+use crate::stronghold::ClientOperation;
 use crate::stronghold::ClientPath;
 use crate::stronghold::StoreOperation;
 use crate::stronghold::Stronghold;
@@ -58,25 +60,33 @@ impl Storage for Stronghold {
     private_key: Option<PrivateKey>,
   ) -> Result<(IotaDID, KeyLocation)> {
     // =============================
-    // KEY GENERATION/RECONSTRUCTION
+    // KEY GENERATION/INSERTION
     // =============================
 
-    // TODO: Temporarily implemented via in-memory generation as opposed to using stronghold procedures.
-    let mut keypair: KeyPair = match private_key {
-      Some(private_key) => KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?,
-      None => KeyPair::new(KeyType::Ed25519)?,
-    };
+    let tmp_client: Client = Client::default();
+    let tmp_location: KeyLocation = random_location(KeyType::Ed25519);
 
-    let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
+    match private_key {
+      Some(private_key) => {
+        insert_private_key(&tmp_client, private_key, &tmp_location).await?;
+      }
+      None => {
+        generate_private_key(&tmp_client, &tmp_location).await?;
+      }
+    }
+
+    let public_key: PublicKey = retrieve_public_key(&tmp_client, &tmp_location).await?;
+
+    let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)
       .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
 
     // =============================
-    // INDEX MODIFICATION
+    // ADD DID TO INDEX
     // =============================
 
     // TODO: Do we have to roll back changes to a client if the entire did_create "transaction"
     // doesn't complete successfully? Otherwise, someone re-trying to create an identity from an existing
-    // keypair might fail every time, because the DID was added to the index, but the vault insertion later failed.
+    // keypair might fail every time, because the DID was added to the index, but e.g. the client syncing later failed.
 
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
 
@@ -97,25 +107,26 @@ impl Storage for Stronghold {
     std::mem::drop(index_lock);
 
     // =============================
-    // KEY INSERTION
+    // CLIENT SYNC & KEY MOVE
     // =============================
-    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
+    let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), public_key.as_ref());
 
-    let stronghold_location: Location = (&location).into();
+    let client_path: ClientPath = ClientPath::from(&did);
+    let client: Client = self.client(&client_path).await?;
+
+    let mut sync_config: SyncClientsConfig = SyncClientsConfig::new(MergePolicy::Replace);
+    sync_config.sync_selected_vaults(vec![VAULT_PATH.to_vec()]);
+
+    client.sync_with(&tmp_client, sync_config).expect("TODO");
+    std::mem::drop(tmp_client);
+
+    move_key(&client, (&tmp_location).into(), (&location).into()).await?;
 
     self
-      .mutate_client(&did, |client: Client| async move {
-        let vault: ClientVault = client.vault(stronghold_location.clone());
-
-        let private_key_vec: Vec<u8> = keypair.private().as_ref().to_vec();
-        keypair.zeroize();
-
-        vault
-          .write_secret(stronghold_location, private_key_vec)
-          .map_err(StrongholdError::VaultError)
-          .map_err(Into::into)
-      })
-      .await?;
+      .stronghold
+      .write_client(client_path.as_ref())
+      .await
+      .map_err(|err| StrongholdError::ClientError(ClientOperation::Persist, client_path.clone(), err))?;
 
     Ok((did, location))
   }
@@ -193,21 +204,10 @@ impl Storage for Stronghold {
       .await
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     self
       .mutate_client(did, |client| async move {
-        let stronghold_location: Location = location.into();
-
-        // TODO: Hopefully this is fixed. Client::vault should only require a vault_path.
-        let vault: ClientVault = client.vault(stronghold_location.clone());
-
-        let private_key_vec: Vec<u8> = private_key.as_ref().to_vec();
-        private_key.zeroize();
-
-        vault
-          .write_secret(stronghold_location, private_key_vec)
-          .map_err(StrongholdError::VaultError)
-          .map_err(Into::into)
+        insert_private_key(&client, private_key, location).await
       })
       .await
   }
@@ -346,6 +346,21 @@ async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result
     .map_err(StrongholdError::ProcedureError)?;
 
   Ok(())
+}
+
+async fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
+  let stronghold_location: Location = location.into();
+
+  // TODO: Hopefully this is fixed. Client::vault should only require a vault_path.
+  let vault: ClientVault = client.vault(stronghold_location.clone());
+
+  let private_key_vec: Vec<u8> = private_key.as_ref().to_vec();
+  private_key.zeroize();
+
+  vault
+    .write_secret(stronghold_location, private_key_vec)
+    .map_err(StrongholdError::VaultError)
+    .map_err(Into::into)
 }
 
 async fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
