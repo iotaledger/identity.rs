@@ -3,29 +3,32 @@
 
 use std::fmt::Display;
 
+use iota_stronghold::procedures::ProcedureError;
+use iota_stronghold::ClientError;
+
+use crate::types::KeyLocation;
+
 use super::client_path::ClientPath;
 
 pub type StrongholdResult<T> = Result<T, StrongholdError>;
+pub type ProcedureName = &'static str;
 
 /// Caused by errors from the [`iota_stronghold`] crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum StrongholdError {
   #[error("failed to `{0}` stronghold client `{1}` due to: {2}")]
-  ClientError(ClientOperation, ClientPath, #[source] iota_stronghold::ClientError),
+  ClientError(ClientOperation, ClientPath, #[source] ClientError),
   #[error("store `{0}` operation failed: {1}")]
-  StoreError(StoreOperation, #[source] iota_stronghold::ClientError),
-  // TODO: Include operation?
-  #[error("vault operation failed: {0}")]
-  VaultError(#[source] iota_stronghold::ClientError),
-  // TODO: Include procedure name?
-  #[error("procedure failed: {0}")]
-  ProcedureError(#[source] iota_stronghold::procedures::ProcedureError),
-  // TODO: Include whether it was read/write?
-  #[error("snapshot operation failed: {0}")]
-  SnapshotError(#[source] iota_stronghold::ClientError),
+  StoreError(StoreOperation, #[source] ClientError),
+  #[error("vault operation `{0}` failed: {1}")]
+  VaultError(VaultOperation, #[source] ClientError),
+  #[error("procedure `{0}` operating on locations {1:?} failed: {2}")]
+  ProcedureError(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
+  #[error("snapshot operation `{0}` failed: {1}")]
+  SnapshotError(SnapshotOperation, #[source] ClientError),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum StoreOperation {
   Insert,
   Delete,
@@ -42,10 +45,11 @@ impl Display for StoreOperation {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ClientOperation {
   Load,
   Persist,
+  Sync,
 }
 
 impl Display for ClientOperation {
@@ -53,6 +57,37 @@ impl Display for ClientOperation {
     match self {
       ClientOperation::Load => f.write_str("load"),
       ClientOperation::Persist => f.write_str("persist"),
+      ClientOperation::Sync => f.write_str("sync"),
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SnapshotOperation {
+  Read,
+  Write,
+}
+
+impl Display for SnapshotOperation {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      SnapshotOperation::Read => f.write_str("read"),
+      SnapshotOperation::Write => f.write_str("write"),
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum VaultOperation {
+  RecordExists,
+  WriteSecret,
+}
+
+impl Display for VaultOperation {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      VaultOperation::RecordExists => f.write_str("record_exists"),
+      VaultOperation::WriteSecret => f.write_str("write_secret"),
     }
   }
 }

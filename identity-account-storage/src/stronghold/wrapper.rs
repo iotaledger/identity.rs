@@ -6,6 +6,7 @@ use std::path::Path;
 
 use identity_iota_core::did::IotaDID;
 use iota_stronghold::Client;
+use iota_stronghold::ClientError;
 use iota_stronghold::KeyProvider;
 use iota_stronghold::SnapshotPath;
 use iota_stronghold::Stronghold as IotaStronghold;
@@ -19,6 +20,7 @@ use crate::Result;
 
 use super::client_path::ClientPath;
 use super::ClientOperation;
+use super::SnapshotOperation;
 use super::StrongholdResult;
 
 // #[derive(Debug)]
@@ -54,12 +56,12 @@ impl Stronghold {
 
     // TODO: Load the snapshot as a side effect, without caring about the client.
     // Stronghold will add a non-client-loading version with another update.
-    let result = stronghold
+    match stronghold
       .load_client_from_snapshot(b"".to_vec(), &key_provider, &snapshot_path)
-      .await;
-
-    if let Err(err) = result {
-      println!("load_client_from_snapshot: {}", err);
+      .await
+    {
+      Ok(_) | Err(ClientError::ClientDataNotPresent) => {}
+      Err(err) => return Err(StrongholdError::SnapshotError(SnapshotOperation::Read, err).into()),
     }
 
     Ok(Self {
@@ -104,7 +106,7 @@ impl Stronghold {
       .stronghold
       .commit(&self.snapshot_path, &self.key_provider)
       .await
-      .map_err(StrongholdError::SnapshotError)
+      .map_err(|err| StrongholdError::SnapshotError(SnapshotOperation::Write, err))
   }
 }
 

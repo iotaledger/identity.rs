@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::any::type_name;
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
@@ -35,6 +36,7 @@ use crate::stronghold::ClientPath;
 use crate::stronghold::StoreOperation;
 use crate::stronghold::Stronghold;
 use crate::stronghold::StrongholdError;
+use crate::stronghold::VaultOperation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -120,7 +122,7 @@ impl Storage for Stronghold {
     client.sync_with(&tmp_client, sync_config).expect("TODO");
     std::mem::drop(tmp_client);
 
-    move_key(&client, (&tmp_location).into(), (&location).into()).await?;
+    move_key(&client, &tmp_location, &location).await?;
 
     self
       .stronghold
@@ -197,7 +199,7 @@ impl Storage for Stronghold {
         let public_key: PublicKey = retrieve_public_key(&client, &tmp_location).await?;
         let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
 
-        move_key(&client, (&tmp_location).into(), (&location).into()).await?;
+        move_key(&client, &tmp_location, &location).await?;
 
         Ok(location)
       })
@@ -226,7 +228,7 @@ impl Storage for Stronghold {
         let exists: bool = client
           .record_exists(location.into())
           .await
-          .map_err(StrongholdError::VaultError)
+          .map_err(|err| StrongholdError::VaultError(VaultOperation::RecordExists, err))
           .map_err(crate::Error::from)?;
 
         client
@@ -235,7 +237,9 @@ impl Storage for Stronghold {
             should_gc: true,
           })
           .await
-          .map_err(StrongholdError::ProcedureError)
+          .map_err(|err| {
+            StrongholdError::ProcedureError(type_name::<procedures::RevokeData>(), vec![location.clone()], err)
+          })
           .map_err(crate::Error::from)?;
 
         Ok(exists)
@@ -258,7 +262,7 @@ impl Storage for Stronghold {
     client
       .record_exists(location.into())
       .await
-      .map_err(StrongholdError::VaultError)
+      .map_err(|err| StrongholdError::VaultError(VaultOperation::RecordExists, err))
       .map_err(Into::into)
   }
 
@@ -340,10 +344,9 @@ async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result
     hint: default_hint(),
   };
 
-  client
-    .execute_procedure(generate_key)
-    .await
-    .map_err(StrongholdError::ProcedureError)?;
+  client.execute_procedure(generate_key).await.map_err(|err| {
+    StrongholdError::ProcedureError(type_name::<procedures::GenerateKey>(), vec![location.clone()], err)
+  })?;
 
   Ok(())
 }
@@ -359,22 +362,21 @@ async fn insert_private_key(client: &Client, mut private_key: PrivateKey, locati
 
   vault
     .write_secret(stronghold_location, private_key_vec)
-    .map_err(StrongholdError::VaultError)
+    .map_err(|err| StrongholdError::VaultError(VaultOperation::WriteSecret, err))
     .map_err(Into::into)
 }
 
 async fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
   match location.key_type {
     KeyType::Ed25519 | KeyType::X25519 => {
-      let procedure: procedures::PublicKey = procedures::PublicKey {
+      let public_key: procedures::PublicKey = procedures::PublicKey {
         ty: location_key_type(location),
         private_key: location.into(),
       };
 
-      let public = client
-        .execute_procedure(procedure)
-        .await
-        .map_err(StrongholdError::ProcedureError)?;
+      let public = client.execute_procedure(public_key).await.map_err(|err| {
+        StrongholdError::ProcedureError(type_name::<procedures::PublicKey>(), vec![location.clone()], err)
+      })?;
 
       Ok(public.to_vec().into())
     }
@@ -387,36 +389,41 @@ async fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation)
     msg: payload,
   };
 
-  let signature: [u8; 64] = client
-    .execute_procedure(procedure)
-    .await
-    .map_err(StrongholdError::ProcedureError)?;
+  let signature: [u8; 64] = client.execute_procedure(procedure).await.map_err(|err| {
+    StrongholdError::ProcedureError(type_name::<procedures::Ed25519Sign>(), vec![location.clone()], err)
+  })?;
 
   Ok(Signature::new(signature.into()))
 }
 
 // Moves a key from one location to another, deleting the old one.
-async fn move_key(client: &Client, source: Location, target: Location) -> Result<()> {
+async fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
+  let source_location: Location = source.into();
+  let target_location: Location = target.into();
+
   let copy_record = procedures::CopyRecord {
-    source: source.clone(),
-    target,
+    source: source_location.clone(),
+    target: target_location,
     hint: default_hint(),
   };
 
-  client
-    .execute_procedure(copy_record)
-    .await
-    .map_err(StrongholdError::ProcedureError)?;
+  client.execute_procedure(copy_record).await.map_err(|err| {
+    StrongholdError::ProcedureError(
+      type_name::<procedures::CopyRecord>(),
+      vec![source.clone(), target.clone()],
+      err,
+    )
+  })?;
 
   let revoke_data = procedures::RevokeData {
-    location: source,
+    location: source_location,
     should_gc: true,
   };
 
   client
     .execute_procedure(revoke_data)
     .await
-    .map_err(StrongholdError::ProcedureError)?;
+    .map_err(|err| StrongholdError::ProcedureError(type_name::<procedures::RevokeData>(), vec![source.clone()], err))?;
 
   Ok(())
 }
