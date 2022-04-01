@@ -25,3 +25,9 @@ impl From<&str> for ClientPath {
     Self(string.to_owned())
   }
 }
+
+impl std::fmt::Display for ClientPath {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(self.0.as_str())
+  }
+}

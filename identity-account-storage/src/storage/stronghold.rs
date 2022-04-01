@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeSet;
-use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use futures::executor;
-use iota_stronghold_old::Location;
+use iota_stronghold::Client;
+use iota_stronghold::ClientVault;
+use iota_stronghold::Location;
+use iota_stronghold::Store;
+use iota_stronghold::StoreGuard;
+use stronghold_engine::vault::RecordHint;
 use zeroize::Zeroize;
 
 use identity_core::convert::FromJson;
@@ -19,24 +22,19 @@ use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
-use iota_stronghold_old::procedures;
-use tokio::sync::RwLock;
+use iota_stronghold::procedures;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
-use crate::stronghold_old::default_hint;
-use crate::stronghold_old::ClientPath;
-use crate::stronghold_old::Context;
-use crate::stronghold_old::Snapshot;
-use crate::stronghold_old::Store;
-use crate::stronghold_old::StrongholdError;
-use crate::stronghold_old::Vault;
+use crate::stronghold::ClientPath;
+use crate::stronghold::StoreOperation;
+use crate::stronghold::Stronghold;
+use crate::stronghold::StrongholdError;
 use crate::types::KeyLocation;
 use crate::types::Signature;
-use crate::utils::derive_encryption_key;
 
 // The name of the stronghold client used for indexing, which is global for a storage instance.
 static INDEX_CLIENT_PATH: &str = "$index";
@@ -47,59 +45,11 @@ static CHAIN_STATE_CLIENT_PATH: &str = "$chain_state";
 static DOCUMENT_CLIENT_PATH: &str = "$document";
 static VAULT_PATH: &[u8; 6] = b"$vault";
 
-#[derive(Debug)]
-pub struct Stronghold {
-  snapshot: Arc<Snapshot>,
-  // Used to prevent race conditions when updating the index concurrently.
-  index_lock: RwLock<()>,
-  dropsave: bool,
-}
+// #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+// #[cfg_attr(feature = "send-sync-storage", async_trait)]
 
-impl Stronghold {
-  /// Constructs a Stronghold storage instance.
-  ///
-  /// Arguments:
-  ///
-  /// * snapshot: path to a local Stronghold file, will be created if it does not exist.
-  /// * password: password for the Stronghold file.
-  /// * dropsave: save all changes when the instance is dropped. Default: true.
-  pub async fn new<'a, T>(snapshot: &T, mut password: String, dropsave: Option<bool>) -> Result<Self>
-  where
-    T: AsRef<Path> + ?Sized,
-  {
-    let snapshot: Snapshot = Snapshot::new(snapshot);
-    snapshot.load(derive_encryption_key(&password)).await?;
-    password.zeroize();
-
-    Ok(Self {
-      snapshot: Arc::new(snapshot),
-      index_lock: RwLock::new(()),
-      dropsave: dropsave.unwrap_or(true),
-    })
-  }
-
-  fn store(&self, client_path: ClientPath) -> Store<'_> {
-    self.snapshot.store(client_path)
-  }
-
-  fn vault(&self, did: &IotaDID) -> Vault<'_> {
-    self.snapshot.vault(ClientPath::from(did))
-  }
-
-  /// Returns whether save-on-drop is enabled.
-  pub fn dropsave(&self) -> bool {
-    self.dropsave
-  }
-
-  /// Set whether to save the storage changes on drop.
-  /// Default: true
-  pub fn set_dropsave(&mut self, value: bool) {
-    self.dropsave = value;
-  }
-}
-
-#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-#[cfg_attr(feature = "send-sync-storage", async_trait)]
+// TODO: Temporarily do not require future to be send due to lack of Send-Futures in current Stronghold.
+#[async_trait(?Send)]
 impl Storage for Stronghold {
   async fn did_create(
     &self,
@@ -107,8 +57,12 @@ impl Storage for Stronghold {
     fragment: &str,
     private_key: Option<PrivateKey>,
   ) -> Result<(IotaDID, KeyLocation)> {
+    // =============================
+    // KEY GENERATION/RECONSTRUCTION
+    // =============================
+
     // TODO: Temporarily implemented via in-memory generation as opposed to using stronghold procedures.
-    let keypair: KeyPair = match private_key {
+    let mut keypair: KeyPair = match private_key {
       Some(private_key) => KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())?,
       None => KeyPair::new(KeyType::Ed25519)?,
     };
@@ -116,9 +70,20 @@ impl Storage for Stronghold {
     let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
       .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
 
+    // =============================
+    // INDEX MODIFICATION
+    // =============================
+
+    // TODO: Do we have to roll back changes to a client if the entire did_create "transaction"
+    // doesn't complete successfully? Otherwise, someone re-trying to create an identity from an existing
+    // keypair might fail every time, because the DID was added to the index, but the vault insertion later failed.
+
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
-    let mut index: BTreeSet<IotaDID> = get_index(&store).await?;
+
+    let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let index_store: Store = index_client.store().await;
+
+    let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
 
     if index.contains(&did) {
       return Err(crate::Error::IdentityAlreadyExists);
@@ -126,45 +91,53 @@ impl Storage for Stronghold {
       index.insert(did.clone());
     }
 
-    set_index(&store, index).await?;
+    set_index(&index_store, index).await?;
+
     // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
 
+    // =============================
+    // KEY INSERTION
+    // =============================
     let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), keypair.public().as_ref());
-    let vault: Vault<'_> = self.vault(&did);
 
-    vault
-      .insert(
-        (&location).into(),
-        keypair.private().as_ref().to_vec(),
-        default_hint(),
-        &[],
-      )
+    let stronghold_location: Location = (&location).into();
+
+    self
+      .mutate_client(&did, |client: Client| async move {
+        let vault: ClientVault = client.vault(stronghold_location.clone());
+
+        let private_key_vec: Vec<u8> = keypair.private().as_ref().to_vec();
+        keypair.zeroize();
+
+        vault
+          .write_secret(stronghold_location, private_key_vec)
+          .map_err(StrongholdError::VaultError)
+          .map_err(Into::into)
+      })
       .await?;
 
     Ok((did, location))
   }
 
   async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
-    // Remove index entry if present.
-    let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
-    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
-    let mut index: BTreeSet<IotaDID> = get_index(&store).await?;
+    let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
+    let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let index_store: Store = index_client.store().await;
+
+    let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
+
+    // Remove index entry if present.
     if !index.remove(did) {
       return Ok(false);
     }
 
-    set_index(&store, index).await?;
+    set_index(&index_store, index).await?;
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
-    let store: Store<'_> = self.store(ClientPath::from(did));
-
-    store.del(DOCUMENT_CLIENT_PATH).await?;
-    store.del(CHAIN_STATE_CLIENT_PATH).await?;
-
-    // TODO: Remove leftover keys (#757).
+    // TODO: Delete the client from stronghold, there should be a function for that?
 
     Ok(true)
   }
@@ -172,7 +145,8 @@ impl Storage for Stronghold {
   async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
+    let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let store: Store = client.store().await;
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
@@ -187,7 +161,8 @@ impl Storage for Stronghold {
   async fn did_list(&self) -> Result<Vec<IotaDID>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let store: Store<'_> = self.store(ClientPath::from(INDEX_CLIENT_PATH));
+    let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let store: Store = client.store().await;
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
@@ -198,128 +173,154 @@ impl Storage for Stronghold {
   }
 
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
-    let vault: Vault<'_> = self.vault(did);
+    self
+      .mutate_client(did, |client| async move {
+        let tmp_location: KeyLocation = random_location(key_type);
 
-    let tmp_location: KeyLocation = random_location(key_type);
+        match key_type {
+          KeyType::Ed25519 | KeyType::X25519 => {
+            generate_private_key(&client, &tmp_location).await?;
+          }
+        }
 
-    match key_type {
-      KeyType::Ed25519 | KeyType::X25519 => {
-        generate_private_key(&vault, &tmp_location).await?;
-      }
-    }
+        let public_key: PublicKey = retrieve_public_key(&client, &tmp_location).await?;
+        let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
 
-    let public_key: PublicKey = self.key_public(did, &tmp_location).await?;
+        move_key(&client, (&tmp_location).into(), (&location).into()).await?;
 
-    let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
-    move_key(&vault, (&tmp_location).into(), (&location).into()).await?;
-
-    Ok(location)
+        Ok(location)
+      })
+      .await
   }
 
-  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
-    let vault: Vault<'_> = self.vault(did);
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, mut private_key: PrivateKey) -> Result<()> {
+    self
+      .mutate_client(did, |client| async move {
+        let stronghold_location: Location = location.into();
 
-    let stronghold_location: Location = location.into();
+        // TODO: Hopefully this is fixed. Client::vault should only require a vault_path.
+        let vault: ClientVault = client.vault(stronghold_location.clone());
 
-    vault
-      .insert(stronghold_location, private_key.as_ref(), default_hint(), &[])
-      .await?;
+        let private_key_vec: Vec<u8> = private_key.as_ref().to_vec();
+        private_key.zeroize();
 
-    Ok(())
+        vault
+          .write_secret(stronghold_location, private_key_vec)
+          .map_err(StrongholdError::VaultError)
+          .map_err(Into::into)
+      })
+      .await
   }
 
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
-    let vault: Vault<'_> = self.vault(did);
-
-    match location.key_type {
-      KeyType::Ed25519 | KeyType::X25519 => retrieve_public_key(&vault, location).await,
-    }
+    let client: Client = self.client(&ClientPath::from(did)).await?;
+    retrieve_public_key(&client, location).await
   }
 
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
-    // Explicitly implemented to hold the lock across the existence check & removal.
-    let context: _ = Context::scope(self.snapshot.path(), ClientPath::from(did).as_ref(), &[]).await?;
+    self
+      .mutate_client(did, |client| async move {
+        // TODO: Technically there is a race condition here between existence check and removal.
+        // Check if RevokeData returns an error if the record doesn't exist, and if so, ignore it.
 
-    let exists: bool = context
-      .record_exists(location.into())
-      .await
-      .map_err(StrongholdError::from)?;
+        let exists: bool = client
+          .record_exists(location.into())
+          .await
+          .map_err(StrongholdError::VaultError)
+          .map_err(crate::Error::from)?;
 
-    context
-      .runtime_exec(procedures::RevokeData {
-        location: location.into(),
-        should_gc: true,
+        client
+          .execute_procedure(procedures::RevokeData {
+            location: location.into(),
+            should_gc: true,
+          })
+          .await
+          .map_err(StrongholdError::ProcedureError)
+          .map_err(crate::Error::from)?;
+
+        Ok(exists)
       })
       .await
-      .map_err(StrongholdError::from)?
-      .map_err(StrongholdError::from)?;
-
-    Ok(exists)
   }
 
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
-    let vault: Vault<'_> = self.vault(did);
+    let client: Client = self.client(&ClientPath::from(did)).await?;
 
     match location.key_type {
-      KeyType::Ed25519 => sign_ed25519(&vault, data, location).await,
+      KeyType::Ed25519 => sign_ed25519(&client, data, location).await,
       KeyType::X25519 => Err(identity_did::Error::InvalidMethodType.into()),
     }
   }
 
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
-    self.vault(did).exists(location.into()).await.map_err(Into::into)
+    let client: Client = self.client(&ClientPath::from(did)).await?;
+
+    client
+      .record_exists(location.into())
+      .await
+      .map_err(StrongholdError::VaultError)
+      .map_err(Into::into)
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
-    // Load the chain-specific store
-    let store: Store<'_> = self.store(ClientPath::from(did));
-    let data: Option<Vec<u8>> = store.get(CHAIN_STATE_CLIENT_PATH).await?;
+    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let store: Store = client.store().await;
 
-    match data {
+    let data: StoreGuard<'_> = store
+      .get(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec())
+      .map_err(|err| StrongholdError::StoreError(StoreOperation::Get, err))?;
+
+    match data.deref() {
       None => return Ok(None),
-      Some(data) => Ok(Some(ChainState::from_json_slice(&data)?)),
+      Some(data) => Ok(Some(ChainState::from_json_slice(data)?)),
     }
   }
 
   async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
-    // Load the chain-specific store
-    let store: Store<'_> = self.store(ClientPath::from(did));
-
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
-    store.set(CHAIN_STATE_CLIENT_PATH, json, None).await?;
+    self
+      .mutate_client(did, |client| async move {
+        let store: Store = client.store().await;
 
-    Ok(())
+        store
+          .insert(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec(), json, None)
+          .map_err(|err| StrongholdError::StoreError(StoreOperation::Insert, err).into())
+      })
+      .await
   }
 
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
-    // Load the chain-specific store
-    let store: Store<'_> = self.store(ClientPath::from(did));
+    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let store: Store = client.store().await;
 
-    // Read the state from the stronghold snapshot
-    let data: Option<Vec<u8>> = store.get(DOCUMENT_CLIENT_PATH).await?;
+    let data: StoreGuard<'_> = store
+      .get(DOCUMENT_CLIENT_PATH.as_bytes().to_vec())
+      .map_err(|err| StrongholdError::StoreError(StoreOperation::Get, err))?;
 
-    match data {
+    match data.deref() {
       None => return Ok(None),
-      Some(data) => Ok(Some(IotaDocument::from_json_slice(&data)?)),
+      Some(data) => Ok(Some(IotaDocument::from_json_slice(data)?)),
     }
   }
 
   async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
-    // Load the chain-specific store
-    let store: Store<'_> = self.store(ClientPath::from(did));
-
-    // Serialize the state
     let json: Vec<u8> = document.to_json_vec()?;
 
-    // Write the state to the stronghold snapshot
-    store.set(DOCUMENT_CLIENT_PATH, json, None).await?;
+    self
+      .mutate_client(did, |client| async move {
+        let store: Store = client.store().await;
 
-    Ok(())
+        store
+          .insert(DOCUMENT_CLIENT_PATH.as_bytes().to_vec(), json, None)
+          .map_err(|err| StrongholdError::StoreError(StoreOperation::Insert, err).into())
+      })
+      .await
   }
 
   async fn flush_changes(&self) -> Result<()> {
-    self.snapshot.save().await?;
+    self.persist_snapshot().await?;
+
     Ok(())
   }
 }
@@ -332,69 +333,98 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_private_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<()> {
+async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: location_key_type(location),
     output: location.into(),
     hint: default_hint(),
   };
 
-  vault.execute(generate_key).await?;
+  client
+    .execute_procedure(generate_key)
+    .await
+    .map_err(StrongholdError::ProcedureError)?;
 
   Ok(())
 }
 
-async fn retrieve_public_key(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
-  let procedure: procedures::PublicKey = procedures::PublicKey {
-    ty: location_key_type(location),
-    private_key: location.into(),
-  };
+async fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
+  match location.key_type {
+    KeyType::Ed25519 | KeyType::X25519 => {
+      let procedure: procedures::PublicKey = procedures::PublicKey {
+        ty: location_key_type(location),
+        private_key: location.into(),
+      };
 
-  Ok(vault.execute(procedure).await.map(|public| public.to_vec().into())?)
+      let public = client
+        .execute_procedure(procedure)
+        .await
+        .map_err(StrongholdError::ProcedureError)?;
+
+      Ok(public.to_vec().into())
+    }
+  }
 }
 
-async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
+async fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
   let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
     private_key: location.into(),
     msg: payload,
   };
-  let signature: [u8; 64] = vault.execute(procedure).await?;
+
+  let signature: [u8; 64] = client
+    .execute_procedure(procedure)
+    .await
+    .map_err(StrongholdError::ProcedureError)?;
+
   Ok(Signature::new(signature.into()))
 }
 
 // Moves a key from one location to another, deleting the old one.
-async fn move_key(vault: &Vault<'_>, source: Location, target: Location) -> Result<()> {
+async fn move_key(client: &Client, source: Location, target: Location) -> Result<()> {
   let copy_record = procedures::CopyRecord {
     source: source.clone(),
     target,
     hint: default_hint(),
   };
 
-  vault.execute(copy_record).await?;
+  client
+    .execute_procedure(copy_record)
+    .await
+    .map_err(StrongholdError::ProcedureError)?;
 
   let revoke_data = procedures::RevokeData {
     location: source,
     should_gc: true,
   };
 
-  vault.execute(revoke_data).await?;
+  client
+    .execute_procedure(revoke_data)
+    .await
+    .map_err(StrongholdError::ProcedureError)?;
 
   Ok(())
 }
 
-async fn get_index(store: &Store<'_>) -> Result<BTreeSet<IotaDID>> {
-  let index: BTreeSet<IotaDID> = match store.get(INDEX_STORE_KEY).await? {
-    Some(index_vec) => BTreeSet::<IotaDID>::from_json_slice(&index_vec)?,
+async fn get_index(store: &Store) -> Result<BTreeSet<IotaDID>> {
+  let data: StoreGuard<'_> = store
+    .get(INDEX_STORE_KEY.as_bytes().to_vec())
+    .map_err(|err| StrongholdError::StoreError(StoreOperation::Get, err))?;
+
+  let index: BTreeSet<IotaDID> = match data.deref() {
+    Some(index_vec) => BTreeSet::<IotaDID>::from_json_slice(index_vec)?,
     None => BTreeSet::new(),
   };
 
   Ok(index)
 }
 
-async fn set_index(store: &Store<'_>, index: BTreeSet<IotaDID>) -> Result<()> {
+async fn set_index(store: &Store, index: BTreeSet<IotaDID>) -> Result<()> {
   let index_vec: Vec<u8> = index.to_json_vec()?;
 
-  store.set(INDEX_STORE_KEY, index_vec, None).await?;
+  store
+    .insert(INDEX_STORE_KEY.as_bytes().to_vec(), index_vec, None)
+    .map_err(|err| StrongholdError::StoreError(StoreOperation::Insert, err))?;
 
   Ok(())
 }
@@ -422,4 +452,9 @@ fn random_location(key_type: KeyType) -> KeyLocation {
   let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
 
   KeyLocation::new(key_type, fragment, &public_key)
+}
+
+pub fn default_hint() -> RecordHint {
+  // unwrap is okay, the hint is <= 24 bytes
+  RecordHint::new([0; 24]).unwrap()
 }

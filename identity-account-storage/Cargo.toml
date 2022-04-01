@@ -29,11 +29,22 @@ tokio = { version = "1.17.0", default-features = false, features = ["sync"], opt
 zeroize = { version = "1.4" }
 
 [dependencies.iota-crypto]
-version = "0.7"
+version = "0.9"
 default-features = false
-features = ["blake2b", "hmac", "pbkdf", "sha", "std"]
+features = ["hmac", "pbkdf", "sha", "std"]
 
-# [dependencies.iota_stronghold]
+[dependencies.iota_stronghold]
+package = "iota_stronghold_new"
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "8da39fcad07303b6a2d14de56c2a9a6574864bca"
+optional = true
+
+# TODO: Remove once `RecordHint` is no longer required.
+[dependencies.stronghold_engine]
+package = "stronghold_engine"
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "8da39fcad07303b6a2d14de56c2a9a6574864bca"
+optional = true
 
 [dependencies.iota_stronghold_old]
 package = "iota_stronghold"

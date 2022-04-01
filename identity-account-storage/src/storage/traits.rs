@@ -25,7 +25,9 @@ mod storage_sub_trait {
 
 #[cfg(feature = "send-sync-storage")]
 mod storage_sub_trait {
-  pub trait StorageSendSyncMaybe: Send + Sync {}
+  // TODO: Temporarily do not require future to be send due to lack of Send-Futures in current Stronghold.
+  // pub trait StorageSendSyncMaybe: Send + Sync {}
+  pub trait StorageSendSyncMaybe: Sync {}
   impl<S: Send + Sync + super::Storage> StorageSendSyncMaybe for S {}
 }
 
@@ -63,8 +65,10 @@ mod storage_sub_trait {
 /// # Implementation example
 ///
 /// See [`MemStore`][crate::storage::MemStore] for a test/example implementation.
-#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-#[cfg_attr(feature = "send-sync-storage", async_trait)]
+// #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+// #[cfg_attr(feature = "send-sync-storage", async_trait)]
+// TODO: Temporarily do not require future to be send due to lack of Send-Futures in current Stronghold.
+#[async_trait(?Send)]
 pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Creates a new identity for the given `network`.
   ///
