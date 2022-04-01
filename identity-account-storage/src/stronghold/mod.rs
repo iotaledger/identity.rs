@@ -3,6 +3,8 @@
 
 mod client_path;
 mod error;
+#[cfg(test)]
+mod tests;
 mod wrapper;
 
 pub use client_path::*;

@@ -476,7 +476,7 @@ fn random_location(key_type: KeyType) -> KeyLocation {
   KeyLocation::new(key_type, fragment, &public_key)
 }
 
-pub fn default_hint() -> RecordHint {
+fn default_hint() -> RecordHint {
   // unwrap is okay, the hint is <= 24 bytes
   RecordHint::new([0; 24]).unwrap()
 }

@@ -3,6 +3,7 @@
 
 use std::future::Future;
 use std::path::Path;
+use std::path::PathBuf;
 
 use identity_iota_core::did::IotaDID;
 use iota_stronghold::Client;
@@ -45,24 +46,34 @@ impl Stronghold {
     T: AsRef<Path> + ?Sized,
   {
     let stronghold: IotaStronghold = IotaStronghold::default();
-
-    let snapshot_path = SnapshotPath::from_path(path);
+    let path: PathBuf = path.as_ref().to_owned();
 
     let mut key: EncryptionKey = derive_encryption_key(&password);
-    let key_provider = KeyProvider::try_from(key.to_vec()).expect("Failed to load key");
-
     password.zeroize();
+
+    let key_provider = KeyProvider::try_from(key.to_vec()).map_err(StrongholdError::MemoryError)?;
     key.zeroize();
 
-    // TODO: Load the snapshot as a side effect, without caring about the client.
-    // Stronghold will add a non-client-loading version with another update.
-    match stronghold
-      .load_client_from_snapshot(b"".to_vec(), &key_provider, &snapshot_path)
-      .await
-    {
-      Ok(_) | Err(ClientError::ClientDataNotPresent) => {}
-      Err(err) => return Err(StrongholdError::SnapshotError(SnapshotOperation::Read, err).into()),
-    }
+    let snapshot_path: SnapshotPath = if path.exists() {
+      let snapshot_path = SnapshotPath::from_path(path);
+      println!("Attempting to load snapshot from {snapshot_path:?}");
+
+      // TODO: Load the snapshot as a side effect, without caring about the client.
+      // Stronghold will add a non-client-loading version with another update.
+      match stronghold
+        .load_client_from_snapshot(b"".to_vec(), &key_provider, &snapshot_path)
+        .await
+      {
+        Ok(_) | Err(ClientError::ClientDataNotPresent) => {}
+        Err(err) => {
+          return Err(StrongholdError::SnapshotError(SnapshotOperation::Read, snapshot_path.clone(), err).into())
+        }
+      }
+
+      snapshot_path
+    } else {
+      SnapshotPath::from_path(path)
+    };
 
     Ok(Self {
       stronghold,
@@ -74,11 +85,19 @@ impl Stronghold {
   }
 
   pub(crate) async fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
-    self
-      .stronghold
-      .load_client(client_path.as_ref())
-      .await
-      .map_err(|err| StrongholdError::ClientError(ClientOperation::Load, client_path.clone(), err))
+    match self.stronghold.load_client(client_path.as_ref()).await {
+      Ok(client) => Ok(client),
+      Err(ClientError::ClientDataNotPresent) => self
+        .stronghold
+        .create_client(client_path.as_ref())
+        .await
+        .map_err(|err| StrongholdError::ClientError(ClientOperation::Load, client_path.clone(), err)),
+      Err(err) => Err(StrongholdError::ClientError(
+        ClientOperation::Load,
+        client_path.clone(),
+        err,
+      )),
+    }
   }
 
   pub(crate) async fn mutate_client<FUN, OUT, FUT>(&self, did: &IotaDID, f: FUN) -> Result<OUT>
@@ -106,29 +125,13 @@ impl Stronghold {
       .stronghold
       .commit(&self.snapshot_path, &self.key_provider)
       .await
-      .map_err(|err| StrongholdError::SnapshotError(SnapshotOperation::Write, err))
+      .map_err(|err| StrongholdError::SnapshotError(SnapshotOperation::Write, self.snapshot_path.clone(), err))
   }
 }
 
 impl std::fmt::Debug for Stronghold {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    // TODO: Include stronghold types once they implement Debug.
+    // TODO: Include stronghold type(s) once they implement Debug.
     f.debug_struct("Stronghold").field("dropsave", &self.dropsave).finish()
   }
 }
-
-// #[cfg(test)]
-// mod tests {
-//   use iota_stronghold::Stronghold;
-
-//   #[tokio::test]
-//   async fn test_future_is_send() {
-//     let stronghold: Stronghold = Stronghold::default();
-
-//     let future = stronghold.load_client(b"client_path".to_vec());
-
-//     fn assert_send<F: std::future::Future + Send>(f: F) {}
-
-//     assert_send(future);
-//   }
-// }
