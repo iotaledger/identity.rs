@@ -3,8 +3,8 @@
 
 use core::iter;
 use futures::executor::block_on;
-use iota_stronghold::procedures::KeyType;
-use iota_stronghold::Location;
+use iota_stronghold_old::procedures::KeyType;
+use iota_stronghold_old::Location;
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
 use rand::Rng;
@@ -299,7 +299,7 @@ rusty_fork_test! {
         let vault = snapshot.vault("persistence".into());
         assert!(vault.exists(location("A")).await.unwrap());
 
-        let procedure = iota_stronghold::procedures::PublicKey{
+        let procedure = iota_stronghold_old::procedures::PublicKey{
           private_key: location("A"),
           ty: KeyType::Ed25519
         };

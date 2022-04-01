@@ -33,12 +33,16 @@ version = "0.7"
 default-features = false
 features = ["blake2b", "hmac", "pbkdf", "sha", "std"]
 
-[dependencies.iota_stronghold]
+# [dependencies.iota_stronghold]
+
+[dependencies.iota_stronghold_old]
+package = "iota_stronghold"
 git = "https://github.com/iotaledger/stronghold.rs"
 rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
-[dependencies.stronghold_engine]
+[dependencies.stronghold_engine_old]
+package = "stronghold_engine"
 git = "https://github.com/iotaledger/stronghold.rs"
 rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
@@ -50,8 +54,8 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros", "r
 [features]
 default = ["stronghold", "send-sync-storage"]
 stronghold = [
-  "iota_stronghold",
-  "stronghold_engine",
+  "iota_stronghold_old",
+  "stronghold_engine_old",
   "actix",
   "tokio/rt-multi-thread",
   "futures",

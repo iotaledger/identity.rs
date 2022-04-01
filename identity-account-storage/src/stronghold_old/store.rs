@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::StrongholdFlags;
+use iota_stronghold_old::StrongholdFlags;
 use std::path::Path;
 use std::time::Duration;
 

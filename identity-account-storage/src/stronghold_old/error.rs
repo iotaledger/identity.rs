@@ -3,22 +3,22 @@
 
 pub type IotaStrongholdResult<T> = Result<T, StrongholdError>;
 
-/// Caused by errors from the [`iota_stronghold`] crate.
+/// Caused by errors from the [`iota_stronghold_old`] crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum StrongholdError {
   #[error(transparent)]
-  StrongholdActorError(#[from] iota_stronghold::ActorError),
+  StrongholdActorError(#[from] iota_stronghold_old::ActorError),
   #[error(transparent)]
-  StrongholdWriteError(#[from] iota_stronghold::WriteError),
+  StrongholdWriteError(#[from] iota_stronghold_old::WriteError),
   #[error(transparent)]
-  StrongholdReadError(#[from] iota_stronghold::ReadError),
+  StrongholdReadError(#[from] iota_stronghold_old::ReadError),
   #[error(transparent)]
-  StrongholdFatalEngineError(#[from] iota_stronghold::FatalEngineError),
+  StrongholdFatalEngineError(#[from] iota_stronghold_old::FatalEngineError),
   #[error(transparent)]
-  StrongholdMailboxError(#[from] iota_stronghold::MailboxError),
+  StrongholdMailboxError(#[from] iota_stronghold_old::MailboxError),
   /// Caused by a failing Stronghold procedure.
   #[error("Stronghold procedure failed: {0}")]
-  StrongholdProcedureFailure(#[from] iota_stronghold::procedures::ProcedureError),
+  StrongholdProcedureFailure(#[from] iota_stronghold_old::procedures::ProcedureError),
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),

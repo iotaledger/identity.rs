@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::RecordHint;
+use iota_stronghold_old::RecordHint;
 
 pub fn hint<T>(data: &T) -> Option<RecordHint>
 where

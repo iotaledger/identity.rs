@@ -1,14 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use engine::vault::RecordId;
-use iota_stronghold::procedures::Procedure;
-use iota_stronghold::procedures::StrongholdProcedure;
-use iota_stronghold::Location;
-use iota_stronghold::RecordHint;
-use iota_stronghold::StrongholdFlags;
-use iota_stronghold::VaultFlags;
+use iota_stronghold_old::procedures::Procedure;
+use iota_stronghold_old::procedures::StrongholdProcedure;
+use iota_stronghold_old::Location;
+use iota_stronghold_old::RecordHint;
+use iota_stronghold_old::StrongholdFlags;
+use iota_stronghold_old::VaultFlags;
 use std::path::Path;
+use stronghold_engine_old::vault::RecordId;
 
 use crate::stronghold_old::Context;
 use crate::stronghold_old::IotaStrongholdResult;

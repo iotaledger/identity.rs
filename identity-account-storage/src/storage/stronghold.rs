@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use futures::executor;
-use iota_stronghold::Location;
+use iota_stronghold_old::Location;
 use zeroize::Zeroize;
 
 use identity_core::convert::FromJson;
@@ -19,7 +19,7 @@ use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
-use iota_stronghold::procedures;
+use iota_stronghold_old::procedures;
 use tokio::sync::RwLock;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
