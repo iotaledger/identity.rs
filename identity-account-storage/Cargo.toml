@@ -12,7 +12,9 @@ description = "Secure storage for Decentralized Identifiers and Verifiable Crede
 
 [dependencies]
 actix = { version = "0.12.0", optional = true }
+anyhow = { version = "1.0", default-features = false, features = ["std"], optional = true }
 async-trait = { version = "0.1", default-features = false }
+function_name = { version = "0.2", default-features = false, optional = true }
 futures = { version = "0.3", optional = true }
 hashbrown = { version = "0.11", features = ["serde"] }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
@@ -65,6 +67,8 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros", "r
 [features]
 default = ["stronghold", "send-sync-storage"]
 stronghold = [
+  "iota_stronghold",
+  "stronghold_engine",
   "iota_stronghold_old",
   "stronghold_engine_old",
   "actix",
@@ -74,3 +78,4 @@ stronghold = [
   "rand",
 ]
 send-sync-storage = []
+storage_test_suite = ["anyhow", "function_name"]

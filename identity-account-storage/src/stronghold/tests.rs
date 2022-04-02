@@ -7,57 +7,15 @@ use identity_iota_core::did::IotaDID;
 use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
 use iota_stronghold::Location;
-use rand::Rng;
 
+use crate::storage::test_util::random_did;
+use crate::storage::test_util::random_key_location;
+use crate::storage::test_util::random_password;
+use crate::storage::test_util::random_temporary_path;
 use crate::storage::Storage;
+use crate::stronghold::ClientPath;
+use crate::stronghold::Stronghold;
 use crate::types::KeyLocation;
-
-use super::ClientPath;
-use super::Stronghold;
-
-fn random_temporary_path() -> String {
-  let mut file = std::env::temp_dir();
-  file.push("test_strongholds");
-  file.push(
-    rand::thread_rng()
-      .sample_iter(rand::distributions::Alphanumeric)
-      .take(32)
-      .map(char::from)
-      .collect::<String>(),
-  );
-  file.set_extension("stronghold");
-  file.to_str().unwrap().to_owned()
-}
-
-fn random_password() -> String {
-  rand::thread_rng()
-    .sample_iter(rand::distributions::Alphanumeric)
-    .take(32)
-    .map(char::from)
-    .collect::<String>()
-}
-
-// async fn test_stronghold() -> Stronghold {
-//   Stronghold::new(&random_temporary_path(), random_password(), None)
-//     .await
-//     .unwrap()
-// }
-
-fn random_did() -> IotaDID {
-  let public_key: [u8; 32] = rand::thread_rng().gen();
-  IotaDID::new(&public_key).unwrap()
-}
-
-fn random_key_location() -> KeyLocation {
-  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
-  let fragment: String = rand::Rng::sample_iter(&mut thread_rng, rand::distributions::Alphanumeric)
-    .take(32)
-    .map(char::from)
-    .collect();
-  let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
-
-  KeyLocation::new(KeyType::Ed25519, fragment, &public_key)
-}
 
 #[tokio::test]
 async fn test_mutate_client_persists_client_into_snapshot() {
@@ -96,7 +54,7 @@ async fn test_mutate_client_persists_client_into_snapshot() {
 }
 
 #[tokio::test]
-async fn test_key_delete() {
+async fn test_stronghold_key_delete() {
   let path: String = random_temporary_path();
   let password: String = random_password();
 
@@ -128,4 +86,17 @@ async fn test_key_delete() {
 
   // Running it a second time does not fail, but returns false.
   assert!(!stronghold.key_delete(&did, location).await.unwrap());
+}
+
+// #[cfg(feature = "storage_test_suite")]
+#[tokio::test]
+async fn test_stronghold_did_create() -> Result<(), Box<dyn std::error::Error>> {
+  let path: String = random_temporary_path();
+  let password: String = random_password();
+
+  let stronghold: Stronghold = Stronghold::new(&path, password.clone(), None).await.unwrap();
+
+  crate::storage::tests::storage_did_create_test(Box::new(stronghold)).await?;
+
+  Ok(())
 }
