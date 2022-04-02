@@ -222,14 +222,18 @@ impl Storage for Stronghold {
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     self
       .mutate_client(did, |client| async move {
-        // TODO: Technically there is a race condition here between existence check and removal.
-        // Check if RevokeData returns an error if the record doesn't exist, and if so, ignore it.
+        // Technically there is a race condition here between existence check and removal.
+        // However, the RevokeData procedure does not return an error if the record doesn't exist, so it's fine.
 
         let exists: bool = client
           .record_exists(location.into())
           .await
           .map_err(|err| StrongholdError::VaultError(VaultOperation::RecordExists, err))
           .map_err(crate::Error::from)?;
+
+        if !exists {
+          return Ok(exists);
+        }
 
         client
           .execute_procedure(procedures::RevokeData {
