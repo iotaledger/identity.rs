@@ -25,7 +25,7 @@ on:
         description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
         required: false
         type: string
-jobs:  
+jobs:
   build-stronghold-nodejs:
       defaults:
         run:
@@ -63,18 +63,17 @@ jobs:
                 npm run build && strip dist/*.node
               test: |
                 npm run test
-            # Remove musl target since we can't get a stable build ATM, also re-add triple in package.json if we re-enable it
-            # - host: ubuntu-latest
-            #   target: x86_64-unknown-linux-musl
-            #   architecture: x64
-            #   setup: |
-            #     sudo apt-get install -y musl-tools
-            #   build: |
-            #     export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
-            #     npm run build && strip dist/*.node
-            #   test-docker: |
-            #     docker build -f .github/Dockerfile.alpine -t tester .
-            #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/identity-stronghold-nodejs.linux-x64-musl.node && npm run test"
+             - host: ubuntu-latest
+               target: x86_64-unknown-linux-musl
+               architecture: x64
+               setup: |
+                 sudo apt-get install -y musl-tools
+               build: |
+                 export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+                 npm run build && strip dist/*.node
+               test-docker: |
+                 docker build -f .github/Dockerfile.alpine -t tester ./.github
+                 docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "ldd dist/identity-stronghold-nodejs.linux-x64-musl.node || true && npm run test:examples"
             - host: macos-latest
               target: aarch64-apple-darwin
               build: |
