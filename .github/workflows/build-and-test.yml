@@ -201,6 +201,6 @@ jobs:
       - build-wasm
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@fix/musl-builds
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
     with:
       input-artifact-name: identity-wasm-bindings-build
