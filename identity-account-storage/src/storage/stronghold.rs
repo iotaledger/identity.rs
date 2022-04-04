@@ -419,6 +419,7 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
 fn random_location(key_type: KeyType) -> KeyLocation {
   // NOTE: do not use rand::thread_rng() or rand::random(), breaks musl-libc cross-compilation.
   let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
+
   let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
 
   KeyLocation::new(key_type, fragment, &public_key)
