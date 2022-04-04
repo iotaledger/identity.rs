@@ -175,7 +175,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
@@ -190,17 +190,17 @@ jobs:
         with:
           name: identity-wasm-bindings-build
           path: bindings/wasm
-    
+
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
 
   build-and-test-stronghold-nodejs:
-    needs: 
+    needs:
       - check-for-run-condition
       - build-wasm
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
     # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@dev
+    uses: iotaledger/identity.rs/.github/workflows/shared-build-and-test-stronghold-nodejs.yml@fix/musl-builds
     with:
       input-artifact-name: identity-wasm-bindings-build
