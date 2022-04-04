@@ -51,7 +51,7 @@ impl Stronghold {
     let mut key: EncryptionKey = derive_encryption_key(&password);
     password.zeroize();
 
-    let key_provider = KeyProvider::try_from(key.to_vec()).map_err(StrongholdError::MemoryError)?;
+    let key_provider = KeyProvider::try_from(key.to_vec()).map_err(StrongholdError::Memory)?;
     key.zeroize();
 
     let snapshot_path: SnapshotPath = if path.exists() {
@@ -65,9 +65,7 @@ impl Stronghold {
         .await
       {
         Ok(_) | Err(ClientError::ClientDataNotPresent) => {}
-        Err(err) => {
-          return Err(StrongholdError::SnapshotError(SnapshotOperation::Read, snapshot_path.clone(), err).into())
-        }
+        Err(err) => return Err(StrongholdError::Snapshot(SnapshotOperation::Read, snapshot_path.clone(), err).into()),
       }
 
       snapshot_path
@@ -91,12 +89,8 @@ impl Stronghold {
         .stronghold
         .create_client(client_path.as_ref())
         .await
-        .map_err(|err| StrongholdError::ClientError(ClientOperation::Load, client_path.clone(), err)),
-      Err(err) => Err(StrongholdError::ClientError(
-        ClientOperation::Load,
-        client_path.clone(),
-        err,
-      )),
+        .map_err(|err| StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
+      Err(err) => Err(StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
     }
   }
 
@@ -115,7 +109,7 @@ impl Stronghold {
       .stronghold
       .write_client(client_path.as_ref())
       .await
-      .map_err(|err| StrongholdError::ClientError(ClientOperation::Persist, client_path.clone(), err))?;
+      .map_err(|err| StrongholdError::Client(ClientOperation::Persist, client_path.clone(), err))?;
 
     Ok(output)
   }
@@ -125,7 +119,7 @@ impl Stronghold {
       .stronghold
       .commit(&self.snapshot_path, &self.key_provider)
       .await
-      .map_err(|err| StrongholdError::SnapshotError(SnapshotOperation::Write, self.snapshot_path.clone(), err))
+      .map_err(|err| StrongholdError::Snapshot(SnapshotOperation::Write, self.snapshot_path.clone(), err))
   }
 }
 

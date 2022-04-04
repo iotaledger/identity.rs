@@ -18,19 +18,19 @@ pub(crate) type ProcedureName = &'static str;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum StrongholdError {
   #[error("failed to `{0}` stronghold client `{1}` due to: {2}")]
-  ClientError(ClientOperation, ClientPath, #[source] ClientError),
+  Client(ClientOperation, ClientPath, #[source] ClientError),
   #[error("store `{0}` operation failed: {1}")]
-  StoreError(StoreOperation, #[source] ClientError),
+  Store(StoreOperation, #[source] ClientError),
   #[error("vault operation `{0}` failed: {1}")]
-  VaultError(VaultOperation, #[source] ClientError),
+  Vault(VaultOperation, #[source] ClientError),
   #[error("procedure `{0}` operating on locations {1:?} failed: {2}")]
-  ProcedureError(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
+  Procedure(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
   // TODO: SnapshotPath should impl Display.
   #[error("snapshot operation `{0}` on path `{1:?}` failed: {2}")]
-  SnapshotError(SnapshotOperation, SnapshotPath, #[source] ClientError),
+  Snapshot(SnapshotOperation, SnapshotPath, #[source] ClientError),
   // TODO: Make #[source] and use {0} when Error trait is impl'd for inner MemoryError.
   #[error("failed to load password into key provider due to: {0:?}")]
-  MemoryError(stronghold_engine::new_runtime::MemoryError),
+  Memory(stronghold_engine::new_runtime::MemoryError),
 }
 
 #[derive(Debug, Clone, Copy)]
