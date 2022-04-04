@@ -41,7 +41,7 @@ impl Stronghold {
   /// * path: path to a local Stronghold file, will be created if it does not exist.
   /// * password: password for the Stronghold file.
   /// * dropsave: save all changes when the instance is dropped. Default: true.
-  pub async fn new<'a, T>(path: &T, mut password: String, dropsave: Option<bool>) -> Result<Self>
+  pub async fn new<T>(path: &T, mut password: String, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
   {
@@ -61,7 +61,7 @@ impl Stronghold {
       // TODO: Load the snapshot as a side effect, without caring about the client.
       // Stronghold will add a non-client-loading version with another update.
       match stronghold
-        .load_client_from_snapshot(b"".to_vec(), &key_provider, &snapshot_path)
+        .load_client_from_snapshot(b"", &key_provider, &snapshot_path)
         .await
       {
         Ok(_) | Err(ClientError::ClientDataNotPresent) => {}

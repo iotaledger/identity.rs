@@ -11,8 +11,8 @@ use crate::types::KeyLocation;
 
 use super::client_path::ClientPath;
 
-pub type StrongholdResult<T> = Result<T, StrongholdError>;
-pub type ProcedureName = &'static str;
+pub(crate) type StrongholdResult<T> = Result<T, StrongholdError>;
+pub(crate) type ProcedureName = &'static str;
 
 /// Caused by errors from the [`iota_stronghold`] crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
@@ -28,7 +28,7 @@ pub enum StrongholdError {
   // TODO: SnapshotPath should impl Display.
   #[error("snapshot operation `{0}` on path `{1:?}` failed: {2}")]
   SnapshotError(SnapshotOperation, SnapshotPath, #[source] ClientError),
-  // TODO: Make #[source] and use {0} whenError trait is impl'd for inner MemoryError.
+  // TODO: Make #[source] and use {0} when Error trait is impl'd for inner MemoryError.
   #[error("failed to load password into key provider due to: {0:?}")]
   MemoryError(stronghold_engine::new_runtime::MemoryError),
 }

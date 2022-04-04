@@ -11,6 +11,6 @@ pub mod tests;
 mod traits;
 
 pub use self::memstore::*;
-#[cfg(feature = "stronghold")]
-pub use self::stronghold::*;
 pub use self::traits::*;
+#[cfg(feature = "stronghold")]
+pub use crate::stronghold::wrapper::Stronghold;
