@@ -7,6 +7,7 @@ import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
 import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
+import { storageTest } from "./storage_test";
 import { unchecked } from "./unchecked";
 
 async function main() {
@@ -32,6 +33,8 @@ async function main() {
             return await unchecked();
         case "multiple_identities":
             return await multipleIdentities();
+        case "storage_test":
+            return await storageTest();
         default:
             throw "Unknown example name";
     }

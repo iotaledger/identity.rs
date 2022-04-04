@@ -36,7 +36,7 @@ macro_rules! ensure_eq {
 
 #[named]
 pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
-  let fragment: String = random_string(20);
+  let fragment: String = random_string();
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let network: NetworkName = Network::Mainnet.name();
 

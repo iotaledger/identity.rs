@@ -16,6 +16,7 @@ anyhow = { version = "1.0", default-features = false, features = ["std"], option
 async-trait = { version = "0.1", default-features = false }
 function_name = { version = "0.2", default-features = false, optional = true }
 futures = { version = "0.3", optional = true }
+getrandom = { version = "0.2", default-features = false, optional = true }
 hashbrown = { version = "0.11", features = ["serde"] }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
@@ -60,6 +61,10 @@ git = "https://github.com/iotaledger/stronghold.rs"
 rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
 optional = true
 
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
+# TODO: Might have to specify version here, 0.2 produces a version selection conflict in Wasm.
+getrandom = { version = "*", features = ["wasm-bindgen"] }
+
 [dev-dependencies]
 rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
@@ -78,4 +83,4 @@ stronghold = [
   "rand",
 ]
 send-sync-storage = []
-storage_test_suite = ["anyhow", "function_name"]
+storage_test_suite = ["anyhow", "function_name", "getrandom"]

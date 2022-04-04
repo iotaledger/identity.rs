@@ -1,45 +1,40 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::KeyLocation;
-
-use identity_core::crypto::KeyType;
-use identity_iota_core::did::IotaDID;
-use rand::Rng;
-
-pub fn random_temporary_path() -> String {
+#[cfg(test)]
+pub(crate) fn random_temporary_path() -> String {
   let mut file = std::env::temp_dir();
   file.push("test_strongholds");
-  file.push(random_string(32));
+  file.push(random_string());
   file.set_extension("stronghold");
   file.to_str().unwrap().to_owned()
 }
 
-pub fn random_password() -> String {
-  random_string(32)
+#[cfg(test)]
+pub(crate) fn random_password() -> String {
+  random_string()
 }
 
-pub fn random_did() -> IotaDID {
-  let public_key: [u8; 32] = rand::thread_rng().gen();
-  IotaDID::new(&public_key).unwrap()
+#[cfg(test)]
+pub(crate) fn random_did() -> identity_iota_core::did::IotaDID {
+  identity_iota_core::did::IotaDID::new(&random_bytes()).unwrap()
 }
 
-pub fn random_key_location() -> KeyLocation {
+#[cfg(test)]
+pub(crate) fn random_key_location() -> crate::types::KeyLocation {
   let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
-  let fragment: String = random_string(32);
+  let fragment: String = random_string();
   let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
 
-  KeyLocation::new(KeyType::Ed25519, fragment, &public_key)
+  crate::types::KeyLocation::new(identity_core::crypto::KeyType::Ed25519, fragment, &public_key)
 }
 
-pub fn random_string(len: usize) -> String {
-  rand::thread_rng()
-    .sample_iter(rand::distributions::Alphanumeric)
-    .take(len)
-    .map(char::from)
-    .collect::<String>()
+pub(crate) fn random_string() -> String {
+  random_bytes().into_iter().map(char::from).collect::<String>()
 }
 
-// pub fn random_bytes(len: usize) -> [u8; 32] {
-//   rand::thread_rng().gen()
-// }
+pub(crate) fn random_bytes() -> [u8; 32] {
+  let mut dest: [u8; 32] = Default::default();
+  getrandom::getrandom(&mut dest).unwrap();
+  dest
+}
