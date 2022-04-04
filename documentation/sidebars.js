@@ -41,7 +41,6 @@ module.exports = {
                 'decentralized_identifiers/overview',
                 'decentralized_identifiers/create',
                 'decentralized_identifiers/update',
-                'decentralized_identifiers/secure',
                 'decentralized_identifiers/resolve',
                 'decentralized_identifiers/resolve_history',
                 'decentralized_identifiers/private_tangle',
