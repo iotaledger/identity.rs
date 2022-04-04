@@ -72,6 +72,8 @@ pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Resul
     .did_create(network, &fragment, Some(keypair.private().to_owned()))
     .await;
 
+  // TODO: Call did_create without a key.
+
   ensure!(
     result.is_err(),
     "expected did_create to return an error when attempting to create an identity from the same private key twice"
@@ -95,11 +97,10 @@ pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Resul
 #[named]
 pub async fn storage_key_generate_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
   let fragment: String = random_string();
-  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let network: NetworkName = Network::Mainnet.name();
 
   let (did, _): (IotaDID, _) = storage
-    .did_create(network.clone(), &fragment, Some(keypair.private().to_owned()))
+    .did_create(network.clone(), &fragment, None)
     .await
     .context("did_create returned an error")?;
 
@@ -129,6 +130,53 @@ pub async fn storage_key_generate_test(storage: Box<dyn Storage>) -> anyhow::Res
       .key_public(&did, &location)
       .await
       .context("key_public returned an error")?;
+  }
+
+  Ok(())
+}
+
+#[named]
+pub async fn storage_key_delete_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  let fragment: String = random_string();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let (did, _): (IotaDID, _) = storage
+    .did_create(network.clone(), &fragment, None)
+    .await
+    .context("did_create returned an error")?;
+
+  let mut locations: Vec<KeyLocation> = Vec::with_capacity(20);
+
+  for _ in 0..20 {
+    let key_fragment: String = random_string();
+    let location: KeyLocation = storage
+      .key_generate(&did, KeyType::Ed25519, &key_fragment)
+      .await
+      .context("key_generate returned an error")?;
+    locations.push(location);
+  }
+
+  for location in locations {
+    let exists: bool = storage
+      .key_exists(&did, &location)
+      .await
+      .context("key_exists returned an error")?;
+
+    ensure!(exists, "expected key at location `{location}` to exist");
+
+    let deleted: bool = storage
+      .key_delete(&did, &location)
+      .await
+      .context("key_delete returned an error")?;
+
+    ensure!(deleted, "expected key at location `{location}` to be deleted");
+
+    let deleted: bool = storage
+      .key_delete(&did, &location)
+      .await
+      .context("key_delete returned an error")?;
+
+    ensure!(!deleted, "expected key at location `{location}` to already be deleted");
   }
 
   Ok(())
