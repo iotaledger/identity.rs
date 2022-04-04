@@ -92,7 +92,8 @@ impl Storage for Stronghold {
 
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
 
-    let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let index_client_path: ClientPath = ClientPath::from(INDEX_CLIENT_PATH);
+    let index_client: Client = self.client(&index_client_path).await?;
     let index_store: Store = index_client.store().await;
 
     let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
@@ -104,6 +105,12 @@ impl Storage for Stronghold {
     }
 
     set_index(&index_store, index).await?;
+
+    self
+      .stronghold
+      .write_client(index_client_path.as_ref())
+      .await
+      .map_err(|err| StrongholdError::ClientError(ClientOperation::Persist, index_client_path, err))?;
 
     // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);

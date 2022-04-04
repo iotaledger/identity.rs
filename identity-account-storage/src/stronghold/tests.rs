@@ -90,13 +90,13 @@ async fn test_stronghold_key_delete() {
 
 // #[cfg(feature = "storage_test_suite")]
 #[tokio::test]
-async fn test_stronghold_did_create() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_stronghold_did_create() {
   let path: String = random_temporary_path();
   let password: String = random_password();
 
   let stronghold: Stronghold = Stronghold::new(&path, password.clone(), None).await.unwrap();
 
-  crate::storage::tests::storage_did_create_test(Box::new(stronghold)).await?;
-
-  Ok(())
+  crate::storage::tests::storage_did_create_test(Box::new(stronghold))
+    .await
+    .unwrap();
 }
