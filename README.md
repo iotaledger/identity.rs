@@ -49,8 +49,8 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.56.1)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.56.0)
+- [Rust](https://www.rust-lang.org/) (>= 1.57.0)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.57.0)
 
 ## Getting Started
 

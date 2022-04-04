@@ -248,3 +248,35 @@ impl Default for MemStore {
     Self::new()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use crate::storage::Storage;
+
+  use super::MemStore;
+
+  fn test_memstore() -> Box<dyn Storage> {
+    Box::new(MemStore::new())
+  }
+
+  #[tokio::test]
+  async fn test_memstore_did_create() {
+    crate::storage::tests::storage_did_create_test(test_memstore())
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_generate() {
+    crate::storage::tests::storage_key_generate_test(test_memstore())
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_delete() {
+    crate::storage::tests::storage_key_delete_test(test_memstore())
+      .await
+      .unwrap()
+  }
+}

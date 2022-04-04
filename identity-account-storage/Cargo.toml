@@ -83,4 +83,4 @@ stronghold = [
   "rand",
 ]
 send-sync-storage = []
-storage_test_suite = ["anyhow", "function_name", "getrandom"]
+storage-test-suite = ["anyhow", "function_name", "getrandom"]

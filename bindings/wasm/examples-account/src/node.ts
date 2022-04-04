@@ -5,6 +5,7 @@ import { config } from "./config";
 import { createIdentity } from "./create_did";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
+import { memstoreTest } from "./memory_storage";
 import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
 import { storageTest } from "./storage_test";
@@ -33,8 +34,8 @@ async function main() {
             return await unchecked();
         case "multiple_identities":
             return await multipleIdentities();
-        case "storage_test":
-            return await storageTest();
+        case "storage_test_suite":
+            return await memstoreTest();
         default:
             throw "Unknown example name";
     }

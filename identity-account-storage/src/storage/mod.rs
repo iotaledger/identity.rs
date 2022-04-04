@@ -4,9 +4,9 @@
 mod memstore;
 #[cfg(feature = "stronghold")]
 mod stronghold;
-#[cfg(feature = "storage_test_suite")]
+#[cfg(feature = "storage-test-suite")]
 pub(crate) mod test_util;
-#[cfg(feature = "storage_test_suite")]
+#[cfg(feature = "storage-test-suite")]
 pub mod tests;
 mod traits;
 

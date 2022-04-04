@@ -14,6 +14,12 @@ use iota_stronghold::Location;
 use iota_stronghold::Store;
 use iota_stronghold::StoreGuard;
 use stronghold_engine::vault::RecordHint;
+use iota_stronghold::procedures;
+use rand::distributions::DistString;
+use rand::rngs::OsRng;
+use rand::Rng;
+use tokio::sync::RwLockReadGuard;
+use tokio::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
 
 use identity_core::convert::FromJson;
@@ -24,9 +30,6 @@ use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
-use iota_stronghold::procedures;
-use tokio::sync::RwLockReadGuard;
-use tokio::sync::RwLockWriteGuard;
 
 use crate::error::Result;
 use crate::identity::ChainState;
@@ -477,12 +480,9 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
 }
 
 fn random_location(key_type: KeyType) -> KeyLocation {
-  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
-  let fragment: String = rand::Rng::sample_iter(&mut thread_rng, rand::distributions::Alphanumeric)
-    .take(32)
-    .map(char::from)
-    .collect();
-  let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
+  // NOTE: do not use rand::thread_rng() or rand::random(), breaks musl-libc cross-compilation.
+  let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
+  let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
 
   KeyLocation::new(key_type, fragment, &public_key)
 }
