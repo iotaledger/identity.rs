@@ -175,7 +175,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
@@ -190,13 +190,13 @@ jobs:
         with:
           name: identity-wasm-bindings-build
           path: bindings/wasm
-    
+
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
 
   build-and-test-stronghold-nodejs:
-    needs: 
+    needs:
       - check-for-run-condition
       - build-wasm
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}
