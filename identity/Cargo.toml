@@ -47,6 +47,8 @@ stronghold = ["identity-account/stronghold", "identity-account-storage/stronghol
 # Enables send and sync storage
 send-sync-storage = ["identity-account-storage/send-sync-storage"]
 
+storage-test-suite = ["identity-account-storage/storage-test-suite"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
