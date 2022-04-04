@@ -100,3 +100,15 @@ async fn test_stronghold_did_create() {
     .await
     .unwrap();
 }
+
+#[tokio::test]
+async fn test_stronghold_key_generate() {
+  let path: String = random_temporary_path();
+  let password: String = random_password();
+
+  let stronghold: Stronghold = Stronghold::new(&path, password.clone(), None).await.unwrap();
+
+  crate::storage::tests::storage_key_generate_test(Box::new(stronghold))
+    .await
+    .unwrap();
+}

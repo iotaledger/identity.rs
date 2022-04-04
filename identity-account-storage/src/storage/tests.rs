@@ -91,3 +91,45 @@ pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Resul
 
   Ok(())
 }
+
+#[named]
+pub async fn storage_key_generate_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  let fragment: String = random_string();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let (did, _): (IotaDID, _) = storage
+    .did_create(network.clone(), &fragment, Some(keypair.private().to_owned()))
+    .await
+    .context("did_create returned an error")?;
+
+  let key_types: [KeyType; 2] = [KeyType::Ed25519, KeyType::X25519];
+
+  let mut locations: Vec<KeyLocation> = Vec::with_capacity(key_types.len());
+
+  for key_type in key_types {
+    let key_fragment: String = random_string();
+    let location: KeyLocation = storage
+      .key_generate(&did, key_type, &key_fragment)
+      .await
+      .context("key_generate returned an error")?;
+    locations.push(location);
+  }
+
+  for location in locations {
+    let exists: bool = storage
+      .key_exists(&did, &location)
+      .await
+      .context("key_exists returned an error")?;
+
+    ensure!(exists, "expected key at location `{location}` to exist");
+
+    // Ensure we can retrieve the public key without erroring.
+    storage
+      .key_public(&did, &location)
+      .await
+      .context("key_public returned an error")?;
+  }
+
+  Ok(())
+}
