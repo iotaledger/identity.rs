@@ -15,7 +15,7 @@ async-trait = { version = "0.1", default-features = false }
 cfg-if = { version = "1.0", default-features = false }
 dashmap = { version = "5.1", default-features = false }
 futures = { version = "0.3", default-features = false }
-identity-account = { path = "../identity-account", default-features = false, optional = true }
+identity-account = { path = "../identity-account", default-features = false, features = ["send-sync-storage"], optional = true }
 identity-core = { path = "../identity-core", default-features = false }
 identity-iota = { path = "../identity-iota", default-features = false }
 identity-iota-core = { path = "../identity-iota-core", default-features = false }

@@ -255,11 +255,7 @@ where
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT>(
-    self,
-    endpoint: &'static str,
-    handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-  ) -> Result<Self>
+  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Result<Self>
   where
     REQ: ActorRequest<Synchronous> + Sync,
     REQ::Response: Send,
@@ -267,7 +263,7 @@ where
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(
-      Endpoint::new(endpoint)?,
+      Endpoint::new(REQ::endpoint())?,
       HandlerObject::new(self.object_id, Box::new(handler)),
     );
     Ok(self)
@@ -284,7 +280,6 @@ where
   /// The handler is not expected to return anything.
   pub fn add_async_handler<REQ, FUT>(
     self,
-    endpoint: &'static str,
     handler: fn(OBJ, Actor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
   ) -> Result<Self>
   where
@@ -293,7 +288,7 @@ where
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(
-      Endpoint::new(endpoint)?,
+      Endpoint::new(REQ::endpoint())?,
       HandlerObject::new(self.object_id, Box::new(handler)),
     );
     Ok(self)

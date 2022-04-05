@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::borrow::Cow;
 use std::fmt::Debug;
 
 use serde::de::DeserializeOwned;
@@ -52,7 +51,7 @@ mod private {
 pub trait ActorRequest<T: SyncMode>: Debug + Serialize + DeserializeOwned + Send + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
-  fn endpoint<'cow>(&self) -> Cow<'cow, str>;
+  fn endpoint() -> &'static str;
 
   fn request_mode(&self) -> RequestMode {
     T::request_mode()

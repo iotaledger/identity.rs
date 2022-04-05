@@ -53,8 +53,8 @@ async fn test_unknown_request_or_thread_returns_error() -> crate::Result<()> {
   impl ActorRequest<Asynchronous> for AsyncDummy {
     type Response = ();
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("unknown/thread")
+    fn endpoint() -> &'static str {
+      "unknown/thread"
     }
   }
 
@@ -80,8 +80,8 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("request/test")
+    fn endpoint() -> &'static str {
+      "request/test"
     }
   }
 
@@ -100,14 +100,14 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   let mut actor1_builder = ActorBuilder::new();
   actor1_builder
     .add_state(actor1_state.clone())
-    .add_sync_handler("request/test", State::handler)
+    .add_sync_handler(State::handler)
     .unwrap();
   let mut actor1 = actor1_builder.build().await.unwrap();
 
   let mut actor2_builder = ActorBuilder::new();
   actor2_builder
     .add_state(actor2_state.clone())
-    .add_sync_handler("request/test", State::handler)
+    .add_sync_handler(State::handler)
     .unwrap();
   let mut actor2 = actor2_builder.build().await.unwrap();
 
@@ -143,8 +143,8 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("request/test")
+    fn endpoint() -> &'static str {
+      "request/test"
     }
   }
 
@@ -164,7 +164,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
   let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(state.clone())
-      .add_sync_handler("request/test", State::handler)
+      .add_sync_handler(State::handler)
       .unwrap();
   })
   .await;
@@ -195,21 +195,17 @@ async fn test_synchronous_handler_invocation() -> crate::Result<()> {
   impl ActorRequest<Synchronous> for MessageRequest {
     type Response = MessageResponse;
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("test/message")
+    fn endpoint() -> &'static str {
+      "test/message"
     }
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_sync_handler(
-        "test/message",
-        |_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
-          println!("invoked");
-          MessageResponse(message.input.0)
-        },
-      )
+      .add_sync_handler(|_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
+        MessageResponse(message.input.0)
+      })
       .unwrap();
   })
   .await;
@@ -270,10 +266,7 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_async_handler(
-        "didcomm/presentation_offer",
-        |_: (), _: Actor, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {},
-      )
+      .add_async_handler(|_: (), _: Actor, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {})
       .unwrap();
   })
   .await;
@@ -309,13 +302,10 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_sync_handler(
-        "remote_account/list",
-        |_: (), _: Actor, _message: RequestContext<IdentityList>| async move {
-          tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-          vec![]
-        },
-      )
+      .add_sync_handler(|_: (), _: Actor, _message: RequestContext<IdentityList>| async move {
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        vec![]
+      })
       .unwrap();
   })
   .await;
@@ -376,7 +366,6 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
     builder
       .add_state(state.clone())
       .add_async_handler(
-        "didcomm/presentation_offer",
         |state: TestFunctionState, _: Actor, _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {
           tokio::time::sleep(std::time::Duration::from_millis(25)).await;
           state.was_called.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -421,26 +410,23 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> crate::
   impl ActorRequest<Synchronous> for CustomRequest {
     type Response = String;
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("test/request")
+    fn endpoint() -> &'static str {
+      "test/request"
     }
   }
 
   impl ActorRequest<Synchronous> for CustomRequest2 {
     type Response = u32;
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("test/request")
+    fn endpoint() -> &'static str {
+      "test/request"
     }
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_sync_handler(
-        "test/request",
-        |_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 },
-      )
+      .add_sync_handler(|_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 })
       .unwrap();
   })
   .await;
@@ -466,8 +452,8 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> crate::
   impl ActorRequest<Synchronous> for CustomRequest3 {
     type Response = String;
 
-    fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-      std::borrow::Cow::Borrowed("test/request")
+    fn endpoint() -> &'static str {
+      "test/request"
     }
   }
 

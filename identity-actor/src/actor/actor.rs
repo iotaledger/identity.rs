@@ -228,9 +228,7 @@ impl Actor {
     thread_id: &ThreadId,
     message: REQ,
   ) -> Result<()> {
-    self
-      .send_named_message(peer, &message.endpoint(), thread_id, message)
-      .await
+    self.send_named_message(peer, REQ::endpoint(), thread_id, message).await
   }
 
   #[doc(hidden)]
@@ -279,9 +277,7 @@ impl Actor {
     peer: PeerId,
     request: REQ,
   ) -> Result<REQ::Response> {
-    self
-      .send_named_request(peer, request.endpoint().as_ref(), request)
-      .await
+    self.send_named_request(peer, REQ::endpoint(), request).await
   }
 
   #[doc(hidden)]
@@ -328,7 +324,7 @@ impl Actor {
     peer: PeerId,
     input: REQ,
   ) -> Result<REQ> {
-    let mut endpoint = Endpoint::new(input.endpoint())?;
+    let mut endpoint = Endpoint::new(REQ::endpoint())?;
     endpoint.is_hook = true;
 
     if self.handlers().contains_key(&endpoint) {

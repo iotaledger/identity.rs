@@ -54,7 +54,7 @@ where
 {
   type Response = ();
 
-  fn endpoint<'cow>(&self) -> std::borrow::Cow<'cow, str> {
-    self.body.endpoint()
+  fn endpoint() -> &'static str {
+    T::endpoint()
   }
 }
