@@ -8,9 +8,13 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::Network;
 use identity_iota_core::tangle::NetworkName;
 
+use crate::identity::ChainState;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -354,6 +358,66 @@ pub async fn storage_key_sign_ed25519_test(storage: Box<dyn Storage>) -> anyhow:
     &signature_hex,
     SIGNATURE_HEX,
     "expected signature to be `{SIGNATURE_HEX}`, was `{signature_hex}`"
+  );
+
+  Ok(())
+}
+
+#[named]
+pub async fn storage_key_value_store_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  let fragment: String = random_string();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let (did, location): (IotaDID, KeyLocation) = storage
+    .did_create(network.clone(), &fragment, None)
+    .await
+    .context("did_create returned an error")?;
+
+  let public_key: PublicKey = storage
+    .key_public(&did, &location)
+    .await
+    .context("key_public returned an error")?;
+
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, &fragment).unwrap();
+
+  let expected_document: IotaDocument = IotaDocument::from_verification_method(method).unwrap();
+
+  storage
+    .document_set(&did, &expected_document)
+    .await
+    .context("document_set returned an error")?;
+
+  let document: IotaDocument = storage
+    .document_get(&did)
+    .await
+    .context("document_get returned an error")?
+    .ok_or_else(|| anyhow::Error::msg("expected `Some(_)` to be returned, got `None`"))?;
+
+  ensure_eq!(
+    expected_document,
+    document,
+    "expected document to be `{expected_document}`, got `{document}`"
+  );
+
+  let mut expected_chain_state: ChainState = ChainState::new();
+  expected_chain_state.set_last_integration_message_id(MessageId::new([0xff; 32]));
+
+  storage
+    .chain_state_set(&did, &expected_chain_state)
+    .await
+    .context("chain_state_set returned an error")?;
+
+  let chain_state: ChainState = storage
+    .chain_state_get(&did)
+    .await
+    .context("chain_state_get returned an error")?
+    .ok_or_else(|| anyhow::Error::msg("expected `Some(_)` to be returned, got `None`"))?;
+
+  ensure_eq!(
+    expected_chain_state,
+    chain_state,
+    "expected chain state to be `{expected_chain_state:?}`, got `{chain_state:?}`"
   );
 
   Ok(())

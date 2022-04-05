@@ -299,4 +299,11 @@ mod tests {
       .await
       .unwrap()
   }
+
+  #[tokio::test]
+  async fn test_memstore_key_value_store() {
+    crate::storage::tests::storage_key_value_store_test(test_memstore())
+      .await
+      .unwrap()
+  }
 }
