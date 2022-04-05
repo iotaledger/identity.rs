@@ -9,8 +9,9 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::PublishOptions;
 use identity::account_storage::Storage;
+use identity::credential::Presentation;
 use identity::crypto::ProofOptions;
-use identity::crypto::SetSignature;
+
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::Client;
 use identity::iota_core::IotaDID;
@@ -136,9 +137,20 @@ impl WasmAccount {
     credential: &WasmCredential,
     options: &WasmProofOptions,
   ) -> PromiseCredential {
-    self
-      .create_signed(fragment, credential.0.clone(), options)
-      .unchecked_into::<PromiseCredential>()
+    let account = self.0.clone();
+    let options: ProofOptions = options.0.clone();
+
+    let mut credential = credential.0.clone();
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut credential, options)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(WasmCredential::from(credential)))
+    })
+    .unchecked_into::<PromiseCredential>()
   }
 
   /// Signs a {@link Document} with the key specified by `fragment`.
@@ -149,9 +161,20 @@ impl WasmAccount {
     document: &WasmDocument,
     options: &WasmProofOptions,
   ) -> PromiseDocument {
-    self
-      .create_signed(fragment, document.0.clone(), options)
-      .unchecked_into::<PromiseDocument>()
+    let account = self.0.clone();
+    let options: ProofOptions = options.0.clone();
+
+    let mut document = document.0.clone();
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut document, options)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(WasmDocument::from(document)))
+    })
+    .unchecked_into::<PromiseDocument>()
   }
 
   /// Signs a {@link Presentation} the key specified by `fragment`.
@@ -162,41 +185,40 @@ impl WasmAccount {
     presentation: &WasmPresentation,
     options: &WasmProofOptions,
   ) -> PromisePresentation {
-    self
-      .create_signed(fragment, presentation.0.clone(), options)
-      .unchecked_into::<PromisePresentation>()
-  }
-
-  /// Signs arbitrary `data` with the key specified by `fragment`.
-  #[wasm_bindgen(js_name = createSignedData)]
-  pub fn create_signed_data(
-    &self,
-    fragment: String,
-    data: &JsValue,
-    options: &WasmProofOptions,
-  ) -> Result<PromiseVoid> {
-    let verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
-    Ok(self.create_signed(fragment, verifiable_properties, options))
-  }
-
-  fn create_signed<U>(&self, fragment: String, mut data: U, options: &WasmProofOptions) -> PromiseVoid
-  where
-    U: serde::Serialize + SetSignature + 'static,
-  {
     let account = self.0.clone();
     let options: ProofOptions = options.0.clone();
 
+    let mut presentation: Presentation = presentation.0.clone();
     future_to_promise(async move {
       account
         .as_ref()
         .borrow_mut()
-        .sign(fragment.as_str(), &mut data, options)
+        .sign(fragment.as_str(), &mut presentation, options)
+        .await
+        .wasm_result()?;
+      Ok(JsValue::from(WasmPresentation::from(presentation)))
+    })
+    .unchecked_into::<PromisePresentation>()
+  }
+
+  /// Signs arbitrary `data` with the key specified by `fragment`.
+  #[wasm_bindgen(js_name = createSignedData)]
+  pub fn create_signed_data(&self, fragment: String, data: &JsValue, options: &WasmProofOptions) -> Result<Promise> {
+    let mut verifiable_properties: VerifiableProperties = data.into_serde().wasm_result()?;
+    let account = self.0.clone();
+    let options: ProofOptions = options.0.clone();
+
+    let promise = future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .sign(fragment.as_str(), &mut verifiable_properties, options)
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()?;
-      JsValue::from_serde(&data).wasm_result()
-    })
-    .unchecked_into::<PromiseVoid>()
+      JsValue::from_serde(&verifiable_properties).wasm_result()
+    });
+    Ok(promise)
   }
 
   /// Overwrites the {@link Document} this account manages, **without doing any validation**.
