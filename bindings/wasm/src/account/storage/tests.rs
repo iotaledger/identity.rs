@@ -12,7 +12,7 @@ use crate::common::PromiseVoid;
 
 use super::WasmStorage;
 
-macro_rules! expose_wasm {
+macro_rules! expose_to_wasm {
   ($test_name:ident, $js_name:ident) => {
     #[wasm_bindgen(js_name = $js_name)]
     pub fn $test_name(storage: WasmStorage) -> PromiseVoid {
@@ -28,6 +28,9 @@ macro_rules! expose_wasm {
   };
 }
 
-expose_wasm!(storage_did_create_test, storageDidCreateTest);
-expose_wasm!(storage_key_generate_test, storageKeyGenerateTest);
-expose_wasm!(storage_key_delete_test, storageKeyDeleteTest);
+expose_to_wasm!(storage_did_create_test, storageDidCreateTest);
+expose_to_wasm!(storage_key_generate_test, storageKeyGenerateTest);
+expose_to_wasm!(storage_key_delete_test, storageKeyDeleteTest);
+expose_to_wasm!(storage_key_insert_test, storageKeyInsertTest);
+expose_to_wasm!(storage_did_list_test, storageDidListTest);
+expose_to_wasm!(storage_key_sign_ed25519_test, storageKeySignEd25519Test);

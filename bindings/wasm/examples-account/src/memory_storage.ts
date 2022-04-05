@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainState, DID, Document, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, storageDidCreateTest, storageKeyDeleteTest, storageKeyGenerateTest } from './../../node/identity_wasm.js';
+import { ChainState, DID, Document, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, storageDidCreateTest, storageDidListTest, storageKeyDeleteTest, storageKeyGenerateTest, storageKeyInsertTest, storageKeySignEd25519Test } from './../../node/identity_wasm.js';
 
 // TODO: add thorough comments explaining what this is and how to use it with an Account.
 export class MemStore implements Storage {
@@ -172,4 +172,7 @@ export async function memstoreTest() {
     await storageDidCreateTest(new MemStore());
     await storageKeyGenerateTest(new MemStore());
     await storageKeyDeleteTest(new MemStore());
+    await storageKeyInsertTest(new MemStore());
+    await storageDidListTest(new MemStore());
+    await storageKeySignEd25519Test(new MemStore());
 }
