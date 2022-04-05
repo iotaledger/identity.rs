@@ -25,22 +25,20 @@ where
   OBJ: Clone + Send + Sync + 'static,
   MOD: SyncMode,
 {
-  pub fn add_hook<REQ, FUT>(
-    self,
-    endpoint: &'static str,
-    handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
-  ) -> ActorResult<Self>
+  pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
   where
     REQ: ActorRequest<MOD> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     MOD: Send + Sync + 'static,
   {
-    let handler = Hook::new(handler);
-    self.handler_map.insert(
-      Endpoint::new(endpoint)?,
-      HandlerObject::new(self.object_id, Box::new(handler)),
-    );
+    let handler: Hook<_, _, _, _> = Hook::new(handler);
+    let mut endpoint: Endpoint = Endpoint::new(REQ::endpoint())?;
+    endpoint.is_hook = true;
+
+    self
+      .handler_map
+      .insert(endpoint, HandlerObject::new(self.object_id, Box::new(handler)));
     Ok(self)
   }
 }

@@ -6,10 +6,8 @@ use crate::didcomm::presentation::presentation_holder_handler;
 use crate::didcomm::presentation::presentation_verifier_handler;
 use crate::didcomm::presentation::DidCommState;
 use crate::didcomm::presentation::Presentation;
-use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::presentation::PresentationRequest;
 use crate::didcomm::termination::DidCommTermination;
-use crate::didcomm::thread_id::ThreadId;
 use crate::tests::try_init_logger;
 use crate::Actor;
 use crate::RequestContext;
@@ -117,7 +115,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
   let mut verifier_actor = default_sending_actor(|builder| {
     builder
       .add_state(function_state.clone())
-      .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
+      .add_hook(presentation_request_hook)
       .unwrap();
   })
   .await;
@@ -163,7 +161,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
 
     builder
       .add_state(function_state.clone())
-      .add_hook("didcomm/presentation/hook", receive_presentation_hook)
+      .add_hook(receive_presentation_hook)
       .unwrap();
   })
   .await;
@@ -178,89 +176,6 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
   holder_actor.shutdown().await.unwrap();
 
   assert!(function_state.was_called.load(Ordering::SeqCst));
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result<()> {
-  try_init_logger();
-
-  async fn presentation_request_hook(
-    _: (),
-    _: Actor,
-    req: RequestContext<DidCommPlaintextMessage<PresentationOffer>>,
-  ) -> StdResult<DidCommPlaintextMessage<PresentationOffer>, DidCommTermination> {
-    Ok(req.input)
-  }
-
-  let mut verifier_actor = default_sending_actor(|builder| {
-    // Register a hook that has the wrong type: PresentationOffer instead of PresentationRequest
-    builder
-      .add_state(())
-      .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
-      .unwrap();
-  })
-  .await;
-
-  let peer_id = verifier_actor.peer_id();
-  let thread_id = ThreadId::new();
-
-  let result = verifier_actor
-    .send_message(peer_id, &thread_id, PresentationRequest::default())
-    .await;
-
-  assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
-
-  verifier_actor.shutdown().await.unwrap();
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_didcomm_await_hook_invocation_with_incorrect_type_fails() -> Result<()> {
-  try_init_logger();
-
-  async fn presentation_request_hook(
-    _: (),
-    _: Actor,
-    req: RequestContext<DidCommPlaintextMessage<Presentation>>,
-  ) -> StdResult<DidCommPlaintextMessage<Presentation>, DidCommTermination> {
-    Ok(req.input)
-  }
-
-  let mut holder_actor = default_sending_actor(|builder| {
-    // Register a hook that has the wrong type: Presentation instead of PresentationRequest
-    builder
-      .add_state(())
-      .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
-      .unwrap();
-  })
-  .await;
-
-  let (verifier_actor, addrs, peer_id) = default_listening_actor(|builder| {
-    builder
-      .add_state(DidCommState)
-      .add_async_handler(DidCommState::presentation_verifier_actor_handler)
-      .unwrap();
-  })
-  .await;
-
-  let verifier_peer_id = verifier_actor.peer_id();
-
-  holder_actor.add_addresses(verifier_peer_id, addrs).await.unwrap();
-
-  let thread_id = ThreadId::new();
-
-  holder_actor
-    .send_message(peer_id, &thread_id, PresentationOffer::default())
-    .await?;
-
-  let result: StdResult<DidCommPlaintextMessage<PresentationRequest>, _> = holder_actor.await_message(&thread_id).await;
-  assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
-
-  verifier_actor.shutdown().await.unwrap();
-  holder_actor.shutdown().await.unwrap();
 
   Ok(())
 }
