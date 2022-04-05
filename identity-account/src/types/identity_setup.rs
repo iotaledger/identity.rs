@@ -4,9 +4,11 @@
 use identity_core::crypto::PrivateKey;
 
 /// Configuration used to create a new Identity.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct IdentitySetup {
   /// Use a pre-generated Ed25519 private key for the DID.
+  // TODO: Quick hack to get `IdentitySetup` to implement Serialize, by always using `None`
+  #[serde(skip)]
   pub(crate) private_key: Option<PrivateKey>,
 }
 

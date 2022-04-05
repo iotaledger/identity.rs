@@ -5,7 +5,7 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use identity_account::identity::IdentitySetup;
+use identity_account::types::IdentitySetup;
 use identity_actor::remote_account::IdentityCreate;
 use identity_actor::remote_account::RemoteAccount;
 use identity_actor::Actor;
