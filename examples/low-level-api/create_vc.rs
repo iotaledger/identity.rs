@@ -9,7 +9,7 @@
 
 use identity::core::ToJson;
 use identity::credential::Credential;
-use identity::crypto::SignatureOptions;
+use identity::crypto::ProofOptions;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
@@ -34,7 +34,7 @@ pub async fn create_vc() -> Result<String> {
     &mut credential,
     issuer_key.private(),
     issuer_doc.default_signing_method()?.id(),
-    SignatureOptions::default(),
+    ProofOptions::default(),
   )?;
 
   println!("Credential JSON > {:#}", credential);

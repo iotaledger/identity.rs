@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::signatures::ed25519;
-use identity_account_storage::identity::IdentityState;
+use log::debug;
+use log::trace;
+
 use identity_account_storage::storage::Storage;
-use identity_account_storage::types::Generation;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
@@ -14,8 +14,8 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
@@ -23,95 +23,51 @@ use identity_did::utils::Queryable;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaService;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::NetworkName;
-use log::debug;
-use log::trace;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::IdentitySetup;
-use crate::types::MethodSecret;
+use crate::types::IdentitySetup;
+use crate::types::MethodContent;
 use crate::updates::UpdateError;
-
-pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
 
 pub(crate) async fn create_identity(
   setup: IdentitySetup,
   network: NetworkName,
   store: &dyn Storage,
-) -> Result<IdentityState> {
-  let method_type = match setup.key_type {
-    KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
+) -> Result<IotaDocument> {
+  let fragment: &str = IotaDocument::DEFAULT_METHOD_FRAGMENT;
+
+  if let Some(private_key) = &setup.private_key {
+    KeyPair::try_from_private_key_bytes(KeyType::Ed25519, private_key.as_ref())
+      .map_err(|err| UpdateError::InvalidMethodContent(err.to_string()))?;
   };
 
-  // The method type must be able to sign document updates.
-  ensure!(
-    IotaDocument::is_signing_method_type(method_type),
-    UpdateError::InvalidMethodType(method_type)
-  );
+  let (did, location) = store.did_create(network.clone(), fragment, setup.private_key).await?;
 
-  let generation = Generation::new();
-  let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
-
-  let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
-
-  let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
-    ensure!(
-      private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-      UpdateError::InvalidMethodSecret(format!(
-        "an ed25519 private key requires {} bytes, found {}",
-        ed25519::SECRET_KEY_LENGTH,
-        private_key.as_ref().len()
-      ))
-    );
-
-    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
-  } else {
-    KeyPair::new_ed25519()?
-  };
-
-  // Generate a new DID from the public key
-  let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)?;
-
-  ensure!(
-    !store.key_exists(&did, &location).await?,
-    UpdateError::DocumentAlreadyExists
-  );
-
-  let private_key = keypair.private().to_owned();
-  std::mem::drop(keypair);
-
-  let public: PublicKey =
-    insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
-
-  let method_fragment = location.fragment().to_owned();
+  let public_key: PublicKey = store.key_public(&did, &location).await?;
 
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::new(did, setup.key_type, &public, method_fragment.name())?;
+    IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, fragment)?;
 
   let document = IotaDocument::from_verification_method(method)?;
 
-  let mut state = IdentityState::new(document);
-
-  // Store the generations at which the method was added
-  state.store_method_generations(method_fragment);
-
-  Ok(state)
+  Ok(document)
 }
 
 #[derive(Clone, Debug)]
 pub(crate) enum Update {
   CreateMethod {
     scope: MethodScope,
-    type_: MethodType,
+    content: MethodContent,
     fragment: String,
-    method_secret: Option<MethodSecret>,
   },
   DeleteMethod {
     fragment: String,
@@ -142,45 +98,47 @@ pub(crate) enum Update {
 }
 
 impl Update {
-  pub(crate) async fn process(self, did: &IotaDID, state: &mut IdentityState, storage: &dyn Storage) -> Result<()> {
+  pub(crate) async fn process(self, did: &IotaDID, document: &mut IotaDocument, storage: &dyn Storage) -> Result<()> {
     debug!("[Update::process] Update = {:?}", self);
-    trace!("[Update::process] State = {:?}", state);
+    trace!("[Update::process] Document = {:?}", document);
     trace!("[Update::process] Store = {:?}", storage);
 
     match self {
       Self::CreateMethod {
-        type_,
         scope,
+        content,
         fragment,
-        method_secret,
       } => {
-        let location: KeyLocation = state.key_location(type_, fragment)?;
+        let fragment: Fragment = Fragment::new(fragment);
 
-        // The key location must be available.
-        // TODO: config: strict
-        ensure!(
-          !storage.key_exists(did, &location).await?,
-          UpdateError::DuplicateKeyLocation(location)
-        );
-
-        let method_url: CoreDIDUrl = did.as_ref().to_url().join(location.fragment().identifier())?;
-
-        if state.document().resolve_method(method_url).is_some() {
+        // Check method identifier is not duplicated.
+        let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
+        if document.resolve_method(method_url, None).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
-        let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(storage, did, &location, type_, method_private_key).await
-        } else {
-          storage.key_new(did, &location).await.map_err(Into::into)
-        }?;
+        // Generate or extract the private key and/or retrieve the public key.
+        let key_type: KeyType = content.key_type();
 
+        let public: PublicKey = match content {
+          MethodContent::GenerateEd25519 | MethodContent::GenerateX25519 => {
+            let location: KeyLocation = storage.key_generate(did, key_type, fragment.name()).await?;
+            storage.key_public(did, &location).await?
+          }
+          MethodContent::PrivateEd25519(private_key) | MethodContent::PrivateX25519(private_key) => {
+            let location: KeyLocation =
+              insert_method_secret(storage, did, key_type, fragment.name(), private_key).await?;
+            storage.key_public(did, &location).await?
+          }
+          MethodContent::PublicEd25519(public_key) => public_key,
+          MethodContent::PublicX25519(public_key) => public_key,
+        };
+
+        // Insert a new method.
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::new(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
+          IotaVerificationMethod::new(did.clone(), key_type, &public, fragment.name())?;
 
-        state.store_method_generations(location.fragment().clone());
-
-        state.document_mut().insert_method(method, scope)?;
+        document.insert_method(method, scope)?;
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -188,7 +146,7 @@ impl Update {
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         // Prevent deleting the last method capable of signing the DID document.
-        let capability_invocation_set = state.document().core_document().capability_invocation();
+        let capability_invocation_set = document.core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &method_url);
@@ -198,7 +156,7 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.document_mut().remove_method(&method_url)?;
+        document.remove_method(&method_url)?;
       }
       Self::AttachMethodRelationship {
         fragment,
@@ -210,9 +168,7 @@ impl Update {
 
         for relationship in relationships {
           // Ignore result: attaching is idempotent.
-          let _ = state
-            .document_mut()
-            .attach_method_relationship(&method_url, relationship)?;
+          let _ = document.attach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::DetachMethodRelationship {
@@ -225,7 +181,7 @@ impl Update {
 
         // Prevent detaching the last method capable of signing the DID document.
         let capability_invocation_set: &OrderedSet<MethodRef<IotaDID>> =
-          state.document().core_document().capability_invocation();
+          document.core_document().capability_invocation();
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &method_url);
@@ -237,9 +193,7 @@ impl Update {
 
         for relationship in relationships {
           // Ignore result: detaching is idempotent.
-          let _ = state
-            .document_mut()
-            .detach_method_relationship(&method_url, relationship)?;
+          let _ = document.detach_method_relationship(&method_url, relationship)?;
         }
       }
       Self::CreateService {
@@ -253,7 +207,7 @@ impl Update {
 
         // The service must not exist.
         ensure!(
-          state.document().service().query(&did_url).is_none(),
+          document.service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment.name().to_owned()),
         );
 
@@ -263,7 +217,7 @@ impl Update {
           .type_(type_)
           .build()?;
 
-        state.document_mut().insert_service(service);
+        document.insert_service(service);
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -271,22 +225,22 @@ impl Update {
 
         // The service must exist
         ensure!(
-          state.document().service().query(&service_url).is_some(),
+          document.service().query(&service_url).is_some(),
           UpdateError::ServiceNotFound
         );
 
-        state.document_mut().remove_service(&service_url)?;
+        document.remove_service(&service_url)?;
       }
       Self::SetController { controllers } => {
-        *state.document_mut().controller_mut() = controllers;
+        *document.controller_mut() = controllers;
       }
 
       Self::SetAlsoKnownAs { urls } => {
-        *state.document_mut().also_known_as_mut() = urls;
+        *document.also_known_as_mut() = urls;
       }
     }
 
-    state.document_mut().metadata.updated = Timestamp::now_utc();
+    document.metadata.updated = Some(Timestamp::now_utc());
 
     Ok(())
   }
@@ -295,60 +249,41 @@ impl Update {
 async fn insert_method_secret(
   store: &dyn Storage,
   did: &IotaDID,
-  location: &KeyLocation,
-  method_type: MethodType,
-  method_secret: MethodSecret,
-) -> Result<PublicKey> {
-  match method_secret {
-    MethodSecret::Ed25519(private_key) => {
-      ensure!(
-        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-        UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 private key requires {} bytes, found {}",
-          ed25519::SECRET_KEY_LENGTH,
-          private_key.as_ref().len()
-        ))
-      );
+  key_type: KeyType,
+  fragment: &str,
+  private_key: PrivateKey,
+) -> Result<KeyLocation> {
+  let keypair: KeyPair = KeyPair::try_from_private_key_bytes(key_type, private_key.as_ref())
+    .map_err(|err| UpdateError::InvalidMethodContent(err.to_string()))?;
 
-      ensure!(
-        matches!(method_type, MethodType::Ed25519VerificationKey2018),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
-        )
-      );
+  let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
+  std::mem::drop(keypair);
 
-      store.key_insert(did, location, private_key).await.map_err(Into::into)
-    }
-    MethodSecret::MerkleKeyCollection(_) => {
-      ensure!(
-        matches!(method_type, MethodType::MerkleKeyCollection2021),
-        UpdateError::InvalidMethodSecret(
-          "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
-        )
-      );
+  ensure!(
+    !store.key_exists(did, &location).await?,
+    UpdateError::DuplicateKeyLocation(location)
+  );
 
-      todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
-    }
-  }
+  store.key_insert(did, &location, private_key).await?;
+
+  Ok(location)
 }
 
 // =============================================================================
-// Update Builders
-// =============================================================================
 
+// =============================================================================
+// Update Builders
 impl_update_builder!(
 /// Create a new method on an identity.
 ///
 /// # Parameters
-/// - `type_`: the type of the method, defaults to [`MethodType::Ed25519VerificationKey2018`].
 /// - `scope`: the scope of the method, defaults to [`MethodScope::default`].
 /// - `fragment`: the identifier of the method in the document, required.
-/// - `method_secret`: the secret key to use for the method, optional. Will be generated when omitted.
+/// - `content`: the key material to use for the method or key type to generate.
 CreateMethod {
-  @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
-  @optional method_secret MethodSecret
+  @required content MethodContent,
 });
 
 impl_update_builder!(
@@ -371,7 +306,10 @@ AttachMethodRelationship {
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> AttachMethodRelationshipBuilder<'account> {
+impl<'account, C> AttachMethodRelationshipBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
   #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
@@ -390,7 +328,10 @@ DetachMethodRelationship {
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> DetachMethodRelationshipBuilder<'account> {
+impl<'account, C> DetachMethodRelationshipBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
   #[must_use]
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);

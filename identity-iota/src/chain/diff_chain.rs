@@ -26,6 +26,7 @@ use crate::tangle::MessageIndex;
 use crate::tangle::PublishType;
 use crate::tangle::TangleRef;
 
+#[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct DiffChain {
@@ -270,6 +271,7 @@ impl From<DiffChain> for Vec<DiffMessage> {
 mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_core::json;
   use identity_did::did::DID;
   use identity_did::service::Service;
@@ -286,7 +288,7 @@ mod tests {
   use super::*;
 
   fn create_document() -> (ResolvedIotaDocument, KeyPair) {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(

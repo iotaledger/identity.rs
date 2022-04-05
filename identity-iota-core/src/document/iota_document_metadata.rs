@@ -9,7 +9,7 @@ use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::FmtJson;
-use identity_core::crypto::Signature;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -19,16 +19,16 @@ use crate::tangle::MessageIdExt;
 /// Additional attributes related to an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IotaDocumentMetadata {
-  pub created: Timestamp,
-  pub updated: Timestamp,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub created: Option<Timestamp>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub updated: Option<Timestamp>,
   #[serde(
     rename = "previousMessageId",
     default = "MessageId::null",
     skip_serializing_if = "MessageId::is_null"
   )]
   pub previous_message_id: MessageId,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<Signature>,
   #[serde(flatten)]
   pub properties: Object,
 }
@@ -39,10 +39,9 @@ impl IotaDocumentMetadata {
   pub fn new() -> Self {
     let now: Timestamp = Timestamp::now_utc();
     Self {
-      created: now,
-      updated: now,
+      created: Some(now),
+      updated: Some(now),
       previous_message_id: MessageId::null(),
-      proof: None,
       properties: Object::default(),
     }
   }

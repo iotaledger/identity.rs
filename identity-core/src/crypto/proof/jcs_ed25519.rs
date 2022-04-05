@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::marker::PhantomData;
+
 use serde::Serialize;
 
 use crate::convert::ToJson;
 use crate::crypto::Ed25519;
 use crate::crypto::Named;
+use crate::crypto::ProofValue;
 use crate::crypto::Sign;
-use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
@@ -38,7 +39,7 @@ where
   T: Sign,
   T::Output: AsRef<[u8]>,
 {
-  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue>
+  fn sign<X>(data: &X, private: &T::Private) -> Result<ProofValue>
   where
     X: Serialize,
   {
@@ -46,7 +47,7 @@ where
     let signature: T::Output = T::sign(&message, private)?;
     let signature: String = encode_b58(signature.as_ref());
 
-    Ok(SignatureValue::Signature(signature))
+    Ok(ProofValue::Signature(signature))
   }
 }
 
@@ -54,7 +55,7 @@ impl<T> Verifier<T::Public> for JcsEd25519<T>
 where
   T: Verify,
 {
-  fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<()>
+  fn verify<X>(data: &X, signature: &ProofValue, public: &T::Public) -> Result<()>
   where
     X: Serialize,
   {
@@ -79,9 +80,10 @@ mod tests {
   use crate::crypto::Ed25519;
   use crate::crypto::JcsEd25519;
   use crate::crypto::KeyPair;
+  use crate::crypto::KeyType;
   use crate::crypto::PrivateKey;
+  use crate::crypto::ProofValue;
   use crate::crypto::PublicKey;
-  use crate::crypto::SignatureValue;
   use crate::crypto::Signer as _;
   use crate::crypto::Verifier as _;
   use crate::json;
@@ -113,7 +115,7 @@ mod tests {
       let input: Object = Object::from_json(tv.input).unwrap();
       let output: Object = Object::from_json(tv.output).unwrap();
 
-      let signature: SignatureValue = Signer::sign(&input, &private).unwrap();
+      let signature: ProofValue = Signer::sign(&input, &private).unwrap();
 
       assert_eq!(output["proof"]["signatureValue"], signature.as_str());
 
@@ -123,7 +125,7 @@ mod tests {
       assert!(Verifier::verify(&input, &signature, &badkey).is_err());
 
       // Fails when the signature is mutated
-      let signature: _ = SignatureValue::Signature("IOTA".into());
+      let signature: _ = ProofValue::Signature("IOTA".into());
       assert!(Verifier::verify(&input, &signature, &public).is_err());
     }
   }
@@ -139,7 +141,7 @@ mod tests {
     let public: PublicKey = utils::decode_b58(PUBLIC).unwrap().into();
     let private: PrivateKey = utils::decode_b58(SECRET).unwrap().into();
 
-    let signature: SignatureValue = Signer::sign(&MSG, &private).unwrap();
+    let signature: ProofValue = Signer::sign(&MSG, &private).unwrap();
 
     assert_eq!(signature.as_str().as_bytes(), SIG);
     assert!(Verifier::verify(&MSG, &signature, &public).is_ok());
@@ -147,8 +149,8 @@ mod tests {
 
   #[test]
   fn test_sign_verify() {
-    let key1: KeyPair = KeyPair::new_ed25519().unwrap();
-    let key2: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let key2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
 
     let data1: Value = json!({ "msg": "IOTA Identity" });
     let data2: Value = json!({ "msg": "IOTA Identity 2" });

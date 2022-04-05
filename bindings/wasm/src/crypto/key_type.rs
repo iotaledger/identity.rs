@@ -1,35 +1,32 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::KeyType as KeyType_;
-
+use identity::crypto::KeyType;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = KeyType)]
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-pub enum KeyType {
+pub enum WasmKeyType {
   #[serde(rename = "ed25519")]
   Ed25519 = 1,
+  #[serde(rename = "x25519")]
+  X25519 = 2,
 }
 
-impl Default for KeyType {
-  fn default() -> Self {
-    Self::Ed25519
-  }
-}
-
-impl From<KeyType> for KeyType_ {
-  fn from(other: KeyType) -> Self {
+impl From<WasmKeyType> for KeyType {
+  fn from(other: WasmKeyType) -> Self {
     match other {
-      KeyType::Ed25519 => KeyType_::Ed25519,
+      WasmKeyType::Ed25519 => KeyType::Ed25519,
+      WasmKeyType::X25519 => KeyType::X25519,
     }
   }
 }
 
-impl From<KeyType_> for KeyType {
-  fn from(other: KeyType_) -> Self {
+impl From<KeyType> for WasmKeyType {
+  fn from(other: KeyType) -> Self {
     match other {
-      KeyType_::Ed25519 => KeyType::Ed25519,
+      KeyType::Ed25519 => WasmKeyType::Ed25519,
+      KeyType::X25519 => WasmKeyType::X25519,
     }
   }
 }

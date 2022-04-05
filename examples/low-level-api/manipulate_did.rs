@@ -28,7 +28,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   let (mut document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // Add a new VerificationMethod with a new keypair
-  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let new_key: KeyPair = KeyPair::new(KeyType::Ed25519)?;
   let method: IotaVerificationMethod =
     IotaVerificationMethod::new(document.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
@@ -45,7 +45,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   // This is REQUIRED in order for the messages to form a chain.
   // Skipping / forgetting this will render the publication useless.
   document.metadata.previous_message_id = *receipt.message_id();
-  document.metadata.updated = Timestamp::now_utc();
+  document.metadata.updated = Some(Timestamp::now_utc());
 
   // Sign the DID Document with the original private key.
   document.sign_self(keypair.private(), document.default_signing_method()?.id().clone())?;

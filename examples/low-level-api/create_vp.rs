@@ -14,7 +14,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
-use identity::crypto::SignatureOptions;
+use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifierOptions;
 
 use identity::iota::CredentialValidationOptions;
@@ -62,7 +62,7 @@ async fn main() -> Result<()> {
     &mut credential,
     key_iss.private(),
     doc_iss.default_signing_method()?.id(),
-    SignatureOptions::default(),
+    ProofOptions::default(),
   )?;
 
   println!("Credential JSON > {:#}", credential);
@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
     &mut presentation,
     key_sub.private(),
     doc_sub.default_signing_method()?.id(),
-    SignatureOptions::new()
+    ProofOptions::new()
       .challenge(challenge.to_string())
       .expires(Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap()),
   )?;

@@ -8,8 +8,8 @@ import {
     FailFast,
     Presentation,
     PresentationValidationOptions,
+    ProofOptions,
     Resolver,
-    SignatureOptions,
     SubjectHolderRelationship,
     Timestamp,
     VerifierOptions
@@ -50,13 +50,13 @@ async function createVP(clientConfig) {
     // (along with other properties like `expires` and `domain`).
 
     // Sign the verifiable presentation with the holder's private key and include the requested challenge and expiry timestamp.
-    const signedVp = alice.doc.signPresentation(unsignedVp, {
-        method: "#sign-0",
-        private: alice.key.private,
-    }, new SignatureOptions({
-        challenge: challenge,
-        expires: Timestamp.nowUTC().checkedAdd(Duration.minutes(10))
-    }));
+    const signedVp = alice.doc.signPresentation(unsignedVp,
+        alice.key.private(),
+        "#sign-0",
+        new ProofOptions({
+            challenge: challenge,
+            expires: Timestamp.nowUTC().checkedAdd(Duration.minutes(10))
+        }));
 
     // Convert the Verifiable Presentation to JSON to send it to the verifier.
     const signedVpJSON = signedVp.toJSON();

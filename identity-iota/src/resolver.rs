@@ -31,8 +31,8 @@ impl ResolverMethod for Client {
       .map_err(|_| Error::MissingResolutionDocument)?;
 
     let mut metadata: DocumentMetadata = DocumentMetadata::new();
-    metadata.created = Some(resolved.document.metadata.created);
-    metadata.updated = Some(resolved.document.metadata.updated);
+    metadata.created = resolved.document.metadata.created;
+    metadata.updated = resolved.document.metadata.updated;
 
     let core_document: CoreDocument =
       IotaCoreDocument::from(resolved.document).map(CoreDID::from, |properties| properties);

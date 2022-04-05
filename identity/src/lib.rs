@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
+#![allow(deprecated)]
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]
@@ -26,6 +27,7 @@ pub mod core {
   pub use identity_core::error::*;
   pub use identity_core::utils::*;
 
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[doc(inline)]
   pub use identity_core::diff;
 
@@ -96,7 +98,6 @@ pub mod account {
 
   pub use identity_account::account::*;
   pub use identity_account::error::*;
-  pub use identity_account::identity::*;
   pub use identity_account::types::*;
   pub use identity_account::updates::*;
 }
@@ -110,8 +111,6 @@ pub mod account_storage {
   pub use identity_account_storage::error::*;
   pub use identity_account_storage::identity::*;
   pub use identity_account_storage::storage::*;
-  #[cfg(feature = "stronghold")]
-  pub use identity_account_storage::stronghold::*;
   pub use identity_account_storage::types::*;
   pub use identity_account_storage::utils::*;
 }
@@ -132,6 +131,7 @@ pub mod prelude {
   //! Prelude of commonly used types
 
   pub use identity_core::crypto::KeyPair;
+  pub use identity_core::crypto::KeyType;
   pub use identity_iota::tangle::Client;
   pub use identity_iota::Result;
   pub use identity_iota_core::document::IotaDocument;

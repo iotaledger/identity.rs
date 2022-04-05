@@ -21,18 +21,21 @@ use crate::error::Result;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
   chain_i: IntegrationChain,
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   chain_d: DiffChain,
   #[serde(skip_serializing_if = "Option::is_none")]
   document: Option<ResolvedIotaDocument>,
 }
 
 impl DocumentChain {
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub(crate) fn __diff_message_id<'a>(chain_i: &'a IntegrationChain, diff: &'a DiffChain) -> &'a MessageId {
     diff
       .current_message_id()
       .unwrap_or_else(|| chain_i.current_message_id())
   }
 
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub(crate) fn __fold(chain_i: &IntegrationChain, chain_d: &DiffChain) -> Result<ResolvedIotaDocument> {
     let mut document: ResolvedIotaDocument = chain_i.current().clone();
 
@@ -53,6 +56,7 @@ impl DocumentChain {
   }
 
   /// Creates a new [`DocumentChain`] from given the [`IntegrationChain`] and [`DiffChain`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn new_with_diff_chain(chain_i: IntegrationChain, chain_d: DiffChain) -> Result<Self> {
     let document: Option<ResolvedIotaDocument> = if chain_d.is_empty() {
       None
@@ -83,11 +87,13 @@ impl DocumentChain {
   }
 
   /// Returns a reference to the [`DiffChain`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff(&self) -> &DiffChain {
     &self.chain_d
   }
 
   /// Returns a mutable reference to the [`DiffChain`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff_mut(&mut self) -> &mut DiffChain {
     &mut self.chain_d
   }
@@ -114,6 +120,7 @@ impl DocumentChain {
   }
 
   /// Returns the Tangle [`MessageId`] of the latest diff or integration [`ResolvedIotaDocument`].
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn diff_message_id(&self) -> &MessageId {
     Self::__diff_message_id(&self.chain_i, &self.chain_d)
   }
@@ -137,6 +144,7 @@ impl DocumentChain {
   /// # Errors
   ///
   /// Fails if the diff is invalid.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   pub fn try_push_diff(&mut self, diff: DiffMessage) -> Result<()> {
     // Use the latest document state to validate the diff.
     let integration_document: &ResolvedIotaDocument = self.document.as_ref().unwrap_or_else(|| self.chain_i.current());
@@ -157,10 +165,11 @@ impl Display for DocumentChain {
 #[cfg(test)]
 mod test {
   use identity_core::common::Timestamp;
+  use identity_core::crypto::GetSignature;
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
-  use identity_core::crypto::SignatureOptions;
-  use identity_core::crypto::TrySignature;
+  use identity_core::crypto::ProofOptions;
   use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
@@ -186,7 +195,7 @@ mod test {
     // Create Initial Document
     // =========================================================================
     {
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
       document
         .sign_self(
@@ -200,14 +209,7 @@ mod test {
       keys.push(keypair);
 
       assert_eq!(
-        chain
-          .current()
-          .document
-          .metadata
-          .proof
-          .as_ref()
-          .unwrap()
-          .verification_method(),
+        chain.current().document.proof.as_ref().unwrap().verification_method(),
         format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
       assert_eq!(chain.current().diff_message_id, MessageId::null());
@@ -223,12 +225,12 @@ mod test {
       new.integration_message_id = new_integration_message_id;
 
       // Replace the capability invocation signing key (one step key rotation).
-      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let signing_method: MethodRef<IotaDID> = MethodBuilder::default()
         .id(chain.id().to_url().join("#key-2").unwrap())
         .controller(chain.id().clone())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_multibase(keypair.public()))
+        .type_(MethodType::Ed25519VerificationKey2018)
+        .data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)
         .unwrap();
@@ -239,7 +241,7 @@ mod test {
         .capability_invocation_mut()
         .append(signing_method);
 
-      new.document.metadata.updated = Timestamp::now_utc();
+      new.document.metadata.updated = Some(Timestamp::now_utc());
       new.document.metadata.previous_message_id = *chain.integration_message_id();
 
       // Sign the update using the old document.
@@ -250,7 +252,7 @@ mod test {
           &mut new.document,
           keys[0].private(),
           chain.current().document.default_signing_method().unwrap().id(),
-          SignatureOptions::default(),
+          ProofOptions::default(),
         )
         .is_ok());
       assert_eq!(
@@ -273,7 +275,7 @@ mod test {
         let mut this: ResolvedIotaDocument = chain.current().clone();
         this.document.properties_mut().insert("foo".into(), 123.into());
         this.document.properties_mut().insert("bar".into(), 456.into());
-        this.document.metadata.updated = Timestamp::now_utc();
+        this.document.metadata.updated = Some(Timestamp::now_utc());
         this
       };
 
@@ -313,7 +315,7 @@ mod test {
       .core_document_mut()
       .capability_invocation_mut()
       .clear();
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -351,7 +353,7 @@ mod test {
       .document
       .insert_method(new_signing_method, MethodScope::capability_invocation())
       .unwrap();
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -388,11 +390,11 @@ mod test {
       .unwrap()
     {
       MethodRef::Embed(method) => {
-        *method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
+        *method.data_mut() = MethodData::new_multibase([3u8; 32]);
       }
       MethodRef::Refer(_) => unreachable!(),
     };
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -447,8 +449,8 @@ mod test {
       .verification_method_mut()
       .head_mut()
       .unwrap();
-    *updated_method.key_data_mut() = MethodData::new_multibase([3u8; 32]);
-    new_resolved.document.metadata.updated = Timestamp::now_utc();
+    *updated_method.data_mut() = MethodData::new_multibase([3u8; 32]);
+    new_resolved.document.metadata.updated = Some(Timestamp::now_utc());
     new_resolved.document.metadata.previous_message_id = *chain.integration_message_id();
 
     let diff_msg: DiffMessage =
@@ -465,7 +467,7 @@ mod test {
   }
 
   fn create_initial_document() -> (ResolvedIotaDocument, KeyPair) {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(
@@ -491,7 +493,7 @@ mod test {
         &mut diff_msg,
         key,
         current_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     diff_msg.set_message_id(*chain.diff_message_id());

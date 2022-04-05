@@ -9,9 +9,6 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
-  /// Caused by errors from the [crypto] crate.
-  #[error(transparent)]
-  CryptoError(#[from] crypto::Error),
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
@@ -30,7 +27,6 @@ pub enum Error {
   /// Caused by errors from the [identity_iota_core] crate.
   #[error(transparent)]
   IotaCoreError(#[from] identity_iota_core::Error),
-
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,
@@ -39,12 +35,6 @@ pub enum Error {
   UpdateError(#[from] crate::updates::UpdateError),
   #[error("method missing fragment")]
   MethodMissingFragment,
-}
-
-#[doc(hidden)]
-pub trait PleaseDontMakeYourOwnResult<T> {
-  #[allow(clippy::wrong_self_convention)]
-  fn to_result(self) -> Result<T>;
 }
 
 impl From<identity_did::did::DIDError> for Error {

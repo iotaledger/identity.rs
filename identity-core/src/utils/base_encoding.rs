@@ -115,22 +115,6 @@ where
   bs58::encode(data).with_alphabet(bs58::Alphabet::BITCOIN).into_string()
 }
 
-/// Decodes the given `data` as base64.
-pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>>
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  base64::decode_config(data.as_ref(), base64::URL_SAFE).map_err(Error::DecodeBase64)
-}
-
-/// Encodes the given `data` as base64.
-pub fn encode_b64<T>(data: &T) -> String
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  base64::encode_config(data.as_ref(), base64::URL_SAFE)
-}
-
 #[cfg(test)]
 mod tests {
   use quickcheck_macros::quickcheck;
@@ -143,11 +127,6 @@ mod tests {
   }
 
   #[test]
-  fn test_decode_b64_empty() {
-    assert_eq!(decode_b64("").unwrap(), Vec::<u8>::new());
-  }
-
-  #[test]
   fn test_decode_multibase_empty() {
     assert_eq!(decode_multibase("").unwrap(), Vec::<u8>::new());
   }
@@ -155,11 +134,6 @@ mod tests {
   #[quickcheck]
   fn test_b58_random(data: Vec<u8>) {
     assert_eq!(decode_b58(&encode_b58(&data)).unwrap(), data);
-  }
-
-  #[quickcheck]
-  fn test_b64_random(data: Vec<u8>) {
-    assert_eq!(decode_b64(&encode_b64(&data)).unwrap(), data);
   }
 
   #[quickcheck]

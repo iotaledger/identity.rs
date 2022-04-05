@@ -13,24 +13,25 @@ use std::path::Path;
 use crate::stronghold::Context;
 use crate::stronghold::IotaStrongholdResult;
 
+use super::ClientPath;
+
 pub type Record = (RecordId, RecordHint);
 
 #[derive(Debug)]
 pub struct Vault<'snapshot> {
   path: &'snapshot Path,
-  name: Vec<u8>,
+  client_path: ClientPath,
   flags: Vec<StrongholdFlags>,
 }
 
 impl<'snapshot> Vault<'snapshot> {
-  pub(crate) fn new<P, T>(path: &'snapshot P, name: &T, flags: &[StrongholdFlags]) -> Self
+  pub(crate) fn new<P>(path: &'snapshot P, client_path: ClientPath, flags: &[StrongholdFlags]) -> Self
   where
     P: AsRef<Path> + ?Sized,
-    T: AsRef<[u8]> + ?Sized,
   {
     Self {
       path: path.as_ref(),
-      name: name.as_ref().to_vec(),
+      client_path,
       flags: flags.to_vec(),
     }
   }
@@ -42,9 +43,9 @@ impl Vault<'_> {
     self.path
   }
 
-  /// Returns the name of the vault.
-  pub fn name(&self) -> &[u8] {
-    &self.name
+  /// Returns the client path of the vault.
+  pub fn client_path(&self) -> &[u8] {
+    self.client_path.as_ref()
   }
 
   /// Returns the vault policy options.
@@ -63,7 +64,7 @@ impl Vault<'_> {
   where
     T: Into<Vec<u8>>,
   {
-    Context::scope(self.path, &self.name, &self.flags)
+    Context::scope(self.path, self.client_path(), &self.flags)
       .await?
       .write_to_vault(location, payload.into(), hint, flags.to_vec())
       .await??;
@@ -72,23 +73,23 @@ impl Vault<'_> {
 
   /// Deletes a record.
   pub async fn delete(&self, location: Location, gc: bool) -> IotaStrongholdResult<()> {
-    Context::scope(self.path, &self.name, &self.flags)
+    Context::scope(self.path, self.client_path(), &self.flags)
       .await?
       .delete_data(location, gc)
       .await??;
     Ok(())
   }
 
-  /// Returns true if the specified location exists.
+  /// Returns true if the specified vault record exists.
   pub async fn exists(&self, location: Location) -> IotaStrongholdResult<bool> {
-    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
-    Ok(scope.vault_exists(location.vault_path()).await?)
+    let scope: _ = Context::scope(self.path, self.client_path(), &self.flags).await?;
+    Ok(scope.record_exists(location).await?)
   }
 
   /// Runs the Stronghold garbage collector.
   pub async fn garbage_collect(&self, vault: &[u8]) -> IotaStrongholdResult<bool> {
     Ok(
-      Context::scope(self.path, &self.name, &self.flags)
+      Context::scope(self.path, self.client_path(), &self.flags)
         .await?
         .garbage_collect(vault.to_vec())
         .await?,
@@ -100,7 +101,7 @@ impl Vault<'_> {
   where
     P: Procedure + Into<StrongholdProcedure>,
   {
-    let result: <P as Procedure>::Output = Context::scope(self.path, &self.name, &self.flags)
+    let result: <P as Procedure>::Output = Context::scope(self.path, self.client_path(), &self.flags)
       .await?
       .runtime_exec(procedure)
       .await??;
@@ -112,7 +113,7 @@ impl Vault<'_> {
   where
     T: AsRef<[u8]> + ?Sized,
   {
-    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let scope: _ = Context::scope(self.path, self.client_path(), &self.flags).await?;
     Ok(scope.list_hints_and_ids(vault.as_ref()).await?)
   }
 }

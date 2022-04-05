@@ -1,28 +1,27 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::PublicKey;
+use serde::Deserialize;
+use serde::Serialize;
 
-/// A digital signature and associated public key.
-#[derive(Clone, Debug)]
-pub struct Signature {
-  pub(crate) pkey: PublicKey,
-  pub(crate) data: Vec<u8>,
-}
+/// A digital signature.
+#[derive(Clone, Deserialize, Serialize)]
+pub struct Signature(pub(crate) Vec<u8>);
 
 impl Signature {
-  /// Creates a new `Signature`.
-  pub const fn new(pkey: PublicKey, data: Vec<u8>) -> Self {
-    Self { pkey, data }
+  /// Creates a `Signature`.
+  pub fn new(data: Vec<u8>) -> Self {
+    Signature(data)
   }
 
-  /// Returns the public key used to verify this signature.
-  pub fn pkey(&self) -> &PublicKey {
-    &self.pkey
+  /// Returns the signature as a slice of bytes.
+  pub fn as_bytes(&self) -> &[u8] {
+    &self.0
   }
+}
 
-  /// Returns the the signature data as a slice of bytes.
-  pub fn data(&self) -> &[u8] {
-    &self.data
+impl From<Signature> for Vec<u8> {
+  fn from(signature: Signature) -> Self {
+    signature.0
   }
 }

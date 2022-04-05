@@ -5,10 +5,10 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
+use identity_core::crypto::GetSignature;
+use identity_core::crypto::GetSignatureMut;
+use identity_core::crypto::Proof;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signature;
-use identity_core::crypto::TrySignature;
-use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
@@ -32,7 +32,7 @@ pub struct DiffMessage {
   )]
   pub(crate) previous_message_id: MessageId,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) proof: Option<Signature>,
+  pub(crate) proof: Option<Proof>,
   #[serde(default = "MessageId::null", skip)]
   pub(crate) message_id: MessageId,
 }
@@ -84,8 +84,8 @@ impl DiffMessage {
     self.previous_message_id = message_id;
   }
 
-  /// Returns a reference to the DID Document proof.
-  pub fn proof(&self) -> Option<&Signature> {
+  /// Returns a reference to the proof.
+  pub fn proof(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 
@@ -97,20 +97,20 @@ impl DiffMessage {
   }
 }
 
-impl TrySignature for DiffMessage {
-  fn signature(&self) -> Option<&Signature> {
+impl GetSignature for DiffMessage {
+  fn signature(&self) -> Option<&Proof> {
     self.proof.as_ref()
   }
 }
 
-impl TrySignatureMut for DiffMessage {
-  fn signature_mut(&mut self) -> Option<&mut Signature> {
+impl GetSignatureMut for DiffMessage {
+  fn signature_mut(&mut self) -> Option<&mut Proof> {
     self.proof.as_mut()
   }
 }
 
 impl SetSignature for DiffMessage {
-  fn set_signature(&mut self, value: Signature) {
+  fn set_signature(&mut self, value: Proof) {
     self.proof = Some(value);
   }
 }

@@ -3,7 +3,11 @@
 
 use std::borrow::Cow;
 use std::fmt::Display;
+use std::result::Result as StdResult;
 
+use identity::account::UpdateError;
+use identity::account_storage::Error as AccountStorageError;
+use identity::account_storage::Result as AccountStorageResult;
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -86,7 +90,8 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  // identity::comm::Error,
+  identity::account::Error,
+  identity::account_storage::Error,
   identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
@@ -187,5 +192,52 @@ impl From<identity::iota::CompoundPresentationValidationError> for WasmError<'_>
       name: Cow::Borrowed("CompoundPresentationValidationError"),
       message: Cow::Owned(error.to_string()),
     }
+  }
+}
+
+impl From<UpdateError> for WasmError<'_> {
+  fn from(error: UpdateError) -> Self {
+    Self {
+      name: Cow::Borrowed("Update::Error"),
+      message: Cow::Owned(error.to_string()),
+    }
+  }
+}
+
+/// Convenience struct to convert Result<JsValue, JsValue> to an AccountStorageResult<_, AccountStorageError>
+pub struct JsValueResult(pub(crate) Result<JsValue>);
+
+impl JsValueResult {
+  /// Consumes the struct and returns a Result<_, AccountStorageError>
+  pub fn account_err(self) -> StdResult<JsValue, AccountStorageError> {
+    self
+      .0
+      .map_err(|js_value| AccountStorageError::JsError(js_value.as_string().unwrap_or_default()))
+  }
+}
+
+impl From<Result<JsValue>> for JsValueResult {
+  fn from(result: Result<JsValue>) -> Self {
+    JsValueResult(result)
+  }
+}
+
+impl From<JsValueResult> for AccountStorageResult<()> {
+  fn from(result: JsValueResult) -> Self {
+    result.account_err().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
+    })
+  }
+}
+
+impl From<JsValueResult> for AccountStorageResult<bool> {
+  fn from(result: JsValueResult) -> Self {
+    result.account_err().and_then(|js_value| {
+      js_value
+        .into_serde()
+        .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
+    })
   }
 }

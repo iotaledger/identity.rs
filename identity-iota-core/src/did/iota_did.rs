@@ -118,7 +118,7 @@ impl IotaDID {
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
-    if segments.is_empty() || segments.len() > 3 {
+    if segments.is_empty() || segments.len() > 2 {
       return Err(Error::InvalidDID(DIDError::InvalidMethodId));
     }
 
@@ -344,6 +344,7 @@ impl KeyComparable for IotaDID {
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
 
@@ -396,6 +397,7 @@ mod tests {
     assert!(IotaDID::parse("did:iota:").is_err());
     // Too many components is invalid.
     assert!(IotaDID::parse(format!("did:iota:custom:shard-1:random:{}", TAG)).is_err());
+    assert!(IotaDID::parse(format!("did:iota:custom:random:{}", TAG)).is_err());
     // Explicit empty network name is invalid (omitting it is still fine)
     assert!(IotaDID::parse(format!("did:iota::{}", TAG)).is_err());
     // Invalid network name is invalid.
@@ -446,7 +448,7 @@ mod tests {
 
   #[test]
   fn test_new() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
@@ -456,7 +458,7 @@ mod tests {
 
   #[test]
   fn test_new_with_network() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let did: IotaDID = IotaDID::new_with_network(key.public().as_ref(), "foo").unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -466,7 +468,7 @@ mod tests {
 
   #[test]
   fn test_normalize() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     // An IotaDID with "main" as the network can be normalized ("main" removed)
@@ -477,7 +479,7 @@ mod tests {
 
   #[test]
   fn test_setter() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let key: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
     let mut did_url: IotaDIDUrl = did.into_url();
 

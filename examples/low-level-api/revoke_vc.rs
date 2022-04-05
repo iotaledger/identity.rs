@@ -7,14 +7,13 @@
 //! from the DID Document of the Issuer.
 //! As such, the Verifiable Credential can no longer be validated.
 //! This would invalidate every Verifiable Credential signed with the same public key, therefore the
-//! issuer would have to sign every VC with a different key. Have a look at the Merkle Key example
-//! on how to do that practically.
+//! issuer would have to sign every VC with a different key.
 //!
 //! cargo run --example did_history
 
 use identity::core::Timestamp;
 use identity::credential::Credential;
-use identity::crypto::SignatureOptions;
+use identity::crypto::ProofOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 
@@ -44,7 +43,7 @@ async fn main() -> Result<()> {
   let (mut issuer_doc, issuer_key, issuer_receipt) = issuer;
   issuer_doc.remove_method(&issuer_doc.id().to_url().join("#newKey")?)?;
   issuer_doc.metadata.previous_message_id = *issuer_receipt.message_id();
-  issuer_doc.metadata.updated = Timestamp::now_utc();
+  issuer_doc.metadata.updated = Some(Timestamp::now_utc());
   issuer_doc.sign_self(issuer_key.private(), issuer_doc.default_signing_method()?.id().clone())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
@@ -107,7 +106,7 @@ async fn create_vc_helper(
     &mut credential,
     issuer_new_key.private(),
     issuer_doc.default_signing_method()?.id(),
-    SignatureOptions::default(),
+    ProofOptions::default(),
   )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);
@@ -127,7 +126,7 @@ pub async fn add_new_key(
   let mut updated_doc = doc.clone();
 
   // Add #newKey to the document
-  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let new_key: KeyPair = KeyPair::new(KeyType::Ed25519)?;
   let method: IotaVerificationMethod =
     IotaVerificationMethod::new(updated_doc.id().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(updated_doc
@@ -136,7 +135,7 @@ pub async fn add_new_key(
 
   // Prepare the update
   updated_doc.metadata.previous_message_id = *receipt.message_id();
-  updated_doc.metadata.updated = Timestamp::now_utc();
+  updated_doc.metadata.updated = Some(Timestamp::now_utc());
   updated_doc.sign_self(key.private(), updated_doc.default_signing_method()?.id().clone())?;
 
   // Publish the update to the Tangle

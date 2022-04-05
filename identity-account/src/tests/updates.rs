@@ -3,18 +3,16 @@
 
 use std::sync::Arc;
 
-use identity_account_storage::identity::IdentityState;
 use identity_account_storage::storage::MemStore;
-use identity_account_storage::types::Generation;
 use identity_account_storage::types::KeyLocation;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::PublicKey;
 use identity_did::did::DID;
 use identity_did::service::ServiceEndpoint;
 use identity_did::utils::Queryable;
@@ -23,6 +21,8 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
@@ -30,61 +30,56 @@ use crate::account::AccountConfig;
 use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
-use crate::identity::IdentitySetup;
-use crate::types::MethodSecret;
+use crate::types::IdentitySetup;
+use crate::types::MethodContent;
 use crate::updates::Update;
 use crate::updates::UpdateError;
 
-async fn account_setup(network: Network) -> AccountSetup {
-  AccountSetup::new(
-    Arc::new(MemStore::new()),
-    Arc::new(
-      ClientBuilder::new()
-        .network(network)
-        .node_sync_disabled()
-        .build()
-        .await
-        .unwrap(),
-    ),
-    AccountConfig::new().testmode(true),
-  )
-}
+use super::util::*;
 
 #[tokio::test]
 async fn test_create_identity() -> Result<()> {
-  let account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
-
-  let expected_fragment = format!("{}{}", crate::updates::DEFAULT_UPDATE_METHOD_PREFIX, Generation::new());
-
-  let state: &IdentityState = account.state();
-
-  assert!(state.document().resolve_method(&expected_fragment).is_some());
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().core_document().methods().count(), 1);
-
-  let location = state
-    .method_location(MethodType::Ed25519VerificationKey2018, expected_fragment.clone())
+  for storage in storages().await {
+    let account = Account::create_identity(
+      account_setup_storage(storage, Network::Mainnet).await,
+      IdentitySetup::default(),
+    )
+    .await
     .unwrap();
 
-  // Ensure we can retrieve the correct location for the key.
-  assert_eq!(
-    location,
-    KeyLocation::new(
-      MethodType::Ed25519VerificationKey2018,
-      expected_fragment,
-      Generation::new(),
-    )
-  );
+    let document: &IotaDocument = account.document();
 
-  // Ensure the key exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+    let expected_fragment = IotaDocument::DEFAULT_METHOD_FRAGMENT;
+    let method: &IotaVerificationMethod = document.resolve_method(expected_fragment, None).unwrap();
 
-  // Enure the state was written to storage.
-  assert!(account.load_state().await.is_ok());
+    assert_eq!(document.core_document().verification_relationships().count(), 1);
+    assert_eq!(document.core_document().methods().count(), 1);
 
-  // Ensure timestamps were recently set.
-  assert!(state.document().metadata.created > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
+
+    // Ensure we can retrieve the correct location for the key.
+    assert_eq!(
+      location,
+      KeyLocation::new(
+        KeyType::Ed25519,
+        expected_fragment.to_owned(),
+        method.data().try_decode().unwrap().as_ref()
+      )
+    );
+
+    // Ensure the key exists in storage.
+    assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+
+    // Ensure the state was written to storage.
+    assert!(account.load_document().await.is_ok());
+
+    // Ensure timestamps were recently set.
+    assert!(document.metadata.created.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+    assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+
+    // Ensure the DID was added to the index.
+    assert!(account.storage().did_exists(account.did()).await.unwrap());
+  }
 
   Ok(())
 }
@@ -126,27 +121,36 @@ async fn test_create_identity_network() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
-  let keypair = KeyPair::new_ed25519()?;
-  let identity_create = IdentitySetup::default()
-    .key_type(KeyType::Ed25519)
-    .method_secret(MethodSecret::Ed25519(keypair.private().clone()));
-  let account_setup = account_setup(Network::Mainnet).await;
+  for storage in storages().await {
+    let keypair = KeyPair::new(KeyType::Ed25519)?;
+    let identity_create = IdentitySetup::default().private_key(keypair.private().clone());
 
-  let account = Account::create_identity(account_setup.clone(), identity_create.clone()).await?;
-  let did: IotaDID = account.did().to_owned();
+    let account_setup = account_setup_storage(storage, Network::Mainnet).await;
 
-  let initial_state = account_setup.storage.state(&did).await?.unwrap();
+    let account = Account::create_identity(account_setup.clone(), identity_create.clone())
+      .await
+      .unwrap();
 
-  let output = Account::create_identity(account_setup.clone(), identity_create).await;
+    let initial_state = account_setup
+      .storage
+      .document_get(account.did())
+      .await
+      .unwrap()
+      .unwrap();
 
-  assert!(matches!(
-    output.unwrap_err(),
-    Error::UpdateError(UpdateError::DocumentAlreadyExists),
-  ));
+    let output = Account::create_identity(account_setup.clone(), identity_create).await;
 
-  // Ensure nothing was overwritten in storage
-  assert_eq!(initial_state, account_setup.storage.state(&did).await?.unwrap());
+    assert!(matches!(
+      output.unwrap_err(),
+      Error::AccountCoreError(identity_account_storage::Error::IdentityAlreadyExists)
+    ));
 
+    // Ensure nothing was overwritten in storage
+    assert_eq!(
+      initial_state,
+      account_setup.storage.document_get(account.did()).await?.unwrap()
+    );
+  }
   Ok(())
 }
 
@@ -155,72 +159,101 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
   let private_bytes: Box<[u8]> = Box::new([0; 33]);
   let private_key: PrivateKey = PrivateKey::from(private_bytes);
 
-  let id_create = IdentitySetup::new()
-    .key_type(KeyType::Ed25519)
-    .method_secret(MethodSecret::Ed25519(private_key));
+  let id_create = IdentitySetup::new().private_key(private_key);
 
   let err = Account::create_identity(account_setup(Network::Mainnet).await, id_create)
     .await
     .unwrap_err();
 
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodContent(_))));
 
   Ok(())
 }
 
 #[tokio::test]
-async fn test_create_method() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+async fn test_create_method_content_generate() -> Result<()> {
+  for storage in storages().await {
+    for method_content in [MethodContent::GenerateEd25519, MethodContent::GenerateX25519] {
+      let mut account: Account = Account::create_identity(
+        account_setup_storage(Arc::clone(&storage), Network::Mainnet).await,
+        IdentitySetup::default(),
+      )
+      .await?;
 
-  let initial_state: IdentityState = account.state().to_owned();
-  let method_type = MethodType::Ed25519VerificationKey2018;
+      let initial_document: IotaDocument = account.document().to_owned();
 
-  let fragment = "key-1".to_owned();
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: None,
-    type_: method_type,
-    fragment: fragment.clone(),
-  };
+      let method_type: MethodType = method_content.method_type();
+      let key_type: KeyType = method_content.key_type();
+      let fragment = "key-1".to_owned();
+      let update: Update = Update::CreateMethod {
+        scope: MethodScope::default(),
+        content: method_content,
+        fragment: fragment.clone(),
+      };
 
-  account.process_update(update).await?;
+      account.process_update(update).await.unwrap();
 
-  let state: &IdentityState = account.state();
+      let document: &IotaDocument = account.document();
 
-  // Ensure existence and key type
-  assert_eq!(
-    state.document().resolve_method(&fragment).unwrap().key_type(),
-    method_type
-  );
+      // Ensure existence.
+      let method: &IotaVerificationMethod = document.resolve_method(&fragment, None).unwrap();
 
-  // Still only the default relationship.
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
-  assert_eq!(state.document().core_document().methods().count(), 2);
+      // Ensure key type.
+      assert_eq!(method.type_(), method_type);
 
-  let location = state.method_location(method_type, fragment.clone()).unwrap();
+      // Still only the default relationship.
+      assert_eq!(document.core_document().verification_relationships().count(), 1);
+      assert_eq!(document.core_document().methods().count(), 2);
 
-  // Ensure we can retrieve the correct location for the key.
-  assert_eq!(
-    location,
-    KeyLocation::new(
-      method_type,
-      fragment,
-      // `create_identity` calls publish, which increments the generation.
-      Generation::new().try_increment().unwrap(),
-    )
-  );
+      let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
-  // Ensure the key exists in storage.
-  assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
+      // Ensure we can retrieve the correct location for the key.
+      assert_eq!(
+        location,
+        KeyLocation::new(key_type, fragment, method.data().try_decode().unwrap().as_ref())
+      );
 
-  // Ensure `created` wasn't updated.
-  assert_eq!(
-    initial_state.document().metadata.created,
-    state.document().metadata.created
-  );
-  // Ensure `updated` was recently set.
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+      // Ensure the key exists in storage.
+      assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
+      // Ensure `created` wasn't updated.
+      assert_eq!(initial_document.metadata.created, document.metadata.created);
+
+      // Ensure `updated` was recently set.
+      assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+    }
+  }
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_method_content_public() -> Result<()> {
+  let bytes: [u8; 32] = [1_u8; 32];
+  for method_content in [
+    MethodContent::PublicX25519(PublicKey::from(bytes.to_vec())),
+    MethodContent::PublicEd25519(PublicKey::from(bytes.to_vec())),
+  ] {
+    let mut account: Account =
+      Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+
+    let method_type: MethodType = method_content.method_type();
+    let fragment = "key-1".to_owned();
+    let update: Update = Update::CreateMethod {
+      scope: MethodScope::default(),
+      content: method_content,
+      fragment: fragment.clone(),
+    };
+    account.process_update(update).await?;
+
+    // Ensure existence and type.
+    let method: &IotaVerificationMethod = account.document().resolve_method(&fragment, None).unwrap();
+    assert_eq!(method.type_(), method_type);
+    assert_eq!(method.data().try_decode().unwrap().as_slice(), bytes);
+
+    // Ensure no key exists in storage.
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
+    assert!(!account.storage().key_exists(account.did(), &location).await.unwrap());
+  }
   Ok(())
 }
 
@@ -239,37 +272,36 @@ async fn test_create_scoped_method() -> Result<()> {
 
     let update: Update = Update::CreateMethod {
       scope: *scope,
-      method_secret: None,
-      type_: MethodType::Ed25519VerificationKey2018,
+      content: MethodContent::GenerateEd25519,
       fragment: fragment.clone(),
     };
 
     account.process_update(update).await?;
 
-    let state: &IdentityState = account.state();
+    let document: &IotaDocument = account.document();
 
-    assert_eq!(state.document().core_document().verification_relationships().count(), 2);
+    assert_eq!(document.core_document().verification_relationships().count(), 2);
 
-    assert_eq!(state.document().core_document().methods().count(), 2);
+    assert_eq!(document.core_document().methods().count(), 2);
 
-    let core_doc = state.document().core_document();
+    let core_doc = document.core_document();
 
     let contains = match scope {
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::authentication())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::authentication()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::assertion_method())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::assertion_method()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::key_agreement())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::key_agreement()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::capability_delegation())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::capability_delegation()))
+        .is_some(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => core_doc
-        .try_resolve_method_with_scope(&fragment, MethodScope::capability_invocation())
-        .is_ok(),
+        .resolve_method(&fragment, Some(MethodScope::capability_invocation()))
+        .is_some(),
       _ => unreachable!(),
     };
 
@@ -280,7 +312,7 @@ async fn test_create_scoped_method() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_method_duplicate_fragment() -> Result<()> {
+async fn test_create_method_duplicate_fragment() {
   let mut account_setup = account_setup(Network::Mainnet).await;
   account_setup.config = account_setup.config.testmode(true).autopublish(false);
 
@@ -290,8 +322,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: "key-1".to_owned(),
   };
 
@@ -299,53 +330,44 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   let output = account.process_update(update.clone()).await;
 
-  // Attempting to add a method with the same fragment in the same int and diff generation.
-  assert!(matches!(
-    output.unwrap_err(),
-    Error::UpdateError(UpdateError::DuplicateKeyLocation(_)),
-  ));
-
-  // This increments the generation internally.
-  account.publish().await?;
-
-  let output = account.process_update(update).await;
-
-  // Now the location is different due to the incremented generation, but the fragment is the same.
+  // Attempting to add a method with the same fragment.
   assert!(matches!(
     output.unwrap_err(),
     Error::DIDError(identity_did::Error::MethodAlreadyExists)
   ));
-
-  Ok(())
 }
 
 #[tokio::test]
-async fn test_create_method_from_private_key() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
+async fn test_create_method_from_private_key() {
+  for storage in storages().await {
+    let mut account = Account::create_identity(
+      account_setup_storage(storage, Network::Mainnet).await,
+      IdentitySetup::default(),
+    )
+    .await
+    .unwrap();
 
-  let keypair = KeyPair::new_ed25519()?;
-  let fragment = "key-1".to_owned();
-  let method_type = MethodType::Ed25519VerificationKey2018;
+    let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let fragment = "key-1".to_owned();
 
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(keypair.private().clone())),
-    type_: method_type,
-    fragment: fragment.clone(),
-  };
+    let update: Update = Update::CreateMethod {
+      scope: MethodScope::default(),
+      content: MethodContent::PrivateEd25519(keypair.private().clone()),
+      fragment: fragment.clone(),
+    };
 
-  account.process_update(update).await?;
+    account.process_update(update).await.unwrap();
 
-  let state: &IdentityState = account.state();
+    let document: &IotaDocument = account.document();
 
-  assert!(state.document().resolve_method(&fragment).is_some());
+    let method: &IotaVerificationMethod = document.resolve_method(&fragment, None).unwrap();
 
-  let location = state.method_location(method_type, fragment).unwrap();
-  let public_key = account.storage().key_get(account.did(), &location).await?;
+    let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
-  assert_eq!(public_key.as_ref(), keypair.public().as_ref());
+    let public_key = account.storage().key_public(account.did(), &location).await.unwrap();
 
-  Ok(())
+    assert_eq!(public_key.as_ref(), keypair.public().as_ref());
+  }
 }
 
 #[tokio::test]
@@ -357,14 +379,13 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(private_key)),
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::PrivateEd25519(private_key),
     fragment: "key-1".to_owned(),
   };
 
   let err = account.process_update(update).await.unwrap_err();
 
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodContent(_))));
 
   Ok(())
 }
@@ -377,8 +398,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: fragment.clone(),
   };
 
@@ -386,12 +406,7 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   // One relationship by default.
   assert_eq!(
-    account
-      .state()
-      .document()
-      .core_document()
-      .verification_relationships()
-      .count(),
+    account.document().core_document().verification_relationships().count(),
     1
   );
 
@@ -481,8 +496,7 @@ async fn test_detach_method_relationship() -> Result<()> {
   // Add an embedded method.
   let update: Update = Update::CreateMethod {
     scope: MethodScope::authentication(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: embedded_fragment.clone(),
   };
 
@@ -511,8 +525,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
+    content: MethodContent::GenerateEd25519,
     fragment: generic_fragment.clone(),
   };
 
@@ -542,58 +555,24 @@ async fn test_detach_method_relationship() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
-
-  let private_bytes: Box<[u8]> = Box::new([0; 32]);
-  let private_key = PrivateKey::from(private_bytes);
-
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::Ed25519(private_key)),
-    type_: MethodType::MerkleKeyCollection2021,
-    fragment: "key-1".to_owned(),
-  };
-
-  let err = account.process_update(update).await.unwrap_err();
-
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
-
-  let key_collection = KeyCollection::new_ed25519(4).unwrap();
-
-  let update: Update = Update::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: Some(MethodSecret::MerkleKeyCollection(key_collection)),
-    type_: MethodType::Ed25519VerificationKey2018,
-    fragment: "key-2".to_owned(),
-  };
-
-  let err = account.process_update(update).await.unwrap_err();
-
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
-
-  Ok(())
-}
-
-#[tokio::test]
 async fn test_delete_method() -> Result<()> {
   let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
   let fragment = "key-1".to_owned();
-  let method_type = MethodType::Ed25519VerificationKey2018;
-  let initial_state = account.state().to_owned();
+  let initial_document = account.document().to_owned();
+  let content: MethodContent = MethodContent::GenerateEd25519;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
-    method_secret: None,
-    type_: method_type,
+    content: content.clone(),
     fragment: fragment.clone(),
   };
 
   account.process_update(update).await?;
 
   // Ensure it was added.
-  assert!(account.state().document().resolve_method(&fragment).is_some());
+  let method: &IotaVerificationMethod = account.document().resolve_method(&fragment, None).unwrap();
+  let location: KeyLocation = KeyLocation::from_verification_method(method).unwrap();
 
   let update: Update = Update::DeleteMethod {
     fragment: "key-1".to_owned(),
@@ -601,28 +580,23 @@ async fn test_delete_method() -> Result<()> {
 
   account.process_update(update.clone()).await?;
 
-  let state: &IdentityState = account.state();
+  let document: &IotaDocument = account.document();
 
   // Ensure it no longer exists.
-  assert!(state.document().resolve_method(&fragment).is_none());
+  assert!(document.resolve_method(&fragment, None).is_none());
 
   // Still only the default relationship.
-  assert_eq!(state.document().core_document().verification_relationships().count(), 1);
+  assert_eq!(document.core_document().verification_relationships().count(), 1);
 
-  assert_eq!(state.document().core_document().methods().count(), 1);
+  assert_eq!(document.core_document().methods().count(), 1);
 
-  let location = state.method_location(method_type, fragment.clone()).unwrap();
-
-  // Ensure the key still exists in storage - deletion in storage happens after successful publication.
+  // Ensure the key still exists in storage.
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.
-  assert_eq!(
-    initial_state.document().metadata.created,
-    state.document().metadata.created
-  );
+  assert_eq!(initial_document.metadata.created, document.metadata.created);
   // Ensure `updated` was recently set.
-  assert!(state.document().metadata.updated > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(document.metadata.updated.unwrap() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   // Deleting a non-existing methods fails.
   let output = account.process_update(update).await;
@@ -707,10 +681,10 @@ async fn test_remove_service() -> Result<()> {
 async fn test_set_controller() -> Result<()> {
   let mut account = Account::create_identity(account_setup(Network::Mainnet).await, IdentitySetup::default()).await?;
 
-  let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair1: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let iota_did1: IotaDID = IotaDID::new(keypair1.public().as_ref()).unwrap();
 
-  let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let iota_did2: IotaDID = IotaDID::new(keypair2.public().as_ref()).unwrap();
 
   // Set one controller.

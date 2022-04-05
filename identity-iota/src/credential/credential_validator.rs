@@ -228,7 +228,7 @@ mod tests {
   use identity_core::common::Timestamp;
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
-  use identity_core::crypto::SignatureOptions;
+  use identity_core::crypto::ProofOptions;
   use identity_credential::credential::Subject;
   use identity_did::did::DID;
   use identity_iota_core::document::IotaDocument;
@@ -338,7 +338,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
 
@@ -410,7 +410,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
 
@@ -450,7 +450,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     // declare the credential validation parameters
@@ -478,7 +478,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
 
@@ -532,7 +532,7 @@ mod tests {
         &mut credential,
         other_keys.private(), // sign with other keys
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
 
@@ -690,7 +690,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
@@ -732,7 +732,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
@@ -773,7 +773,7 @@ mod tests {
         &mut credential,
         issuer_key.private(),
         issuer_doc.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct

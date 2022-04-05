@@ -1,5 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+#![allow(deprecated)]
 
 use criterion::criterion_group;
 use criterion::criterion_main;
@@ -11,6 +13,7 @@ use identity::iota::DocumentChain;
 use identity::iota::IntegrationChain;
 use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDocument;
+use identity_core::crypto::KeyType;
 
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;
@@ -34,7 +37,7 @@ fn generate_did(keypair: &KeyPair) {
 }
 
 fn bench_generate_signed_document(c: &mut Criterion) {
-  let keypair = KeyPair::new_ed25519().unwrap();
+  let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
 
   c.bench_function("generate signed document", |b| {
     b.iter(|| generate_signed_document(&keypair))
@@ -42,7 +45,7 @@ fn bench_generate_signed_document(c: &mut Criterion) {
 }
 
 fn bench_generate_did(c: &mut Criterion) {
-  let keypair = KeyPair::new_ed25519().unwrap();
+  let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
   c.bench_function("generate did", |b| b.iter(|| generate_did(&keypair)));
 }
 

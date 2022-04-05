@@ -1,6 +1,6 @@
 [package]
 name = "identity-wasm"
-version = "0.5.0-dev.4"
+version = "0.5.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -15,6 +15,7 @@ description = "Web Assembly bindings for the identity-rs crate."
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }
@@ -25,9 +26,10 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity]
-version = "=0.5.0-dev.4"
+version = "=0.5.0"
 path = "../../identity"
 default-features = false
+features = ["account"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }

@@ -17,7 +17,6 @@ import {createVC} from './create_vc';
  The Verifiable Credential is revoked by actually removing a verification method (public key) from the DID Document of the Issuer.
  As such, the Verifiable Credential can no longer be validated.
  This would invalidate every Verifiable Credential signed with the same public key, therefore the issuer would have to sign every VC with a different key.
- Have a look at the Merkle Key example on how to do that practically.
 
  Note that this example uses the "main" network, if you are writing code against the test network then most function
  calls will need to include information about the network, since this is not automatically inferred from the
@@ -39,16 +38,16 @@ async function revokeVC(clientConfig) {
     const signedVc = Credential.fromJSON(credentialJSON);
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
-    issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
-    issuer.doc.metadataPreviousMessageId = issuer.updatedMessageId;
-    issuer.doc.metadataUpdated = Timestamp.nowUTC();
-    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id);
+    issuer.doc.removeMethod(issuer.doc.id().toUrl().join("#newKey"));
+    issuer.doc.setMetadataPreviousMessageId(issuer.updatedMessageId);
+    issuer.doc.setMetadataUpdated(Timestamp.nowUTC());
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id());
     // This is an integration chain update, so we publish the full document.
-    const {messageId} = await client.publishDocument(issuer.doc);
-
+    const receipt = await client.publishDocument(issuer.doc);
+    console.log(`published document`);
     // Log the resulting Identity update
-    console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(messageId)}`);
-    console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id)}`);
+    console.log(`Issuer Update Transaction: ${clientConfig.explorer.messageUrl(receipt.messageId())}`);
+    console.log(`Explore the Issuer DID Document: ${clientConfig.explorer.resolverUrl(issuer.doc.id())}`);
 
     // Check the verifiable credential.
     const resolver = await Resolver

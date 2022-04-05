@@ -435,24 +435,6 @@ Document.removeMethod(did: DID);
 ##### Returns
 
 * Void
- 
-#### [Document.revokeMerkleKey(query, index)](api_reference#Document+revokeMerkleKey)
-
-[Revoke a single key from a MerkleKeyCollection](../../verifiable_credentials/merkle_key_collection.mdx) from a [Document](api_reference#Document), instead of revoking the entire verification method.
-
-##### Parameters
-
-* query: string. For example a [VerificationMethod](api_reference#VerificationMethod)'s string representation.
-* index: number. The credentials key. 
-
-```js
-Document.revokeMerkleKey(query, index);
-```
-
-##### Returns
-
-* Boolean.
-
 
 ## Verifiable Presentations (VP)
 

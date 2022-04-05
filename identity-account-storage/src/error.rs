@@ -12,6 +12,9 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
+  /// Caused by errors from the [`identity_iota_core`] crate.
+  #[error("DID creation failed: {0}")]
+  DIDCreationError(String),
   /// Caused by errors from the [identity_did] crate.
   #[error(transparent)]
   DIDError(#[from] identity_did::Error),
@@ -22,13 +25,6 @@ pub enum Error {
   #[cfg(feature = "stronghold")]
   #[error(transparent)]
   StrongholdError(#[from] crate::stronghold::StrongholdError),
-
-  /// Caused by attempting to increment a generation above the maximum value.
-  #[error("Generation overflow")]
-  GenerationOverflow,
-  /// Caused by attempting to decrement a generation below the minimum value.
-  #[error("Generation underflow")]
-  GenerationUnderflow,
   /// Caused by providing bytes that cannot be used as a private key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
@@ -45,12 +41,15 @@ pub enum Error {
   /// Caused by attempting to write a poisoned shared resource.
   #[error("Shared resource poisoned: write")]
   SharedWritePoisoned,
-}
-
-#[doc(hidden)]
-pub trait PleaseDontMakeYourOwnResult<T> {
-  #[allow(clippy::wrong_self_convention)]
-  fn to_result(self) -> Result<T>;
+  /// Caused by attempting to create a DID that already exists.
+  #[error("identity already exists")]
+  IdentityAlreadyExists,
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("JsValue serialization error: {0}")]
+  SerializationError(String),
+  #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+  #[error("javascript function threw an exception: {0}")]
+  JsError(String),
 }
 
 impl From<identity_did::did::DIDError> for Error {

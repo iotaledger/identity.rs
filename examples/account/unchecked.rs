@@ -6,9 +6,9 @@
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::account_storage::Stronghold;
 use identity::core::Timestamp;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
@@ -23,14 +23,15 @@ async fn main() -> Result<()> {
   // Stronghold is an encrypted file that manages private keys.
   // It implements best practices for security and is the recommended way of handling private keys.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
-  let password: String = "my-password".into();
+  let password: String = "my-password".to_owned();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, password, None).await?;
 
   // Create a new identity using Stronghold as local storage.
   //
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
+    .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
 
@@ -46,7 +47,7 @@ async fn main() -> Result<()> {
   // Override the updated field timestamp to 24 hours (= 86400 seconds) in the future,
   // because we can. This is usually set automatically by Account::update_identity.
   let timestamp: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() + 86400)?;
-  document.metadata.updated = timestamp;
+  document.metadata.updated = Some(timestamp);
 
   // Update the identity without validation and publish the result to the Tangle
   // (depending on the account's autopublish setting).
