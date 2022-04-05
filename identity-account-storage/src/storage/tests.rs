@@ -72,8 +72,6 @@ pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Resul
     .did_create(network, &fragment, Some(keypair.private().to_owned()))
     .await;
 
-  // TODO: Call did_create without a key.
-
   ensure!(
     result.is_err(),
     "expected did_create to return an error when attempting to create an identity from the same private key twice"
@@ -89,6 +87,39 @@ pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Resul
     keypair.public().as_ref(),
     "expected key_public to return `{:?}`, returned `{public_key:?}`",
     keypair.public()
+  );
+
+  let network: NetworkName = Network::Devnet.name();
+  let (did, location): (IotaDID, KeyLocation) = storage
+    .did_create(network.clone(), &fragment, None)
+    .await
+    .context("did_create returned an error")?;
+
+  ensure_eq!(
+    did.network_str(),
+    network.as_ref(),
+    "expected network `{network}` for the generated DID, was `{}`",
+    did.network_str()
+  );
+
+  let exists: bool = storage
+    .key_exists(&did, &location)
+    .await
+    .context("key_exists returned an error")?;
+
+  ensure!(exists, "expected key at location `{location}` to exist");
+
+  let public_key: PublicKey = storage
+    .key_public(&did, &location)
+    .await
+    .context("key_public returned an error")?;
+
+  let expected_did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network).unwrap();
+
+  ensure_eq!(
+    did,
+    expected_did,
+    "returned did `{did}` did not match did created from retrieved public key and network, expected: `{expected_did}`"
   );
 
   Ok(())
