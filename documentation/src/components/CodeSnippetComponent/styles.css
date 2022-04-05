@@ -23,12 +23,15 @@
 }
 
 .codeSnippetContainer {
-    height: 600px;
+    height: 700px;
     width: 100%;
-    background-color: var(--ifm-color-emphasis-500);
+    background-color: #292D3E;
     overflow: hidden;
-    border-radius:0 10px 10px 10px;
-    margin-bottom: 20px;
+    border-radius:0 10px 10px 0;
+}
+.noMarginBottom {
+    margin-bottom: 0 !important;
+    border-radius:0 10px 10px 10px !important;
 }
 
 .langSelector {
@@ -36,4 +39,15 @@
     padding: 5px;
     display: inline-block;
     border-radius:10px 10px 0 0;
+}
+
+.githubLink {
+    font-size: 0.9em;
+    margin-top: 3px;
+    margin-bottom: 20px;
+}
+
+.rustContainer {
+    height: 100%;
+    overflow-y: scroll;
 }
