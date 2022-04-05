@@ -48,7 +48,7 @@ path = "low-level-api/create_did.rs"
 
 [[example]]
 name = "create_vc"
-path = "low-level-api/create_vc.rs"
+path = "account/create_vc.rs"
 
 [[example]]
 name = "create_vp"
