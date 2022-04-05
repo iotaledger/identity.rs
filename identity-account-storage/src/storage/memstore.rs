@@ -285,4 +285,18 @@ mod tests {
       .await
       .unwrap()
   }
+
+  #[tokio::test]
+  async fn test_memstore_key_insert() {
+    crate::storage::tests::storage_key_insert_test(test_memstore())
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_sign_ed25519() {
+    crate::storage::tests::storage_key_sign_ed25519_test(test_memstore())
+      .await
+      .unwrap()
+  }
 }

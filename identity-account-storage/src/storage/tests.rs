@@ -5,12 +5,14 @@ use anyhow::Context;
 use function_name::named;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::tangle::Network;
 use identity_iota_core::tangle::NetworkName;
 
 use crate::types::KeyLocation;
+use crate::types::Signature;
 
 use super::test_util::random_string;
 use super::Storage;
@@ -266,6 +268,93 @@ pub async fn storage_did_list_test(storage: Box<dyn Storage>) -> anyhow::Result<
       "expected did_list to return a list of len {expected_len}, got {list_len} elements instead"
     );
   }
+
+  Ok(())
+}
+
+#[named]
+pub async fn storage_key_insert_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  let fragment: String = random_string();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let (did, _): (IotaDID, _) = storage
+    .did_create(network.clone(), &fragment, None)
+    .await
+    .context("did_create returned an error")?;
+
+  let key_types: [KeyType; 2] = [KeyType::Ed25519, KeyType::X25519];
+
+  let mut locations: Vec<KeyLocation> = Vec::with_capacity(key_types.len());
+  let mut public_keys: Vec<PublicKey> = Vec::with_capacity(key_types.len());
+
+  for key_type in key_types {
+    let key_fragment: String = random_string();
+    let keypair: KeyPair = KeyPair::new(key_type).unwrap();
+    let location: KeyLocation = KeyLocation::new(key_type, key_fragment, keypair.public().as_ref());
+
+    storage
+      .key_insert(&did, &location, keypair.private().to_owned())
+      .await
+      .context("key_insert returned an error")?;
+
+    public_keys.push(keypair.public().to_owned());
+    locations.push(location);
+  }
+
+  for (i, location) in locations.into_iter().enumerate() {
+    let exists: bool = storage
+      .key_exists(&did, &location)
+      .await
+      .context("key_exists returned an error")?;
+
+    ensure!(exists, "expected key at location `{location}` to exist");
+
+    let public_key: PublicKey = storage
+      .key_public(&did, &location)
+      .await
+      .context("key_public returned an error")?;
+
+    let expected_public_key: &PublicKey = &public_keys[i];
+
+    ensure_eq!(
+      public_key.as_ref(),
+      expected_public_key.as_ref(),
+      "expected public key at location `{location}` to be {expected_public_key:?}, was {public_key:?}"
+    );
+  }
+
+  Ok(())
+}
+
+#[named]
+pub async fn storage_key_sign_ed25519_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  // The following test vector is taken from [Test 2 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
+  const SECRET_KEY_HEX: &str = "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb";
+  const MESSAGE_HEX: &str = "72";
+  const SIGNATURE_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
+
+  let private_key: Vec<u8> = hex::decode(SECRET_KEY_HEX).unwrap();
+  let message: Vec<u8> = hex::decode(MESSAGE_HEX).unwrap();
+
+  let fragment: String = random_string();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let (did, location): (IotaDID, KeyLocation) = storage
+    .did_create(network.clone(), &fragment, Some(PrivateKey::from(private_key)))
+    .await
+    .context("did_create returned an error")?;
+
+  let signature: Signature = storage
+    .key_sign(&did, &location, message.clone())
+    .await
+    .context("key_sign returned an error")?;
+  let signature_hex: String = hex::encode(signature.as_bytes());
+
+  ensure_eq!(
+    &signature_hex,
+    SIGNATURE_HEX,
+    "expected signature to be `{SIGNATURE_HEX}`, was `{signature_hex}`"
+  );
 
   Ok(())
 }
