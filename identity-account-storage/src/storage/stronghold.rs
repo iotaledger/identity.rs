@@ -126,12 +126,16 @@ impl Storage for Stronghold {
     let client_path: ClientPath = ClientPath::from(&did);
     let client: Client = self.client(&client_path).await?;
 
+    // Sync the vault identified by VAULT_PATH from the tmp client to the client identified by the DID.
     let mut sync_config: SyncClientsConfig = SyncClientsConfig::new(MergePolicy::Replace);
     sync_config.sync_selected_vaults(vec![VAULT_PATH.to_vec()]);
 
-    client.sync_with(&tmp_client, sync_config).expect("TODO");
+    client
+      .sync_with(&tmp_client, sync_config)
+      .map_err(|err| StrongholdError::Client(ClientOperation::Sync, client_path.clone(), err))?;
     std::mem::drop(tmp_client);
 
+    // Within client, move the key from the tmp location to the expected location.
     move_key(&client, &tmp_location, &location).await?;
 
     self
