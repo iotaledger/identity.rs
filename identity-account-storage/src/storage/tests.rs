@@ -212,3 +212,60 @@ pub async fn storage_key_delete_test(storage: Box<dyn Storage>) -> anyhow::Resul
 
   Ok(())
 }
+
+#[named]
+pub async fn storage_did_list_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  const NUM_IDENTITIES: usize = 20;
+  let fragment: String = random_string();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let list: Vec<IotaDID> = storage.did_list().await.context("did_list returned an error")?;
+
+  ensure!(
+    list.is_empty(),
+    "expected list to be empty, but found {} element(s)",
+    list.len()
+  );
+
+  let mut dids: Vec<IotaDID> = Vec::with_capacity(NUM_IDENTITIES);
+  for i in 0..NUM_IDENTITIES {
+    let (did, _): (IotaDID, _) = storage
+      .did_create(network.clone(), &fragment, None)
+      .await
+      .context("did_create returned an error")?;
+
+    let exists: bool = storage.did_exists(&did).await.context("did_exists returned an error")?;
+    ensure!(exists, "expected did `{did}` to exist");
+
+    let list_len: usize = storage.did_list().await.context("did_list returned an error")?.len();
+    let expected_len: usize = i + 1;
+
+    ensure_eq!(
+      list_len,
+      expected_len,
+      "expected did_list to return a list of len {expected_len}, got {list_len} elements instead"
+    );
+
+    dids.push(did);
+  }
+
+  for (i, did) in dids.into_iter().enumerate() {
+    let purged: bool = storage.did_purge(&did).await.context("did_purge returned an error")?;
+
+    ensure!(purged, "expected the did `{did}` to be purged");
+
+    let exists: bool = storage.did_exists(&did).await.context("did_exists returned an error")?;
+    ensure!(!exists, "expected did `{did}` to no longer exist");
+
+    let list_len: usize = storage.did_list().await.context("did_list returned an error")?.len();
+    let expected_len: usize = NUM_IDENTITIES - (i + 1);
+
+    ensure_eq!(
+      list_len,
+      expected_len,
+      "expected did_list to return a list of len {expected_len}, got {list_len} elements instead"
+    );
+  }
+
+  Ok(())
+}

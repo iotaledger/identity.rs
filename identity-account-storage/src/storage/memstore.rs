@@ -278,4 +278,11 @@ mod tests {
       .await
       .unwrap()
   }
+
+  #[tokio::test]
+  async fn test_memstore_did_list() {
+    crate::storage::tests::storage_did_list_test(test_memstore())
+      .await
+      .unwrap()
+  }
 }
