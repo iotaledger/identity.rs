@@ -20,7 +20,6 @@ pub struct ActorRequestResponseCodec();
 
 impl ProtocolName for ActorProtocol {
   fn protocol_name(&self) -> &[u8] {
-    // TODO: Should we tie this to the crate version?
     "/actor/0.5.0".as_bytes()
   }
 }
