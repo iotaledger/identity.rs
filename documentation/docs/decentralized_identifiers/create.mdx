@@ -9,16 +9,17 @@ keywords:
 - Tangle
 - Create
 - Publish
+- explanation
 ---
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-When someone or something wants to benefit from Self-Sovereign Identity, they must first create a Decentralized Identity. This identity consists of many parts that have different functions. This page will cover both the basics and the details about identity creation, storage, and publishing to the Tangle.
+When someone or something wants to benefit from Self-Sovereign Identity, they must first create a Decentralized Identity. This identity consists of many different parts and functions. This page will cover both the basics and the details about identity creation, storage, and publishing to the Tangle.
 
-The example below utilizes the high-level account module of the IOTA Identity framework to create an identity. The account is the easiest method of using IOTA Identity. It is recommended to use the account for your use cases, although a lower-level API is also available, providing more flexibility at the cost of more complexity.
+The example below utilizes the high-level account module of the IOTA Identity framework to create an identity. The account is the easiest method of using IOTA Identity. We recommend using the account for your use cases, although a lower-level API is also available, providing more flexibility at the cost of more complexity.
 
 ## Creating an Identity Using the Account
 
-:::tip Using Replit
+:::note Using Replit
 
 Select your programming language of choice and press the green play button to execute the example.
 
@@ -29,7 +30,7 @@ rustReplitLink="https://replit.com/@JelleMillenaar1/accountbasic?lite=true"/>
 
 The first step in this example is the creation of an account. This acts as a stateful object that manages one or more identities. The account provides an interface to execute high-level operations on identities, such as creating, updating, and storing them.
 
-Next, the identity is created and published to the IOTA Tangle. This operation will generate a private key, storing it in the account, generating a DID, DID Document, and publishing it to the Tangle. Once it is uploaded to the Tangle, it becomes immutable, meaning that this version of the identity can never be altered or removed. The only way to update or delete an identity is by publishing a new version, which we will discuss in the next section. This immutability is what makes a Decentralized Identity solution based on Distributed Ledger Technology (DLT) trustworthy. The public keys inside the DID Document can never be changed without having access to the private key, allowing the users to completely control their own identities. The rest of the example shows how to retrieve (resolve) the identity from the Tangle and how it can be deleted.
+Next, the identity is created and published to the IOTA Tangle. This operation will generate a private key, storing it in the account, generating a DID, DID Document, and publishing it to the Tangle. Once it is uploaded, it becomes immutable, meaning that this version of the identity can never be altered or removed. The only way to update or delete an identity is by publishing a new version, which we will discuss in the next section. This immutability is what makes a Decentralized Identity solution based on Distributed Ledger Technology (DLT) trustworthy. The public keys inside the DID Document can never be changed without having access to the private key, allowing the users to completely control their own identities. The rest of the example shows how to retrieve (resolve) the identity from the Tangle and how it can be deleted.
 
 ### Identity Generation Process
 
