@@ -52,7 +52,7 @@ path = "account/create_vc.rs"
 
 [[example]]
 name = "create_vp"
-path = "low-level-api/create_vp.rs"
+path = "account/create_vp.rs"
 
 [[example]]
 name = "resolve_history"

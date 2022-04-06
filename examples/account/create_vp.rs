@@ -6,12 +6,13 @@
 //!
 //! cargo run --example create_vp
 
-use identity::core::Duration;
+use identity::account::{Account, IdentitySetup, MethodContent};
+use identity::core::{Duration, json};
 use identity::core::FromJson;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::core::Url;
-use identity::credential::Credential;
+use identity::credential::{Credential, CredentialBuilder, Subject};
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::ProofOptions;
@@ -24,8 +25,8 @@ use identity::iota::Receipt;
 use identity::iota::Resolver;
 use identity::iota::SubjectHolderRelationship;
 use identity::prelude::*;
+use identity::account::Result;
 
-mod common;
 mod create_did;
 
 #[tokio::main]
@@ -34,11 +35,42 @@ async fn main() -> Result<()> {
   // Participants: credential issuer, presentation holder, verifier
   // ===========================================================================
 
-  // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
-  let (doc_iss, key_iss, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
-  // Create a signed DID Document/KeyPair for the credential subject (see create_did.rs).
-  let (doc_sub, key_sub, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+  // Create an identity for the issuer.
+  let mut issuer: Account = Account::builder()
+    .create_identity(IdentitySetup::default())
+    .await?;
+
+  // Add verification method to the issuer.
+  issuer
+    .update_identity()
+    .create_method()
+    .content(MethodContent::GenerateEd25519)
+    .fragment("issuerKey")
+    .apply()
+    .await?;
+
+  // Create an identity for the holder, in this case also the subject.
+  let mut alice: Account = Account::builder()
+    .create_identity(IdentitySetup::default())
+    .await?;
+
+  // Add verification method to the holder.
+  alice
+    .update_identity()
+    .create_method()
+    .content(MethodContent::GenerateEd25519)
+    .fragment("aliceKey")
+    .apply()
+    .await?;
+
+  // .............
+  // // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
+  // let (doc_iss, key_iss, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+  //
+  // // Create a signed DID Document/KeyPair for the credential subject (see create_did.rs).
+  // let (doc_sub, key_sub, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+  // ..............
 
   // Note that in this example the credential subject is the same as the holder of the presentation.
 
@@ -54,16 +86,31 @@ async fn main() -> Result<()> {
   // Issuer - creates and issues a verifiable credential to the holder.
   // ===========================================================================
 
-  // Create an unsigned Credential with claims about `subject` specified by `issuer`.
-  let mut credential: Credential = common::issue_degree(&doc_iss, &doc_sub)?;
+  // Create VC "subject" field containing subject ID and claims about it.
+  let subject: Subject = Subject::from_json_value(json!({
+    "id": alice.did().to_string(),
+    "name": "Alice",
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science and Arts",
+    },
+    "GPA": "4.0",
+  }))?;
 
-  // Sign the Credential with the issuers private key.
-  doc_iss.sign_data(
+  // Build credential using subject above and issuer.
+  let mut credential: Credential = CredentialBuilder::default()
+    .id(Url::parse("https://example.edu/credentials/3732")?)
+    .issuer(Url::parse(issuer.did().to_string())?)
+    .type_("UniversityDegreeCredential")
+    .subject(subject)
+    .build()?;
+
+  // Sign the Credential with the issuers default key.
+  issuer.sign(
+    "#issuerKey",
     &mut credential,
-    key_iss.private(),
-    doc_iss.default_signing_method()?.id(),
     ProofOptions::default(),
-  )?;
+  ).await?;
 
   println!("Credential JSON > {:#}", credential);
 
@@ -81,20 +128,19 @@ async fn main() -> Result<()> {
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
   let mut presentation: Presentation = PresentationBuilder::default()
     .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs")?)
-    .holder(Url::parse(doc_sub.id().as_ref())?)
+    .holder(Url::parse(alice.did().as_ref())?)
     .credential(credential)
     .build()?;
 
   // The holder signs the presentation with their private key and includes the requested challenge and an expiry
   // timestamp.
-  doc_sub.sign_data(
+  alice.sign(
+    "#aliceKey",
     &mut presentation,
-    key_sub.private(),
-    doc_sub.default_signing_method()?.id(),
     ProofOptions::new()
       .challenge(challenge.to_string())
       .expires(Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap()),
-  )?;
+  ).await?;
 
   // Convert the Verifiable Presentation to JSON to send it to the verifier.
   let presentation_json: String = presentation.to_json()?;
