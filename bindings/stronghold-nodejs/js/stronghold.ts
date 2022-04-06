@@ -99,8 +99,13 @@ export class Stronghold implements Storage {
 
     public async chainStateGet(did: DID): Promise<ChainState | undefined | null> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiChainState: NapiChainState = await this.napiStronghold.chainStateGet(napiDID);
-        return ChainState.fromJSON(napiChainState.toJSON())
+        const napiChainState: NapiChainState | undefined | null = await this.napiStronghold.chainStateGet(napiDID);
+
+        if (napiChainState) {
+            return ChainState.fromJSON(napiChainState.toJSON())
+        } else {
+            return null;
+        }
     }
 
     public async chainStateSet(did: DID, chainState: ChainState): Promise<void> {
@@ -111,8 +116,13 @@ export class Stronghold implements Storage {
 
     public async documentGet(did: DID): Promise<Document | undefined | null> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiDocument: NapiDocument = await this.napiStronghold.documentGet(napiDID);
-        return Document.fromJSON(napiDocument.toJSON())
+        const napiDocument: NapiDocument | undefined | null = await this.napiStronghold.documentGet(napiDID);
+
+        if (napiDocument) {
+            return Document.fromJSON(napiDocument.toJSON())
+        } else {
+            return null;
+        }
     }
 
     public async documentSet(did: DID, document: Document): Promise<void> {

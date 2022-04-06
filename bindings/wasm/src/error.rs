@@ -210,9 +210,17 @@ pub struct JsValueResult(pub(crate) Result<JsValue>);
 impl JsValueResult {
   /// Consumes the struct and returns a Result<_, AccountStorageError>
   pub fn account_err(self) -> StdResult<JsValue, AccountStorageError> {
-    self
-      .0
-      .map_err(|js_value| AccountStorageError::JsError(js_value.as_string().unwrap_or_default()))
+    self.0.map_err(|js_value| {
+      let error: std::result::Result<String, String> = js_value
+        .into_serde()
+        .map_err(|err| err.to_string())
+        .and_then(|value: serde_json::Value| serde_json::to_string(&value).map_err(|err| err.to_string()));
+
+      match error {
+        Ok(json) => AccountStorageError::JsError(json),
+        Err(error) => AccountStorageError::JsError(format!("failed to serialize JS error: {}", error)),
+      }
+    })
   }
 }
 

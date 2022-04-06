@@ -5,9 +5,10 @@ import { config } from "./config";
 import { createIdentity } from "./create_did";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
-import { memstoreTest } from "./memory_storage";
+import { MemStore } from "./memory_storage";
 import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
+import { storageTestSuite } from "./storage_test_suite";
 import { unchecked } from "./unchecked";
 
 async function main() {
@@ -34,7 +35,7 @@ async function main() {
         case "multiple_identities":
             return await multipleIdentities();
         case "storage_test_suite":
-            return await memstoreTest();
+            return await storageTestSuite(async () => new MemStore())
         default:
             throw "Unknown example name";
     }

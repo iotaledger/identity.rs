@@ -167,13 +167,3 @@ export class MemStore implements Storage {
 
     public async flushChanges(): Promise<void> { }
 }
-
-export async function memstoreTest() {
-    await StorageTestSuite.didCreateTest(new MemStore());
-    await StorageTestSuite.keyGenerateTest(new MemStore());
-    await StorageTestSuite.keyDeleteTest(new MemStore());
-    await StorageTestSuite.keyInsertTest(new MemStore());
-    await StorageTestSuite.didListTest(new MemStore());
-    await StorageTestSuite.keySignEd25519Test(new MemStore());
-    await StorageTestSuite.didPurgeTest(new MemStore());
-}
