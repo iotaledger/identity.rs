@@ -1,7 +1,7 @@
 name: Shared / Create Hotfix PR
 
-# This workflow creates a Pull Request meant for creating releases. 
-# A changelog, including the new version, is generated and version strings in relevant files are replaced. 
+# This workflow creates a Pull Request meant for creating releases.
+# A changelog, including the new version, is generated and version strings in relevant files are replaced.
 # All these changes are committed and submitted as a Pull Request.
 
 on:
@@ -47,7 +47,7 @@ on:
       GPG_PASSPHRASE:
         description: "GPG private passphrase for signing commits and tags"
         required: true
-        
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -112,7 +112,7 @@ jobs:
           echo UNRELATED_TAGS=$UNRELATED_TAGS
 
           # set variables
-          FIRST="--release-branch ${{ inputs.branch }} --exclude-tags "
+          FIRST="--exclude-tags "
           SECOND=$UNRELATED_TAGS
           OPTIONAL_ARG=$FIRST$SECOND
           echo OPTIONAL_ARG=$OPTIONAL_ARG
@@ -124,7 +124,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-path: ${{ inputs.changelog-path }}
           changelog-config-path: ${{ inputs.changelog-config-path }}
-          future-release: ${{ env.HOTFIX_TAG }} 
+          future-release: ${{ env.HOTFIX_TAG }}
           optional-arg: ${{env.OPTIONAL_ARG}}
 
       - name: Check Changelog For Modification
@@ -149,7 +149,7 @@ jobs:
         uses: './.github/actions/release/bump-versions'
         with:
           release-target: ${{inputs.release-target}}
-          version: ${{ env.HOTFIX_VERSION }} 
+          version: ${{ env.HOTFIX_VERSION }}
 
       - name: Commit changes
         run: |
@@ -159,13 +159,13 @@ jobs:
             exit 1
           fi
           git commit -m "changelog and versions"
-          
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@67df31e08a133c6a77008b89689677067fef169e
         with:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          branch: hotfix/${{ env.HOTFIX_TAG }} 
+          branch: hotfix/${{ env.HOTFIX_TAG }}
           delete-branch: true
           title: 'Hotfix ${{ env.HOTFIX_TAG }}'
           body: |
