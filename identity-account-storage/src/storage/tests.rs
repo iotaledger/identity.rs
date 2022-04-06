@@ -1,8 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! A test suite for the `Storage` interface.
+//!
+//! This module contains a set of tests that a correct storage implementation
+//! should pass. Note that not every edge case is tested.
+//!
+//! Tests usually rely on multiple interface methods being implemented, so they should only
+//! be run on a fully implemented version. That's why there is not a single test case for every
+//! interface method.
+
 use anyhow::Context;
 use function_name::named;
+use rand::distributions::DistString;
+use rand::rngs::OsRng;
+
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -18,7 +30,6 @@ use crate::identity::ChainState;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
-use super::test_util::random_string;
 use super::Storage;
 
 macro_rules! ensure {
@@ -39,6 +50,10 @@ macro_rules! ensure_eq {
       return Err(anyhow::Error::msg(format!("[{}]: {}", fn_name, message)));
     }
   };};
+}
+
+fn random_string() -> String {
+  rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32)
 }
 
 #[named]

@@ -12,6 +12,14 @@ use crate::common::PromiseVoid;
 
 use super::WasmStorage;
 
+/// A test suite for the `Storage` interface.
+///
+/// This module contains a set of tests that a correct storage implementation
+/// should pass. Note that not every edge case is tested.
+///
+/// Tests usually rely on multiple interface methods being implemented, so they should only
+/// be run on a fully implemented version. That's why there is not a single test case for every
+/// interface method.
 #[wasm_bindgen]
 pub struct StorageTestSuite;
 
