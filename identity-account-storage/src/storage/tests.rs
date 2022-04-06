@@ -373,6 +373,26 @@ pub async fn storage_key_value_store_test(storage: Box<dyn Storage>) -> anyhow::
     .await
     .context("did_create returned an error")?;
 
+  let chain_state: Option<ChainState> = storage
+    .chain_state_get(&did)
+    .await
+    .context("chain_state_get returned an error")?;
+
+  ensure!(
+    chain_state.is_none(),
+    "expected chain_state_get to return `None` for a new DID"
+  );
+
+  let document: Option<IotaDocument> = storage
+    .document_get(&did)
+    .await
+    .context("document_get returned an error")?;
+
+  ensure!(
+    document.is_none(),
+    "expected document_get to return `None` for a new DID"
+  );
+
   let public_key: PublicKey = storage
     .key_public(&did, &location)
     .await
@@ -418,6 +438,49 @@ pub async fn storage_key_value_store_test(storage: Box<dyn Storage>) -> anyhow::
     expected_chain_state,
     chain_state,
     "expected chain state to be `{expected_chain_state:?}`, got `{chain_state:?}`"
+  );
+
+  Ok(())
+}
+
+#[named]
+pub async fn storage_did_purge_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  let fragment: String = random_string();
+  let network: NetworkName = Network::Mainnet.name();
+
+  let (did, location): (IotaDID, KeyLocation) = storage
+    .did_create(network.clone(), &fragment, None)
+    .await
+    .context("did_create returned an error")?;
+
+  let mut expected_chain_state: ChainState = ChainState::new();
+  expected_chain_state.set_last_integration_message_id(MessageId::new([0xff; 32]));
+
+  storage
+    .chain_state_set(&did, &expected_chain_state)
+    .await
+    .context("chain_state_set returned an error")?;
+
+  storage.did_purge(&did).await.context("did_purge returned an error")?;
+
+  let chain_state: Option<ChainState> = storage
+    .chain_state_get(&did)
+    .await
+    .context("chain_state_get returned an error")?;
+
+  ensure!(
+    chain_state.is_none(),
+    "expected chain_state_get to return `None` after purging"
+  );
+
+  let exists: bool = storage
+    .key_exists(&did, &location)
+    .await
+    .context("key_exists returned an error")?;
+
+  ensure!(
+    !exists,
+    "expected key at location `{location}` to no longer exist after purge"
   );
 
   Ok(())

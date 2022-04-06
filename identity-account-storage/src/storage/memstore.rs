@@ -306,4 +306,11 @@ mod tests {
       .await
       .unwrap()
   }
+
+  #[tokio::test]
+  async fn test_memstore_did_purge() {
+    crate::storage::tests::storage_did_purge_test(test_memstore())
+      .await
+      .unwrap()
+  }
 }
