@@ -140,7 +140,7 @@ impl WasmAccount {
     let account = self.0.clone();
     let options: ProofOptions = options.0.clone();
 
-    let mut credential = credential.0.clone();
+    let mut credential: Credential = credential.0.clone();
     future_to_promise(async move {
       account
         .as_ref()
@@ -164,7 +164,7 @@ impl WasmAccount {
     let account = self.0.clone();
     let options: ProofOptions = options.0.clone();
 
-    let mut document = document.0.clone();
+    let mut document: IotaDocument = document.0.clone();
     future_to_promise(async move {
       account
         .as_ref()
