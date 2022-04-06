@@ -1,5 +1,14 @@
 # Changelog
 
+## [wasm-v0.5.1](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.1) (2022-04-06)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0...wasm-v0.5.1)
+
+### Patch
+
+- Fix Account `create_signed_*` function return types [\#794](https://github.com/iotaledger/identity.rs/pull/794)
+- Fix musl-libc target for Stronghold Node.js bindings [\#789](https://github.com/iotaledger/identity.rs/pull/789)
+
 ## [wasm-v0.5.0](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0) (2022-03-31)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.0...wasm-v0.5.0)
