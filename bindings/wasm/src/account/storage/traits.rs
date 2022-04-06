@@ -259,7 +259,29 @@ impl Storage for WasmStorage {
 
 #[wasm_bindgen(typescript_custom_section)]
 const STORAGE: &'static str = r#"
-/** All methods an object must implement to be used as an account storage. */
+/** An interface for Account storage implementations.
+
+The `Storage` interface is used for secure key operations, such as key generation and signing,
+as well as key-value like storage of data structures, such as DID documents.
+
+# Identifiers
+
+Implementations of this interface are expected to uniquely identify keys through the
+combination of DID _and_ `KeyLocation`.
+
+An implementation recommendation is to use the DID as a partition key. Everything related to a DID
+can be stored in a partition identified by that DID. Keys belonging to a DID can then be identified
+by `KeyLocation`s in that partition.
+
+# DID List
+
+The storage is expected to maintain a list of stored DIDs. DIDs created with `did_create` should be
+inserted into the list, and removed when calling `did_purge`.
+Other operations on the list are `did_exists` and `did_list`.
+
+# Implementation example
+
+See the `MemStore` example for a test implementation. */
 interface Storage {
   /** Creates a new identity for the given `network`.
 
