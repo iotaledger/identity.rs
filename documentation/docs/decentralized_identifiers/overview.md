@@ -67,7 +67,7 @@ IOTA Identity is a framework to implement SSI on IOTA. Inherently, IOTA provides
 
 ### Feeless
 
-IOTA is a feeless Distributed Ledger Technology, which means that messages can immutably be stored inside the Tangle at no cost, nor a requirement of holding any cryptocurrency tokens. That means that SSI applications can directly deploy towards the main network without any problems, as compared to most other SSI solutions running on a test network or having cryptocurrency requirements. This does not simply make IOTA Identity have predictable costs and prevent issues around cryptocurrency holding taxes and legislation, it also makes it a fair network as anyone would be able to create one or more identities at no cost. The wealth of someone is irrelevant, making it the most inclusive SSI solution.
+IOTA is a feeless Distributed Ledger Technology, which means that messages can immutably be stored inside the Tangle at no cost, nor a requirement of holding any cryptocurrency tokens. That means that SSI applications can directly deploy towards the main network without any problems, as compared to most other SSI solutions running on a test network or having cryptocurrency requirements. So not only does it give IOTA Identity predictable costs, but it also turns it into a fair network.
 
 ### Ease-of-Use
 
