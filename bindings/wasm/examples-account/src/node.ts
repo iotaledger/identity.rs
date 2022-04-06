@@ -4,6 +4,7 @@
 import { config } from "./config";
 import { createIdentity } from "./create_did";
 import { createVC } from "./create_vc";
+import { createVP } from "./create_vp";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
 import { multipleIdentities } from "./multiple_identities";
@@ -35,6 +36,8 @@ async function main() {
             return await multipleIdentities();
         case "create_vc":
             return await createVC();
+        case "create_vp":
+            return await createVP();
         default:
             throw "Unknown example name";
     }

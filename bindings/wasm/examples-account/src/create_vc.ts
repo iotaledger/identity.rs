@@ -10,7 +10,6 @@ import {
     AccountBuilder,
     Storage,
     MethodContent,
-    Presentation
 } from './../../node/identity_wasm.js';
 
 /**
@@ -18,8 +17,6 @@ import {
  In this example, alice takes the role of the subject, while we also have an issuer.
  The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
  This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
-
- @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createVC(storage?: Storage) {
     let builder = new AccountBuilder({
@@ -28,6 +25,7 @@ async function createVC(storage?: Storage) {
     });
 
 
+    // Create an identity for the issuer.
     let issuer = await builder.createIdentity();
 
     // Add verification method to the issuer.
