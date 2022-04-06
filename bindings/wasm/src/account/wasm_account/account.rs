@@ -9,6 +9,7 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::PublishOptions;
 use identity::account_storage::Storage;
+use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::crypto::ProofOptions;
 
