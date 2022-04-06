@@ -24,8 +24,10 @@ macro_rules! expose_to_wasm {
         let promise = future_to_promise(async move {
           tests::$test_name(Box::new(storage))
             .await
-            // TODO: Use custom error cause string to prevent newlines from being added.
-            .map_err(|err| JsValue::from_str(&format!("{:?}", err)))
+            .map_err(|err| {
+              let root_cause: &dyn std::error::Error = err.root_cause();
+              JsValue::from_str(&format!("{}: {}", err, root_cause))
+            })
             .map(|_| JsValue::undefined())
         });
 
