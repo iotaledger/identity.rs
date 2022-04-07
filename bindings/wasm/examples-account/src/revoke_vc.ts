@@ -67,7 +67,7 @@ async function revokeVC(storage?: Storage) {
     );
 
     // ===========================================================================
-    // Revoke a Verifiable Credential.
+    // Revoke the Verifiable Credential.
     // ===========================================================================
 
     await issuer.deleteMethod({

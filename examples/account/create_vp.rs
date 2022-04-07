@@ -4,6 +4,9 @@
 //! A Verifiable Presentation (VP) represents a bundle of one or more Verifiable Credentials.
 //! This example demonstrates building and usage of VPs.
 //!
+//! Note: This example uses in-memory storage for simplicity.
+//! See `create_did` example to configure Stronghold storage.
+//!
 //! cargo run --example create_vp
 
 use identity::account::Account;
@@ -63,10 +66,8 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
-  // Note that in this example the credential subject is the same as the holder of the presentation.
-
   // ===========================================================================
-  // Step2: Issuer creates and signs the Verifiable Credential.
+  // Step2: Issuer creates and signs a Verifiable Credential.
   // ===========================================================================
 
   // Create VC "subject" field containing subject ID and claims about it.
@@ -115,7 +116,7 @@ async fn main() -> Result<()> {
   let expires: Timestamp = Timestamp::now_utc().checked_add(Duration::minutes(10)).unwrap();
 
   // ===========================================================================
-  // Step5: Holder creates a verifiable presentation from the issued credential for the verifier to validate.
+  // Step5: Holder creates ans signs a verifiable presentation from the issued credential.
   // ===========================================================================
 
   // Deserialize the credential.
@@ -128,8 +129,8 @@ async fn main() -> Result<()> {
     .credential(credential)
     .build()?;
 
-  // The holder signs the presentation with their private key and includes the requested challenge and an expiry
-  // timestamp.
+  // Sign the verifiable presentation using the holder's verification method
+  // and include the requested challenge and expiry timestamp.
   alice
     .sign(
       "#aliceKey",
@@ -182,6 +183,9 @@ async fn main() -> Result<()> {
       None,
     )
     .await?;
+
+  // Since no errors were thrown by `verify_presentation` we know that the validation was successful.
+  println!("VP successfully validated");
 
   // Note that we did not declare a latest allowed issuance date for credentials. This is because we only want to check
   // that the credentials do not have an issuance date in the future which is a default check.

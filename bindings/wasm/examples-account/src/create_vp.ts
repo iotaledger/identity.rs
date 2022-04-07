@@ -51,10 +51,9 @@ async function createVP(storage?: Storage) {
         content: MethodContent.GenerateEd25519(),
         fragment: "aliceKey"
     })
-    // Note that in this example the credential subject is the same as the holder of the presentation.
 
     // ===========================================================================
-    // Step2: Issuer creates and signs the Verifiable Credential.
+    // Step2: Issuer creates and signs a Verifiable Credential.
     // ===========================================================================
 
     // Create a credential subject indicating the degree earned by Alice.

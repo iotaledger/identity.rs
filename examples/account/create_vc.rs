@@ -5,7 +5,7 @@
 //! Documents, then creates a Verifiable Credential (vc) specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
 //!
-//! This example uses in-memory storage for simplicity.
+//! Note: This example uses in-memory storage for simplicity.
 //! See `create_did` example to configure Stronghold storage.
 //!
 //! cargo run --example create_vc
@@ -33,7 +33,6 @@ mod create_did;
 pub async fn create_vc() -> Result<String> {
   // Create an identity for the issuer.
   let mut issuer: Account = Account::builder()
-    .autopublish(false)
     .create_identity(IdentitySetup::default())
     .await?;
 
@@ -48,7 +47,6 @@ pub async fn create_vc() -> Result<String> {
 
   // Create an identity for the holder, in this case also the subject.
   let alice: Account = Account::builder()
-    .autopublish(false)
     .create_identity(IdentitySetup::default())
     .await?;
 

@@ -9,6 +9,9 @@
 //! This would invalidate every Verifiable Credential signed with the same public key, therefore the
 //! issuer would have to sign every VC with a different key.
 //!
+//! Note: This example uses in-memory storage for simplicity.
+//! See `create_did` example to configure Stronghold storage.
+//!
 //! cargo run --example revoke_vc
 
 use identity::account::Account;
@@ -73,7 +76,7 @@ async fn main() -> Result<()> {
   issuer.sign("#key-1", &mut credential, ProofOptions::default()).await?;
 
   // ===========================================================================
-  // Revoke a Verifiable Credential.
+  // Revoke the Verifiable Credential.
   // ===========================================================================
 
   // Remove the public key that signed the VC from the issuer's DID document

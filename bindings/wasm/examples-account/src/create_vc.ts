@@ -21,7 +21,6 @@ import {
 async function createVC(storage?: Storage) {
     let builder = new AccountBuilder({
         storage,
-        autopublish: false
     });
 
 
@@ -34,7 +33,9 @@ async function createVC(storage?: Storage) {
         fragment: "#newKey"
     })
 
+    // Create an identity for the holder, in this case also the subject.
     let alice = await builder.createIdentity();
+
     // Create a credential subject indicating the degree earned by Alice.
     let credentialSubject = {
         id: alice.document().id().toString(),
