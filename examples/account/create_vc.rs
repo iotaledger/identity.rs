@@ -10,11 +10,18 @@
 //!
 //! cargo run --example create_vc
 
-use std::path::PathBuf;
-use identity::account::{Account, IdentitySetup, MethodContent};
+use identity::account::Account;
+use identity::account::IdentitySetup;
+use identity::account::MethodContent;
+use identity::account::Result;
 use identity::account_storage::Stronghold;
-use identity::core::{FromJson, json, ToJson, Url};
-use identity::credential::{Credential, CredentialBuilder, Subject};
+use identity::core::json;
+use identity::core::FromJson;
+use identity::core::ToJson;
+use identity::core::Url;
+use identity::credential::Credential;
+use identity::credential::CredentialBuilder;
+use identity::credential::Subject;
 use identity::crypto::ProofOptions;
 use identity::did::DID;
 use identity::iota::CredentialValidationOptions;
@@ -22,12 +29,11 @@ use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
 use identity::iota::Receipt;
 use identity::prelude::*;
-use identity::account::Result;
+use std::path::PathBuf;
 
 mod create_did;
 
 pub async fn create_vc() -> Result<String> {
-
   // Create an identity for the issuer.
   let mut issuer: Account = Account::builder()
     .autopublish(false)
@@ -68,7 +74,6 @@ pub async fn create_vc() -> Result<String> {
     .subject(subject)
     .build()?;
 
-
   // Sign the Credential with the issuer's verification method.
   issuer.sign("#newKey", &mut credential, ProofOptions::default()).await?;
 
@@ -84,7 +89,8 @@ pub async fn create_vc() -> Result<String> {
     &issuer.document(),
     &CredentialValidationOptions::default(),
     FailFast::FirstError,
-  ).unwrap();
+  )
+  .unwrap();
 
   println!("VC successfully validated");
 

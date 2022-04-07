@@ -6,18 +6,24 @@
 //!
 //! cargo run --example create_vp
 
-use identity::account::{Account, IdentitySetup, MethodContent};
-use identity::core::{Duration, json};
+use identity::account::Account;
+use identity::account::IdentitySetup;
+use identity::account::MethodContent;
+use identity::core::json;
+use identity::core::Duration;
 use identity::core::FromJson;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::core::Url;
-use identity::credential::{Credential, CredentialBuilder, Subject};
+use identity::credential::Credential;
+use identity::credential::CredentialBuilder;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
+use identity::credential::Subject;
 use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifierOptions;
 
+use identity::account::Result;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::FailFast;
 use identity::iota::PresentationValidationOptions;
@@ -25,7 +31,6 @@ use identity::iota::Receipt;
 use identity::iota::Resolver;
 use identity::iota::SubjectHolderRelationship;
 use identity::prelude::*;
-use identity::account::Result;
 
 mod create_did;
 
@@ -36,9 +41,7 @@ async fn main() -> Result<()> {
   // ===========================================================================
 
   // Create an identity for the issuer.
-  let mut issuer: Account = Account::builder()
-    .create_identity(IdentitySetup::default())
-    .await?;
+  let mut issuer: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
 
   // Add verification method to the issuer.
   issuer
@@ -50,9 +53,7 @@ async fn main() -> Result<()> {
     .await?;
 
   // Create an identity for the holder, in this case also the subject.
-  let mut alice: Account = Account::builder()
-    .create_identity(IdentitySetup::default())
-    .await?;
+  let mut alice: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
 
   // Add verification method to the holder.
   alice
@@ -68,7 +69,6 @@ async fn main() -> Result<()> {
   // ===========================================================================
   // Step2: Issuer creates and signs the Verifiable Credential.
   // ===========================================================================
-
 
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
@@ -90,14 +90,11 @@ async fn main() -> Result<()> {
     .build()?;
 
   // Sign the Credential with the issuers default key.
-  issuer.sign(
-    "#issuerKey",
-    &mut credential,
-    ProofOptions::default(),
-  ).await?;
+  issuer
+    .sign("#issuerKey", &mut credential, ProofOptions::default())
+    .await?;
 
   println!("Credential JSON > {:#}", credential);
-
 
   // ===========================================================================
   // Step3: Issuer sends the Verifiable Credential to the holder.
@@ -106,7 +103,6 @@ async fn main() -> Result<()> {
   // The credential is then serialized to JSON and transmitted to the holder in a secure manner.
   // Note that the credential is NOT published to the IOTA Tangle. It is sent and stored off-chain.
   let credential_json: String = credential.to_json()?;
-
 
   // ===========================================================================
   // Step4: Verifier sends the holder a challenge and requests a signed Verifiable Presentation.
@@ -135,13 +131,13 @@ async fn main() -> Result<()> {
 
   // The holder signs the presentation with their private key and includes the requested challenge and an expiry
   // timestamp.
-  alice.sign(
-    "#aliceKey",
-    &mut presentation,
-    ProofOptions::new()
-      .challenge(challenge.to_string())
-      .expires(expires),
-  ).await?;
+  alice
+    .sign(
+      "#aliceKey",
+      &mut presentation,
+      ProofOptions::new().challenge(challenge.to_string()).expires(expires),
+    )
+    .await?;
 
   // ===========================================================================
   // Step6: Holder sends a verifiable presentation to the verifier.

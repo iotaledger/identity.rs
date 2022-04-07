@@ -11,17 +11,25 @@
 //!
 //! cargo run --example revoke_vc
 
-use identity::account::{Account, IdentitySetup, MethodContent};
-use identity::core::{FromJson, json, Timestamp, Url};
-use identity::credential::{Credential, CredentialBuilder, Subject};
+use identity::account::Account;
+use identity::account::IdentitySetup;
+use identity::account::MethodContent;
+use identity::core::json;
+use identity::core::FromJson;
+use identity::core::Timestamp;
+use identity::core::Url;
+use identity::credential::Credential;
+use identity::credential::CredentialBuilder;
+use identity::credential::Subject;
 use identity::crypto::ProofOptions;
 use identity::did::MethodScope;
 use identity::did::DID;
 
-use identity::iota::{CredentialValidationOptions, ResolvedIotaDocument};
+use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
+use identity::iota::ResolvedIotaDocument;
 
 use identity::iota::Resolver;
 use identity::iota_core::IotaVerificationMethod;
@@ -37,9 +45,7 @@ async fn main() -> Result<()> {
   // ===========================================================================
 
   // Create an identity for the issuer.
-  let mut issuer: Account = Account::builder()
-    .create_identity(IdentitySetup::default())
-    .await?;
+  let mut issuer: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
 
   // Add verification method to the issuer.
   issuer
@@ -66,10 +72,8 @@ async fn main() -> Result<()> {
     .subject(subject)
     .build()?;
 
-
   // Sign the Credential with the issuer's verification method.
   issuer.sign("#key-1", &mut credential, ProofOptions::default()).await?;
-
 
   // ===========================================================================
   // Revoke a Verifiable Credential.
@@ -84,10 +88,9 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
-
   // Check the verifiable credential
   let resolver: Resolver = Resolver::new().await?;
-  let resolved_issuer_doc: ResolvedIotaDocument= resolver.resolve_credential_issuer(&credential).await?;
+  let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve_credential_issuer(&credential).await?;
   let validation_result = CredentialValidator::validate(
     &credential,
     &resolved_issuer_doc,
