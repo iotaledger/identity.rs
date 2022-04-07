@@ -28,12 +28,9 @@ use identity::did::DID;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 
-
 use identity::iota::ResolvedIotaDocument;
 
 use identity::iota::Resolver;
-
-
 
 use identity::account::Result;
 mod create_did;

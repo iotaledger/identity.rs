@@ -31,7 +31,6 @@ use identity::iota::PresentationValidationOptions;
 use identity::iota::Resolver;
 use identity::iota::SubjectHolderRelationship;
 
-
 mod create_did;
 
 #[tokio::main]

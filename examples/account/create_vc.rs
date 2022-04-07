@@ -28,9 +28,6 @@ use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
 
-
-
-
 mod create_did;
 
 pub async fn create_vc() -> Result<String> {
