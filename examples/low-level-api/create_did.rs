@@ -10,8 +10,7 @@ use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   // Create a client instance to send messages to the Tangle.
   let client: Client = Client::new().await?;
 
@@ -38,6 +37,14 @@ async fn main() -> Result<()> {
     explorer.message_url(receipt.message_id())?
   );
   println!("Explore the DID Document > {}", explorer.resolver_url(document.id())?);
+
+  Ok((document, keypair, receipt))
+}
+
+#[allow(dead_code)]
+#[tokio::main]
+async fn main() -> Result<()> {
+  let _ = run().await?;
 
   Ok(())
 }

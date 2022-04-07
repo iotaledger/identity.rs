@@ -12,6 +12,7 @@ use identity::account_storage::Stronghold;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
 
+#[allow(dead_code)]
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
