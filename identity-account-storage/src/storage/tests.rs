@@ -189,6 +189,7 @@ pub async fn storage_key_generate_test(storage: Box<dyn Storage>) -> anyhow::Res
 
 #[named]
 pub async fn storage_key_delete_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  const NUM_IDENTITIES: usize = 20;
   let fragment: String = random_string();
   let network: NetworkName = Network::Mainnet.name();
 
@@ -197,9 +198,9 @@ pub async fn storage_key_delete_test(storage: Box<dyn Storage>) -> anyhow::Resul
     .await
     .context("did_create returned an error")?;
 
-  let mut locations: Vec<KeyLocation> = Vec::with_capacity(20);
+  let mut locations: Vec<KeyLocation> = Vec::with_capacity(NUM_IDENTITIES);
 
-  for _ in 0..20 {
+  for _ in 0..NUM_IDENTITIES {
     let key_fragment: String = random_string();
     let location: KeyLocation = storage
       .key_generate(&did, KeyType::Ed25519, &key_fragment)

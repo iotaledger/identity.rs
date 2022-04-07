@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(non_snake_case)]
-
 use identity::account_storage::tests;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -33,8 +31,9 @@ macro_rules! expose_to_wasm {
           tests::$test_name(Box::new(storage))
             .await
             .map_err(|err| {
-              let root_cause: &dyn std::error::Error = err.root_cause();
-              JsValue::from_str(&format!("{}: {}", err, root_cause))
+              let mut errors: Vec<String> = err.chain().map(|error| error.to_string()).collect();
+              let output: String = AsMut::<[String]>::as_mut(&mut errors).join(": ");
+              JsValue::from_str(&output)
             })
             .map(|_| JsValue::undefined())
         });

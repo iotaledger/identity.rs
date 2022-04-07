@@ -1,6 +1,5 @@
 import { stronghold } from '../stronghold';
-import { StorageTestSuite } from '../../../../wasm/node/identity_wasm.js';
-// import { StorageTestSuite } from '@iota/identity-wasm/node';
+import { StorageTestSuite } from '@iota/identity-wasm/node';
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test Stronghold Node.js examples", function () {
