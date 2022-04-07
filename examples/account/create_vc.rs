@@ -32,9 +32,7 @@ mod create_did;
 
 pub async fn create_vc() -> Result<String> {
   // Create an identity for the issuer.
-  let mut issuer: Account = Account::builder()
-    .create_identity(IdentitySetup::default())
-    .await?;
+  let mut issuer: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
 
   // Add verification method to the issuer.
   issuer
@@ -46,9 +44,7 @@ pub async fn create_vc() -> Result<String> {
     .await?;
 
   // Create an identity for the holder, in this case also the subject.
-  let alice: Account = Account::builder()
-    .create_identity(IdentitySetup::default())
-    .await?;
+  let alice: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
