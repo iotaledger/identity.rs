@@ -44,8 +44,9 @@ npm run example:account -- create_did
 |5| [signing](src/signing.ts) | Using a DID to sign arbitrary statements and validating them. |
 |6| [create_vc](src/create_vc.ts)             | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and verifies it.|
 |7| [create_vp](src/create_vp.ts)             | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verifies it.      
-|8| [multiple_identities](src/multiple_identities.ts) | How to create multiple identities from a builder and how to load existing identities into an account. |
-|9| [unchecked](src/unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
+|8| [revoke_vc](src/revoke_vc.ts)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.            
+|9| [multiple_identities](src/multiple_identities.ts) | How to create multiple identities from a builder and how to load existing identities into an account. |
+|10| [unchecked](src/unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
 ## Browser
 
 Although the examples should work in browser environment, we don't provide a browser project as for now.

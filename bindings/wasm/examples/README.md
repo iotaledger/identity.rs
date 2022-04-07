@@ -44,10 +44,10 @@ The following examples are currently available:
 |  1  | [create_did](src/create_did.js)           | Generates and publishes a DID Document, the fundamental building block for decentralized identity.                                                                                                                                         |
 |  2  | [manipulate_did](src/manipulate_did.js)   | Add verification methods and service endpoints to a DID Document and update an already existing DID Document.                                                                                                                              | |
 |  3  | [resolve_history](src/resolve_history.js) | Advanced example that performs multiple updates and demonstrates how to resolve the DID Document history to view them.                                                                            |
-|  4  | [revoke_vc](src/revoke_vc.js)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.                                                                                      |
-|  5  | [resolution](src/resolution.js)           | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
-|  6   | [key_exchange](src/key_exchange.js) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. | |
-|  7   | [private_tangle](src/private_tangle.js)   | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
+                                                                          |
+|  4  | [resolution](src/resolution.js)           | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
+|  5   | [key_exchange](src/key_exchange.js) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. | |
+|  6   | [private_tangle](src/private_tangle.js)   | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
 
 ### Browser Examples
 

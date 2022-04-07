@@ -9,7 +9,7 @@
 //! This would invalidate every Verifiable Credential signed with the same public key, therefore the
 //! issuer would have to sign every VC with a different key.
 //!
-//! cargo run --example did_history
+//! cargo run --example revoke_vc
 
 use identity::account::{Account, IdentitySetup, MethodContent};
 use identity::core::{FromJson, json, Timestamp, Url};

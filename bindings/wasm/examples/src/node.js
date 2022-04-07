@@ -1,16 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {createIdentity} from "./create_did";
-import {manipulateIdentity} from "./manipulate_did";
-import {privateTangle} from "./private_tangle";
-import {resolution} from "./resolution";
-import {createVC} from "./create_vc";
-import {createVP} from "./create_vp";
-import {revokeVC} from "./revoke_vc";
-import {CLIENT_CONFIG} from "./config";
-import {resolveHistory} from "./resolve_history";
-import {keyExchange} from "./key_exchange";
+import { createIdentity } from "./create_did";
+import { manipulateIdentity } from "./manipulate_did";
+import { privateTangle } from "./private_tangle";
+import { resolution } from "./resolution";
+import { CLIENT_CONFIG } from "./config";
+import { resolveHistory } from "./resolve_history";
+import { keyExchange } from "./key_exchange";
 
 async function main() {
     //Check if an example is mentioned
@@ -27,12 +24,6 @@ async function main() {
             return await manipulateIdentity(CLIENT_CONFIG);
         case "resolution":
             return await resolution(CLIENT_CONFIG);
-        case "create_vc":
-            return await createVC(CLIENT_CONFIG);
-        case "revoke_vc":
-            return await revokeVC(CLIENT_CONFIG);
-        case "create_vp":
-            return await createVP(CLIENT_CONFIG);
         case "key_exchange":
             return await keyExchange(CLIENT_CONFIG);
         case "private_tangle":
@@ -45,10 +36,7 @@ async function main() {
             await createIdentity(CLIENT_CONFIG);
             await manipulateIdentity(CLIENT_CONFIG);
             await resolution(CLIENT_CONFIG);
-            await createVC(CLIENT_CONFIG);
             await keyExchange(CLIENT_CONFIG);
-            await revokeVC(CLIENT_CONFIG);
-            await createVP(CLIENT_CONFIG);
             await resolveHistory(CLIENT_CONFIG);
 
             console.log(">>> End All Examples");
