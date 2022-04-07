@@ -76,4 +76,4 @@ path = "low-level-api/private_tangle.rs"
 
 [[example]]
 name = "revoke_vc"
-path = "low-level-api/revoke_vc.rs"
+path = "account/revoke_vc.rs"
