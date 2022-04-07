@@ -14,7 +14,7 @@ use identity::account::Account;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
-use identity::account_storage::Stronghold;
+
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::ToJson;
@@ -27,9 +27,9 @@ use identity::did::DID;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
-use identity::iota::Receipt;
-use identity::prelude::*;
-use std::path::PathBuf;
+
+
+
 
 mod create_did;
 

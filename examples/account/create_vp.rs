@@ -27,10 +27,10 @@ use identity::account::Result;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::FailFast;
 use identity::iota::PresentationValidationOptions;
-use identity::iota::Receipt;
+
 use identity::iota::Resolver;
 use identity::iota::SubjectHolderRelationship;
-use identity::prelude::*;
+
 
 mod create_did;
 

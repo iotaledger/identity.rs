@@ -16,24 +16,24 @@ use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::core::json;
 use identity::core::FromJson;
-use identity::core::Timestamp;
+
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::crypto::ProofOptions;
-use identity::did::MethodScope;
+
 use identity::did::DID;
 
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
-use identity::iota::ExplorerUrl;
-use identity::iota::Receipt;
+
+
 use identity::iota::ResolvedIotaDocument;
 
 use identity::iota::Resolver;
-use identity::iota_core::IotaVerificationMethod;
-use identity::prelude::*;
+
+
 
 use identity::account::Result;
 mod create_did;
