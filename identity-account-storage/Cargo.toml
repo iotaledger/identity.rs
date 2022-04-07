@@ -51,7 +51,7 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-default = ["stronghold", "send-sync-storage"]
+default = ["stronghold", "send-sync-storage", "storage-test-suite"]
 stronghold = [
   "iota_stronghold",
   "stronghold_engine",
