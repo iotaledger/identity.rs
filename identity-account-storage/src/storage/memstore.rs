@@ -255,8 +255,8 @@ mod tests {
 
   use super::MemStore;
 
-  fn test_memstore() -> Box<dyn Storage> {
-    Box::new(MemStore::new())
+  fn test_memstore() -> impl Storage {
+    MemStore::new()
   }
 
   #[tokio::test]

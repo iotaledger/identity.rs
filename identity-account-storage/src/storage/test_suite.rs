@@ -56,7 +56,7 @@ pub struct StorageTestSuite;
 
 impl StorageTestSuite {
   #[named]
-  pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_did_create_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let network: NetworkName = Network::Mainnet.name();
@@ -147,7 +147,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_key_generate_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_key_generate_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
@@ -188,7 +188,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_key_delete_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_key_delete_test(storage: impl Storage) -> anyhow::Result<()> {
     const NUM_IDENTITIES: usize = 20;
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
@@ -236,7 +236,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_did_list_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_did_list_test(storage: impl Storage) -> anyhow::Result<()> {
     const NUM_IDENTITIES: usize = 20;
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
@@ -293,7 +293,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_key_insert_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_key_insert_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
@@ -347,7 +347,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_key_sign_ed25519_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_key_sign_ed25519_test(storage: impl Storage) -> anyhow::Result<()> {
     // The following test vector is taken from [Test 2 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
     const SECRET_KEY_HEX: &str = "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb";
     const MESSAGE_HEX: &str = "72";
@@ -380,7 +380,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_key_value_store_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_key_value_store_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
@@ -460,7 +460,7 @@ impl StorageTestSuite {
   }
 
   #[named]
-  pub async fn storage_did_purge_test(storage: Box<dyn Storage>) -> anyhow::Result<()> {
+  pub async fn storage_did_purge_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
