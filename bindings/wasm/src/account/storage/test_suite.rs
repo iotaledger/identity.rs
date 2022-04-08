@@ -31,8 +31,8 @@ macro_rules! expose_to_wasm {
           StorageTestSuite::$test_name(storage)
             .await
             .map_err(|err| {
-              let mut errors: Vec<String> = err.chain().map(|error| error.to_string()).collect();
-              let output: String = AsMut::<[String]>::as_mut(&mut errors).join(": ");
+              let errors: Vec<String> = err.chain().map(|error| error.to_string()).collect();
+              let output: String = AsRef::<[String]>::as_ref(&errors).join(": ");
               JsValue::from_str(&output)
             })
             .map(|_| JsValue::undefined())
