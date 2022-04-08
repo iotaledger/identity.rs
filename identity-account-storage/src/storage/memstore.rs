@@ -251,6 +251,7 @@ impl Default for MemStore {
 #[cfg(test)]
 mod tests {
   use crate::storage::Storage;
+  use crate::storage::StorageTestSuite;
 
   use super::MemStore;
 
@@ -260,57 +261,53 @@ mod tests {
 
   #[tokio::test]
   async fn test_memstore_did_create() {
-    crate::storage::tests::storage_did_create_test(test_memstore())
+    StorageTestSuite::storage_did_create_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_generate() {
-    crate::storage::tests::storage_key_generate_test(test_memstore())
+    StorageTestSuite::storage_key_generate_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_delete() {
-    crate::storage::tests::storage_key_delete_test(test_memstore())
+    StorageTestSuite::storage_key_delete_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_did_list() {
-    crate::storage::tests::storage_did_list_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::storage_did_list_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_insert() {
-    crate::storage::tests::storage_key_insert_test(test_memstore())
+    StorageTestSuite::storage_key_insert_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_sign_ed25519() {
-    crate::storage::tests::storage_key_sign_ed25519_test(test_memstore())
+    StorageTestSuite::storage_key_sign_ed25519_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_value_store() {
-    crate::storage::tests::storage_key_value_store_test(test_memstore())
+    StorageTestSuite::storage_key_value_store_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_did_purge() {
-    crate::storage::tests::storage_did_purge_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::storage_did_purge_test(test_memstore()).await.unwrap()
   }
 }
