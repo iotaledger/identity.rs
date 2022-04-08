@@ -335,32 +335,37 @@ impl StorageTestSuite {
 
   #[named]
   pub async fn key_sign_ed25519_test(storage: impl Storage) -> anyhow::Result<()> {
-    // The following test vector is taken from [Test 2 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
-    const SECRET_KEY_HEX: &str = "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb";
-    const MESSAGE_HEX: &str = "72";
-    const SIGNATURE_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
-
-    let private_key: Vec<u8> = hex::decode(SECRET_KEY_HEX).unwrap();
-    let message: Vec<u8> = hex::decode(MESSAGE_HEX).unwrap();
+    // The following test vector is taken from Test 2 of RFC 8032
+    // https://datatracker.ietf.org/doc/html/rfc8032#section-7
+    const PRIVATE_KEY: [u8; 32] = [
+      76, 205, 8, 155, 40, 255, 150, 218, 157, 182, 195, 70, 236, 17, 78, 15, 91, 138, 49, 159, 53, 171, 166, 36, 218,
+      140, 246, 237, 79, 184, 166, 251,
+    ];
+    const MESSAGE: [u8; 1] = [114];
+    const SIGNATURE: [u8; 64] = [
+      146, 160, 9, 169, 240, 212, 202, 184, 114, 14, 130, 11, 95, 100, 37, 64, 162, 178, 123, 84, 22, 80, 63, 143, 179,
+      118, 34, 35, 235, 219, 105, 218, 8, 90, 193, 228, 62, 21, 153, 110, 69, 143, 54, 19, 208, 241, 29, 140, 56, 123,
+      46, 174, 180, 48, 42, 238, 176, 13, 41, 22, 18, 187, 12, 0,
+    ];
 
     let fragment: String = random_string();
     let network: NetworkName = Network::Mainnet.name();
 
     let (did, location): (IotaDID, KeyLocation) = storage
-      .did_create(network.clone(), &fragment, Some(PrivateKey::from(private_key)))
+      .did_create(network.clone(), &fragment, Some(PrivateKey::from(PRIVATE_KEY.to_vec())))
       .await
       .context("did_create returned an error")?;
 
     let signature: Signature = storage
-      .key_sign(&did, &location, message.clone())
+      .key_sign(&did, &location, MESSAGE.to_vec())
       .await
       .context("key_sign returned an error")?;
-    let signature_hex: String = hex::encode(signature.as_bytes());
 
     ensure_eq!(
-      &signature_hex,
-      SIGNATURE_HEX,
-      "expected signature to be `{SIGNATURE_HEX}`, was `{signature_hex}`"
+      signature.as_bytes(),
+      &SIGNATURE,
+      "expected signature to be `{SIGNATURE:?}`, was `{:?}`",
+      signature.as_bytes()
     );
 
     Ok(())

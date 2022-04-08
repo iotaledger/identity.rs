@@ -17,7 +17,6 @@ async-trait = { version = "0.1", default-features = false }
 function_name = { version = "0.2", default-features = false, optional = true }
 futures = { version = "0.3", optional = true }
 hashbrown = { version = "0.11", features = ["serde"] }
-hex = { version = "0.4", default-features = false, optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
@@ -64,4 +63,4 @@ stronghold = [
 # Enables `Send` + `Sync` bounds for the Storage trait.
 send-sync-storage = []
 # Exposes Storage `test_suite` module.
-storage-test-suite = ["anyhow", "function_name", "rand", "hex"]
+storage-test-suite = ["anyhow", "function_name", "rand"]
