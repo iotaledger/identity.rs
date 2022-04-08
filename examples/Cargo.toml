@@ -47,11 +47,11 @@ name = "create_did"
 path = "low-level-api/create_did.rs"
 
 [[example]]
-name = "create_vc"
+name = "account_create_vc"
 path = "account/create_vc.rs"
 
 [[example]]
-name = "create_vp"
+name = "account_create_vp"
 path = "account/create_vp.rs"
 
 [[example]]
@@ -75,5 +75,5 @@ name = "private_tangle"
 path = "low-level-api/private_tangle.rs"
 
 [[example]]
-name = "revoke_vc"
+name = "account_revoke_vc"
 path = "account/revoke_vc.rs"

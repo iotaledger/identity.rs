@@ -9,34 +9,25 @@
 //! This would invalidate every Verifiable Credential signed with the same public key, therefore the
 //! issuer would have to sign every VC with a different key.
 //!
-//! Note: This example uses in-memory storage for simplicity.
-//! See `create_did` example to configure Stronghold storage.
-//!
-//! cargo run --example revoke_vc
+//! cargo run --example account_revoke_vc
 
 use identity::account::Account;
+use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::core::json;
 use identity::core::FromJson;
-
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::crypto::ProofOptions;
-
 use identity::did::DID;
-
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
-
 use identity::iota::ResolvedIotaDocument;
-
 use identity::iota::Resolver;
-
 use identity::account::Result;
-mod create_did;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -44,10 +35,14 @@ async fn main() -> Result<()> {
   // Create a Verifiable Credential.
   // ===========================================================================
 
-  // Create an identity for the issuer.
-  let mut issuer: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
+  // Create an account builder with in-memory storage for simplicity.
+  // See `create_did` example to configure Stronghold storage.
+  let mut builder: AccountBuilder = Account::builder();
 
-  // Add verification method to the issuer.
+  // Create an identity for the issuer.
+  let mut issuer: Account = builder.create_identity(IdentitySetup::default()).await?;
+
+  // Add a dedicated verification method to the issuer, with which to sign credentials.
   issuer
     .update_identity()
     .create_method()
@@ -80,7 +75,7 @@ async fn main() -> Result<()> {
   // ===========================================================================
 
   // Remove the public key that signed the VC from the issuer's DID document
-  // - effectively revoking the VC as it will no longer be able to verified.
+  // This effectively revokes the VC as it will no longer be able to be verified.
   issuer
     .update_identity()
     .delete_method()
@@ -88,7 +83,7 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
-  // Check the verifiable credential
+  // Check the verifiable credential is revoked.
   let resolver: Resolver = Resolver::new().await?;
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve_credential_issuer(&credential).await?;
   let validation_result = CredentialValidator::validate(

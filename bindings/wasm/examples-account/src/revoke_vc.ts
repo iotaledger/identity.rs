@@ -23,7 +23,6 @@ import {
  Note that this example uses the "main" network, if you are writing code against the test network then most function
  calls will need to include information about the network, since this is not automatically inferred from the
  arguments in all cases currently.
-
  **/
 async function revokeVC(storage?: Storage) {
     // ===========================================================================
@@ -37,7 +36,7 @@ async function revokeVC(storage?: Storage) {
     // Create an identity for the issuer.
     let issuer = await builder.createIdentity();
 
-    // Add verification method to the issuer.
+    // Add a dedicated verification method to the issuer, with which to sign credentials.
     await issuer.createMethod({
         content: MethodContent.GenerateEd25519(),
         fragment: "key-1"
@@ -75,7 +74,7 @@ async function revokeVC(storage?: Storage) {
     })
 
     // Check the verifiable credential.
-    const resolver = await new Resolver();
+    const resolver = new Resolver();
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
         const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);

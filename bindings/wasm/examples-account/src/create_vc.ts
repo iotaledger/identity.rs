@@ -23,14 +23,13 @@ async function createVC(storage?: Storage) {
         storage,
     });
 
-
     // Create an identity for the issuer.
     let issuer = await builder.createIdentity();
 
     // Add verification method to the issuer.
     await issuer.createMethod({
         content: MethodContent.GenerateEd25519(),
-        fragment: "#newKey"
+        fragment: "#issuerKey"
     })
 
     // Create an identity for the holder, in this case also the subject.
@@ -55,7 +54,7 @@ async function createVC(storage?: Storage) {
 
     // Created a signed credential by the issuer. 
     const signedVc = await issuer.createSignedCredential(
-        "#newKey",
+        "#issuerKey",
         unsignedVc,
         ProofOptions.default(),
     );

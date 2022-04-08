@@ -5,12 +5,9 @@
 //! Documents, then creates a Verifiable Credential (vc) specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
 //!
-//! Note: This example uses in-memory storage for simplicity.
-//! See `create_did` example to configure Stronghold storage.
-//!
-//! cargo run --example create_vc
+//! cargo run --example account_create_vc
 
-use identity::account::Account;
+use identity::account::{Account, AccountBuilder};
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
@@ -28,23 +25,26 @@ use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
 
-mod create_did;
 
 pub async fn create_vc() -> Result<String> {
+  // Create an account builder with in-memory storage for simplicity.
+  // See `create_did` example to configure Stronghold storage.
+  let mut builder: AccountBuilder = Account::builder();
+
   // Create an identity for the issuer.
-  let mut issuer: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
+  let mut issuer: Account = builder.create_identity(IdentitySetup::default()).await?;
 
   // Add verification method to the issuer.
   issuer
     .update_identity()
     .create_method()
     .content(MethodContent::GenerateEd25519)
-    .fragment("newKey")
+    .fragment("issuerKey")
     .apply()
     .await?;
 
   // Create an identity for the holder, in this case also the subject.
-  let alice: Account = Account::builder().create_identity(IdentitySetup::default()).await?;
+  let alice: Account = builder.create_identity(IdentitySetup::default()).await?;
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
@@ -66,7 +66,7 @@ pub async fn create_vc() -> Result<String> {
     .build()?;
 
   // Sign the Credential with the issuer's verification method.
-  issuer.sign("#newKey", &mut credential, ProofOptions::default()).await?;
+  issuer.sign("#issuerKey", &mut credential, ProofOptions::default()).await?;
 
   println!("Credential JSON > {:#}", credential);
 
