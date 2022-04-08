@@ -149,7 +149,7 @@ export class MemStore implements Storage {
         }
     }
 
-    public async chainStateGet(did: DID): Promise<ChainState | null | undefined> {
+    public async chainStateGet(did: DID): Promise<ChainState | undefined> {
         return this._chainStates.get(did.toString());
     }
 
@@ -157,7 +157,7 @@ export class MemStore implements Storage {
         this._chainStates.set(did.toString(), chainState);
     }
 
-    public async documentGet(did: DID): Promise<Document | null | undefined> {
+    public async documentGet(did: DID): Promise<Document | undefined> {
         return this._documents.get(did.toString())
     }
 

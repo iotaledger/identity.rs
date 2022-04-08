@@ -97,14 +97,14 @@ export class Stronghold implements Storage {
         return Signature.fromJSON(napiSignature.toJSON());
     }
 
-    public async chainStateGet(did: DID): Promise<ChainState | undefined | null> {
+    public async chainStateGet(did: DID): Promise<ChainState | undefined> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiChainState: NapiChainState | undefined | null = await this.napiStronghold.chainStateGet(napiDID);
+        const napiChainState: NapiChainState | undefined = await this.napiStronghold.chainStateGet(napiDID);
 
         if (napiChainState) {
             return ChainState.fromJSON(napiChainState.toJSON())
         } else {
-            return null;
+            return undefined;
         }
     }
 
@@ -114,14 +114,14 @@ export class Stronghold implements Storage {
         return this.napiStronghold.chainStateSet(napiDID, napiChainState);
     }
 
-    public async documentGet(did: DID): Promise<Document | undefined | null> {
+    public async documentGet(did: DID): Promise<Document | undefined> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiDocument: NapiDocument | undefined | null = await this.napiStronghold.documentGet(napiDID);
+        const napiDocument: NapiDocument | undefined = await this.napiStronghold.documentGet(napiDID);
 
         if (napiDocument) {
             return Document.fromJSON(napiDocument.toJSON())
         } else {
-            return null;
+            return undefined;
         }
     }
 
