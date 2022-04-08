@@ -7,7 +7,8 @@
 //!
 //! cargo run --example account_create_vc
 
-use identity::account::{Account, AccountBuilder};
+use identity::account::Account;
+use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
@@ -24,7 +25,6 @@ use identity::did::DID;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::FailFast;
-
 
 pub async fn create_vc() -> Result<String> {
   // Create an account builder with in-memory storage for simplicity.
@@ -66,7 +66,9 @@ pub async fn create_vc() -> Result<String> {
     .build()?;
 
   // Sign the Credential with the issuer's verification method.
-  issuer.sign("#issuerKey", &mut credential, ProofOptions::default()).await?;
+  issuer
+    .sign("#issuerKey", &mut credential, ProofOptions::default())
+    .await?;
 
   println!("Credential JSON > {:#}", credential);
 

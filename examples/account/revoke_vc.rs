@@ -15,6 +15,7 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
+use identity::account::Result;
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Url;
@@ -27,7 +28,6 @@ use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
-use identity::account::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
