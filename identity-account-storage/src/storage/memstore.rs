@@ -260,8 +260,15 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_memstore_did_create() {
-    StorageTestSuite::storage_did_create_test(test_memstore())
+  async fn test_memstore_did_create_with_private_key() {
+    StorageTestSuite::storage_did_create_with_private_key_test(test_memstore())
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_did_create_generate_key() {
+    StorageTestSuite::storage_did_create_generate_key_test(test_memstore())
       .await
       .unwrap()
   }

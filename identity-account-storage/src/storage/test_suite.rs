@@ -1,15 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A test suite for the `Storage` interface.
-//!
-//! This module contains a set of tests that a correct storage implementation
-//! should pass. Note that not every edge case is tested.
-//!
-//! Tests usually rely on multiple interface methods being implemented, so they should only
-//! be run on a fully implemented version. That's why there is not a single test case for every
-//! interface method.
-
 use anyhow::Context;
 use function_name::named;
 use rand::distributions::DistString;
@@ -52,11 +43,19 @@ fn random_string() -> String {
   rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32)
 }
 
+/// A test suite for the `Storage` interface.
+///
+/// This contains a set of tests that a correct storage implementation
+/// should pass. Note that not every edge case is tested.
+///
+/// Tests usually rely on multiple interface methods being implemented, so they should only
+/// be run on a fully implemented version. That's why there is not a single test case for every
+/// interface method.
 pub struct StorageTestSuite;
 
 impl StorageTestSuite {
   #[named]
-  pub async fn storage_did_create_test(storage: impl Storage) -> anyhow::Result<()> {
+  pub async fn storage_did_create_with_private_key_test(storage: impl Storage) -> anyhow::Result<()> {
     let fragment: String = random_string();
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let network: NetworkName = Network::Mainnet.name();
@@ -110,6 +109,12 @@ impl StorageTestSuite {
       keypair.public()
     );
 
+    Ok(())
+  }
+
+  #[named]
+  pub async fn storage_did_create_generate_key_test(storage: impl Storage) -> anyhow::Result<()> {
+    let fragment: String = random_string();
     let network: NetworkName = Network::Devnet.name();
     let (did, location): (IotaDID, KeyLocation) = storage
       .did_create(network.clone(), &fragment, None)
