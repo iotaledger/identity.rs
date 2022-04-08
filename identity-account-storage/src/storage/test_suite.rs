@@ -254,7 +254,6 @@ impl StorageTestSuite {
       list.len()
     );
 
-    let mut dids: Vec<IotaDID> = Vec::with_capacity(NUM_IDENTITIES);
     for i in 0..NUM_IDENTITIES {
       let (did, _): (IotaDID, _) = storage
         .did_create(network.clone(), &fragment, None)
@@ -272,8 +271,6 @@ impl StorageTestSuite {
         expected_len,
         "expected did_list to return a list of len {expected_len}, got {list_len} elements instead"
       );
-
-      dids.push(did);
     }
 
     Ok(())
