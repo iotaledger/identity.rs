@@ -43,13 +43,9 @@ macro_rules! ensure {
 }
 
 macro_rules! ensure_eq {
-  ($left:expr, $right:expr, $($msg:expr),*) => {{
-    if $left != $right {
-      let message: String = format!($( $msg, )*);
-      let fn_name: &'static str = function_name!();
-      return Err(anyhow::Error::msg(format!("[{}]: {}", fn_name, message)));
-    }
-  };};
+  ($left:expr, $right:expr, $($msg:expr),*) => {
+    ensure!($left == $right, $($msg),*);
+  };
 }
 
 fn random_string() -> String {
