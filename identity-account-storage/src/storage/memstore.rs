@@ -261,60 +261,50 @@ mod tests {
 
   #[tokio::test]
   async fn test_memstore_did_create_with_private_key() {
-    StorageTestSuite::storage_did_create_with_private_key_test(test_memstore())
+    StorageTestSuite::did_create_private_key_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_did_create_generate_key() {
-    StorageTestSuite::storage_did_create_generate_key_test(test_memstore())
+    StorageTestSuite::did_create_generate_key_test(test_memstore())
       .await
       .unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_generate() {
-    StorageTestSuite::storage_key_generate_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::key_generate_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_delete() {
-    StorageTestSuite::storage_key_delete_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::key_delete_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_did_list() {
-    StorageTestSuite::storage_did_list_test(test_memstore()).await.unwrap()
+    StorageTestSuite::did_list_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_insert() {
-    StorageTestSuite::storage_key_insert_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::key_insert_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_sign_ed25519() {
-    StorageTestSuite::storage_key_sign_ed25519_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::key_sign_ed25519_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_key_value_store() {
-    StorageTestSuite::storage_key_value_store_test(test_memstore())
-      .await
-      .unwrap()
+    StorageTestSuite::key_value_store_test(test_memstore()).await.unwrap()
   }
 
   #[tokio::test]
   async fn test_memstore_did_purge() {
-    StorageTestSuite::storage_did_purge_test(test_memstore()).await.unwrap()
+    StorageTestSuite::did_purge_test(test_memstore()).await.unwrap()
   }
 }

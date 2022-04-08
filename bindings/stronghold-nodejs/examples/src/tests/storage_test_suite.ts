@@ -4,7 +4,8 @@ import { StorageTestSuite } from '@iota/identity-wasm/node';
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test Stronghold Node.js examples", function () {
     it("Storage Test Suite", async () => {
-        await StorageTestSuite.didCreateTest(await stronghold());
+        await StorageTestSuite.didCreateGenerateKeyTest(await stronghold());
+        await StorageTestSuite.didCreatePrivateKeyTest(await stronghold());
         await StorageTestSuite.keyGenerateTest(await stronghold());
         await StorageTestSuite.keyDeleteTest(await stronghold());
         await StorageTestSuite.keyInsertTest(await stronghold());

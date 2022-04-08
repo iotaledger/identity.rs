@@ -44,10 +44,11 @@ macro_rules! expose_to_wasm {
   };
 }
 
-expose_to_wasm!(storage_did_create_test, didCreateTest);
-expose_to_wasm!(storage_did_list_test, didListTest);
-expose_to_wasm!(storage_did_purge_test, didPurgeTest);
-expose_to_wasm!(storage_key_generate_test, keyGenerateTest);
-expose_to_wasm!(storage_key_delete_test, keyDeleteTest);
-expose_to_wasm!(storage_key_insert_test, keyInsertTest);
-expose_to_wasm!(storage_key_sign_ed25519_test, keySignEd25519Test);
+expose_to_wasm!(did_create_generate_key_test, didCreateGenerateKeyTest);
+expose_to_wasm!(did_create_private_key_test, didCreatePrivateKeyTest);
+expose_to_wasm!(did_list_test, didListTest);
+expose_to_wasm!(did_purge_test, didPurgeTest);
+expose_to_wasm!(key_generate_test, keyGenerateTest);
+expose_to_wasm!(key_delete_test, keyDeleteTest);
+expose_to_wasm!(key_insert_test, keyInsertTest);
+expose_to_wasm!(key_sign_ed25519_test, keySignEd25519Test);

@@ -8,7 +8,7 @@ import { manipulateIdentity } from "./manipulate_did";
 import { MemStore } from "./memory_storage";
 import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
-import { storageTestSuite } from "./storage_test_suite";
+import { storageTestSuite } from "./memory_storage";
 import { unchecked } from "./unchecked";
 
 async function main() {
@@ -34,8 +34,8 @@ async function main() {
             return await unchecked();
         case "multiple_identities":
             return await multipleIdentities();
-        case "storage_test_suite":
-            return await storageTestSuite(async () => new MemStore())
+        case "custom_storage":
+            return await storageTestSuite()
         default:
             throw "Unknown example name";
     }
