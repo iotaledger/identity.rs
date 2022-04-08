@@ -3,5 +3,5 @@
 
 pub use traits::WasmStorage;
 
-mod tests;
+mod test_suite;
 mod traits;
