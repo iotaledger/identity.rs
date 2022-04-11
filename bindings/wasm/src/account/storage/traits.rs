@@ -53,6 +53,7 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
+  #[wasm_bindgen(typescript_type = "Storage")]
   pub type WasmStorage;
 
   #[wasm_bindgen(method, js_name = didCreate)]
