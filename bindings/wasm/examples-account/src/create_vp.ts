@@ -172,9 +172,7 @@ async function createVP(storage?: Storage) {
     await resolver.verifyPresentation(
         presentation,
         presentationValidationOptions,
-        FailFast.FirstError,
-        undefined,
-        undefined
+        FailFast.FirstError
     );
 
     // Since no errors were thrown by `verifyPresentation` we know that the validation was successful.
