@@ -194,7 +194,7 @@ publishing to the Tangle.
     * [.createSignedCredential(fragment, credential, options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
     * [.createSignedDocument(fragment, document, options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-    * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -316,7 +316,7 @@ Signs a [Presentation](#Presentation) the key specified by `fragment`.
 
 <a name="Account+createSignedData"></a>
 
-### account.createSignedData(fragment, data, options) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.createSignedData(fragment, data, options) ⇒ <code>Promise.&lt;any&gt;</code>
 Signs arbitrary `data` with the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
