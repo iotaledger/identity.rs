@@ -8,6 +8,7 @@ use identity::iota_core::DiffMessage;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use crate::did::ArrayResolvedDocument;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
@@ -32,9 +33,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<string>")]
   pub type ArrayString;
-
-  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
-  pub type ArrayResolvedDocument;
 
   #[wasm_bindgen(typescript_type = "Array<DiffMessage>")]
   pub type ArrayDiffMessage;
