@@ -160,10 +160,7 @@ fn test_document_resolve_method() {
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from(default_method.id()).unchecked_into(),
-        None,
-      )
+      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
@@ -172,10 +169,7 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from(method_new.id()).unchecked_into(),
-        None,
-      )
+      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
@@ -198,10 +192,7 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
-        None,
-      )
+      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
@@ -262,24 +253,20 @@ fn test_document_resolve_method() {
   );
 
   // Resolve with wrong verification method relationship.
-  assert!(
-    document
-      .resolve_method(
-        &JsValue::from(default_method.id()).unchecked_into(),
-        Some(JsValue::from(WasmMethodScope::key_agreement()).unchecked_into()),
-      )
-      .unwrap()
-      .is_none()
-  );
-  assert!(
-    document
-      .resolve_method(
-        &JsValue::from(method_new.id()).unchecked_into(),
-        Some(JsValue::from(WasmMethodScope::assertion_method()).unchecked_into()),
-      )
-      .unwrap()
-      .is_none()
-  );
+  assert!(document
+    .resolve_method(
+      &JsValue::from(default_method.id()).unchecked_into(),
+      Some(JsValue::from(WasmMethodScope::key_agreement()).unchecked_into()),
+    )
+    .unwrap()
+    .is_none());
+  assert!(document
+    .resolve_method(
+      &JsValue::from(method_new.id()).unchecked_into(),
+      Some(JsValue::from(WasmMethodScope::assertion_method()).unchecked_into()),
+    )
+    .unwrap()
+    .is_none());
 }
 
 #[wasm_bindgen_test]
