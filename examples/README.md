@@ -28,9 +28,9 @@ The following examples are available for using the basic account (A high-level A
 | 4 | [account_manipulate](./account/manipulate_did.rs) | How to manipulate a DID Document by adding/removing Verification Methods and Services. |
 | 5 | [account_lazy](./account/lazy.rs) | How to take control over publishing DID updates manually, instead of the default automated behavior. |
 | 6 | [account_signing](./account/signing.rs) | Using a DID to sign arbitrary statements and validating them. |
-| 7 | [create_vc](account/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
-| 8 | [create_vp](account/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
-| 9 | [revoke_vc](account/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
+| 7 | [account_create_vc](account/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
+| 8 | [account_create_vp](account/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
+| 9 | [account_revoke_vc](account/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
 | 10 | [account_multiple](./account/multiple_identities.rs) | How to create multiple identities from a builder and how to load existing identities into an account. |
 | 11 | [account_unchecked](./account/unchecked.rs) | How to update the custom properties of a DID document directly by using the account's unchecked methods. |
 
