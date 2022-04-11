@@ -189,3 +189,9 @@ await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
 `identity.init().then(<callback>)` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
+
+## Examples in the Wild
+
+You may find it useful to see how the WASM bindings are being used in existing applications:
+
+- [Zebra IOTA Edge SDK](https://github.com/ZebraDevs/Zebra-Iota-Edge-SDK) (mobile apps using Capacitor.js + Svelte)

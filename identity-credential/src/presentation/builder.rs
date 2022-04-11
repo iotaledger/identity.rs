@@ -47,7 +47,7 @@ impl<T, U> PresentationBuilder<T, U> {
     self
   }
 
-  /// Sets the value of `id`.
+  /// Sets the unique identifier of the presentation.
   #[must_use]
   pub fn id(mut self, value: Url) -> Self {
     self.id = Some(value);

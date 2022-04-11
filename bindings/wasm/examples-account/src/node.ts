@@ -3,10 +3,12 @@
 
 import { config } from "./config";
 import { createIdentity } from "./create_did";
+import { createVC } from "./create_vc";
+import { createVP } from "./create_vp";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
-import { MemStore } from "./memory_storage";
 import { multipleIdentities } from "./multiple_identities";
+import { revokeVC } from "./revoke_vc";
 import { signing } from "./signing";
 import { storageTestSuite } from "./memory_storage";
 import { unchecked } from "./unchecked";
@@ -34,6 +36,12 @@ async function main() {
             return await unchecked();
         case "multiple_identities":
             return await multipleIdentities();
+        case "create_vc":
+            return await createVC();
+        case "create_vp":
+            return await createVP();
+        case "revoke_vc":
+            return await revokeVC();
         case "custom_storage":
             return await storageTestSuite()
         default:
