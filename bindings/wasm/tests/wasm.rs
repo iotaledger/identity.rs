@@ -162,7 +162,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from(default_method.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -174,7 +174,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from(method_new.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -188,7 +188,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -200,7 +200,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -214,7 +214,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -226,13 +226,59 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
       .id()
       .to_string(),
     method_new.id().to_string()
+  );
+
+  // Resolve with correct verification method relationship.
+  assert_eq!(
+    document
+      .resolve_method(
+        &JsValue::from(default_method.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::capability_invocation()).unchecked_into()),
+      )
+      .unwrap()
+      .unwrap()
+      .id()
+      .to_string(),
+    default_method.id().to_string()
+  );
+  assert_eq!(
+    document
+      .resolve_method(
+        &JsValue::from(method_new.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::authentication()).unchecked_into()),
+      )
+      .unwrap()
+      .unwrap()
+      .id()
+      .to_string(),
+    method_new.id().to_string()
+  );
+
+  // Resolve with wrong verification method relationship.
+  assert!(
+    document
+      .resolve_method(
+        &JsValue::from(default_method.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::key_agreement()).unchecked_into()),
+      )
+      .unwrap()
+      .is_none()
+  );
+  assert!(
+    document
+      .resolve_method(
+        &JsValue::from(method_new.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::assertion_method()).unchecked_into()),
+      )
+      .unwrap()
+      .is_none()
   );
 }
 
