@@ -47,6 +47,8 @@ npm run example:account -- create_did
 |8| [revoke_vc](src/revoke_vc.ts)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.            
 |9| [multiple_identities](src/multiple_identities.ts) | How to create multiple identities from a builder and how to load existing identities into an account. |
 |10| [unchecked](src/unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
+|11| [custom_storage](src/custom_storage.ts) | Example implementation of a custom storage and testing it with the storage test suite. |
+
 ## Browser
 
 Although the examples should work in browser environment, we don't provide a browser project as for now.

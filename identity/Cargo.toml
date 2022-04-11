@@ -44,8 +44,11 @@ stronghold = ["identity-account/stronghold", "identity-account-storage/stronghol
 # Enables support for DID Communication
 # comm = ["identity-comm"]
 
-# Enables send and sync storage
+# Enables `Send` + `Sync` bounds for the Storage trait.
 send-sync-storage = ["identity-account-storage/send-sync-storage"]
+
+# Exposes Storage `test_suite` module.
+storage-test-suite = ["identity-account-storage/storage-test-suite"]
 
 [package.metadata.docs.rs]
 # To build locally:
