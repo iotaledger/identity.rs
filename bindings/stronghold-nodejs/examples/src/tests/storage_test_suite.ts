@@ -12,7 +12,7 @@ describe("Test Stronghold Node.js", function () {
     it("keyGenerate", async () => {
         await StorageTestSuite.keyGenerateTest(await stronghold());
     });
-    it("keyGenerate", async () => {
+    it("keyDelete", async () => {
         await StorageTestSuite.keyDeleteTest(await stronghold());
     });
     it("keyInsert", async () => {

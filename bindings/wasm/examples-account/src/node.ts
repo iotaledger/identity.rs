@@ -10,7 +10,7 @@ import { manipulateIdentity } from "./manipulate_did";
 import { multipleIdentities } from "./multiple_identities";
 import { revokeVC } from "./revoke_vc";
 import { signing } from "./signing";
-import { storageTestSuite } from "./memory_storage";
+import { storageTestSuite } from "./custom_storage";
 import { unchecked } from "./unchecked";
 
 async function main() {
