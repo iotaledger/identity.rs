@@ -69,14 +69,14 @@ impl Storage for Stronghold {
 
     match private_key {
       Some(private_key) => {
-        insert_private_key(&tmp_client, private_key, &tmp_location).await?;
+        insert_private_key(&tmp_client, private_key, &tmp_location)?;
       }
       None => {
-        generate_private_key(&tmp_client, &tmp_location).await?;
+        generate_private_key(&tmp_client, &tmp_location)?;
       }
     }
 
-    let public_key: PublicKey = retrieve_public_key(&tmp_client, &tmp_location).await?;
+    let public_key: PublicKey = retrieve_public_key(&tmp_client, &tmp_location)?;
 
     let did: IotaDID = IotaDID::new_with_network(public_key.as_ref(), network)
       .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
@@ -95,7 +95,7 @@ impl Storage for Stronghold {
     let index_client: Client = self.client(&index_client_path)?;
     let index_store: Store = index_client.store();
 
-    let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
+    let mut index: BTreeSet<IotaDID> = get_index(&index_store)?;
 
     if index.contains(&did) {
       return Err(crate::Error::IdentityAlreadyExists);
@@ -103,7 +103,7 @@ impl Storage for Stronghold {
       index.insert(did.clone());
     }
 
-    set_index(&index_store, index).await?;
+    set_index(&index_store, index)?;
 
     self
       .stronghold
@@ -131,7 +131,7 @@ impl Storage for Stronghold {
     std::mem::drop(tmp_client);
 
     // Within client, move the key from the tmp location to the expected location.
-    move_key(&client, &tmp_location, &location).await?;
+    move_key(&client, &tmp_location, &location)?;
 
     self
       .stronghold
@@ -147,14 +147,14 @@ impl Storage for Stronghold {
     let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
     let index_store: Store = index_client.store();
 
-    let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
+    let mut index: BTreeSet<IotaDID> = get_index(&index_store)?;
 
     // Remove index entry if present.
     if !index.remove(did) {
       return Ok(false);
     }
 
-    set_index(&index_store, index).await?;
+    set_index(&index_store, index)?;
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
@@ -175,7 +175,7 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
     let store: Store = client.store();
 
-    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
+    let dids: BTreeSet<IotaDID> = get_index(&store)?;
 
     let has_did: bool = dids.contains(did);
 
@@ -191,7 +191,7 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
     let store: Store = client.store();
 
-    let dids: BTreeSet<IotaDID> = get_index(&store).await?;
+    let dids: BTreeSet<IotaDID> = get_index(&store)?;
 
     // Explicitly drop the lock so it's not considered unused.
     std::mem::drop(index_lock);
@@ -206,14 +206,14 @@ impl Storage for Stronghold {
 
         match key_type {
           KeyType::Ed25519 | KeyType::X25519 => {
-            generate_private_key(&client, &tmp_location).await?;
+            generate_private_key(&client, &tmp_location)?;
           }
         }
 
-        let public_key: PublicKey = retrieve_public_key(&client, &tmp_location).await?;
+        let public_key: PublicKey = retrieve_public_key(&client, &tmp_location)?;
         let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
 
-        move_key(&client, &tmp_location, &location).await?;
+        move_key(&client, &tmp_location, &location)?;
 
         Ok(location)
       })
@@ -223,14 +223,14 @@ impl Storage for Stronghold {
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
     self
       .mutate_client(did, |client| async move {
-        insert_private_key(&client, private_key, location).await
+        insert_private_key(&client, private_key, location)
       })
       .await
   }
 
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let client: Client = self.client(&ClientPath::from(did))?;
-    retrieve_public_key(&client, location).await
+    retrieve_public_key(&client, location)
   }
 
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
@@ -265,7 +265,7 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(did))?;
 
     match location.key_type {
-      KeyType::Ed25519 => sign_ed25519(&client, data, location).await,
+      KeyType::Ed25519 => sign_ed25519(&client, data, location),
       KeyType::X25519 => Err(identity_did::Error::InvalidMethodType.into()),
     }
   }
@@ -350,7 +350,7 @@ impl Drop for Stronghold {
   }
 }
 
-async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
+fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: location_key_type(location),
     output: location.into(),
@@ -364,7 +364,7 @@ async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result
   Ok(())
 }
 
-async fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
+fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
   let stronghold_location: Location = location.into();
 
   let vault: ClientVault = client.vault(stronghold_location.vault_path());
@@ -378,7 +378,7 @@ async fn insert_private_key(client: &Client, mut private_key: PrivateKey, locati
     .map_err(Into::into)
 }
 
-async fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
+fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
   match location.key_type {
     KeyType::Ed25519 | KeyType::X25519 => {
       let public_key: procedures::PublicKey = procedures::PublicKey {
@@ -395,7 +395,7 @@ async fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<
   }
 }
 
-async fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
+fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
   let procedure: procedures::Ed25519Sign = procedures::Ed25519Sign {
     private_key: location.into(),
     msg: payload,
@@ -409,7 +409,7 @@ async fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation)
 }
 
 // Moves a key from one location to another, deleting the old one.
-async fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
+fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
   let source_location: Location = source.into();
   let target_location: Location = target.into();
 
@@ -439,7 +439,7 @@ async fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -
   Ok(())
 }
 
-async fn get_index(store: &Store) -> Result<BTreeSet<IotaDID>> {
+fn get_index(store: &Store) -> Result<BTreeSet<IotaDID>> {
   let data: Option<Vec<u8>> = store
     .get(INDEX_STORE_KEY.as_bytes())
     .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
@@ -452,7 +452,7 @@ async fn get_index(store: &Store) -> Result<BTreeSet<IotaDID>> {
   Ok(index)
 }
 
-async fn set_index(store: &Store, index: BTreeSet<IotaDID>) -> Result<()> {
+fn set_index(store: &Store, index: BTreeSet<IotaDID>) -> Result<()> {
   let index_vec: Vec<u8> = index.to_json_vec()?;
 
   store
