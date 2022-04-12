@@ -16,7 +16,7 @@ use crate::error::Result;
 ///
 ///   `JWM(Content)`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Plaintext(pub(crate) String);
+pub struct Plaintext(pub String);
 
 impl Plaintext {
   pub fn pack<T: ToJson>(message: &T) -> Result<Self> {

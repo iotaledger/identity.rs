@@ -51,6 +51,7 @@ use uuid::Uuid;
 use super::actor::HandlerMap;
 use super::actor::ObjectId;
 use super::actor::ObjectMap;
+use super::actor_identity::ActorIdentity;
 
 /// An [`Actor`] builder for easy configuration and building of handler and hook functions.
 pub struct ActorBuilder {
@@ -59,6 +60,7 @@ pub struct ActorBuilder {
   config: ActorConfig,
   handler_map: HandlerMap,
   object_map: ObjectMap,
+  identity: Option<ActorIdentity>,
 }
 
 impl ActorBuilder {
@@ -67,10 +69,10 @@ impl ActorBuilder {
     Self {
       listening_addresses: vec![],
       keypair: None,
-
       config: ActorConfig::default(),
       handler_map: HashMap::new(),
       object_map: HashMap::new(),
+      identity: None,
     }
   }
 
@@ -95,6 +97,16 @@ impl ActorBuilder {
   pub fn timeout(mut self, timeout: Duration) -> Self {
     self.config.timeout = timeout;
     self
+  }
+
+  #[must_use]
+  pub fn identity(mut self, identity: ActorIdentity) -> Self {
+    self.identity = Some(identity);
+    self
+  }
+
+  pub fn set_identity(&mut self, identity: ActorIdentity) {
+    self.identity = Some(identity);
   }
 
   /// Grants low-level access to the handler map for use in bindings.
@@ -208,6 +220,7 @@ impl ActorBuilder {
       self.object_map,
       peer_id,
       self.config,
+      self.identity,
     )
     .await?;
 

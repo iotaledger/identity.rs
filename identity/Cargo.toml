@@ -15,7 +15,7 @@ description = "Tools for working with Self-sovereign Identity."
 identity-account = { version = "=0.5.0", path = "../identity-account", default-features = false, optional = true }
 identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false, optional = true }
 identity-actor = { version = "=0.5.0", path = "../identity-actor", default-features = false, optional = true }
-# identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
+identity-comm = { version = "=0.5.0", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential" }
 identity-did = { version = "=0.5.0", path = "../identity-did" }
@@ -47,7 +47,7 @@ actor = ["identity-actor"]
 actor-primitives = ["identity-actor/primitives"]
 
 # Enables support for DID Communication
-# comm = ["identity-comm"]
+comm = ["identity-comm"]
 
 # Enables send and sync storage
 send-sync-storage = ["identity-account-storage/send-sync-storage"]

@@ -30,43 +30,48 @@ use crate::error::Result;
 ///
 ///   `JWE(Plaintext | Signed)`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Encrypted(pub(crate) String);
+pub struct DidCommEncryptedMessage(pub String);
 
-impl Encrypted {
+impl DidCommEncryptedMessage {
   pub fn pack<T: ToJson>(
     message: &T,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    Plaintext::pack(message).and_then(|plaintext| Self::pack_plaintext(&plaintext, algorithm, recipients, sender))
+    Plaintext::pack(message)
+      .and_then(|plaintext| Self::pack_plaintext(&plaintext, cek_algorithm, enc_algorithm, recipients, sender))
   }
 
   pub fn pack_plaintext(
     envelope: &Plaintext,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    Self::pack_envelope(envelope, algorithm, recipients, sender)
+    Self::pack_envelope(envelope, cek_algorithm, enc_algorithm, recipients, sender)
   }
 
   pub fn pack_signed(
     envelope: &Signed,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    Self::pack_envelope(envelope, algorithm, recipients, sender)
+    Self::pack_envelope(envelope, cek_algorithm, enc_algorithm, recipients, sender)
   }
 
   fn pack_envelope<T: EnvelopeExt>(
     envelope: &T,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    let header: JweHeader = JweHeader::new(JweAlgorithm::ECDH_1PU, algorithm.into());
+    let header: JweHeader = JweHeader::new(JweAlgorithm::from(cek_algorithm), enc_algorithm.into());
 
     let encoder: Encoder<'_> = Encoder::new()
       .format(JweFormat::General)
@@ -83,22 +88,35 @@ impl Encrypted {
 
   pub fn unpack<T: FromJson>(
     &self,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipient: &PrivateKey,
     sender: &PublicKey,
   ) -> Result<T> {
+    let bytes: Vec<u8> = self.unpack_vec(cek_algorithm, enc_algorithm, recipient, sender)?;
+
+    T::from_json_slice(&bytes).map_err(Into::into)
+  }
+
+  pub fn unpack_vec(
+    &self,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
+    recipient: &PrivateKey,
+    sender: &PublicKey,
+  ) -> Result<Vec<u8>> {
     let token: Token = Decoder::new(recipient)
       .public(sender)
       .format(JweFormat::General)
-      .algorithm(JweAlgorithm::ECDH_1PU)
-      .encryption(algorithm.into())
+      .algorithm(JweAlgorithm::from(cek_algorithm))
+      .encryption(enc_algorithm.into())
       .decode(self.as_bytes())?;
 
-    T::from_json_slice(&token.1).map_err(Into::into)
+    Ok(token.1)
   }
 }
 
-impl EnvelopeExt for Encrypted {
+impl EnvelopeExt for DidCommEncryptedMessage {
   const FEXT: &'static str = "dcem";
   const MIME: &'static str = "application/didcomm-encrypted+json";
 
@@ -125,6 +143,25 @@ impl From<EncryptionAlgorithm> for JweEncryption {
     match other {
       EncryptionAlgorithm::A256GCM => Self::A256GCM,
       EncryptionAlgorithm::XC20P => Self::XC20P,
+    }
+  }
+}
+
+/// Supported algorithms for the cryptographic algorithm used to encrypt
+/// or determine the value of the CEK.
+#[derive(Clone, Copy, Debug)]
+pub enum CEKAlgorithm {
+  /// Can be used for sender-authenticated encryption.
+  ECDH_1PU_A256KW,
+  /// Can be used for anonymous encryption.
+  ECDH_ES_A256KW,
+}
+
+impl From<CEKAlgorithm> for JweAlgorithm {
+  fn from(other: CEKAlgorithm) -> Self {
+    match other {
+      CEKAlgorithm::ECDH_1PU_A256KW => JweAlgorithm::ECDH_1PU_A256KW,
+      CEKAlgorithm::ECDH_ES_A256KW => JweAlgorithm::ECDH_ES_A256KW,
     }
   }
 }

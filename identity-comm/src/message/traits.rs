@@ -5,7 +5,8 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PublicKey;
 
-use crate::envelope::Encrypted;
+use crate::envelope::CEKAlgorithm;
+use crate::envelope::DidCommEncryptedMessage;
 use crate::envelope::EncryptionAlgorithm;
 use crate::envelope::Plaintext;
 use crate::envelope::SignatureAlgorithm;
@@ -20,18 +21,20 @@ pub trait Message {
 
   fn pack_encrypted(
     &self,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
-  ) -> Result<Encrypted>;
+  ) -> Result<DidCommEncryptedMessage>;
 
   fn pack_signed_encrypted(
     &self,
     signature: SignatureAlgorithm,
+    cek_algorithm: CEKAlgorithm,
     encryption: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
-  ) -> Result<Encrypted>;
+  ) -> Result<DidCommEncryptedMessage>;
 }
 
 impl<T: ToJson> Message for T {
@@ -45,21 +48,24 @@ impl<T: ToJson> Message for T {
 
   fn pack_encrypted(
     &self,
-    algorithm: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
-  ) -> Result<Encrypted> {
-    Encrypted::pack(self, algorithm, recipients, sender)
+  ) -> Result<DidCommEncryptedMessage> {
+    DidCommEncryptedMessage::pack(self, cek_algorithm, enc_algorithm, recipients, sender)
   }
 
   fn pack_signed_encrypted(
     &self,
     signature: SignatureAlgorithm,
-    encryption: EncryptionAlgorithm,
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
-  ) -> Result<Encrypted> {
-    Self::pack_signed(self, signature, sender)
-      .and_then(|signed| Encrypted::pack_signed(&signed, encryption, recipients, sender))
+  ) -> Result<DidCommEncryptedMessage> {
+    Self::pack_signed(self, signature, sender).and_then(|signed| {
+      DidCommEncryptedMessage::pack_signed(&signed, cek_algorithm, enc_algorithm, recipients, sender)
+    })
   }
 }

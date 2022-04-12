@@ -24,6 +24,7 @@ pub struct DidCommPlaintextMessage<T> {
   pub(crate) body: T,
 }
 
+// TODO: Require T: DIDCommMessage and use DIDCommMessage::TYPE for validation.
 impl<T> DidCommPlaintextMessage<T> {
   pub(crate) fn new(id: ThreadId, type_: String, body: T) -> Self {
     DidCommPlaintextMessage {
@@ -56,5 +57,37 @@ where
 
   fn endpoint() -> &'static str {
     T::endpoint()
+  }
+}
+
+pub trait DIDCommMessage {
+  const TYPE: &'static str;
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[repr(transparent)]
+pub struct EmptyMessage(serde_json::Map<String, serde_json::Value>);
+
+impl EmptyMessage {
+  pub fn new() -> Self {
+    Self(serde_json::Map::new())
+  }
+}
+
+impl Default for EmptyMessage {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
+impl DIDCommMessage for EmptyMessage {
+  const TYPE: &'static str = "https://didcomm.org/reserved/2.0/empty";
+}
+
+impl ActorRequest<Asynchronous> for EmptyMessage {
+  type Response = ();
+
+  fn endpoint() -> &'static str {
+    "didcomm/empty"
   }
 }

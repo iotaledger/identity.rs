@@ -44,6 +44,15 @@ pub enum Error {
   AwaitTimeout(ThreadId),
   #[error("actor was shutdown")]
   Shutdown,
+  #[error("no actor identity set")]
+  IdentityMissing,
+  #[error("{location} {operation} failed during {context} due to: {error_message}")]
+  CryptError {
+    operation: CryptOperation,
+    location: ErrorLocation,
+    context: String,
+    error_message: String,
+  },
 }
 
 /// Errors that can occur on the remote actor.
@@ -67,6 +76,15 @@ pub enum RemoteSendError {
     context: String,
     error_message: String,
   },
+  #[error("no actor identity set")]
+  IdentityMissing,
+  #[error("{location} {operation} failed during {context} due to: {error_message}")]
+  CryptError {
+    operation: CryptOperation,
+    location: ErrorLocation,
+    context: String,
+    error_message: String,
+  },
 }
 
 impl From<RemoteSendError> for Error {
@@ -75,6 +93,7 @@ impl From<RemoteSendError> for Error {
       RemoteSendError::UnexpectedRequest(req) => Error::UnexpectedRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
       RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
+      RemoteSendError::IdentityMissing => Error::IdentityMissing,
       RemoteSendError::DeserializationFailure {
         location,
         context,
@@ -89,6 +108,17 @@ impl From<RemoteSendError> for Error {
         context,
         error_message,
       } => Error::SerializationFailure {
+        location,
+        context,
+        error_message,
+      },
+      RemoteSendError::CryptError {
+        operation,
+        location,
+        context,
+        error_message,
+      } => Error::CryptError {
+        operation,
         location,
         context,
         error_message,
@@ -111,5 +141,22 @@ impl std::fmt::Display for ErrorLocation {
     };
 
     write!(f, "{}", display)
+  }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub enum CryptOperation {
+  Encryption,
+  Decryption,
+}
+
+impl std::fmt::Display for CryptOperation {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let display = match self {
+      CryptOperation::Encryption => "encryption",
+      CryptOperation::Decryption => "decryption",
+    };
+
+    f.write_str(display)
   }
 }

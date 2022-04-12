@@ -10,14 +10,7 @@ use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::RequestContext;
 
-#[derive(Clone)]
-pub struct DidCommState;
-
-impl DidCommState {
-  pub async fn new() -> Self {
-    Self
-  }
-
+impl DIDCommState {
   pub async fn presentation_holder_actor_handler(
     self,
     actor: Actor,
@@ -108,6 +101,8 @@ pub async fn presentation_verifier_handler(
 
 use serde::Deserialize;
 use serde::Serialize;
+
+use super::state::DIDCommState;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest([u8; 2]);

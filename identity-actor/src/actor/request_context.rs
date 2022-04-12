@@ -5,6 +5,7 @@ use crate::Endpoint;
 
 use libp2p::PeerId;
 
+#[derive(Debug)]
 pub struct RequestContext<T> {
   pub input: T,
   pub peer: PeerId,

@@ -30,11 +30,19 @@ use crate::Synchronous;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
+use identity_comm::envelope::CEKAlgorithm;
+use identity_comm::envelope::DidCommEncryptedMessage;
+use identity_comm::envelope::EncryptionAlgorithm;
 use identity_core::common::OneOrMany;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::PublicKey;
+use identity_iota_core::did::IotaDIDUrl;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 use serde::de::DeserializeOwned;
 use uuid::Uuid;
+
+use super::actor_identity::ActorIdentity;
 
 pub(crate) struct ActorState {
   pub(crate) handlers: HandlerMap,
@@ -43,6 +51,28 @@ pub(crate) struct ActorState {
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
+  pub(crate) did_comm_config: DIDCommConfig,
+  pub(crate) identity: Option<ActorIdentity>,
+}
+
+#[derive(Debug)]
+pub(crate) struct DIDCommKeyConfig {
+  /// The public key of the peer to used for encryption.
+  pub(crate) peer_key: PublicKey,
+  /// The url identifying the key of the local identity to use for encryption.
+  pub(crate) own_key: IotaDIDUrl,
+}
+
+impl DIDCommKeyConfig {
+  pub fn new(own_key: IotaDIDUrl, peer_key: PublicKey) -> Self {
+    Self { own_key, peer_key }
+  }
+}
+
+#[derive(Debug)]
+pub(crate) struct DIDCommConfig {
+  // TODO: String should be KeyLocation?
+  pub(crate) peer_keys: DashMap<PeerId, DIDCommKeyConfig>,
 }
 
 /// The [`Actor`] can be used to send and receive messages to and from other actors.
@@ -70,6 +100,7 @@ impl Actor {
     objects: ObjectMap,
     peer_id: PeerId,
     config: ActorConfig,
+    identity: Option<ActorIdentity>,
   ) -> Result<Self> {
     let actor = Self {
       commander,
@@ -80,6 +111,10 @@ impl Actor {
         threads_sender: DashMap::new(),
         peer_id,
         config,
+        did_comm_config: DIDCommConfig {
+          peer_keys: DashMap::new(),
+        },
+        identity,
       }),
     };
 
@@ -88,6 +123,10 @@ impl Actor {
 
   fn handlers(&self) -> &HandlerMap {
     &self.state.as_ref().handlers
+  }
+
+  pub(crate) fn try_identity(&self) -> Result<&ActorIdentity> {
+    self.state.identity.as_ref().ok_or(crate::Error::IdentityMissing)
   }
 
   /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
@@ -110,7 +149,7 @@ impl Actor {
   }
 
   #[inline(always)]
-  pub(crate) fn handle_request<STR: InvocationStrategy>(mut self, request: InboundRequest) {
+  pub(crate) fn handle_request<STR: InvocationStrategy>(mut self, mut request: InboundRequest) {
     cfg_if::cfg_if! {
       if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
         let spawn = tokio::spawn;
@@ -120,6 +159,10 @@ impl Actor {
     }
 
     let _ = spawn(async move {
+      if let Some(tuple) = self.state.did_comm_config.peer_keys.get(&request.peer_id) {
+        request = self.decrypt_request(tuple.value(), request).expect("TODO");
+      }
+
       if self.state.handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
 
@@ -248,15 +291,22 @@ impl Actor {
 
     self.create_thread_channels(thread_id);
 
-    let dcpm_vec = serde_json::to_vec(&dcpm).map_err(|err| Error::SerializationFailure {
-      location: ErrorLocation::Local,
-      context: "send message".to_owned(),
-      error_message: err.to_string(),
-    })?;
+    log::trace!("sending message {dcpm:#?}");
 
-    let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
+    let message: String = if let Some(key) = self.state.did_comm_config.peer_keys.get(&peer) {
+      self.encrypt_request(key.value(), &dcpm)?
+    } else {
+      let plaintext = identity_comm::envelope::Plaintext::pack(&dcpm).map_err(|err| Error::SerializationFailure {
+        location: ErrorLocation::Local,
+        context: "send message".to_owned(),
+        error_message: err.to_string(),
+      })?;
+      plaintext.0
+    };
 
-    log::debug!("Sending `{}` message", name);
+    let message = RequestMessage::new(name, request_mode, message.into_bytes())?;
+
+    log::debug!("Sending `{name}` message");
 
     let response = self.commander.send_request(peer, message).await?;
 
@@ -404,6 +454,71 @@ impl Actor {
     // is not awaited through await_message, so it does not need to follow that logic.
     self.state.threads_sender.insert(thread_id.to_owned(), sender);
     self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
+  }
+
+  fn encrypt_request<T: serde::Serialize>(
+    &self,
+    key_config: &DIDCommKeyConfig,
+    dcpm: &DidCommPlaintextMessage<T>,
+  ) -> Result<String> {
+    let keypair: &KeyPair = self.try_identity()?.keypairs.get(&key_config.own_key).expect("TODO");
+
+    let recipients: &[PublicKey] = &[key_config.peer_key.to_owned()];
+
+    let dcem: DidCommEncryptedMessage = DidCommEncryptedMessage::pack(
+      dcpm,
+      CEKAlgorithm::ECDH_ES_A256KW,
+      EncryptionAlgorithm::A256GCM,
+      recipients,
+      keypair,
+    )
+    .map_err(|err| crate::Error::CryptError {
+      operation: super::errors::CryptOperation::Encryption,
+      location: ErrorLocation::Local,
+      context: "request encryption".to_owned(),
+      error_message: err.to_string(),
+    })?;
+
+    Ok(dcem.0)
+  }
+
+  fn decrypt_request(
+    &self,
+    key_config: &DIDCommKeyConfig,
+    mut request: InboundRequest,
+  ) -> StdResult<InboundRequest, RemoteSendError> {
+    let own_key = self
+      .try_identity()
+      .map_err(|_| RemoteSendError::IdentityMissing)?
+      .keypairs
+      .get(&key_config.own_key)
+      .expect("TODO");
+
+    let message: String = String::from_utf8(request.input).map_err(|err| RemoteSendError::CryptError {
+      operation: super::errors::CryptOperation::Decryption,
+      location: ErrorLocation::Remote,
+      context: "decoding request bytes into utf8 string".to_owned(),
+      error_message: err.to_string(),
+    })?;
+
+    let encrypted = DidCommEncryptedMessage(message);
+    let unpacked: Vec<u8> = encrypted
+      .unpack_vec(
+        CEKAlgorithm::ECDH_ES_A256KW,
+        EncryptionAlgorithm::A256GCM,
+        own_key.private(),
+        &key_config.peer_key,
+      )
+      .map_err(|_err| RemoteSendError::CryptError {
+        operation: super::errors::CryptOperation::Decryption,
+        location: ErrorLocation::Remote,
+        context: "request decryption".to_owned(),
+        // TODO: (?) omitted (for now) in an abundance of caution not to leak any information
+        error_message: "".to_owned(),
+      })?;
+
+    request.input = unpacked;
+    Ok(request)
   }
 
   /// Call the hook identified by the given `endpoint` with some `input`.

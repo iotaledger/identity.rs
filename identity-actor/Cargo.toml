@@ -16,7 +16,9 @@ cfg-if = { version = "1.0", default-features = false }
 dashmap = { version = "5.1", default-features = false }
 futures = { version = "0.3", default-features = false }
 identity-account = { path = "../identity-account", default-features = false, features = ["send-sync-storage"], optional = true }
+identity-comm = { path = "../identity-comm", default-features = false }
 identity-core = { path = "../identity-core", default-features = false }
+identity-did = { path = "../identity-did", default-features = false }
 identity-iota = { path = "../identity-iota", default-features = false }
 identity-iota-core = { path = "../identity-iota-core", default-features = false }
 libp2p = { version = "0.43", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }

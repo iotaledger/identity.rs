@@ -4,6 +4,7 @@
 #[allow(clippy::module_inception)]
 mod actor;
 mod actor_builder;
+mod actor_identity;
 pub(crate) mod actor_request;
 mod config;
 mod endpoint;
@@ -14,9 +15,11 @@ mod request_context;
 pub(crate) mod traits;
 
 pub use actor::Actor;
+pub(crate) use actor::DIDCommKeyConfig;
 pub(crate) use actor::HandlerObject;
 pub use actor_builder::ActorBuilder;
 pub use actor_builder::HandlerBuilder;
+pub use actor_identity::ActorIdentity;
 pub use actor_request::ActorRequest;
 pub use actor_request::Asynchronous;
 pub use actor_request::RequestMode;
