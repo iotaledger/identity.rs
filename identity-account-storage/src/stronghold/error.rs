@@ -55,6 +55,7 @@ pub enum ClientOperation {
   Load,
   Persist,
   Sync,
+  Purge,
 }
 
 impl Display for ClientOperation {
@@ -63,6 +64,7 @@ impl Display for ClientOperation {
       ClientOperation::Load => f.write_str("load"),
       ClientOperation::Persist => f.write_str("persist"),
       ClientOperation::Sync => f.write_str("sync"),
+      ClientOperation::Purge => f.write_str("purge"),
     }
   }
 }

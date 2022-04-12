@@ -161,7 +161,13 @@ impl Storage for Stronghold {
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
-    // TODO: Delete the client from stronghold, there should be a function for that?
+    // Delete the client from the snapshot, which removes the store and the vaults (= all keys).
+    let client_path: ClientPath = ClientPath::from(did);
+    let client: Client = self.client(&client_path).await?;
+    self
+      .stronghold
+      .purge_client(client)
+      .map_err(|err| StrongholdError::Client(ClientOperation::Purge, client_path, err))?;
 
     Ok(true)
   }

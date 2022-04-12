@@ -75,6 +75,7 @@ impl Stronghold {
     })
   }
 
+  // TODO: Does not need to be async.
   pub(crate) async fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
     match self.stronghold.load_client(client_path.as_ref()) {
       Ok(client) => Ok(client),
