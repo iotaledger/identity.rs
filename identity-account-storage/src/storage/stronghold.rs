@@ -92,7 +92,7 @@ impl Storage for Stronghold {
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
 
     let index_client_path: ClientPath = ClientPath::from(INDEX_CLIENT_PATH);
-    let index_client: Client = self.client(&index_client_path).await?;
+    let index_client: Client = self.client(&index_client_path)?;
     let index_store: Store = index_client.store();
 
     let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
@@ -119,7 +119,7 @@ impl Storage for Stronghold {
     let location: KeyLocation = KeyLocation::new(KeyType::Ed25519, fragment.to_owned(), public_key.as_ref());
 
     let client_path: ClientPath = ClientPath::from(&did);
-    let client: Client = self.client(&client_path).await?;
+    let client: Client = self.client(&client_path)?;
 
     // Sync the vault identified by VAULT_PATH from the tmp client to the client identified by the DID.
     let mut sync_config: SyncClientsConfig = SyncClientsConfig::new(MergePolicy::Replace);
@@ -144,7 +144,7 @@ impl Storage for Stronghold {
   async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
     let index_store: Store = index_client.store();
 
     let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
@@ -160,7 +160,7 @@ impl Storage for Stronghold {
 
     // Delete the client from the snapshot, which removes the store and the vaults (= all keys).
     let client_path: ClientPath = ClientPath::from(did);
-    let client: Client = self.client(&client_path).await?;
+    let client: Client = self.client(&client_path)?;
     self
       .stronghold
       .purge_client(client)
@@ -172,7 +172,7 @@ impl Storage for Stronghold {
   async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
     let store: Store = client.store();
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
@@ -188,7 +188,7 @@ impl Storage for Stronghold {
   async fn did_list(&self) -> Result<Vec<IotaDID>> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
+    let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
     let store: Store = client.store();
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
@@ -229,7 +229,7 @@ impl Storage for Stronghold {
   }
 
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
-    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let client: Client = self.client(&ClientPath::from(did))?;
     retrieve_public_key(&client, location).await
   }
 
@@ -262,7 +262,7 @@ impl Storage for Stronghold {
   }
 
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
-    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let client: Client = self.client(&ClientPath::from(did))?;
 
     match location.key_type {
       KeyType::Ed25519 => sign_ed25519(&client, data, location).await,
@@ -271,7 +271,7 @@ impl Storage for Stronghold {
   }
 
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
-    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let client: Client = self.client(&ClientPath::from(did))?;
 
     client
       .record_exists(location.into())
@@ -280,7 +280,7 @@ impl Storage for Stronghold {
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
-    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let client: Client = self.client(&ClientPath::from(did))?;
     let store: Store = client.store();
 
     let data: Option<Vec<u8>> = store
@@ -308,7 +308,7 @@ impl Storage for Stronghold {
   }
 
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
-    let client: Client = self.client(&ClientPath::from(did)).await?;
+    let client: Client = self.client(&ClientPath::from(did))?;
     let store: Store = client.store();
 
     let data: Option<Vec<u8>> = store

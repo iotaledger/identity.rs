@@ -75,8 +75,7 @@ impl Stronghold {
     })
   }
 
-  // TODO: Does not need to be async.
-  pub(crate) async fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
+  pub(crate) fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
     match self.stronghold.load_client(client_path.as_ref()) {
       Ok(client) => Ok(client),
       Err(ClientError::ClientDataNotPresent) => self
@@ -87,13 +86,14 @@ impl Stronghold {
     }
   }
 
+  // TODO: does closure need to be async?
   pub(crate) async fn mutate_client<FUN, OUT, FUT>(&self, did: &IotaDID, f: FUN) -> Result<OUT>
   where
     FUN: FnOnce(Client) -> FUT,
     FUT: Future<Output = Result<OUT>>,
   {
     let client_path: ClientPath = ClientPath::from(did);
-    let client: Client = self.client(&client_path).await?;
+    let client: Client = self.client(&client_path)?;
 
     // Don't need to write client if this operation fails, hence ?.
     let output: OUT = f(client).await?;
