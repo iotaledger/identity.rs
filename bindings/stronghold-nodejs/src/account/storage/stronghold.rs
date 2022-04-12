@@ -3,6 +3,7 @@
 
 use identity_account_storage::storage::Storage;
 use identity_account_storage::storage::Stronghold;
+use identity_account_storage::types::EncryptedData;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
@@ -13,6 +14,7 @@ use napi::Result;
 use napi_derive::napi;
 
 use crate::account::identity::NapiDidLocation;
+use crate::account::types::NapiEncryptedData;
 use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
 use crate::account::NapiDocument;
@@ -173,6 +175,56 @@ impl NapiStronghold {
   #[napi]
   pub async fn key_exists(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
+  }
+
+  /// Performs Diffie-Hellman key exchange using the private key of the first party with the
+  /// public key of the second party, resulting in a shared secret.
+  ///
+  /// Returns the location where the shared secred was stored
+  #[napi]
+  pub async fn key_exchange(
+    &self,
+    did: &NapiDID,
+    location: &NapiKeyLocation,
+    public_key: Vec<u32>,
+    fragment: String,
+  ) -> Result<NapiKeyLocation> {
+    let public_key: PublicKey = public_key.try_into_bytes()?.into();
+    let location: KeyLocation = self
+      .0
+      .key_exchange(&did.0, &location.0, public_key, &fragment)
+      .await
+      .napi_result()?;
+    Ok(NapiKeyLocation(location))
+  }
+
+  /// Encrypts the given `data` using the key at the specified `location`.
+  #[napi]
+  pub async fn encrypt_data(
+    &self,
+    did: &NapiDID,
+    location: &NapiKeyLocation,
+    data: Vec<u32>,
+  ) -> Result<NapiEncryptedData> {
+    let data: Vec<u8> = data.try_into_bytes()?;
+    let encrypted_data: EncryptedData = self.0.encrypt_data(&did.0, &location.0, data).await.napi_result()?;
+    Ok(NapiEncryptedData(encrypted_data))
+  }
+
+  /// Decrypts the given `data` using the key at the specified `location`.
+  #[napi]
+  pub async fn decrypt_data(
+    &self,
+    did: &NapiDID,
+    location: &NapiKeyLocation,
+    data: &NapiEncryptedData,
+  ) -> Result<Vec<u32>> {
+    let data: Vec<u8> = self
+      .0
+      .decrypt_data(&did.0, &location.0, data.0.clone())
+      .await
+      .napi_result()?;
+    Ok(data.into_iter().map(u32::from).collect())
   }
 
   /// Returns the chain state of the identity specified by `did`.

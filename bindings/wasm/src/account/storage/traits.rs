@@ -5,6 +5,7 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use identity::account_storage::ChainState;
+use identity::account_storage::EncryptedData;
 use identity::account_storage::Error as AccountStorageError;
 use identity::account_storage::KeyLocation;
 use identity::account_storage::Result as AccountStorageResult;
@@ -24,6 +25,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
+use crate::account::types::WasmEncryptedData;
 use crate::account::types::WasmKeyLocation;
 use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
@@ -49,6 +51,10 @@ extern "C" {
   pub type PromiseArrayDID;
   #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
   pub type PromiseDIDKeyLocation;
+  #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
+  pub type PromiseEncryptedData;
+  #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
+  pub type PromiseData;
 }
 
 #[wasm_bindgen]
@@ -82,6 +88,28 @@ extern "C" {
   pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method, js_name = keyExists)]
   pub fn key_exists(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseBool;
+  #[wasm_bindgen(method, js_name = keyExchange)]
+  pub fn key_exchange(
+    this: &WasmStorage,
+    did: WasmDID,
+    location: WasmKeyLocation,
+    public_key: Uint8Array,
+    fragment: String,
+  ) -> PromiseKeyLocation;
+  #[wasm_bindgen(method, js_name = encryptData)]
+  pub fn encrypt_data(
+    this: &WasmStorage,
+    did: WasmDID,
+    location: WasmKeyLocation,
+    data: Vec<u8>,
+  ) -> PromiseEncryptedData;
+  #[wasm_bindgen(method, js_name = decryptData)]
+  pub fn decrypt_data(
+    this: &WasmStorage,
+    did: WasmDID,
+    location: WasmKeyLocation,
+    data: WasmEncryptedData,
+  ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = chainStateGet)]
   pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
   #[wasm_bindgen(method, js_name = chainStateSet)]
@@ -212,6 +240,56 @@ impl Storage for WasmStorage {
     result.into()
   }
 
+  async fn key_exchange(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    public_key: PublicKey,
+    fragment: &str,
+  ) -> AccountStorageResult<KeyLocation> {
+    let promise: Promise = Promise::resolve(&self.key_exchange(
+      did.clone().into(),
+      location.clone().into(),
+      public_key.as_ref().into(),
+      fragment.to_owned(),
+    ));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let location: KeyLocation = result
+      .account_err()?
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(location)
+  }
+
+  async fn encrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: Vec<u8>,
+  ) -> AccountStorageResult<EncryptedData> {
+    let promise: Promise =
+      Promise::resolve(&self.encrypt_data(did.clone().into(), location.clone().into(), data.into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let encrypted_data: EncryptedData = result
+      .account_err()?
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(encrypted_data)
+  }
+
+  async fn decrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: EncryptedData,
+  ) -> AccountStorageResult<Vec<u8>> {
+    let promise: Promise =
+      Promise::resolve(&self.decrypt_data(did.clone().into(), location.clone().into(), data.into()));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let data: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
+    Ok(data)
+  }
+
   async fn chain_state_get(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
     let promise: Promise = Promise::resolve(&self.chain_state_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -329,6 +407,18 @@ interface Storage {
 
   /** Returns `true` if a key exists at the specified `location`. */
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+
+  /** Performs Diffie-Hellman key exchange using the private key of the first party with the
+   * public key of the second party, resulting in a shared secret.
+   * 
+   * Returns the location where the shared secred was stored. */
+  keyExchange: (did: DID, keyLocation: KeyLocation, publicKey: Uint8Array, fragment: string) => Promise<KeyLocation>;
+
+  /** Encrypts the given `data` using the key at the specified `location`. */
+  encryptData: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<EncryptedData>;
+
+  /** Decrypts the given `data` using the key at the specified `location`. */
+  decryptData: (did: DID, keyLocation: KeyLocation, data: EncryptedData) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined | null>;

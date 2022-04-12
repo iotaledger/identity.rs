@@ -30,6 +30,7 @@ The following examples are available for using the basic account (A high-level A
 | 6 | [account_signing](./account/signing.rs) | Using a DID to sign arbitrary statements and validating them. |
 | 7 | [account_multiple](./account/multiple_identities.rs) | How to create multiple identities from a builder and how to load existing identities into an account. |
 | 8 | [account_unchecked](./account/unchecked.rs) | How to update the custom properties of a DID document directly by using the account's unchecked methods. |
+| 9 | [account_key_exchange](./account/key_exchange.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
 
 The following examples are available for using the low-level APIs, which provides more flexibility at the cost of complexity:
 

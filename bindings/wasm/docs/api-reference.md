@@ -49,6 +49,10 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
+<dt><a href="#EncryptedData">EncryptedData</a></dt>
+<dd></dd>
+<dt><a href="#EncryptionKey">EncryptionKey</a></dt>
+<dd></dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -182,8 +186,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -194,37 +199,52 @@ publishing to the Tangle.
     * [.createSignedCredential(fragment, credential, options)](#Account+createSignedCredential) ⇒ [<code>Promise.&lt;Credential&gt;</code>](#Credential)
     * [.createSignedDocument(fragment, document, options)](#Account+createSignedDocument) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
     * [.createSignedPresentation(fragment, presentation, options)](#Account+createSignedPresentation) ⇒ [<code>Promise.&lt;Presentation&gt;</code>](#Presentation)
-    * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.encryptData(fragment, encryption_key, data)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(fragment, encryption_key, data)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
-<a name="Account+deleteService"></a>
+<a name="Account+attachMethodRelationships"></a>
 
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
 
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -316,7 +336,7 @@ Signs a [Presentation](#Presentation) the key specified by `fragment`.
 
 <a name="Account+createSignedData"></a>
 
-### account.createSignedData(fragment, data, options) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.createSignedData(fragment, data, options) ⇒ <code>Promise.&lt;any&gt;</code>
 Signs arbitrary `data` with the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -353,6 +373,32 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+encryptData"></a>
+
+### account.encryptData(fragment, encryption_key, data) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+Encrypts the given `data` using the key specified by `fragment`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
+| data | <code>Uint8Array</code> | 
+
+<a name="Account+decryptData"></a>
+
+### account.decryptData(fragment, encryption_key, data) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+Decrypts the given `data` using the key specified by `fragment`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
+| data | [<code>EncryptedData</code>](#EncryptedData) | 
+
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -363,6 +409,28 @@ Deletes a verification method if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -385,42 +453,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -2219,6 +2251,81 @@ to canonicalize JSON messages.
 | message | <code>Uint8Array</code> | 
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
+
+<a name="EncryptedData"></a>
+
+## EncryptedData
+**Kind**: global class  
+
+* [EncryptedData](#EncryptedData)
+    * _instance_
+        * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+
+<a name="EncryptedData+toJSON"></a>
+
+### encryptedData.toJSON() ⇒ <code>any</code>
+Serializes `EncryptedData` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData.fromJSON"></a>
+
+### EncryptedData.fromJSON(json_value) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+Deserializes `EncryptedData` from a JSON object.
+
+**Kind**: static method of [<code>EncryptedData</code>](#EncryptedData)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="EncryptionKey"></a>
+
+## EncryptionKey
+**Kind**: global class  
+
+* [EncryptionKey](#EncryptionKey)
+    * _instance_
+        * [.toJSON()](#EncryptionKey+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.ed25519()](#EncryptionKey.ed25519) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+        * [.x25519(public_key)](#EncryptionKey.x25519) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+        * [.fromJSON(json_value)](#EncryptionKey.fromJSON) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+
+<a name="EncryptionKey+toJSON"></a>
+
+### encryptionKey.toJSON() ⇒ <code>any</code>
+Serializes `EncryptionKey` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptionKey</code>](#EncryptionKey)  
+<a name="EncryptionKey.ed25519"></a>
+
+### EncryptionKey.ed25519() ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+Generates an Ed25519 `EncryptionKey`.
+
+**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
+<a name="EncryptionKey.x25519"></a>
+
+### EncryptionKey.x25519(public_key) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+Generates an X25519 `EncryptionKey`.
+
+**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
+
+| Param | Type |
+| --- | --- |
+| public_key | <code>Uint8Array</code> | 
+
+<a name="EncryptionKey.fromJSON"></a>
+
+### EncryptionKey.fromJSON(json_value) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+Deserializes `EncryptionKey` from a JSON object.
+
+**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
 
 <a name="ExplorerUrl"></a>
 

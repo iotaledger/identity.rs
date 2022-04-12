@@ -1,5 +1,5 @@
-import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiDocument, NapiKeyType, NapiDidLocation } from '../napi-dist/napi';
-import { DID, KeyLocation, Signature, ChainState, Storage, KeyType, Document } from "@iota/identity-wasm/node";
+import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiDocument, NapiKeyType, NapiDidLocation, NapiEncryptedData } from '../napi-dist/napi';
+import { DID, KeyLocation, Signature, ChainState, Storage, KeyType, Document, EncryptedData } from "@iota/identity-wasm/node";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
@@ -95,6 +95,28 @@ export class Stronghold implements Storage {
         const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         const napiSignature = await this.napiStronghold.keySign(napiDID, napiKeyLocation, Array.from(data));
         return Signature.fromJSON(napiSignature.toJSON());
+    }
+
+    public async keyExchange(did: DID, keyLocation: KeyLocation, publicKey: Uint8Array, fragment: string): Promise<KeyLocation> {
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const secretLocation = await this.napiStronghold.keyExchange(napiDID, napiKeyLocation, Array.from(publicKey), fragment);
+        return KeyLocation.fromJSON(secretLocation.toJSON());
+    }
+
+    public async encryptData(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<EncryptedData> {
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const napiEncryptedData = await this.napiStronghold.encryptData(napiDID, napiKeyLocation, Array.from(data));
+        return EncryptedData.fromJSON(napiEncryptedData.toJSON());
+    }
+
+    public async decryptData(did: DID, keyLocation: KeyLocation, data: EncryptedData): Promise<Uint8Array> {
+        const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
+        const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
+        const napiEncryptedData = NapiEncryptedData.fromJSON(data.toJSON());
+        const decryptedData = await this.napiStronghold.decryptData(napiDID, napiKeyLocation, napiEncryptedData);
+        return Uint8Array.from(decryptedData);
     }
 
     public async chainStateGet(did: DID): Promise<ChainState | undefined | null> {

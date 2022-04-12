@@ -44,6 +44,7 @@ npm run example:account -- create_did
 |4| [signing](src/signing.ts) | Using a DID to sign arbitrary statements and validating them. |
 |7| [multiple_identities](src/multiple_identities.ts) | How to create multiple identities from a builder and how to load existing identities into an account. |
 |6| [unchecked](src/unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
+|8| [key_exchange](src/key_exchange.ts) |   Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange by encrypting and decrypting data with a shared key. |
 ## Browser
 
 Although the examples should work in browser environment, we don't provide a browser project as for now.
