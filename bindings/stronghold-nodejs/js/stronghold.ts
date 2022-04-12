@@ -97,10 +97,15 @@ export class Stronghold implements Storage {
         return Signature.fromJSON(napiSignature.toJSON());
     }
 
-    public async chainStateGet(did: DID): Promise<ChainState | undefined | null> {
+    public async chainStateGet(did: DID): Promise<ChainState | undefined> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiChainState: NapiChainState = await this.napiStronghold.chainStateGet(napiDID);
-        return ChainState.fromJSON(napiChainState.toJSON())
+        const napiChainState: NapiChainState | undefined = await this.napiStronghold.chainStateGet(napiDID);
+
+        if (napiChainState) {
+            return ChainState.fromJSON(napiChainState.toJSON())
+        } else {
+            return undefined;
+        }
     }
 
     public async chainStateSet(did: DID, chainState: ChainState): Promise<void> {
@@ -109,10 +114,15 @@ export class Stronghold implements Storage {
         return this.napiStronghold.chainStateSet(napiDID, napiChainState);
     }
 
-    public async documentGet(did: DID): Promise<Document | undefined | null> {
+    public async documentGet(did: DID): Promise<Document | undefined> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiDocument: NapiDocument = await this.napiStronghold.documentGet(napiDID);
-        return Document.fromJSON(napiDocument.toJSON())
+        const napiDocument: NapiDocument | undefined = await this.napiStronghold.documentGet(napiDID);
+
+        if (napiDocument) {
+            return Document.fromJSON(napiDocument.toJSON())
+        } else {
+            return undefined;
+        }
     }
 
     public async documentSet(did: DID, document: Document): Promise<void> {

@@ -83,3 +83,9 @@ impl WasmPresentation {
 }
 
 impl_wasm_clone!(WasmPresentation, Presentation);
+
+impl From<Presentation> for WasmPresentation {
+  fn from(presentation: Presentation) -> WasmPresentation {
+    Self(presentation)
+  }
+}

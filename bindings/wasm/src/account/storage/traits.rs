@@ -39,9 +39,9 @@ extern "C" {
   pub type PromiseSignature;
   #[wasm_bindgen(typescript_type = "Promise<boolean>")]
   pub type PromiseBool;
-  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined | null>")]
+  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined>")]
   pub type PromiseOptionChainState;
-  #[wasm_bindgen(typescript_type = "Promise<Document | undefined | null>")]
+  #[wasm_bindgen(typescript_type = "Promise<Document | undefined>")]
   pub type PromiseOptionDocument;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
@@ -53,6 +53,7 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
+  #[wasm_bindgen(typescript_type = "Storage")]
   pub type WasmStorage;
 
   #[wasm_bindgen(method, js_name = didCreate)]
@@ -259,7 +260,29 @@ impl Storage for WasmStorage {
 
 #[wasm_bindgen(typescript_custom_section)]
 const STORAGE: &'static str = r#"
-/** All methods an object must implement to be used as an account storage. */
+/** An interface for Account storage implementations.
+
+The `Storage` interface is used for secure key operations, such as key generation and signing,
+as well as key-value like storage of data structures, such as DID documents.
+
+# Identifiers
+
+Implementations of this interface are expected to uniquely identify keys through the
+combination of DID _and_ `KeyLocation`.
+
+An implementation recommendation is to use the DID as a partition key. Everything related to a DID
+can be stored in a partition identified by that DID. Keys belonging to a DID can then be identified
+by `KeyLocation`s in that partition.
+
+# DID List
+
+The storage is expected to maintain a list of stored DIDs. DIDs created with `did_create` should be
+inserted into the list, and removed when calling `did_purge`.
+Other operations on the list are `did_exists` and `did_list`.
+
+# Implementation example
+
+See the `MemStore` example for a test implementation. */
 interface Storage {
   /** Creates a new identity for the given `network`.
 
@@ -309,13 +332,13 @@ interface Storage {
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
   /** Returns the chain state of the identity specified by `did`. */
-  chainStateGet: (did: DID) => Promise<ChainState | undefined | null>;
+  chainStateGet: (did: DID) => Promise<ChainState | undefined>;
 
   /** Set the chain state of the identity specified by `did`. */
   chainStateSet: (did: DID, chainState: ChainState) => Promise<void>;
 
   /** Returns the document of the identity specified by `did`. */
-  documentGet: (did: DID) => Promise<Document | undefined | null>;
+  documentGet: (did: DID) => Promise<Document | undefined>;
 
   /** Sets a new state for the identity specified by `did`. */
   documentSet: (did: DID, document: Document) => Promise<void>;

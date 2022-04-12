@@ -5,12 +5,12 @@ mod memstore;
 #[cfg(feature = "stronghold")]
 mod stronghold;
 #[cfg(feature = "storage-test-suite")]
-pub(crate) mod test_util;
-#[cfg(feature = "storage-test-suite")]
-pub mod tests;
+mod test_suite;
 mod traits;
 
 pub use self::memstore::*;
 pub use self::traits::*;
 #[cfg(feature = "stronghold")]
 pub use crate::stronghold::wrapper::Stronghold;
+#[cfg(feature = "storage-test-suite")]
+pub use test_suite::StorageTestSuite;

@@ -70,7 +70,7 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-default = ["stronghold", "send-sync-storage"]
+default = ["stronghold", "send-sync-storage", "storage-test-suite"]
 stronghold = [
   "iota_stronghold",
   "stronghold_engine",
@@ -82,5 +82,7 @@ stronghold = [
   "once_cell",
   "rand",
 ]
+# Enables `Send` + `Sync` bounds for the Storage trait.
 send-sync-storage = []
-storage-test-suite = ["anyhow", "function_name", "getrandom"]
+# Exposes Storage `test_suite` module.
+storage-test-suite = ["anyhow", "function_name", "rand"]
