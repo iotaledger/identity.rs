@@ -24,6 +24,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
+use crate::types::EncryptedData;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
@@ -200,6 +201,24 @@ impl Storage for MemStore {
         return Err(identity_did::Error::InvalidMethodType.into());
       }
     }
+  }
+
+  async fn key_exchange(
+    &self,
+    _did: &IotaDID,
+    _location: &KeyLocation,
+    _public_key: PublicKey,
+    _fragment: &str,
+  ) -> Result<KeyLocation> {
+    unimplemented!();
+  }
+
+  async fn encrypt_data(&self, _did: &IotaDID, _location: &KeyLocation, _data: Vec<u8>) -> Result<EncryptedData> {
+    unimplemented!();
+  }
+
+  async fn decrypt_data(&self, _did: &IotaDID, _location: &KeyLocation, _data: EncryptedData) -> Result<Vec<u8>> {
+    unimplemented!();
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {

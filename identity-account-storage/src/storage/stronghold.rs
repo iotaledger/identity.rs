@@ -6,6 +6,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::traits::Aead;
 use futures::executor;
 use iota_stronghold::procedures;
 use iota_stronghold::Location;
@@ -23,10 +25,12 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
 
+use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
@@ -37,6 +41,7 @@ use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::Vault;
+use crate::types::EncryptedData;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
@@ -273,6 +278,37 @@ impl Storage for Stronghold {
     self.vault(did).exists(location.into()).await.map_err(Into::into)
   }
 
+  async fn key_exchange(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    public_key: PublicKey,
+    fragment: &str,
+  ) -> Result<KeyLocation> {
+    let shared_key: KeyLocation = KeyLocation::new(
+      KeyType::X25519,
+      fragment.to_owned(),
+      self.key_public(did, location).await?.as_ref(),
+    );
+    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+      .as_ref()
+      .try_into()
+      .map_err(|_| Error::InvalidPublicKey(format!("expected type [u8; {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+    let vault: Vault<'_> = self.vault(did);
+    diffie_hellman(&vault, location, public_key, &shared_key).await?;
+    Ok(shared_key)
+  }
+
+  async fn encrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<EncryptedData> {
+    let vault: Vault<'_> = self.vault(did);
+    aead_encrypt(&vault, location, data).await
+  }
+
+  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
+    let vault: Vault<'_> = self.vault(did);
+    aead_decrypt(&vault, location, data).await
+  }
+
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(ClientPath::from(did));
@@ -363,6 +399,45 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   };
   let signature: [u8; 64] = vault.execute(procedure).await?;
   Ok(Signature::new(signature.into()))
+}
+
+async fn diffie_hellman(
+  vault: &Vault<'_>,
+  private_key: &KeyLocation,
+  public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
+  shared_key: &KeyLocation,
+) -> Result<()> {
+  let diffie_hellman: procedures::X25519DiffieHellman = procedures::X25519DiffieHellman {
+    public_key,
+    private_key: private_key.into(),
+    shared_key: shared_key.into(),
+    hint: default_hint(),
+  };
+  vault.execute(diffie_hellman).await.map_err(Into::into)
+}
+
+async fn aead_encrypt(vault: &Vault<'_>, location: &KeyLocation, plaintext: Vec<u8>) -> Result<EncryptedData> {
+  let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
+    cipher: procedures::AeadCipher::Aes256Gcm,
+    associated_data: Vec::new(),
+    plaintext,
+    nonce: [0; Aes256Gcm::NONCE_LENGTH].to_vec(),
+    key: location.into(),
+  };
+  let mut data = vault.execute(aead_encrypt).await?;
+  Ok(EncryptedData::new(data.drain(..Aes256Gcm::TAG_LENGTH).collect(), data))
+}
+
+async fn aead_decrypt(vault: &Vault<'_>, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
+  let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
+    cipher: procedures::AeadCipher::Aes256Gcm,
+    key: location.into(),
+    ciphertext: data.cypher_text().to_vec(),
+    associated_data: Vec::new(),
+    tag: data.tag().to_vec(),
+    nonce: [0; Aes256Gcm::NONCE_LENGTH].to_vec(),
+  };
+  vault.execute(aead_decrypt).await.map_err(Into::into)
 }
 
 // Moves a key from one location to another, deleting the old one.

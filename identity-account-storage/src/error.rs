@@ -29,6 +29,10 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
+  /// Caused by providing bytes that cannot be used as a public key of the
+  /// [`KeyType`][identity_core::crypto::KeyType].
+  #[error("Invalid Public Key: {0}")]
+  InvalidPublicKey(String),
   /// Caused by attempting to find a key in storage that does not exist.
   #[error("key not found")]
   KeyNotFound,

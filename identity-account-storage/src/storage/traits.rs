@@ -14,6 +14,7 @@ use identity_iota_core::tangle::NetworkName;
 
 use crate::error::Result;
 use crate::identity::ChainState;
+use crate::types::EncryptedData;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -117,6 +118,24 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Returns `true` if a key exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
+
+  /// Performs Diffie-Hellman key exchange using the private key of the first party with the
+  /// public key of the second party, resulting in a shared secret.
+  ///
+  /// Returns the location where the shared secred was stored
+  async fn key_exchange(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    public_key: PublicKey,
+    fragment: &str,
+  ) -> Result<KeyLocation>;
+
+  /// Encrypts the given `data` using the key at the specified `location`.
+  async fn encrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<EncryptedData>;
+
+  /// Decrypts the given `data` using the key at the specified `location`.
+  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>>;
 
   /// Returns the chain state of the identity specified by `did`.
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>>;

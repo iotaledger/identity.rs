@@ -7,12 +7,13 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use identity_account_storage::crypto::RemoteEd25519;
-use identity_account_storage::crypto::RemoteKey;
 use serde::Serialize;
 
+use identity_account_storage::crypto::RemoteEd25519;
+use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
+use identity_account_storage::types::EncryptedData;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
@@ -32,6 +33,7 @@ use identity_iota_core::tangle::MessageIdExt;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
+use crate::types::EncryptionKey;
 use crate::types::IdentitySetup;
 use crate::types::IdentityUpdater;
 use crate::updates::create_identity;
@@ -301,6 +303,42 @@ where
     self.increment_actions();
     self.store_state().await?;
     Ok(())
+  }
+
+  /// Encrypts the given `data` using the key specified by `fragment`.
+  pub async fn encrypt_data(
+    &self,
+    fragment: &str,
+    encryption_key: &EncryptionKey,
+    data: &[u8],
+  ) -> Result<EncryptedData> {
+    let location: KeyLocation = encryption_key
+      .key_location(fragment, self.did(), self.document(), self.storage())
+      .await?;
+    self
+      .storage()
+      .as_ref()
+      .encrypt_data(self.did(), &location, data.to_vec())
+      .await
+      .map_err(Into::into)
+  }
+
+  /// Decrypts the given `data` using the key specified by `fragment`.
+  pub async fn decrypt_data(
+    &self,
+    fragment: &str,
+    encryption_key: &EncryptionKey,
+    data: EncryptedData,
+  ) -> Result<Vec<u8>> {
+    let location: KeyLocation = encryption_key
+      .key_location(fragment, self.did(), self.document(), self.storage())
+      .await?;
+    self
+      .storage()
+      .as_ref()
+      .decrypt_data(self.did(), &location, data)
+      .await
+      .map_err(Into::into)
   }
 
   // ===========================================================================
