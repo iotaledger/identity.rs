@@ -56,14 +56,10 @@ impl Stronghold {
 
     let snapshot_path: SnapshotPath = if path.exists() {
       let snapshot_path = SnapshotPath::from_path(path);
-      println!("Attempting to load snapshot from {snapshot_path:?}");
 
-      // TODO: Load the snapshot as a side effect, without caring about the client.
-      // Stronghold will add a non-client-loading version with another update.
-      match stronghold.load_client_from_snapshot(b"", &key_provider, &snapshot_path) {
-        Ok(_) | Err(ClientError::ClientDataNotPresent) => {}
-        Err(err) => return Err(StrongholdError::Snapshot(SnapshotOperation::Read, snapshot_path.clone(), err).into()),
-      }
+      stronghold
+        .load_snapshot(&key_provider, &snapshot_path)
+        .map_err(|err| StrongholdError::Snapshot(SnapshotOperation::Read, snapshot_path.clone(), err))?;
 
       snapshot_path
     } else {
