@@ -51,11 +51,8 @@ static CHAIN_STATE_CLIENT_PATH: &str = "$chain_state";
 static DOCUMENT_CLIENT_PATH: &str = "$document";
 static VAULT_PATH: &[u8; 6] = b"$vault";
 
-// #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
-// #[cfg_attr(feature = "send-sync-storage", async_trait)]
-
-// TODO: Temporarily do not require future to be send due to lack of Send-Futures in current Stronghold.
-#[async_trait(?Send)]
+#[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
+#[cfg_attr(feature = "send-sync-storage", async_trait)]
 impl Storage for Stronghold {
   async fn did_create(
     &self,
