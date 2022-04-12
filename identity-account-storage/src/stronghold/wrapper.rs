@@ -60,10 +60,7 @@ impl Stronghold {
 
       // TODO: Load the snapshot as a side effect, without caring about the client.
       // Stronghold will add a non-client-loading version with another update.
-      match stronghold
-        .load_client_from_snapshot(b"", &key_provider, &snapshot_path)
-        .await
-      {
+      match stronghold.load_client_from_snapshot(b"", &key_provider, &snapshot_path) {
         Ok(_) | Err(ClientError::ClientDataNotPresent) => {}
         Err(err) => return Err(StrongholdError::Snapshot(SnapshotOperation::Read, snapshot_path.clone(), err).into()),
       }
@@ -83,12 +80,11 @@ impl Stronghold {
   }
 
   pub(crate) async fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
-    match self.stronghold.load_client(client_path.as_ref()).await {
+    match self.stronghold.load_client(client_path.as_ref()) {
       Ok(client) => Ok(client),
       Err(ClientError::ClientDataNotPresent) => self
         .stronghold
         .create_client(client_path.as_ref())
-        .await
         .map_err(|err| StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
       Err(err) => Err(StrongholdError::Client(ClientOperation::Load, client_path.clone(), err)),
     }
@@ -108,17 +104,16 @@ impl Stronghold {
     self
       .stronghold
       .write_client(client_path.as_ref())
-      .await
       .map_err(|err| StrongholdError::Client(ClientOperation::Persist, client_path.clone(), err))?;
 
     Ok(output)
   }
 
+  // TODO: Does not need to be async as of right now, but it should!
   pub(crate) async fn persist_snapshot(&self) -> StrongholdResult<()> {
     self
       .stronghold
       .commit(&self.snapshot_path, &self.key_provider)
-      .await
       .map_err(|err| StrongholdError::Snapshot(SnapshotOperation::Write, self.snapshot_path.clone(), err))
   }
 }
@@ -126,6 +121,12 @@ impl Stronghold {
 impl std::fmt::Debug for Stronghold {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     // TODO: Include stronghold type(s) once they implement Debug.
-    f.debug_struct("Stronghold").field("dropsave", &self.dropsave).finish()
+    f.debug_struct("Stronghold")
+      //.field("stronghold", &self.stronghold)
+      .field("snapshot_path", &self.snapshot_path)
+      //.field("key_provider", &self.key_provider)
+      .field("index_lock", &self.index_lock)
+      .field("dropsave", &self.dropsave)
+      .finish()
   }
 }

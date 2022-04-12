@@ -39,14 +39,14 @@ features = ["hmac", "pbkdf", "sha", "std"]
 [dependencies.iota_stronghold]
 package = "iota_stronghold_new"
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "8da39fcad07303b6a2d14de56c2a9a6574864bca"
+rev = "a9ee54f5379f712aa1b8187fee331f5c8999dc93"
 optional = true
 
 # TODO: Remove once `RecordHint` is no longer required.
 [dependencies.stronghold_engine]
 package = "stronghold_engine"
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "8da39fcad07303b6a2d14de56c2a9a6574864bca"
+rev = "a9ee54f5379f712aa1b8187fee331f5c8999dc93"
 optional = true
 
 [dependencies.iota_stronghold_old]

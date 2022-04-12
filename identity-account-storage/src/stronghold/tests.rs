@@ -6,7 +6,6 @@ use identity_core::crypto::KeyType;
 use identity_iota_core::did::IotaDID;
 use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
-use iota_stronghold::Location;
 
 use crate::storage::test_util::random_did;
 use crate::storage::test_util::random_key_location;
@@ -36,7 +35,7 @@ async fn test_mutate_client_persists_client_into_snapshot() {
 
   stronghold
     .mutate_client(&did, |client| async move {
-      let vault: ClientVault = client.vault(Location::generic(b"vault".to_vec(), Vec::new()));
+      let vault: ClientVault = client.vault(b"vault");
 
       vault
         .write_secret(location.into(), keypair.private().as_ref().to_vec())
@@ -48,14 +47,14 @@ async fn test_mutate_client_persists_client_into_snapshot() {
     .unwrap();
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).await.unwrap();
-  assert!(client.record_exists(location.into()).await.unwrap());
+  assert!(client.record_exists(location.into()).unwrap());
 
   stronghold.persist_snapshot().await.unwrap();
 
   let stronghold: Stronghold = Stronghold::new(&path, password, None).await.unwrap();
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).await.unwrap();
-  assert!(client.record_exists(location.into()).await.unwrap());
+  assert!(client.record_exists(location.into()).unwrap());
 }
 
 #[tokio::test]

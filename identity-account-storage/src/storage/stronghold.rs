@@ -13,7 +13,6 @@ use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
 use iota_stronghold::Location;
 use iota_stronghold::Store;
-use iota_stronghold::StoreGuard;
 use rand::distributions::DistString;
 use rand::rngs::OsRng;
 use rand::Rng;
@@ -97,7 +96,7 @@ impl Storage for Stronghold {
 
     let index_client_path: ClientPath = ClientPath::from(INDEX_CLIENT_PATH);
     let index_client: Client = self.client(&index_client_path).await?;
-    let index_store: Store = index_client.store().await;
+    let index_store: Store = index_client.store();
 
     let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
 
@@ -112,7 +111,6 @@ impl Storage for Stronghold {
     self
       .stronghold
       .write_client(index_client_path.as_ref())
-      .await
       .map_err(|err| StrongholdError::Client(ClientOperation::Persist, index_client_path, err))?;
 
     // Explicitly drop the lock so it's not considered unused.
@@ -141,7 +139,6 @@ impl Storage for Stronghold {
     self
       .stronghold
       .write_client(client_path.as_ref())
-      .await
       .map_err(|err| StrongholdError::Client(ClientOperation::Persist, client_path.clone(), err))?;
 
     Ok((did, location))
@@ -151,7 +148,7 @@ impl Storage for Stronghold {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
     let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
-    let index_store: Store = index_client.store().await;
+    let index_store: Store = index_client.store();
 
     let mut index: BTreeSet<IotaDID> = get_index(&index_store).await?;
 
@@ -173,7 +170,7 @@ impl Storage for Stronghold {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
     let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
-    let store: Store = client.store().await;
+    let store: Store = client.store();
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
@@ -189,7 +186,7 @@ impl Storage for Stronghold {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
     let client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH)).await?;
-    let store: Store = client.store().await;
+    let store: Store = client.store();
 
     let dids: BTreeSet<IotaDID> = get_index(&store).await?;
 
@@ -241,7 +238,6 @@ impl Storage for Stronghold {
 
         let exists: bool = client
           .record_exists(location.into())
-          .await
           .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
           .map_err(crate::Error::from)?;
 
@@ -254,7 +250,6 @@ impl Storage for Stronghold {
             location: location.into(),
             should_gc: true,
           })
-          .await
           .map_err(|err| StrongholdError::Procedure(type_name::<procedures::RevokeData>(), vec![location.clone()], err))
           .map_err(crate::Error::from)?;
 
@@ -277,22 +272,21 @@ impl Storage for Stronghold {
 
     client
       .record_exists(location.into())
-      .await
       .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
       .map_err(Into::into)
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
     let client: Client = self.client(&ClientPath::from(did)).await?;
-    let store: Store = client.store().await;
+    let store: Store = client.store();
 
-    let data: StoreGuard<'_> = store
-      .get(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec())
+    let data: Option<Vec<u8>> = store
+      .get(CHAIN_STATE_CLIENT_PATH.as_bytes())
       .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
 
-    match data.deref() {
+    match data {
       None => return Ok(None),
-      Some(data) => Ok(Some(ChainState::from_json_slice(data)?)),
+      Some(data) => Ok(Some(ChainState::from_json_slice(&data)?)),
     }
   }
 
@@ -301,7 +295,7 @@ impl Storage for Stronghold {
 
     self
       .mutate_client(did, |client| async move {
-        let store: Store = client.store().await;
+        let store: Store = client.store();
 
         store
           .insert(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec(), json, None)
@@ -312,15 +306,15 @@ impl Storage for Stronghold {
 
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
     let client: Client = self.client(&ClientPath::from(did)).await?;
-    let store: Store = client.store().await;
+    let store: Store = client.store();
 
-    let data: StoreGuard<'_> = store
-      .get(DOCUMENT_CLIENT_PATH.as_bytes().to_vec())
+    let data: Option<Vec<u8>> = store
+      .get(DOCUMENT_CLIENT_PATH.as_bytes())
       .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
 
-    match data.deref() {
+    match data {
       None => return Ok(None),
-      Some(data) => Ok(Some(IotaDocument::from_json_slice(data)?)),
+      Some(data) => Ok(Some(IotaDocument::from_json_slice(&data)?)),
     }
   }
 
@@ -329,7 +323,7 @@ impl Storage for Stronghold {
 
     self
       .mutate_client(did, |client| async move {
-        let store: Store = client.store().await;
+        let store: Store = client.store();
 
         store
           .insert(DOCUMENT_CLIENT_PATH.as_bytes().to_vec(), json, None)
@@ -362,7 +356,6 @@ async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result
 
   client
     .execute_procedure(generate_key)
-    .await
     .map_err(|err| StrongholdError::Procedure(type_name::<procedures::GenerateKey>(), vec![location.clone()], err))?;
 
   Ok(())
@@ -371,8 +364,7 @@ async fn generate_private_key(client: &Client, location: &KeyLocation) -> Result
 async fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
   let stronghold_location: Location = location.into();
 
-  // TODO: Hopefully this is fixed. Client::vault should only require a vault_path.
-  let vault: ClientVault = client.vault(stronghold_location.clone());
+  let vault: ClientVault = client.vault(stronghold_location.vault_path());
 
   let private_key_vec: Vec<u8> = private_key.as_ref().to_vec();
   private_key.zeroize();
@@ -393,7 +385,6 @@ async fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<
 
       let public = client
         .execute_procedure(public_key)
-        .await
         .map_err(|err| StrongholdError::Procedure(type_name::<procedures::PublicKey>(), vec![location.clone()], err))?;
 
       Ok(public.to_vec().into())
@@ -409,7 +400,6 @@ async fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation)
 
   let signature: [u8; 64] = client
     .execute_procedure(procedure)
-    .await
     .map_err(|err| StrongholdError::Procedure(type_name::<procedures::Ed25519Sign>(), vec![location.clone()], err))?;
 
   Ok(Signature::new(signature.into()))
@@ -426,7 +416,7 @@ async fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -
     hint: default_hint(),
   };
 
-  client.execute_procedure(copy_record).await.map_err(|err| {
+  client.execute_procedure(copy_record).map_err(|err| {
     StrongholdError::Procedure(
       type_name::<procedures::CopyRecord>(),
       vec![source.clone(), target.clone()],
@@ -441,19 +431,18 @@ async fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -
 
   client
     .execute_procedure(revoke_data)
-    .await
     .map_err(|err| StrongholdError::Procedure(type_name::<procedures::RevokeData>(), vec![source.clone()], err))?;
 
   Ok(())
 }
 
 async fn get_index(store: &Store) -> Result<BTreeSet<IotaDID>> {
-  let data: StoreGuard<'_> = store
-    .get(INDEX_STORE_KEY.as_bytes().to_vec())
+  let data: Option<Vec<u8>> = store
+    .get(INDEX_STORE_KEY.as_bytes())
     .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
 
-  let index: BTreeSet<IotaDID> = match data.deref() {
-    Some(index_vec) => BTreeSet::<IotaDID>::from_json_slice(index_vec)?,
+  let index: BTreeSet<IotaDID> = match data {
+    Some(index_vec) => BTreeSet::<IotaDID>::from_json_slice(&index_vec)?,
     None => BTreeSet::new(),
   };
 
