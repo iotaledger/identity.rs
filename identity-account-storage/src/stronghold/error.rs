@@ -17,19 +17,19 @@ pub(crate) type ProcedureName = &'static str;
 /// Caused by errors from the [`iota_stronghold`] crate.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum StrongholdError {
-  #[error("failed to `{0}` stronghold client `{1}` due to: {2}")]
+  #[error("failed to `{0}` stronghold client `{1}`")]
   Client(ClientOperation, ClientPath, #[source] ClientError),
-  #[error("store `{0}` operation failed: {1}")]
+  #[error("store `{0}` operation failed")]
   Store(StoreOperation, #[source] ClientError),
-  #[error("vault operation `{0}` failed: {1}")]
+  #[error("vault operation `{0}` failed")]
   Vault(VaultOperation, #[source] ClientError),
-  #[error("procedure `{0}` operating on locations {1:?} failed: {2}")]
+  #[error("procedure `{0}` operating on locations {1:?} failed")]
   Procedure(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
   // TODO: SnapshotPath should impl Display.
-  #[error("snapshot operation `{0}` on path `{1:?}` failed: {2}")]
+  #[error("snapshot operation `{0}` on path `{1:?}` failed")]
   Snapshot(SnapshotOperation, SnapshotPath, #[source] ClientError),
-  // TODO: Make #[source] and use {0} when Error trait is impl'd for inner MemoryError.
-  #[error("failed to load password into key provider due to: {0:?}")]
+  // TODO: Make #[source] when Error trait is impl'd for inner MemoryError.
+  #[error("failed to load password into key provider")]
   Memory(stronghold_engine::new_runtime::MemoryError),
 }
 
