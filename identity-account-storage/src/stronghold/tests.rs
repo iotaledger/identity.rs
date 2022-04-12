@@ -34,7 +34,7 @@ async fn test_mutate_client_persists_client_into_snapshot() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
 
   stronghold
-    .mutate_client(&did, |client| async move {
+    .mutate_client(&did, |client| {
       let vault: ClientVault = client.vault(b"vault");
 
       vault
@@ -43,7 +43,6 @@ async fn test_mutate_client_persists_client_into_snapshot() {
 
       Ok(())
     })
-    .await
     .unwrap();
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();

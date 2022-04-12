@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::future::Future;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -87,16 +86,15 @@ impl Stronghold {
   }
 
   // TODO: does closure need to be async?
-  pub(crate) async fn mutate_client<FUN, OUT, FUT>(&self, did: &IotaDID, f: FUN) -> Result<OUT>
+  pub(crate) fn mutate_client<FUN, OUT>(&self, did: &IotaDID, f: FUN) -> Result<OUT>
   where
-    FUN: FnOnce(Client) -> FUT,
-    FUT: Future<Output = Result<OUT>>,
+    FUN: FnOnce(Client) -> Result<OUT>,
   {
     let client_path: ClientPath = ClientPath::from(did);
     let client: Client = self.client(&client_path)?;
 
     // Don't need to write client if this operation fails, hence ?.
-    let output: OUT = f(client).await?;
+    let output: OUT = f(client)?;
 
     self
       .stronghold

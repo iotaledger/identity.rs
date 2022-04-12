@@ -200,32 +200,26 @@ impl Storage for Stronghold {
   }
 
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
-    self
-      .mutate_client(did, |client| async move {
-        let tmp_location: KeyLocation = random_location(key_type);
+    self.mutate_client(did, |client| {
+      let tmp_location: KeyLocation = random_location(key_type);
 
-        match key_type {
-          KeyType::Ed25519 | KeyType::X25519 => {
-            generate_private_key(&client, &tmp_location)?;
-          }
+      match key_type {
+        KeyType::Ed25519 | KeyType::X25519 => {
+          generate_private_key(&client, &tmp_location)?;
         }
+      }
 
-        let public_key: PublicKey = retrieve_public_key(&client, &tmp_location)?;
-        let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
+      let public_key: PublicKey = retrieve_public_key(&client, &tmp_location)?;
+      let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), public_key.as_ref());
 
-        move_key(&client, &tmp_location, &location)?;
+      move_key(&client, &tmp_location, &location)?;
 
-        Ok(location)
-      })
-      .await
+      Ok(location)
+    })
   }
 
   async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<()> {
-    self
-      .mutate_client(did, |client| async move {
-        insert_private_key(&client, private_key, location)
-      })
-      .await
+    self.mutate_client(did, |client| insert_private_key(&client, private_key, location))
   }
 
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
@@ -234,31 +228,29 @@ impl Storage for Stronghold {
   }
 
   async fn key_delete(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
-    self
-      .mutate_client(did, |client| async move {
-        // Technically there is a race condition here between existence check and removal.
-        // However, the RevokeData procedure does not return an error if the record doesn't exist, so it's fine.
+    self.mutate_client(did, |client| {
+      // Technically there is a race condition here between existence check and removal.
+      // However, the RevokeData procedure does not return an error if the record doesn't exist, so it's fine.
 
-        let exists: bool = client
-          .record_exists(location.into())
-          .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
-          .map_err(crate::Error::from)?;
+      let exists: bool = client
+        .record_exists(location.into())
+        .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
+        .map_err(crate::Error::from)?;
 
-        if !exists {
-          return Ok(exists);
-        }
+      if !exists {
+        return Ok(exists);
+      }
 
-        client
-          .execute_procedure(procedures::RevokeData {
-            location: location.into(),
-            should_gc: true,
-          })
-          .map_err(|err| StrongholdError::Procedure(type_name::<procedures::RevokeData>(), vec![location.clone()], err))
-          .map_err(crate::Error::from)?;
+      client
+        .execute_procedure(procedures::RevokeData {
+          location: location.into(),
+          should_gc: true,
+        })
+        .map_err(|err| StrongholdError::Procedure(type_name::<procedures::RevokeData>(), vec![location.clone()], err))
+        .map_err(crate::Error::from)?;
 
-        Ok(exists)
-      })
-      .await
+      Ok(exists)
+    })
   }
 
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
@@ -296,15 +288,13 @@ impl Storage for Stronghold {
   async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
-    self
-      .mutate_client(did, |client| async move {
-        let store: Store = client.store();
+    self.mutate_client(did, |client| {
+      let store: Store = client.store();
 
-        store
-          .insert(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec(), json, None)
-          .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
-      })
-      .await
+      store
+        .insert(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec(), json, None)
+        .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
+    })
   }
 
   async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
@@ -324,15 +314,13 @@ impl Storage for Stronghold {
   async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
     let json: Vec<u8> = document.to_json_vec()?;
 
-    self
-      .mutate_client(did, |client| async move {
-        let store: Store = client.store();
+    self.mutate_client(did, |client| {
+      let store: Store = client.store();
 
-        store
-          .insert(DOCUMENT_CLIENT_PATH.as_bytes().to_vec(), json, None)
-          .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
-      })
-      .await
+      store
+        .insert(DOCUMENT_CLIENT_PATH.as_bytes().to_vec(), json, None)
+        .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
+    })
   }
 
   async fn flush_changes(&self) -> Result<()> {
