@@ -248,17 +248,18 @@ impl Storage for MemStore {
     let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
     let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
     // Encrypts the given data
+    let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
     let mut cipher_text: Vec<u8> = vec![0; data.len()];
     let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
     Aes256Gcm::try_encrypt(
       key_pair.private().as_ref(),
-      [0; Aes256Gcm::NONCE_LENGTH].as_ref(),
+      nonce,
       associated_data.as_ref(),
       data.as_ref(),
       &mut cipher_text,
       &mut tag,
     )?;
-    Ok(EncryptedData::new(tag, cipher_text))
+    Ok(EncryptedData::new(nonce.to_vec(), tag, cipher_text))
   }
 
   async fn decrypt_data(
@@ -276,7 +277,7 @@ impl Storage for MemStore {
     let mut plaintext = vec![0; data.cypher_text().len()];
     Aes256Gcm::try_decrypt(
       key_pair.private().as_ref(),
-      [0; Aes256Gcm::NONCE_LENGTH].as_ref(),
+      data.nonce(),
       associated_data.as_ref(),
       &mut plaintext,
       data.cypher_text(),

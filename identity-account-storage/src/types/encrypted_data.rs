@@ -7,13 +7,18 @@ use serde::Serialize;
 /// The structure returned after encrypting data
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct EncryptedData {
+  nonce: Vec<u8>,
   tag: Vec<u8>,
   cypher_text: Vec<u8>,
 }
 
 impl EncryptedData {
-  pub fn new(tag: Vec<u8>, cypher_text: Vec<u8>) -> Self {
-    Self { tag, cypher_text }
+  pub fn new(nonce: Vec<u8>, tag: Vec<u8>, cypher_text: Vec<u8>) -> Self {
+    Self {
+      nonce,
+      tag,
+      cypher_text,
+    }
   }
 
   pub fn cypher_text(&self) -> &[u8] {
@@ -22,5 +27,9 @@ impl EncryptedData {
 
   pub fn tag(&self) -> &[u8] {
     &self.tag
+  }
+
+  pub fn nonce(&self) -> &[u8] {
+    &self.nonce
   }
 }

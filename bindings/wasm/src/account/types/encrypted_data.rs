@@ -13,6 +13,12 @@ pub struct WasmEncryptedData(pub(crate) EncryptedData);
 
 #[wasm_bindgen(js_class = EncryptedData)]
 impl WasmEncryptedData {
+  /// Returns a copy of the nonce
+  #[wasm_bindgen(js_name = nonce)]
+  pub fn nonce(&self) -> Vec<u8> {
+    self.0.nonce().to_vec()
+  }
+
   /// Returns a copy of the cipher text
   #[wasm_bindgen(js_name = cipherText)]
   pub fn cypher_text(&self) -> Vec<u8> {

@@ -434,15 +434,20 @@ async fn aead_encrypt(
   plaintext: Vec<u8>,
   associated_data: Vec<u8>,
 ) -> Result<EncryptedData> {
+  let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
   let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
     cipher: procedures::AeadCipher::Aes256Gcm,
     associated_data,
     plaintext,
-    nonce: [0; Aes256Gcm::NONCE_LENGTH].to_vec(),
+    nonce: nonce.to_vec(),
     key: location.into(),
   };
   let mut data = vault.execute(aead_encrypt).await?;
-  Ok(EncryptedData::new(data.drain(..Aes256Gcm::TAG_LENGTH).collect(), data))
+  Ok(EncryptedData::new(
+    nonce.to_vec(),
+    data.drain(..Aes256Gcm::TAG_LENGTH).collect(),
+    data,
+  ))
 }
 
 async fn aead_decrypt(
@@ -457,7 +462,7 @@ async fn aead_decrypt(
     ciphertext: encrypted_data.cypher_text().to_vec(),
     associated_data,
     tag: encrypted_data.tag().to_vec(),
-    nonce: [0; Aes256Gcm::NONCE_LENGTH].to_vec(),
+    nonce: encrypted_data.nonce().to_vec(),
   };
   vault.execute(aead_decrypt).await.map_err(Into::into)
 }

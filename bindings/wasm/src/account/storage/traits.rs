@@ -271,12 +271,8 @@ impl Storage for WasmStorage {
     data: Vec<u8>,
     associated_data: Vec<u8>,
   ) -> AccountStorageResult<EncryptedData> {
-    let promise: Promise = Promise::resolve(&self.encrypt_data(
-      did.clone().into(),
-      location.clone().into(),
-      data.into(),
-      associated_data,
-    ));
+    let promise: Promise =
+      Promise::resolve(&self.encrypt_data(did.clone().into(), location.clone().into(), data, associated_data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let encrypted_data: EncryptedData = result
       .account_err()?
