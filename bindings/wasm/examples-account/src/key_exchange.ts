@@ -4,7 +4,7 @@ import {AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionK
  * This example demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange
  * by encrypting and decrypting data with a shared key.
  */
-async function key_exchange(storage?: Storage) {
+async function keyExchange(storage?: Storage) {
     let builder = new AccountBuilder({
         storage,
     });
@@ -14,7 +14,7 @@ async function key_exchange(storage?: Storage) {
     await aliceAccount.createMethod({
         fragment: "kex-0",
         scope: MethodScope.KeyAgreement(),
-        content: MethodContent.GenerateEd25519(),
+        content: MethodContent.GenerateX25519(),
     })
 
     // bob creates and publishes their DID Document (see create_did and manipulate_did examples).
@@ -22,7 +22,7 @@ async function key_exchange(storage?: Storage) {
     await bobAccount.createMethod({
         fragment: "kex-0",
         scope: MethodScope.KeyAgreement(),
-        content: MethodContent.GenerateEd25519(),
+        content: MethodContent.GenerateX25519(),
     })
 
     // Alice and Bob tell each other their Public Keys. They each resolve the DID Document of the other
@@ -42,9 +42,10 @@ async function key_exchange(storage?: Storage) {
 
     // Alice encrypts the data using Diffie-Hellman key exchange
     const message = Buffer.from("This msg will be encrypted and decrypted");
-    const encyptedData = await aliceAccount.encryptData("kex-0", EncryptionKey.x25519(bobPublicKey), message);
+    const associatedData = Buffer.from("associatedData");
+    const encryptedData = await aliceAccount.encryptData("kex-0", EncryptionKey.x25519(bobPublicKey), message, associatedData);
     // Bob must be able to decrypt the message using the shared secret
-    const decryptedMessage = await bobAccount.decryptData("kex-0", EncryptionKey.x25519(alicePublicKey), encyptedData);
+    const decryptedMessage = await bobAccount.decryptData("kex-0", EncryptionKey.x25519(alicePublicKey), encryptedData, associatedData);
     if(!isArrayEqual(message, decryptedMessage)) throw new Error("decrypted message does not match original message!");
     console.log(`Diffie-Hellman key exchange successful!`);
 }
@@ -57,4 +58,4 @@ function isArrayEqual(a: Buffer, b: Uint8Array) {
     return true;
 }
 
-export {key_exchange};
+export {keyExchange};

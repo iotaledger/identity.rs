@@ -274,6 +274,7 @@ impl WasmAccount {
     fragment: String,
     encryption_key: &WasmEncryptionKey,
     data: Vec<u8>,
+    associated_data: Vec<u8>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
     let encryption_key: EncryptionKey = encryption_key.clone().into();
@@ -282,7 +283,7 @@ impl WasmAccount {
       let encrypted_data: EncryptedData = account
         .as_ref()
         .borrow()
-        .encrypt_data(&fragment, &encryption_key, &data)
+        .encrypt_data(&fragment, &encryption_key, &data, &associated_data)
         .await
         .wasm_result()?;
       Ok(JsValue::from(WasmEncryptedData::from(encrypted_data)))
@@ -297,6 +298,7 @@ impl WasmAccount {
     fragment: String,
     encryption_key: &WasmEncryptionKey,
     data: &WasmEncryptedData,
+    associated_data: Vec<u8>,
   ) -> PromiseData {
     let account = self.0.clone();
     let encryption_key: EncryptionKey = encryption_key.clone().into();
@@ -306,7 +308,7 @@ impl WasmAccount {
       let data: Vec<u8> = account
         .as_ref()
         .borrow()
-        .decrypt_data(&fragment, &encryption_key, data)
+        .decrypt_data(&fragment, &encryption_key, data, &associated_data)
         .await
         .wasm_result()?;
       Ok(JsValue::from(js_sys::Uint8Array::from(data.as_ref())))

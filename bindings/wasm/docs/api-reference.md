@@ -50,9 +50,11 @@ the configuration of previously built accounts.</p>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
 <dt><a href="#EncryptedData">EncryptedData</a></dt>
-<dd></dd>
+<dd><p>The structure returned after encrypting data</p>
+</dd>
 <dt><a href="#EncryptionKey">EncryptionKey</a></dt>
-<dd></dd>
+<dd><p>Supported keys for encrypting data</p>
+</dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -202,8 +204,8 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptData(fragment, encryption_key, data)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-    * [.decryptData(fragment, encryption_key, data)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.encryptData(fragment, encryption_key, data, associated_data)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(fragment, encryption_key, data, associated_data)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -375,7 +377,7 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+encryptData"></a>
 
-### account.encryptData(fragment, encryption_key, data) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+### account.encryptData(fragment, encryption_key, data, associated_data) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
 Encrypts the given `data` using the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -385,10 +387,11 @@ Encrypts the given `data` using the key specified by `fragment`.
 | fragment | <code>string</code> | 
 | encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
 | data | <code>Uint8Array</code> | 
+| associated_data | <code>Uint8Array</code> | 
 
 <a name="Account+decryptData"></a>
 
-### account.decryptData(fragment, encryption_key, data) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+### account.decryptData(fragment, encryption_key, data, associated_data) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
 Decrypts the given `data` using the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -398,6 +401,7 @@ Decrypts the given `data` using the key specified by `fragment`.
 | fragment | <code>string</code> | 
 | encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
 | data | [<code>EncryptedData</code>](#EncryptedData) | 
+| associated_data | <code>Uint8Array</code> | 
 
 <a name="Account+deleteMethod"></a>
 
@@ -2255,14 +2259,30 @@ to canonicalize JSON messages.
 <a name="EncryptedData"></a>
 
 ## EncryptedData
+The structure returned after encrypting data
+
 **Kind**: global class  
 
 * [EncryptedData](#EncryptedData)
     * _instance_
+        * [.cipherText()](#EncryptedData+cipherText) ⇒ <code>Uint8Array</code>
+        * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json_value)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
 
+<a name="EncryptedData+cipherText"></a>
+
+### encryptedData.cipherText() ⇒ <code>Uint8Array</code>
+Returns a copy of the cipher text
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+tag"></a>
+
+### encryptedData.tag() ⇒ <code>Uint8Array</code>
+Returns a copy of the tag
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
 <a name="EncryptedData+toJSON"></a>
 
 ### encryptedData.toJSON() ⇒ <code>any</code>
@@ -2283,6 +2303,8 @@ Deserializes `EncryptedData` from a JSON object.
 <a name="EncryptionKey"></a>
 
 ## EncryptionKey
+Supported keys for encrypting data
+
 **Kind**: global class  
 
 * [EncryptionKey](#EncryptionKey)

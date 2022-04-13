@@ -8,7 +8,7 @@ import { manipulateIdentity } from "./manipulate_did";
 import { multipleIdentities } from "./multiple_identities";
 import { signing } from "./signing";
 import { unchecked } from "./unchecked";
-import { key_exchange } from "./key_exchange";
+import { keyExchange } from "./key_exchange";
 
 async function main() {
     //Check if an example is mentioned
@@ -34,7 +34,7 @@ async function main() {
         case "multiple_identities":
             return await multipleIdentities();
         case "key_exchange":
-            return await key_exchange();
+            return await keyExchange();
         default:
             throw "Unknown example name";
     }

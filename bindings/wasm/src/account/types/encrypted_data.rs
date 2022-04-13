@@ -7,12 +7,24 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-#[derive(Debug)]
+/// The structure returned after encrypting data
 #[wasm_bindgen(js_name = EncryptedData, inspectable)]
 pub struct WasmEncryptedData(pub(crate) EncryptedData);
 
 #[wasm_bindgen(js_class = EncryptedData)]
 impl WasmEncryptedData {
+  /// Returns a copy of the cipher text
+  #[wasm_bindgen(js_name = cipherText)]
+  pub fn cypher_text(&self) -> Vec<u8> {
+    self.0.cypher_text().to_vec()
+  }
+
+  /// Returns a copy of the tag
+  #[wasm_bindgen(js_name = tag)]
+  pub fn tag(&self) -> Vec<u8> {
+    self.0.tag().to_vec()
+  }
+
   /// Serializes `EncryptedData` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {

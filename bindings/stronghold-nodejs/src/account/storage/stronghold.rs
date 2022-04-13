@@ -205,9 +205,15 @@ impl NapiStronghold {
     did: &NapiDID,
     location: &NapiKeyLocation,
     data: Vec<u32>,
+    associated_data: Vec<u32>,
   ) -> Result<NapiEncryptedData> {
     let data: Vec<u8> = data.try_into_bytes()?;
-    let encrypted_data: EncryptedData = self.0.encrypt_data(&did.0, &location.0, data).await.napi_result()?;
+    let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
+    let encrypted_data: EncryptedData = self
+      .0
+      .encrypt_data(&did.0, &location.0, data, associated_data)
+      .await
+      .napi_result()?;
     Ok(NapiEncryptedData(encrypted_data))
   }
 
@@ -218,10 +224,12 @@ impl NapiStronghold {
     did: &NapiDID,
     location: &NapiKeyLocation,
     data: &NapiEncryptedData,
+    associated_data: Vec<u32>,
   ) -> Result<Vec<u32>> {
+    let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
     let data: Vec<u8> = self
       .0
-      .decrypt_data(&did.0, &location.0, data.0.clone())
+      .decrypt_data(&did.0, &location.0, data.0.clone(), associated_data)
       .await
       .napi_result()?;
     Ok(data.into_iter().map(u32::from).collect())

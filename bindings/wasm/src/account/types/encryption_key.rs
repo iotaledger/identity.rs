@@ -17,6 +17,7 @@ enum WasmEncryptionKeyInner {
   X25519(Vec<u8>),
 }
 
+/// Supported keys for encrypting data
 #[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = EncryptionKey, inspectable)]
 pub struct WasmEncryptionKey(WasmEncryptionKeyInner);

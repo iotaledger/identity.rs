@@ -104,18 +104,18 @@ export class Stronghold implements Storage {
         return KeyLocation.fromJSON(secretLocation.toJSON());
     }
 
-    public async encryptData(did: DID, keyLocation: KeyLocation, data: Uint8Array): Promise<EncryptedData> {
+    public async encryptData(did: DID, keyLocation: KeyLocation, data: Uint8Array, associatedData: Uint8Array): Promise<EncryptedData> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
         const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
-        const napiEncryptedData = await this.napiStronghold.encryptData(napiDID, napiKeyLocation, Array.from(data));
+        const napiEncryptedData = await this.napiStronghold.encryptData(napiDID, napiKeyLocation, Array.from(data), Array.from(associatedData));
         return EncryptedData.fromJSON(napiEncryptedData.toJSON());
     }
 
-    public async decryptData(did: DID, keyLocation: KeyLocation, data: EncryptedData): Promise<Uint8Array> {
+    public async decryptData(did: DID, keyLocation: KeyLocation, data: EncryptedData, associatedData: Uint8Array): Promise<Uint8Array> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
         const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         const napiEncryptedData = NapiEncryptedData.fromJSON(data.toJSON());
-        const decryptedData = await this.napiStronghold.decryptData(napiDID, napiKeyLocation, napiEncryptedData);
+        const decryptedData = await this.napiStronghold.decryptData(napiDID, napiKeyLocation, napiEncryptedData, Array.from(associatedData));
         return Uint8Array.from(decryptedData);
     }
 

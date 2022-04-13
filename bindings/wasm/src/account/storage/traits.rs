@@ -102,6 +102,7 @@ extern "C" {
     did: WasmDID,
     location: WasmKeyLocation,
     data: Vec<u8>,
+    associated_data: Vec<u8>,
   ) -> PromiseEncryptedData;
   #[wasm_bindgen(method, js_name = decryptData)]
   pub fn decrypt_data(
@@ -109,6 +110,7 @@ extern "C" {
     did: WasmDID,
     location: WasmKeyLocation,
     data: WasmEncryptedData,
+    associated_data: Vec<u8>,
   ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = chainStateGet)]
   pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
@@ -266,9 +268,14 @@ impl Storage for WasmStorage {
     did: &IotaDID,
     location: &KeyLocation,
     data: Vec<u8>,
+    associated_data: Vec<u8>,
   ) -> AccountStorageResult<EncryptedData> {
-    let promise: Promise =
-      Promise::resolve(&self.encrypt_data(did.clone().into(), location.clone().into(), data.into()));
+    let promise: Promise = Promise::resolve(&self.encrypt_data(
+      did.clone().into(),
+      location.clone().into(),
+      data.into(),
+      associated_data,
+    ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let encrypted_data: EncryptedData = result
       .account_err()?
@@ -282,9 +289,14 @@ impl Storage for WasmStorage {
     did: &IotaDID,
     location: &KeyLocation,
     data: EncryptedData,
+    associated_data: Vec<u8>,
   ) -> AccountStorageResult<Vec<u8>> {
-    let promise: Promise =
-      Promise::resolve(&self.decrypt_data(did.clone().into(), location.clone().into(), data.into()));
+    let promise: Promise = Promise::resolve(&self.decrypt_data(
+      did.clone().into(),
+      location.clone().into(),
+      data.into(),
+      associated_data,
+    ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let data: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
     Ok(data)
@@ -415,10 +427,10 @@ interface Storage {
   keyExchange: (did: DID, keyLocation: KeyLocation, publicKey: Uint8Array, fragment: string) => Promise<KeyLocation>;
 
   /** Encrypts the given `data` using the key at the specified `location`. */
-  encryptData: (did: DID, keyLocation: KeyLocation, data: Uint8Array) => Promise<EncryptedData>;
+  encryptData: (did: DID, keyLocation: KeyLocation, data: Uint8Array, associatedData: Uint8Array) => Promise<EncryptedData>;
 
   /** Decrypts the given `data` using the key at the specified `location`. */
-  decryptData: (did: DID, keyLocation: KeyLocation, data: EncryptedData) => Promise<Uint8Array>;
+  decryptData: (did: DID, keyLocation: KeyLocation, data: EncryptedData, associatedData: Uint8Array) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined | null>;
