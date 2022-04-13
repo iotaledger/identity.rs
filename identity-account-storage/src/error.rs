@@ -12,6 +12,9 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
+  /// Caused by errors from the [crypto] crate.
+  #[error(transparent)]
+  CryptoError(#[from] crypto::error::Error),
   /// Caused by errors from the [`identity_iota_core`] crate.
   #[error("DID creation failed: {0}")]
   DIDCreationError(String),
@@ -29,6 +32,9 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
+  /// Caused by attempting to perform Diffie-Hellman key exchange with the wrong key type
+  #[error("Invalid Key Type: {0}")]
+  InvalidKeyType(String),
   /// Caused by providing bytes that cannot be used as a public key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Public Key: {0}")]

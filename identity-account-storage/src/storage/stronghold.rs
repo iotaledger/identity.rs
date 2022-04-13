@@ -299,14 +299,26 @@ impl Storage for Stronghold {
     Ok(shared_key)
   }
 
-  async fn encrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<EncryptedData> {
+  async fn encrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: Vec<u8>,
+    associated_data: Vec<u8>,
+  ) -> Result<EncryptedData> {
     let vault: Vault<'_> = self.vault(did);
-    aead_encrypt(&vault, location, data).await
+    aead_encrypt(&vault, location, data, associated_data).await
   }
 
-  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
+  async fn decrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: EncryptedData,
+    associated_data: Vec<u8>,
+  ) -> Result<Vec<u8>> {
     let vault: Vault<'_> = self.vault(did);
-    aead_decrypt(&vault, location, data).await
+    aead_decrypt(&vault, location, data, associated_data).await
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
@@ -416,10 +428,15 @@ async fn diffie_hellman(
   vault.execute(diffie_hellman).await.map_err(Into::into)
 }
 
-async fn aead_encrypt(vault: &Vault<'_>, location: &KeyLocation, plaintext: Vec<u8>) -> Result<EncryptedData> {
+async fn aead_encrypt(
+  vault: &Vault<'_>,
+  location: &KeyLocation,
+  plaintext: Vec<u8>,
+  associated_data: Vec<u8>,
+) -> Result<EncryptedData> {
   let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
     cipher: procedures::AeadCipher::Aes256Gcm,
-    associated_data: Vec::new(),
+    associated_data,
     plaintext,
     nonce: [0; Aes256Gcm::NONCE_LENGTH].to_vec(),
     key: location.into(),
@@ -428,13 +445,18 @@ async fn aead_encrypt(vault: &Vault<'_>, location: &KeyLocation, plaintext: Vec<
   Ok(EncryptedData::new(data.drain(..Aes256Gcm::TAG_LENGTH).collect(), data))
 }
 
-async fn aead_decrypt(vault: &Vault<'_>, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
+async fn aead_decrypt(
+  vault: &Vault<'_>,
+  location: &KeyLocation,
+  encrypted_data: EncryptedData,
+  associated_data: Vec<u8>,
+) -> Result<Vec<u8>> {
   let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
     cipher: procedures::AeadCipher::Aes256Gcm,
     key: location.into(),
-    ciphertext: data.cypher_text().to_vec(),
-    associated_data: Vec::new(),
-    tag: data.tag().to_vec(),
+    ciphertext: encrypted_data.cypher_text().to_vec(),
+    associated_data,
+    tag: encrypted_data.tag().to_vec(),
     nonce: [0; Aes256Gcm::NONCE_LENGTH].to_vec(),
   };
   vault.execute(aead_decrypt).await.map_err(Into::into)

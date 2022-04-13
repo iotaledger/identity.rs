@@ -3,7 +3,8 @@
 
 use serde::Deserialize;
 use serde::Serialize;
- 
+
+/// The structure returned after encrypting data
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct EncryptedData {
   tag: Vec<u8>,

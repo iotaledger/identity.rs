@@ -6,6 +6,8 @@ use core::fmt::Formatter;
 use std::collections::HashSet;
 
 use async_trait::async_trait;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::traits::Aead;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
@@ -13,6 +15,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
+use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
@@ -205,20 +208,81 @@ impl Storage for MemStore {
 
   async fn key_exchange(
     &self,
-    _did: &IotaDID,
-    _location: &KeyLocation,
-    _public_key: PublicKey,
-    _fragment: &str,
+    did: &IotaDID,
+    location: &KeyLocation,
+    public_key: PublicKey,
+    fragment: &str,
   ) -> Result<KeyLocation> {
-    unimplemented!();
+    // Retrieves the PrivateKey from the vault
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
+    let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
+    if key_pair.type_() != KeyType::X25519 {
+      return Err(Error::InvalidKeyType(format!(
+        "{} expected KeyType::X25519",
+        key_pair.type_()
+      )));
+    }
+    // Computes the shared secret and inserts it in the vault
+    let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), public_key.as_ref())?;
+    let secret_location: KeyLocation =
+      KeyLocation::new(KeyType::X25519, fragment.to_owned(), key_pair.public().as_ref());
+    let secret_pair: KeyPair = KeyPair::from((
+      KeyType::X25519,
+      key_pair.public().clone(),
+      shared_secret.to_vec().into(),
+    ));
+    vault.insert(secret_location.clone(), secret_pair);
+    Ok(secret_location)
   }
 
-  async fn encrypt_data(&self, _did: &IotaDID, _location: &KeyLocation, _data: Vec<u8>) -> Result<EncryptedData> {
-    unimplemented!();
+  async fn encrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: Vec<u8>,
+    associated_data: Vec<u8>,
+  ) -> Result<EncryptedData> {
+    // Retrieves the PrivateKey from the vault
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
+    let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
+    // Encrypts the given data
+    let mut cipher_text: Vec<u8> = vec![0; data.len()];
+    let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
+    Aes256Gcm::try_encrypt(
+      key_pair.private().as_ref(),
+      [0; Aes256Gcm::NONCE_LENGTH].as_ref(),
+      associated_data.as_ref(),
+      data.as_ref(),
+      &mut cipher_text,
+      &mut tag,
+    )?;
+    Ok(EncryptedData::new(tag, cipher_text))
   }
 
-  async fn decrypt_data(&self, _did: &IotaDID, _location: &KeyLocation, _data: EncryptedData) -> Result<Vec<u8>> {
-    unimplemented!();
+  async fn decrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: EncryptedData,
+    associated_data: Vec<u8>,
+  ) -> Result<Vec<u8>> {
+    // Retrieves the PrivateKey from the vault
+    let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
+    let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
+    // Decrypts the data
+    let mut plaintext = vec![0; data.cypher_text().len()];
+    Aes256Gcm::try_decrypt(
+      key_pair.private().as_ref(),
+      [0; Aes256Gcm::NONCE_LENGTH].as_ref(),
+      associated_data.as_ref(),
+      &mut plaintext,
+      data.cypher_text(),
+      data.tag(),
+    )?;
+    Ok(plaintext)
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {

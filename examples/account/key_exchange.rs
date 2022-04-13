@@ -81,13 +81,24 @@ pub async fn run() -> Result<()> {
   let alice_public_key: Vec<u8> = alice_method.data().try_decode()?;
 
   // Alice encrypts the data using Diffie-Hellman key exchange
-  let message: &[u8] = "This msg will be encrypted and decrypted".as_bytes();
+  let message: &[u8] = b"This msg will be encrypted and decrypted";
+  let associated_data: &[u8] = b"associated_data";
   let encrypted_data: EncryptedData = alice_account
-    .encrypt_data("kex-0", &EncryptionKey::X25519(bob_public_key.clone().into()), message)
+    .encrypt_data(
+      "kex-0",
+      &EncryptionKey::X25519(bob_public_key.into()),
+      message,
+      associated_data,
+    )
     .await?;
   // Bob must be able to decrypt the message using the shared secret
   let decrypted_msg: Vec<u8> = bob_account
-    .decrypt_data("kex-0", &EncryptionKey::X25519(alice_public_key.into()), encrypted_data)
+    .decrypt_data(
+      "kex-0",
+      &EncryptionKey::X25519(alice_public_key.into()),
+      encrypted_data,
+      associated_data,
+    )
     .await?;
   assert_eq!(message, &decrypted_msg);
 

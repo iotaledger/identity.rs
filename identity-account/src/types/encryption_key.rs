@@ -14,7 +14,7 @@ use identity_iota_core::document::IotaVerificationMethod;
 use crate::Error;
 use crate::Result;
 
-/// 
+/// Supported keys for encrypting data
 #[derive(Clone, Debug)]
 pub enum EncryptionKey {
   Ed25519,
@@ -22,6 +22,10 @@ pub enum EncryptionKey {
 }
 
 impl EncryptionKey {
+  /// Finds the location of the given key.
+  ///
+  /// If [`EncryptionKey::X25519(key)`] is given, Diffie-Hellman key exchange will be performed.
+  /// If [`EncryptionKey::Ed25519`] is given, `KeyLocation` will be obtained from the verification method.
   pub async fn key_location(
     &self,
     fragment: &str,
@@ -32,13 +36,13 @@ impl EncryptionKey {
     match self {
       Self::Ed25519 => {
         let method: &IotaVerificationMethod = document
-          .resolve_method::<&str>(fragment.into(), None)
+          .resolve_method::<&str>(fragment, None)
           .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
         KeyLocation::from_verification_method(method).map_err(Into::into)
       }
       Self::X25519(peer_public_key) => {
         let method: &IotaVerificationMethod = document
-          .resolve_method::<&str>(fragment.into(), Some(MethodScope::key_agreement()))
+          .resolve_method::<&str>(fragment, Some(MethodScope::key_agreement()))
           .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
         let location: KeyLocation = KeyLocation::from_verification_method(method)?;
         storage

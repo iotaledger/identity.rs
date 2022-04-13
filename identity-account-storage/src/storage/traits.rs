@@ -132,10 +132,22 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   ) -> Result<KeyLocation>;
 
   /// Encrypts the given `data` using the key at the specified `location`.
-  async fn encrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<EncryptedData>;
+  async fn encrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: Vec<u8>,
+    associated_data: Vec<u8>,
+  ) -> Result<EncryptedData>;
 
   /// Decrypts the given `data` using the key at the specified `location`.
-  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>>;
+  async fn decrypt_data(
+    &self,
+    did: &IotaDID,
+    location: &KeyLocation,
+    data: EncryptedData,
+    associated_data: Vec<u8>,
+  ) -> Result<Vec<u8>>;
 
   /// Returns the chain state of the identity specified by `did`.
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>>;
