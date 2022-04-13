@@ -41,9 +41,9 @@ extern "C" {
   pub type PromiseSignature;
   #[wasm_bindgen(typescript_type = "Promise<boolean>")]
   pub type PromiseBool;
-  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined | null>")]
+  #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined>")]
   pub type PromiseOptionChainState;
-  #[wasm_bindgen(typescript_type = "Promise<Document | undefined | null>")]
+  #[wasm_bindgen(typescript_type = "Promise<Document | undefined>")]
   pub type PromiseOptionDocument;
   #[wasm_bindgen(typescript_type = "Promise<KeyLocation>")]
   pub type PromiseKeyLocation;
@@ -59,6 +59,7 @@ extern "C" {
 
 #[wasm_bindgen]
 extern "C" {
+  #[wasm_bindgen(typescript_type = "Storage")]
   pub type WasmStorage;
 
   #[wasm_bindgen(method, js_name = didCreate)]
@@ -433,13 +434,13 @@ interface Storage {
   decryptData: (did: DID, keyLocation: KeyLocation, data: EncryptedData, associatedData: Uint8Array) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
-  chainStateGet: (did: DID) => Promise<ChainState | undefined | null>;
+  chainStateGet: (did: DID) => Promise<ChainState | undefined>;
 
   /** Set the chain state of the identity specified by `did`. */
   chainStateSet: (did: DID, chainState: ChainState) => Promise<void>;
 
   /** Returns the document of the identity specified by `did`. */
-  documentGet: (did: DID) => Promise<Document | undefined | null>;
+  documentGet: (did: DID) => Promise<Document | undefined>;
 
   /** Sets a new state for the identity specified by `did`. */
   documentSet: (did: DID, document: Document) => Promise<void>;

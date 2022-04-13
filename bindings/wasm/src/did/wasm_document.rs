@@ -26,7 +26,7 @@ use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmProof;
 use crate::crypto::WasmProofOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
-use crate::did::OptionMethodScope;
+use crate::did::RefMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
@@ -270,10 +270,10 @@ impl WasmDocument {
   pub fn resolve_method(
     &self,
     query: &UDIDUrlQuery,
-    scope: OptionMethodScope,
+    scope: Option<RefMethodScope>,
   ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
-    let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
+    let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
     let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
       self.0.resolve_method(&method_query, Some(scope))

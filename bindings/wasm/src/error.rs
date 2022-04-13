@@ -210,9 +210,11 @@ pub struct JsValueResult(pub(crate) Result<JsValue>);
 impl JsValueResult {
   /// Consumes the struct and returns a Result<_, AccountStorageError>
   pub fn account_err(self) -> StdResult<JsValue, AccountStorageError> {
-    self
-      .0
-      .map_err(|js_value| AccountStorageError::JsError(js_value.as_string().unwrap_or_default()))
+    self.0.map_err(|js_value| {
+      // Using the debug format includes a backtrace, which is awkwardly formatted,
+      // but no other way of extracting the error, like serialization, works.
+      AccountStorageError::JsError(format!("{:?}", js_value))
+    })
   }
 }
 

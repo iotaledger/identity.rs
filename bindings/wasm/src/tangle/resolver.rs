@@ -22,10 +22,12 @@ use crate::chain::DiffChainHistory;
 use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
+use crate::common::PromiseVoid;
 use crate::credential::WasmCredential;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
+use crate::did::ArrayResolvedDocument;
 use crate::did::PromiseArrayResolvedDocument;
 use crate::did::PromiseResolvedDocument;
 use crate::did::UWasmDID;
@@ -41,14 +43,12 @@ pub struct WasmResolver(pub(crate) Rc<Resolver<Rc<Client>>>);
 #[wasm_bindgen]
 extern "C" {
   // Workaround for Typescript type annotations on async function returns.
-  #[wasm_bindgen(typescript_type = "Promise<void>")]
-  pub type PromiseVoid;
+  #[wasm_bindgen(typescript_type = "Promise<Resolver>")]
+  pub type PromiseResolver;
 
-  #[wasm_bindgen(typescript_type = "ResolvedDocument | undefined")]
-  pub type OptionResolvedDocument;
-
-  #[wasm_bindgen(typescript_type = "ResolvedDocument[] | undefined")]
-  pub type OptionArrayResolvedDocument;
+  // Workaround for lack of &Option<Type>/Option<&Type> support.
+  #[wasm_bindgen(typescript_type = "ResolvedDocument")]
+  pub type RefResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = Resolver)]
@@ -260,13 +260,13 @@ impl WasmResolver {
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
-    holder: OptionResolvedDocument,
-    issuers: OptionArrayResolvedDocument,
+    holder: Option<RefResolvedDocument>,
+    issuers: Option<ArrayResolvedDocument>,
   ) -> Result<PromiseVoid> {
     // TODO: reimplemented function to avoid cloning the entire presentation and validation options.
     // Would be solved with Rc internal representation, pending memory leak discussions.
-    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.into_serde().wasm_result()?;
-    let holder: Option<ResolvedIotaDocument> = holder.into_serde().wasm_result()?;
+    let holder: Option<ResolvedIotaDocument> = holder.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.map(|js| js.into_serde().wasm_result()).transpose()?;
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let presentation: WasmPresentation = presentation.clone();
     let options: WasmPresentationValidationOptions = options.clone();
@@ -349,11 +349,4 @@ impl From<ResolverBuilder<Rc<Client>>> for WasmResolverBuilder {
   fn from(builder: ResolverBuilder<Rc<Client>>) -> Self {
     Self(builder)
   }
-}
-
-// Workaround for Typescript type annotations on async function returns.
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(typescript_type = "Promise<Resolver>")]
-  pub type PromiseResolver;
 }

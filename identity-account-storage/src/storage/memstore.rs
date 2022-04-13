@@ -330,3 +330,64 @@ impl Default for MemStore {
     Self::new()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use crate::storage::Storage;
+  use crate::storage::StorageTestSuite;
+
+  use super::MemStore;
+
+  fn test_memstore() -> impl Storage {
+    MemStore::new()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_did_create_with_private_key() {
+    StorageTestSuite::did_create_private_key_test(test_memstore())
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_did_create_generate_key() {
+    StorageTestSuite::did_create_generate_key_test(test_memstore())
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_generate() {
+    StorageTestSuite::key_generate_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_delete() {
+    StorageTestSuite::key_delete_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_did_list() {
+    StorageTestSuite::did_list_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_insert() {
+    StorageTestSuite::key_insert_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_sign_ed25519() {
+    StorageTestSuite::key_sign_ed25519_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_key_value_store() {
+    StorageTestSuite::key_value_store_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_memstore_did_purge() {
+    StorageTestSuite::did_purge_test(test_memstore()).await.unwrap()
+  }
+}

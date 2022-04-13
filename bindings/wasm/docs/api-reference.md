@@ -120,6 +120,14 @@ with a DID subject.</p>
 </dd>
 <dt><a href="#Signature">Signature</a></dt>
 <dd></dd>
+<dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
+<dd><p>A test suite for the <code>Storage</code> interface.</p>
+<p>This module contains a set of tests that a correct storage implementation
+should pass. Note that not every edge case is tested.</p>
+<p>Tests usually rely on multiple interface methods being implemented, so they should only
+be run on a fully implemented version. That&#39;s why there is not a single test case for every
+interface method.</p>
+</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
@@ -136,6 +144,8 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
@@ -164,8 +174,6 @@ This variant is the default used if no other variant is specified when construct
 <dd><p>Return after the first error occurs.</p>
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 </dl>
 
@@ -3923,6 +3931,102 @@ Deserializes a JSON object as `Signature`.
 | --- | --- |
 | json_value | <code>any</code> | 
 
+<a name="StorageTestSuite"></a>
+
+## StorageTestSuite
+A test suite for the `Storage` interface.
+
+This module contains a set of tests that a correct storage implementation
+should pass. Note that not every edge case is tested.
+
+Tests usually rely on multiple interface methods being implemented, so they should only
+be run on a fully implemented version. That's why there is not a single test case for every
+interface method.
+
+**Kind**: global class  
+
+* [StorageTestSuite](#StorageTestSuite)
+    * [.didCreateGenerateKeyTest(storage)](#StorageTestSuite.didCreateGenerateKeyTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.didCreatePrivateKeyTest(storage)](#StorageTestSuite.didCreatePrivateKeyTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.didListTest(storage)](#StorageTestSuite.didListTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.didPurgeTest(storage)](#StorageTestSuite.didPurgeTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keyGenerateTest(storage)](#StorageTestSuite.keyGenerateTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keyDeleteTest(storage)](#StorageTestSuite.keyDeleteTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keyInsertTest(storage)](#StorageTestSuite.keyInsertTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keySignEd25519Test(storage)](#StorageTestSuite.keySignEd25519Test) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="StorageTestSuite.didCreateGenerateKeyTest"></a>
+
+### StorageTestSuite.didCreateGenerateKeyTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.didCreatePrivateKeyTest"></a>
+
+### StorageTestSuite.didCreatePrivateKeyTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.didListTest"></a>
+
+### StorageTestSuite.didListTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.didPurgeTest"></a>
+
+### StorageTestSuite.didPurgeTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keyGenerateTest"></a>
+
+### StorageTestSuite.keyGenerateTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keyDeleteTest"></a>
+
+### StorageTestSuite.keyDeleteTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keyInsertTest"></a>
+
+### StorageTestSuite.keyInsertTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keySignEd25519Test"></a>
+
+### StorageTestSuite.keySignEd25519Test(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -4217,6 +4321,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
@@ -4271,10 +4379,6 @@ Return after the first error occurs.
 <a name="KeyType"></a>
 
 ## KeyType
-**Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
