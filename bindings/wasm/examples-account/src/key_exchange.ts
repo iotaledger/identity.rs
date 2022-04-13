@@ -45,7 +45,7 @@ async function keyExchange(storage?: Storage) {
     const associatedData = Buffer.from("associatedData");
     const encryptedData = await aliceAccount.encryptData("kex-0", EncryptionKey.x25519(bobPublicKey), message, associatedData);
     // Bob must be able to decrypt the message using the shared secret
-    const decryptedMessage = await bobAccount.decryptData("kex-0", EncryptionKey.x25519(alicePublicKey), encryptedData, associatedData);
+    const decryptedMessage = await bobAccount.decryptData("kex-0", EncryptionKey.x25519(alicePublicKey), encryptedData);
     if(!isArrayEqual(message, decryptedMessage)) throw new Error("decrypted message does not match original message!");
     console.log(`Diffie-Hellman key exchange successful!`);
 }

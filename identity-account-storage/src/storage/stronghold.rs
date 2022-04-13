@@ -310,15 +310,9 @@ impl Storage for Stronghold {
     aead_encrypt(&vault, location, data, associated_data).await
   }
 
-  async fn decrypt_data(
-    &self,
-    did: &IotaDID,
-    location: &KeyLocation,
-    data: EncryptedData,
-    associated_data: Vec<u8>,
-  ) -> Result<Vec<u8>> {
+  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
     let vault: Vault<'_> = self.vault(did);
-    aead_decrypt(&vault, location, data, associated_data).await
+    aead_decrypt(&vault, location, data).await
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
@@ -437,7 +431,7 @@ async fn aead_encrypt(
   let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
   let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
     cipher: procedures::AeadCipher::Aes256Gcm,
-    associated_data,
+    associated_data: associated_data.clone(),
     plaintext,
     nonce: nonce.to_vec(),
     key: location.into(),
@@ -445,22 +439,18 @@ async fn aead_encrypt(
   let mut data = vault.execute(aead_encrypt).await?;
   Ok(EncryptedData::new(
     nonce.to_vec(),
+    associated_data,
     data.drain(..Aes256Gcm::TAG_LENGTH).collect(),
     data,
   ))
 }
 
-async fn aead_decrypt(
-  vault: &Vault<'_>,
-  location: &KeyLocation,
-  encrypted_data: EncryptedData,
-  associated_data: Vec<u8>,
-) -> Result<Vec<u8>> {
+async fn aead_decrypt(vault: &Vault<'_>, location: &KeyLocation, encrypted_data: EncryptedData) -> Result<Vec<u8>> {
   let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
     cipher: procedures::AeadCipher::Aes256Gcm,
     key: location.into(),
     ciphertext: encrypted_data.cypher_text().to_vec(),
-    associated_data,
+    associated_data: encrypted_data.associated_data().to_vec(),
     tag: encrypted_data.tag().to_vec(),
     nonce: encrypted_data.nonce().to_vec(),
   };

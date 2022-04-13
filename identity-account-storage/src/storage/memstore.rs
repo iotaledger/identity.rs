@@ -259,16 +259,10 @@ impl Storage for MemStore {
       &mut cipher_text,
       &mut tag,
     )?;
-    Ok(EncryptedData::new(nonce.to_vec(), tag, cipher_text))
+    Ok(EncryptedData::new(nonce.to_vec(), associated_data, tag, cipher_text))
   }
 
-  async fn decrypt_data(
-    &self,
-    did: &IotaDID,
-    location: &KeyLocation,
-    data: EncryptedData,
-    associated_data: Vec<u8>,
-  ) -> Result<Vec<u8>> {
+  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
     // Retrieves the PrivateKey from the vault
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
@@ -278,7 +272,7 @@ impl Storage for MemStore {
     Aes256Gcm::try_decrypt(
       key_pair.private().as_ref(),
       data.nonce(),
-      associated_data.as_ref(),
+      data.associated_data(),
       &mut plaintext,
       data.cypher_text(),
       data.tag(),

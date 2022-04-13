@@ -111,11 +111,11 @@ export class Stronghold implements Storage {
         return EncryptedData.fromJSON(napiEncryptedData.toJSON());
     }
 
-    public async decryptData(did: DID, keyLocation: KeyLocation, data: EncryptedData, associatedData: Uint8Array): Promise<Uint8Array> {
+    public async decryptData(did: DID, keyLocation: KeyLocation, data: EncryptedData): Promise<Uint8Array> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
         const napiKeyLocation = NapiKeyLocation.fromJSON(keyLocation.toJSON());
         const napiEncryptedData = NapiEncryptedData.fromJSON(data.toJSON());
-        const decryptedData = await this.napiStronghold.decryptData(napiDID, napiKeyLocation, napiEncryptedData, Array.from(associatedData));
+        const decryptedData = await this.napiStronghold.decryptData(napiDID, napiKeyLocation, napiEncryptedData);
         return Uint8Array.from(decryptedData);
     }
 

@@ -213,7 +213,7 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(fragment, encryption_key, data, associated_data)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-    * [.decryptData(fragment, encryption_key, data, associated_data)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.decryptData(fragment, encryption_key, data)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -399,7 +399,7 @@ Encrypts the given `data` using the key specified by `fragment`.
 
 <a name="Account+decryptData"></a>
 
-### account.decryptData(fragment, encryption_key, data, associated_data) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+### account.decryptData(fragment, encryption_key, data) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
 Decrypts the given `data` using the key specified by `fragment`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
@@ -409,7 +409,6 @@ Decrypts the given `data` using the key specified by `fragment`.
 | fragment | <code>string</code> | 
 | encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
 | data | [<code>EncryptedData</code>](#EncryptedData) | 
-| associated_data | <code>Uint8Array</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -2274,6 +2273,7 @@ The structure returned after encrypting data
 * [EncryptedData](#EncryptedData)
     * _instance_
         * [.nonce()](#EncryptedData+nonce) ⇒ <code>Uint8Array</code>
+        * [.associatedData()](#EncryptedData+associatedData) ⇒ <code>Uint8Array</code>
         * [.cipherText()](#EncryptedData+cipherText) ⇒ <code>Uint8Array</code>
         * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
@@ -2284,6 +2284,12 @@ The structure returned after encrypting data
 
 ### encryptedData.nonce() ⇒ <code>Uint8Array</code>
 Returns a copy of the nonce
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+associatedData"></a>
+
+### encryptedData.associatedData() ⇒ <code>Uint8Array</code>
+Returns a copy of the associated data
 
 **Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
 <a name="EncryptedData+cipherText"></a>

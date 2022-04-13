@@ -224,12 +224,10 @@ impl NapiStronghold {
     did: &NapiDID,
     location: &NapiKeyLocation,
     data: &NapiEncryptedData,
-    associated_data: Vec<u32>,
   ) -> Result<Vec<u32>> {
-    let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
     let data: Vec<u8> = self
       .0
-      .decrypt_data(&did.0, &location.0, data.0.clone(), associated_data)
+      .decrypt_data(&did.0, &location.0, data.0.clone())
       .await
       .napi_result()?;
     Ok(data.into_iter().map(u32::from).collect())

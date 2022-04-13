@@ -19,6 +19,12 @@ impl WasmEncryptedData {
     self.0.nonce().to_vec()
   }
 
+  /// Returns a copy of the associated data
+  #[wasm_bindgen(js_name = associatedData)]
+  pub fn associated_data(&self) -> Vec<u8> {
+    self.0.associated_data().to_vec()
+  }
+
   /// Returns a copy of the cipher text
   #[wasm_bindgen(js_name = cipherText)]
   pub fn cypher_text(&self) -> Vec<u8> {

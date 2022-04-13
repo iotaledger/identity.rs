@@ -330,7 +330,6 @@ where
     fragment: &str,
     encryption_key: &EncryptionKey,
     data: EncryptedData,
-    associated_data: &[u8],
   ) -> Result<Vec<u8>> {
     let location: KeyLocation = encryption_key
       .key_location(fragment, self.did(), self.document(), self.storage())
@@ -338,7 +337,7 @@ where
     self
       .storage()
       .as_ref()
-      .decrypt_data(self.did(), &location, data, associated_data.to_vec())
+      .decrypt_data(self.did(), &location, data)
       .await
       .map_err(Into::into)
   }
