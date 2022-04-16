@@ -10,15 +10,113 @@ keywords:
 import create_vp_rs from  '!!raw-loader!./../../../examples/account/create_vp.rs';
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-TODO: Explain the need for and
+A verifiable presentation is a data format for sharing one or more [verifiable credentials](./overview.md).
+It is constructed and signed by a holder to prove control over their credentials and can be presented to a verifier for [validation](#validation).
+
+For instance: after an issuer [creates and issues a verifiable credential](./create.mdx) to a holder, such as a university issuing a degree to a graduate,
+the holder stores it securely until asked to present it.
+A company could then request proof of that university degree: the holder would [create a verifiable presentation](#creation)
+containing their credential, which is already signed by their university, and present it to the company to [validate](#validation).
+
+Note that verifiable presentations that contain personal data should, as with verifiable credentials, only be transmitted and stored off-chain to satisfy data privacy regulations such as [GDPR](https://gdpr.eu/).
+
+:::note
+
+See the [Verifiable Credentials Data Model Specification](https://www.w3.org/TR/vc-data-model/#presentations) for more information on verifiable presentations.
+
+:::
+
+## Creation
+
+The IOTA Identity Framework enables holders to construct verifiable presentations easily.
+
+TODO
+
+### Proof Options
+
+TODO
+
+## Validation
+
+The IOTA Identity Framework provides several options for verifiers to validate various sections of a verifiable presentation. The framework checks:
+
+- **Semantic structure**: ensures the presentation and its credentials adhere to the specification.
+- **Presentation proof**: verifies the presentation signature against the DID Document of the holder.
+- **Credential proofs**: verifies the credential signatures against the DID Documents of their respective issuers.
+- **Optional validations**: additional checks on signatures and credential fields can be configured by the verifier.
+
+Note that a verifier may specify which DID Documents to use for the holder and issuers, otherwise they are resolved from the IOTA Tangle automatically.
+
+Currently, validation does *not* check the following:
+
+- **Data schemas**: credentials that specify a [schema](https://www.w3.org/TR/vc-data-model/#data-schemas) property should be examined to ensure conformance.
+- **Fitness for purpose**: whether the credentials in a presentation and the data within them are acceptable and valid depends on the context in which they are used. Verifiers should ensure that the credential types and schemas sent by a holder match what was requested.
+- **Issuer trustworthiness**: verifiers must check that they trust the issuer on each individual credential in a presentation. The framework only verifies that the issuer signature on each credential is current and valid against the given options.
+
+The default validation behaviour may be modified by the following options.
+
+### Proof Verifier Options
+
+TODO
+
+    /** Verify the signing verification method relationship matches this.
+    *
+    * NOTE: `purpose` overrides the `method_scope` option.
+    */
+    readonly methodScope?: MethodScope;
+
+    /** Verify the signing verification method type matches one specified.
+    *
+    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.X25519KeyAgreementKey2019()]`
+    */
+    readonly methodType?: Array<MethodType>;
+
+    /** Verify the `Proof.challenge` field matches this. */
+    readonly challenge?: string;
+
+    /** Verify the `Proof.domain` field matches this. */
+    readonly domain?: string;
+
+    /** Verify the `Proof.purpose` field matches this. Also verifies that the signing
+    * method has the corresponding verification method relationship.
+    *
+    * NOTE: `purpose` overrides the `method_scope` option.
+    */
+    readonly purpose?: ProofPurpose;
+
+    /** Determines whether to error if the current time exceeds the `Proof.expires` field.
+    *
+    * Default: false (reject expired signatures).
+    */
+    readonly allowExpired?: boolean;
+
+### Subject-Holder Relationship
+
+Specifies the expected relationship between the holder that signed the verifiable presentation and the subject specified in each verifiable credential. The following options are available:
+
+- **`AlwaysSubject` (default)**: the holder DID that signed the presentation must match the `credentialSubject` `id` field in each of the attached credentials. This is the safest option which ensures holders may only present credentials that were directly issued to their DID. An error is thrown on a mismatch or if no subject `id` is present.
+- **`SubjectOnNonTransferable`**: the holder DID must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`. This is appropriate for accepting [bearer credentials](https://www.w3.org/TR/vc-data-model/#bearer-credentials) while still adhering to the specification.
+- **`Any`**: the holder DID is not required to have any kind of relationship to any credential subject. This option performs no checks and ignores the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
+
+:::note
+
+See the [Verifiable Credentials Data Model Specification](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships) for further discussion on the different subject-holder relationships.
+
+:::
+
+### Credential Validation Options
+
+These options specify conditions that all credentials in a verifiable presentation must satisfy.
+
+- **Expiry Date**: check that the [`expirationDate`](https://www.w3.org/TR/vc-data-model/#expiration) property, if present, is not before a specific datetime. Defaults to the current datetime if unset.
+- **Issuance Date**: check that that [`issuanceDate`](https://www.w3.org/TR/vc-data-model/#issuance-date) property, if present, is not after a specific datetime. Defaults to the current datetime if unset.
+- **Verifier Options**: see [Proof Verifier Options](#proof-verifier-options) for details.
 
 ## Example
 
-This example shows how you can create and validate a Verifiable Presentation. A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+The following example demonstrates using the IOTA Identity Framework to both create and validate a verifiable presentation.
 
-
-
-<CodeSnippet 
+<CodeSnippet
     nodeReplitLink="https://repl.it/@IOTAFoundation/create-vp?lite=true"
     rustContent={create_vp_rs}
     nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-account/src/create_vp.ts"
