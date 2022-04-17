@@ -5,7 +5,6 @@ use libp2p::PeerId;
 
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
-use crate::Actor;
 use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::RequestContext;
@@ -20,7 +19,7 @@ impl DidCommState {
 
   pub async fn presentation_holder_actor_handler(
     self,
-    actor: Actor,
+    actor: DidCommActor,
     request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
   ) {
     log::debug!("holder: received presentation request");
@@ -34,7 +33,7 @@ impl DidCommState {
 
   pub async fn presentation_verifier_actor_handler(
     self,
-    actor: Actor,
+    actor: DidCommActor,
     request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>,
   ) {
     log::debug!("verifier: received offer from {}", request.peer);
@@ -48,7 +47,7 @@ impl DidCommState {
 }
 
 pub async fn presentation_holder_handler(
-  mut actor: Actor,
+  mut actor: DidCommActor,
   peer: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
 ) -> crate::Result<()> {
@@ -80,7 +79,7 @@ pub async fn presentation_holder_handler(
 }
 
 pub async fn presentation_verifier_handler(
-  mut actor: Actor,
+  mut actor: DidCommActor,
   peer: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
 ) -> crate::Result<()> {
@@ -108,6 +107,8 @@ pub async fn presentation_verifier_handler(
 
 use serde::Deserialize;
 use serde::Serialize;
+
+use super::didcomm_actor::DidCommActor;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest([u8; 2]);

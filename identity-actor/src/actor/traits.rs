@@ -7,7 +7,6 @@ use std::pin::Pin;
 use futures::Future;
 
 use crate::actor::errors::ErrorLocation;
-use crate::Actor;
 use crate::ActorRequest;
 use crate::RemoteSendError;
 use crate::RequestContext;
@@ -23,7 +22,7 @@ pub trait RequestHandler: Send + Sync {
   /// type-erased `Any` object.
   fn invoke(
     &self,
-    actor: Actor,
+    actor: Box<dyn Any + Send + Sync>,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,

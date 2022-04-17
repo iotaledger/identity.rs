@@ -7,42 +7,48 @@ use std::result::Result as StdResult;
 use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
-use crate::didcomm::message::DidCommPlaintextMessage;
-use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::thread_id::ThreadId;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ThreadRequest;
+use crate::ActorBuilder;
 use crate::ActorConfig;
 use crate::ActorRequest;
-use crate::Asynchronous;
 use crate::Endpoint;
 use crate::Error;
-use crate::InvocationStrategy;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
 use crate::RequestMode;
 use crate::Result;
-use crate::SyncMode;
 use crate::Synchronous;
+use crate::SynchronousInvocationStrategy;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
 use identity_core::common::OneOrMany;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use serde::de::DeserializeOwned;
 use uuid::Uuid;
 
-pub(crate) struct ActorState {
+use super::generic_actor::GenericActor;
+
+pub trait ActorStateExtension: 'static + Default + Send + Sync {}
+
+impl ActorStateExtension for () {}
+
+pub(crate) struct ActorState<EXT>
+where
+  EXT: ActorStateExtension,
+{
   pub(crate) handlers: HandlerMap,
   pub(crate) objects: ObjectMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
+  pub(crate) extension: EXT,
 }
 
 /// The [`Actor`] can be used to send and receive messages to and from other actors.
@@ -54,23 +60,41 @@ pub(crate) struct ActorState {
 ///
 /// After shutting down the event loop of an actor using [`Actor::shutdown`], other clones of the
 /// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
-#[derive(Clone)]
-pub struct Actor {
+pub struct Actor<EXT = ()>
+where
+  EXT: ActorStateExtension,
+{
   #[cfg(not(feature = "primitives"))]
   pub(crate) commander: NetCommander,
   #[cfg(feature = "primitives")]
   pub commander: NetCommander,
-  pub(crate) state: Arc<ActorState>,
+  pub(crate) state: Arc<ActorState<EXT>>,
 }
 
-impl Actor {
-  pub(crate) async fn from_builder(
-    commander: NetCommander,
-    handlers: HandlerMap,
-    objects: ObjectMap,
-    peer_id: PeerId,
-    config: ActorConfig,
-  ) -> Result<Self> {
+impl<EXT> Clone for Actor<EXT>
+where
+  EXT: ActorStateExtension,
+{
+  fn clone(&self) -> Self {
+    Self {
+      commander: self.commander.clone(),
+      state: Arc::clone(&self.state),
+    }
+  }
+}
+
+impl<EXT> Actor<EXT>
+where
+  EXT: ActorStateExtension,
+{
+  pub(crate) fn from_builder(builder: ActorBuilder, peer_id: PeerId, commander: NetCommander) -> Result<Self> {
+    let ActorBuilder {
+      handlers,
+      objects,
+      config,
+      ..
+    } = builder;
+
     let actor = Self {
       commander,
       state: Arc::new(ActorState {
@@ -80,13 +104,14 @@ impl Actor {
         threads_sender: DashMap::new(),
         peer_id,
         config,
+        extension: Default::default(),
       }),
     };
 
     Ok(actor)
   }
 
-  fn handlers(&self) -> &HandlerMap {
+  pub(crate) fn handlers(&self) -> &HandlerMap {
     &self.state.as_ref().handlers
   }
 
@@ -110,7 +135,7 @@ impl Actor {
   }
 
   #[inline(always)]
-  pub(crate) fn handle_request<STR: InvocationStrategy>(mut self, request: InboundRequest) {
+  pub(crate) fn handle_sync_request(mut self, request: InboundRequest) {
     cfg_if::cfg_if! {
       if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
         let spawn = tokio::spawn;
@@ -132,7 +157,7 @@ impl Actor {
 
             let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
 
-            STR::invoke_handler(
+            SynchronousInvocationStrategy::invoke_handler(
               handler,
               actor,
               request_context,
@@ -146,9 +171,13 @@ impl Actor {
           Err(error) => {
             log::debug!("handler error: {error:?}");
 
-            let result =
-              STR::handler_deserialization_failure(&mut actor, request.response_channel, request.request_id, error)
-                .await;
+            let result = SynchronousInvocationStrategy::handler_deserialization_failure(
+              &mut actor,
+              request.response_channel,
+              request.request_id,
+              error,
+            )
+            .await;
 
             match result {
               Ok(Err(err)) => {
@@ -168,12 +197,12 @@ impl Actor {
           }
         }
       } else {
-        STR::endpoint_not_found(&mut self, request).await;
+        SynchronousInvocationStrategy::endpoint_not_found(&mut self, request).await;
       }
     });
   }
 
-  fn get_handler(&self, endpoint: &Endpoint) -> StdResult<HandlerObjectTuple<'_>, RemoteSendError> {
+  pub(crate) fn get_handler(&self, endpoint: &Endpoint) -> StdResult<HandlerObjectTuple<'_>, RemoteSendError> {
     match self.state.handlers.get(endpoint) {
       Some(handler_object) => {
         let object_id = handler_object.object_id;
@@ -218,57 +247,6 @@ impl Actor {
   /// request to this [`PeerId`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> crate::Result<()> {
     self.commander.add_addresses(peer_id, OneOrMany::Many(addresses)).await
-  }
-
-  /// Sends an asynchronous message to a peer. To receive a potential response, use [`Actor::await_message`],
-  /// with the same `thread_id`.
-  pub async fn send_message<REQ: ActorRequest<Asynchronous>>(
-    &mut self,
-    peer: PeerId,
-    thread_id: &ThreadId,
-    message: REQ,
-  ) -> Result<()> {
-    self.send_named_message(peer, REQ::endpoint(), thread_id, message).await
-  }
-
-  #[doc(hidden)]
-  /// Helper function for bindings, prefer [`Actor::send_message`] whenever possible.
-  pub(crate) async fn send_named_message<REQ: ActorRequest<Asynchronous>>(
-    &mut self,
-    peer: PeerId,
-    name: &str,
-    thread_id: &ThreadId,
-    message: REQ,
-  ) -> Result<()> {
-    let request_mode: RequestMode = message.request_mode();
-
-    let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
-
-    let dcpm = self.call_send_message_hook(peer, dcpm).await?;
-
-    self.create_thread_channels(thread_id);
-
-    let dcpm_vec = serde_json::to_vec(&dcpm).map_err(|err| Error::SerializationFailure {
-      location: ErrorLocation::Local,
-      context: "send message".to_owned(),
-      error_message: err.to_string(),
-    })?;
-
-    let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
-
-    log::debug!("Sending `{}` message", name);
-
-    let response = self.commander.send_request(peer, message).await?;
-
-    serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).map_err(|err| {
-      Error::DeserializationFailure {
-        location: ErrorLocation::Local,
-        context: "send message".to_owned(),
-        error_message: err.to_string(),
-      }
-    })??;
-
-    Ok(())
   }
 
   /// Sends a synchronous request to a peer and returns its response.
@@ -317,126 +295,19 @@ impl Actor {
       error_message: err.to_string(),
     })
   }
+}
 
-  #[inline(always)]
-  async fn call_send_message_hook<MOD: SyncMode, REQ: ActorRequest<MOD>>(
-    &self,
-    peer: PeerId,
-    input: REQ,
-  ) -> Result<REQ> {
-    let mut endpoint = Endpoint::new(REQ::endpoint())?;
-    endpoint.is_hook = true;
-
-    if self.handlers().contains_key(&endpoint) {
-      log::debug!("Calling send hook: {}", endpoint);
-
-      let hook_result: StdResult<StdResult<REQ, DidCommTermination>, RemoteSendError> =
-        self.call_hook(endpoint, peer, input).await;
-
-      match hook_result {
-        Ok(Ok(request)) => Ok(request),
-        Ok(Err(_)) => {
-          unimplemented!("didcomm termination");
-        }
-        Err(err) => Err(err.into()),
-      }
-    } else {
-      Ok(input)
-    }
+impl GenericActor for Actor {
+  fn from_actor_builder(builder: ActorBuilder, peer_id: PeerId, commander: NetCommander) -> crate::Result<Self> {
+    Self::from_builder(builder, peer_id, commander)
   }
 
-  /// Wait for a message on a given `thread_id`. This can only be called successfully if
-  /// [`Actor::send_message`] was used previously. This will return a timeout error if no message
-  /// is received within the duration passed to [`ActorBuilder::timeout`](crate::ActorBuilder::timeout).
-  pub async fn await_message<T: DeserializeOwned + Send + 'static>(
-    &mut self,
-    thread_id: &ThreadId,
-  ) -> Result<DidCommPlaintextMessage<T>> {
-    if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
-      // Receival + Deserialization
-      let inbound_request = tokio::time::timeout(self.state.config.timeout, receiver.1)
-        .await
-        .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
-        .map_err(|_| Error::ThreadNotFound(receiver.0))?;
-
-      let message: DidCommPlaintextMessage<T> =
-        serde_json::from_slice(inbound_request.input.as_ref()).map_err(|err| Error::DeserializationFailure {
-          location: ErrorLocation::Local,
-          context: "await message".to_owned(),
-          error_message: err.to_string(),
-        })?;
-
-      log::debug!("awaited message {}", inbound_request.endpoint);
-
-      // Hooking
-      let mut hook_endpoint: Endpoint = inbound_request.endpoint;
-      hook_endpoint.is_hook = true;
-
-      if self.handlers().contains_key(&hook_endpoint) {
-        log::debug!("Calling hook: {}", hook_endpoint);
-
-        let hook_result: StdResult<StdResult<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
-          self.call_hook(hook_endpoint, inbound_request.peer_id, message).await;
-
-        match hook_result {
-          Ok(Ok(request)) => Ok(request),
-          Ok(Err(_)) => {
-            unimplemented!("didcomm termination");
-          }
-          Err(err) => Err(err.into()),
-        }
-      } else {
-        Ok(message)
-      }
-    } else {
-      log::warn!("attempted to wait for a message on thread {thread_id:?}, which does not exist");
-      Err(Error::ThreadNotFound(thread_id.to_owned()))
+  fn handle_request(self, request: InboundRequest) {
+    if request.request_mode == RequestMode::Asynchronous {
+      todo!("return `NotSupported` error or similar");
     }
-  }
 
-  /// Creates the channels used to await a message on a thread.
-  fn create_thread_channels(&mut self, thread_id: &ThreadId) {
-    let (sender, receiver) = oneshot::channel();
-
-    // The logic is that for every received message on a thread,
-    // there must be a preceding send_message on that same thread.
-    // Note that on the receiving actor, the very first message of a protocol
-    // is not awaited through await_message, so it does not need to follow that logic.
-    self.state.threads_sender.insert(thread_id.to_owned(), sender);
-    self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
-  }
-
-  /// Call the hook identified by the given `endpoint` with some `input`.
-  async fn call_hook<I, O>(&self, endpoint: Endpoint, peer: PeerId, input: I) -> StdResult<O, RemoteSendError>
-  where
-    I: Send + 'static,
-    O: 'static,
-  {
-    match self.get_handler(&endpoint) {
-      Ok(handler_object) => {
-        let handler: &dyn RequestHandler = handler_object.0.handler.as_ref();
-        let state: Box<dyn Any + Send + Sync> = handler_object.1;
-        let type_erased_input: Box<dyn Any + Send> = Box::new(input);
-        let request_context = RequestContext::new((), peer, endpoint);
-
-        let result = handler
-          .invoke(self.clone(), request_context, state, type_erased_input)?
-          .await;
-
-        match result.downcast::<O>() {
-          Ok(result) => Ok(*result),
-          Err(_) => {
-            let err = RemoteSendError::HookInvocationError(format!(
-              "hook did not return the expected type: {:?}",
-              std::any::type_name::<O>(),
-            ));
-
-            Err(err)
-          }
-        }
-      }
-      Err(error) => Err(error),
-    }
+    self.handle_sync_request(request)
   }
 }
 
@@ -449,8 +320,8 @@ pub(crate) type ObjectId = Uuid;
 
 /// A [`RequestHandler`] and the id of its associated shared state object.
 pub struct HandlerObject {
-  handler: Box<dyn RequestHandler>,
-  object_id: ObjectId,
+  pub(crate) handler: Box<dyn RequestHandler>,
+  pub(crate) object_id: ObjectId,
 }
 
 impl HandlerObject {

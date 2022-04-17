@@ -10,6 +10,7 @@ use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
+use crate::didcomm::didcomm_actor::DidCommActor;
 use crate::Actor;
 use crate::ActorBuilder;
 
@@ -41,4 +42,30 @@ async fn default_sending_actor(f: impl FnOnce(&mut ActorBuilder)) -> Actor {
   f(&mut builder);
 
   builder.build().await.unwrap()
+}
+
+async fn default_sending_didcomm_actor(f: impl FnOnce(&mut ActorBuilder)) -> DidCommActor {
+  let mut builder = ActorBuilder::new();
+
+  f(&mut builder);
+
+  builder.build().await.unwrap()
+}
+
+async fn default_listening_didcomm_actor(f: impl FnOnce(&mut ActorBuilder)) -> (DidCommActor, Vec<Multiaddr>, PeerId) {
+  let id_keys = Keypair::generate_ed25519();
+
+  let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
+  let mut builder = ActorBuilder::new().keypair(id_keys);
+
+  f(&mut builder);
+
+  let mut listening_actor: DidCommActor = builder.build().await.unwrap();
+
+  let _ = listening_actor.start_listening(addr).await.unwrap();
+  let addrs = listening_actor.addresses().await.unwrap();
+
+  let peer_id = listening_actor.peer_id();
+
+  (listening_actor, addrs, peer_id)
 }

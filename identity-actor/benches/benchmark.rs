@@ -26,12 +26,12 @@ async fn setup() -> (Actor, PeerId, Actor) {
     .add_sync_handler(RemoteAccount::get)
     .unwrap();
 
-  let mut receiver = builder.build().await.unwrap();
+  let mut receiver: Actor = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
   let receiver_peer_id = receiver.peer_id();
 
-  let mut sender = ActorBuilder::new().build().await.unwrap();
+  let mut sender: Actor = ActorBuilder::new().build().await.unwrap();
 
   sender.add_address(receiver_peer_id, addr).await.unwrap();
 

@@ -7,6 +7,7 @@ use std::iter;
 use std::marker::PhantomData;
 use std::time::Duration;
 
+use crate::didcomm::didcomm_actor::DidCommActor;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::p2p::ActorProtocol;
 use crate::p2p::ActorRequestResponseCodec;
@@ -17,17 +18,15 @@ use crate::Actor;
 use crate::ActorConfig;
 use crate::ActorRequest;
 use crate::Asynchronous;
-use crate::AsynchronousInvocationStrategy;
 use crate::Endpoint;
 use crate::Error;
+use crate::GenericActor;
 use crate::Handler;
 use crate::HandlerObject;
 use crate::RequestContext;
-use crate::RequestMode;
 use crate::Result;
 use crate::SyncMode;
 use crate::Synchronous;
-use crate::SynchronousInvocationStrategy;
 use futures::channel::mpsc;
 use futures::AsyncRead;
 use futures::AsyncWrite;
@@ -54,11 +53,11 @@ use super::actor::ObjectMap;
 
 /// An [`Actor`] builder for easy configuration and building of handler and hook functions.
 pub struct ActorBuilder {
-  listening_addresses: Vec<Multiaddr>,
-  keypair: Option<Keypair>,
-  config: ActorConfig,
-  handler_map: HandlerMap,
-  object_map: ObjectMap,
+  pub(crate) listening_addresses: Vec<Multiaddr>,
+  pub(crate) keypair: Option<Keypair>,
+  pub(crate) config: ActorConfig,
+  pub(crate) handlers: HandlerMap,
+  pub(crate) objects: ObjectMap,
 }
 
 impl ActorBuilder {
@@ -69,8 +68,8 @@ impl ActorBuilder {
       keypair: None,
 
       config: ActorConfig::default(),
-      handler_map: HashMap::new(),
-      object_map: HashMap::new(),
+      handlers: HashMap::new(),
+      objects: HashMap::new(),
     }
   }
 
@@ -100,13 +99,13 @@ impl ActorBuilder {
   /// Grants low-level access to the handler map for use in bindings.
   #[cfg(feature = "primitives")]
   pub fn handlers(&mut self) -> &mut HandlerMap {
-    &mut self.handler_map
+    &mut self.handlers
   }
 
   /// Grants low-level access to the object map for use in bindings.
   #[cfg(feature = "primitives")]
   pub fn objects(&mut self) -> &mut ObjectMap {
-    &mut self.object_map
+    &mut self.objects
   }
 
   /// Add a new shared state object and returns a [`HandlerBuilder`] which can be used to
@@ -117,10 +116,10 @@ impl ActorBuilder {
     MOD: SyncMode,
   {
     let object_id: ObjectId = Uuid::new_v4();
-    self.object_map.insert(object_id, Box::new(state_object));
+    self.objects.insert(object_id, Box::new(state_object));
     HandlerBuilder {
       object_id,
-      handler_map: &mut self.handler_map,
+      handler_map: &mut self.handlers,
       _marker_obj: PhantomData,
       _marker_mod: PhantomData,
     }
@@ -128,7 +127,7 @@ impl ActorBuilder {
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
-  pub async fn build(self) -> Result<Actor> {
+  pub async fn build<ACT: GenericActor>(self) -> Result<ACT> {
     let dns_transport =
       libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new()).map_err(|err| Error::TransportError {
         context: "unable to build transport",
@@ -143,8 +142,9 @@ impl ActorBuilder {
   }
 
   /// Build the actor with a custom transport.
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<Actor>
+  pub async fn build_with_transport<ACT, TRA>(mut self, transport: TRA) -> Result<ACT>
   where
+    ACT: GenericActor,
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     TRA::Dial: Send + 'static,
@@ -152,9 +152,11 @@ impl ActorBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
+    // TODO: (maybe), quick hack to avoid moving keypair out of the builder.
+    let gen_keypair = Keypair::generate_ed25519();
     let (noise_keypair, peer_id) = {
-      let keypair = self.keypair.unwrap_or_else(Keypair::generate_ed25519);
-      let noise_keypair = NoiseKeypair::<X25519Spec>::new().into_authentic(&keypair).unwrap();
+      let keypair: &Keypair = self.keypair.as_ref().unwrap_or(&gen_keypair);
+      let noise_keypair = NoiseKeypair::<X25519Spec>::new().into_authentic(keypair).unwrap();
       let peer_id = keypair.public().to_peer_id();
       (noise_keypair, peer_id)
     };
@@ -190,7 +192,7 @@ impl ActorBuilder {
         .build()
     };
 
-    for addr in self.listening_addresses {
+    for addr in std::mem::take(&mut self.listening_addresses) {
       swarm.listen_on(addr).map_err(|err| Error::TransportError {
         context: "unable to start listening",
         source: err,
@@ -200,27 +202,17 @@ impl ActorBuilder {
     let (cmd_sender, cmd_receiver) = mpsc::channel(10);
 
     let event_loop = EventLoop::new(swarm, cmd_receiver);
-    let swarm_commander = NetCommander::new(cmd_sender);
+    let net_commander = NetCommander::new(cmd_sender);
 
-    let actor = Actor::from_builder(
-      swarm_commander.clone(),
-      self.handler_map,
-      self.object_map,
-      peer_id,
-      self.config,
-    )
-    .await?;
+    let actor = ACT::from_actor_builder(self, peer_id, net_commander)?;
 
     let actor_clone = actor.clone();
 
     let event_handler = move |event: InboundRequest| {
       let actor = actor_clone.clone();
 
-      if event.request_mode == RequestMode::Asynchronous {
-        actor.handle_request::<AsynchronousInvocationStrategy>(event);
-      } else {
-        actor.handle_request::<SynchronousInvocationStrategy>(event);
-      };
+      // TODO: Should be GenericActor::handle_request
+      actor.handle_request(event);
     };
 
     executor.exec(event_loop.run(event_handler).boxed());
@@ -280,7 +272,7 @@ where
   /// The handler is not expected to return anything.
   pub fn add_async_handler<REQ, FUT>(
     self,
-    handler: fn(OBJ, Actor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
+    handler: fn(OBJ, DidCommActor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
   ) -> Result<Self>
   where
     REQ: ActorRequest<Asynchronous> + Sync,

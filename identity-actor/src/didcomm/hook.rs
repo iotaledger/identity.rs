@@ -9,14 +9,15 @@ use futures::Future;
 use crate::actor::HandlerBuilder;
 use crate::traits::AnyFuture;
 use crate::traits::RequestHandler;
-use crate::Actor;
 use crate::ActorRequest;
 use crate::Endpoint;
+use crate::GenericActor;
 use crate::HandlerObject;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::Result as ActorResult;
 
+use super::didcomm_actor::DidCommActor;
 use super::termination::DidCommTermination;
 use crate::SyncMode;
 
@@ -25,14 +26,14 @@ where
   OBJ: Clone + Send + Sync + 'static,
   MOD: SyncMode,
 {
-  pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
+  pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
   where
     REQ: ActorRequest<MOD> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
     MOD: Send + Sync + 'static,
   {
-    let handler: Hook<_, _, _, _> = Hook::new(handler);
+    let handler: Hook<_, _, _, _, _> = Hook::new(handler);
     let mut endpoint: Endpoint = Endpoint::new(REQ::endpoint())?;
     endpoint.is_hook = true;
 
@@ -46,14 +47,15 @@ where
 /// A function that hooks and thus extends existing handler logic.
 /// Can modify incoming requests or abort handling.
 #[derive(Clone)]
-pub struct Hook<MOD, OBJ, REQ, FUT>
+pub struct Hook<MOD, ACT, OBJ, REQ, FUT>
 where
+  ACT: GenericActor,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
   MOD: SyncMode + 'static,
 {
-  func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
@@ -61,27 +63,31 @@ where
   _marker_obj: PhantomData<&'static OBJ>,
   _marker_req: PhantomData<&'static REQ>,
   _marker_mod: PhantomData<&'static MOD>,
+  _marker_act: PhantomData<&'static ACT>,
 }
 
-impl<MOD, OBJ, REQ, FUT> Hook<MOD, OBJ, REQ, FUT>
+impl<MOD, ACT, OBJ, REQ, FUT> Hook<MOD, ACT, OBJ, REQ, FUT>
 where
+  ACT: GenericActor,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
   MOD: SyncMode + 'static,
 {
-  pub fn new(func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self {
+  pub fn new(func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
       _marker_mod: PhantomData,
+      _marker_act: PhantomData,
     }
   }
 }
 
-impl<MOD, OBJ, REQ, FUT> RequestHandler for Hook<MOD, OBJ, REQ, FUT>
+impl<MOD, ACT, OBJ, REQ, FUT> RequestHandler for Hook<MOD, ACT, OBJ, REQ, FUT>
 where
+  ACT: GenericActor,
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,
@@ -90,7 +96,7 @@ where
 {
   fn invoke(
     &self,
-    actor: Actor,
+    actor: Box<dyn Any + Send + Sync>,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
@@ -112,6 +118,8 @@ where
         std::any::type_name::<OBJ>()
       ))
     })?;
+
+    let actor: ACT = *actor.downcast().expect("TODO");
 
     let future = async move {
       let response: Result<REQ, DidCommTermination> = (self.func)(*boxed_object, actor, request).await;

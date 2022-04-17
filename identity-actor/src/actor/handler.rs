@@ -7,22 +7,23 @@ use std::marker::PhantomData;
 
 use crate::traits::AnyFuture;
 use crate::traits::RequestHandler;
-use crate::Actor;
 use crate::ActorRequest;
+use crate::GenericActor;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::SyncMode;
 
 /// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]
-pub struct Handler<MOD, OBJ, REQ, FUT>
+pub struct Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  ACT: GenericActor,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
   MOD: SyncMode + 'static,
 {
-  func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
@@ -30,27 +31,31 @@ where
   _marker_obj: std::marker::PhantomData<&'static OBJ>,
   _marker_req: std::marker::PhantomData<&'static REQ>,
   _marker_mod: std::marker::PhantomData<&'static MOD>,
+  _marker_act: std::marker::PhantomData<&'static ACT>,
 }
 
-impl<MOD, OBJ, REQ, FUT> Handler<MOD, OBJ, REQ, FUT>
+impl<MOD, ACT, OBJ, REQ, FUT> Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  ACT: GenericActor,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
   MOD: SyncMode + 'static,
 {
-  pub fn new(func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self {
+  pub fn new(func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
       _marker_mod: PhantomData,
+      _marker_act: PhantomData,
     }
   }
 }
 
-impl<MOD, OBJ, REQ, FUT> RequestHandler for Handler<MOD, OBJ, REQ, FUT>
+impl<MOD, ACT, OBJ, REQ, FUT> RequestHandler for Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  ACT: GenericActor,
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,
@@ -59,7 +64,7 @@ where
 {
   fn invoke(
     &self,
-    actor: Actor,
+    actor: Box<dyn Any + Send + Sync>,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
@@ -81,6 +86,9 @@ where
         std::any::type_name::<OBJ>()
       ))
     })?;
+
+    let actor: ACT = *actor.downcast().expect("TODO");
+
     let future = async move {
       let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
       let type_erased: Box<dyn Any + Send> = Box::new(response);
