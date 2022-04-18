@@ -44,6 +44,7 @@ use crate::stronghold::Vault;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
+use crate::types::SharedSecretLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
@@ -292,7 +293,7 @@ impl Storage for Stronghold {
     match private_key.key_type {
       KeyType::Ed25519 => aead_encrypt(&vault, algorithm, private_key, data, associated_data).await,
       KeyType::X25519 => {
-        let shared_secret: KeyLocation = random_location(KeyType::X25519);
+        let shared_secret: SharedSecretLocation = SharedSecretLocation::random();
         diffie_hellman(
           &vault,
           private_key,
@@ -324,7 +325,7 @@ impl Storage for Stronghold {
     match private_key.key_type {
       KeyType::Ed25519 => aead_decrypt(&vault, algorithm, private_key, data).await,
       KeyType::X25519 => {
-        let shared_secret: KeyLocation = random_location(KeyType::X25519);
+        let shared_secret: SharedSecretLocation = SharedSecretLocation::random();
         diffie_hellman(
           &vault,
           private_key,
@@ -548,6 +549,12 @@ impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
     let record_path: Vec<u8> = key_location.canonical().into_bytes();
     Location::generic(VAULT_PATH.to_vec(), record_path)
+  }
+}
+
+impl From<&SharedSecretLocation> for Location {
+  fn from(shared_secret_location: &SharedSecretLocation) -> Self {
+    Location::generic(VAULT_PATH.to_vec(), shared_secret_location.0.clone())
   }
 }
 
