@@ -280,7 +280,7 @@ impl WasmAccount {
     public_key: Option<Vec<u8>>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
-    let algorithm: WasmEncryptionAlgorithm = algorithm.clone().into();
+    let algorithm: WasmEncryptionAlgorithm = algorithm.clone();
     let public_key: Option<PublicKey> = public_key.map(|key| key.to_vec().into());
 
     future_to_promise(async move {
@@ -307,7 +307,7 @@ impl WasmAccount {
     public_key: Option<Vec<u8>>,
   ) -> PromiseData {
     let account = self.0.clone();
-    let algorithm: WasmEncryptionAlgorithm = algorithm.clone().into();
+    let algorithm: WasmEncryptionAlgorithm = algorithm.clone();
     let public_key: Option<PublicKey> = public_key.map(|key| key.to_vec().into());
     let data: EncryptedData = data.0.clone();
 
