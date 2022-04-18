@@ -26,7 +26,7 @@ See the [Verifiable Credentials Data Model Specification](https://www.w3.org/TR/
 
 :::
 
-## Creation
+## Creation {#creation}
 
 The IOTA Identity Framework enables holders to construct verifiable presentations easily.
 As demonstrated in the [example](#example), holders need only pass in their credentials to present and sign the presentation.
@@ -47,12 +47,12 @@ However, the holder property should be included to satisfy [subject-holder relat
 After creation, the holder signs the verifiable presentation using a private key linked to one of the verification methods in their
 DID Document and transmits it to a verifier for [validation](#validation).
 
-### Proof Options
+### Proof Options {#proof-options}
 
 A digital signature on a verifiable presentation both provides data integrity and proves the DID of the holder.
-The proof section embedded in a presentation may include additional metadata, such as challenge and domain strings sent by a verifier.
+The proof section embedded in a presentation may also include additional metadata.
 
-The following proof metadata properties can be configured by the framework and are optional and omitted by default:
+The following metadata properties can be configured by the framework and are optional and omitted by default:
 
 - **Created**: timestamp of when the presentation was signed.
 - **Expires**: timestamp after which the presentation is no longer considered valid.
@@ -62,14 +62,12 @@ The following proof metadata properties can be configured by the framework and a
   - **AssertionMethod**: to assert a claim. The signing verification method must have an [`assertionMethod`](https://www.w3.org/TR/did-core/#assertion) relationship to be valid.
   - **Authentication**: to authenticate the signer. The signing verification method must have an [`authentication`](https://www.w3.org/TR/did-core/#authentication) relationship to be valid.
 
-Verifiers should always send a challenge and domain to mitigate replay attacks.
-That is, a verifiable presentation without a challenge and domain in its proof that matches what was sent by the verifier should be considered invalid,
-as it could have been stored by a malicious actor from a previous interaction with the actual holder and replayed.
+Verifiers should always send a challenge and domain to mitigate replay attacks, see [Security Considerations](#security-considerations).
 
 A verifier could also choose to ignore some or all of these options.
 See [Proof Verifier Options](#proof-verifier-options) for more information.
 
-## Validation
+## Validation {#validation}
 
 The IOTA Identity Framework provides several options for verifiers to validate various sections of a verifiable presentation.
 See the [example](#example) for a demonstration of how to validate a presentation.
@@ -91,15 +89,16 @@ Currently, the following are *not* checked automatically:
 
 The default validation behaviour may be modified by the following options.
 
-### Proof Verifier Options
+### Proof Verifier Options {#proof-verifier-options}
 
 While the framework always verifies that the digital signature on a verifiable presentation is valid, a verifier may validate additional fields in the proof on a presentation.
 Notably, to mitigate potential replay attacks a verifier should always check that the challenge and domain fields match what was sent to the holder when requesting the presentation.
+See [Security Considerations](#security-considerations) for more information.
 
-The following optional checks are available:
+The following options are available:
 
 - **Method Scope**: check the signing verification method has a particular [verification relationship](https://www.w3.org/TR/did-core/#verification-relationships). Overridden by the proof purpose check.
-- **Method Type**: check the signing verification method type matches one in a list.
+- **Method Type**: check the signing verification method has a particular type.
 - **Challenge**: check the challenge field matches this string.
 - **Domain**: check the domain field matches this string.
 - **Proof Purpose**: require a specific purpose on the proof. See [Proof Options](#proof-options).
@@ -107,13 +106,13 @@ The following optional checks are available:
 
 See [Proof Options](#proof-options) for more information on setting these properties as a holder when signing a verifiable presentation.
 
-### Subject-Holder Relationship
+### Subject-Holder Relationship {#subject-holder-relationship}
 
 Specifies the expected relationship between the holder that signed the verifiable presentation and the subject specified in each verifiable credential.
 
 The following options are available:
 
-- **`AlwaysSubject` (default)**: the holder DID that signed the presentation must match the `credentialSubject` `id` field in each of the attached credentials. This is the safest option which ensures holders may only present credentials that were directly issued to their DID. An error is thrown on a mismatch or if no subject `id` is present.
+- **`AlwaysSubject` (default)**: the holder DID that signed the presentation must match the [`credentialSubject` `id`](https://www.w3.org/TR/vc-data-model/#credential-subject) field in each of the attached credentials. This is the safest option which ensures holders may only present credentials that were directly issued to their DID. An error is thrown on a mismatch or if no subject `id` is present.
 - **`SubjectOnNonTransferable`**: the holder DID must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`. This is appropriate for accepting [bearer credentials](https://www.w3.org/TR/vc-data-model/#bearer-credentials) while still adhering to the specification.
 - **`Any`**: the holder DID is not required to have any kind of relationship to any credential subject. This option performs no checks and ignores the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property.
 
@@ -123,7 +122,7 @@ See the [Verifiable Credentials Data Model Specification](https://www.w3.org/TR/
 
 :::
 
-### Credential Validation Options
+### Credential Validation Options {#credential-validation-options}
 
 These options specify conditions that all credentials in a verifiable presentation must satisfy.
 
@@ -131,7 +130,30 @@ These options specify conditions that all credentials in a verifiable presentati
 - **Issuance Date**: check that that [`issuanceDate`](https://www.w3.org/TR/vc-data-model/#issuance-date) property, if present, is not after a specific datetime. Defaults to the current datetime if unset.
 - **Verifier Options**: see [Proof Verifier Options](#proof-verifier-options) for details.
 
-## Example
+## Security Considerations {#security-considerations}
+
+### Replay Attacks {#replay-attacks}
+
+A verifiable presentation by default, without a creation timestamp nor challenge and domain properties,
+could potentially be stored by a malicious actor and replayed to multiple verifiers, impersonating the holder.
+This is because the holder's signature on a presentation would still be seen as valid indefinitely,
+unless they [rotate](https://www.w3.org/TR/did-core/#verification-method-rotation) the verification method used.
+
+To mitigate this, verifiers should always send a unique challenge and domain when requesting a verifiable presentation.
+These properties are then included in the proof section of the presentation by the holder during signing using [Proof Options](#proof-options).
+The digital signature prevents these properties from being altered as it would invalidate the signature, effectively preventing a malicious
+actor from injecting different values into old verifiable presentations. A presentation without a challenge and domain
+in its proof that matches what was sent by the verifier should be considered invalid.
+
+The challenge should be sufficiently random and unique for each verifiable presentation requested by a verifier to avoid
+being predicted. The domain, which does not need to be random, is an additional measure. In the unlikely occurrence
+of two verifiers generating the same random challenge, the domain would sufficiently distinguish those requests.
+
+Holders may additionally specify that their signature on a verifiable presentation expires after a short duration, as
+per [Proof Options](#proof-options). However, verifiers and different implementations could choose to ignore that property,
+so setting a signature expiration alone should not be relied upon.
+
+## Example {#example}
 
 The following code demonstrates how to use the IOTA Identity Framework end-to-end to create and sign a verifiable presentation as a holder,
 serialize it to JSON for transmission, deserialize it on the receiving side as a verifier, and finally validate it with various options.
