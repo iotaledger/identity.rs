@@ -52,7 +52,7 @@ the configuration of previously built accounts.</p>
 <dt><a href="#EncryptedData">EncryptedData</a></dt>
 <dd><p>The structure returned after encrypting data</p>
 </dd>
-<dt><a href="#EncryptionKey">EncryptionKey</a></dt>
+<dt><a href="#EncryptionAlgorithm">EncryptionAlgorithm</a></dt>
 <dd><p>Supported keys for encrypting data</p>
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
@@ -196,9 +196,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -212,13 +212,27 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptData(fragment, encryption_key, data, associated_data)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-    * [.decryptData(fragment, encryption_key, data)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.encryptData(data, associated_data, algorithm, fragment, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(data, algorithm, fragment, public_key)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -241,20 +255,6 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -385,30 +385,36 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+encryptData"></a>
 
-### account.encryptData(fragment, encryption_key, data, associated_data) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-Encrypts the given `data` using the key specified by `fragment`.
+### account.encryptData(data, associated_data, algorithm, fragment, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+Encrypts the given `data` with the specified `algorithm`
+
+Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
-| encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
 | data | <code>Uint8Array</code> | 
 | associated_data | <code>Uint8Array</code> | 
+| algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| fragment | <code>string</code> | 
+| public_key | <code>Uint8Array</code> \| <code>undefined</code> | 
 
 <a name="Account+decryptData"></a>
 
-### account.decryptData(fragment, encryption_key, data) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-Decrypts the given `data` using the key specified by `fragment`.
+### account.decryptData(data, algorithm, fragment, public_key) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+Decrypts the given `data` with the specified `algorithm`
+
+Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
-| encryption_key | [<code>EncryptionKey</code>](#EncryptionKey) | 
 | data | [<code>EncryptedData</code>](#EncryptedData) | 
+| algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| fragment | <code>string</code> | 
+| public_key | <code>Uint8Array</code> \| <code>undefined</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -2274,7 +2280,7 @@ The structure returned after encrypting data
     * _instance_
         * [.nonce()](#EncryptedData+nonce) ⇒ <code>Uint8Array</code>
         * [.associatedData()](#EncryptedData+associatedData) ⇒ <code>Uint8Array</code>
-        * [.cipherText()](#EncryptedData+cipherText) ⇒ <code>Uint8Array</code>
+        * [.ciphertext()](#EncryptedData+ciphertext) ⇒ <code>Uint8Array</code>
         * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
     * _static_
@@ -2292,10 +2298,10 @@ Returns a copy of the nonce
 Returns a copy of the associated data
 
 **Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
-<a name="EncryptedData+cipherText"></a>
+<a name="EncryptedData+ciphertext"></a>
 
-### encryptedData.cipherText() ⇒ <code>Uint8Array</code>
-Returns a copy of the cipher text
+### encryptedData.ciphertext() ⇒ <code>Uint8Array</code>
+Returns a copy of the ciphertext
 
 **Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
 <a name="EncryptedData+tag"></a>
@@ -2321,50 +2327,38 @@ Deserializes `EncryptedData` from a JSON object.
 | --- | --- |
 | json_value | <code>any</code> | 
 
-<a name="EncryptionKey"></a>
+<a name="EncryptionAlgorithm"></a>
 
-## EncryptionKey
+## EncryptionAlgorithm
 Supported keys for encrypting data
 
 **Kind**: global class  
 
-* [EncryptionKey](#EncryptionKey)
+* [EncryptionAlgorithm](#EncryptionAlgorithm)
     * _instance_
-        * [.toJSON()](#EncryptionKey+toJSON) ⇒ <code>any</code>
+        * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.ed25519()](#EncryptionKey.ed25519) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
-        * [.x25519(public_key)](#EncryptionKey.x25519) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
-        * [.fromJSON(json_value)](#EncryptionKey.fromJSON) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
+        * [.aes256gcm()](#EncryptionAlgorithm.aes256gcm) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 
-<a name="EncryptionKey+toJSON"></a>
+<a name="EncryptionAlgorithm+toJSON"></a>
 
-### encryptionKey.toJSON() ⇒ <code>any</code>
-Serializes `EncryptionKey` as a JSON object.
+### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
+Serializes `EncryptionAlgorithm` as a JSON object.
 
-**Kind**: instance method of [<code>EncryptionKey</code>](#EncryptionKey)  
-<a name="EncryptionKey.ed25519"></a>
+**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm.aes256gcm"></a>
 
-### EncryptionKey.ed25519() ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
-Generates an Ed25519 `EncryptionKey`.
+### EncryptionAlgorithm.aes256gcm() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+Encrypts/Decrypts data using Aes256Gcm.
 
-**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
-<a name="EncryptionKey.x25519"></a>
+**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm.fromJSON"></a>
 
-### EncryptionKey.x25519(public_key) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
-Generates an X25519 `EncryptionKey`.
+### EncryptionAlgorithm.fromJSON(json_value) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+Deserializes `EncryptionAlgorithm` from a JSON object.
 
-**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
-
-| Param | Type |
-| --- | --- |
-| public_key | <code>Uint8Array</code> | 
-
-<a name="EncryptionKey.fromJSON"></a>
-
-### EncryptionKey.fromJSON(json_value) ⇒ [<code>EncryptionKey</code>](#EncryptionKey)
-Deserializes `EncryptionKey` from a JSON object.
-
-**Kind**: static method of [<code>EncryptionKey</code>](#EncryptionKey)  
+**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 
 | Param | Type |
 | --- | --- |

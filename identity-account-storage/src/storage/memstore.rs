@@ -28,6 +28,7 @@ use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::types::EncryptedData;
+use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
@@ -206,78 +207,57 @@ impl Storage for MemStore {
     }
   }
 
-  async fn key_exchange(
-    &self,
-    did: &IotaDID,
-    location: &KeyLocation,
-    public_key: PublicKey,
-    fragment: &str,
-  ) -> Result<KeyLocation> {
-    // Retrieves the PrivateKey from the vault
-    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
-    let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
-    if key_pair.type_() != KeyType::X25519 {
-      return Err(Error::InvalidKeyType(format!(
-        "{} expected KeyType::X25519",
-        key_pair.type_()
-      )));
-    }
-    // Computes the shared secret and inserts it in the vault
-    let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), public_key.as_ref())?;
-    let secret_location: KeyLocation =
-      KeyLocation::new(KeyType::X25519, fragment.to_owned(), key_pair.public().as_ref());
-    let secret_pair: KeyPair = KeyPair::from((
-      KeyType::X25519,
-      key_pair.public().clone(),
-      shared_secret.to_vec().into(),
-    ));
-    vault.insert(secret_location.clone(), secret_pair);
-    Ok(secret_location)
-  }
-
   async fn encrypt_data(
     &self,
     did: &IotaDID,
-    location: &KeyLocation,
     data: Vec<u8>,
     associated_data: Vec<u8>,
+    algorithm: &EncryptionAlgorithm,
+    private_key: &KeyLocation,
+    public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
-    // Retrieves the PrivateKey from the vault
-    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
-    let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
-    // Encrypts the given data
-    let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
-    let mut cipher_text: Vec<u8> = vec![0; data.len()];
-    let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
-    Aes256Gcm::try_encrypt(
-      key_pair.private().as_ref(),
-      nonce,
-      associated_data.as_ref(),
-      data.as_ref(),
-      &mut cipher_text,
-      &mut tag,
-    )?;
-    Ok(EncryptedData::new(nonce.to_vec(), associated_data, tag, cipher_text))
-  }
-
-  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
     // Retrieves the PrivateKey from the vault
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
-    let key_pair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
+    let key_pair: &KeyPair = vault.get(private_key).ok_or(Error::KeyNotFound)?;
+    // Encrypts the data
+    match key_pair.type_() {
+      KeyType::Ed25519 => try_encrypt(key_pair.private().as_ref(), algorithm, &data, associated_data),
+      KeyType::X25519 => {
+        // Computes the shared secret
+        let shared_secret: [u8; 32] = X25519::key_exchange(
+          key_pair.private(),
+          &public_key.ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?,
+        )?;
+        try_encrypt(shared_secret.as_ref(), algorithm, &data, associated_data)
+      }
+    }
+  }
+
+  async fn decrypt_data(
+    &self,
+    did: &IotaDID,
+    data: EncryptedData,
+    algorithm: &EncryptionAlgorithm,
+    private_key: &KeyLocation,
+    public_key: Option<PublicKey>,
+  ) -> Result<Vec<u8>> {
+    // Retrieves the PrivateKey from the vault
+    let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
+    let key_pair: &KeyPair = vault.get(private_key).ok_or(Error::KeyNotFound)?;
     // Decrypts the data
-    let mut plaintext = vec![0; data.cypher_text().len()];
-    Aes256Gcm::try_decrypt(
-      key_pair.private().as_ref(),
-      data.nonce(),
-      data.associated_data(),
-      &mut plaintext,
-      data.cypher_text(),
-      data.tag(),
-    )?;
-    Ok(plaintext)
+    match key_pair.type_() {
+      KeyType::Ed25519 => try_decrypt(key_pair.private().as_ref(), algorithm, &data),
+      KeyType::X25519 => {
+        // Computes the shared secret
+        let shared_secret: [u8; 32] = X25519::key_exchange(
+          key_pair.private(),
+          &public_key.ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?,
+        )?;
+        try_decrypt(shared_secret.as_ref(), algorithm, &data)
+      }
+    }
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
@@ -302,6 +282,40 @@ impl Storage for MemStore {
 
   async fn flush_changes(&self) -> Result<()> {
     Ok(())
+  }
+}
+
+fn try_encrypt(
+  key: &[u8],
+  algorithm: &EncryptionAlgorithm,
+  data: &[u8],
+  associated_data: Vec<u8>,
+) -> Result<EncryptedData> {
+  match algorithm {
+    EncryptionAlgorithm::Aes256Gcm => {
+      let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
+      let mut ciphertext: Vec<u8> = vec![0; data.len()];
+      let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
+      Aes256Gcm::try_encrypt(key, nonce, associated_data.as_ref(), data, &mut ciphertext, &mut tag)?;
+      Ok(EncryptedData::new(nonce.to_vec(), associated_data, tag, ciphertext))
+    }
+  }
+}
+
+fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData) -> Result<Vec<u8>> {
+  match algorithm {
+    EncryptionAlgorithm::Aes256Gcm => {
+      let mut plaintext = vec![0; data.ciphertext().len()];
+      Aes256Gcm::try_decrypt(
+        key,
+        data.nonce(),
+        data.associated_data(),
+        &mut plaintext,
+        data.ciphertext(),
+        data.tag(),
+      )?;
+      Ok(plaintext)
+    }
   }
 }
 

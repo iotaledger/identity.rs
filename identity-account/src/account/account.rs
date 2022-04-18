@@ -14,9 +14,11 @@ use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::EncryptedData;
+use identity_account_storage::types::EncryptionAlgorithm;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
+use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
@@ -33,7 +35,6 @@ use identity_iota_core::tangle::MessageIdExt;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
-use crate::types::EncryptionKey;
 use crate::types::IdentitySetup;
 use crate::types::IdentityUpdater;
 use crate::updates::create_identity;
@@ -305,39 +306,54 @@ where
     Ok(())
   }
 
-  /// Encrypts the given `data` using the key specified by `fragment`.
+  /// Encrypts the given `data` with the specified `algorithm`
+  ///
+  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   pub async fn encrypt_data(
     &self,
-    fragment: &str,
-    encryption_key: &EncryptionKey,
     data: &[u8],
     associated_data: &[u8],
+    algorithm: &EncryptionAlgorithm,
+    fragment: &str,
+    public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
-    let location: KeyLocation = encryption_key
-      .key_location(fragment, self.did(), self.document(), self.storage())
-      .await?;
+    let method: &IotaVerificationMethod = self
+      .document()
+      .resolve_method(fragment, None)
+      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
+    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
     self
       .storage()
-      .as_ref()
-      .encrypt_data(self.did(), &location, data.to_vec(), associated_data.to_vec())
+      .encrypt_data(
+        self.did(),
+        data.to_vec(),
+        associated_data.to_vec(),
+        algorithm,
+        &private_key,
+        public_key,
+      )
       .await
       .map_err(Into::into)
   }
 
-  /// Decrypts the given `data` using the key specified by `fragment`.
+  /// Decrypts the given `data` with the specified `algorithm`
+  ///
+  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   pub async fn decrypt_data(
     &self,
-    fragment: &str,
-    encryption_key: &EncryptionKey,
     data: EncryptedData,
+    algorithm: &EncryptionAlgorithm,
+    fragment: &str,
+    public_key: Option<PublicKey>,
   ) -> Result<Vec<u8>> {
-    let location: KeyLocation = encryption_key
-      .key_location(fragment, self.did(), self.document(), self.storage())
-      .await?;
+    let method: &IotaVerificationMethod = self
+      .document()
+      .resolve_method(fragment, None)
+      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
+    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
     self
       .storage()
-      .as_ref()
-      .decrypt_data(self.did(), &location, data)
+      .decrypt_data(self.did(), data, algorithm, &private_key, public_key)
       .await
       .map_err(Into::into)
   }

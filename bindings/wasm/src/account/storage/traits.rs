@@ -6,6 +6,7 @@ use core::fmt::Formatter;
 
 use identity::account_storage::ChainState;
 use identity::account_storage::EncryptedData;
+use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::Error as AccountStorageError;
 use identity::account_storage::KeyLocation;
 use identity::account_storage::Result as AccountStorageResult;
@@ -26,6 +27,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::types::WasmEncryptedData;
+use crate::account::types::WasmEncryptionAlgorithm;
 use crate::account::types::WasmKeyLocation;
 use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
@@ -89,28 +91,24 @@ extern "C" {
   pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method, js_name = keyExists)]
   pub fn key_exists(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseBool;
-  #[wasm_bindgen(method, js_name = keyExchange)]
-  pub fn key_exchange(
-    this: &WasmStorage,
-    did: WasmDID,
-    location: WasmKeyLocation,
-    public_key: Uint8Array,
-    fragment: String,
-  ) -> PromiseKeyLocation;
   #[wasm_bindgen(method, js_name = encryptData)]
   pub fn encrypt_data(
     this: &WasmStorage,
     did: WasmDID,
-    location: WasmKeyLocation,
     data: Vec<u8>,
     associated_data: Vec<u8>,
+    algorithm: WasmEncryptionAlgorithm,
+    private_key: WasmKeyLocation,
+    public_key: Option<Vec<u8>>,
   ) -> PromiseEncryptedData;
   #[wasm_bindgen(method, js_name = decryptData)]
   pub fn decrypt_data(
     this: &WasmStorage,
     did: WasmDID,
-    location: WasmKeyLocation,
     data: WasmEncryptedData,
+    algorithm: WasmEncryptionAlgorithm,
+    private_key: WasmKeyLocation,
+    public_key: Option<Vec<u8>>,
   ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = chainStateGet)]
   pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
@@ -242,36 +240,23 @@ impl Storage for WasmStorage {
     result.into()
   }
 
-  async fn key_exchange(
-    &self,
-    did: &IotaDID,
-    location: &KeyLocation,
-    public_key: PublicKey,
-    fragment: &str,
-  ) -> AccountStorageResult<KeyLocation> {
-    let promise: Promise = Promise::resolve(&self.key_exchange(
-      did.clone().into(),
-      location.clone().into(),
-      public_key.as_ref().into(),
-      fragment.to_owned(),
-    ));
-    let result: JsValueResult = JsFuture::from(promise).await.into();
-    let location: KeyLocation = result
-      .account_err()?
-      .into_serde()
-      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
-    Ok(location)
-  }
-
   async fn encrypt_data(
     &self,
     did: &IotaDID,
-    location: &KeyLocation,
     data: Vec<u8>,
     associated_data: Vec<u8>,
+    algorithm: &EncryptionAlgorithm,
+    private_key: &KeyLocation,
+    public_key: Option<PublicKey>,
   ) -> AccountStorageResult<EncryptedData> {
-    let promise: Promise =
-      Promise::resolve(&self.encrypt_data(did.clone().into(), location.clone().into(), data, associated_data));
+    let promise: Promise = Promise::resolve(&self.encrypt_data(
+      did.clone().into(),
+      data,
+      associated_data,
+      algorithm.clone().into(),
+      private_key.clone().into(),
+      public_key.map(|key| key.as_ref().to_vec()),
+    ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let encrypted_data: EncryptedData = result
       .account_err()?
@@ -283,11 +268,18 @@ impl Storage for WasmStorage {
   async fn decrypt_data(
     &self,
     did: &IotaDID,
-    location: &KeyLocation,
     data: EncryptedData,
+    algorithm: &EncryptionAlgorithm,
+    private_key: &KeyLocation,
+    public_key: Option<PublicKey>,
   ) -> AccountStorageResult<Vec<u8>> {
-    let promise: Promise =
-      Promise::resolve(&self.decrypt_data(did.clone().into(), location.clone().into(), data.into()));
+    let promise: Promise = Promise::resolve(&self.decrypt_data(
+      did.clone().into(),
+      data.into(),
+      algorithm.clone().into(),
+      private_key.clone().into(),
+      public_key.map(|key| key.as_ref().to_vec()),
+    ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let data: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
     Ok(data)
@@ -411,17 +403,17 @@ interface Storage {
   /** Returns `true` if a key exists at the specified `location`. */
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
-  /** Performs Diffie-Hellman key exchange using the private key of the first party with the
-   * public key of the second party, resulting in a shared secret.
+  /** Encrypts the given `data` with the specified `algorithm`.
    * 
-   * Returns the location where the shared secred was stored. */
-  keyExchange: (did: DID, keyLocation: KeyLocation, publicKey: Uint8Array, fragment: string) => Promise<KeyLocation>;
+   *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
+   */
+  encryptData: (did: DID, data: Uint8Array, associatedData: Uint8Array, algorithm: EncryptionAlgorithm, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<EncryptedData>;
 
-  /** Encrypts the given `data` using the key at the specified `location`. */
-  encryptData: (did: DID, keyLocation: KeyLocation, data: Uint8Array, associatedData: Uint8Array) => Promise<EncryptedData>;
-
-  /** Decrypts the given `data` using the key at the specified `location`. */
-  decryptData: (did: DID, keyLocation: KeyLocation, data: EncryptedData) => Promise<Uint8Array>;
+  /** Decrypts the given `data` with the specified `algorithm`.
+   * 
+   *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
+   */
+  decryptData: (did: DID, data: EncryptedData, algorithm: EncryptionAlgorithm, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined>;

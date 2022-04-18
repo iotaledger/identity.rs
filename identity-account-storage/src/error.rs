@@ -32,9 +32,6 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
-  /// Caused by attempting to perform Diffie-Hellman key exchange with the wrong key type
-  #[error("Invalid Key Type: {0}")]
-  InvalidKeyType(String),
   /// Caused by providing bytes that cannot be used as a public key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Public Key: {0}")]

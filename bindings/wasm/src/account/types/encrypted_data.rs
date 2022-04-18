@@ -25,10 +25,10 @@ impl WasmEncryptedData {
     self.0.associated_data().to_vec()
   }
 
-  /// Returns a copy of the cipher text
-  #[wasm_bindgen(js_name = cipherText)]
-  pub fn cypher_text(&self) -> Vec<u8> {
-    self.0.cypher_text().to_vec()
+  /// Returns a copy of the ciphertext
+  #[wasm_bindgen(js_name = ciphertext)]
+  pub fn ciphertext(&self) -> Vec<u8> {
+    self.0.ciphertext().to_vec()
   }
 
   /// Returns a copy of the tag

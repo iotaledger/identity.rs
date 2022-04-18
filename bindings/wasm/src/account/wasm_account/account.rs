@@ -7,13 +7,13 @@ use std::sync::Arc;
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
-use identity::account::EncryptionKey;
 use identity::account::PublishOptions;
 use identity::account_storage::EncryptedData;
 use identity::account_storage::Storage;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::crypto::ProofOptions;
+use identity::crypto::PublicKey;
 use identity::did::verifiable::VerifiableProperties;
 use identity::iota::Client;
 use identity::iota_core::IotaDID;
@@ -25,7 +25,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmAutoSave;
 use crate::account::types::WasmEncryptedData;
-use crate::account::types::WasmEncryptionKey;
+use crate::account::types::WasmEncryptionAlgorithm;
 use crate::common::PromiseVoid;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -267,23 +267,27 @@ impl WasmAccount {
     .unchecked_into::<PromiseVoid>()
   }
 
-  /// Encrypts the given `data` using the key specified by `fragment`.
+  /// Encrypts the given `data` with the specified `algorithm`
+  ///
+  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   #[wasm_bindgen(js_name = encryptData)]
   pub fn encrypt_data(
     &self,
-    fragment: String,
-    encryption_key: &WasmEncryptionKey,
     data: Vec<u8>,
     associated_data: Vec<u8>,
+    algorithm: &WasmEncryptionAlgorithm,
+    fragment: String,
+    public_key: Option<Vec<u8>>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
-    let encryption_key: EncryptionKey = encryption_key.clone().into();
+    let algorithm: WasmEncryptionAlgorithm = algorithm.clone().into();
+    let public_key: Option<PublicKey> = public_key.map(|key| key.to_vec().into());
 
     future_to_promise(async move {
       let encrypted_data: EncryptedData = account
         .as_ref()
         .borrow()
-        .encrypt_data(&fragment, &encryption_key, &data, &associated_data)
+        .encrypt_data(&data, &associated_data, &algorithm.into(), &fragment, public_key)
         .await
         .wasm_result()?;
       Ok(JsValue::from(WasmEncryptedData::from(encrypted_data)))
@@ -291,23 +295,27 @@ impl WasmAccount {
     .unchecked_into::<PromiseEncryptedData>()
   }
 
-  /// Decrypts the given `data` using the key specified by `fragment`.
+  /// Decrypts the given `data` with the specified `algorithm`
+  ///
+  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   #[wasm_bindgen(js_name = decryptData)]
   pub fn decrypt_data(
     &self,
-    fragment: String,
-    encryption_key: &WasmEncryptionKey,
     data: &WasmEncryptedData,
+    algorithm: &WasmEncryptionAlgorithm,
+    fragment: String,
+    public_key: Option<Vec<u8>>,
   ) -> PromiseData {
     let account = self.0.clone();
-    let encryption_key: EncryptionKey = encryption_key.clone().into();
+    let algorithm: WasmEncryptionAlgorithm = algorithm.clone().into();
+    let public_key: Option<PublicKey> = public_key.map(|key| key.to_vec().into());
     let data: EncryptedData = data.0.clone();
 
     future_to_promise(async move {
       let data: Vec<u8> = account
         .as_ref()
         .borrow()
-        .decrypt_data(&fragment, &encryption_key, data)
+        .decrypt_data(data, &algorithm.into(), &fragment, public_key)
         .await
         .wasm_result()?;
       Ok(JsValue::from(js_sys::Uint8Array::from(data.as_ref())))

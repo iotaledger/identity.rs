@@ -42,6 +42,7 @@ use crate::stronghold::Store;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::Vault;
 use crate::types::EncryptedData;
+use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
@@ -278,41 +279,68 @@ impl Storage for Stronghold {
     self.vault(did).exists(location.into()).await.map_err(Into::into)
   }
 
-  async fn key_exchange(
-    &self,
-    did: &IotaDID,
-    location: &KeyLocation,
-    public_key: PublicKey,
-    fragment: &str,
-  ) -> Result<KeyLocation> {
-    let shared_key: KeyLocation = KeyLocation::new(
-      KeyType::X25519,
-      fragment.to_owned(),
-      self.key_public(did, location).await?.as_ref(),
-    );
-    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
-      .as_ref()
-      .try_into()
-      .map_err(|_| Error::InvalidPublicKey(format!("expected type [u8; {}]", X25519::PUBLIC_KEY_LENGTH)))?;
-    let vault: Vault<'_> = self.vault(did);
-    diffie_hellman(&vault, location, public_key, &shared_key).await?;
-    Ok(shared_key)
-  }
-
   async fn encrypt_data(
     &self,
     did: &IotaDID,
-    location: &KeyLocation,
     data: Vec<u8>,
     associated_data: Vec<u8>,
+    algorithm: &EncryptionAlgorithm,
+    private_key: &KeyLocation,
+    public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
     let vault: Vault<'_> = self.vault(did);
-    aead_encrypt(&vault, location, data, associated_data).await
+    match private_key.key_type {
+      KeyType::Ed25519 => aead_encrypt(&vault, algorithm, private_key, data, associated_data).await,
+      KeyType::X25519 => {
+        let shared_secret: KeyLocation = random_location(KeyType::X25519);
+        diffie_hellman(
+          &vault,
+          private_key,
+          public_key
+            .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
+            .as_ref()
+            .try_into()
+            .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?,
+          &shared_secret,
+        )
+        .await?;
+        let encrypted_data: Result<EncryptedData> =
+          aead_encrypt(&vault, algorithm, &shared_secret, data, associated_data).await;
+        revoke_data(&vault, &shared_secret, true).await?;
+        encrypted_data
+      }
+    }
   }
 
-  async fn decrypt_data(&self, did: &IotaDID, location: &KeyLocation, data: EncryptedData) -> Result<Vec<u8>> {
+  async fn decrypt_data(
+    &self,
+    did: &IotaDID,
+    data: EncryptedData,
+    algorithm: &EncryptionAlgorithm,
+    private_key: &KeyLocation,
+    public_key: Option<PublicKey>,
+  ) -> Result<Vec<u8>> {
     let vault: Vault<'_> = self.vault(did);
-    aead_decrypt(&vault, location, data).await
+    match private_key.key_type {
+      KeyType::Ed25519 => aead_decrypt(&vault, algorithm, private_key, data).await,
+      KeyType::X25519 => {
+        let shared_secret: KeyLocation = random_location(KeyType::X25519);
+        diffie_hellman(
+          &vault,
+          private_key,
+          public_key
+            .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
+            .as_ref()
+            .try_into()
+            .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?,
+          &shared_secret,
+        )
+        .await?;
+        let decrypted_data: Result<Vec<u8>> = aead_decrypt(&vault, algorithm, &shared_secret, data).await;
+        revoke_data(&vault, &shared_secret, true).await?;
+        decrypted_data
+      }
+    }
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
@@ -407,11 +435,11 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   Ok(Signature::new(signature.into()))
 }
 
-async fn diffie_hellman(
+async fn diffie_hellman<T: Into<Location>>(
   vault: &Vault<'_>,
   private_key: &KeyLocation,
   public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
-  shared_key: &KeyLocation,
+  shared_key: T,
 ) -> Result<()> {
   let diffie_hellman: procedures::X25519DiffieHellman = procedures::X25519DiffieHellman {
     public_key,
@@ -422,39 +450,61 @@ async fn diffie_hellman(
   vault.execute(diffie_hellman).await.map_err(Into::into)
 }
 
-async fn aead_encrypt(
+async fn aead_encrypt<T: Into<Location>>(
   vault: &Vault<'_>,
-  location: &KeyLocation,
+  algorithm: &EncryptionAlgorithm,
+  location: T,
   plaintext: Vec<u8>,
   associated_data: Vec<u8>,
 ) -> Result<EncryptedData> {
-  let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
-  let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
-    cipher: procedures::AeadCipher::Aes256Gcm,
-    associated_data: associated_data.clone(),
-    plaintext,
-    nonce: nonce.to_vec(),
-    key: location.into(),
-  };
-  let mut data = vault.execute(aead_encrypt).await?;
-  Ok(EncryptedData::new(
-    nonce.to_vec(),
-    associated_data,
-    data.drain(..Aes256Gcm::TAG_LENGTH).collect(),
-    data,
-  ))
+  match algorithm {
+    EncryptionAlgorithm::Aes256Gcm => {
+      let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
+      let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
+        cipher: procedures::AeadCipher::Aes256Gcm,
+        associated_data: associated_data.clone(),
+        plaintext,
+        nonce: nonce.to_vec(),
+        key: location.into(),
+      };
+      let mut data = vault.execute(aead_encrypt).await?;
+      Ok(EncryptedData::new(
+        nonce.to_vec(),
+        associated_data,
+        data.drain(..Aes256Gcm::TAG_LENGTH).collect(),
+        data,
+      ))
+    }
+  }
 }
 
-async fn aead_decrypt(vault: &Vault<'_>, location: &KeyLocation, encrypted_data: EncryptedData) -> Result<Vec<u8>> {
-  let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
-    cipher: procedures::AeadCipher::Aes256Gcm,
-    key: location.into(),
-    ciphertext: encrypted_data.cypher_text().to_vec(),
-    associated_data: encrypted_data.associated_data().to_vec(),
-    tag: encrypted_data.tag().to_vec(),
-    nonce: encrypted_data.nonce().to_vec(),
+async fn aead_decrypt<T: Into<Location>>(
+  vault: &Vault<'_>,
+  algorithm: &EncryptionAlgorithm,
+  location: T,
+  encrypted_data: EncryptedData,
+) -> Result<Vec<u8>> {
+  match algorithm {
+    EncryptionAlgorithm::Aes256Gcm => {
+      let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
+        cipher: procedures::AeadCipher::Aes256Gcm,
+        key: location.into(),
+        ciphertext: encrypted_data.ciphertext().to_vec(),
+        associated_data: encrypted_data.associated_data().to_vec(),
+        tag: encrypted_data.tag().to_vec(),
+        nonce: encrypted_data.nonce().to_vec(),
+      };
+      vault.execute(aead_decrypt).await.map_err(Into::into)
+    }
+  }
+}
+
+async fn revoke_data<T: Into<Location>>(vault: &Vault<'_>, location: T, should_gc: bool) -> Result<()> {
+  let revoke_data: procedures::RevokeData = procedures::RevokeData {
+    location: location.into(),
+    should_gc,
   };
-  vault.execute(aead_decrypt).await.map_err(Into::into)
+  vault.execute(revoke_data).await.map_err(Into::into)
 }
 
 // Moves a key from one location to another, deleting the old one.

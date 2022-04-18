@@ -1,4 +1,4 @@
-import {AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionKey, Network} from './../../node/identity_wasm.js';
+import {AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, Network} from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange
@@ -43,9 +43,9 @@ async function keyExchange(storage?: Storage) {
     // Alice encrypts the data using Diffie-Hellman key exchange
     const message = Buffer.from("This msg will be encrypted and decrypted");
     const associatedData = Buffer.from("associatedData");
-    const encryptedData = await aliceAccount.encryptData("kex-0", EncryptionKey.x25519(bobPublicKey), message, associatedData);
+    const encryptedData = await aliceAccount.encryptData(message, associatedData, EncryptionAlgorithm.aes256gcm(), "kex-0", bobPublicKey);
     // Bob must be able to decrypt the message using the shared secret
-    const decryptedMessage = await bobAccount.decryptData("kex-0", EncryptionKey.x25519(alicePublicKey), encryptedData);
+    const decryptedMessage = await bobAccount.decryptData(encryptedData, EncryptionAlgorithm.aes256gcm(), "kex-0", alicePublicKey);
     if(!isArrayEqual(message, decryptedMessage)) throw new Error("decrypted message does not match original message!");
     console.log(`Diffie-Hellman key exchange successful!`);
 }

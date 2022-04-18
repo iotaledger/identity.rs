@@ -10,16 +10,16 @@ pub struct EncryptedData {
   nonce: Vec<u8>,
   associated_data: Vec<u8>,
   tag: Vec<u8>,
-  cypher_text: Vec<u8>,
+  ciphertext: Vec<u8>,
 }
 
 impl EncryptedData {
-  pub fn new(nonce: Vec<u8>, associated_data: Vec<u8>, tag: Vec<u8>, cypher_text: Vec<u8>) -> Self {
+  pub fn new(nonce: Vec<u8>, associated_data: Vec<u8>, tag: Vec<u8>, ciphertext: Vec<u8>) -> Self {
     Self {
       nonce,
       associated_data,
       tag,
-      cypher_text,
+      ciphertext,
     }
   }
 
@@ -27,8 +27,8 @@ impl EncryptedData {
     &self.associated_data
   }
 
-  pub fn cypher_text(&self) -> &[u8] {
-    &self.cypher_text
+  pub fn ciphertext(&self) -> &[u8] {
+    &self.ciphertext
   }
 
   pub fn tag(&self) -> &[u8] {

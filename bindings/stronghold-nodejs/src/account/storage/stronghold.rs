@@ -15,6 +15,7 @@ use napi_derive::napi;
 
 use crate::account::identity::NapiDidLocation;
 use crate::account::types::NapiEncryptedData;
+use crate::account::types::NapiEncryptionAlgorithm;
 use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
 use crate::account::NapiDocument;
@@ -177,57 +178,59 @@ impl NapiStronghold {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
   }
 
-  /// Performs Diffie-Hellman key exchange using the private key of the first party with the
-  /// public key of the second party, resulting in a shared secret.
+  /// Encrypts the given `data` with the specified `algorithm`
   ///
-  /// Returns the location where the shared secred was stored
-  #[napi]
-  pub async fn key_exchange(
-    &self,
-    did: &NapiDID,
-    location: &NapiKeyLocation,
-    public_key: Vec<u32>,
-    fragment: String,
-  ) -> Result<NapiKeyLocation> {
-    let public_key: PublicKey = public_key.try_into_bytes()?.into();
-    let location: KeyLocation = self
-      .0
-      .key_exchange(&did.0, &location.0, public_key, &fragment)
-      .await
-      .napi_result()?;
-    Ok(NapiKeyLocation(location))
-  }
-
-  /// Encrypts the given `data` using the key at the specified `location`.
+  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   #[napi]
   pub async fn encrypt_data(
     &self,
     did: &NapiDID,
-    location: &NapiKeyLocation,
     data: Vec<u32>,
     associated_data: Vec<u32>,
+    algorithm: &NapiEncryptionAlgorithm,
+    private_key: &NapiKeyLocation,
+    public_key: Option<Vec<u32>>,
   ) -> Result<NapiEncryptedData> {
+    let public_key: Option<Vec<u8>> = public_key.map(|key| key.try_into_bytes()).transpose()?;
     let data: Vec<u8> = data.try_into_bytes()?;
     let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
     let encrypted_data: EncryptedData = self
       .0
-      .encrypt_data(&did.0, &location.0, data, associated_data)
+      .encrypt_data(
+        &did.0,
+        data,
+        associated_data,
+        &algorithm.0,
+        &private_key.0,
+        public_key.map(|key| key.into()),
+      )
       .await
       .napi_result()?;
     Ok(NapiEncryptedData(encrypted_data))
   }
 
-  /// Decrypts the given `data` using the key at the specified `location`.
+  /// Decrypts the given `data` with the specified `algorithm`
+  ///
+  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   #[napi]
   pub async fn decrypt_data(
     &self,
     did: &NapiDID,
-    location: &NapiKeyLocation,
     data: &NapiEncryptedData,
+    algorithm: &NapiEncryptionAlgorithm,
+    private_key: &NapiKeyLocation,
+    public_key: Option<Vec<u32>>,
   ) -> Result<Vec<u32>> {
+    let public_key: Option<Vec<u8>> = public_key.map(|key| key.try_into_bytes()).transpose()?;
     let data: Vec<u8> = self
       .0
-      .decrypt_data(&did.0, &location.0, data.0.clone())
+      .decrypt_data(
+        &did.0,
+        data.0.clone(),
+        &algorithm.0,
+        &private_key.0,
+        public_key.map(|key| key.into()),
+      )
       .await
       .napi_result()?;
     Ok(data.into_iter().map(u32::from).collect())

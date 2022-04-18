@@ -1,27 +1,25 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.
+//! Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
 //!
-//! cargo run --example key_exchange
+//! cargo run --example account_key_exchange
 
 use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
-use identity::account::EncryptionKey;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
 use identity::account_storage::EncryptedData;
+use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::Stronghold;
 use identity::did::MethodScope;
 use identity::iota::Client;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::TangleResolve;
 use identity::iota_core::IotaVerificationMethod;
-
-mod create_did;
 
 pub async fn run() -> Result<()> {
   // Alice and Bob want to communicate securely by encrypting their messages so only they
@@ -84,15 +82,21 @@ pub async fn run() -> Result<()> {
   let message: &[u8] = b"This msg will be encrypted and decrypted";
   let encrypted_data: EncryptedData = alice_account
     .encrypt_data(
-      "kex-0",
-      &EncryptionKey::X25519(bob_public_key.into()),
       message,
       b"associated_data",
+      &EncryptionAlgorithm::Aes256Gcm,
+      "kex-0",
+      Some(bob_public_key.into()),
     )
     .await?;
   // Bob must be able to decrypt the message using the shared secret
   let decrypted_msg: Vec<u8> = bob_account
-    .decrypt_data("kex-0", &EncryptionKey::X25519(alice_public_key.into()), encrypted_data)
+    .decrypt_data(
+      encrypted_data,
+      &EncryptionAlgorithm::Aes256Gcm,
+      "kex-0",
+      Some(alice_public_key.into()),
+    )
     .await?;
   assert_eq!(message, &decrypted_msg);
 
