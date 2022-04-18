@@ -15,10 +15,10 @@ It is constructed and signed by a holder to prove control over their credentials
 
 For instance: after an issuer [creates and issues a verifiable credential](./create.mdx) to a holder, such as a university issuing a degree to a graduate,
 the holder stores it securely until asked to present it.
-A company could then request proof of that university degree: the holder would [create a verifiable presentation](#creation)
+A company could then request proof of that university degree: the holder can [create a verifiable presentation](#creation)
 containing their credential, which is already signed by their university, and present it to the company to [validate](#validation).
 
-Note that verifiable presentations that contain personal data should, as with verifiable credentials, only be transmitted and stored off-chain to satisfy data privacy regulations such as [GDPR](https://gdpr.eu/).
+Note that verifiable presentations that contain personal data should, as with verifiable credentials, be transmitted and stored securely off-chain to satisfy data privacy regulations such as [GDPR](https://gdpr.eu/).
 
 :::note
 
@@ -29,16 +29,52 @@ See the [Verifiable Credentials Data Model Specification](https://www.w3.org/TR/
 ## Creation
 
 The IOTA Identity Framework enables holders to construct verifiable presentations easily.
+As demonstrated in the [example](#example), holders need only pass in their credentials to present and sign the presentation.
 
-TODO
+The following properties may be specified on a presentation:
+
+- [**ID**](https://www.w3.org/TR/vc-data-model/#identifiers): optional URI identifier for the presentation.
+- [**Context**](https://www.w3.org/TR/vc-data-model/#contexts): list of JSON-LD context URIs. Includes `"https://www.w3.org/2018/credentials/v1"` by default.
+- [**Types**](https://www.w3.org/TR/vc-data-model/#types): list of types describing the presentation. Includes `"VerifiablePresentation"` by default.
+- [**Credentials**](https://www.w3.org/TR/vc-data-model/#dfn-verifiable-credentials): list of verifiable credentials to present.
+- [**Holder**](https://www.w3.org/TR/vc-data-model/#dfn-holders): optional URI, typically a DID, of the entity that generated the presentation.
+- [**Refresh Service**](https://www.w3.org/TR/vc-data-model/#refreshing): optional link to a service where the recipient may refresh the included credentials.
+- [**Terms of Use**](https://www.w3.org/TR/vc-data-model/#terms-of-use): optional list of policies defining obligations, prohibitions, or permissions of the presentation recipient.
+
+Of the above, only the list of credentials is required when creating a presentation using the framework.
+However, the holder property should be included to satisfy [subject-holder relationship](#subject-holder-relationship) checks during validation.
+
+After creation, the holder signs the verifiable presentation using a private key linked to one of the verification methods in their
+DID Document and transmits it to a verifier for [validation](#validation).
 
 ### Proof Options
 
-TODO
+A digital signature on a verifiable presentation both provides data integrity and proves the DID of the holder.
+The proof section embedded in a presentation may include additional metadata, such as challenge and domain strings sent by a verifier.
+
+The following proof metadata properties can be configured by the framework and are optional and omitted by default:
+
+- **Created**: timestamp of when the presentation was signed.
+- **Expires**: timestamp after which the presentation is no longer considered valid.
+- **Challenge**: arbitrary random string. Sent by the verifier and mitigates replay attacks; should be sufficiently random and uniquely generated per presentation request.
+- **Domain**: arbitrary string. Sent by the verifier and can help mitigate replay attacks when used with a challenge.
+- **Proof Purpose**: indicates the purpose of the signature.
+  - **AssertionMethod**: to assert a claim. The signing verification method must have an [`assertionMethod`](https://www.w3.org/TR/did-core/#assertion) relationship to be valid.
+  - **Authentication**: to authenticate the signer. The signing verification method must have an [`authentication`](https://www.w3.org/TR/did-core/#authentication) relationship to be valid.
+
+Verifiers should always send a challenge and domain to mitigate replay attacks.
+That is, a verifiable presentation without a challenge and domain in its proof that matches what was sent by the verifier should be considered invalid,
+as it could have been stored by a malicious actor from a previous interaction with the actual holder and replayed.
+
+A verifier could also choose to ignore some or all of these options.
+See [Proof Verifier Options](#proof-verifier-options) for more information.
 
 ## Validation
 
-The IOTA Identity Framework provides several options for verifiers to validate various sections of a verifiable presentation. The framework checks:
+The IOTA Identity Framework provides several options for verifiers to validate various sections of a verifiable presentation.
+See the [example](#example) for a demonstration of how to validate a presentation.
+
+The framework checks:
 
 - **Semantic structure**: ensures the presentation and its credentials adhere to the specification.
 - **Presentation proof**: verifies the presentation signature against the DID Document of the holder.
@@ -47,52 +83,35 @@ The IOTA Identity Framework provides several options for verifiers to validate v
 
 Note that a verifier may specify which DID Documents to use for the holder and issuers, otherwise they are resolved from the IOTA Tangle automatically.
 
-Currently, validation does *not* check the following:
+Currently, the following are *not* checked automatically:
 
 - **Data schemas**: credentials that specify a [schema](https://www.w3.org/TR/vc-data-model/#data-schemas) property should be examined to ensure conformance.
-- **Fitness for purpose**: whether the credentials in a presentation and the data within them are acceptable and valid depends on the context in which they are used. Verifiers should ensure that the credential types and schemas sent by a holder match what was requested.
-- **Issuer trustworthiness**: verifiers must check that they trust the issuer on each individual credential in a presentation. The framework only verifies that the issuer signature on each credential is current and valid against the given options.
+- **Fitness for purpose**: whether the credentials in a presentation and the data within them are acceptable and valid depends on the context in which they are used. Verifiers should ensure that the credential types, subjects, and schemas sent by a holder match what was requested.
+- **Issuer trustworthiness**: verifiers must check that they trust the issuer on each individual credential in a presentation. The framework only verifies that the issuer's signature on each credential is current and valid against the given options.
 
 The default validation behaviour may be modified by the following options.
 
 ### Proof Verifier Options
 
-TODO
+While the framework always verifies that the digital signature on a verifiable presentation is valid, a verifier may validate additional fields in the proof on a presentation.
+Notably, to mitigate potential replay attacks a verifier should always check that the challenge and domain fields match what was sent to the holder when requesting the presentation.
 
-    /** Verify the signing verification method relationship matches this.
-    *
-    * NOTE: `purpose` overrides the `method_scope` option.
-    */
-    readonly methodScope?: MethodScope;
+The following optional checks are available:
 
-    /** Verify the signing verification method type matches one specified.
-    *
-    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.X25519KeyAgreementKey2019()]`
-    */
-    readonly methodType?: Array<MethodType>;
+- **Method Scope**: check the signing verification method has a particular [verification relationship](https://www.w3.org/TR/did-core/#verification-relationships). Overridden by the proof purpose check.
+- **Method Type**: check the signing verification method type matches one in a list.
+- **Challenge**: check the challenge field matches this string.
+- **Domain**: check the domain field matches this string.
+- **Proof Purpose**: require a specific purpose on the proof. See [Proof Options](#proof-options).
+- **Allow Expired**: accept proofs where the current datetime is after their expiration. Default is to reject expired proofs.
 
-    /** Verify the `Proof.challenge` field matches this. */
-    readonly challenge?: string;
-
-    /** Verify the `Proof.domain` field matches this. */
-    readonly domain?: string;
-
-    /** Verify the `Proof.purpose` field matches this. Also verifies that the signing
-    * method has the corresponding verification method relationship.
-    *
-    * NOTE: `purpose` overrides the `method_scope` option.
-    */
-    readonly purpose?: ProofPurpose;
-
-    /** Determines whether to error if the current time exceeds the `Proof.expires` field.
-    *
-    * Default: false (reject expired signatures).
-    */
-    readonly allowExpired?: boolean;
+See [Proof Options](#proof-options) for more information on setting these properties as a holder when signing a verifiable presentation.
 
 ### Subject-Holder Relationship
 
-Specifies the expected relationship between the holder that signed the verifiable presentation and the subject specified in each verifiable credential. The following options are available:
+Specifies the expected relationship between the holder that signed the verifiable presentation and the subject specified in each verifiable credential.
+
+The following options are available:
 
 - **`AlwaysSubject` (default)**: the holder DID that signed the presentation must match the `credentialSubject` `id` field in each of the attached credentials. This is the safest option which ensures holders may only present credentials that were directly issued to their DID. An error is thrown on a mismatch or if no subject `id` is present.
 - **`SubjectOnNonTransferable`**: the holder DID must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`. This is appropriate for accepting [bearer credentials](https://www.w3.org/TR/vc-data-model/#bearer-credentials) while still adhering to the specification.
@@ -114,7 +133,8 @@ These options specify conditions that all credentials in a verifiable presentati
 
 ## Example
 
-The following example demonstrates using the IOTA Identity Framework to both create and validate a verifiable presentation.
+The following code demonstrates how to use the IOTA Identity Framework end-to-end to create and sign a verifiable presentation as a holder,
+serialize it to JSON for transmission, deserialize it on the receiving side as a verifier, and finally validate it with various options.
 
 <CodeSnippet
     nodeReplitLink="https://repl.it/@IOTAFoundation/create-vp?lite=true"
