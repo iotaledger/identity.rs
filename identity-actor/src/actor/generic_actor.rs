@@ -3,10 +3,11 @@
 
 use libp2p::PeerId;
 
+use crate::actor::ActorConfig;
+use crate::actor::ActorStateExtension;
+use crate::actor::Result as ActorResult;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
-use crate::ActorConfig;
-use crate::ActorStateExtension;
 
 use super::actor::HandlerMap;
 use super::actor::ObjectMap;
@@ -24,7 +25,7 @@ where
     peer_id: PeerId,
     commander: NetCommander,
     extension: Self::Extension,
-  ) -> crate::Result<Self>;
+  ) -> ActorResult<Self>;
   // TODO: Take &self and move cloning inside the function.
   fn handle_request(self, request: InboundRequest);
 }

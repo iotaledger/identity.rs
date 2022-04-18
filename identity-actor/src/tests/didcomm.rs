@@ -3,24 +3,23 @@
 
 use libp2p::PeerId;
 
-use crate::didcomm::didcomm_actor::DidCommActor;
-use crate::didcomm::message::DidCommPlaintextMessage;
-use crate::didcomm::presentation::presentation_holder_handler;
-use crate::didcomm::presentation::presentation_verifier_handler;
-use crate::didcomm::presentation::DidCommState;
-use crate::didcomm::presentation::Presentation;
-use crate::didcomm::presentation::PresentationOffer;
-use crate::didcomm::presentation::PresentationRequest;
-use crate::didcomm::termination::DidCommTermination;
-use crate::didcomm::thread_id::ThreadId;
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
+use crate::actor::Error;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
+use crate::didcomm::presentation_holder_handler;
+use crate::didcomm::presentation_verifier_handler;
+use crate::didcomm::DidCommActor;
+use crate::didcomm::DidCommPlaintextMessage;
+use crate::didcomm::DidCommState;
+use crate::didcomm::DidCommTermination;
+use crate::didcomm::Presentation;
+use crate::didcomm::PresentationOffer;
+use crate::didcomm::PresentationRequest;
+use crate::didcomm::ThreadId;
 use crate::remote_account::IdentityList;
 use crate::tests::try_init_logger;
-use crate::ActorRequest;
-use crate::Asynchronous;
-use crate::Error;
-use crate::RequestContext;
-use crate::Result;
-use std::result::Result as StdResult;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -29,7 +28,7 @@ use super::default_listening_didcomm_actor;
 use super::default_sending_didcomm_actor;
 
 #[tokio::test]
-async fn test_unknown_thread_returns_error() -> crate::Result<()> {
+async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| builder).await;
@@ -74,7 +73,7 @@ impl TestFunctionState {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
+async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   try_init_logger();
   let handler = DidCommState::new().await;
 
@@ -102,7 +101,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
+async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
   try_init_logger();
 
   let handler = DidCommState::new().await;
@@ -130,7 +129,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> Result<()> {
+async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> ActorResult<()> {
   try_init_logger();
 
   let handler = DidCommState::new().await;
@@ -150,7 +149,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
     state: TestFunctionState,
     _: DidCommActor,
     request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
-  ) -> StdResult<DidCommPlaintextMessage<PresentationRequest>, DidCommTermination> {
+  ) -> Result<DidCommPlaintextMessage<PresentationRequest>, DidCommTermination> {
     state.was_called.store(true, Ordering::SeqCst);
     Ok(request.input)
   }
@@ -179,7 +178,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> Result<()> {
+async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> ActorResult<()> {
   try_init_logger();
 
   let handler = DidCommState::new().await;
@@ -190,7 +189,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
     state: TestFunctionState,
     _: DidCommActor,
     req: RequestContext<DidCommPlaintextMessage<Presentation>>,
-  ) -> StdResult<DidCommPlaintextMessage<Presentation>, DidCommTermination> {
+  ) -> Result<DidCommPlaintextMessage<Presentation>, DidCommTermination> {
     state.was_called.store(true, Ordering::SeqCst);
     Ok(req.input)
   }
@@ -227,7 +226,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
 }
 
 #[tokio::test]
-async fn test_sending_to_unconnected_peer_returns_error() -> crate::Result<()> {
+async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
   try_init_logger();
 
   let mut sending_actor = default_sending_didcomm_actor(|builder| builder).await;
@@ -248,7 +247,7 @@ async fn test_sending_to_unconnected_peer_returns_error() -> crate::Result<()> {
 }
 
 #[tokio::test]
-async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
+async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
@@ -285,7 +284,7 @@ async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
 }
 
 #[tokio::test]
-async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
+async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Clone)]

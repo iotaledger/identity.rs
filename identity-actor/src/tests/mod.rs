@@ -12,11 +12,11 @@ use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
-use crate::didcomm::didcomm_actor::ActorIdentity;
-use crate::didcomm::didcomm_actor::DidCommActor;
-use crate::didcomm::didcomm_actor_builder::DidCommActorBuilder;
-use crate::Actor;
-use crate::ActorBuilder;
+use crate::actor::Actor;
+use crate::actor::ActorBuilder;
+use crate::didcomm::ActorIdentity;
+use crate::didcomm::DidCommActor;
+use crate::didcomm::DidCommActorBuilder;
 
 fn try_init_logger() {
   let _ = pretty_env_logger::try_init();

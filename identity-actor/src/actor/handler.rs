@@ -5,13 +5,13 @@ use std::any::Any;
 use std::future::Future;
 use std::marker::PhantomData;
 
-use crate::traits::AnyFuture;
-use crate::traits::RequestHandler;
-use crate::ActorRequest;
-use crate::GenericActor;
-use crate::RemoteSendError;
-use crate::RequestContext;
-use crate::SyncMode;
+use crate::actor::ActorRequest;
+use crate::actor::AnyFuture;
+use crate::actor::GenericActor;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::RequestHandler;
+use crate::actor::SyncMode;
 
 /// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]
@@ -98,14 +98,14 @@ where
   }
 
   fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
-    crate::traits::request_handler_serialize_response::<MOD, REQ>(input)
+    crate::actor::request_handler_serialize_response::<MOD, REQ>(input)
   }
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
-    crate::traits::request_handler_deserialize_request::<MOD, REQ>(input)
+    crate::actor::request_handler_deserialize_request::<MOD, REQ>(input)
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
-    crate::traits::request_handler_clone_object::<OBJ>(object)
+    crate::actor::request_handler_clone_object::<OBJ>(object)
   }
 }

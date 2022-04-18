@@ -3,11 +3,12 @@
 
 use libp2p::PeerId;
 
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
-use crate::ActorRequest;
-use crate::Asynchronous;
-use crate::RequestContext;
 
 #[derive(Clone)]
 pub struct DidCommState;
@@ -50,7 +51,7 @@ pub async fn presentation_holder_handler(
   mut actor: DidCommActor,
   peer: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
-) -> crate::Result<()> {
+) -> ActorResult<()> {
   let request: DidCommPlaintextMessage<PresentationRequest> = match request {
     Some(request) => request,
     None => {
@@ -82,7 +83,7 @@ pub async fn presentation_verifier_handler(
   mut actor: DidCommActor,
   peer: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
-) -> crate::Result<()> {
+) -> ActorResult<()> {
   let thread_id: ThreadId = if let Some(offer) = offer {
     offer.thread_id().to_owned()
   } else {

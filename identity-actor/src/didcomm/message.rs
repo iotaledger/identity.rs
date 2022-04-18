@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ActorRequest;
-use crate::Asynchronous;
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
 
 use super::thread_id::ThreadId;
 

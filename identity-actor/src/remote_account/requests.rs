@@ -7,8 +7,8 @@ use identity_iota_core::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::ActorRequest;
-use crate::Synchronous;
+use crate::actor::ActorRequest;
+use crate::actor::Synchronous;
 
 use super::RemoteAccountError;
 

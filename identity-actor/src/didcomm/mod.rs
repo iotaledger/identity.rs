@@ -1,10 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod didcomm_actor;
-pub mod didcomm_actor_builder;
-pub mod hook;
-pub mod message;
-pub mod presentation;
-pub mod termination;
-pub mod thread_id;
+mod didcomm_actor;
+mod didcomm_actor_builder;
+mod hook;
+mod message;
+mod presentation;
+mod termination;
+mod thread_id;
+
+pub use didcomm_actor::*;
+pub use didcomm_actor_builder::*;
+pub use hook::*;
+pub use message::*;
+pub use presentation::*;
+pub use termination::*;
+pub use thread_id::*;

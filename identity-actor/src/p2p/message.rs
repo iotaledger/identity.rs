@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Endpoint;
-use crate::RequestMode;
-use crate::Result;
+use crate::actor::Endpoint;
+use crate::actor::RequestMode;
+use crate::actor::Result;
 
 use serde::Deserialize;
 use serde::Serialize;

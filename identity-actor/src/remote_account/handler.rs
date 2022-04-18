@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
+use crate::actor::Actor;
+use crate::actor::RequestContext;
 use crate::remote_account::IdentityList;
-use crate::Actor;
-use crate::RequestContext;
 use dashmap::DashMap;
 use identity_account::account::Account;
 use identity_account::account::AccountBuilder;

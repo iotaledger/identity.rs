@@ -2,55 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
-use std::result::Result as StdResult;
 
+use crate::actor::Actor;
+use crate::actor::ActorStateExtension;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::RequestHandler;
+use crate::actor::Result as ActorResult;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::ResponseMessage;
-use crate::traits::RequestHandler;
-use crate::Actor;
-use crate::ActorStateExtension;
-use crate::RemoteSendError;
-use crate::RequestContext;
 
 use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 
-// An abstraction over the strategy with which to invoke a handler, which is implemented
-// synchronously and asynchronously.
-// #[async_trait::async_trait]
-// pub trait InvocationStrategy: Send + Sync + 'static {
-//   /// Invokes the `handler` and communicates with the remote through `channel`.
-//   #[allow(clippy::too_many_arguments)]
-//   async fn invoke_handler(
-//     handler: &dyn RequestHandler,
-//     actor: Actor,
-//     context: RequestContext<()>,
-//     object: Box<dyn Any + Send + Sync>,
-//     input: Box<dyn Any + Send>,
-//     channel: ResponseChannel<ResponseMessage>,
-//     request_id: RequestId,
-//   );
-
-//   /// Called when the actor is unable to deserialize the request to the expected input for the handler.
-//   async fn handler_deserialization_failure(
-//     actor: &mut Actor,
-//     channel: ResponseChannel<ResponseMessage>,
-//     request_id: RequestId,
-//     error: RemoteSendError,
-//   ) -> crate::Result<StdResult<(), InboundFailure>>;
-
-//   /// Called when no handler was found for the requested endpoint.
-//   async fn endpoint_not_found(actor: &mut Actor, request: InboundRequest);
-// }
-
 pub(crate) async fn send_response<T: serde::Serialize>(
   commander: &mut NetCommander,
-  response: StdResult<T, RemoteSendError>,
+  response: Result<T, RemoteSendError>,
   channel: ResponseChannel<ResponseMessage>,
   request_id: RequestId,
-) -> crate::Result<StdResult<(), InboundFailure>> {
+) -> ActorResult<Result<(), InboundFailure>> {
   let response: Vec<u8> = serde_json::to_vec(&response).unwrap();
   commander.send_response(response, channel, request_id).await
 }
@@ -63,7 +35,7 @@ impl SynchronousInvocationStrategy {
   where
     EXT: ActorStateExtension,
   {
-    let response: StdResult<Vec<u8>, RemoteSendError> =
+    let response: Result<Vec<u8>, RemoteSendError> =
       Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
 
     let send_result = send_response(
@@ -85,13 +57,13 @@ impl SynchronousInvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
-  ) -> crate::Result<StdResult<(), InboundFailure>>
+  ) -> ActorResult<Result<(), InboundFailure>>
   where
     EXT: ActorStateExtension,
   {
     send_response(
       &mut actor.commander,
-      StdResult::<Vec<u8>, RemoteSendError>::Err(error),
+      Result::<Vec<u8>, RemoteSendError>::Err(error),
       channel,
       request_id,
     )
@@ -127,7 +99,7 @@ impl SynchronousInvocationStrategy {
           Err(err) => {
             if let Err(error) = send_response(
               &mut commander,
-              StdResult::<(), RemoteSendError>::Err(err),
+              Result::<(), RemoteSendError>::Err(err),
               channel,
               request_id,
             )
@@ -143,7 +115,7 @@ impl SynchronousInvocationStrategy {
 
         if let Err(error) = send_response(
           &mut commander,
-          StdResult::<(), RemoteSendError>::Err(err),
+          Result::<(), RemoteSendError>::Err(err),
           channel,
           request_id,
         )

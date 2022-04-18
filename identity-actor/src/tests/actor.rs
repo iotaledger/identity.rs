@@ -9,22 +9,23 @@ use futures::pin_mut;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
+use crate::actor::Actor;
+use crate::actor::ActorBuilder;
+use crate::actor::ActorRequest;
+use crate::actor::Error;
+use crate::actor::ErrorLocation;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
+use crate::actor::Synchronous;
 use crate::remote_account::IdentityGet;
 use crate::remote_account::IdentityList;
 use crate::tests::try_init_logger;
-use crate::Actor;
-use crate::ActorBuilder;
-use crate::ActorRequest;
-use crate::Error;
-use crate::ErrorLocation;
-use crate::RequestContext;
-use crate::Synchronous;
 
 use super::default_listening_actor;
 use super::default_sending_actor;
 
 #[tokio::test]
-async fn test_unknown_request_returns_error() -> crate::Result<()> {
+async fn test_unknown_request_returns_error() -> ActorResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|_| {}).await;
@@ -48,7 +49,7 @@ async fn test_unknown_request_returns_error() -> crate::Result<()> {
 }
 
 #[tokio::test]
-async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
+async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -111,7 +112,7 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
 }
 
 #[tokio::test]
-async fn test_actor_handler_is_invoked() -> crate::Result<()> {
+async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -160,7 +161,7 @@ async fn test_actor_handler_is_invoked() -> crate::Result<()> {
 }
 
 #[tokio::test]
-async fn test_synchronous_handler_invocation() -> crate::Result<()> {
+async fn test_synchronous_handler_invocation() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -216,7 +217,7 @@ async fn test_interacting_with_shutdown_actor_returns_error() {
 }
 
 #[tokio::test]
-async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<()> {
+async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
@@ -264,7 +265,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> crate::Result<(
 }
 
 #[tokio::test]
-async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> crate::Result<()> {
+async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorResult<()> {
   try_init_logger();
 
   // Define two types with identical serialization results, but different `Response` types.

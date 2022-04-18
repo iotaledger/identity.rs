@@ -7,26 +7,23 @@ use std::iter;
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use crate::didcomm::didcomm_actor::DidCommActor;
-use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::actor::Actor;
+use crate::actor::ActorConfig;
+use crate::actor::ActorRequest;
+use crate::actor::Endpoint;
+use crate::actor::Error;
+use crate::actor::GenericActor;
+use crate::actor::Handler;
+use crate::actor::HandlerObject;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
+use crate::actor::SyncMode;
+use crate::actor::Synchronous;
 use crate::p2p::ActorProtocol;
 use crate::p2p::ActorRequestResponseCodec;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
-use crate::Actor;
-use crate::ActorConfig;
-use crate::ActorRequest;
-use crate::Asynchronous;
-use crate::Endpoint;
-use crate::Error;
-use crate::GenericActor;
-use crate::Handler;
-use crate::HandlerObject;
-use crate::RequestContext;
-use crate::Result;
-use crate::SyncMode;
-use crate::Synchronous;
 use futures::channel::mpsc;
 use futures::AsyncRead;
 use futures::AsyncWrite;
@@ -127,7 +124,7 @@ impl ActorBuilder {
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
-  pub async fn build(self) -> Result<Actor> {
+  pub async fn build(self) -> ActorResult<Actor> {
     let dns_transport =
       libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new()).map_err(|err| Error::TransportError {
         context: "unable to build transport",
@@ -142,7 +139,7 @@ impl ActorBuilder {
   }
 
   /// Build the actor with a custom transport.
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<Actor>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<Actor>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -159,7 +156,7 @@ impl ActorBuilder {
     self,
     transport: TRA,
     extension: ACT::Extension,
-  ) -> Result<ACT>
+  ) -> ActorResult<ACT>
   where
     ACT: GenericActor,
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
@@ -268,36 +265,11 @@ where
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Result<Self>
+  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
   where
     REQ: ActorRequest<Synchronous> + Sync,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
-  {
-    let handler = Handler::new(handler);
-    self.handler_map.insert(
-      Endpoint::new(REQ::endpoint())?,
-      HandlerObject::new(self.object_id, Box::new(handler)),
-    );
-    Ok(self)
-  }
-}
-
-impl<'builder, OBJ> HandlerBuilder<'builder, Asynchronous, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  /// Add an asynchronous handler function that operates on a shared state object and some
-  /// [`ActorRequest`]. The function will be called if the actor receives a request
-  /// on the given `endpoint` and can deserialize it into `DidCommPlaintextMessage<REQ>`.
-  /// The handler is not expected to return anything.
-  pub fn add_async_handler<REQ, FUT>(
-    self,
-    handler: fn(OBJ, DidCommActor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
-  ) -> Result<Self>
-  where
-    REQ: ActorRequest<Asynchronous> + Sync,
-    FUT: Future<Output = ()> + Send + 'static,
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(

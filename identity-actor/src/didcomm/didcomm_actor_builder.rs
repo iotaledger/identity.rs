@@ -6,20 +6,28 @@ use std::time::Duration;
 
 use futures::AsyncRead;
 use futures::AsyncWrite;
+use futures::Future;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
-use crate::ActorBuilder;
-use crate::Error;
-use crate::HandlerBuilder;
-use crate::ObjectId;
-use crate::Result;
-use crate::SyncMode;
+use crate::actor::ActorBuilder;
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
+use crate::actor::Error;
+use crate::actor::Handler;
+use crate::actor::HandlerBuilder;
+use crate::actor::HandlerObject;
+use crate::actor::ObjectId;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
+use crate::actor::SyncMode;
 
 use super::didcomm_actor::ActorIdentity;
 use super::didcomm_actor::DidCommActor;
 use super::didcomm_actor::DidCommStateExtension;
+use super::DidCommPlaintextMessage;
 
 pub struct DidCommActorBuilder {
   inner: ActorBuilder,
@@ -81,7 +89,7 @@ impl DidCommActorBuilder {
 
   /// See [`ActorBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
-  pub async fn build(self) -> Result<DidCommActor> {
+  pub async fn build(self) -> ActorResult<DidCommActor> {
     let dns_transport =
       libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new()).map_err(|err| Error::TransportError {
         context: "unable to build transport",
@@ -96,7 +104,7 @@ impl DidCommActorBuilder {
   }
 
   /// See [`ActorBuilder::build_with_transport`].
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<DidCommActor>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<DidCommActor>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -113,5 +121,30 @@ impl DidCommActorBuilder {
 impl Default for DidCommActorBuilder {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+impl<'builder, OBJ> HandlerBuilder<'builder, Asynchronous, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+{
+  /// Add an asynchronous handler function that operates on a shared state object and some
+  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// on the given `endpoint` and can deserialize it into `DidCommPlaintextMessage<REQ>`.
+  /// The handler is not expected to return anything.
+  pub fn add_async_handler<REQ, FUT>(
+    self,
+    handler: fn(OBJ, DidCommActor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
+  ) -> ActorResult<Self>
+  where
+    REQ: ActorRequest<Asynchronous> + Sync,
+    FUT: Future<Output = ()> + Send + 'static,
+  {
+    let handler = Handler::new(handler);
+    self.handler_map.insert(
+      Endpoint::new(REQ::endpoint())?,
+      HandlerObject::new(self.object_id, Box::new(handler)),
+    );
+    Ok(self)
   }
 }

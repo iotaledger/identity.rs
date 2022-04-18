@@ -1,8 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use std::any::Any;
-use std::result::Result as StdResult;
 
+use crate::actor::send_response;
+use crate::actor::Actor;
+use crate::actor::ActorConfig;
+use crate::actor::ActorRequest;
+use crate::actor::ActorStateExtension;
+use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
+use crate::actor::Error;
+use crate::actor::GenericActor;
+use crate::actor::HandlerMap;
+use crate::actor::ObjectMap;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::RequestHandler;
+use crate::actor::RequestMode;
+use crate::actor::Result as ActorResult;
+use crate::actor::Synchronous;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
 use crate::p2p::InboundRequest;
@@ -10,23 +26,6 @@ use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 use crate::p2p::ThreadRequest;
-use crate::send_response;
-use crate::Actor;
-use crate::ActorConfig;
-use crate::ActorRequest;
-use crate::ActorStateExtension;
-use crate::Asynchronous;
-use crate::Endpoint;
-use crate::Error;
-use crate::GenericActor;
-use crate::HandlerMap;
-use crate::ObjectMap;
-use crate::RemoteSendError;
-use crate::RequestContext;
-use crate::RequestHandler;
-use crate::RequestMode;
-use crate::Result;
-use crate::Synchronous;
 
 use dashmap::DashMap;
 use futures::channel::oneshot;
@@ -38,7 +37,7 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use serde::de::DeserializeOwned;
 
-use crate::ErrorLocation;
+use crate::actor::ErrorLocation;
 
 use super::thread_id::ThreadId;
 
@@ -67,7 +66,7 @@ impl DidCommStateExtension {
   }
 }
 
-impl crate::traits::state_extension_seal::Sealed for DidCommStateExtension {}
+impl crate::actor::traits::state_extension_seal::Sealed for DidCommStateExtension {}
 impl ActorStateExtension for DidCommStateExtension {}
 
 #[derive(Clone)]
@@ -83,7 +82,7 @@ impl GenericActor for DidCommActor {
     peer_id: PeerId,
     commander: NetCommander,
     extension: Self::Extension,
-  ) -> crate::Result<Self> {
+  ) -> ActorResult<Self> {
     Actor::<Self::Extension>::from_builder(handlers, objects, config, peer_id, commander, extension).map(Self)
   }
 
@@ -100,7 +99,7 @@ impl DidCommActor {
   // TODO: Is there an automated way to copy docs from the delegated fns?
 
   /// See [`Actor::start_listening`].
-  pub async fn start_listening(&mut self, address: Multiaddr) -> crate::Result<Multiaddr> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     self.0.start_listening(address).await
   }
 
@@ -110,22 +109,22 @@ impl DidCommActor {
   }
 
   /// See [`Actor::addresses`].
-  pub async fn addresses(&mut self) -> crate::Result<Vec<Multiaddr>> {
+  pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
     self.0.addresses().await
   }
 
   /// See [`Actor::add_address`].
-  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> crate::Result<()> {
+  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
     self.0.add_address(peer_id, address).await
   }
 
   /// See [`Actor::add_addresses`].
-  pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> crate::Result<()> {
+  pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
     self.0.add_addresses(peer_id, addresses).await
   }
 
   /// See [`Actor::shutdown`].
-  pub async fn shutdown(self) -> Result<()> {
+  pub async fn shutdown(self) -> ActorResult<()> {
     self.0.shutdown().await
   }
 
@@ -134,7 +133,7 @@ impl DidCommActor {
     &mut self,
     peer: PeerId,
     request: REQ,
-  ) -> Result<REQ::Response> {
+  ) -> ActorResult<REQ::Response> {
     self.0.send_request(peer, request).await
   }
 
@@ -145,7 +144,7 @@ impl DidCommActor {
     peer: PeerId,
     thread_id: &ThreadId,
     message: REQ,
-  ) -> Result<()> {
+  ) -> ActorResult<()> {
     let endpoint: &'static str = REQ::endpoint();
     let request_mode: RequestMode = message.request_mode();
 
@@ -167,7 +166,7 @@ impl DidCommActor {
 
     let response = self.0.commander.send_request(peer, message).await?;
 
-    serde_json::from_slice::<StdResult<(), RemoteSendError>>(&response.0).map_err(|err| {
+    serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
         location: ErrorLocation::Local,
         context: "send message".to_owned(),
@@ -181,11 +180,11 @@ impl DidCommActor {
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
   /// [`DidCommActor::send_message`] was called on the same `thread_id` previously.
   /// This will return a timeout error if no message is received within the duration passed
-  /// to [`DidCommActorBuilder::timeout`](crate::didcomm::didcomm_actor_builder::DidCommActorBuilder::timeout).
+  /// to [`DidCommActorBuilder::timeout`](crate::didcomm::DidCommActorBuilder::timeout).
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
-  ) -> Result<DidCommPlaintextMessage<T>> {
+  ) -> ActorResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.0.state.extension.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
       let inbound_request = tokio::time::timeout(self.0.state.config.timeout, receiver.1)
@@ -209,7 +208,7 @@ impl DidCommActor {
       if self.0.handlers().contains_key(&hook_endpoint) {
         log::debug!("Calling hook: {}", hook_endpoint);
 
-        let hook_result: StdResult<StdResult<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
+        let hook_result: Result<Result<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
           self.call_hook(hook_endpoint, inbound_request.peer_id, message).await;
 
         match hook_result {
@@ -323,14 +322,14 @@ impl DidCommActor {
     &self,
     peer: PeerId,
     input: REQ,
-  ) -> Result<REQ> {
+  ) -> ActorResult<REQ> {
     let mut endpoint = Endpoint::new(REQ::endpoint())?;
     endpoint.is_hook = true;
 
     if self.0.handlers().contains_key(&endpoint) {
       log::debug!("Calling send hook: {}", endpoint);
 
-      let hook_result: StdResult<StdResult<REQ, DidCommTermination>, RemoteSendError> =
+      let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
         self.call_hook(endpoint, peer, input).await;
 
       match hook_result {
@@ -346,12 +345,7 @@ impl DidCommActor {
   }
 
   /// Call the hook identified by the given `endpoint` with some `input`.
-  pub(crate) async fn call_hook<I, O>(
-    &self,
-    endpoint: Endpoint,
-    peer: PeerId,
-    input: I,
-  ) -> StdResult<O, RemoteSendError>
+  pub(crate) async fn call_hook<I, O>(&self, endpoint: Endpoint, peer: PeerId, input: I) -> Result<O, RemoteSendError>
   where
     I: Send + 'static,
     O: 'static,
@@ -389,7 +383,7 @@ pub struct AsynchronousInvocationStrategy;
 impl AsynchronousInvocationStrategy {
   #[inline(always)]
   async fn endpoint_not_found(actor: &mut DidCommActor, request: InboundRequest) {
-    let result: StdResult<(), RemoteSendError> =
+    let result: Result<(), RemoteSendError> =
       match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
         Err(error) => Err(RemoteSendError::DeserializationFailure {
           location: ErrorLocation::Remote,
@@ -448,10 +442,10 @@ impl AsynchronousInvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
-  ) -> crate::Result<StdResult<(), InboundFailure>> {
+  ) -> ActorResult<Result<(), InboundFailure>> {
     send_response(
       &mut actor.0.commander,
-      StdResult::<(), RemoteSendError>::Err(error),
+      Result::<(), RemoteSendError>::Err(error),
       channel,
       request_id,
     )

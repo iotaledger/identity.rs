@@ -3,7 +3,7 @@
 
 use libp2p::request_response::OutboundFailure;
 
-use crate::didcomm::thread_id::ThreadId;
+use crate::didcomm::ThreadId;
 
 pub type Result<T> = std::result::Result<T, Error>;
 

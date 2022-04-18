@@ -4,6 +4,7 @@
 use identity_account::types::IdentitySetup;
 use identity_iota_core::document::IotaDocument;
 
+use crate::actor::Result as ActorResult;
 use crate::remote_account::IdentityCreate;
 use crate::remote_account::IdentityGet;
 use crate::remote_account::IdentityList;
@@ -13,7 +14,7 @@ use crate::tests::default_sending_actor;
 use crate::tests::try_init_logger;
 
 #[tokio::test]
-async fn test_remote_account() -> crate::Result<()> {
+async fn test_remote_account() -> ActorResult<()> {
   try_init_logger();
 
   let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|builder| {

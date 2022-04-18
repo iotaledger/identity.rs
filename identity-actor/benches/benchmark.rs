@@ -6,10 +6,10 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 use identity_account::types::IdentitySetup;
+use identity_actor::actor::Actor;
+use identity_actor::actor::ActorBuilder;
 use identity_actor::remote_account::IdentityCreate;
 use identity_actor::remote_account::RemoteAccount;
-use identity_actor::Actor;
-use identity_actor::ActorBuilder;
 use identity_actor::Multiaddr;
 use identity_actor::PeerId;
 

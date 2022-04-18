@@ -6,20 +6,20 @@ use std::marker::PhantomData;
 
 use futures::Future;
 
+use crate::actor::ActorRequest;
+use crate::actor::AnyFuture;
+use crate::actor::Endpoint;
+use crate::actor::GenericActor;
 use crate::actor::HandlerBuilder;
-use crate::traits::AnyFuture;
-use crate::traits::RequestHandler;
-use crate::ActorRequest;
-use crate::Endpoint;
-use crate::GenericActor;
-use crate::HandlerObject;
-use crate::RemoteSendError;
-use crate::RequestContext;
-use crate::Result as ActorResult;
+use crate::actor::HandlerObject;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::RequestHandler;
+use crate::actor::Result as ActorResult;
 
 use super::didcomm_actor::DidCommActor;
 use super::termination::DidCommTermination;
-use crate::SyncMode;
+use crate::actor::SyncMode;
 
 impl<'builder, MOD, OBJ> HandlerBuilder<'builder, MOD, OBJ>
 where
@@ -139,6 +139,6 @@ where
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
-    crate::traits::request_handler_clone_object::<OBJ>(object)
+    crate::actor::request_handler_clone_object::<OBJ>(object)
   }
 }

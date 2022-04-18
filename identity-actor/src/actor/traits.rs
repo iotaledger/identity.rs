@@ -7,10 +7,10 @@ use std::pin::Pin;
 use futures::Future;
 
 use crate::actor::errors::ErrorLocation;
-use crate::ActorRequest;
-use crate::RemoteSendError;
-use crate::RequestContext;
-use crate::SyncMode;
+use crate::actor::ActorRequest;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::SyncMode;
 
 /// A future whose output is an `Any` trait object.
 pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;
@@ -94,7 +94,7 @@ pub fn request_handler_clone_object<OBJ: Clone + Send + Sync + 'static>(
 ) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
   // Double indirection is unfortunately required - the downcast fails otherwise.
   let object: &OBJ = object.downcast_ref::<OBJ>().ok_or_else(|| {
-    crate::RemoteSendError::HandlerInvocationError(format!(
+    crate::actor::RemoteSendError::HandlerInvocationError(format!(
       "unable to downcast to type {} in order to clone the object",
       std::any::type_name::<OBJ>()
     ))

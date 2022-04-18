@@ -14,7 +14,8 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
 
-use crate::Error;
+use crate::actor::Error;
+use crate::actor::Result as ActorResult;
 
 use super::message::RequestMessage;
 use super::message::ResponseMessage;
@@ -30,7 +31,7 @@ impl NetCommander {
     NetCommander { command_sender }
   }
 
-  pub async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> crate::Result<ResponseMessage> {
+  pub async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> ActorResult<ResponseMessage> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
       peer,
@@ -49,7 +50,7 @@ impl NetCommander {
     data: Vec<u8>,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
-  ) -> crate::Result<Result<(), InboundFailure>> {
+  ) -> ActorResult<Result<(), InboundFailure>> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendResponse {
       response: data,
@@ -61,7 +62,7 @@ impl NetCommander {
     receiver.await.map_err(|_| Error::Shutdown)
   }
 
-  pub async fn start_listening(&mut self, address: Multiaddr) -> crate::Result<Multiaddr> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::StartListening {
       address,
@@ -77,11 +78,11 @@ impl NetCommander {
       })
   }
 
-  pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> crate::Result<()> {
+  pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
     self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await
   }
 
-  pub async fn get_addresses(&mut self) -> crate::Result<Vec<Multiaddr>> {
+  pub async fn get_addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::GetAddresses {
@@ -91,7 +92,7 @@ impl NetCommander {
     receiver.await.map_err(|_| Error::Shutdown)
   }
 
-  pub async fn shutdown(&mut self) -> crate::Result<()> {
+  pub async fn shutdown(&mut self) -> ActorResult<()> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::Shutdown {
@@ -101,7 +102,7 @@ impl NetCommander {
     receiver.await.map_err(|_| Error::Shutdown)
   }
 
-  async fn send_command(&mut self, command: SwarmCommand) -> crate::Result<()> {
+  async fn send_command(&mut self, command: SwarmCommand) -> ActorResult<()> {
     poll_fn(|cx| self.command_sender.poll_ready(cx))
       .await
       .map_err(|_| Error::Shutdown)?;
