@@ -460,7 +460,7 @@ async fn aead_encrypt<T: Into<Location>>(
 ) -> Result<EncryptedData> {
   match algorithm {
     EncryptionAlgorithm::Aes256Gcm => {
-      let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
+      let nonce: &[u8] = &Aes256Gcm::random_nonce().map_err(|e| Error::NonceGenerationFailed(e.to_string()))?;
       let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
         cipher: procedures::AeadCipher::Aes256Gcm,
         associated_data: associated_data.clone(),

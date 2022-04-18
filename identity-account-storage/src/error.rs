@@ -12,9 +12,6 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
   CoreError(#[from] identity_core::Error),
-  /// Caused by errors from the [crypto] crate.
-  #[error(transparent)]
-  CryptoError(#[from] crypto::error::Error),
   /// Caused by errors from the [`identity_iota_core`] crate.
   #[error("DID creation failed: {0}")]
   DIDCreationError(String),
@@ -36,6 +33,15 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Public Key: {0}")]
   InvalidPublicKey(String),
+  /// Caused by failing to generate a random nonce
+  #[error("Nonce Generation Failed: {0}")]
+  NonceGenerationFailed(String),
+  /// Caused by failing to decrypt data
+  #[error("Failed to decrypt data: {0}")]
+  FailedToDecryptData(String),
+  /// Caused by failing to encrypt data
+  #[error("Failed to encrypt data: {0}")]
+  FailedToEncryptData(String),
   /// Caused by attempting to find a key in storage that does not exist.
   #[error("key not found")]
   KeyNotFound,

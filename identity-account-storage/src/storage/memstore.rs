@@ -293,10 +293,11 @@ fn try_encrypt(
 ) -> Result<EncryptedData> {
   match algorithm {
     EncryptionAlgorithm::Aes256Gcm => {
-      let nonce: &[u8] = &Aes256Gcm::random_nonce()?;
+      let nonce: &[u8] = &Aes256Gcm::random_nonce().map_err(|e| Error::NonceGenerationFailed(e.to_string()))?;
       let mut ciphertext: Vec<u8> = vec![0; data.len()];
       let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
-      Aes256Gcm::try_encrypt(key, nonce, associated_data.as_ref(), data, &mut ciphertext, &mut tag)?;
+      Aes256Gcm::try_encrypt(key, nonce, associated_data.as_ref(), data, &mut ciphertext, &mut tag)
+        .map_err(|e| Error::FailedToEncryptData(e.to_string()))?;
       Ok(EncryptedData::new(nonce.to_vec(), associated_data, tag, ciphertext))
     }
   }
@@ -313,7 +314,8 @@ fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData
         &mut plaintext,
         data.ciphertext(),
         data.tag(),
-      )?;
+      )
+      .map_err(|e| Error::FailedToDecryptData(e.to_string()))?;
       Ok(plaintext)
     }
   }
