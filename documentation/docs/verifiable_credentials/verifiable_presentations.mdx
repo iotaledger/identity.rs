@@ -134,10 +134,10 @@ These options specify conditions that all credentials in a verifiable presentati
 
 ### Replay Attacks {#replay-attacks}
 
-A verifiable presentation by default, without a creation timestamp nor challenge and domain properties,
-could potentially be stored by a malicious actor and replayed to multiple verifiers, impersonating the holder.
+A verifiable presentation without challenge and domain properties could potentially be stored by a malicious actor
+and replayed to a different verifier, impersonating the holder.
 This is because the holder's signature on a presentation would still be seen as valid indefinitely,
-unless they [rotate](https://www.w3.org/TR/did-core/#verification-method-rotation) the verification method used.
+until they [rotate](https://www.w3.org/TR/did-core/#verification-method-rotation) the verification method used.
 
 To mitigate this, verifiers should always send a unique challenge and domain when requesting a verifiable presentation.
 These properties are then included in the proof section of the presentation by the holder during signing using [Proof Options](#proof-options).
@@ -145,7 +145,7 @@ The digital signature prevents these properties from being altered as it would i
 actor from injecting different values into old verifiable presentations. A presentation without a challenge and domain
 in its proof that matches what was sent by the verifier should be considered invalid.
 
-The challenge should be sufficiently random and unique for each verifiable presentation requested by a verifier to avoid
+The challenge string should be sufficiently random and unique for each verifiable presentation requested by a verifier to avoid
 being predicted. The domain, which does not need to be random, is an additional measure. In the unlikely occurrence
 of two verifiers generating the same random challenge, the domain would sufficiently distinguish those requests.
 
