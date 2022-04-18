@@ -89,7 +89,7 @@ impl ActorBuilder {
     self
   }
 
-  /// Sets the timeout for [`Actor::await_message`] and the underlying libp2p protocol timeout.
+  /// Sets the timeout for the underlying libp2p [`RequestResponse`] protocol.
   #[must_use]
   pub fn timeout(mut self, timeout: Duration) -> Self {
     self.config.timeout = timeout;

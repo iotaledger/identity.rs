@@ -12,8 +12,10 @@ use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::ActorConfig;
 use crate::ActorRequest;
+use crate::ActorStateExtension;
 use crate::Endpoint;
 use crate::Error;
+use crate::GenericActor;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
@@ -26,12 +28,6 @@ use identity_core::common::OneOrMany;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 use uuid::Uuid;
-
-use super::generic_actor::GenericActor;
-
-pub trait ActorStateExtension: 'static + Send + Sync + Sized {}
-
-impl ActorStateExtension for () {}
 
 pub(crate) struct ActorState<EXT>
 where
@@ -246,17 +242,7 @@ where
     peer: PeerId,
     request: REQ,
   ) -> Result<REQ::Response> {
-    self.send_named_request(peer, REQ::endpoint(), request).await
-  }
-
-  #[doc(hidden)]
-  /// Helper function for bindings, prefer [`Actor::send_request`] whenever possible.
-  pub(crate) async fn send_named_request<REQ: ActorRequest<Synchronous>>(
-    &mut self,
-    peer: PeerId,
-    name: &str,
-    request: REQ,
-  ) -> Result<REQ::Response> {
+    let endpoint: &'static str = REQ::endpoint();
     let request_mode: RequestMode = request.request_mode();
 
     let request_vec = serde_json::to_vec(&request).map_err(|err| Error::SerializationFailure {
@@ -265,9 +251,9 @@ where
       error_message: err.to_string(),
     })?;
 
-    let message = RequestMessage::new(name, request_mode, request_vec)?;
+    let message = RequestMessage::new(endpoint, request_mode, request_vec)?;
 
-    log::debug!("Sending `{}` message", name);
+    log::debug!("Sending `{}` message", endpoint);
 
     let response = self.commander.send_request(peer, message).await?;
 

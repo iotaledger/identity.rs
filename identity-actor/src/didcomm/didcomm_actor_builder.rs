@@ -34,30 +34,36 @@ impl DidCommActorBuilder {
     }
   }
 
+  /// See [`ActorBuilder::keypair`].
   #[must_use]
   pub fn keypair(mut self, keypair: Keypair) -> Self {
     self.inner.keypair = Some(keypair);
     self
   }
 
+  /// See [`ActorBuilder::listen_on`].
   #[must_use]
   pub fn listen_on(mut self, address: Multiaddr) -> Self {
     self.inner.listening_addresses.push(address);
     self
   }
 
+  /// Sets the timeout for [`DidCommActor::await_message`] and the underlying libp2p
+  /// [`RequestResponse`](libp2p::request_response::RequestResponse) protocol.
   #[must_use]
   pub fn timeout(mut self, timeout: Duration) -> Self {
     self.inner.config.timeout = timeout;
     self
   }
 
+  /// Set the [`ActorIdentity`] that will be used for DIDComm related tasks, such as en- and decryption.
   #[must_use]
   pub fn identity(mut self, identity: ActorIdentity) -> Self {
     self.identity = Some(identity);
     self
   }
 
+  /// See [`ActorBuilder::add_state`].
   pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
@@ -73,7 +79,7 @@ impl DidCommActorBuilder {
     }
   }
 
-  /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
+  /// See [`ActorBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> Result<DidCommActor> {
     let dns_transport =
@@ -89,7 +95,7 @@ impl DidCommActorBuilder {
     self.build_with_transport(transport).await
   }
 
-  /// Build the actor with a custom transport.
+  /// See [`ActorBuilder::build_with_transport`].
   pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<DidCommActor>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,

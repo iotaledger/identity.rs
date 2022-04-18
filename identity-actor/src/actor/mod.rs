@@ -15,7 +15,6 @@ mod request_context;
 pub(crate) mod traits;
 
 pub use actor::Actor;
-pub use actor::ActorStateExtension;
 pub(crate) use actor::HandlerMap;
 pub(crate) use actor::HandlerObject;
 pub(crate) use actor::ObjectId;
@@ -38,4 +37,5 @@ pub(crate) use handler::Handler;
 pub(crate) use invocation::send_response;
 pub(crate) use invocation::SynchronousInvocationStrategy;
 pub use request_context::RequestContext;
+pub(crate) use traits::ActorStateExtension;
 pub(crate) use traits::RequestHandler;

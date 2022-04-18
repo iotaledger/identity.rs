@@ -67,6 +67,7 @@ impl DidCommStateExtension {
   }
 }
 
+impl crate::traits::state_extension_seal::Sealed for DidCommStateExtension {}
 impl ActorStateExtension for DidCommStateExtension {}
 
 #[derive(Clone)]
@@ -98,26 +99,37 @@ impl GenericActor for DidCommActor {
 impl DidCommActor {
   // TODO: Is there an automated way to copy docs from the delegated fns?
 
+  /// See [`Actor::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> crate::Result<Multiaddr> {
     self.0.start_listening(address).await
   }
 
+  /// See [`Actor::peer_id`].
   pub fn peer_id(&self) -> PeerId {
     self.0.peer_id()
   }
 
+  /// See [`Actor::addresses`].
   pub async fn addresses(&mut self) -> crate::Result<Vec<Multiaddr>> {
     self.0.addresses().await
   }
 
+  /// See [`Actor::add_address`].
+  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> crate::Result<()> {
+    self.0.add_address(peer_id, address).await
+  }
+
+  /// See [`Actor::add_addresses`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> crate::Result<()> {
     self.0.add_addresses(peer_id, addresses).await
   }
 
+  /// See [`Actor::shutdown`].
   pub async fn shutdown(self) -> Result<()> {
     self.0.shutdown().await
   }
 
+  /// See [`Actor::send_request`].
   pub async fn send_request<REQ: ActorRequest<Synchronous>>(
     &mut self,
     peer: PeerId,
@@ -126,7 +138,7 @@ impl DidCommActor {
     self.0.send_request(peer, request).await
   }
 
-  /// Sends an asynchronous message to a peer. To receive a potential response, use [`Actor::await_message`],
+  /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommActor::await_message`],
   /// with the same `thread_id`.
   pub async fn send_message<REQ: ActorRequest<Asynchronous>>(
     &mut self,
@@ -134,21 +146,10 @@ impl DidCommActor {
     thread_id: &ThreadId,
     message: REQ,
   ) -> Result<()> {
-    self.send_named_message(peer, REQ::endpoint(), thread_id, message).await
-  }
-
-  #[doc(hidden)]
-  /// Helper function for bindings, prefer [`Actor::send_message`] whenever possible.
-  pub(crate) async fn send_named_message<REQ: ActorRequest<Asynchronous>>(
-    &mut self,
-    peer: PeerId,
-    name: &str,
-    thread_id: &ThreadId,
-    message: REQ,
-  ) -> Result<()> {
+    let endpoint: &'static str = REQ::endpoint();
     let request_mode: RequestMode = message.request_mode();
 
-    let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), name.to_owned(), message);
+    let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), endpoint.to_owned(), message);
 
     let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
@@ -160,9 +161,9 @@ impl DidCommActor {
       error_message: err.to_string(),
     })?;
 
-    let message = RequestMessage::new(name, request_mode, dcpm_vec)?;
+    let message = RequestMessage::new(endpoint, request_mode, dcpm_vec)?;
 
-    log::debug!("Sending `{}` message", name);
+    log::debug!("Sending `{}` message", endpoint);
 
     let response = self.0.commander.send_request(peer, message).await?;
 
@@ -178,8 +179,9 @@ impl DidCommActor {
   }
 
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
-  /// [`Actor::send_message`] was used previously. This will return a timeout error if no message
-  /// is received within the duration passed to [`ActorBuilder::timeout`](crate::ActorBuilder::timeout).
+  /// [`DidCommActor::send_message`] was called on the same `thread_id` previously.
+  /// This will return a timeout error if no message is received within the duration passed
+  /// to [`DidCommActorBuilder::timeout`](crate::didcomm::didcomm_actor_builder::DidCommActorBuilder::timeout).
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,

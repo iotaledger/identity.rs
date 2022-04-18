@@ -49,7 +49,7 @@ async fn test_unknown_thread_returns_error() -> crate::Result<()> {
   }
 
   let result = sending_actor
-    .send_named_message(peer_id, "unknown/thread", &ThreadId::new(), AsyncDummy(42))
+    .send_message(peer_id, &ThreadId::new(), AsyncDummy(42))
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));

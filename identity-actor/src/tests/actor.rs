@@ -33,9 +33,8 @@ async fn test_unknown_request_returns_error() -> crate::Result<()> {
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
-    .send_named_request(
+    .send_request(
       peer_id,
-      "unknown/request",
       IdentityGet("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
     )
     .await;
