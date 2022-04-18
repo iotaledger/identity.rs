@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod didcomm_actor;
+pub mod didcomm_actor_builder;
 pub mod hook;
 pub mod message;
 pub mod presentation;

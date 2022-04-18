@@ -58,7 +58,7 @@ impl NetCommander {
       request_id,
     };
     self.send_command(command).await?;
-    Ok(receiver.await.map_err(|_| Error::Shutdown)?)
+    receiver.await.map_err(|_| Error::Shutdown)
   }
 
   pub async fn start_listening(&mut self, address: Multiaddr) -> crate::Result<Multiaddr> {

@@ -7,12 +7,9 @@ use std::result::Result as StdResult;
 use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
-use crate::didcomm::thread_id::ThreadId;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
-use crate::p2p::ThreadRequest;
-use crate::ActorBuilder;
 use crate::ActorConfig;
 use crate::ActorRequest;
 use crate::Endpoint;
@@ -25,8 +22,6 @@ use crate::Result;
 use crate::Synchronous;
 use crate::SynchronousInvocationStrategy;
 
-use dashmap::DashMap;
-use futures::channel::oneshot;
 use identity_core::common::OneOrMany;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
@@ -34,7 +29,7 @@ use uuid::Uuid;
 
 use super::generic_actor::GenericActor;
 
-pub trait ActorStateExtension: 'static + Default + Send + Sync {}
+pub trait ActorStateExtension: 'static + Send + Sync + Sized {}
 
 impl ActorStateExtension for () {}
 
@@ -44,8 +39,6 @@ where
 {
   pub(crate) handlers: HandlerMap,
   pub(crate) objects: ObjectMap,
-  pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
-  pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
   pub(crate) extension: EXT,
@@ -87,24 +80,22 @@ impl<EXT> Actor<EXT>
 where
   EXT: ActorStateExtension,
 {
-  pub(crate) fn from_builder(builder: ActorBuilder, peer_id: PeerId, commander: NetCommander) -> Result<Self> {
-    let ActorBuilder {
-      handlers,
-      objects,
-      config,
-      ..
-    } = builder;
-
+  pub(crate) fn from_builder(
+    handlers: HandlerMap,
+    objects: ObjectMap,
+    config: ActorConfig,
+    peer_id: PeerId,
+    commander: NetCommander,
+    extension: EXT,
+  ) -> Result<Self> {
     let actor = Self {
       commander,
       state: Arc::new(ActorState {
         handlers,
         objects,
-        threads_receiver: DashMap::new(),
-        threads_sender: DashMap::new(),
         peer_id,
         config,
-        extension: Default::default(),
+        extension,
       }),
     };
 
@@ -298,8 +289,17 @@ where
 }
 
 impl GenericActor for Actor {
-  fn from_actor_builder(builder: ActorBuilder, peer_id: PeerId, commander: NetCommander) -> crate::Result<Self> {
-    Self::from_builder(builder, peer_id, commander)
+  type Extension = ();
+
+  fn from_actor_builder(
+    handlers: HandlerMap,
+    objects: ObjectMap,
+    config: ActorConfig,
+    peer_id: PeerId,
+    commander: NetCommander,
+    extension: Self::Extension,
+  ) -> crate::Result<Self> {
+    Self::from_builder(handlers, objects, config, peer_id, commander, extension)
   }
 
   fn handle_request(self, request: InboundRequest) {

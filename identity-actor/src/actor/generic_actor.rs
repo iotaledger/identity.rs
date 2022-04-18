@@ -5,13 +5,26 @@ use libp2p::PeerId;
 
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
-use crate::ActorBuilder;
+use crate::ActorConfig;
+use crate::ActorStateExtension;
+
+use super::actor::HandlerMap;
+use super::actor::ObjectMap;
 
 pub trait GenericActor
 where
   Self: Sized + Clone + Send + Sync + 'static,
 {
-  fn from_actor_builder(builder: ActorBuilder, peer_id: PeerId, commander: NetCommander) -> crate::Result<Self>;
+  type Extension: ActorStateExtension;
+
+  fn from_actor_builder(
+    handlers: HandlerMap,
+    objects: ObjectMap,
+    config: ActorConfig,
+    peer_id: PeerId,
+    commander: NetCommander,
+    extension: Self::Extension,
+  ) -> crate::Result<Self>;
   // TODO: Take &self and move cloning inside the function.
   fn handle_request(self, request: InboundRequest);
 }

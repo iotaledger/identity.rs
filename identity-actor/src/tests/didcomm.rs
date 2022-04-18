@@ -15,7 +15,6 @@ use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::thread_id::ThreadId;
 use crate::remote_account::IdentityList;
 use crate::tests::try_init_logger;
-use crate::ActorBuilder;
 use crate::ActorRequest;
 use crate::Asynchronous;
 use crate::Error;
@@ -33,9 +32,9 @@ use super::default_sending_didcomm_actor;
 async fn test_unknown_thread_returns_error() -> crate::Result<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|_| {}).await;
+  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| builder).await;
 
-  let mut sending_actor = default_sending_didcomm_actor(|_| {}).await;
+  let mut sending_actor = default_sending_didcomm_actor(|builder| builder).await;
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -79,13 +78,14 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   try_init_logger();
   let handler = DidCommState::new().await;
 
-  let mut holder_actor = default_sending_didcomm_actor(|_| {}).await;
+  let mut holder_actor = default_sending_didcomm_actor(|builder| builder).await;
 
-  let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| {
+  let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
       .add_async_handler(DidCommState::presentation_verifier_actor_handler)
       .unwrap();
+    builder
   })
   .await;
 
@@ -107,14 +107,15 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 
   let handler = DidCommState::new().await;
 
-  let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| {
+  let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
       .add_async_handler(DidCommState::presentation_holder_actor_handler)
       .unwrap();
+    builder
   })
   .await;
-  let mut verifier_actor = default_sending_didcomm_actor(|_| {}).await;
+  let mut verifier_actor = default_sending_didcomm_actor(|builder| builder).await;
 
   verifier_actor.add_addresses(peer_id, addrs).await.unwrap();
 
@@ -134,11 +135,12 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 
   let handler = DidCommState::new().await;
 
-  let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| {
+  let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
       .add_async_handler(DidCommState::presentation_holder_actor_handler)
       .unwrap();
+    builder
   })
   .await;
 
@@ -153,11 +155,12 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
     Ok(request.input)
   }
 
-  let mut verifier_actor = default_sending_didcomm_actor(|builder| {
+  let mut verifier_actor = default_sending_didcomm_actor(|mut builder| {
     builder
       .add_state(function_state.clone())
       .add_hook(presentation_request_hook)
       .unwrap();
+    builder
   })
   .await;
 
@@ -192,9 +195,9 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
     Ok(req.input)
   }
 
-  let mut holder_actor = default_sending_didcomm_actor(|_| {}).await;
+  let mut holder_actor = default_sending_didcomm_actor(|builder| builder).await;
 
-  let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| {
+  let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
       .add_async_handler(DidCommState::presentation_verifier_actor_handler)
@@ -204,6 +207,8 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
       .add_state(function_state.clone())
       .add_hook(receive_presentation_hook)
       .unwrap();
+
+    builder
   })
   .await;
 
@@ -225,7 +230,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
 async fn test_sending_to_unconnected_peer_returns_error() -> crate::Result<()> {
   try_init_logger();
 
-  let mut sending_actor = default_sending_didcomm_actor(|_| {}).await;
+  let mut sending_actor = default_sending_didcomm_actor(|builder| builder).await;
 
   let result = sending_actor.send_request(PeerId::random(), IdentityList).await;
 
@@ -246,21 +251,20 @@ async fn test_sending_to_unconnected_peer_returns_error() -> crate::Result<()> {
 async fn test_await_message_returns_timeout_error() -> crate::Result<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(())
       .add_async_handler(
         |_: (), _: DidCommActor, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {},
       )
       .unwrap();
+
+    builder
   })
   .await;
 
-  let mut sending_actor: DidCommActor = ActorBuilder::new()
-    .timeout(std::time::Duration::from_millis(50))
-    .build()
-    .await
-    .unwrap();
+  let mut sending_actor: DidCommActor =
+    default_sending_didcomm_actor(|builder| builder.timeout(std::time::Duration::from_millis(50))).await;
 
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
@@ -299,7 +303,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
 
   let state = TestFunctionState::new();
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(state.clone())
       .add_async_handler(
@@ -311,10 +315,12 @@ async fn test_handler_finishes_execution_after_shutdown() -> crate::Result<()> {
         },
       )
       .unwrap();
+
+    builder
   })
   .await;
 
-  let mut sending_actor: DidCommActor = ActorBuilder::new().build().await.unwrap();
+  let mut sending_actor: DidCommActor = default_sending_didcomm_actor(|builder| builder).await;
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   sending_actor

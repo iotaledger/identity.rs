@@ -16,7 +16,10 @@ pub(crate) mod traits;
 
 pub use actor::Actor;
 pub use actor::ActorStateExtension;
+pub(crate) use actor::HandlerMap;
 pub(crate) use actor::HandlerObject;
+pub(crate) use actor::ObjectId;
+pub(crate) use actor::ObjectMap;
 pub use actor_builder::ActorBuilder;
 pub use actor_builder::HandlerBuilder;
 pub use actor_request::ActorRequest;

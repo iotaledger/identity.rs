@@ -44,6 +44,8 @@ pub enum Error {
   AwaitTimeout(ThreadId),
   #[error("actor was shutdown")]
   Shutdown,
+  #[error("actor identity missing")]
+  IdentityMissing,
 }
 
 /// Errors that can occur on the remote actor.

@@ -12,13 +12,15 @@ use crate::p2p::ResponseMessage;
 use crate::p2p::ThreadRequest;
 use crate::send_response;
 use crate::Actor;
-use crate::ActorBuilder;
+use crate::ActorConfig;
 use crate::ActorRequest;
 use crate::ActorStateExtension;
 use crate::Asynchronous;
 use crate::Endpoint;
 use crate::Error;
 use crate::GenericActor;
+use crate::HandlerMap;
+use crate::ObjectMap;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
@@ -26,7 +28,9 @@ use crate::RequestMode;
 use crate::Result;
 use crate::Synchronous;
 
+use dashmap::DashMap;
 use futures::channel::oneshot;
+use identity_iota_core::document::IotaDocument;
 use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
@@ -38,14 +42,27 @@ use crate::ErrorLocation;
 
 use super::thread_id::ThreadId;
 
-pub struct DidCommStateExtension {
-  _test_state: bool,
+pub struct ActorIdentity {
+  // TODO: This type is meant for illustrating the state extension mechanism
+  // and will be used in a future update.
+  #[allow(dead_code)]
+  pub(crate) document: IotaDocument,
 }
 
-impl Default for DidCommStateExtension {
-  fn default() -> Self {
+pub struct DidCommStateExtension {
+  pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
+  pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
+  // TODO: See above.
+  #[allow(dead_code)]
+  pub(crate) identity: ActorIdentity,
+}
+
+impl DidCommStateExtension {
+  pub fn new(identity: ActorIdentity) -> Self {
     Self {
-      _test_state: Default::default(),
+      threads_receiver: DashMap::new(),
+      threads_sender: DashMap::new(),
+      identity,
     }
   }
 }
@@ -56,8 +73,17 @@ impl ActorStateExtension for DidCommStateExtension {}
 pub struct DidCommActor(Actor<DidCommStateExtension>);
 
 impl GenericActor for DidCommActor {
-  fn from_actor_builder(builder: ActorBuilder, peer_id: PeerId, commander: NetCommander) -> crate::Result<Self> {
-    Actor::<DidCommStateExtension>::from_builder(builder, peer_id, commander).map(Self)
+  type Extension = DidCommStateExtension;
+
+  fn from_actor_builder(
+    handlers: HandlerMap,
+    objects: ObjectMap,
+    config: ActorConfig,
+    peer_id: PeerId,
+    commander: NetCommander,
+    extension: Self::Extension,
+  ) -> crate::Result<Self> {
+    Actor::<Self::Extension>::from_builder(handlers, objects, config, peer_id, commander, extension).map(Self)
   }
 
   fn handle_request(self, request: InboundRequest) {
@@ -90,11 +116,6 @@ impl DidCommActor {
 
   pub async fn shutdown(self) -> Result<()> {
     self.0.shutdown().await
-  }
-
-  // TODO: Remove.
-  pub fn _test_access_state(&self) {
-    let _ = self.0.state.extension._test_state;
   }
 
   pub async fn send_request<REQ: ActorRequest<Synchronous>>(
@@ -163,7 +184,7 @@ impl DidCommActor {
     &mut self,
     thread_id: &ThreadId,
   ) -> Result<DidCommPlaintextMessage<T>> {
-    if let Some(receiver) = self.0.state.threads_receiver.remove(thread_id) {
+    if let Some(receiver) = self.0.state.extension.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
       let inbound_request = tokio::time::timeout(self.0.state.config.timeout, receiver.1)
         .await
@@ -213,8 +234,18 @@ impl DidCommActor {
     // there must be a preceding send_message on that same thread.
     // Note that on the receiving actor, the very first message of a protocol
     // is not awaited through await_message, so it does not need to follow that logic.
-    self.0.state.threads_sender.insert(thread_id.to_owned(), sender);
-    self.0.state.threads_receiver.insert(thread_id.to_owned(), receiver);
+    self
+      .0
+      .state
+      .extension
+      .threads_sender
+      .insert(thread_id.to_owned(), sender);
+    self
+      .0
+      .state
+      .extension
+      .threads_receiver
+      .insert(thread_id.to_owned(), receiver);
   }
 
   #[inline(always)]
@@ -366,7 +397,7 @@ impl AsynchronousInvocationStrategy {
         Ok(plaintext_msg) => {
           let thread_id = plaintext_msg.thread_id();
 
-          match actor.0.state.threads_sender.remove(thread_id) {
+          match actor.0.state.extension.threads_sender.remove(thread_id) {
             Some(sender) => {
               let thread_request = ThreadRequest {
                 peer_id: request.peer_id,

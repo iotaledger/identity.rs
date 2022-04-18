@@ -6,11 +6,15 @@ mod didcomm;
 #[cfg(feature = "account")]
 mod remote_account;
 
+use identity_core::crypto::KeyPair;
+use identity_iota_core::document::IotaDocument;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
+use crate::didcomm::didcomm_actor::ActorIdentity;
 use crate::didcomm::didcomm_actor::DidCommActor;
+use crate::didcomm::didcomm_actor_builder::DidCommActorBuilder;
 use crate::Actor;
 use crate::ActorBuilder;
 
@@ -44,21 +48,23 @@ async fn default_sending_actor(f: impl FnOnce(&mut ActorBuilder)) -> Actor {
   builder.build().await.unwrap()
 }
 
-async fn default_sending_didcomm_actor(f: impl FnOnce(&mut ActorBuilder)) -> DidCommActor {
-  let mut builder = ActorBuilder::new();
+async fn default_sending_didcomm_actor(f: impl FnOnce(DidCommActorBuilder) -> DidCommActorBuilder) -> DidCommActor {
+  let mut builder = DidCommActorBuilder::new().identity(default_identity());
 
-  f(&mut builder);
+  builder = f(builder);
 
   builder.build().await.unwrap()
 }
 
-async fn default_listening_didcomm_actor(f: impl FnOnce(&mut ActorBuilder)) -> (DidCommActor, Vec<Multiaddr>, PeerId) {
+async fn default_listening_didcomm_actor(
+  f: impl FnOnce(DidCommActorBuilder) -> DidCommActorBuilder,
+) -> (DidCommActor, Vec<Multiaddr>, PeerId) {
   let id_keys = Keypair::generate_ed25519();
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = ActorBuilder::new().keypair(id_keys);
+  let mut builder = DidCommActorBuilder::new().keypair(id_keys).identity(default_identity());
 
-  f(&mut builder);
+  builder = f(builder);
 
   let mut listening_actor: DidCommActor = builder.build().await.unwrap();
 
@@ -68,4 +74,12 @@ async fn default_listening_didcomm_actor(f: impl FnOnce(&mut ActorBuilder)) -> (
   let peer_id = listening_actor.peer_id();
 
   (listening_actor, addrs, peer_id)
+}
+
+fn default_identity() -> ActorIdentity {
+  let keypair: KeyPair = KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
+
+  ActorIdentity {
+    document: IotaDocument::new(&keypair).unwrap(),
+  }
 }

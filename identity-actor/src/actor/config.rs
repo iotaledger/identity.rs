@@ -3,7 +3,7 @@
 
 use std::time::Duration;
 
-pub(crate) struct ActorConfig {
+pub struct ActorConfig {
   pub(crate) timeout: Duration,
 }
 

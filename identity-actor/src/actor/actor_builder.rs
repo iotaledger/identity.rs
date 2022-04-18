@@ -127,7 +127,7 @@ impl ActorBuilder {
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
-  pub async fn build<ACT: GenericActor>(self) -> Result<ACT> {
+  pub async fn build(self) -> Result<Actor> {
     let dns_transport =
       libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new()).map_err(|err| Error::TransportError {
         context: "unable to build transport",
@@ -142,7 +142,24 @@ impl ActorBuilder {
   }
 
   /// Build the actor with a custom transport.
-  pub async fn build_with_transport<ACT, TRA>(mut self, transport: TRA) -> Result<ACT>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<Actor>
+  where
+    TRA: Transport + Sized + Clone + Send + Sync + 'static,
+    TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    TRA::Dial: Send + 'static,
+    TRA::Listener: Send + 'static,
+    TRA::ListenerUpgrade: Send + 'static,
+    TRA::Error: Send + Sync,
+  {
+    self.build_with_transport_and_ext(transport, ()).await
+  }
+
+  /// Build the actor with a custom transport and custom extension.
+  pub(crate) async fn build_with_transport_and_ext<ACT, TRA>(
+    self,
+    transport: TRA,
+    extension: ACT::Extension,
+  ) -> Result<ACT>
   where
     ACT: GenericActor,
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
@@ -152,11 +169,9 @@ impl ActorBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
-    // TODO: (maybe), quick hack to avoid moving keypair out of the builder.
-    let gen_keypair = Keypair::generate_ed25519();
     let (noise_keypair, peer_id) = {
-      let keypair: &Keypair = self.keypair.as_ref().unwrap_or(&gen_keypair);
-      let noise_keypair = NoiseKeypair::<X25519Spec>::new().into_authentic(keypair).unwrap();
+      let keypair: Keypair = self.keypair.unwrap_or_else(Keypair::generate_ed25519);
+      let noise_keypair = NoiseKeypair::<X25519Spec>::new().into_authentic(&keypair).unwrap();
       let peer_id = keypair.public().to_peer_id();
       (noise_keypair, peer_id)
     };
@@ -192,7 +207,7 @@ impl ActorBuilder {
         .build()
     };
 
-    for addr in std::mem::take(&mut self.listening_addresses) {
+    for addr in self.listening_addresses {
       swarm.listen_on(addr).map_err(|err| Error::TransportError {
         context: "unable to start listening",
         source: err,
@@ -204,15 +219,21 @@ impl ActorBuilder {
     let event_loop = EventLoop::new(swarm, cmd_receiver);
     let net_commander = NetCommander::new(cmd_sender);
 
-    let actor = ACT::from_actor_builder(self, peer_id, net_commander)?;
+    let actor: ACT = ACT::from_actor_builder(
+      self.handlers,
+      self.objects,
+      self.config,
+      peer_id,
+      net_commander,
+      extension,
+    )?;
 
-    let actor_clone = actor.clone();
+    let actor_clone: ACT = actor.clone();
 
     let event_handler = move |event: InboundRequest| {
-      let actor = actor_clone.clone();
+      let actor: ACT = actor_clone.clone();
 
-      // TODO: Should be GenericActor::handle_request
-      actor.handle_request(event);
+      GenericActor::handle_request(actor, event);
     };
 
     executor.exec(event_loop.run(event_handler).boxed());
@@ -235,8 +256,8 @@ where
 {
   pub(crate) object_id: ObjectId,
   pub(crate) handler_map: &'builder mut HandlerMap,
-  _marker_obj: PhantomData<&'static OBJ>,
-  _marker_mod: PhantomData<&'static MOD>,
+  pub(crate) _marker_obj: PhantomData<&'static OBJ>,
+  pub(crate) _marker_mod: PhantomData<&'static MOD>,
 }
 
 impl<'builder, OBJ> HandlerBuilder<'builder, Synchronous, OBJ>
