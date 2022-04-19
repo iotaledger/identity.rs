@@ -10,6 +10,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Issuer")]
   pub type Issuer;
+
+  #[wasm_bindgen(typescript_type = "Policy")]
+  pub type Policy;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -36,5 +39,19 @@ interface Issuer {
   /** A URL identifying the credential issuer. */
   readonly id?: string;
   /** Additional properties of the credential issuer. */
+  readonly [properties: string | symbol]: unknown;
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_POLICY: &'static str = r#"
+/** Information used to express obligations, prohibitions, and permissions about a {@link Credential} or {@link Presentation}.
+
+[More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use) */
+interface Policy {
+  /** A URL identifying the credential terms-of-use. */
+  readonly id?: string;
+  /** The type(s) of the credential terms-of-use. */
+  readonly types: string | Array<string>;
+  /** Additional properties of the credential terms-of-use. */
   readonly [properties: string | symbol]: unknown;
 }"#;
