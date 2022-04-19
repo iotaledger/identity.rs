@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -114,8 +114,8 @@ impl<T> Credential<T> {
       expiration_date: builder.expiration_date,
       credential_status: builder.status.into(),
       credential_schema: builder.schema.into(),
-      refresh_service: builder.refresh.into(),
-      terms_of_use: builder.policy.into(),
+      refresh_service: builder.refresh_service.into(),
+      terms_of_use: builder.terms_of_use.into(),
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,

@@ -29,8 +29,8 @@ pub struct CredentialBuilder<T = Object> {
   pub(crate) expiration_date: Option<Timestamp>,
   pub(crate) status: Vec<Status>,
   pub(crate) schema: Vec<Schema>,
-  pub(crate) refresh: Vec<RefreshService>,
-  pub(crate) policy: Vec<Policy>,
+  pub(crate) refresh_service: Vec<RefreshService>,
+  pub(crate) terms_of_use: Vec<Policy>,
   pub(crate) evidence: Vec<Evidence>,
   pub(crate) non_transferable: Option<bool>,
   pub(crate) properties: T,
@@ -49,8 +49,8 @@ impl<T> CredentialBuilder<T> {
       expiration_date: None,
       status: Vec::new(),
       schema: Vec::new(),
-      refresh: Vec::new(),
-      policy: Vec::new(),
+      refresh_service: Vec::new(),
+      terms_of_use: Vec::new(),
       evidence: Vec::new(),
       non_transferable: None,
       properties,
@@ -131,15 +131,15 @@ impl<T> CredentialBuilder<T> {
 
   /// Adds a value to the `refreshService` set.
   #[must_use]
-  pub fn refresh(mut self, value: RefreshService) -> Self {
-    self.refresh.push(value);
+  pub fn refresh_service(mut self, value: RefreshService) -> Self {
+    self.refresh_service.push(value);
     self
   }
 
   /// Adds a value to the `termsOfUse` set.
   #[must_use]
-  pub fn policy(mut self, value: Policy) -> Self {
-    self.policy.push(value);
+  pub fn terms_of_use(mut self, value: Policy) -> Self {
+    self.terms_of_use.push(value);
     self
   }
 
