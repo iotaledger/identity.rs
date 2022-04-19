@@ -11,4 +11,4 @@ pub use self::encrypted_data::*;
 pub use self::encryption_algorithm::*;
 pub use self::key_location::*;
 pub use self::signature::*;
-pub(crate) use shared_secret_location::*;
+pub use shared_secret_location::*;

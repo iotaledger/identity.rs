@@ -34,14 +34,14 @@ pub enum Error {
   #[error("Invalid Public Key: {0}")]
   InvalidPublicKey(String),
   /// Caused by failing to generate a random nonce
-  #[error("Nonce Generation Failed: {0}")]
-  NonceGenerationFailed(String),
+  #[error("nonce generation failed")]
+  NonceGenerationFailed(#[source] crypto::error::Error),
   /// Caused by failing to decrypt data
-  #[error("Failed to decrypt data: {0}")]
-  FailedToDecryptData(String),
+  #[error("failed to decrypt data")]
+  FailedToDecryptData(#[source] crypto::error::Error),
   /// Caused by failing to encrypt data
-  #[error("Failed to encrypt data: {0}")]
-  FailedToEncryptData(String),
+  #[error("failed to encrypt data")]
+  FailedToEncryptData(#[source] crypto::error::Error),
   /// Caused by attempting to find a key in storage that does not exist.
   #[error("key not found")]
   KeyNotFound,
