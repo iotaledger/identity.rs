@@ -19,6 +19,7 @@ use identity::iota_core::MessageId;
 use identity::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
+use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -662,9 +663,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayVerificationMethods;
-
-  #[wasm_bindgen(typescript_type = "Map<string, any>")]
-  pub type MapStringAny;
 
   #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
   pub type OptionTimestamp;

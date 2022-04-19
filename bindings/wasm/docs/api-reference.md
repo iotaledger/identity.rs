@@ -140,6 +140,8 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -165,8 +167,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
@@ -190,10 +190,13 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -207,24 +210,7 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
 
 <a name="Account+createMethod"></a>
 
@@ -248,6 +234,42 @@ Detaches the given relationship from the given method, if the method exists.
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
 
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
 <a name="Account+setAlsoKnownAs"></a>
 
 ### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -258,6 +280,17 @@ Sets the `alsoKnownAs` property in the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -386,39 +419,6 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
-
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -709,6 +709,21 @@ Creates a new `Client` with the given settings.
 
 * [Credential](#Credential)
     * _instance_
+        * [.context()](#Credential+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+        * [.id()](#Credential+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.types()](#Credential+types) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.credentialSubject()](#Credential+credentialSubject) ⇒ <code>Array.&lt;Subject&gt;</code>
+        * [.issuer()](#Credential+issuer) ⇒ <code>string</code> \| <code>Issuer</code>
+        * [.issuanceDate()](#Credential+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.expirationDate()](#Credential+expirationDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.credentialStatus()](#Credential+credentialStatus) ⇒ <code>Array.&lt;Status&gt;</code>
+        * [.credentialSchema()](#Credential+credentialSchema) ⇒ <code>Array.&lt;Schema&gt;</code>
+        * [.refreshService()](#Credential+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
+        * [.termsOfUse()](#Credential+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
+        * [.evidence()](#Credential+evidence) ⇒ <code>Array.&lt;Evidence&gt;</code>
+        * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
@@ -716,6 +731,97 @@ Creates a new `Client` with the given settings.
         * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#Credential.issue) ⇒ [<code>Credential</code>](#Credential)
         * [.fromJSON(json)](#Credential.fromJSON) ⇒ [<code>Credential</code>](#Credential)
 
+<a name="Credential+context"></a>
+
+### credential.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+id"></a>
+
+### credential.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the unique `URI` referencing the subject of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+types"></a>
+
+### credential.types() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the URIs defining the type of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+credentialSubject"></a>
+
+### credential.credentialSubject() ⇒ <code>Array.&lt;Subject&gt;</code>
+Returns a copy of the `Credential` subject(s).
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+issuer"></a>
+
+### credential.issuer() ⇒ <code>string</code> \| <code>Issuer</code>
+Returns a copy of the issuer of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+issuanceDate"></a>
+
+### credential.issuanceDate() ⇒ [<code>Timestamp</code>](#Timestamp)
+Returns a copy of the timestamp of when the `Credential` becomes valid.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+expirationDate"></a>
+
+### credential.expirationDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of when the `Credential` should no longer be considered valid.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+credentialStatus"></a>
+
+### credential.credentialStatus() ⇒ <code>Array.&lt;Status&gt;</code>
+Returns a copy of the information used to determine the current status of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+credentialSchema"></a>
+
+### credential.credentialSchema() ⇒ <code>Array.&lt;Schema&gt;</code>
+Returns a copy of the information used to assist in the enforcement of a specific `Credential` structure.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+refreshService"></a>
+
+### credential.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
+Returns a copy of the service(s) used to refresh an expired `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+termsOfUse"></a>
+
+### credential.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
+Returns a copy of the terms-of-use specified by the `Credential` issuer.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+evidence"></a>
+
+### credential.evidence() ⇒ <code>Array.&lt;Evidence&gt;</code>
+Returns a copy of the human-readable evidence used to support the claims within the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+nonTransferable"></a>
+
+### credential.nonTransferable() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns whether or not the `Credential` must only be contained within a [Presentation](#Presentation)
+with a proof issued from the `Credential` subject.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+proof"></a>
+
+### credential.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+Returns a copy of the proof used to verify the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+properties"></a>
+
+### credential.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the miscellaneous properties on the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+toJSON"></a>
 
 ### credential.toJSON() ⇒ <code>any</code>
@@ -4196,6 +4302,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4242,10 +4352,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="KeyType"></a>
 

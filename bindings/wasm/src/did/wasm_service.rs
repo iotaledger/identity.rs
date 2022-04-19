@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common::deserialize_map_or_any;
+use crate::common::MapStringAny;
 use identity::did::ServiceEndpoint;
 use identity::iota_core::IotaDIDUrl;
 use identity::iota_core::IotaService;
@@ -116,9 +117,6 @@ impl From<IotaService> for WasmService {
 extern "C" {
   #[wasm_bindgen(typescript_type = "string | string[] | Map<string, string[]>")]
   pub type UServiceEndpoint;
-
-  #[wasm_bindgen(typescript_type = "Map<string, any>")]
-  pub type MapStringAny;
 }
 
 #[wasm_bindgen]

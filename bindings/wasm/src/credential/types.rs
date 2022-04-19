@@ -5,26 +5,29 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Evidence")]
-  pub type WasmEvidence;
+  #[wasm_bindgen(typescript_type = "Array<string | Record<string, any> >")]
+  pub type ArrayContext;
 
-  #[wasm_bindgen(typescript_type = "Issuer")]
-  pub type WasmIssuer;
+  #[wasm_bindgen(typescript_type = "Array<Evidence>")]
+  pub type ArrayEvidence;
 
-  #[wasm_bindgen(typescript_type = "Policy")]
-  pub type WasmPolicy;
+  #[wasm_bindgen(typescript_type = "string | Issuer")]
+  pub type UrlOrIssuer;
 
-  #[wasm_bindgen(typescript_type = "RefreshService")]
-  pub type WasmRefreshService;
+  #[wasm_bindgen(typescript_type = "Array<Policy>")]
+  pub type ArrayPolicy;
 
-  #[wasm_bindgen(typescript_type = "Schema")]
-  pub type WasmSchema;
+  #[wasm_bindgen(typescript_type = "Array<RefreshService>")]
+  pub type ArrayRefreshService;
 
-  #[wasm_bindgen(typescript_type = "Status")]
-  pub type WasmStatus;
+  #[wasm_bindgen(typescript_type = "Array<Schema>")]
+  pub type ArraySchema;
 
-  #[wasm_bindgen(typescript_type = "Subject")]
-  pub type WasmSubject;
+  #[wasm_bindgen(typescript_type = "Array<Status>")]
+  pub type ArrayStatus;
+
+  #[wasm_bindgen(typescript_type = "Array<Subject>")]
+  pub type ArraySubject;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -39,8 +42,7 @@ interface Evidence {
   readonly types: string | Array<string>;
   /** Additional properties of the credential evidence. */
   readonly [properties: string | symbol]: unknown;
-}
-"#;
+}"#;
 
 #[wasm_bindgen(typescript_custom_section)]
 const I_ISSUER: &'static str = r#"
