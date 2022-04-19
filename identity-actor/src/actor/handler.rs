@@ -7,7 +7,6 @@ use std::marker::PhantomData;
 
 use crate::actor::ActorRequest;
 use crate::actor::AnyFuture;
-use crate::actor::GenericActor;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestHandler;
@@ -17,7 +16,7 @@ use crate::actor::SyncMode;
 #[derive(Clone)]
 pub struct Handler<MOD, ACT, OBJ, REQ, FUT>
 where
-  ACT: GenericActor,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
@@ -36,7 +35,7 @@ where
 
 impl<MOD, ACT, OBJ, REQ, FUT> Handler<MOD, ACT, OBJ, REQ, FUT>
 where
-  ACT: GenericActor,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
@@ -55,7 +54,7 @@ where
 
 impl<MOD, ACT, OBJ, REQ, FUT> RequestHandler for Handler<MOD, ACT, OBJ, REQ, FUT>
 where
-  ACT: GenericActor,
+  ACT: Send + Sync + 'static,
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,

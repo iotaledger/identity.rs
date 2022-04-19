@@ -9,7 +9,6 @@ use futures::Future;
 use crate::actor::ActorRequest;
 use crate::actor::AnyFuture;
 use crate::actor::Endpoint;
-use crate::actor::GenericActor;
 use crate::actor::HandlerBuilder;
 use crate::actor::HandlerObject;
 use crate::actor::RemoteSendError;
@@ -49,7 +48,7 @@ where
 #[derive(Clone)]
 pub struct Hook<MOD, ACT, OBJ, REQ, FUT>
 where
-  ACT: GenericActor,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
@@ -68,7 +67,7 @@ where
 
 impl<MOD, ACT, OBJ, REQ, FUT> Hook<MOD, ACT, OBJ, REQ, FUT>
 where
-  ACT: GenericActor,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
@@ -87,7 +86,7 @@ where
 
 impl<MOD, ACT, OBJ, REQ, FUT> RequestHandler for Hook<MOD, ACT, OBJ, REQ, FUT>
 where
-  ACT: GenericActor,
+  ACT: Send + Sync + 'static,
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,

@@ -3,19 +3,21 @@
 
 use std::any::Any;
 
-use crate::actor::Actor;
-use crate::actor::ActorStateExtension;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestHandler;
 use crate::actor::Result as ActorResult;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
+use crate::p2p::NetCommanderMut;
 use crate::p2p::ResponseMessage;
 
 use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
+
+use super::actor::RawActor;
+use super::ActorStateRef;
 
 pub(crate) async fn send_response<T: serde::Serialize>(
   commander: &mut NetCommander,
@@ -31,15 +33,16 @@ pub struct SynchronousInvocationStrategy;
 
 impl SynchronousInvocationStrategy {
   #[inline(always)]
-  pub async fn endpoint_not_found<EXT>(actor: &mut Actor<EXT>, request: InboundRequest)
+  pub async fn endpoint_not_found<CMD, STA>(actor: &mut RawActor<CMD, STA>, request: InboundRequest)
   where
-    EXT: ActorStateExtension,
+    CMD: NetCommanderMut,
+    STA: ActorStateRef,
   {
     let response: Result<Vec<u8>, RemoteSendError> =
       Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
 
     let send_result = send_response(
-      &mut actor.commander,
+      actor.commander(),
       response,
       request.response_channel,
       request.request_id,
@@ -52,17 +55,18 @@ impl SynchronousInvocationStrategy {
   }
 
   #[inline(always)]
-  pub async fn handler_deserialization_failure<EXT>(
-    actor: &mut Actor<EXT>,
+  pub async fn handler_deserialization_failure<CMD, STA>(
+    actor: &mut RawActor<CMD, STA>,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
     error: RemoteSendError,
   ) -> ActorResult<Result<(), InboundFailure>>
   where
-    EXT: ActorStateExtension,
+    CMD: NetCommanderMut,
+    STA: ActorStateRef,
   {
     send_response(
-      &mut actor.commander,
+      actor.commander(),
       Result::<Vec<u8>, RemoteSendError>::Err(error),
       channel,
       request_id,
@@ -71,16 +75,17 @@ impl SynchronousInvocationStrategy {
   }
 
   #[inline(always)]
-  pub async fn invoke_handler<EXT>(
+  pub async fn invoke_handler<CMD, STA>(
     handler: &dyn RequestHandler,
-    actor: Actor<EXT>,
+    actor: RawActor<CMD, STA>,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
   ) where
-    EXT: ActorStateExtension,
+    CMD: NetCommanderMut + Clone + 'static,
+    STA: ActorStateRef + 'static,
   {
     let mut commander = actor.commander.clone();
     let endpoint = context.endpoint.clone();
@@ -92,13 +97,13 @@ impl SynchronousInvocationStrategy {
 
         match ser_res {
           Ok(response) => {
-            if let Err(error) = send_response(&mut commander, Ok(response), channel, request_id).await {
+            if let Err(error) = send_response(commander.as_mut(), Ok(response), channel, request_id).await {
               log::error!("unable to respond to synchronous request on endpoint `{endpoint}` due to: {error}");
             }
           }
           Err(err) => {
             if let Err(error) = send_response(
-              &mut commander,
+              commander.as_mut(),
               Result::<(), RemoteSendError>::Err(err),
               channel,
               request_id,
@@ -114,7 +119,7 @@ impl SynchronousInvocationStrategy {
         log::error!("{}", err);
 
         if let Err(error) = send_response(
-          &mut commander,
+          commander.as_mut(),
           Result::<(), RemoteSendError>::Err(err),
           channel,
           request_id,

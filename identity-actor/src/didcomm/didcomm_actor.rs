@@ -1,18 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use std::any::Any;
+use std::sync::Arc;
 
 use crate::actor::send_response;
-use crate::actor::Actor;
-use crate::actor::ActorConfig;
 use crate::actor::ActorRequest;
-use crate::actor::ActorStateExtension;
+use crate::actor::ActorState;
+use crate::actor::ActorStateRef;
 use crate::actor::Asynchronous;
 use crate::actor::Endpoint;
 use crate::actor::Error;
-use crate::actor::GenericActor;
-use crate::actor::HandlerMap;
-use crate::actor::ObjectMap;
+use crate::actor::RawActor;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestHandler;
@@ -48,7 +46,8 @@ pub struct ActorIdentity {
   pub(crate) document: IotaDocument,
 }
 
-pub struct DidCommStateExtension {
+pub struct DidActorCommState {
+  pub(crate) actor_state: ActorState,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
@@ -56,9 +55,18 @@ pub struct DidCommStateExtension {
   pub(crate) identity: ActorIdentity,
 }
 
-impl DidCommStateExtension {
-  pub fn new(identity: ActorIdentity) -> Self {
+impl AsRef<ActorState> for Arc<DidActorCommState> {
+  fn as_ref(&self) -> &ActorState {
+    &self.actor_state
+  }
+}
+
+impl ActorStateRef for Arc<DidActorCommState> {}
+
+impl DidActorCommState {
+  pub fn new(actor_state: ActorState, identity: ActorIdentity) -> Self {
     Self {
+      actor_state,
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
       identity,
@@ -66,66 +74,72 @@ impl DidCommStateExtension {
   }
 }
 
-impl crate::actor::traits::state_extension_seal::Sealed for DidCommStateExtension {}
-impl ActorStateExtension for DidCommStateExtension {}
-
 #[derive(Clone)]
-pub struct DidCommActor(Actor<DidCommStateExtension>);
-
-impl GenericActor for DidCommActor {
-  type Extension = DidCommStateExtension;
-
-  fn from_actor_builder(
-    handlers: HandlerMap,
-    objects: ObjectMap,
-    config: ActorConfig,
-    peer_id: PeerId,
-    commander: NetCommander,
-    extension: Self::Extension,
-  ) -> ActorResult<Self> {
-    Actor::<Self::Extension>::from_builder(handlers, objects, config, peer_id, commander, extension).map(Self)
-  }
-
-  fn handle_request(self, request: InboundRequest) {
-    if request.request_mode == RequestMode::Asynchronous {
-      self.handle_async_request(request)
-    } else {
-      self.0.handle_sync_request(request)
-    }
-  }
+pub struct DidCommActor {
+  pub(crate) net_commander: NetCommander,
+  pub(crate) state: Arc<DidActorCommState>,
 }
 
 impl DidCommActor {
+  fn raw(&mut self) -> RawActor<&mut NetCommander, &ActorState> {
+    RawActor {
+      commander: &mut self.net_commander,
+      state: self.state.actor_state.as_ref(),
+    }
+  }
+
+  fn raw_ref(&self) -> RawActor<&NetCommander, &ActorState> {
+    RawActor {
+      commander: &self.net_commander,
+      state: self.state.actor_state.as_ref(),
+    }
+  }
+
+  fn to_actor(&self) -> RawActor<NetCommander, Arc<DidActorCommState>> {
+    RawActor {
+      commander: self.net_commander.clone(),
+      state: Arc::clone(&self.state),
+    }
+  }
+
+  pub(crate) fn handle_request(self, request: InboundRequest) {
+    if request.request_mode == RequestMode::Asynchronous {
+      self.handle_async_request(request)
+    } else {
+      self.to_actor().handle_sync_request(request)
+    }
+  }
+
   // TODO: Is there an automated way to copy docs from the delegated fns?
 
   /// See [`Actor::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
-    self.0.start_listening(address).await
+    self.raw().start_listening(address).await
   }
 
   /// See [`Actor::peer_id`].
   pub fn peer_id(&self) -> PeerId {
-    self.0.peer_id()
+    self.raw_ref().peer_id()
   }
 
   /// See [`Actor::addresses`].
   pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
-    self.0.addresses().await
+    self.raw().addresses().await
   }
 
   /// See [`Actor::add_address`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
-    self.0.add_address(peer_id, address).await
+    self.raw().add_address(peer_id, address).await
   }
 
   /// See [`Actor::add_addresses`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
-    self.0.add_addresses(peer_id, addresses).await
+    self.raw().add_addresses(peer_id, addresses).await
   }
 
   /// See [`Actor::shutdown`].
   pub async fn shutdown(self) -> ActorResult<()> {
-    self.0.shutdown().await
+    self.to_actor().shutdown().await
   }
 
   /// See [`Actor::send_request`].
@@ -134,7 +148,7 @@ impl DidCommActor {
     peer: PeerId,
     request: REQ,
   ) -> ActorResult<REQ::Response> {
-    self.0.send_request(peer, request).await
+    self.raw().send_request(peer, request).await
   }
 
   /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommActor::await_message`],
@@ -164,7 +178,7 @@ impl DidCommActor {
 
     log::debug!("Sending `{}` message", endpoint);
 
-    let response = self.0.commander.send_request(peer, message).await?;
+    let response = self.raw().commander.send_request(peer, message).await?;
 
     serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
@@ -185,9 +199,9 @@ impl DidCommActor {
     &mut self,
     thread_id: &ThreadId,
   ) -> ActorResult<DidCommPlaintextMessage<T>> {
-    if let Some(receiver) = self.0.state.extension.threads_receiver.remove(thread_id) {
+    if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
-      let inbound_request = tokio::time::timeout(self.0.state.config.timeout, receiver.1)
+      let inbound_request = tokio::time::timeout(self.raw().state.config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
         .map_err(|_| Error::ThreadNotFound(receiver.0))?;
@@ -205,7 +219,7 @@ impl DidCommActor {
       let mut hook_endpoint: Endpoint = inbound_request.endpoint;
       hook_endpoint.is_hook = true;
 
-      if self.0.handlers().contains_key(&hook_endpoint) {
+      if self.raw().handlers().contains_key(&hook_endpoint) {
         log::debug!("Calling hook: {}", hook_endpoint);
 
         let hook_result: Result<Result<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
@@ -235,18 +249,8 @@ impl DidCommActor {
     // there must be a preceding send_message on that same thread.
     // Note that on the receiving actor, the very first message of a protocol
     // is not awaited through await_message, so it does not need to follow that logic.
-    self
-      .0
-      .state
-      .extension
-      .threads_sender
-      .insert(thread_id.to_owned(), sender);
-    self
-      .0
-      .state
-      .extension
-      .threads_receiver
-      .insert(thread_id.to_owned(), receiver);
+    self.state.threads_sender.insert(thread_id.to_owned(), sender);
+    self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
   }
 
   #[inline(always)]
@@ -260,10 +264,10 @@ impl DidCommActor {
     }
 
     let _ = spawn(async move {
-      if self.0.state.handlers.contains_key(&request.endpoint) {
+      if self.raw().state.handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
 
-        match self.0.get_handler(&request.endpoint).and_then(|handler_ref| {
+        match self.raw().get_handler(&request.endpoint).and_then(|handler_ref| {
           let input = handler_ref.0.handler.deserialize_request(request.input)?;
           Ok((handler_ref.0, handler_ref.1, input))
         }) {
@@ -326,7 +330,7 @@ impl DidCommActor {
     let mut endpoint = Endpoint::new(REQ::endpoint())?;
     endpoint.is_hook = true;
 
-    if self.0.handlers().contains_key(&endpoint) {
+    if self.raw_ref().handlers().contains_key(&endpoint) {
       log::debug!("Calling send hook: {}", endpoint);
 
       let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
@@ -350,7 +354,7 @@ impl DidCommActor {
     I: Send + 'static,
     O: 'static,
   {
-    match self.0.get_handler(&endpoint) {
+    match self.raw_ref().get_handler(&endpoint) {
       Ok(handler_object) => {
         let handler: &dyn RequestHandler = handler_object.0.handler.as_ref();
         let state: Box<dyn Any + Send + Sync> = handler_object.1;
@@ -393,7 +397,7 @@ impl AsynchronousInvocationStrategy {
         Ok(plaintext_msg) => {
           let thread_id = plaintext_msg.thread_id();
 
-          match actor.0.state.extension.threads_sender.remove(thread_id) {
+          match actor.state.threads_sender.remove(thread_id) {
             Some(sender) => {
               let thread_request = ThreadRequest {
                 peer_id: request.peer_id,
@@ -424,7 +428,7 @@ impl AsynchronousInvocationStrategy {
       };
 
     let send_result = send_response(
-      &mut actor.0.commander,
+      &mut actor.net_commander,
       result,
       request.response_channel,
       request.request_id,
@@ -444,7 +448,7 @@ impl AsynchronousInvocationStrategy {
     error: RemoteSendError,
   ) -> ActorResult<Result<(), InboundFailure>> {
     send_response(
-      &mut actor.0.commander,
+      &mut actor.net_commander,
       Result::<(), RemoteSendError>::Err(error),
       channel,
       request_id,
@@ -462,7 +466,7 @@ impl AsynchronousInvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
   ) {
-    let send_result = send_response(&mut actor.0.commander, Ok(()), channel, request_id).await;
+    let send_result = send_response(&mut actor.net_commander, Ok(()), channel, request_id).await;
 
     if let Err(err) = send_result {
       log::error!(

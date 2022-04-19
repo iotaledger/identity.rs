@@ -2,17 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::marker::PhantomData;
+use std::sync::Arc;
 use std::time::Duration;
 
 use futures::AsyncRead;
 use futures::AsyncWrite;
 use futures::Future;
+use futures::FutureExt;
+use libp2p::core::Executor;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
 use crate::actor::ActorBuilder;
 use crate::actor::ActorRequest;
+use crate::actor::ActorState;
 use crate::actor::Asynchronous;
 use crate::actor::Endpoint;
 use crate::actor::Error;
@@ -23,10 +27,13 @@ use crate::actor::ObjectId;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::actor::SyncMode;
+use crate::p2p::EventLoop;
+use crate::p2p::InboundRequest;
+use crate::p2p::NetCommander;
 
 use super::didcomm_actor::ActorIdentity;
+use super::didcomm_actor::DidActorCommState;
 use super::didcomm_actor::DidCommActor;
-use super::didcomm_actor::DidCommStateExtension;
 use super::DidCommPlaintextMessage;
 
 pub struct DidCommActorBuilder {
@@ -113,8 +120,35 @@ impl DidCommActorBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
-    let extension: DidCommStateExtension = DidCommStateExtension::new(self.identity.ok_or(Error::IdentityMissing)?);
-    self.inner.build_with_transport_and_ext(transport, extension).await
+    let executor = Box::new(|fut| {
+      cfg_if::cfg_if! {
+        if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
+          tokio::spawn(fut);
+        } else {
+          wasm_bindgen_futures::spawn_local(fut);
+        }
+      }
+    });
+
+    let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
+      self.inner.build_actor_constituents(transport, executor.clone()).await?;
+
+    let state: DidActorCommState = DidActorCommState::new(actor_state, self.identity.ok_or(Error::IdentityMissing)?);
+
+    let didcomm_actor: DidCommActor = DidCommActor {
+      net_commander,
+      state: Arc::new(state),
+    };
+
+    let didcomm_actor_clone: DidCommActor = didcomm_actor.clone();
+
+    let event_handler = move |event: InboundRequest| {
+      didcomm_actor_clone.clone().handle_request(event);
+    };
+
+    executor.exec(event_loop.run(event_handler).boxed());
+
+    Ok(didcomm_actor)
   }
 }
 

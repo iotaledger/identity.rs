@@ -102,13 +102,3 @@ pub fn request_handler_clone_object<OBJ: Clone + Send + Sync + 'static>(
 
   Ok(Box::new(object.clone()))
 }
-
-/// A sealed trait to extend what is stored in the `ActorState`.
-pub trait ActorStateExtension: 'static + Send + Sync + Sized + state_extension_seal::Sealed {}
-
-impl state_extension_seal::Sealed for () {}
-impl ActorStateExtension for () {}
-
-pub(crate) mod state_extension_seal {
-  pub trait Sealed {}
-}

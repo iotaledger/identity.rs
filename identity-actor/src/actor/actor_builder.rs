@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::iter;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use std::time::Duration;
 
 use crate::actor::Actor;
@@ -12,7 +13,6 @@ use crate::actor::ActorConfig;
 use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
-use crate::actor::GenericActor;
 use crate::actor::Handler;
 use crate::actor::HandlerObject;
 use crate::actor::RequestContext;
@@ -47,6 +47,7 @@ use uuid::Uuid;
 use super::actor::HandlerMap;
 use super::actor::ObjectId;
 use super::actor::ObjectMap;
+use super::ActorState;
 
 /// An [`Actor`] builder for easy configuration and building of handler and hook functions.
 pub struct ActorBuilder {
@@ -148,17 +149,41 @@ impl ActorBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
-    self.build_with_transport_and_ext(transport, ()).await
+    let executor = Box::new(|fut| {
+      cfg_if::cfg_if! {
+        if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
+          tokio::spawn(fut);
+        } else {
+          wasm_bindgen_futures::spawn_local(fut);
+        }
+      }
+    });
+
+    let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
+      self.build_actor_constituents(transport, executor.clone()).await?;
+
+    let actor: Actor = Actor {
+      commander: net_commander,
+      state: Arc::new(actor_state),
+    };
+    let actor_clone: Actor = actor.clone();
+
+    let event_handler = move |event: InboundRequest| {
+      actor_clone.clone().handle_request(event);
+    };
+
+    executor.exec(event_loop.run(event_handler).boxed());
+
+    Ok(actor)
   }
 
-  /// Build the actor with a custom transport and custom extension.
-  pub(crate) async fn build_with_transport_and_ext<ACT, TRA>(
+  /// Build the actor with a custom transport and custom executor.
+  pub(crate) async fn build_actor_constituents<TRA>(
     self,
     transport: TRA,
-    extension: ACT::Extension,
-  ) -> ActorResult<ACT>
+    executor: Box<dyn Executor + Send>,
+  ) -> ActorResult<(EventLoop, ActorState, NetCommander)>
   where
-    ACT: GenericActor,
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     TRA::Dial: Send + 'static,
@@ -172,16 +197,6 @@ impl ActorBuilder {
       let peer_id = keypair.public().to_peer_id();
       (noise_keypair, peer_id)
     };
-
-    let executor = Box::new(|fut| {
-      cfg_if::cfg_if! {
-        if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
-          tokio::spawn(fut);
-        } else {
-          wasm_bindgen_futures::spawn_local(fut);
-        }
-      }
-    });
 
     let mut swarm: Swarm<RequestResponse<ActorRequestResponseCodec>> = {
       let mut config: RequestResponseConfig = RequestResponseConfig::default();
@@ -200,7 +215,7 @@ impl ActorBuilder {
         .boxed();
 
       SwarmBuilder::new(transport, behaviour, peer_id)
-        .executor(executor.clone())
+        .executor(executor)
         .build()
     };
 
@@ -216,26 +231,14 @@ impl ActorBuilder {
     let event_loop = EventLoop::new(swarm, cmd_receiver);
     let net_commander = NetCommander::new(cmd_sender);
 
-    let actor: ACT = ACT::from_actor_builder(
-      self.handlers,
-      self.objects,
-      self.config,
+    let actor_state: ActorState = ActorState {
+      handlers: self.handlers,
+      objects: self.objects,
       peer_id,
-      net_commander,
-      extension,
-    )?;
-
-    let actor_clone: ACT = actor.clone();
-
-    let event_handler = move |event: InboundRequest| {
-      let actor: ACT = actor_clone.clone();
-
-      GenericActor::handle_request(actor, event);
+      config: self.config,
     };
 
-    executor.exec(event_loop.run(event_handler).boxed());
-
-    Ok(actor)
+    Ok((event_loop, actor_state, net_commander))
   }
 }
 
