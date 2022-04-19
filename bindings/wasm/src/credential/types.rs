@@ -19,6 +19,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Schema")]
   pub type WasmSchema;
+
+  #[wasm_bindgen(typescript_type = "Status")]
+  pub type WasmStatus;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -81,11 +84,25 @@ const I_SCHEMA: &'static str = r#"
 /** Information used to validate the structure of a {@link Credential}.
 
 [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas) */
-interface RefreshService {
+interface Schema {
   /** A URL identifying the credential schema file. */
   readonly id: string;
   /** The type(s) of the credential schema. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential schema. */
+  readonly [properties: string | symbol]: unknown;
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_STATUS: &'static str = r#"
+/** Information used to determine the current status of a {@link Credential}.
+
+[More Info](https://www.w3.org/TR/vc-data-model/#status) */
+interface Status {
+  /** A URL identifying the credential status. */
+  readonly id: string;
+  /** The type(s) of the credential status. */
+  readonly types: string | Array<string>;
+  /** Additional properties of the credential status. */
   readonly [properties: string | symbol]: unknown;
 }"#;

@@ -191,6 +191,7 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
@@ -210,7 +211,6 @@ publishing to the Tangle.
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -225,6 +225,17 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -418,17 +429,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
