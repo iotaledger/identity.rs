@@ -8,6 +8,7 @@ mod credential_validator;
 mod presentation;
 mod presentation_validator;
 mod validation_options;
+mod types;
 
 pub use self::credential::WasmCredential;
 pub use self::credential_validator::WasmCredentialValidator;
@@ -17,3 +18,4 @@ pub use self::validation_options::WasmCredentialValidationOptions;
 pub use self::validation_options::WasmFailFast;
 pub use self::validation_options::WasmPresentationValidationOptions;
 pub use self::validation_options::WasmSubjectHolderRelationship;
+pub use self::types::*;
