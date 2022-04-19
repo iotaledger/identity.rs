@@ -13,6 +13,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Policy")]
   pub type Policy;
+
+  #[wasm_bindgen(typescript_type = "RefreshService")]
+  pub type RefreshService;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -53,5 +56,19 @@ interface Policy {
   /** The type(s) of the credential terms-of-use. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential terms-of-use. */
+  readonly [properties: string | symbol]: unknown;
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_REFRESH_SERVICE: &'static str = r#"
+/** Information used to refresh or assert the status of a {@link Credential}.
+
+[More Info](https://www.w3.org/TR/vc-data-model/#refreshing) */
+interface RefreshService {
+  /** The URL of the credential refresh service. */
+  readonly id: string;
+  /** The type(s) of the credential refresh service. */
+  readonly types: string | Array<string>;
+  /** Additional properties of the credential refresh service. */
   readonly [properties: string | symbol]: unknown;
 }"#;
