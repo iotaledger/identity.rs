@@ -193,7 +193,6 @@ publishing to the Tangle.
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -209,6 +208,7 @@ publishing to the Tangle.
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
@@ -247,17 +247,6 @@ Sets the `alsoKnownAs` property in the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -407,6 +396,17 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
 
 <a name="Account+createService"></a>
 

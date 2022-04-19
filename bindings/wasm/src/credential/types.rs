@@ -6,16 +6,19 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "Evidence")]
-  pub type Evidence;
+  pub type WasmEvidence;
 
   #[wasm_bindgen(typescript_type = "Issuer")]
-  pub type Issuer;
+  pub type WasmIssuer;
 
   #[wasm_bindgen(typescript_type = "Policy")]
-  pub type Policy;
+  pub type WasmPolicy;
 
   #[wasm_bindgen(typescript_type = "RefreshService")]
-  pub type RefreshService;
+  pub type WasmRefreshService;
+
+  #[wasm_bindgen(typescript_type = "Schema")]
+  pub type WasmSchema;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -70,5 +73,19 @@ interface RefreshService {
   /** The type(s) of the credential refresh service. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential refresh service. */
+  readonly [properties: string | symbol]: unknown;
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_SCHEMA: &'static str = r#"
+/** Information used to validate the structure of a {@link Credential}.
+
+[More Info](https://www.w3.org/TR/vc-data-model/#data-schemas) */
+interface RefreshService {
+  /** A URL identifying the credential schema file. */
+  readonly id: string;
+  /** The type(s) of the credential schema. */
+  readonly types: string | Array<string>;
+  /** Additional properties of the credential schema. */
   readonly [properties: string | symbol]: unknown;
 }"#;
