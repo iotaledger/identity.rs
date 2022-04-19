@@ -14,6 +14,7 @@ use crate::actor::ActorBuilder;
 use crate::actor::ActorRequest;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
+use crate::actor::HandlerActor2;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::actor::Synchronous;
@@ -67,7 +68,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   pub struct State(pub Arc<AtomicBool>);
 
   impl State {
-    async fn handler(self, _actor: Actor, _req: RequestContext<Dummy>) {
+    async fn handler(self, _actor: HandlerActor2, _req: RequestContext<Dummy>) {
       self.0.store(true, std::sync::atomic::Ordering::SeqCst);
     }
   }
@@ -130,7 +131,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   pub struct State(pub Arc<AtomicBool>);
 
   impl State {
-    async fn handler(self, _actor: Actor, req: RequestContext<Dummy>) {
+    async fn handler(self, _actor: HandlerActor2, req: RequestContext<Dummy>) {
       if let Dummy(42) = req.input {
         self.0.store(true, std::sync::atomic::Ordering::SeqCst);
       }
@@ -181,7 +182,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_sync_handler(|_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
+      .add_sync_handler(|_: (), _: HandlerActor2, message: RequestContext<MessageRequest>| async move {
         MessageResponse(message.input.0)
       })
       .unwrap();
@@ -223,10 +224,12 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_sync_handler(|_: (), _: Actor, _message: RequestContext<IdentityList>| async move {
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-        vec![]
-      })
+      .add_sync_handler(
+        |_: (), _: HandlerActor2, _message: RequestContext<IdentityList>| async move {
+          tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+          vec![]
+        },
+      )
       .unwrap();
   })
   .await;
@@ -296,7 +299,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
     builder
       .add_state(())
-      .add_sync_handler(|_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 })
+      .add_sync_handler(|_: (), _: HandlerActor2, _: RequestContext<CustomRequest2>| async move { 42 })
       .unwrap();
   })
   .await;

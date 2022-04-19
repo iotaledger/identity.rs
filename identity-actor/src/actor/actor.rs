@@ -40,7 +40,7 @@ impl AsRef<ActorState> for ActorState {
   }
 }
 
-pub trait ActorStateRef: AsRef<ActorState> + Clone + Send + Sync {}
+pub trait ActorStateRef: AsRef<ActorState> + Send + Sync {}
 
 impl ActorStateRef for Arc<ActorState> {}
 impl ActorStateRef for &ActorState {}
@@ -67,7 +67,7 @@ where
 impl<CMD, STA> Clone for RawActor<CMD, STA>
 where
   CMD: NetCommanderMut + Clone,
-  STA: ActorStateRef,
+  STA: ActorStateRef + Clone,
 {
   fn clone(&self) -> Self {
     Self {
@@ -136,26 +136,6 @@ where
   pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
     self.commander().get_addresses().await
   }
-
-  // pub(crate) fn from_builder(
-  //   handlers: HandlerMap,
-  //   objects: ObjectMap,
-  //   config: ActorConfig,
-  //   peer_id: PeerId,
-  //   commander: NetCommander,
-  // ) -> ActorResult<Self> {
-  //   let actor = Self {
-  //     commander,
-  //     state: Arc::new(ActorState {
-  //       handlers,
-  //       objects,
-  //       peer_id,
-  //       config,
-  //     }),
-  //   };
-
-  //   Ok(actor)
-  // }
 
   /// Shut this actor down. This will break the event loop in the background immediately,
   /// returning an error for all current handlers that interact with their copy of the
@@ -229,7 +209,7 @@ where
 impl<CMD, STA> RawActor<CMD, STA>
 where
   CMD: NetCommanderMut + Clone + 'static,
-  STA: ActorStateRef + 'static,
+  STA: ActorStateRef + Clone + 'static,
 {
   pub fn handle_request(self, request: InboundRequest) {
     if request.request_mode == RequestMode::Asynchronous {

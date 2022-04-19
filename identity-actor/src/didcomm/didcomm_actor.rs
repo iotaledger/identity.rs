@@ -47,7 +47,7 @@ pub struct ActorIdentity {
 }
 
 pub struct DidActorCommState {
-  pub(crate) actor_state: ActorState,
+  pub(crate) actor_state: Arc<ActorState>,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
@@ -66,7 +66,7 @@ impl ActorStateRef for Arc<DidActorCommState> {}
 impl DidActorCommState {
   pub fn new(actor_state: ActorState, identity: ActorIdentity) -> Self {
     Self {
-      actor_state,
+      actor_state: Arc::new(actor_state),
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
       identity,
@@ -95,18 +95,17 @@ impl DidCommActor {
     }
   }
 
-  fn to_actor(&self) -> RawActor<NetCommander, Arc<DidActorCommState>> {
+  fn to_actor(&self) -> RawActor<NetCommander, Arc<ActorState>> {
     RawActor {
       commander: self.net_commander.clone(),
-      state: Arc::clone(&self.state),
+      state: Arc::clone(&self.state.actor_state),
     }
   }
 
   pub(crate) fn handle_request(self, request: InboundRequest) {
-    if request.request_mode == RequestMode::Asynchronous {
-      self.handle_async_request(request)
-    } else {
-      self.to_actor().handle_sync_request(request)
+    match request.request_mode {
+      RequestMode::Asynchronous => self.handle_async_request(request),
+      RequestMode::Synchronous => self.to_actor().handle_sync_request(request),
     }
   }
 

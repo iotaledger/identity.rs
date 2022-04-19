@@ -12,6 +12,8 @@ use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::SyncMode;
 
+use super::Actor;
+
 /// A future whose output is an `Any` trait object.
 pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;
 
@@ -22,7 +24,7 @@ pub trait RequestHandler: Send + Sync {
   /// type-erased `Any` object.
   fn invoke(
     &self,
-    actor: Box<dyn Any + Send + Sync>,
+    actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,

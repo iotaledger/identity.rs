@@ -3,11 +3,14 @@
 
 use libp2p::PeerId;
 
+use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Asynchronous;
 use crate::actor::Error;
+use crate::actor::RawActor;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::Synchronous;
 use crate::didcomm::presentation_holder_handler;
 use crate::didcomm::presentation_verifier_handler;
 use crate::didcomm::DidCommActor;
@@ -26,6 +29,44 @@ use std::sync::Arc;
 
 use super::default_listening_didcomm_actor;
 use super::default_sending_didcomm_actor;
+
+#[tokio::test]
+async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
+  try_init_logger();
+
+  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+  pub struct SyncDummy(u16);
+
+  impl ActorRequest<Synchronous> for SyncDummy {
+    type Response = ();
+
+    fn endpoint() -> &'static str {
+      "test/request"
+    }
+  }
+
+  let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
+    builder
+      .add_state(())
+      .add_sync_handler(|_: (), actor: Actor, request: RequestContext<SyncDummy>| async move { () })
+      .unwrap();
+
+    builder
+  })
+  .await;
+
+  let mut sending_actor = default_sending_didcomm_actor(|builder| builder).await;
+  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+
+  let result = sending_actor.send_request(peer_id, SyncDummy(42)).await;
+
+  assert!(result.is_ok());
+
+  listening_actor.shutdown().await.unwrap();
+  sending_actor.shutdown().await.unwrap();
+
+  Ok(())
+}
 
 #[tokio::test]
 async fn test_unknown_thread_returns_error() -> ActorResult<()> {

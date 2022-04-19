@@ -12,6 +12,10 @@ use crate::actor::RequestContext;
 use crate::actor::RequestHandler;
 use crate::actor::SyncMode;
 
+use super::actor::HandlerActor;
+use super::actor::HandlerActor2;
+use super::actor::HandlerActorMut;
+
 /// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]
 pub struct Handler<MOD, ACT, OBJ, REQ, FUT>
@@ -33,15 +37,14 @@ where
   _marker_act: std::marker::PhantomData<&'static ACT>,
 }
 
-impl<MOD, ACT, OBJ, REQ, FUT> Handler<MOD, ACT, OBJ, REQ, FUT>
+impl<MOD, OBJ, REQ, FUT> Handler<MOD, HandlerActor2, OBJ, REQ, FUT>
 where
-  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
   MOD: SyncMode + 'static,
 {
-  pub fn new(func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT) -> Self {
+  pub fn new(func: fn(OBJ, HandlerActor2, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
@@ -52,9 +55,8 @@ where
   }
 }
 
-impl<MOD, ACT, OBJ, REQ, FUT> RequestHandler for Handler<MOD, ACT, OBJ, REQ, FUT>
+impl<MOD, OBJ, REQ, FUT> RequestHandler for Handler<MOD, HandlerActor2, OBJ, REQ, FUT>
 where
-  ACT: Send + Sync + 'static,
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
   REQ::Response: Send,
@@ -63,7 +65,7 @@ where
 {
   fn invoke(
     &self,
-    actor: Box<dyn Any + Send + Sync>,
+    actor: HandlerActor2,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
@@ -86,7 +88,7 @@ where
       ))
     })?;
 
-    let actor: ACT = *actor.downcast().expect("TODO");
+    // let actor: ACT = *actor.downcast().expect("TODO");
 
     let future = async move {
       let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;

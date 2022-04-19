@@ -85,12 +85,12 @@ impl SynchronousInvocationStrategy {
     request_id: RequestId,
   ) where
     CMD: NetCommanderMut + Clone + 'static,
-    STA: ActorStateRef + 'static,
+    STA: ActorStateRef + Clone + 'static,
   {
     let mut commander = actor.commander.clone();
     let endpoint = context.endpoint.clone();
 
-    match handler.invoke(Box::new(actor), context, object, input) {
+    match handler.invoke(actor.to_handler_actor(), context, object, input) {
       Ok(invocation) => {
         let result = invocation.await;
         let ser_res = handler.serialize_response(result);
