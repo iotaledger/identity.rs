@@ -20,7 +20,7 @@ use identity_did::verification::TryMethod;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::error::Error;
 use crate::error::Result;
 use crate::presentation::PresentationBuilder;
@@ -45,7 +45,7 @@ pub struct Presentation<T = Object, U = Object> {
   pub holder: Option<Url>,
   /// Service(s) used to refresh an expired `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
-  pub refresh_service: OneOrMany<Refresh>,
+  pub refresh_service: OneOrMany<RefreshService>,
   /// Terms-of-use specified by the `Presentation` holder.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   pub terms_of_use: OneOrMany<Policy>,

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Context;
@@ -11,7 +11,7 @@ use crate::credential::Credential;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
@@ -29,7 +29,7 @@ pub struct CredentialBuilder<T = Object> {
   pub(crate) expiration_date: Option<Timestamp>,
   pub(crate) status: Vec<Status>,
   pub(crate) schema: Vec<Schema>,
-  pub(crate) refresh: Vec<Refresh>,
+  pub(crate) refresh: Vec<RefreshService>,
   pub(crate) policy: Vec<Policy>,
   pub(crate) evidence: Vec<Evidence>,
   pub(crate) non_transferable: Option<bool>,
@@ -131,7 +131,7 @@ impl<T> CredentialBuilder<T> {
 
   /// Adds a value to the `refreshService` set.
   #[must_use]
-  pub fn refresh(mut self, value: Refresh) -> Self {
+  pub fn refresh(mut self, value: RefreshService) -> Self {
     self.refresh.push(value);
     self
   }

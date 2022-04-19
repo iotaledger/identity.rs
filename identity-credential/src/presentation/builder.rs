@@ -8,7 +8,7 @@ use identity_core::common::Value;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::error::Result;
 use crate::presentation::Presentation;
 
@@ -20,7 +20,7 @@ pub struct PresentationBuilder<T = Object, U = Object> {
   pub(crate) types: Vec<String>,
   pub(crate) credentials: Vec<Credential<U>>,
   pub(crate) holder: Option<Url>,
-  pub(crate) refresh: Vec<Refresh>,
+  pub(crate) refresh: Vec<RefreshService>,
   pub(crate) policy: Vec<Policy>,
   pub(crate) properties: T,
 }
@@ -77,7 +77,7 @@ impl<T, U> PresentationBuilder<T, U> {
 
   /// Adds a value to the `refreshService` set.
   #[must_use]
-  pub fn refresh(mut self, value: Refresh) -> Self {
+  pub fn refresh(mut self, value: RefreshService) -> Self {
     self.refresh.push(value);
     self
   }

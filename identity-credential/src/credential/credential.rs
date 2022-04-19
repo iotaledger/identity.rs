@@ -23,7 +23,7 @@ use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
@@ -65,7 +65,7 @@ pub struct Credential<T = Object> {
   pub credential_schema: OneOrMany<Schema>,
   /// Service(s) used to refresh an expired `Credential`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
-  pub refresh_service: OneOrMany<Refresh>,
+  pub refresh_service: OneOrMany<RefreshService>,
   /// Terms-of-use specified by the `Credential` issuer.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   pub terms_of_use: OneOrMany<Policy>,
