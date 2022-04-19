@@ -22,6 +22,9 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Status")]
   pub type WasmStatus;
+
+  #[wasm_bindgen(typescript_type = "Subject")]
+  pub type WasmSubject;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -46,7 +49,7 @@ const I_ISSUER: &'static str = r#"
 [More Info](https://www.w3.org/TR/vc-data-model/#issuer) */
 interface Issuer {
   /** A URL identifying the credential issuer. */
-  readonly id?: string;
+  readonly id: string;
   /** Additional properties of the credential issuer. */
   readonly [properties: string | symbol]: unknown;
 }"#;
@@ -104,5 +107,17 @@ interface Status {
   /** The type(s) of the credential status. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential status. */
+  readonly [properties: string | symbol]: unknown;
+}"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const I_SUBJECT: &'static str = r#"
+/** An entity who is the target of a set of claims in a {@link Credential}.
+
+[More Info](https://www.w3.org/TR/vc-data-model/#credential-subject) */
+interface Subject {
+  /** A URL identifying the credential subject. */
+  readonly id?: string;
+  /** Additional properties of the credential subject. */
   readonly [properties: string | symbol]: unknown;
 }"#;
