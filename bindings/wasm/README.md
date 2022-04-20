@@ -3,7 +3,9 @@
 > This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
 ## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
-## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
+
+## [Account Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples-account/README.md)
+## [Low-Level Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
 
 ## Install the library:
 
@@ -19,12 +21,20 @@ npm install @iota/identity-wasm@dev
 
 ## Build
 
-Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
+Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. 
+
+Install [`wasm-bindgen-cli`](https://github.com/rustwasm/wasm-bindgen). A manual installation is required because we use the [Weak References](https://rustwasm.github.io/wasm-bindgen/reference/weak-references.html) feature, which [`wasm-pack` does not expose](https://github.com/rustwasm/wasm-pack/issues/930).
+
+```bash
+cargo install --force wasm-bindgen-cli
+```
+
+Then, install the necessary dependencies using:
 ```bash
 npm install
 ```
 
-and then build the bindings for `node.js` with
+and build the bindings for `node.js` with
 
 ```bash
 npm run build:nodejs
@@ -54,36 +64,27 @@ cat \
 ```javascript
 const identity = require('@iota/identity-wasm/node')
 
-// Choose the Tangle network to publish on.
-const network = identity.Network.mainnet();
-// const network = identity.Network.devnet();
+async function main() {
 
-// Generate a new Ed25519 KeyPair.
-const key = new identity.KeyPair(identity.KeyType.Ed25519);
+    // The creation step generates a keypair, builds an identity
+    // and publishes it to the IOTA mainnet.
+    const builder = new identity.AccountBuilder();
+    const account = await builder.createIdentity();
 
-// Create a new DID Document using the KeyPair for the default VerificationMethod.
-const doc = new identity.Document(key, network.name);
+    // Retrieve the DID of the newly created identity.
+    const did = account.did();
 
-// Sign the DID Document with the private key.
-doc.signSelf(key, doc.defaultSigningMethod().id);
+    // Print the DID of the created Identity.
+    console.log(did.toString())
 
-// Create a default client instance for the network.
-const config = identity.Config.fromNetwork(network);
-const client = identity.Client.fromConfig(config);
+    // Print the local state of the DID Document
+    console.log(account.document());
 
-// Publish the DID Document to the IOTA Tangle
-// The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
-client.publishDocument(doc)
-    .then((receipt) => {
-        const explorer = identity.ExplorerUrl.mainnet();
-        // const explorer = identity.ExplorerUrl.devnet(); // if using the devnet
-        console.log("Tangle Message Receipt:", receipt);
-        console.log("Tangle Exporer Url:", explorer.resolverUrl(doc.id));
-    })
-    .catch((error) => {
-        console.error("Error: ", error);
-        throw error
-    })
+    // Print the Explorer URL for the DID.
+    console.log(`Explorer Url:`, identity.ExplorerUrl.mainnet().resolverUrl(did));
+}
+
+main()
 ```
 
 ## Web Setup
@@ -144,22 +145,43 @@ new CopyWebPlugin({
 import * as identity from "@iota/identity-wasm/web";
 
 identity.init().then(() => {
-  const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = new identity.Document(key)
-  // const doc = new identity.Document(key, "dev") // if using the devnet
-  console.log("Key Pair: ", key)
-  console.log("DID Document: ", doc)
+
+  // The creation step generates a keypair, builds an identity
+  // and publishes it to the IOTA mainnet.
+  let builder = new identity.AccountBuilder();
+  let account = await builder.createIdentity();
+
+  // Retrieve the DID of the newly created identity.
+  const did = account.did();
+
+  // Print the DID of the created Identity.
+  console.log(did.toString())
+
+  // Print the local state of the DID Document
+  console.log(account.document());
+
 });
 
 // or
 
 (async () => {
+  
   await identity.init()
-  const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = new identity.Document(key)
-  // const doc = new identity.Document(key, "dev") // if using the devnet
-  console.log("Key Pair: ", key)
-  console.log("DID Document: ", doc)
+    
+  // The creation step generates a keypair, builds an identity
+  // and publishes it to the IOTA mainnet.
+  let builder = new identity.AccountBuilder();
+  let account = await builder.createIdentity();
+
+  // Retrieve the DID of the newly created identity.
+  const did = account.did();
+
+  // Print the DID of the created Identity.
+  console.log(did.toString())
+
+  // Print the local state of the DID Document
+  console.log(account.document());
+  
 })()
 
 // Default path is "identity_wasm_bg.wasm", but you can override it like this
@@ -167,3 +189,9 @@ await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
 `identity.init().then(<callback>)` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
+
+## Examples in the Wild
+
+You may find it useful to see how the WASM bindings are being used in existing applications:
+
+- [Zebra IOTA Edge SDK](https://github.com/ZebraDevs/Zebra-Iota-Edge-SDK) (mobile apps using Capacitor.js + Svelte)

@@ -41,7 +41,6 @@ module.exports = {
                 'decentralized_identifiers/overview',
                 'decentralized_identifiers/create',
                 'decentralized_identifiers/update',
-                'decentralized_identifiers/secure',
                 'decentralized_identifiers/resolve',
                 'decentralized_identifiers/resolve_history',
                 'decentralized_identifiers/private_tangle',
@@ -50,7 +49,6 @@ module.exports = {
                 'verifiable_credentials/overview',
                 'verifiable_credentials/create',
                 'verifiable_credentials/revoke',
-                'verifiable_credentials/merkle_key_collection',
                 'verifiable_credentials/verifiable_presentations',
             ],
             'DID Communication': [
@@ -114,7 +112,6 @@ module.exports = {
               items: [
                 'specs/did/overview',
                 'specs/did/iota_did_method_spec',
-                'specs/did/merkle_key_collection',
               ]
             },
             {

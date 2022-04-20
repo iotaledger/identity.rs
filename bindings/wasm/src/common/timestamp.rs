@@ -36,7 +36,7 @@ impl WasmTimestamp {
   ///
   /// Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
   #[wasm_bindgen(js_name = checkedAdd)]
-  pub fn checked_add(self, duration: WasmDuration) -> Option<WasmTimestamp> {
+  pub fn checked_add(&self, duration: &WasmDuration) -> Option<WasmTimestamp> {
     self.0.checked_add(duration.0).map(WasmTimestamp)
   }
 
@@ -44,7 +44,7 @@ impl WasmTimestamp {
   ///
   /// Returns `null` if the operation leads to a timestamp not in the valid range for [RFC 3339](https://tools.ietf.org/html/rfc3339).
   #[wasm_bindgen(js_name = checkedSub)]
-  pub fn checked_sub(self, duration: WasmDuration) -> Option<WasmTimestamp> {
+  pub fn checked_sub(&self, duration: &WasmDuration) -> Option<WasmTimestamp> {
     self.0.checked_sub(duration.0).map(WasmTimestamp)
   }
 
@@ -100,6 +100,18 @@ impl WasmDuration {
   #[wasm_bindgen]
   pub fn weeks(weeks: u32) -> WasmDuration {
     Self(Duration::weeks(weeks))
+  }
+
+  /// Serializes a `Duration` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `Duration` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmDuration> {
+    json.into_serde().map(Self).wasm_result()
   }
 }
 

@@ -25,7 +25,7 @@ Describes the concept of Decentralized or Self-Sovereign Identities (SSI), how i
 
 ### Chapter 3.1: Decentralized Identifiers (DID)
 
-Explains the DID standard from W3C, how to manipulate DID Documents and Merkle Key Collections, and the basis of our revocation mechanism.
+Explains the DID standard from W3C and how to manipulate DID Documents.
 
 ### Chapter 3.2: Verifiable Credentials (VC)
 

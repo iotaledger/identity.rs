@@ -1,10 +1,14 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
+
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
 /// Represents a DID URL fragment.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

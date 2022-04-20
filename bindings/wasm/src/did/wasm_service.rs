@@ -1,9 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::common::deserialize_map_or_any;
 use identity::did::ServiceEndpoint;
-use identity::iota::IotaDIDUrl;
-use identity::iota::IotaService;
+use identity::iota_core::IotaDIDUrl;
+use identity::iota_core::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -37,19 +38,19 @@ impl WasmService {
   }
 
   /// Returns a copy of the `Service` id.
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen]
   pub fn id(&self) -> WasmDIDUrl {
     WasmDIDUrl::from(self.0.id().clone())
   }
 
   /// Returns a copy of the `Service` type.
-  #[wasm_bindgen(getter = type)]
+  #[wasm_bindgen(js_name = type)]
   pub fn type_(&self) -> String {
     self.0.type_().to_owned()
   }
 
   /// Returns a copy of the `Service` endpoint.
-  #[wasm_bindgen(getter = serviceEndpoint)]
+  #[wasm_bindgen(js_name = serviceEndpoint)]
   pub fn service_endpoint(&self) -> UServiceEndpoint {
     match self.0.service_endpoint() {
       // string
@@ -103,25 +104,11 @@ impl WasmService {
   }
 }
 
+impl_wasm_clone!(WasmService, Service);
+
 impl From<IotaService> for WasmService {
   fn from(service: IotaService) -> Self {
     Self(service)
-  }
-}
-
-/// Special-case for deserializing [`js_sys::Map`], which otherwise serializes to JSON as an empty
-/// object `{}`. This uses a [`js_sys::Object`] as an intermediate representation to convert
-/// to the required struct via JSON.
-fn deserialize_map_or_any<T>(value: &JsValue) -> Result<T>
-where
-  T: for<'a> serde::de::Deserialize<'a>,
-{
-  if let Some(map) = JsCast::dyn_ref::<js_sys::Map>(value) {
-    // Map<string, string[]>
-    js_sys::Object::from_entries(map).and_then(|object| JsValue::into_serde(&object).wasm_result())
-  } else {
-    // any
-    value.into_serde().wasm_result()
   }
 }
 

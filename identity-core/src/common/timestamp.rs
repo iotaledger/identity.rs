@@ -5,15 +5,19 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-
-use crate::diff;
 use core::str::FromStr;
-use identity_diff::Diff;
-use identity_diff::DiffString;
+
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 use time::UtcOffset;
 
+use identity_diff::Diff;
+use identity_diff::DiffString;
+
+use crate::diff;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -223,17 +227,21 @@ impl Duration {
 
 #[cfg(test)]
 mod tests {
-  use identity_diff::Diff;
-  use identity_diff::DiffString;
   use proptest::proptest;
 
-  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
-  const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
+  use identity_diff::Diff;
+  use identity_diff::DiffString;
+
   use crate::common::Timestamp;
   use crate::convert::FromJson;
   use crate::convert::ToJson;
 
   use super::Duration;
+
+  // 0000-01-01T00:00:00Z
+  const FIRST_VALID_UNIX_TIMESTAMP: i64 = -62167219200;
+  // 9999-12-31T23:59:59Z
+  const LAST_VALID_UNIX_TIMESTAMP: i64 = 253402300799;
 
   #[test]
   fn test_parse_valid() {

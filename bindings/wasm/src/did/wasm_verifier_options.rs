@@ -7,9 +7,9 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// Holds additional signature verification options.
+/// Holds additional proof verification options.
 /// See `IVerifierOptions`.
-#[wasm_bindgen(js_name = VerifierOptions)]
+#[wasm_bindgen(js_name = VerifierOptions, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmVerifierOptions(pub(crate) VerifierOptions);
 
@@ -29,6 +29,18 @@ impl WasmVerifierOptions {
   pub fn default() -> WasmVerifierOptions {
     WasmVerifierOptions(VerifierOptions::default())
   }
+
+  /// Serializes a `VerifierOptions` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `VerifierOptions` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmVerifierOptions> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<VerifierOptions> for WasmVerifierOptions {
@@ -42,6 +54,8 @@ impl From<WasmVerifierOptions> for VerifierOptions {
     options.0
   }
 }
+
+impl_wasm_clone!(WasmVerifierOptions, VerifierOptions);
 
 /// Duck-typed interface to allow creating `VerifierOptions` easily.
 #[wasm_bindgen]
@@ -62,24 +76,24 @@ interface IVerifierOptions {
 
     /** Verify the signing verification method type matches one specified.
     *
-    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.MerkleKeyCollection2021()]`
+    * E.g. `[MethodType.Ed25519VerificationKey2018(), MethodType.X25519KeyAgreementKey2019()]`
     */
     readonly methodType?: Array<MethodType>;
 
-    /** Verify the `Signature::challenge` field matches this. */
+    /** Verify the `Proof.challenge` field matches this. */
     readonly challenge?: string;
 
-    /** Verify the `Signature::domain` field matches this. */
+    /** Verify the `Proof.domain` field matches this. */
     readonly domain?: string;
 
-    /** Verify the `Signature::purpose` field matches this. Also verifies that the signing
+    /** Verify the `Proof.purpose` field matches this. Also verifies that the signing
     * method has the corresponding verification method relationship.
     *
     * NOTE: `purpose` overrides the `method_scope` option.
     */
     readonly purpose?: ProofPurpose;
 
-    /** Determines whether to error if the current time exceeds the `Signature::expires` field.
+    /** Determines whether to error if the current time exceeds the `Proof.expires` field.
     *
     * Default: false (reject expired signatures).
     */

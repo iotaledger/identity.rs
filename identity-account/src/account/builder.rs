@@ -1,40 +1,22 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "stronghold")]
-use std::path::PathBuf;
 use std::sync::Arc;
 
-#[cfg(feature = "stronghold")]
-use zeroize::Zeroize;
-
-use identity_iota::did::IotaDID;
+use identity_account_storage::storage::MemStore;
+use identity_account_storage::storage::Storage;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::SharedPtr;
+use identity_iota_core::did::IotaDID;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::IdentitySetup;
-use crate::storage::MemStore;
-use crate::storage::Storage;
-#[cfg(feature = "stronghold")]
-use crate::storage::Stronghold;
+use crate::types::IdentitySetup;
 
 use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
-
-/// The storage adapter used by an [`Account`].
-///
-/// Note that [`AccountStorage::Stronghold`] is only available if the `stronghold` feature is
-/// activated, which it is by default.
-#[derive(Debug)]
-pub enum AccountStorage {
-  Memory,
-  #[cfg(feature = "stronghold")]
-  Stronghold(PathBuf, Option<String>, Option<bool>),
-  Custom(Arc<dyn Storage>),
-}
 
 /// An [`Account`] builder for easy account configuration.
 ///
@@ -45,21 +27,25 @@ pub enum AccountStorage {
 /// This means a builder can be reconfigured in-between account creations, without affecting
 /// the configuration of previously built accounts.
 #[derive(Debug)]
-pub struct AccountBuilder {
+pub struct AccountBuilder<C = Arc<Client>>
+where
+  C: SharedPtr<Client>,
+{
   config: AccountConfig,
-  storage_template: Option<AccountStorage>,
   storage: Option<Arc<dyn Storage>>,
   client_builder: Option<ClientBuilder>,
-  client: Option<Arc<Client>>,
+  client: Option<C>,
 }
 
-impl AccountBuilder {
+impl<C> AccountBuilder<C>
+where
+  C: SharedPtr<Client>,
+{
   /// Creates a new `AccountBuilder`.
   pub fn new() -> Self {
     Self {
       config: AccountConfig::new(),
-      storage_template: Some(AccountStorage::Memory),
-      storage: Some(Arc::new(MemStore::new())),
+      storage: None,
       client_builder: None,
       client: None,
     }
@@ -94,39 +80,28 @@ impl AccountBuilder {
 
   /// Sets the account storage adapter.
   #[must_use]
-  pub fn storage(mut self, value: AccountStorage) -> Self {
-    self.storage_template = Some(value);
+  pub fn storage<S: Storage + 'static>(mut self, value: S) -> Self {
+    self.storage = Some(Arc::new(value));
     self
   }
 
-  async fn get_storage(&mut self) -> Result<Arc<dyn Storage>> {
-    match self.storage_template.take() {
-      Some(AccountStorage::Memory) => {
-        let storage = Arc::new(MemStore::new());
-        self.storage = Some(storage);
-      }
-      #[cfg(feature = "stronghold")]
-      Some(AccountStorage::Stronghold(snapshot, password, dropsave)) => {
-        let passref: Option<&str> = password.as_deref();
-        let adapter: Stronghold = Stronghold::new(&snapshot, passref, dropsave).await?;
+  /// Sets the account storage adapter from a shared pointer.
+  #[must_use]
+  pub fn storage_shared(mut self, value: Arc<dyn Storage>) -> Self {
+    self.storage = Some(value);
+    self
+  }
 
-        if let Some(mut password) = password {
-          password.zeroize();
-        }
-
-        let storage = Arc::new(adapter);
-        self.storage = Some(storage);
-      }
-      Some(AccountStorage::Custom(storage)) => {
-        self.storage = Some(storage);
-      }
-      None => (),
-    };
-
-    // unwrap is fine, since by default, storage_template is `Some`,
-    // which results in storage being `Some`.
-    // Overwriting storage_template always produces `Some` storage.
-    Ok(Arc::clone(self.storage.as_ref().unwrap()))
+  fn get_storage(&mut self) -> Arc<dyn Storage> {
+    if let Some(storage) = self.storage.as_ref() {
+      Arc::clone(storage)
+    } else {
+      // TODO: throw an error or log a warning that MemStore is not persistent and should not
+      //       be used in production?
+      let storage: Arc<dyn Storage> = Arc::new(MemStore::new());
+      self.storage = Some(Arc::clone(&storage));
+      storage
+    }
   }
 
   /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
@@ -135,7 +110,7 @@ impl AccountBuilder {
   /// NOTE: this overwrites any [`ClientBuilder`] previously set by
   /// [`AccountBuilder::client_builder`].
   #[must_use]
-  pub fn client(mut self, client: Arc<Client>) -> Self {
+  pub fn client(mut self, client: C) -> Self {
     self.client = Some(client);
     self.client_builder = None;
     self
@@ -156,28 +131,24 @@ impl AccountBuilder {
   /// to [`AccountBuilder::client_builder`].
   ///
   /// If neither is set, instantiates and stores a default [`Client`].
-  async fn get_or_build_client(&mut self) -> Result<Arc<Client>> {
+  async fn get_or_build_client(&mut self) -> Result<C> {
     if let Some(client) = &self.client {
-      Ok(Arc::clone(client))
+      Ok(C::clone(client))
     } else if let Some(client_builder) = self.client_builder.take() {
-      let client: Arc<Client> = Arc::new(client_builder.build().await?);
-      self.client = Some(Arc::clone(&client));
+      let client: C = C::from(client_builder.build().await?);
+      self.client = Some(C::clone(&client));
       Ok(client)
     } else {
-      let client: Arc<Client> = Arc::new(Client::new().await?);
-      self.client = Some(Arc::clone(&client));
+      let client: C = C::from(Client::new().await?);
+      self.client = Some(C::clone(&client));
       Ok(client)
     }
   }
 
-  async fn build_setup(&mut self) -> Result<AccountSetup> {
-    let client: Arc<Client> = self.get_or_build_client().await?;
+  async fn build_setup(&mut self) -> Result<AccountSetup<C>> {
+    let client: C = self.get_or_build_client().await?;
 
-    Ok(AccountSetup::new(
-      self.get_storage().await?,
-      client,
-      self.config.clone(),
-    ))
+    Ok(AccountSetup::<C>::new(self.get_storage(), client, self.config.clone()))
   }
 
   /// Creates a new identity based on the builder configuration and returns
@@ -187,8 +158,8 @@ impl AccountBuilder {
   /// by the [`Client`] used to publish it.
   ///
   /// See [`IdentitySetup`] to customize the identity creation.
-  pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account> {
-    let setup: AccountSetup = self.build_setup().await?;
+  pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account<C>> {
+    let setup: AccountSetup<C> = self.build_setup().await?;
     Account::create_identity(setup, input).await
   }
 
@@ -199,13 +170,16 @@ impl AccountBuilder {
   ///
   /// Callers are expected **not** to load the same [`IotaDID`] into more than one account,
   /// as that would cause race conditions when updating the identity.
-  pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account> {
-    let setup: AccountSetup = self.build_setup().await?;
+  pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account<C>> {
+    let setup: AccountSetup<C> = self.build_setup().await?;
     Account::load_identity(setup, did).await
   }
 }
 
-impl Default for AccountBuilder {
+impl<C> Default for AccountBuilder<C>
+where
+  C: SharedPtr<Client>,
+{
   fn default() -> Self {
     Self::new()
   }

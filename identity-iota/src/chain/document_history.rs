@@ -1,24 +1,24 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashSet;
 use std::ops::Deref;
 
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
-use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::Client;
-use crate::tangle::Message;
 use crate::tangle::MessageExt;
-use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 
@@ -33,9 +33,11 @@ pub struct DocumentHistory {
   #[serde(rename = "integrationChainSpam")]
   pub integration_chain_spam: Vec<MessageId>,
   /// List of diffs for the last integration chain document.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[serde(rename = "diffChainData")]
   pub diff_chain_data: Vec<DiffMessage>,
   /// List of "spam" messages on the diff chain index.
+  #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
   #[serde(rename = "diffChainSpam")]
   pub diff_chain_spam: Vec<MessageId>,
 }

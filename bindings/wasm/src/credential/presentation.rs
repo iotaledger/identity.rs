@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::OneOrMany;
@@ -8,7 +8,9 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::did::DID;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
+use crate::credential::WasmCredential;
 use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -16,6 +18,13 @@ use crate::error::WasmResult;
 #[wasm_bindgen(js_name = Presentation, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmPresentation(pub(crate) Presentation);
+
+// Workaround for Typescript type annotations for returned arrays.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Array<Credential>")]
+  pub type ArrayCredential;
+}
 
 #[wasm_bindgen(js_class = Presentation)]
 impl WasmPresentation {
@@ -56,5 +65,27 @@ impl WasmPresentation {
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmPresentation> {
     json.into_serde().map(Self).wasm_result()
+  }
+
+  /// Returns a copy of the credentials contained in the presentation.
+  #[wasm_bindgen(js_name = verifiableCredential)]
+  pub fn verifiable_credential(&self) -> ArrayCredential {
+    self
+      .0
+      .verifiable_credential
+      .iter()
+      .cloned()
+      .map(WasmCredential::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayCredential>()
+  }
+}
+
+impl_wasm_clone!(WasmPresentation, Presentation);
+
+impl From<Presentation> for WasmPresentation {
+  fn from(presentation: Presentation) -> WasmPresentation {
+    Self(presentation)
   }
 }

@@ -125,14 +125,14 @@ The [trusted-party](#roles) SHOULD verify that the credential is actually revoke
 
 ## RevocationInfo {#RevocationInfo}
 
-The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing schemes may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
+The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing schemes may require different information for revocation.
 
 Implementors MUST adhere to at least one of the types below, either [KeyRevocation2021](#keyrevocation2021) or [CredentialRevocation2021](#credentialrevocation2021). Implementors MAY define additional types as-needed. A valid `RevocationInfo` type MUST have a `revocationInfoType` field.
 
 ### KeyRevocation2021
 - Type: `KeyRevocation2021`
 
-Allows a particular cryptographic public key linked as a verification method to be specified for revocation. This may reference any singular verification method such as [Ed25519VerificationKey2018](https://www.w3.org/TR/did-spec-registries/#ed25519verificationkey2018) or [RsaVerificationKey2018](https://www.w3.org/TR/did-spec-registries/#rsaverificationkey2018). Verification methods that hold multiple keys as a collection, such as [MerkleKeyCollection2021](../../did/merkle_key_collection), may encode the index of the key to be revoked in the [query](https://www.w3.org/TR/did-core/#dfn-did-queries) of the [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax).
+Allows a particular cryptographic public key linked as a verification method to be specified for revocation. This may reference any singular verification method such as [Ed25519VerificationKey2018](https://www.w3.org/TR/did-spec-registries/#ed25519verificationkey2018) or [RsaVerificationKey2018](https://www.w3.org/TR/did-spec-registries/#rsaverificationkey2018). Verification methods that hold multiple keys as a collection could, for example, encode the index of the key to be revoked in the [query](https://www.w3.org/TR/did-core/#dfn-did-queries) of the [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax).
 
 See the [DID Spec Registry for more verification method types](https://www.w3.org/TR/did-spec-registries/#verification-method-types).
 
@@ -152,7 +152,7 @@ Note that revoking a verification method revokes all verifiable credentials sign
 | `revocationInfoType` | String indicating the `RevocationInfo` type, MUST be `"KeyRevocation2021"`. | ✔ |
 | `key` | String conforming to the [DIDUrl syntax](https://www.w3.org/TR/did-core/#did-url-syntax) identifying a [verification method](https://www.w3.org/TR/did-core/#verification-methods) to be revoked.[^1] | ✔ |
 
-[^1] the [fragment](https://www.w3.org/TR/did-core/#dfn-did-fragments) MUST reference a valid verification method. The DID document referenced need not belong to the revoker necessarily, as they could forward or delegate the request to the actual owner or controller. The [query](https://www.w3.org/TR/did-core/#dfn-did-queries) MAY include extra information needed to identify the particular signing key, for example the index in a [MerkleKeyCollection2021](../../did/merkle_key_collection).
+[^1] the [fragment](https://www.w3.org/TR/did-core/#dfn-did-fragments) MUST reference a valid verification method. The DID document referenced need not belong to the revoker necessarily, as they could forward or delegate the request to the actual owner or controller. The [query](https://www.w3.org/TR/did-core/#dfn-did-queries) MAY include extra information needed to identify the particular signing key.
 
 #### Example
 
@@ -162,15 +162,6 @@ Note that revoking a verification method revokes all verifiable credentials sign
 {
   "revocationInfoType": "KeyRevocation2021",
   "key": "did:example:76e12ec712ebc6f1c221ebfeb1f#keys-1"
-}
-```
-
-2. Specify a particular key in a [MerkleKeyCollection2021](../../did/merkle_key_collection) to revoke:
-
-```json
-{
-  "revocationInfoType": "KeyRevocation2021",
-  "key": "did:example:76e12ec712ebc6f1c221ebfeb1f?index=7#keys-2"
 }
 ```
 
