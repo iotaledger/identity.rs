@@ -113,8 +113,11 @@ See [Proof Options](#proof-options) for more information on setting these proper
 ### Subject-Holder Relationship {#subject-holder-relationship}
 
 Specifies the expected relationship between the holder that signed the verifiable presentation and the subject specified in each verifiable credential.
+This can be restricted by the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property,
+which indicates that a verifiable credential must only be encapsulated into a verifiable presentation whose holder matches the credential subject.
 
-The following options are available:
+By default, the framework always enforces that the holder matches the subject on all credentials.
+The following options are available to modify that behaviour:
 
 - **`AlwaysSubject` (default)**: the holder DID that signed the presentation must match the [`credentialSubject` `id`](https://www.w3.org/TR/vc-data-model/#credential-subject) field in each of the attached credentials. This is the safest option which ensures holders may only present credentials that were directly issued to their DID. An error is thrown on a mismatch or if no subject `id` is present.
 - **`SubjectOnNonTransferable`**: the holder DID must match the subject only for credentials where the [`nonTransferable`](https://www.w3.org/TR/vc-data-model/#nontransferable-property) property is `true`. This is appropriate for accepting [bearer credentials](https://www.w3.org/TR/vc-data-model/#bearer-credentials) while still adhering to the specification.
