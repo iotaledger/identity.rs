@@ -51,14 +51,14 @@ async function revokeVC(storage?: Storage) {
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
-    const unsignedVc = Credential.extend({
+    const unsignedVc = new Credential({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
-        issuer: issuer.document().id().toString(),
+        issuer: issuer.document().id(),
         credentialSubject,
     });
 
-    // Created a signed credential by the issuer. 
+    // Created a signed credential by the issuer.
     const signedVc = await issuer.createSignedCredential(
         "#key-1",
         unsignedVc,

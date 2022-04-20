@@ -55,8 +55,8 @@ async function signing(storage?: Storage) {
     };
 
     // Issue an unsigned Credential...
-    const unsignedVc = Credential.extend({
-        issuer: account.did().toString(),
+    const unsignedVc = new Credential({
+        issuer: account.did(),
         type: "UniversityDegreeCredential",
         credentialSubject,
     });

@@ -45,20 +45,19 @@ async function createVC(storage?: Storage) {
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice
-    const unsignedVc = Credential.extend({
+    const unsignedVc = new Credential({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
-        issuer: issuer.document().id().toString(),
-        credentialSubject,
+        issuer: issuer.document().id(),
+        credentialSubject: credentialSubject
     });
 
-    // Created a signed credential by the issuer. 
+    // Created a signed credential by the issuer.
     const signedVc = await issuer.createSignedCredential(
         "#issuerKey",
         unsignedVc,
         ProofOptions.default(),
     );
-
 
     // Before sending this credential to the holder the issuer wants to validate that some properties
     // of the credential satisfy their expectations.
@@ -84,4 +83,3 @@ async function createVC(storage?: Storage) {
 }
 
 export {createVC};
-

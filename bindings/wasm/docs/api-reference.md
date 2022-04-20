@@ -140,8 +140,6 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -169,6 +167,8 @@ This variant is the default used if no other variant is specified when construct
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
@@ -190,10 +190,8 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -210,18 +208,9 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -247,17 +236,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -419,6 +397,17 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -429,6 +418,17 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -708,6 +708,7 @@ Creates a new `Client` with the given settings.
 **Kind**: global class  
 
 * [Credential](#Credential)
+    * [new Credential(values)](#new_Credential_new)
     * _instance_
         * [.context()](#Credential+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
         * [.id()](#Credential+id) ⇒ <code>string</code> \| <code>undefined</code>
@@ -727,9 +728,19 @@ Creates a new `Client` with the given settings.
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
-        * [.extend(value)](#Credential.extend) ⇒ [<code>Credential</code>](#Credential)
-        * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#Credential.issue) ⇒ [<code>Credential</code>](#Credential)
+        * [.BaseContext()](#Credential.BaseContext) ⇒ <code>string</code>
+        * [.BaseType()](#Credential.BaseType) ⇒ <code>string</code>
         * [.fromJSON(json)](#Credential.fromJSON) ⇒ [<code>Credential</code>](#Credential)
+
+<a name="new_Credential_new"></a>
+
+### new Credential(values)
+Constructs a new `Credential`.
+
+
+| Param | Type |
+| --- | --- |
+| values | <code>ICredential</code> | 
 
 <a name="Credential+context"></a>
 
@@ -825,7 +836,7 @@ Returns a copy of the miscellaneous properties on the `Credential`.
 <a name="Credential+toJSON"></a>
 
 ### credential.toJSON() ⇒ <code>any</code>
-Serializes a `Credential` object as a JSON object.
+Serializes a `Credential` to a JSON object.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+clone"></a>
@@ -834,31 +845,22 @@ Serializes a `Credential` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
-<a name="Credential.extend"></a>
+<a name="Credential.BaseContext"></a>
 
-### Credential.extend(value) ⇒ [<code>Credential</code>](#Credential)
+### Credential.BaseContext() ⇒ <code>string</code>
+Returns the base JSON-LD context.
+
 **Kind**: static method of [<code>Credential</code>](#Credential)  
+<a name="Credential.BaseType"></a>
 
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
+### Credential.BaseType() ⇒ <code>string</code>
+Returns the base type.
 
-<a name="Credential.issue"></a>
-
-### Credential.issue(issuer_doc, subject_data, credential_type, credential_id) ⇒ [<code>Credential</code>](#Credential)
 **Kind**: static method of [<code>Credential</code>](#Credential)  
-
-| Param | Type |
-| --- | --- |
-| issuer_doc | [<code>Document</code>](#Document) | 
-| subject_data | <code>any</code> | 
-| credential_type | <code>string</code> \| <code>undefined</code> | 
-| credential_id | <code>string</code> \| <code>undefined</code> | 
-
 <a name="Credential.fromJSON"></a>
 
 ### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
-Deserializes a `Credential` object from a JSON object.
+Deserializes a `Credential` from a JSON object.
 
 **Kind**: static method of [<code>Credential</code>](#Credential)  
 
@@ -3024,6 +3026,8 @@ Deserializes a `Network` from a JSON object.
         * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
         * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
     * _static_
+        * [.BaseContext()](#Presentation.BaseContext) ⇒ <code>string</code>
+        * [.BaseType()](#Presentation.BaseType) ⇒ <code>string</code>
         * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
 
 <a name="new_Presentation_new"></a>
@@ -3055,6 +3059,18 @@ Returns a copy of the credentials contained in the presentation.
 Deep clones the object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation.BaseContext"></a>
+
+### Presentation.BaseContext() ⇒ <code>string</code>
+Returns the base JSON-LD context.
+
+**Kind**: static method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation.BaseType"></a>
+
+### Presentation.BaseType() ⇒ <code>string</code>
+Returns the base type.
+
+**Kind**: static method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
@@ -4302,10 +4318,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4356,6 +4368,10 @@ Return after the first error occurs.
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 
