@@ -110,7 +110,10 @@ async function createVP(storage?: Storage) {
     const receivedVc = Credential.fromJSON(signedVcJson);
 
     // Create a Verifiable Presentation from the Credential
-    const unsignedVp = new Presentation(alice.document(), receivedVc)
+    const unsignedVp = new Presentation({
+        holder: alice.did(),
+        verifiableCredential: receivedVc
+    })
 
     // Sign the verifiable presentation using the holder's verification method
     // and include the requested challenge and expiry timestamp.
