@@ -51,6 +51,7 @@ mod private {
 pub trait ActorRequest<T: SyncMode>: Debug + Serialize + DeserializeOwned + Send + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
+  // TODO: Let this return `Endpoint` directly without making it fallible.
   fn endpoint() -> &'static str;
 
   fn request_mode(&self) -> RequestMode {

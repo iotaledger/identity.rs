@@ -8,6 +8,7 @@ mod message;
 mod presentation;
 mod termination;
 mod thread_id;
+mod traits;
 
 pub use didcomm_actor::*;
 pub use didcomm_actor_builder::*;

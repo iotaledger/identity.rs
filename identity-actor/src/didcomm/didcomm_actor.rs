@@ -1,24 +1,27 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 use std::any::Any;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::actor::send_response;
+use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::ActorState;
 use crate::actor::ActorStateRef;
 use crate::actor::Asynchronous;
 use crate::actor::Endpoint;
 use crate::actor::Error;
+use crate::actor::ObjectId;
 use crate::actor::RawActor;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::RequestHandler;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
 use crate::actor::Synchronous;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
+use crate::didcomm::traits::AsyncRequestHandler;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
@@ -48,6 +51,7 @@ pub struct ActorIdentity {
 
 pub struct DidActorCommState {
   pub(crate) actor_state: Arc<ActorState>,
+  pub(crate) async_handlers: AsyncHandlerMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
@@ -64,9 +68,10 @@ impl AsRef<ActorState> for Arc<DidActorCommState> {
 impl ActorStateRef for Arc<DidActorCommState> {}
 
 impl DidActorCommState {
-  pub fn new(actor_state: ActorState, identity: ActorIdentity) -> Self {
+  pub(crate) fn new(actor_state: ActorState, async_handlers: AsyncHandlerMap, identity: ActorIdentity) -> Self {
     Self {
       actor_state: Arc::new(actor_state),
+      async_handlers,
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
       identity,
@@ -82,24 +87,15 @@ pub struct DidCommActor {
 
 impl DidCommActor {
   fn raw(&mut self) -> RawActor<&mut NetCommander, &ActorState> {
-    RawActor {
-      commander: &mut self.net_commander,
-      state: self.state.actor_state.as_ref(),
-    }
+    RawActor::new(&mut self.net_commander, self.state.actor_state.as_ref())
   }
 
   fn raw_ref(&self) -> RawActor<&NetCommander, &ActorState> {
-    RawActor {
-      commander: &self.net_commander,
-      state: self.state.actor_state.as_ref(),
-    }
+    RawActor::new(&self.net_commander, self.state.actor_state.as_ref())
   }
 
-  fn to_actor(&self) -> RawActor<NetCommander, Arc<ActorState>> {
-    RawActor {
-      commander: self.net_commander.clone(),
-      state: Arc::clone(&self.state.actor_state),
-    }
+  fn to_actor(&self) -> Actor {
+    RawActor::new(self.net_commander.clone(), Arc::clone(&self.state.actor_state))
   }
 
   pub(crate) fn handle_request(self, request: InboundRequest) {
@@ -111,7 +107,7 @@ impl DidCommActor {
 
   // TODO: Is there an automated way to copy docs from the delegated fns?
 
-  /// See [`Actor::start_listening`].
+  /// See [`RawActor::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     self.raw().start_listening(address).await
   }
@@ -139,6 +135,25 @@ impl DidCommActor {
   /// See [`Actor::shutdown`].
   pub async fn shutdown(self) -> ActorResult<()> {
     self.to_actor().shutdown().await
+  }
+
+  pub(crate) fn get_async_handler(&self, endpoint: &Endpoint) -> Result<AsyncHandlerObjectTuple<'_>, RemoteSendError> {
+    match self.state.async_handlers.get(endpoint) {
+      Some(handler_object) => {
+        let object_id = handler_object.object_id;
+
+        if let Some(object) = self.state.actor_state.objects.get(&object_id) {
+          let object_clone = handler_object.handler.clone_object(object)?;
+          Ok((handler_object, object_clone))
+        } else {
+          Err(RemoteSendError::HandlerInvocationError(format!(
+            "no state set for {}",
+            endpoint
+          )))
+        }
+      }
+      None => Err(RemoteSendError::UnexpectedRequest(endpoint.to_string())),
+    }
   }
 
   /// See [`Actor::send_request`].
@@ -177,7 +192,7 @@ impl DidCommActor {
 
     log::debug!("Sending `{}` message", endpoint);
 
-    let response = self.raw().commander.send_request(peer, message).await?;
+    let response = self.raw().commander().send_request(peer, message).await?;
 
     serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
@@ -200,7 +215,7 @@ impl DidCommActor {
   ) -> ActorResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
-      let inbound_request = tokio::time::timeout(self.raw().state.config.timeout, receiver.1)
+      let inbound_request = tokio::time::timeout(self.raw_ref().state().config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
         .map_err(|_| Error::ThreadNotFound(receiver.0))?;
@@ -218,7 +233,7 @@ impl DidCommActor {
       let mut hook_endpoint: Endpoint = inbound_request.endpoint;
       hook_endpoint.is_hook = true;
 
-      if self.raw().handlers().contains_key(&hook_endpoint) {
+      if self.state.async_handlers.contains_key(&hook_endpoint) {
         log::debug!("Calling hook: {}", hook_endpoint);
 
         let hook_result: Result<Result<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
@@ -263,15 +278,15 @@ impl DidCommActor {
     }
 
     let _ = spawn(async move {
-      if self.raw().state.handlers.contains_key(&request.endpoint) {
+      if self.state.async_handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
 
-        match self.raw().get_handler(&request.endpoint).and_then(|handler_ref| {
+        match self.get_async_handler(&request.endpoint).and_then(|handler_ref| {
           let input = handler_ref.0.handler.deserialize_request(request.input)?;
           Ok((handler_ref.0, handler_ref.1, input))
         }) {
           Ok((handler_ref, object, input)) => {
-            let handler: &dyn RequestHandler = handler_ref.handler.as_ref();
+            let handler: &dyn AsyncRequestHandler = handler_ref.handler.as_ref();
 
             let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
 
@@ -329,7 +344,7 @@ impl DidCommActor {
     let mut endpoint = Endpoint::new(REQ::endpoint())?;
     endpoint.is_hook = true;
 
-    if self.raw_ref().handlers().contains_key(&endpoint) {
+    if self.state.async_handlers.contains_key(&endpoint) {
       log::debug!("Calling send hook: {}", endpoint);
 
       let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
@@ -353,15 +368,15 @@ impl DidCommActor {
     I: Send + 'static,
     O: 'static,
   {
-    match self.raw_ref().get_handler(&endpoint) {
+    match self.get_async_handler(&endpoint) {
       Ok(handler_object) => {
-        let handler: &dyn RequestHandler = handler_object.0.handler.as_ref();
+        let handler: &dyn AsyncRequestHandler = handler_object.0.handler.as_ref();
         let state: Box<dyn Any + Send + Sync> = handler_object.1;
         let type_erased_input: Box<dyn Any + Send> = Box::new(input);
         let request_context = RequestContext::new((), peer, endpoint);
 
         let result = handler
-          .invoke(Box::new(self.clone()), request_context, state, type_erased_input)?
+          .invoke(self.clone(), request_context, state, type_erased_input)?
           .await;
 
         match result.downcast::<O>() {
@@ -457,7 +472,7 @@ impl AsynchronousInvocationStrategy {
 
   #[inline(always)]
   async fn invoke_handler(
-    handler: &dyn RequestHandler,
+    handler: &dyn AsyncRequestHandler,
     mut actor: DidCommActor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
@@ -473,11 +488,11 @@ impl AsynchronousInvocationStrategy {
         context.endpoint
       );
 
-      // Peer seems to be unresponsive, so we do not continue handling this request.
+      // Peer seems to be unresponsive, do not continue handling this request.
       return;
     }
 
-    match handler.invoke(Box::new(actor), context, object, input) {
+    match handler.invoke(actor, context, object, input) {
       Ok(invocation) => {
         // Invocation result is () in async handlers.
         let _ = invocation.await;
@@ -488,3 +503,21 @@ impl AsynchronousInvocationStrategy {
     }
   }
 }
+
+/// An [`AsyncRequestHandler`] and the id of its associated shared state object.
+pub(crate) struct AsyncHandlerObject {
+  pub(crate) handler: Box<dyn AsyncRequestHandler>,
+  pub(crate) object_id: ObjectId,
+}
+
+impl AsyncHandlerObject {
+  pub(crate) fn new(object_id: ObjectId, handler: Box<dyn AsyncRequestHandler>) -> Self {
+    Self { object_id, handler }
+  }
+}
+
+/// A map from an endpoint to the identifier of the shared state object
+/// and the method that handles that particular request.
+pub(crate) type AsyncHandlerMap = HashMap<Endpoint, AsyncHandlerObject>;
+
+pub(crate) type AsyncHandlerObjectTuple<'a> = (&'a AsyncHandlerObject, Box<dyn Any + Send + Sync>);

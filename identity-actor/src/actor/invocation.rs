@@ -5,8 +5,8 @@ use std::any::Any;
 
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::RequestHandler;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncRequestHandler;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::NetCommanderMut;
@@ -17,6 +17,7 @@ use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 
 use super::actor::RawActor;
+use super::Actor;
 use super::ActorStateRef;
 
 pub(crate) async fn send_response<T: serde::Serialize>(
@@ -75,22 +76,19 @@ impl SynchronousInvocationStrategy {
   }
 
   #[inline(always)]
-  pub async fn invoke_handler<CMD, STA>(
-    handler: &dyn RequestHandler,
-    actor: RawActor<CMD, STA>,
+  pub async fn invoke_handler(
+    handler: &dyn SyncRequestHandler,
+    mut actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
-  ) where
-    CMD: NetCommanderMut + Clone + 'static,
-    STA: ActorStateRef + Clone + 'static,
-  {
-    let mut commander = actor.commander.clone();
+  ) {
+    let mut commander = actor.commander().clone();
     let endpoint = context.endpoint.clone();
 
-    match handler.invoke(actor.to_handler_actor(), context, object, input) {
+    match handler.invoke(actor.clone(), context, object, input) {
       Ok(invocation) => {
         let result = invocation.await;
         let ser_res = handler.serialize_response(result);

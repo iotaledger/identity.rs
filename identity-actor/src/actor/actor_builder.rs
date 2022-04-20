@@ -14,9 +14,9 @@ use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::Handler;
-use crate::actor::HandlerObject;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncHandlerObject;
 use crate::actor::SyncMode;
 use crate::actor::Synchronous;
 use crate::p2p::ActorProtocol;
@@ -44,17 +44,18 @@ use libp2p::Multiaddr;
 use libp2p::Swarm;
 use uuid::Uuid;
 
-use super::actor::HandlerMap;
 use super::actor::ObjectId;
 use super::actor::ObjectMap;
+use super::actor::SyncHandlerMap;
 use super::ActorState;
+use super::RawActor;
 
 /// An [`Actor`] builder for easy configuration and building of handler and hook functions.
 pub struct ActorBuilder {
   pub(crate) listening_addresses: Vec<Multiaddr>,
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: ActorConfig,
-  pub(crate) handlers: HandlerMap,
+  pub(crate) handlers: SyncHandlerMap,
   pub(crate) objects: ObjectMap,
 }
 
@@ -96,7 +97,7 @@ impl ActorBuilder {
 
   /// Grants low-level access to the handler map for use in bindings.
   #[cfg(feature = "primitives")]
-  pub fn handlers(&mut self) -> &mut HandlerMap {
+  pub fn handlers(&mut self) -> &mut SyncHandlerMap {
     &mut self.handlers
   }
 
@@ -106,16 +107,16 @@ impl ActorBuilder {
     &mut self.objects
   }
 
-  /// Add a new shared state object and returns a [`HandlerBuilder`] which can be used to
+  /// Add a new shared state object and returns a [`ActorHandlerBuilder`] which can be used to
   /// attach handlers and hooks that operate on that object.
-  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
+  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> ActorHandlerBuilder<MOD, OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
     MOD: SyncMode,
   {
     let object_id: ObjectId = Uuid::new_v4();
     self.objects.insert(object_id, Box::new(state_object));
-    HandlerBuilder {
+    ActorHandlerBuilder {
       object_id,
       handler_map: &mut self.handlers,
       _marker_obj: PhantomData,
@@ -162,10 +163,7 @@ impl ActorBuilder {
     let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
       self.build_actor_constituents(transport, executor.clone()).await?;
 
-    let actor: Actor = Actor {
-      commander: net_commander,
-      state: Arc::new(actor_state),
-    };
+    let actor: Actor = RawActor::new(net_commander, Arc::new(actor_state));
     let actor_clone: Actor = actor.clone();
 
     let event_handler = move |event: InboundRequest| {
@@ -177,7 +175,7 @@ impl ActorBuilder {
     Ok(actor)
   }
 
-  /// Build the actor with a custom transport and custom executor.
+  /// Build the actor constituents with a custom transport and custom executor.
   pub(crate) async fn build_actor_constituents<TRA>(
     self,
     transport: TRA,
@@ -249,18 +247,18 @@ impl Default for ActorBuilder {
 }
 
 /// Used to attach handlers and hooks to an [`ActorBuilder`].
-pub struct HandlerBuilder<'builder, MOD, OBJ>
+pub struct ActorHandlerBuilder<'builder, MOD, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
   MOD: SyncMode + 'static,
 {
   pub(crate) object_id: ObjectId,
-  pub(crate) handler_map: &'builder mut HandlerMap,
+  pub(crate) handler_map: &'builder mut SyncHandlerMap,
   pub(crate) _marker_obj: PhantomData<&'static OBJ>,
   pub(crate) _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<'builder, OBJ> HandlerBuilder<'builder, Synchronous, OBJ>
+impl<'builder, OBJ> ActorHandlerBuilder<'builder, Synchronous, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
@@ -277,7 +275,7 @@ where
     let handler = Handler::new(handler);
     self.handler_map.insert(
       Endpoint::new(REQ::endpoint())?,
-      HandlerObject::new(self.object_id, Box::new(handler)),
+      SyncHandlerObject::new(self.object_id, Box::new(handler)),
     );
     Ok(self)
   }

@@ -20,7 +20,7 @@ pub mod primitives {
   pub use crate::actor::traits::request_handler_deserialize_request;
   pub use crate::actor::traits::request_handler_serialize_response;
   pub use crate::actor::traits::AnyFuture;
-  pub use crate::actor::traits::RequestHandler;
+  pub use crate::actor::traits::SyncRequestHandler;
   pub use crate::p2p::NetCommander;
   pub use crate::p2p::RequestMessage;
   pub use crate::p2p::ResponseMessage;

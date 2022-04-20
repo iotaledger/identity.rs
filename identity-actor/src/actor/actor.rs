@@ -12,9 +12,9 @@ use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::RequestHandler;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncRequestHandler;
 use crate::actor::Synchronous;
 use crate::actor::SynchronousInvocationStrategy;
 use crate::p2p::InboundRequest;
@@ -28,7 +28,7 @@ use libp2p::PeerId;
 use uuid::Uuid;
 
 pub struct ActorState {
-  pub(crate) handlers: HandlerMap,
+  pub(crate) handlers: SyncHandlerMap,
   pub(crate) objects: ObjectMap,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
@@ -50,7 +50,7 @@ impl ActorStateRef for &ActorState {}
 /// An actor is a frontend for an event loop running in the background, which invokes
 /// user-registered handlers and injects a copy of the actor into it. Actors can thus be cloned
 /// without cloning the event loop, and doing so is a relatively cheap operation.
-/// Handlers are registered at actor build time, using the [`ActorBuilder`](crate::ActorBuilder).
+/// Handlers are registered at actor build time, using the [`ActorBuilder`](crate::actor::ActorBuilder).
 ///
 /// After shutting down the event loop of an actor using [`Actor::shutdown`], other clones of the
 /// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
@@ -60,8 +60,8 @@ pub struct RawActor<CMD, STA>
 where
   STA: ActorStateRef,
 {
-  pub(crate) commander: CMD,
-  pub(crate) state: STA,
+  commander: CMD,
+  state: STA,
 }
 
 impl<CMD, STA> Clone for RawActor<CMD, STA>
@@ -81,12 +81,12 @@ impl<CMD, STA> RawActor<CMD, STA>
 where
   STA: ActorStateRef,
 {
-  pub fn state(&self) -> &ActorState {
-    self.state.as_ref()
+  pub(crate) fn new(commander: CMD, state: STA) -> RawActor<CMD, STA> {
+    Self { commander, state }
   }
 
-  pub(crate) fn handlers(&self) -> &HandlerMap {
-    &self.state().handlers
+  pub fn state(&self) -> &ActorState {
+    self.state.as_ref()
   }
 
   /// Returns the [`PeerId`] that other peers can securely identify this actor with.
@@ -94,7 +94,7 @@ where
     self.state().peer_id
   }
 
-  pub(crate) fn get_handler(&self, endpoint: &Endpoint) -> Result<HandlerObjectTuple<'_>, RemoteSendError> {
+  pub(crate) fn get_sync_handler(&self, endpoint: &Endpoint) -> Result<SyncHandlerObjectTuple<'_>, RemoteSendError> {
     match self.state().handlers.get(endpoint) {
       Some(handler_object) => {
         let object_id = handler_object.object_id;
@@ -206,11 +206,7 @@ where
   }
 }
 
-impl<CMD, STA> RawActor<CMD, STA>
-where
-  CMD: NetCommanderMut + Clone + 'static,
-  STA: ActorStateRef + Clone + 'static,
-{
+impl RawActor<NetCommander, Arc<ActorState>> {
   pub fn handle_request(self, request: InboundRequest) {
     if request.request_mode == RequestMode::Asynchronous {
       todo!("return `NotSupported` error or similar");
@@ -233,12 +229,12 @@ where
       if self.state().handlers.contains_key(&request.endpoint) {
         let mut actor = self.clone();
 
-        match self.get_handler(&request.endpoint).and_then(|handler_ref| {
+        match self.get_sync_handler(&request.endpoint).and_then(|handler_ref| {
           let input = handler_ref.0.handler.deserialize_request(request.input)?;
           Ok((handler_ref.0, handler_ref.1, input))
         }) {
           Ok((handler_ref, object, input)) => {
-            let handler: &dyn RequestHandler = handler_ref.handler.as_ref();
+            let handler: &dyn SyncRequestHandler = handler_ref.handler.as_ref();
 
             let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
 
@@ -295,20 +291,20 @@ pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
 /// An actor-internal identifier for the object representing the shared state of one or more handlers.
 pub(crate) type ObjectId = Uuid;
 
-/// A [`RequestHandler`] and the id of its associated shared state object.
-pub struct HandlerObject {
-  pub(crate) handler: Box<dyn RequestHandler>,
+/// A [`SyncRequestHandler`] and the id of its associated shared state object.
+pub struct SyncHandlerObject {
+  pub(crate) handler: Box<dyn SyncRequestHandler>,
   pub(crate) object_id: ObjectId,
 }
 
-impl HandlerObject {
-  pub(crate) fn new(object_id: ObjectId, handler: Box<dyn RequestHandler>) -> Self {
+impl SyncHandlerObject {
+  pub(crate) fn new(object_id: ObjectId, handler: Box<dyn SyncRequestHandler>) -> Self {
     Self { object_id, handler }
   }
 }
 
 /// A map from an endpoint to the identifier of the shared state object
 /// and the method that handles that particular request.
-pub(crate) type HandlerMap = HashMap<Endpoint, HandlerObject>;
+pub type SyncHandlerMap = HashMap<Endpoint, SyncHandlerObject>;
 
-pub(crate) type HandlerObjectTuple<'a> = (&'a HandlerObject, Box<dyn Any + Send + Sync>);
+pub(crate) type SyncHandlerObjectTuple<'a> = (&'a SyncHandlerObject, Box<dyn Any + Send + Sync>);

@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time::Duration;
@@ -14,6 +15,7 @@ use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
+use crate::actor::Actor;
 use crate::actor::ActorBuilder;
 use crate::actor::ActorRequest;
 use crate::actor::ActorState;
@@ -21,12 +23,15 @@ use crate::actor::Asynchronous;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::Handler;
-use crate::actor::HandlerBuilder;
-use crate::actor::HandlerObject;
 use crate::actor::ObjectId;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncHandlerMap;
+use crate::actor::SyncHandlerObject;
 use crate::actor::SyncMode;
+use crate::actor::Synchronous;
+use crate::didcomm::AsyncHandlerMap;
+use crate::didcomm::AsyncHandlerObject;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
@@ -38,6 +43,7 @@ use super::DidCommPlaintextMessage;
 
 pub struct DidCommActorBuilder {
   inner: ActorBuilder,
+  async_handlers: AsyncHandlerMap,
   identity: Option<ActorIdentity>,
 }
 
@@ -46,6 +52,7 @@ impl DidCommActorBuilder {
     Self {
       inner: ActorBuilder::new(),
       identity: None,
+      async_handlers: HashMap::new(),
     }
   }
 
@@ -79,16 +86,17 @@ impl DidCommActorBuilder {
   }
 
   /// See [`ActorBuilder::add_state`].
-  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> HandlerBuilder<MOD, OBJ>
+  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> DidCommHandlerBuilder<MOD, OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
     MOD: SyncMode,
   {
     let object_id: ObjectId = ObjectId::new_v4();
     self.inner.objects.insert(object_id, Box::new(state_object));
-    HandlerBuilder {
+    DidCommHandlerBuilder {
       object_id,
-      handler_map: &mut self.inner.handlers,
+      sync_handlers: &mut self.inner.handlers,
+      async_handlers: &mut self.async_handlers,
       _marker_obj: PhantomData,
       _marker_mod: PhantomData,
     }
@@ -133,7 +141,11 @@ impl DidCommActorBuilder {
     let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
       self.inner.build_actor_constituents(transport, executor.clone()).await?;
 
-    let state: DidActorCommState = DidActorCommState::new(actor_state, self.identity.ok_or(Error::IdentityMissing)?);
+    let state: DidActorCommState = DidActorCommState::new(
+      actor_state,
+      self.async_handlers,
+      self.identity.ok_or(Error::IdentityMissing)?,
+    );
 
     let didcomm_actor: DidCommActor = DidCommActor {
       net_commander,
@@ -158,7 +170,20 @@ impl Default for DidCommActorBuilder {
   }
 }
 
-impl<'builder, OBJ> HandlerBuilder<'builder, Asynchronous, OBJ>
+/// Used to attach handlers and hooks to an [`DidCommActorBuilder`].
+pub struct DidCommHandlerBuilder<'builder, MOD, OBJ>
+where
+  OBJ: Clone + Send + Sync + 'static,
+  MOD: SyncMode + 'static,
+{
+  pub(crate) object_id: ObjectId,
+  pub(crate) sync_handlers: &'builder mut SyncHandlerMap,
+  pub(crate) async_handlers: &'builder mut AsyncHandlerMap,
+  pub(crate) _marker_obj: PhantomData<&'static OBJ>,
+  pub(crate) _marker_mod: PhantomData<&'static MOD>,
+}
+
+impl<'builder, OBJ> DidCommHandlerBuilder<'builder, Asynchronous, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
@@ -174,10 +199,28 @@ where
     REQ: ActorRequest<Asynchronous> + Sync,
     FUT: Future<Output = ()> + Send + 'static,
   {
-    let handler = Handler::new(handler);
-    self.handler_map.insert(
+    let handler: Handler<_, DidCommActor, _, _, _> = Handler::new(handler);
+    self.async_handlers.insert(
       Endpoint::new(REQ::endpoint())?,
-      HandlerObject::new(self.object_id, Box::new(handler)),
+      AsyncHandlerObject::new(self.object_id, Box::new(handler)),
+    );
+    Ok(self)
+  }
+
+  /// Add a synchronous handler function that operates on a shared state object and some
+  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
+  /// to return an instance of `REQ::Response`.
+  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
+  where
+    REQ: ActorRequest<Synchronous> + Sync,
+    REQ::Response: Send,
+    FUT: Future<Output = REQ::Response> + Send + 'static,
+  {
+    let handler = Handler::new(handler);
+    self.sync_handlers.insert(
+      Endpoint::new(REQ::endpoint())?,
+      SyncHandlerObject::new(self.object_id, Box::new(handler)),
     );
     Ok(self)
   }

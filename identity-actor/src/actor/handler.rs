@@ -9,24 +9,23 @@ use crate::actor::ActorRequest;
 use crate::actor::AnyFuture;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::RequestHandler;
 use crate::actor::SyncMode;
+use crate::actor::SyncRequestHandler;
 
-use super::actor::HandlerActor;
-use super::actor::HandlerActor2;
-use super::actor::HandlerActorMut;
+use super::traits::RequestHandlerCore;
+use super::Actor;
 
 /// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]
 pub struct Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  MOD: SyncMode + 'static,
   ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
-  MOD: SyncMode + 'static,
 {
-  func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT,
+  pub(crate) func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
@@ -37,14 +36,15 @@ where
   _marker_act: std::marker::PhantomData<&'static ACT>,
 }
 
-impl<MOD, OBJ, REQ, FUT> Handler<MOD, HandlerActor2, OBJ, REQ, FUT>
+impl<MOD, ACT, OBJ, REQ, FUT> Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  MOD: SyncMode + 'static,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
-  MOD: SyncMode + 'static,
 {
-  pub fn new(func: fn(OBJ, HandlerActor2, RequestContext<REQ>) -> FUT) -> Self {
+  pub fn new(func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
@@ -55,7 +55,7 @@ where
   }
 }
 
-impl<MOD, OBJ, REQ, FUT> RequestHandler for Handler<MOD, HandlerActor2, OBJ, REQ, FUT>
+impl<MOD, OBJ, REQ, FUT> SyncRequestHandler for Handler<MOD, Actor, OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
@@ -65,7 +65,7 @@ where
 {
   fn invoke(
     &self,
-    actor: HandlerActor2,
+    actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
@@ -97,7 +97,17 @@ where
     };
     Ok(Box::pin(future))
   }
+}
 
+impl<MOD, ACT, OBJ, REQ, FUT> RequestHandlerCore for Handler<MOD, ACT, OBJ, REQ, FUT>
+where
+  ACT: Send + Sync + 'static,
+  OBJ: Clone + Send + Sync + 'static,
+  REQ: ActorRequest<MOD> + Sync,
+  REQ::Response: Send,
+  FUT: Future<Output = REQ::Response> + Send,
+  MOD: SyncMode + Send + Sync + 'static,
+{
   fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
     crate::actor::request_handler_serialize_response::<MOD, REQ>(input)
   }

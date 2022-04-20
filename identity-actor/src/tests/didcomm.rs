@@ -7,7 +7,6 @@ use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Asynchronous;
 use crate::actor::Error;
-use crate::actor::RawActor;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::actor::Synchronous;
@@ -38,7 +37,7 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
   pub struct SyncDummy(u16);
 
   impl ActorRequest<Synchronous> for SyncDummy {
-    type Response = ();
+    type Response = u16;
 
     fn endpoint() -> &'static str {
       "test/request"
@@ -48,7 +47,7 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(())
-      .add_sync_handler(|_: (), actor: Actor, request: RequestContext<SyncDummy>| async move { () })
+      .add_sync_handler(|_: (), _: Actor, request: RequestContext<SyncDummy>| async move { request.input.0 })
       .unwrap();
 
     builder
