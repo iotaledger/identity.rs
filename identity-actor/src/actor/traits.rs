@@ -7,17 +7,29 @@ use std::pin::Pin;
 use futures::Future;
 
 use crate::actor::errors::ErrorLocation;
-use crate::Actor;
-use crate::ActorRequest;
-use crate::RemoteSendError;
-use crate::RequestContext;
-use crate::SyncMode;
+use crate::actor::ActorRequest;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::SyncMode;
+
+use super::Actor;
 
 /// A future whose output is an `Any` trait object.
 pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;
 
+pub trait RequestHandlerCore {
+  /// Serializes the returned result from an invocation of this handler.
+  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError>;
+
+  /// Attempts to deserialize bytes into some input type for use in invocations of this handler.
+  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError>;
+
+  /// Helper function to clone the type-erased shared state object.
+  fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError>;
+}
+
 /// An abstraction for an asynchronous function.
-pub trait RequestHandler: Send + Sync {
+pub trait SyncRequestHandler: RequestHandlerCore + Send + Sync {
   /// Invokes the handler with the given `actor` and `context`, as well as the shared
   /// state `object` and the `input` received from a peer. Returns the result as a
   /// type-erased `Any` object.
@@ -28,18 +40,9 @@ pub trait RequestHandler: Send + Sync {
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
   ) -> Result<AnyFuture<'_>, RemoteSendError>;
-
-  /// Serializes the returned result from [`Self::invoke`].
-  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError>;
-
-  /// Attempts to deserialize bytes into some input type compatible with [`Self::invoke`].
-  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError>;
-
-  /// Helper function to clone the type-erased shared state object.
-  fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError>;
 }
 
-// Default implementations of some RequestHandler methods. These cannot be implemented on
+// Default implementations of some (A)SyncRequestHandler methods. These cannot be implemented on
 // the trait itself, because the trait cannot be made generic without losing its type-erasing nature.
 
 #[inline(always)]
@@ -95,7 +98,7 @@ pub fn request_handler_clone_object<OBJ: Clone + Send + Sync + 'static>(
 ) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
   // Double indirection is unfortunately required - the downcast fails otherwise.
   let object: &OBJ = object.downcast_ref::<OBJ>().ok_or_else(|| {
-    crate::RemoteSendError::HandlerInvocationError(format!(
+    crate::actor::RemoteSendError::HandlerInvocationError(format!(
       "unable to downcast to type {} in order to clone the object",
       std::any::type_name::<OBJ>()
     ))

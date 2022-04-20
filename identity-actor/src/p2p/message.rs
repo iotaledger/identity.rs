@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Endpoint;
-use crate::RequestMode;
-use crate::Result;
+use crate::actor::Endpoint;
+use crate::actor::RequestMode;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -17,12 +16,12 @@ pub struct RequestMessage {
 }
 
 impl RequestMessage {
-  pub fn new(name: impl AsRef<str>, request_mode: RequestMode, data: Vec<u8>) -> Result<Self> {
-    Ok(Self {
-      endpoint: Endpoint::new(name)?,
+  pub fn new(endpoint: Endpoint, request_mode: RequestMode, data: Vec<u8>) -> Self {
+    Self {
+      endpoint,
       request_mode,
       data,
-    })
+    }
   }
 
   pub fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {

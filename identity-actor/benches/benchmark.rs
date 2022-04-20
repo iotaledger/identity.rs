@@ -6,10 +6,10 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 use identity_account::types::IdentitySetup;
+use identity_actor::actor::Actor;
+use identity_actor::actor::ActorBuilder;
 use identity_actor::remote_account::IdentityCreate;
 use identity_actor::remote_account::RemoteAccount;
-use identity_actor::Actor;
-use identity_actor::ActorBuilder;
 use identity_actor::Multiaddr;
 use identity_actor::PeerId;
 
@@ -20,18 +20,15 @@ async fn setup() -> (Actor, PeerId, Actor) {
   builder
     .add_state(RemoteAccount::new().unwrap())
     .add_sync_handler(RemoteAccount::create)
-    .unwrap()
     .add_sync_handler(RemoteAccount::list)
-    .unwrap()
-    .add_sync_handler(RemoteAccount::get)
-    .unwrap();
+    .add_sync_handler(RemoteAccount::get);
 
-  let mut receiver = builder.build().await.unwrap();
+  let mut receiver: Actor = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
   let receiver_peer_id = receiver.peer_id();
 
-  let mut sender = ActorBuilder::new().build().await.unwrap();
+  let mut sender: Actor = ActorBuilder::new().build().await.unwrap();
 
   sender.add_address(receiver_peer_id, addr).await.unwrap();
 

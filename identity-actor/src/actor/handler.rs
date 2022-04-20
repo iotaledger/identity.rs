@@ -5,24 +5,27 @@ use std::any::Any;
 use std::future::Future;
 use std::marker::PhantomData;
 
-use crate::traits::AnyFuture;
-use crate::traits::RequestHandler;
-use crate::Actor;
-use crate::ActorRequest;
-use crate::RemoteSendError;
-use crate::RequestContext;
-use crate::SyncMode;
+use crate::actor::ActorRequest;
+use crate::actor::AnyFuture;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
+use crate::actor::SyncMode;
+use crate::actor::SyncRequestHandler;
+
+use super::traits::RequestHandlerCore;
+use super::Actor;
 
 /// An abstraction over an asynchronous function that processes some [`ActorRequest`].
 #[derive(Clone)]
-pub struct Handler<MOD, OBJ, REQ, FUT>
+pub struct Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  MOD: SyncMode + 'static,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
-  MOD: SyncMode + 'static,
 {
-  func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
+  pub(crate) func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
@@ -30,26 +33,29 @@ where
   _marker_obj: std::marker::PhantomData<&'static OBJ>,
   _marker_req: std::marker::PhantomData<&'static REQ>,
   _marker_mod: std::marker::PhantomData<&'static MOD>,
+  _marker_act: std::marker::PhantomData<&'static ACT>,
 }
 
-impl<MOD, OBJ, REQ, FUT> Handler<MOD, OBJ, REQ, FUT>
+impl<MOD, ACT, OBJ, REQ, FUT> Handler<MOD, ACT, OBJ, REQ, FUT>
 where
+  MOD: SyncMode + 'static,
+  ACT: Send + Sync + 'static,
   OBJ: 'static,
   REQ: ActorRequest<MOD>,
   FUT: Future<Output = REQ::Response>,
-  MOD: SyncMode + 'static,
 {
-  pub fn new(func: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self {
+  pub fn new(func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
       _marker_mod: PhantomData,
+      _marker_act: PhantomData,
     }
   }
 }
 
-impl<MOD, OBJ, REQ, FUT> RequestHandler for Handler<MOD, OBJ, REQ, FUT>
+impl<MOD, OBJ, REQ, FUT> SyncRequestHandler for Handler<MOD, Actor, OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest<MOD> + Sync,
@@ -81,6 +87,9 @@ where
         std::any::type_name::<OBJ>()
       ))
     })?;
+
+    // let actor: ACT = *actor.downcast().expect("TODO");
+
     let future = async move {
       let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
       let type_erased: Box<dyn Any + Send> = Box::new(response);
@@ -88,16 +97,26 @@ where
     };
     Ok(Box::pin(future))
   }
+}
 
+impl<MOD, ACT, OBJ, REQ, FUT> RequestHandlerCore for Handler<MOD, ACT, OBJ, REQ, FUT>
+where
+  ACT: Send + Sync + 'static,
+  OBJ: Clone + Send + Sync + 'static,
+  REQ: ActorRequest<MOD> + Sync,
+  REQ::Response: Send,
+  FUT: Future<Output = REQ::Response> + Send,
+  MOD: SyncMode + Send + Sync + 'static,
+{
   fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
-    crate::traits::request_handler_serialize_response::<MOD, REQ>(input)
+    crate::actor::request_handler_serialize_response::<MOD, REQ>(input)
   }
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
-    crate::traits::request_handler_deserialize_request::<MOD, REQ>(input)
+    crate::actor::request_handler_deserialize_request::<MOD, REQ>(input)
   }
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
-    crate::traits::request_handler_clone_object::<OBJ>(object)
+    crate::actor::request_handler_clone_object::<OBJ>(object)
   }
 }

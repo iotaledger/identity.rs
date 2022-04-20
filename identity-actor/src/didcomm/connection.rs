@@ -9,16 +9,18 @@ use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaVerificationMethod;
 use libp2p::PeerId;
 
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
 use crate::didcomm::message::EmptyMessage;
-use crate::Actor;
-use crate::ActorRequest;
-use crate::Asynchronous;
-use crate::DIDCommKeyConfig;
-use crate::RequestContext;
+use crate::didcomm::DIDCommKeyConfig;
 
 use super::message::DidCommPlaintextMessage;
-use super::state::DIDCommState;
+use super::state::DidCommState;
 use super::thread_id::ThreadId;
+use super::DidCommActor;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -41,6 +43,12 @@ impl Connection {
   }
 }
 
+impl Default for Connection {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DIDKey(String);
 
@@ -53,8 +61,8 @@ pub enum UrlOrKey {
 impl ActorRequest<Asynchronous> for Connection {
   type Response = ();
 
-  fn endpoint() -> &'static str {
-    "didcomm/connection"
+  fn endpoint() -> Endpoint {
+    "didcomm/connection".parse().unwrap()
   }
 }
 
@@ -65,16 +73,16 @@ pub struct Invitation {
   recipient_keys: Option<UrlOrKey>,
 }
 
-impl DIDCommState {
-  pub async fn connection(self, mut actor: Actor, request: RequestContext<DidCommPlaintextMessage<Connection>>) {
+impl DidCommState {
+  pub async fn connection(self, mut actor: DidCommActor, request: RequestContext<DidCommPlaintextMessage<Connection>>) {
     match request.input.body.recipient_key {
       Some(UrlOrKey::DIDUrl(ref peer_key)) => {
         // TODO: How is *this* actor supposed to know, which of their own keys is used for encryption?
         // It could be any of the `recipientKeys` sent in the invitation.
         // Just use `kex-0` for now.
         let own_key: IotaDIDUrl = actor
-          .try_identity()
-          .expect("TODO")
+          .state
+          .identity
           .doc
           .resolve_method("kex-0", Some(MethodScope::key_agreement()))
           .unwrap()
@@ -95,7 +103,7 @@ impl DIDCommState {
         println!(
           "setting up encryption for peer {} on actor {}",
           request.peer,
-          actor.state.identity.as_ref().unwrap().doc.id()
+          actor.state.identity.doc.id()
         );
 
         // ACK we're done setting up encryption.
@@ -111,7 +119,7 @@ impl DIDCommState {
         // Activate encryption after sending the ack, otherwise ack is encrypted.
         actor
           .state
-          .did_comm_config
+          .didcomm_config
           .peer_keys
           .insert(request.peer, DIDCommKeyConfig::new(own_key, public_key));
       }
@@ -125,11 +133,11 @@ impl DIDCommState {
 }
 
 pub async fn accept_invitation(
-  actor: &mut Actor,
+  actor: &mut DidCommActor,
   peer_id: PeerId,
   own_key_url: IotaDIDUrl,
   peer_key_url: IotaDIDUrl,
-) -> crate::Result<()> {
+) -> ActorResult<()> {
   let resolver: Resolver = Resolver::new().await.expect("TODO");
   let peer_doc: ResolvedIotaDocument = resolver.resolve(peer_key_url.did()).await.expect("TODO");
 
@@ -147,7 +155,7 @@ pub async fn accept_invitation(
 
   let _ack: DidCommPlaintextMessage<EmptyMessage> = actor.await_message(&thread_id).await.unwrap();
 
-  actor.state.did_comm_config.peer_keys.insert(
+  actor.state.didcomm_config.peer_keys.insert(
     peer_id,
     DIDCommKeyConfig::new(
       own_key_url,

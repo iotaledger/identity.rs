@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
-use crate::Result;
-use core::result::Result as StdResult;
+use crate::actor::Error;
+use crate::actor::Result as ActorResult;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -27,7 +26,7 @@ pub struct Endpoint {
 impl Endpoint {
   /// Creates a new endpoint from a string. Returns an [`Error::InvalidEndpoint`]
   /// if disallowed characters are encountered.
-  pub fn new(string: impl AsRef<str>) -> Result<Self> {
+  pub fn new(string: impl AsRef<str>) -> ActorResult<Self> {
     let mut is_hook = false;
     let mut split = string.as_ref().split('/');
 
@@ -61,7 +60,7 @@ impl Endpoint {
 impl FromStr for Endpoint {
   type Err = Error;
 
-  fn from_str(string: &str) -> StdResult<Self, Self::Err> {
+  fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::new(string)
   }
 }
@@ -78,8 +77,8 @@ impl Display for Endpoint {
 
 #[cfg(test)]
 mod tests {
-  use crate::Endpoint;
-  use crate::Error;
+  use crate::actor::Endpoint;
+  use crate::actor::Error;
 
   #[test]
   fn invalid_endpoints() {

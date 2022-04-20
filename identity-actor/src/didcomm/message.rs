@@ -1,8 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ActorRequest;
-use crate::Asynchronous;
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
 
 use super::thread_id::ThreadId;
 
@@ -55,7 +56,7 @@ where
 {
   type Response = ();
 
-  fn endpoint() -> &'static str {
+  fn endpoint() -> Endpoint {
     T::endpoint()
   }
 }
@@ -87,7 +88,7 @@ impl DIDCommMessage for EmptyMessage {
 impl ActorRequest<Asynchronous> for EmptyMessage {
   type Response = ();
 
-  fn endpoint() -> &'static str {
-    "didcomm/empty"
+  fn endpoint() -> Endpoint {
+    "didcomm/empty".parse().unwrap()
   }
 }

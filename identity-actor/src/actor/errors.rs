@@ -3,7 +3,7 @@
 
 use libp2p::request_response::OutboundFailure;
 
-use crate::didcomm::thread_id::ThreadId;
+use crate::didcomm::ThreadId;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -44,7 +44,7 @@ pub enum Error {
   AwaitTimeout(ThreadId),
   #[error("actor was shutdown")]
   Shutdown,
-  #[error("no actor identity set")]
+  #[error("actor identity missing")]
   IdentityMissing,
   #[error("{location} {operation} failed during {context} due to: {error_message}")]
   CryptError {

@@ -3,17 +3,22 @@
 
 use libp2p::PeerId;
 
+use crate::actor::ActorRequest;
+use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
+use crate::actor::RequestContext;
+use crate::actor::Result as ActorResult;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
-use crate::Actor;
-use crate::ActorRequest;
-use crate::Asynchronous;
-use crate::RequestContext;
+use crate::didcomm::DidCommActor;
+use crate::didcomm::DidCommState;
+use serde::Deserialize;
+use serde::Serialize;
 
-impl DIDCommState {
+impl DidCommState {
   pub async fn presentation_holder_actor_handler(
     self,
-    actor: Actor,
+    actor: DidCommActor,
     request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
   ) {
     log::debug!("holder: received presentation request");
@@ -27,7 +32,7 @@ impl DIDCommState {
 
   pub async fn presentation_verifier_actor_handler(
     self,
-    actor: Actor,
+    actor: DidCommActor,
     request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>,
   ) {
     log::debug!("verifier: received offer from {}", request.peer);
@@ -41,10 +46,10 @@ impl DIDCommState {
 }
 
 pub async fn presentation_holder_handler(
-  mut actor: Actor,
+  mut actor: DidCommActor,
   peer: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
-) -> crate::Result<()> {
+) -> ActorResult<()> {
   let request: DidCommPlaintextMessage<PresentationRequest> = match request {
     Some(request) => request,
     None => {
@@ -73,10 +78,10 @@ pub async fn presentation_holder_handler(
 }
 
 pub async fn presentation_verifier_handler(
-  mut actor: Actor,
+  mut actor: DidCommActor,
   peer: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
-) -> crate::Result<()> {
+) -> ActorResult<()> {
   let thread_id: ThreadId = if let Some(offer) = offer {
     offer.thread_id().to_owned()
   } else {
@@ -99,18 +104,13 @@ pub async fn presentation_verifier_handler(
   Ok(())
 }
 
-use serde::Deserialize;
-use serde::Serialize;
-
-use super::state::DIDCommState;
-
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest([u8; 2]);
 
 impl ActorRequest<Asynchronous> for PresentationRequest {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation_request"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation_request".parse().unwrap()
   }
 }
 
@@ -119,8 +119,8 @@ pub struct PresentationOffer([u8; 3]);
 
 impl ActorRequest<Asynchronous> for PresentationOffer {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation_offer"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation_offer".parse().unwrap()
   }
 }
 
@@ -129,8 +129,8 @@ pub struct Presentation([u8; 4]);
 
 impl ActorRequest<Asynchronous> for Presentation {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation".parse().unwrap()
   }
 }
 
@@ -139,7 +139,7 @@ pub struct PresentationResult([u8; 5]);
 
 impl ActorRequest<Asynchronous> for PresentationResult {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation_result"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation_result".parse().unwrap()
   }
 }

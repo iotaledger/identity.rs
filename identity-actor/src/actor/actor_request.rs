@@ -7,6 +7,8 @@ use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Serialize;
 
+use super::Endpoint;
+
 /// Used to represent the synchronicity of a request at runtime.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RequestMode {
@@ -51,7 +53,7 @@ mod private {
 pub trait ActorRequest<T: SyncMode>: Debug + Serialize + DeserializeOwned + Send + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
-  fn endpoint() -> &'static str;
+  fn endpoint() -> Endpoint;
 
   fn request_mode(&self) -> RequestMode {
     T::request_mode()
