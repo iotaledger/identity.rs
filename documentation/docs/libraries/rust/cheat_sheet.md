@@ -399,6 +399,6 @@ account.sign(did, "key-1", &mut credential).await?;
 
 ## Verifiable Presentations (VP)
 
-A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp.
+A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp. 
 
 ### [Create](../../verifiable_credentials/verifiable_presentations.mdx)
