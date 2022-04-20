@@ -29,7 +29,7 @@
     "test:browser": "cypress run --headless",
     "test:readme": "mocha ./tests/txm_readme.js --retries 3 --timeout 180000 --exit",
     "test:unit": "wasm-pack test --release --node",
-    "test:unit:node": "mocha ./tests/tests.js --parallel --exit",
+    "test:unit:node": "ts-mocha ./tests/*.ts --parallel --exit",
     "cypress": "cypress open"
   },
   "contributors": [

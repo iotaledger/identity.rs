@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::Context;
 use identity::core::Object;
-use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use wasm_bindgen::prelude::*;
@@ -33,7 +33,10 @@ impl WasmCredential {
   /// Returns the base JSON-LD context.
   #[wasm_bindgen(js_name = "BaseContext")]
   pub fn base_context() -> Result<String> {
-    Credential::<Object>::base_context().to_json().wasm_result()
+    match Credential::<Object>::base_context() {
+      Context::Url(url) => Ok(url.to_string()),
+      Context::Obj(_) => Err(JsError::new("Credential.BaseContext should be a single URL").into()),
+    }
   }
 
   /// Returns the base type.
