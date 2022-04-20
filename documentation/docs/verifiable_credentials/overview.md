@@ -40,10 +40,6 @@ In the IOTA Idenitity framework, Alice would receive a digitally verifiable cred
 
 The first step in the creation and verification of a VC is to create a verifiable credential. This requires the subject and issuer (Alice and the government, respectively) to have DIDs published to the Tangle with a set of statements being asserted (that Alice has a passport). The issuer signs the credential with their private key and publishes the public key to the Tangle. In the future, a proof can be used by the verifiers to validate the authenticity of the credentials using the issuer's public key.
 
-After the credential is published to the Tangle, validations occur:
- 
- - By looking up the issuer's key on the Tangle. 
- - The holder proving ownership of their DID to the verifier (evidence). 
- - Validating that the credential has been signed by the issuing party.
+Anyone can verify the credentials by looking up the key, checking the holder's DID, and the signature of the issuing party.
 
 The remaining chapters in this section explore creation, verification, and revocation of VCs in more detail.

@@ -401,4 +401,4 @@ account.sign(did, "key-1", &mut credential).await?;
 
 A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject to prove control over the Verifiable Credential with a nonce or timestamp.
 
-### [Create](https://wiki.iota.org/identity.rs/verifiable_credentials/verifiable_presentations)
+### [Create](../../verifiable_credentials/verifiable_presentations.mdx)
