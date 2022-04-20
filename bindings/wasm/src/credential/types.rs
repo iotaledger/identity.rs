@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
-  #[wasm_bindgen(typescript_type = "Array<string | Record<string, any> >")]
+  #[wasm_bindgen(typescript_type = "Array<string | Record<string, any>>")]
   pub type ArrayContext;
 
   #[wasm_bindgen(typescript_type = "Array<Evidence>")]

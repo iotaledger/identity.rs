@@ -413,7 +413,8 @@ fn test_validations() {
   )
   .unwrap();
 
-  let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
+  let credential: WasmCredential =
+    WasmCredential::new(JsValue::from_serde(&credential_obj).unwrap().unchecked_into()).unwrap();
 
   // Sign the credential with the issuer's DID Document.
   let signed_credential: WasmCredential = issuer_doc

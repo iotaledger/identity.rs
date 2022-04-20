@@ -238,16 +238,10 @@ interface IClientConfig {
 mod tests {
   use identity::core::FromJson;
   use identity::core::Object;
-  use identity::iota::ClientBuilder;
-  use identity::iota::DIDMessageEncoding;
-  use identity::iota_core::Network;
   use wasm_bindgen::JsCast;
-  use wasm_bindgen::JsValue;
   use wasm_bindgen_test::*;
 
-  use crate::tangle::client_config::ConfigOptions;
-  use crate::tangle::client_config::NodeAuth;
-  use crate::tangle::IClientConfig;
+  use super::*;
 
   fn mock_client_config_json() -> JsValue {
     JsValue::from_serde(
