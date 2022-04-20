@@ -1,18 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_client::bee_message::payload::transaction::Essence;
-use iota_client::bee_message::payload::Payload;
-use iota_client::bee_message::Message;
-use iota_client::bee_message::MessageId;
-use iota_client::bee_message::MESSAGE_ID_LENGTH;
-
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::DID;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use iota_client::bee_message::payload::transaction::Essence;
+use iota_client::bee_message::payload::Payload;
 
-use crate::did::IotaDID;
-use crate::diff::DiffMessage;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
@@ -22,9 +20,6 @@ use crate::tangle::TangleRef;
 
 /// Magic bytes used to mark DID messages.
 const DID_MESSAGE_MARKER: &[u8] = b"DID";
-
-// TODO: Use MessageId when it has a const ctor
-static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];
 
 fn parse_message<T: FromJson + TangleRef>(message: &Message, did: &IotaDID) -> Option<T> {
   let message_id: MessageId = message.id().0;
@@ -106,28 +101,6 @@ fn add_flags_to_message(
   buffer
 }
 
-pub trait MessageIdExt: Sized {
-  fn is_null(&self) -> bool;
-
-  fn encode_hex(&self) -> String;
-
-  fn decode_hex(hex: &str) -> Result<Self>;
-}
-
-impl MessageIdExt for MessageId {
-  fn is_null(&self) -> bool {
-    self.as_ref() == NULL
-  }
-
-  fn encode_hex(&self) -> String {
-    self.to_string()
-  }
-
-  fn decode_hex(hex: &str) -> Result<Self> {
-    hex.parse().map_err(Into::into)
-  }
-}
-
 pub trait MessageExt {
   fn try_extract_document(&self, did: &IotaDID) -> Option<ResolvedIotaDocument>;
 
@@ -168,18 +141,18 @@ mod test {
   use identity_did::service::ServiceBuilder;
   use identity_did::service::ServiceEndpoint;
   use identity_did::verification::MethodScope;
+  use identity_iota_core::document::IotaDocument;
+  use identity_iota_core::document::IotaVerificationMethod;
+  use identity_iota_core::tangle::MessageId;
 
-  use crate::document::IotaDocument;
-  use crate::document::IotaVerificationMethod;
   use crate::document::ResolvedIotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
-  use crate::tangle::MessageId;
 
   use super::*;
 
   #[test]
   fn test_pack_did_message() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(
@@ -201,7 +174,7 @@ mod test {
 
   #[test]
   fn test_pack_did_message_diff() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut doc1: IotaDocument = IotaDocument::new(&keypair).unwrap();
     doc1
       .sign_self(keypair.private(), doc1.default_signing_method().unwrap().id().clone())

@@ -1,11 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Formatter;
 
-use crypto::hashes::sha::Sha256;
-use crypto::hashes::Digest;
-use crypto::hashes::Output;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -38,12 +35,6 @@ pub trait ToJson: Serialize + Sized {
   /// Canonicalization Scheme (JCS).
   fn to_jcs(&self) -> Result<Vec<u8>> {
     serde_jcs::to_vec(self).map_err(Error::EncodeJSON)
-  }
-
-  /// Returns the given `data` serialized using JSON Canonicalization Scheme and
-  /// hashed using SHA-256.
-  fn to_jcs_sha256(&self) -> Result<Output<Sha256>> {
-    self.to_jcs().map(|json| Sha256::digest(&json))
   }
 }
 

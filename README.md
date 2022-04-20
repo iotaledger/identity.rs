@@ -49,8 +49,8 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.56.1)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.56.0)
+- [Rust](https://www.rust-lang.org/) (>= 1.58.0)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.58.0)
 
 ## Getting Started
 
@@ -83,30 +83,31 @@ edition = "2021"
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}
 pretty_env_logger = { version = "0.4" }
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.14", features = ["full"] }
 ```
 *main.*<span></span>*rs*
 ```rust
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::account_storage::Stronghold;
 use identity::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // The Stronghold settings for the storage.
+  // Stronghold settings.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, Some(password), None).await?;
 
   // Create a new identity with default settings and
   // Stronghold as the storage.
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
 

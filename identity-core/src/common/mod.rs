@@ -3,7 +3,6 @@
 
 //! Definitions of common types (`Url`, `Timestamp`, JSON types, etc).
 
-pub use self::bitset::BitSet;
 pub use self::context::Context;
 pub use self::fragment::Fragment;
 pub use self::key_comparable::KeyComparable;
@@ -16,7 +15,6 @@ pub use self::timestamp::Duration;
 pub use self::timestamp::Timestamp;
 pub use self::url::Url;
 
-mod bitset;
 mod context;
 mod fragment;
 mod key_comparable;

@@ -6,11 +6,8 @@ image: /img/Identity_icon.png
 keywords:
 - Resolve
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import resolution_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/resolution.js';
-import resolution_rs from  '!!raw-loader!./../../../examples/low-level-api/resolution.rs';
+import CodeSnippet from '../../src/components/CodeSnippetComponent'
+import resolution from  '!!raw-loader!../../../examples/low-level-api/resolution.rs';
 
 TODO: Explain how resolving works including arguments.
 
@@ -18,21 +15,10 @@ TODO: Explain how resolving works including arguments.
 
 A short example that shows how you can resolve a DID Document. This example returns the latest DID Document.
 
-<Tabs
-    groupId="programming-languages"
-    defaultValue="rust"
-    values={[
-        {label: 'Rust', value: 'rust'},
-        {label: 'Node.js', value: 'nodejs'},
-    ]
-    }>
-    <TabItem value="rust">
-        <CodeBlock className="language-rust">
-            {resolution_rs}
-        </CodeBlock>
-    </TabItem>
-    <TabItem value='nodejs'>
-        <CodeBlock className="language-javascript">
-            {resolution_js}
-        </CodeBlock></TabItem>
-</Tabs>
+<CodeSnippet 
+    nodeReplitLink="https://repl.it/@IOTAFoundation/resolution?lite=true"
+    rustContent={resolution}
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/resolution.js"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/resolution.rs"
+/>
+

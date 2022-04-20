@@ -9,7 +9,7 @@ use serde::Serialize;
 use crate::verification::MethodScope;
 use crate::verification::MethodType;
 
-/// Holds additional options for verifying a signature with [`DocumentVerifier`](crate::verifiable::DocumentVerifier).
+/// Holds additional options for verifying a proof with [`DocumentVerifier`](crate::verifiable::DocumentVerifier).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VerifierOptions {

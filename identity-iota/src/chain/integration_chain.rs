@@ -1,28 +1,26 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-
 use core::mem;
 
+use identity_core::convert::FmtJson;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::Message;
+use identity_iota_core::tangle::MessageId;
+use identity_iota_core::tangle::MessageIdExt;
 use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::convert::FmtJson;
-
 use crate::chain::milestone::sort_by_milestone;
-use crate::did::IotaDID;
-use crate::document::IotaDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
-use crate::tangle::Message;
 use crate::tangle::MessageExt;
-use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 

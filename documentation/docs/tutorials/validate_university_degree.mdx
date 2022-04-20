@@ -13,6 +13,8 @@ keywords:
 - tutorial
 ---
 
+TODO: update this tutorial to remove references to `MerkleKeyCollection` and instead use `credentialStatus` with e.g. `RevocationList2020`.
+
 # Digitally Validate a Degree
 
 In this tutorial, you will use the [WASM binding of the IOTA Identity framework](https://wiki.iota.org/identity.rs/libraries/wasm/getting_started) to digitally prove the existence and validity of a degree.
@@ -44,7 +46,6 @@ As described in the [Digital Identities Solution](https://www.iota.org/solutions
 | [Verifiable Credential](https://www.w3.org/TR/did-core/#dfn-verifiable-credentials) | A standard data model and representation format for cryptographically-verifiable digital credentials. It is signed by the issuer, to prove control over the Verifiable Credential with a nonce or timestamp. |
 | Verifiable Presentation | A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared. It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp. |
 | [DID Resolution](https://www.w3.org/TR/did-core/#dfn-did-resolution)  | The process that takes as its input a DID and a set of resolution options and returns a DID document in a conforming representation plus additional metadata.  |
-| [Merkle Key Collection](https://medium.com/asecuritysite-when-bob-met-alice/how-can-i-have-a-1-000-private-keys-but-just-one-public-key-well-thats-merkle-magic-6c323439417b)  | By using a Merkle Tree, you can verify the ownership of multiple private keys (that must be a power of 2) with only one public key.  |
 
 ## Flow-Chart
 
@@ -117,7 +118,7 @@ Since the University will need to verify Alice's degree, you should add a "degre
 
 The University will have to sign more than just Alice's degree, so you should generate this verification method with a set of Merkle keys. These signatures can all be proved by a single public key, while retaining the ability to revoke them separately.
 
-You should know that the newly added verification method is of the *type* [MerkleKeyCollection](https://wiki.iota.org/identity.rs/specs/did/merkle_key_collection).
+You should know that the newly added verification method is of the *type* `MerkleKeyCollection`.
 
 - [addVerificationMethod.js](https://github.com/adrian-grassl/iota-identity-tutorial/blob/master/addVerificationMethod.js).
 

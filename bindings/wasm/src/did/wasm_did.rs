@@ -1,12 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::decode_b58;
 use identity::did::DID;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::WasmKeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -19,26 +17,18 @@ pub struct WasmDID(pub(crate) IotaDID);
 
 #[wasm_bindgen(js_class = DID)]
 impl WasmDID {
-  /// Creates a new `DID` from a `KeyPair` object.
+  /// Creates a new `DID` from a public key.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &WasmKeyPair, network: Option<String>) -> Result<WasmDID> {
-    let public: &[u8] = key.0.public().as_ref();
-    Self::from_public_key(public, network)
-  }
-
-  /// Creates a new `DID` from a base58-encoded public key.
-  #[wasm_bindgen(js_name = fromBase58)]
-  pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID> {
-    let public: Vec<u8> = decode_b58(key).wasm_result()?;
-    Self::from_public_key(public.as_slice(), network)
+  pub fn new(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
+    Self::from_public_key(public_key, network)
   }
 
   /// Creates a new `DID` from an arbitrary public key.
-  fn from_public_key(public: &[u8], network: Option<String>) -> Result<WasmDID> {
+  fn from_public_key(public_key: &[u8], network: Option<String>) -> Result<WasmDID> {
     let did = if let Some(network) = network {
-      IotaDID::new_with_network(public, network)
+      IotaDID::new_with_network(public_key, network)
     } else {
-      IotaDID::new(public)
+      IotaDID::new(public_key)
     };
     did.wasm_result().map(Self)
   }
@@ -61,8 +51,8 @@ impl WasmDID {
     self.0.network_str().into()
   }
 
-  /// Returns the unique tag of the `DID`.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the unique tag of the `DID`.
+  #[wasm_bindgen]
   pub fn tag(&self) -> String {
     self.0.tag().into()
   }
@@ -90,6 +80,12 @@ impl WasmDID {
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.0.to_string()
+  }
+
+  /// Deserializes a JSON object as `DID`.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json_value: JsValue) -> Result<WasmDID> {
+    json_value.into_serde().map(Self).wasm_result()
   }
 
   /// Serializes a `DID` as a JSON object.

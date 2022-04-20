@@ -19,7 +19,7 @@ async function resolution(clientConfig, did) {
     if (!did) {
         // Creates a new identity, that also is updated (See "manipulate_did" example).
         let {doc} = await manipulateIdentity(clientConfig);
-        did = doc.id.toString();
+        did = doc.id().toString();
     }
 
     // Resolve a DID.

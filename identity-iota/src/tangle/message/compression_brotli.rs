@@ -30,14 +30,14 @@ pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Ve
 mod test {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
-
-  use crate::document::IotaDocument;
+  use identity_core::crypto::KeyType;
+  use identity_iota_core::document::IotaDocument;
 
   use super::*;
 
   #[test]
   fn test_brotli() {
-    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document
       .sign_self(

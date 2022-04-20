@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::did::MethodScope;
@@ -7,8 +7,18 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+#[wasm_bindgen]
+extern "C" {
+  // Workaround for lack of Option<&Type>/&Option<Type> support.
+  #[wasm_bindgen(typescript_type = "MethodScope")]
+  pub type RefMethodScope;
+
+  #[wasm_bindgen(typescript_type = "MethodScope | undefined")]
+  pub type OptionMethodScope;
+}
+
 /// Supported verification method types.
-#[wasm_bindgen(js_name = MethodScope)]
+#[wasm_bindgen(js_name = MethodScope, inspectable)]
 #[derive(Clone, Debug)]
 pub struct WasmMethodScope(pub(crate) MethodScope);
 

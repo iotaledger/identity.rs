@@ -1,7 +1,7 @@
 ---
 title: DID Messages
 sidebar_label: DID Messages
-description: Learn how IOTA Identity recreates and validates the state from it's origin to the current version using Integration and Differentiation Chains. 
+description: Learn how IOTA Identity recreates and validates the state from its origin to the current version using Integration and Differentiation Chains.
 image: /img/Identity_icon.png
 keywords:
 - Diff Chain
@@ -15,8 +15,6 @@ keywords:
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
-import diff_chain_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/diff_chain.js';
-import diff_chain_rs from  '!!raw-loader!./../../../examples/low-level-api/diff_chain.rs';
 
 TODO: Explain the concept of DID Messages and how they can be used to optimize DID updates.
 
@@ -34,28 +32,6 @@ The Integration Chain is a chain of transactions that contain full DID Documents
 
 Once a new Integration chain transaction is created, it will take all Diff Chain updates and compress them into a new DID Document, essentially combining them all into a single transaction. This reduces the amount of updates that need to be queried and validated tremendously. For example, lets assume every Diff chain contains 100 updates. Then validating a DID that has done 1050 updates, only requires the validation of 10 Integration Chain updates and 40 Diff Chain updates (The latest Diff Chain). We skipped out on 10 Diff Chains each containing 100 updates, and only validated the 10 Integration Chain updates and the last Diff Chain containing 40 updates. If we estimate every update to be on average 1 Kb, we only have to download 50 kb of information and validate it, which is significantly less than the otherwise 1.025 Mb of information.
 
-The improved performance and ability to handle frequently updated DID Documents is especially beneficial for Verifiable Credential Revocation, by utilizing revocation flags. These concepts will be explained in the Verifiable Credentials and Key Collections sections.
+The improved performance and ability to handle frequently updated DID Documents is especially beneficial for Verifiable Credential Revocation.
 
-
-## Example of Utilizing a Diff Chain
-
-This example is a basic introduction on how you can create a diff message and publish it to the tangle.
-
-<Tabs
-groupId="programming-languages"
-defaultValue="rust"
-values={[
-{label: 'Rust', value: 'rust'},
-{label: 'Node.js', value: 'nodejs'},
-]
-}>
-<TabItem value="rust">
-<CodeBlock className="language-rust">
-{diff_chain_rs}
-</CodeBlock>
-</TabItem>
-<TabItem value='nodejs'>
-<CodeBlock className="language-javascript">
-{diff_chain_js}
-</CodeBlock></TabItem>
-</Tabs>
+TODO: mention future revocation scheme replacement for MerkleKeyCollection.

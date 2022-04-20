@@ -1,0 +1,66 @@
+[package]
+name = "identity-account-storage"
+version = "0.5.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity"]
+license = "Apache-2.0"
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
+
+[dependencies]
+actix = { version = "0.12.0", optional = true }
+anyhow = { version = "1.0", default-features = false, features = ["std"], optional = true }
+async-trait = { version = "0.1", default-features = false }
+function_name = { version = "0.2", default-features = false, optional = true }
+futures = { version = "0.3", optional = true }
+hashbrown = { version = "0.11", features = ["serde"] }
+identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
+identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
+identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
+once_cell = { version = "1.7", default-features = false, features = ["std"], optional = true }
+parking_lot = { version = "0.12" }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"], optional = true }
+seahash = { version = "4.1.0", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0" }
+tokio = { version = "1.17.0", default-features = false, features = ["sync"], optional = true }
+zeroize = { version = "1.4" }
+
+[dependencies.iota-crypto]
+version = "0.7"
+default-features = false
+features = ["blake2b", "hmac", "pbkdf", "sha", "std"]
+
+[dependencies.iota_stronghold]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
+optional = true
+
+[dependencies.stronghold_engine]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
+optional = true
+
+[dev-dependencies]
+rusty-fork = { version = "0.3" }
+tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
+
+[features]
+default = ["stronghold", "send-sync-storage", "storage-test-suite"]
+stronghold = [
+  "iota_stronghold",
+  "stronghold_engine",
+  "actix",
+  "tokio/rt-multi-thread",
+  "futures",
+  "once_cell",
+  "rand",
+]
+# Enables `Send` + `Sync` bounds for the Storage trait.
+send-sync-storage = []
+# Exposes Storage `test_suite` module.
+storage-test-suite = ["anyhow", "function_name", "rand"]

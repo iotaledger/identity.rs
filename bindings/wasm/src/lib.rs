@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![forbid(unsafe_code)]
+#![allow(deprecated)]
 #![allow(clippy::upper_case_acronyms)]
 #![allow(clippy::unused_unit)]
 
@@ -15,6 +17,7 @@ mod macros;
 #[macro_use]
 pub mod error;
 
+pub mod account;
 pub mod chain;
 pub mod common;
 pub mod credential;
