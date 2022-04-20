@@ -83,8 +83,8 @@ impl<T, U> Presentation<T, U> {
       types: builder.types.into(),
       verifiable_credential: builder.credentials.into(),
       holder: builder.holder,
-      refresh_service: builder.refresh.into(),
-      terms_of_use: builder.policy.into(),
+      refresh_service: builder.refresh_service.into(),
+      terms_of_use: builder.terms_of_use.into(),
       properties: builder.properties,
       proof: None,
     };
