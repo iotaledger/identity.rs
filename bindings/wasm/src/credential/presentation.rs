@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::Object;
 use identity::core::OneOrMany;
+use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Presentation;
@@ -28,6 +30,18 @@ extern "C" {
 
 #[wasm_bindgen(js_class = Presentation)]
 impl WasmPresentation {
+  /// Returns the base JSON-LD context.
+  #[wasm_bindgen(js_name = "BaseContext")]
+  pub fn base_context() -> Result<String> {
+    Presentation::<Object, Object>::base_context().to_json().wasm_result()
+  }
+
+  /// Returns the base type.
+  #[wasm_bindgen(js_name = "BaseType")]
+  pub fn base_type() -> String {
+    Presentation::<Object, Object>::base_type().to_owned()
+  }
+
   #[wasm_bindgen(constructor)]
   pub fn new(
     holder_doc: &WasmDocument,

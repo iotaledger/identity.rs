@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::Object;
+use identity::core::ToJson;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use wasm_bindgen::prelude::*;
@@ -28,6 +30,19 @@ pub struct WasmCredential(pub(crate) Credential);
 
 #[wasm_bindgen(js_class = Credential)]
 impl WasmCredential {
+  /// Returns the base JSON-LD context.
+  #[wasm_bindgen(js_name = "BaseContext")]
+  pub fn base_context() -> Result<String> {
+    Credential::<Object>::base_context().to_json().wasm_result()
+  }
+
+  /// Returns the base type.
+  #[wasm_bindgen(js_name = "BaseType")]
+  pub fn base_type() -> String {
+    Credential::<Object>::base_type().to_owned()
+  }
+
+  /// Constructs a new `Credential`.
   #[wasm_bindgen(constructor)]
   pub fn new(values: ICredential) -> Result<WasmCredential> {
     let builder: CredentialBuilder = CredentialBuilder::try_from(values)?;
