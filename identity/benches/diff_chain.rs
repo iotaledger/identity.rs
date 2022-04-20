@@ -1,5 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+#![allow(deprecated)]
 
 use identity::core::Timestamp;
 use identity::crypto::KeyPair;
@@ -8,17 +10,18 @@ use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::did::DID;
-use identity::iota::DiffMessage;
 use identity::iota::DocumentChain;
-use identity::iota::IotaDocument;
-use identity::iota::MessageId;
 use identity::iota::TangleRef;
-use identity_core::crypto::SignatureOptions;
-use identity_iota::did::IotaDID;
+use identity::iota_core::DiffMessage;
+use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDocument;
+use identity::iota_core::MessageId;
+use identity_core::crypto::KeyType;
+use identity_core::crypto::ProofOptions;
 use identity_iota::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
-  let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
   document
@@ -42,7 +45,7 @@ pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair)
     let new: IotaDocument = {
       let mut this: IotaDocument = chain.current().clone().document;
       this.properties_mut().insert(i.to_string(), 123.into());
-      this.metadata.updated = Timestamp::now_utc();
+      this.metadata.updated = Some(Timestamp::now_utc());
       this
     };
 
@@ -73,8 +76,8 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
     let authentication: MethodRef<IotaDID> = MethodBuilder::default()
       .id(chain.id().to_url().join(&format!("#key-{}", i)).unwrap())
       .controller(chain.id().clone())
-      .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_multibase(keypair.public()))
+      .type_(MethodType::Ed25519VerificationKey2018)
+      .data(MethodData::new_multibase(keypair.public()))
       .build()
       .map(Into::into)
       .unwrap();
@@ -86,7 +89,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
       .authentication_mut()
       .append(authentication);
 
-    new.document.metadata.updated = Timestamp::now_utc();
+    new.document.metadata.updated = Some(Timestamp::now_utc());
     new.document.metadata.previous_message_id = *chain.integration_message_id();
 
     chain
@@ -96,7 +99,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
         &mut new.document,
         keypair.private(),
         chain.current().document.default_signing_method().unwrap().id(),
-        SignatureOptions::default(),
+        ProofOptions::default(),
       )
       .unwrap();
     chain.try_push_integration(new).unwrap();

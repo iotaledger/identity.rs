@@ -101,6 +101,18 @@ impl WasmDuration {
   pub fn weeks(weeks: u32) -> WasmDuration {
     Self(Duration::weeks(weeks))
   }
+
+  /// Serializes a `Duration` as a JSON object.
+  #[wasm_bindgen(js_name = toJSON)]
+  pub fn to_json(&self) -> Result<JsValue> {
+    JsValue::from_serde(&self.0).wasm_result()
+  }
+
+  /// Deserializes a `Duration` from a JSON object.
+  #[wasm_bindgen(js_name = fromJSON)]
+  pub fn from_json(json: &JsValue) -> Result<WasmDuration> {
+    json.into_serde().map(Self).wasm_result()
+  }
 }
 
 impl From<Duration> for WasmDuration {

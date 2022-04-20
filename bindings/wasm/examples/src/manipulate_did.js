@@ -34,12 +34,12 @@ async function manipulateIdentity(clientConfig) {
 
     // Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
-    const method = new VerificationMethod(doc.id, newKey.type, newKey.public, "newKey");
+    const method = new VerificationMethod(doc.id(), newKey.type(), newKey.public(), "newKey");
     doc.insertMethod(method, MethodScope.VerificationMethod());
 
     // Add a new ServiceEndpoint
     const service = new Service({
-        id: doc.id.toUrl().join("#linked-domain"),
+        id: doc.id().toUrl().join("#linked-domain"),
         type: "LinkedDomains",
         serviceEndpoint: "https://iota.org",
     });
@@ -50,25 +50,25 @@ async function manipulateIdentity(clientConfig) {
         This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
-    doc.metadataPreviousMessageId = receipt.messageId;
-    doc.metadataUpdated = Timestamp.nowUTC();
+    doc.setMetadataPreviousMessageId(receipt.messageId());
+    doc.setMetadataUpdated(Timestamp.nowUTC());
 
     // Sign the DID Document with the appropriate key.
-    doc.signSelf(key, doc.defaultSigningMethod().id);
+    doc.signSelf(key, doc.defaultSigningMethod().id());
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const updateReceipt = await client.publishDocument(doc);
 
     // Log the results.
-    console.log(`DID Document Update Transaction: ${clientConfig.explorer.messageUrl(updateReceipt.messageId)}`);
-    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id)}`);
+    console.log(`DID Document Update Transaction: ${clientConfig.explorer.messageUrl(updateReceipt.messageId())}`);
+    console.log(`Explore the DID Document: ${clientConfig.explorer.resolverUrl(doc.id())}`);
 
     return {
         key,
         newKey,
         doc,
-        originalMessageId: receipt.messageId,
-        updatedMessageId: updateReceipt.messageId,
+        originalMessageId: receipt.messageId(),
+        updatedMessageId: updateReceipt.messageId(),
     };
 }
 

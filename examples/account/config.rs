@@ -5,14 +5,14 @@
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
-use identity::account::AccountStorage;
 use identity::account::AutoSave;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::account_storage::MemStore;
 use identity::iota::ClientBuilder;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
-use identity::iota::Network;
+use identity::iota_core::IotaDID;
+use identity::iota_core::Network;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -40,13 +40,14 @@ async fn main() -> Result<()> {
     .autosave(AutoSave::Every) // save immediately after every action
     .autosave(AutoSave::Batch(10)) // save after every 10 actions
     .autopublish(true) // publish to the tangle automatically on every update
-    .storage(AccountStorage::Memory) // use the default in-memory storage
+    .storage(MemStore::new()) // use the default in-memory storage
     .client_builder(
       // Configure a client for the private network
       ClientBuilder::new()
         .network(network.clone())
-        .primary_node(private_node_url, None, None)?
-        // .permanode(<permanode_url>, None, None)? // set a permanode for the same network
+        .primary_node(private_node_url, None, None)?,
+      // set a permanode for the same network
+      // .permanode(<permanode_url>, None, None)?
     );
 
   // Create an identity and publish it.

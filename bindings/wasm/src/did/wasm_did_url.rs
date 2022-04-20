@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::IotaDIDUrl;
+use identity::iota_core::IotaDIDUrl;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
@@ -21,52 +21,50 @@ impl WasmDIDUrl {
     IotaDIDUrl::parse(input).map(WasmDIDUrl::from).wasm_result()
   }
 
-  /// Return the `DID` section of the `DIDUrl`.
-  ///
-  /// Note: clones the data
-  #[wasm_bindgen(getter)]
+  /// Return a copy of the `DID` section of the `DIDUrl`.
+  #[wasm_bindgen]
   pub fn did(&self) -> WasmDID {
     WasmDID::from(self.0.did().clone())
   }
 
-  /// Return the relative DID Url as a string, including only the path, query, and fragment.
-  #[wasm_bindgen(getter)]
+  /// Return a copy of the relative DID Url as a string, including only the path, query, and fragment.
+  #[wasm_bindgen(js_name = urlStr)]
   pub fn url_str(&self) -> String {
     self.0.url().to_string()
   }
 
-  /// Returns the `DIDUrl` method fragment, if any. Excludes the leading '#'.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `DIDUrl` method fragment, if any. Excludes the leading '#'.
+  #[wasm_bindgen]
   pub fn fragment(&self) -> Option<String> {
     self.0.fragment().map(str::to_owned)
   }
 
   /// Sets the `fragment` component of the `DIDUrl`.
-  #[wasm_bindgen(setter = fragment)]
+  #[wasm_bindgen(js_name = setFragment)]
   pub fn set_fragment(&mut self, value: Option<String>) -> Result<()> {
     self.0.set_fragment(value.as_deref()).wasm_result()
   }
 
-  /// Returns the `DIDUrl` path.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `DIDUrl` path.
+  #[wasm_bindgen]
   pub fn path(&self) -> Option<String> {
     self.0.path().map(str::to_owned)
   }
 
   /// Sets the `path` component of the `DIDUrl`.
-  #[wasm_bindgen(setter = path)]
+  #[wasm_bindgen(js_name = setPath)]
   pub fn set_path(&mut self, value: Option<String>) -> Result<()> {
     self.0.set_path(value.as_deref()).wasm_result()
   }
 
-  /// Returns the `DIDUrl` method query, if any. Excludes the leading '?'.
-  #[wasm_bindgen(getter)]
+  /// Returns a copy of the `DIDUrl` method query, if any. Excludes the leading '?'.
+  #[wasm_bindgen]
   pub fn query(&self) -> Option<String> {
     self.0.query().map(str::to_owned)
   }
 
   /// Sets the `query` component of the `DIDUrl`.
-  #[wasm_bindgen(setter = query)]
+  #[wasm_bindgen(js_name = setQuery)]
   pub fn set_query(&mut self, value: Option<String>) -> Result<()> {
     self.0.set_query(value.as_deref()).wasm_result()
   }

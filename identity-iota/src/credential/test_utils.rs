@@ -1,23 +1,22 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Result;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_core::crypto::KeyPair;
-
+use identity_core::crypto::KeyType;
 use identity_core::json;
 use identity_credential::credential::Credential;
 use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Subject;
-
 use identity_did::did::DID;
+use identity_iota_core::document::IotaDocument;
 
-use crate::document::IotaDocument;
+use crate::Result;
 
 pub(super) fn generate_document_with_keys() -> (IotaDocument, KeyPair) {
-  let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
   (document, keypair)
 }

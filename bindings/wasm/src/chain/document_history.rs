@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::iota::ChainHistory;
-use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::DiffMessage;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use crate::did::ArrayResolvedDocument;
 use crate::did::WasmDiffMessage;
 use crate::did::WasmResolvedDocument;
 use crate::error::Result;
@@ -32,9 +33,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Array<string>")]
   pub type ArrayString;
-
-  #[wasm_bindgen(typescript_type = "Array<ResolvedDocument>")]
-  pub type ArrayResolvedDocument;
 
   #[wasm_bindgen(typescript_type = "Array<DiffMessage>")]
   pub type ArrayDiffMessage;
@@ -78,6 +76,8 @@ impl WasmDocumentHistory {
   /// Returns an `Array` of diff chain `DiffMessages`.
   ///
   /// NOTE: clones the data.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffChainData)]
   pub fn diff_chain_data(&self) -> ArrayDiffMessage {
     self
@@ -95,6 +95,8 @@ impl WasmDocumentHistory {
   /// as the diff chain.
   ///
   /// NOTE: clones the data.
+  ///
+  /// @deprecated since 0.5.0, diff chain features are slated for removal.
   #[wasm_bindgen(js_name = diffChainSpam)]
   pub fn diff_chain_spam(&self) -> ArrayString {
     self
@@ -133,6 +135,7 @@ impl From<DocumentHistory> for WasmDocumentHistory {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IntegrationChainHistory(ChainHistory<ResolvedIotaDocument>);
 
+/// @deprecated since 0.5.0, diff chain features are slated for removal.
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiffChainHistory(ChainHistory<DiffMessage>);

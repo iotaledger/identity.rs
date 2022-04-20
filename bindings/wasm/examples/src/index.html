@@ -1,76 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>WASM Examples Browser</title>
-    </head>
-    <body>
-        <style>
-            .ma-md {
-                margin: 5px;
-            }
-            .block {
-                display: block;
-            }
-            .content {
-                border: 1px solid black;
-                margin: 5px;
-                padding: 10px;
-            }
-        </style>
 
-        <script type="module" src="./web.js" defer async></script>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wasm Examples Browser</title>
+</head>
 
-        <button class="ma-md block" id="create-identity-btn">
-            Create Identity
-        </button>
-        <div class="ma-md">
-            <input placeholder="DID" id="resolve-did-input" />
-            <button id="resolve-did-btn">Resolve</button>
-        </div>
-        <button class="ma-md block" id="manipulate_did_btn">
-            Manipulate Identity
-        </button>
+<body>
+    <style>
+        .ma-md {
+            margin: 5px;
+        }
+        
+        .container {
+            margin: 15px 0px;
+        }
+        
+        .tangleInput {
+            width: 200px;
+        }
+        
+        .block {
+            display: block;
+        }
+        
+        .content {
+            border: 1px solid black;
+            margin: 5px;
+            padding: 10px;
+        }
+    </style>
 
-        <button class="ma-md block" id="create_vc_btn">
-            Create Verifiable Credential
-        </button>
+    <script type="module" src="./web.js" defer async></script>
 
-        <button class="ma-md block" id="create_vp_btn">
-            Create Verifiable Presentation
-        </button>
+    <button class="ma-md block" id="create-identity-btn">Create Identity</button>
+    <div class="ma-md">
+        <input placeholder="DID" id="resolve-did-input" />
+        <button id="resolve-did-btn">Resolve</button>
+    </div>
+    <button class="ma-md block" id="manipulate_did_btn">Manipulate Identity</button>
 
-        <button class="ma-md block" id="revoke_vc_btn">
-            Revoke Verifiable Credential
-        </button>
+    <div class="ma-md container">
+        <input class="ma-md block tangleInput" placeholder="Private Tangle REST API URL" id="create-private-rest-url" />
+        <input class="ma-md block tangleInput" placeholder="Private Tangle Network Name" id="create-private-network-name" />
+        <button class="ma-md block" id="private_tangle_btn">Create DID on Private Tangle</button>
+    </div>
+    <button class="ma-md block" id="key_exchange_btn">Key Exchange</button>
 
-        <button class="ma-md block" id="merkle_key_btn">Merkle Key</button>
+    <button class="ma-md block" id="did_history_btn">Resolve History</button>
 
-        <div class="ma-md">
-            <input placeholder="Private Tangle REST API URL" id="create-private-rest-url" />
-            <input placeholder="Private Tangle Network Name" id="create-private-network-name" />
-            <button class="ma-md block" id="private_tangle_btn">Create DID on Private Tangle</button>
-        </div>
+    <button class="ma-md block" id="clear_output" onclick="
+            document.querySelector('#content').innerHTML = ''">
+      Clear Output
+    </button>
 
-        <button class="ma-md block" id="diff_chain_btn">
-            Diff Chain
-        </button>
+    <h4 class="ma-md">Output:</h4>
+    <pre id="content" class="content"></pre>
+</body>
 
-        <button class="ma-md block" id="did_history_btn">
-            Resolve History
-        </button>
-
-        <button
-            class="ma-md block"
-            id="clear_output"
-            onclick="
-            document.querySelector('#content').innerHTML = ''"
-        >
-            Clear Output
-        </button>
-
-        <h4 class="ma-md">Output:</h4>
-        <pre id="content" class="content"></pre>
-    </body>
 </html>

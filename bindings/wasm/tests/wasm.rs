@@ -1,11 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
 use identity::core::FromJson;
 use identity::core::Object;
 use identity::core::Timestamp;
 use identity::core::ToJson;
-use identity::iota::IotaDID;
+use identity::iota_core::IotaDID;
+use identity_wasm::account::types::WasmKeyLocation;
+use js_sys::Array;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen_test::*;
+
+use identity_wasm::common::WasmTimestamp;
 use identity_wasm::credential::WasmCredential;
 use identity_wasm::credential::WasmCredentialValidationOptions;
 use identity_wasm::credential::WasmCredentialValidator;
@@ -13,32 +22,21 @@ use identity_wasm::credential::WasmFailFast;
 use identity_wasm::credential::WasmPresentation;
 use identity_wasm::credential::WasmPresentationValidationOptions;
 use identity_wasm::credential::WasmPresentationValidator;
-use identity_wasm::crypto::WasmSignatureOptions;
-use identity_wasm::did::WasmVerifierOptions;
-use js_sys::Array;
-use std::borrow::Cow;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_test::*;
-
-use identity_wasm::common::WasmTimestamp;
-use identity_wasm::crypto::Digest;
-use identity_wasm::crypto::KeyType;
-use identity_wasm::crypto::WasmKeyCollection;
 use identity_wasm::crypto::WasmKeyPair;
+use identity_wasm::crypto::WasmKeyType;
+use identity_wasm::crypto::WasmProofOptions;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
 use identity_wasm::did::WasmMethodScope;
 use identity_wasm::did::WasmVerificationMethod;
+use identity_wasm::did::WasmVerifierOptions;
 use identity_wasm::error::WasmError;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
-  let key1 = WasmKeyPair::new(KeyType::Ed25519).unwrap();
-  let public_key = key1.public();
-  let private_key = key1.private();
-  let key2 = WasmKeyPair::from_base58(KeyType::Ed25519, &public_key, &private_key).unwrap();
+  let key1 = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
+  let key2 = WasmKeyPair::from_keys(WasmKeyType::Ed25519, key1.public(), key1.private()).unwrap();
 
   let json1 = key1.to_json().unwrap();
   let json2 = key2.to_json().unwrap();
@@ -54,35 +52,6 @@ fn test_keypair() {
 }
 
 #[wasm_bindgen_test]
-fn test_key_collection() {
-  let size = 1 << 5;
-  let keys = WasmKeyCollection::new(KeyType::Ed25519, size).unwrap();
-
-  assert_eq!(keys.length(), size);
-  assert!(!keys.is_empty());
-
-  for index in 0..keys.length() {
-    let key = keys.keypair(index).unwrap();
-
-    assert_eq!(key.public(), keys.public(index).unwrap());
-    assert_eq!(key.private(), keys.private(index).unwrap());
-
-    assert!(keys.merkle_proof(Digest::Sha256, index).is_some());
-  }
-
-  assert!(keys.keypair(keys.length()).is_none());
-  assert!(keys.merkle_proof(Digest::Sha256, keys.length()).is_none());
-
-  let json = keys.to_json().unwrap();
-  let from = WasmKeyCollection::from_json(&json).unwrap();
-
-  for index in 0..keys.length() {
-    assert_eq!(keys.public(index).unwrap(), from.public(index).unwrap());
-    assert_eq!(keys.private(index).unwrap(), from.private(index).unwrap());
-  }
-}
-
-#[wasm_bindgen_test]
 fn test_js_error_from_wasm_error() {
   let error = WasmError::new(Cow::Borrowed("Some name"), Cow::Owned("Error message".to_owned()));
   let js_error = js_sys::Error::from(error);
@@ -92,8 +61,8 @@ fn test_js_error_from_wasm_error() {
 
 #[wasm_bindgen_test]
 fn test_did() {
-  let key = WasmKeyPair::new(KeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key, None).unwrap();
+  let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
+  let did = WasmDID::new(&key.public(), None).unwrap();
 
   assert_eq!(did.network_name(), "main");
 
@@ -101,8 +70,7 @@ fn test_did() {
 
   assert_eq!(did.to_string(), parsed.to_string());
 
-  let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("dev".to_owned())).unwrap();
+  let base58 = WasmDID::new(&key.public(), Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_name(), "dev");
@@ -111,8 +79,8 @@ fn test_did() {
 #[wasm_bindgen_test]
 fn test_did_url() {
   // Base DID Url
-  let key = WasmKeyPair::new(KeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key, None).unwrap();
+  let key = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
+  let did = WasmDID::new(&key.public(), None).unwrap();
   let did_url = did.to_url();
 
   assert_eq!(did.to_string(), did_url.to_string());
@@ -136,7 +104,7 @@ fn test_did_url() {
 
 #[wasm_bindgen_test]
 fn test_document_new() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
   assert_eq!(document.id().network_name(), "main");
   assert!(document.default_signing_method().is_ok());
@@ -144,7 +112,7 @@ fn test_document_new() {
 
 #[wasm_bindgen_test]
 fn test_document_sign_self() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
 
   // Sign with DIDUrl method query.
   {
@@ -173,14 +141,14 @@ fn test_document_sign_self() {
 
 #[wasm_bindgen_test]
 fn test_document_resolve_method() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
   let default_method: WasmVerificationMethod = document.default_signing_method().unwrap();
 
-  let keypair_new: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair_new: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let method_new: WasmVerificationMethod = WasmVerificationMethod::new(
     &document.id(),
-    KeyType::Ed25519,
+    WasmKeyType::Ed25519,
     keypair_new.public(),
     "new-key".to_owned(),
   )
@@ -192,10 +160,8 @@ fn test_document_resolve_method() {
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from(default_method.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
-      )
+      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -203,10 +169,8 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from(method_new.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
-      )
+      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -218,8 +182,9 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        None,
       )
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -227,10 +192,8 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
-      )
+      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -242,8 +205,9 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        None,
       )
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
@@ -253,18 +217,61 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into()
+        None,
       )
+      .unwrap()
       .unwrap()
       .id()
       .to_string(),
     method_new.id().to_string()
   );
+
+  // Resolve with correct verification method relationship.
+  assert_eq!(
+    document
+      .resolve_method(
+        &JsValue::from(default_method.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::capability_invocation()).unchecked_into()),
+      )
+      .unwrap()
+      .unwrap()
+      .id()
+      .to_string(),
+    default_method.id().to_string()
+  );
+  assert_eq!(
+    document
+      .resolve_method(
+        &JsValue::from(method_new.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::authentication()).unchecked_into()),
+      )
+      .unwrap()
+      .unwrap()
+      .id()
+      .to_string(),
+    method_new.id().to_string()
+  );
+
+  // Resolve with wrong verification method relationship.
+  assert!(document
+    .resolve_method(
+      &JsValue::from(default_method.id()).unchecked_into(),
+      Some(JsValue::from(WasmMethodScope::key_agreement()).unchecked_into()),
+    )
+    .unwrap()
+    .is_none());
+  assert!(document
+    .resolve_method(
+      &JsValue::from(method_new.id()).unchecked_into(),
+      Some(JsValue::from(WasmMethodScope::assertion_method()).unchecked_into()),
+    )
+    .unwrap()
+    .is_none());
 }
 
 #[wasm_bindgen_test]
 fn test_document_network() {
-  let keypair: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
   assert_eq!(document.id().network_name(), "dev");
@@ -307,12 +314,12 @@ fn test_timestamp_serde() {
 
 #[wasm_bindgen_test]
 fn test_sign_document() {
-  let keypair1: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair1: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let document1: WasmDocument = WasmDocument::new(&keypair1, None, None).unwrap();
 
   // Replace the default signing method.
   let mut document2: WasmDocument = document1.clone();
-  let keypair2: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let keypair2: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let method: WasmVerificationMethod = WasmVerificationMethod::new(
     &document2.id(),
     keypair2.type_(),
@@ -344,7 +351,7 @@ fn test_sign_document() {
 #[wasm_bindgen_test]
 fn test_validations() {
   // Set up issuer & subject DID documents
-  let issuer_keys: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let issuer_keys: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let mut issuer_doc: WasmDocument = WasmDocument::new(&issuer_keys, None, None).unwrap();
   issuer_doc
     .sign_self(
@@ -359,7 +366,7 @@ fn test_validations() {
     )
     .unwrap();
 
-  let subject_keys: WasmKeyPair = WasmKeyPair::new(KeyType::Ed25519).unwrap();
+  let subject_keys: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
   let mut subject_doc: WasmDocument = WasmDocument::new(&subject_keys, None, None).unwrap();
   subject_doc
     .sign_self(
@@ -408,28 +415,13 @@ fn test_validations() {
 
   let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
 
-  // sign the credential with the issuer's DID Document
-
-  let issuer_method: Object = Object::from_json(
-    format!(
-      r#"{{
-    "method": "{}",
-    "public": "{}",
-    "private": "{}"
-  }}"#,
-      "#sign-0",
-      issuer_keys.public(),
-      issuer_keys.private()
-    )
-    .as_str(),
-  )
-  .unwrap();
-
+  // Sign the credential with the issuer's DID Document.
   let signed_credential: WasmCredential = issuer_doc
     .sign_credential(
       &JsValue::from(&credential.to_json().unwrap()),
-      &JsValue::from_serde(&issuer_method).unwrap(),
-      &WasmSignatureOptions::default(),
+      issuer_keys.private(),
+      &JsValue::from_str("#sign-0").unchecked_into(),
+      &WasmProofOptions::default(),
     )
     .unwrap();
 
@@ -438,7 +430,7 @@ fn test_validations() {
     &signed_credential,
     &issuer_doc.to_json().unwrap().unchecked_into(),
     &WasmCredentialValidationOptions::default(),
-    WasmFailFast::FirstError
+    WasmFailFast::FirstError,
   )
   .is_ok());
 
@@ -447,7 +439,7 @@ fn test_validations() {
   assert!(WasmCredentialValidator::verify_signature(
     &signed_credential,
     issuers.unchecked_ref(),
-    &WasmVerifierOptions::default()
+    &WasmVerifierOptions::default(),
   )
   .is_ok());
 
@@ -455,28 +447,16 @@ fn test_validations() {
     &subject_doc,
     signed_credential.to_json().unwrap(),
     Some("VerifiablePresentation".to_owned()),
-    Some("http://example.org/credentials/3732".to_owned()),
-  )
-  .unwrap();
-
-  let subject_method: Object = Object::from_json(
-    format!(
-      r#"{{
-    "method": "{}",
-    "private": "{}"
-  }}"#,
-      "#sign-0",
-      subject_keys.private()
-    )
-    .as_str(),
+    Some("https://example.org/credentials/3732".to_owned()),
   )
   .unwrap();
 
   let signed_presentation: WasmPresentation = subject_doc
     .sign_presentation(
       &presentation.to_json().unwrap(),
-      &JsValue::from_serde(&subject_method).unwrap(),
-      &WasmSignatureOptions::default(),
+      subject_keys.private(),
+      &JsValue::from_str("#sign-0").unchecked_into(),
+      &WasmProofOptions::default(),
     )
     .unwrap();
 
@@ -485,7 +465,7 @@ fn test_validations() {
   assert!(WasmPresentationValidator::verify_presentation_signature(
     &signed_presentation,
     &subject_doc.to_json().unwrap().unchecked_into(),
-    &WasmVerifierOptions::default()
+    &WasmVerifierOptions::default(),
   )
   .is_ok());
 
@@ -495,7 +475,31 @@ fn test_validations() {
     &subject_doc.to_json().unwrap().unchecked_into(),
     issuers.unchecked_ref(),
     &WasmPresentationValidationOptions::default(),
-    WasmFailFast::FirstError
+    WasmFailFast::FirstError,
   )
   .is_ok());
+}
+
+// This test should be matched by a test with equivalent test vector in Rust
+// to ensure hashes are consistent across architectures.
+#[wasm_bindgen_test]
+fn test_hash_is_consistent() {
+  let test_vector_1: [u8; 32] = [
+    187, 104, 26, 87, 133, 152, 0, 180, 17, 232, 218, 46, 190, 140, 102, 34, 42, 94, 9, 101, 87, 249, 167, 237, 194,
+    182, 240, 2, 150, 78, 110, 218,
+  ];
+
+  let test_vector_2: [u8; 32] = [
+    125, 153, 99, 21, 23, 190, 149, 109, 84, 120, 40, 91, 181, 57, 67, 254, 11, 25, 152, 214, 84, 46, 105, 186, 16, 39,
+    141, 151, 100, 163, 138, 222,
+  ];
+
+  let location_1 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_1.to_vec());
+  let location_2 = WasmKeyLocation::new(WasmKeyType::Ed25519, "".to_owned(), test_vector_2.to_vec());
+
+  assert_eq!(location_1.to_string().split(':').last().unwrap(), "74874706796298672");
+  assert_eq!(
+    location_2.to_string().split(':').last().unwrap(),
+    "10201576743536852223"
+  );
 }

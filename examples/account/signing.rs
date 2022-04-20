@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! cargo run --example account_signing
@@ -6,21 +6,23 @@
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
+use identity::account::MethodContent;
 use identity::account::Result;
+use identity::account_storage::Stronghold;
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Subject;
 use identity::crypto::KeyPair;
-use identity::crypto::SignatureOptions;
+use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifierOptions;
 use identity::did::DID;
 use identity::iota::ExplorerUrl;
-use identity::iota::IotaDID;
 use identity::iota::ResolvedIotaDocument;
+use identity::iota_core::IotaDID;
+use identity::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -32,11 +34,12 @@ async fn main() -> Result<()> {
 
   // Stronghold settings
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
-  let password: String = "my-password".into();
+  let password: String = "my-password".to_owned();
+  let stronghold: Stronghold = Stronghold::new(&stronghold_path, password, None).await?;
 
   // Create a new Account with stronghold storage.
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
+    .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
 
@@ -48,12 +51,13 @@ async fn main() -> Result<()> {
   account
     .update_identity()
     .create_method()
+    .content(MethodContent::GenerateEd25519)
     .fragment("key-1")
     .apply()
     .await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
-  let subject_key: KeyPair = KeyPair::new_ed25519()?;
+  let subject_key: KeyPair = KeyPair::new(KeyType::Ed25519)?;
   let subject_did: IotaDID = IotaDID::new(subject_key.public().as_ref())?;
 
   // Create the actual Verifiable Credential subject.
@@ -73,9 +77,7 @@ async fn main() -> Result<()> {
     .build()?;
 
   // ...and sign the Credential with the previously created Verification Method
-  account
-    .sign("key-1", &mut credential, SignatureOptions::default())
-    .await?;
+  account.sign("key-1", &mut credential, ProofOptions::default()).await?;
 
   println!("[Example] Local Credential = {:#}", credential);
 

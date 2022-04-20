@@ -34,14 +34,20 @@ macro_rules! impl_update_builder {
     paste::paste! {
       $(#[$doc])*
       #[derive(Debug)]
-      pub struct [<$ident Builder>]<'account> {
-        account: &'account mut Account,
+      pub struct [<$ident Builder>]<'account, C>
+      where
+        C: identity_iota::tangle::SharedPtr<Client>,
+      {
+        account: &'account mut Account<C>,
         $(
           $field: Option<$ty>,
         )*
       }
 
-      impl<'account> [<$ident Builder>]<'account> {
+      impl<'account, C> [<$ident Builder>]<'account, C>
+      where
+        C: identity_iota::tangle::SharedPtr<Client>,
+      {
         $(
           #[must_use]
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
@@ -50,7 +56,10 @@ macro_rules! impl_update_builder {
           }
         )*
 
-        pub fn new(account: &'account mut Account) -> [<$ident Builder>]<'account> {
+        pub fn new(account: &'account mut Account<C>) -> [<$ident Builder>]<'account, C>
+      where
+        C: identity_iota::tangle::SharedPtr<Client>,
+        {
           [<$ident Builder>] {
             account,
             $(
@@ -70,9 +79,12 @@ macro_rules! impl_update_builder {
         }
       }
 
-      impl<'account> $crate::identity::IdentityUpdater<'account> {
+      impl<'account, C> $crate::types::IdentityUpdater<'account, C>
+      where
+        C: identity_iota::tangle::SharedPtr<Client>,
+      {
         /// Creates a new builder to modify the identity. See the documentation of the return type for details.
-        pub fn [<$ident:snake>](&'account mut self) -> [<$ident Builder>]<'account> {
+        pub fn [<$ident:snake>](&'account mut self) -> [<$ident Builder>]<'account, C> {
           [<$ident Builder>]::new(self.account)
         }
       }

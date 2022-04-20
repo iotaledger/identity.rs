@@ -50,6 +50,13 @@ jobs:
           args: --manifest-path ./bindings/wasm/Cargo.toml --target wasm32-unknown-unknown --all-targets --all-features -- -D warnings
           name: wasm
 
+      - name: stronghold-nodejs clippy check
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --manifest-path ./bindings/stronghold-nodejs/Cargo.toml --all-targets --all-features -- -D warnings
+          name: stronghold-nodejs
+
       - name: libjose clippy check
         uses: actions-rs/clippy-check@v1
         with:

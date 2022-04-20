@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
+#![allow(deprecated)]
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]
@@ -25,8 +26,6 @@ mod resolver;
 
 pub mod chain;
 pub mod credential;
-pub mod did;
-pub mod diff;
 pub mod document;
 pub mod error;
 pub mod tangle;

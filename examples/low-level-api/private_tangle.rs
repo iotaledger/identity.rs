@@ -9,11 +9,12 @@
 //!
 //! cargo run --example private_tangle
 
+use identity::crypto::KeyType;
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
 use identity::iota::ExplorerUrl;
-use identity::iota::Network;
 use identity::iota::Receipt;
+use identity::iota_core::Network;
 use identity::prelude::*;
 
 #[tokio::main]
@@ -45,7 +46,7 @@ pub async fn main() -> Result<()> {
     .await?;
 
   // Generate a new Ed25519 public/private key pair.
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
 
   // Create a DID with the network set explicitly.
   let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;

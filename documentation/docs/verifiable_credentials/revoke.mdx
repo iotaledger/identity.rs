@@ -7,36 +7,20 @@ keywords:
 - verifiable
 - credentials
 - revoke
-- Merkle Key Collections
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
-import revoke_vc_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/revoke_vc.js';
-import revoke_vc_rs from  '!!raw-loader!./../../../examples/low-level-api/revoke_vc.rs';
+import revoke_vc_rs from  '!!raw-loader!./../../../examples/account/revoke_vc.rs';
+import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-TODO: Explain how Verifiable Credentials are revoked using Merkle Key Collections
+TODO: Explain how Verifiable Credentials are revoked using `credentialStatus` and e.g. `RevocationList2020`.
 
 ## Example
 
 This example shows how you can revoke a [Verifiable Credential(VC)](overview) by removing a verification method (public key) from the DID Document of the Issuer. This means the VC can no longer be validated. This would invalidate every VC signed with the same public key, meaning the Issuer would have to sign every VC with a different key.
 
-<Tabs
-groupId="programming-languages"
-defaultValue="rust"
-values={[
-{label: 'Rust', value: 'rust'},
-{label: 'Node.js', value: 'nodejs'},
-]
-}>
-<TabItem value="rust">
-<CodeBlock className="language-rust">
-{revoke_vc_rs}
-</CodeBlock>
-</TabItem>
-<TabItem value='nodejs'>
-<CodeBlock className="language-javascript">
-{revoke_vc_js}
-</CodeBlock></TabItem>
-</Tabs>
 
+<CodeSnippet 
+    nodeReplitLink="https://repl.it/@IOTAFoundation/revoke-vc?lite=true"
+    rustContent={revoke_vc_rs}
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples-account/src/revoke_vc.ts"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/dev/examples/account/revoke_vc.rs"
+/>
