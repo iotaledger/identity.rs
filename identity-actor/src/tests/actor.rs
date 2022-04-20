@@ -12,6 +12,7 @@ use libp2p::Multiaddr;
 use crate::actor::Actor;
 use crate::actor::ActorBuilder;
 use crate::actor::ActorRequest;
+use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
 use crate::actor::RequestContext;
@@ -28,9 +29,9 @@ use super::default_sending_actor;
 async fn test_unknown_request_returns_error() -> ActorResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|_| {}).await;
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| builder).await;
 
-  let mut sending_actor = default_sending_actor(|_| {}).await;
+  let mut sending_actor = default_sending_actor(|builder| builder).await;
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
@@ -58,8 +59,8 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
-    fn endpoint() -> &'static str {
-      "request/test"
+    fn endpoint() -> Endpoint {
+      "request/test".parse().unwrap()
     }
   }
 
@@ -78,15 +79,13 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   let mut actor1_builder = ActorBuilder::new();
   actor1_builder
     .add_state(actor1_state.clone())
-    .add_sync_handler(State::handler)
-    .unwrap();
+    .add_sync_handler(State::handler);
   let mut actor1: Actor = actor1_builder.build().await.unwrap();
 
   let mut actor2_builder = ActorBuilder::new();
   actor2_builder
     .add_state(actor2_state.clone())
-    .add_sync_handler(State::handler)
-    .unwrap();
+    .add_sync_handler(State::handler);
   let mut actor2: Actor = actor2_builder.build().await.unwrap();
 
   actor2
@@ -121,8 +120,8 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   impl ActorRequest<Synchronous> for Dummy {
     type Response = ();
 
-    fn endpoint() -> &'static str {
-      "request/test"
+    fn endpoint() -> Endpoint {
+      "request/test".parse().unwrap()
     }
   }
 
@@ -139,14 +138,12 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
 
   let state = State(Arc::new(AtomicBool::new(false)));
 
-  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|builder| {
+  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
+    builder.add_state(state.clone()).add_sync_handler(State::handler);
     builder
-      .add_state(state.clone())
-      .add_sync_handler(State::handler)
-      .unwrap();
   })
   .await;
-  let mut sender = default_sending_actor(|_| {}).await;
+  let mut sender = default_sending_actor(|builder| builder).await;
 
   sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 
@@ -173,22 +170,22 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
   impl ActorRequest<Synchronous> for MessageRequest {
     type Response = MessageResponse;
 
-    fn endpoint() -> &'static str {
-      "test/message"
+    fn endpoint() -> Endpoint {
+      "test/message".parse().unwrap()
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
     builder
       .add_state(())
       .add_sync_handler(|_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
         MessageResponse(message.input.0)
-      })
-      .unwrap();
+      });
+    builder
   })
   .await;
 
-  let mut sending_actor = default_sending_actor(|_| {}).await;
+  let mut sending_actor = default_sending_actor(|builder| builder).await;
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
@@ -207,7 +204,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
 async fn test_interacting_with_shutdown_actor_returns_error() {
   try_init_logger();
 
-  let (listening_actor, _, _) = default_listening_actor(|_| {}).await;
+  let (listening_actor, _, _) = default_listening_actor(|builder| builder).await;
 
   let mut actor_clone = listening_actor.clone();
 
@@ -220,14 +217,15 @@ async fn test_interacting_with_shutdown_actor_returns_error() {
 async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
     builder
       .add_state(())
       .add_sync_handler(|_: (), _: Actor, _message: RequestContext<IdentityList>| async move {
         tokio::time::sleep(std::time::Duration::from_millis(50)).await;
         vec![]
-      })
-      .unwrap();
+      });
+
+    builder
   })
   .await;
 
@@ -280,24 +278,24 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   impl ActorRequest<Synchronous> for CustomRequest {
     type Response = String;
 
-    fn endpoint() -> &'static str {
-      "test/request"
+    fn endpoint() -> Endpoint {
+      "test/request".parse().unwrap()
     }
   }
 
   impl ActorRequest<Synchronous> for CustomRequest2 {
     type Response = u32;
 
-    fn endpoint() -> &'static str {
-      "test/request"
+    fn endpoint() -> Endpoint {
+      "test/request".parse().unwrap()
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
     builder
       .add_state(())
-      .add_sync_handler(|_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 })
-      .unwrap();
+      .add_sync_handler(|_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 });
+    builder
   })
   .await;
 
@@ -322,8 +320,8 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   impl ActorRequest<Synchronous> for CustomRequest3 {
     type Response = String;
 
-    fn endpoint() -> &'static str {
-      "test/request"
+    fn endpoint() -> Endpoint {
+      "test/request".parse().unwrap()
     }
   }
 

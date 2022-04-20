@@ -21,6 +21,7 @@ use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::NetCommanderMut;
 use crate::p2p::RequestMessage;
+use crate::p2p::ResponseMessage;
 
 use identity_core::common::OneOrMany;
 use libp2p::Multiaddr;
@@ -174,7 +175,7 @@ where
     peer: PeerId,
     request: REQ,
   ) -> ActorResult<REQ::Response> {
-    let endpoint: &'static str = REQ::endpoint();
+    let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = request.request_mode();
 
     let request_vec = serde_json::to_vec(&request).map_err(|err| Error::SerializationFailure {
@@ -183,11 +184,11 @@ where
       error_message: err.to_string(),
     })?;
 
-    let message = RequestMessage::new(endpoint, request_mode, request_vec)?;
-
     log::debug!("Sending `{}` message", endpoint);
 
-    let response = self.commander().send_request(peer, message).await?;
+    let request: RequestMessage = RequestMessage::new(endpoint, request_mode, request_vec);
+
+    let response: ResponseMessage = self.commander().send_request(peer, request).await?;
 
     let response: Vec<u8> =
       serde_json::from_slice::<Result<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {

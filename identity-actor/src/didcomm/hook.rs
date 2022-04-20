@@ -12,7 +12,6 @@ use crate::actor::AnyFuture;
 use crate::actor::Endpoint;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::Result as ActorResult;
 
 use super::didcomm_actor::DidCommActor;
 use super::termination::DidCommTermination;
@@ -26,7 +25,7 @@ where
   OBJ: Clone + Send + Sync + 'static,
   MOD: SyncMode,
 {
-  pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
+  pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT) -> Self
   where
     REQ: ActorRequest<MOD> + Sync,
     REQ::Response: Send,
@@ -34,7 +33,7 @@ where
     MOD: Send + Sync + 'static,
   {
     let handler: Hook<_, _, _, _> = Hook::new(handler);
-    let mut endpoint: Endpoint = Endpoint::new(REQ::endpoint())?;
+    let mut endpoint: Endpoint = REQ::endpoint();
     endpoint.is_hook = true;
 
     println!("adding hook {endpoint}");
@@ -42,7 +41,7 @@ where
     self
       .async_handlers
       .insert(endpoint, AsyncHandlerObject::new(self.object_id, Box::new(handler)));
-    Ok(self)
+    self
   }
 }
 

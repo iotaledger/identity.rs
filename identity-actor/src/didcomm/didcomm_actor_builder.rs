@@ -20,7 +20,6 @@ use crate::actor::ActorBuilder;
 use crate::actor::ActorRequest;
 use crate::actor::ActorState;
 use crate::actor::Asynchronous;
-use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::Handler;
 use crate::actor::ObjectId;
@@ -194,24 +193,24 @@ where
   pub fn add_async_handler<REQ, FUT>(
     self,
     handler: fn(OBJ, DidCommActor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
-  ) -> ActorResult<Self>
+  ) -> Self
   where
     REQ: ActorRequest<Asynchronous> + Sync,
     FUT: Future<Output = ()> + Send + 'static,
   {
     let handler: Handler<_, DidCommActor, _, _, _> = Handler::new(handler);
     self.async_handlers.insert(
-      Endpoint::new(REQ::endpoint())?,
+      REQ::endpoint(),
       AsyncHandlerObject::new(self.object_id, Box::new(handler)),
     );
-    Ok(self)
+    self
   }
 
   /// Add a synchronous handler function that operates on a shared state object and some
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
+  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self
   where
     REQ: ActorRequest<Synchronous> + Sync,
     REQ::Response: Send,
@@ -219,9 +218,9 @@ where
   {
     let handler = Handler::new(handler);
     self.sync_handlers.insert(
-      Endpoint::new(REQ::endpoint())?,
+      REQ::endpoint(),
       SyncHandlerObject::new(self.object_id, Box::new(handler)),
     );
-    Ok(self)
+    self
   }
 }

@@ -3,6 +3,7 @@
 
 use crate::actor::ActorRequest;
 use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
 
 use super::thread_id::ThreadId;
 
@@ -54,7 +55,7 @@ where
 {
   type Response = ();
 
-  fn endpoint() -> &'static str {
+  fn endpoint() -> Endpoint {
     T::endpoint()
   }
 }

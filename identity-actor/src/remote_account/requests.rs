@@ -8,6 +8,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::actor::ActorRequest;
+use crate::actor::Endpoint;
 use crate::actor::Synchronous;
 
 use super::RemoteAccountError;
@@ -18,8 +19,8 @@ pub struct IdentityCreate(pub IdentitySetup);
 impl ActorRequest<Synchronous> for IdentityCreate {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
-  fn endpoint() -> &'static str {
-    "remote_account/create"
+  fn endpoint() -> Endpoint {
+    "remote_account/create".parse().unwrap()
   }
 }
 
@@ -29,8 +30,8 @@ pub struct IdentityList;
 impl ActorRequest<Synchronous> for IdentityList {
   type Response = Vec<IotaDID>;
 
-  fn endpoint() -> &'static str {
-    "remote_account/list"
+  fn endpoint() -> Endpoint {
+    "remote_account/list".parse().unwrap()
   }
 }
 
@@ -40,7 +41,7 @@ pub struct IdentityGet(pub IotaDID);
 impl ActorRequest<Synchronous> for IdentityGet {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
-  fn endpoint() -> &'static str {
-    "remote_account/get"
+  fn endpoint() -> Endpoint {
+    "remote_account/get".parse().unwrap()
   }
 }

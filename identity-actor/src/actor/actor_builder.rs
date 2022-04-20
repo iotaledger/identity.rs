@@ -11,7 +11,6 @@ use std::time::Duration;
 use crate::actor::Actor;
 use crate::actor::ActorConfig;
 use crate::actor::ActorRequest;
-use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::Handler;
 use crate::actor::RequestContext;
@@ -266,7 +265,7 @@ where
   /// [`ActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> ActorResult<Self>
+  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self
   where
     REQ: ActorRequest<Synchronous> + Sync,
     REQ::Response: Send,
@@ -274,9 +273,9 @@ where
   {
     let handler = Handler::new(handler);
     self.handler_map.insert(
-      Endpoint::new(REQ::endpoint())?,
+      REQ::endpoint(),
       SyncHandlerObject::new(self.object_id, Box::new(handler)),
     );
-    Ok(self)
+    self
   }
 }

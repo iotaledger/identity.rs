@@ -173,10 +173,10 @@ impl DidCommActor {
     thread_id: &ThreadId,
     message: REQ,
   ) -> ActorResult<()> {
-    let endpoint: &'static str = REQ::endpoint();
+    let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = message.request_mode();
 
-    let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), endpoint.to_owned(), message);
+    let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), endpoint.to_string(), message);
 
     let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
@@ -188,9 +188,8 @@ impl DidCommActor {
       error_message: err.to_string(),
     })?;
 
-    let message = RequestMessage::new(endpoint, request_mode, dcpm_vec)?;
-
     log::debug!("Sending `{}` message", endpoint);
+    let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
     let response = self.raw().commander().send_request(peer, message).await?;
 
@@ -341,7 +340,7 @@ impl DidCommActor {
     peer: PeerId,
     input: REQ,
   ) -> ActorResult<REQ> {
-    let mut endpoint = Endpoint::new(REQ::endpoint())?;
+    let mut endpoint: Endpoint = REQ::endpoint();
     endpoint.is_hook = true;
 
     if self.state.async_handlers.contains_key(&endpoint) {

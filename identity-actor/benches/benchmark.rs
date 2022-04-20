@@ -20,11 +20,8 @@ async fn setup() -> (Actor, PeerId, Actor) {
   builder
     .add_state(RemoteAccount::new().unwrap())
     .add_sync_handler(RemoteAccount::create)
-    .unwrap()
     .add_sync_handler(RemoteAccount::list)
-    .unwrap()
-    .add_sync_handler(RemoteAccount::get)
-    .unwrap();
+    .add_sync_handler(RemoteAccount::get);
 
   let mut receiver: Actor = builder.build().await.unwrap();
 

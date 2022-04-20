@@ -6,6 +6,7 @@ use libp2p::PeerId;
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
@@ -39,16 +40,15 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
   impl ActorRequest<Synchronous> for SyncDummy {
     type Response = u16;
 
-    fn endpoint() -> &'static str {
-      "test/request"
+    fn endpoint() -> Endpoint {
+      "test/request".parse().unwrap()
     }
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(())
-      .add_sync_handler(|_: (), _: Actor, request: RequestContext<SyncDummy>| async move { request.input.0 })
-      .unwrap();
+      .add_sync_handler(|_: (), _: Actor, request: RequestContext<SyncDummy>| async move { request.input.0 });
 
     builder
   })
@@ -82,8 +82,8 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   impl ActorRequest<Asynchronous> for AsyncDummy {
     type Response = ();
 
-    fn endpoint() -> &'static str {
-      "unknown/thread"
+    fn endpoint() -> Endpoint {
+      "unknown/thread".parse().unwrap()
     }
   }
 
@@ -122,8 +122,7 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
-      .add_async_handler(DidCommState::presentation_verifier_actor_handler)
-      .unwrap();
+      .add_async_handler(DidCommState::presentation_verifier_actor_handler);
     builder
   })
   .await;
@@ -149,8 +148,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
   let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
-      .add_async_handler(DidCommState::presentation_holder_actor_handler)
-      .unwrap();
+      .add_async_handler(DidCommState::presentation_holder_actor_handler);
     builder
   })
   .await;
@@ -177,8 +175,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
   let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
-      .add_async_handler(DidCommState::presentation_holder_actor_handler)
-      .unwrap();
+      .add_async_handler(DidCommState::presentation_holder_actor_handler);
     builder
   })
   .await;
@@ -197,8 +194,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
   let mut verifier_actor = default_sending_didcomm_actor(|mut builder| {
     builder
       .add_state(function_state.clone())
-      .add_hook(presentation_request_hook)
-      .unwrap();
+      .add_hook(presentation_request_hook);
     builder
   })
   .await;
@@ -239,13 +235,11 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
   let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
     builder
       .add_state(handler)
-      .add_async_handler(DidCommState::presentation_verifier_actor_handler)
-      .unwrap();
+      .add_async_handler(DidCommState::presentation_verifier_actor_handler);
 
     builder
       .add_state(function_state.clone())
-      .add_hook(receive_presentation_hook)
-      .unwrap();
+      .add_hook(receive_presentation_hook);
 
     builder
   })
@@ -291,12 +285,9 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder
-      .add_state(())
-      .add_async_handler(
-        |_: (), _: DidCommActor, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {},
-      )
-      .unwrap();
+    builder.add_state(()).add_async_handler(
+      |_: (), _: DidCommActor, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {},
+    );
 
     builder
   })
@@ -343,17 +334,14 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   let state = TestFunctionState::new();
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder
-      .add_state(state.clone())
-      .add_async_handler(
-        |state: TestFunctionState,
-         _: DidCommActor,
-         _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {
-          tokio::time::sleep(std::time::Duration::from_millis(25)).await;
-          state.was_called.store(true, std::sync::atomic::Ordering::SeqCst);
-        },
-      )
-      .unwrap();
+    builder.add_state(state.clone()).add_async_handler(
+      |state: TestFunctionState,
+       _: DidCommActor,
+       _message: RequestContext<DidCommPlaintextMessage<PresentationOffer>>| async move {
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+        state.was_called.store(true, std::sync::atomic::Ordering::SeqCst);
+      },
+    );
 
     builder
   })

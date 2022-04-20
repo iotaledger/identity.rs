@@ -5,6 +5,7 @@ use libp2p::PeerId;
 
 use crate::actor::ActorRequest;
 use crate::actor::Asynchronous;
+use crate::actor::Endpoint;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::didcomm::message::DidCommPlaintextMessage;
@@ -116,8 +117,8 @@ pub struct PresentationRequest([u8; 2]);
 
 impl ActorRequest<Asynchronous> for PresentationRequest {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation_request"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation_request".parse().unwrap()
   }
 }
 
@@ -126,8 +127,8 @@ pub struct PresentationOffer([u8; 3]);
 
 impl ActorRequest<Asynchronous> for PresentationOffer {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation_offer"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation_offer".parse().unwrap()
   }
 }
 
@@ -136,8 +137,8 @@ pub struct Presentation([u8; 4]);
 
 impl ActorRequest<Asynchronous> for Presentation {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation".parse().unwrap()
   }
 }
 
@@ -146,7 +147,7 @@ pub struct PresentationResult([u8; 5]);
 
 impl ActorRequest<Asynchronous> for PresentationResult {
   type Response = ();
-  fn endpoint() -> &'static str {
-    "didcomm/presentation_result"
+  fn endpoint() -> Endpoint {
+    "didcomm/presentation_result".parse().unwrap()
   }
 }

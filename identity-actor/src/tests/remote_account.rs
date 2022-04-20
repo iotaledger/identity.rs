@@ -17,18 +17,16 @@ use crate::tests::try_init_logger;
 async fn test_remote_account() -> ActorResult<()> {
   try_init_logger();
 
-  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|builder| {
+  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
     builder
       .add_state(RemoteAccount::new().unwrap())
       .add_sync_handler(RemoteAccount::create)
-      .unwrap()
       .add_sync_handler(RemoteAccount::list)
-      .unwrap()
-      .add_sync_handler(RemoteAccount::get)
-      .unwrap();
+      .add_sync_handler(RemoteAccount::get);
+    builder
   })
   .await;
-  let mut sender = default_sending_actor(|_| {}).await;
+  let mut sender = default_sending_actor(|builder| builder).await;
 
   sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 
