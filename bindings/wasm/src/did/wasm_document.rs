@@ -8,6 +8,8 @@ use identity::core::OneOrSet;
 use identity::core::OrderedSet;
 use identity::core::Timestamp;
 use identity::core::Url;
+use identity::credential::Credential;
+use identity::credential::Presentation;
 use identity::crypto::PrivateKey;
 use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifiableProperties;
@@ -376,15 +378,21 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = signCredential)]
   pub fn sign_credential(
     &self,
-    data: &JsValue,
+    credential: &WasmCredential,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
-    let data: WasmCredential = WasmCredential::from_json(&json)?;
+    let mut data: Credential = credential.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-    Ok(data)
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmCredential::from(data))
   }
 
   /// Creates a signature for the given `Presentation` with the specified DID Document
@@ -393,15 +401,21 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = signPresentation)]
   pub fn sign_presentation(
     &self,
-    data: &JsValue,
+    presentation: &WasmPresentation,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
-    let data: WasmPresentation = WasmPresentation::from_json(&json)?;
+    let mut data: Presentation = presentation.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-    Ok(data)
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmPresentation::from(data))
   }
 
   /// Creates a signature for the given `data` with the specified DID Document
