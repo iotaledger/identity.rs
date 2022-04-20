@@ -69,7 +69,7 @@ impl WasmCredential {
   }
 
   /// Returns a copy of the URIs defining the type of the `Credential`.
-  #[wasm_bindgen]
+  #[wasm_bindgen(js_name = "type")]
   pub fn types(&self) -> ArrayString {
     self
       .0
@@ -195,14 +195,7 @@ impl WasmCredential {
   /// Returns a copy of the miscellaneous properties on the `Credential`.
   #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    let map: js_sys::Map = js_sys::Map::new();
-    for (key, value) in self.0.properties.iter() {
-      map.set(
-        &JsValue::from_str(key.as_str()),
-        &JsValue::from_serde(&value).wasm_result()?,
-      );
-    }
-    Ok(map.unchecked_into::<MapStringAny>())
+    MapStringAny::try_from(&self.0.properties)
   }
 
   /// Serializes a `Credential` to a JSON object.

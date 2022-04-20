@@ -80,16 +80,9 @@ impl WasmService {
   }
 
   /// Returns a copy of the custom properties on the `Service`.
-  #[wasm_bindgen(js_name = properties)]
+  #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    let map: js_sys::Map = js_sys::Map::new();
-    for (key, value) in self.0.properties().iter() {
-      map.set(
-        &JsValue::from_str(key.as_str()),
-        &JsValue::from_serde(&value).wasm_result()?,
-      );
-    }
-    Ok(map.unchecked_into::<MapStringAny>())
+    MapStringAny::try_from(self.0.properties())
   }
 
   /// Serializes a `Service` object as a JSON object.
