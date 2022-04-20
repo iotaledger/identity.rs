@@ -62,7 +62,11 @@ The following metadata properties can be configured by the framework and are opt
   - **AssertionMethod**: to assert a claim. The signing verification method must have an [`assertionMethod`](https://www.w3.org/TR/did-core/#assertion) relationship to be valid.
   - **Authentication**: to authenticate the signer. The signing verification method must have an [`authentication`](https://www.w3.org/TR/did-core/#authentication) relationship to be valid.
 
+:::note
+
 Verifiers should always send a challenge and domain to mitigate replay attacks, see [Security Considerations](#security-considerations).
+
+:::
 
 A verifier could also choose to ignore some or all of these options.
 See [Proof Verifier Options](#proof-verifier-options) for more information.
