@@ -1,25 +1,21 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::ArrayString;
-use crate::common::MapStringAny;
 use identity::core::Object;
-use identity::core::OneOrMany;
 use identity::core::ToJson;
-use identity::core::Url;
-use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
-use identity::did::DID;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use crate::common::ArrayString;
+use crate::common::MapStringAny;
 use crate::credential::ArrayContext;
 use crate::credential::ArrayPolicy;
 use crate::credential::ArrayRefreshService;
+use crate::credential::IPresentation;
 use crate::credential::WasmCredential;
 use crate::crypto::WasmProof;
-use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -50,29 +46,8 @@ impl WasmPresentation {
 
   /// Constructs a new `Presentation`.
   #[wasm_bindgen(constructor)]
-  pub fn new(
-    holder_doc: &WasmDocument,
-    credential_data: JsValue,
-    presentation_type: Option<String>,
-    presentation_id: Option<String>,
-  ) -> Result<WasmPresentation> {
-    let credentials: OneOrMany<Credential> = credential_data.into_serde().wasm_result()?;
-    let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).wasm_result()?;
-
-    let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
-
-    for credential in credentials.into_vec() {
-      builder = builder.credential(credential);
-    }
-
-    if let Some(presentation_type) = presentation_type {
-      builder = builder.type_(presentation_type);
-    }
-
-    if let Some(presentation_id) = presentation_id {
-      builder = builder.id(Url::parse(presentation_id).wasm_result()?);
-    }
-
+  pub fn new(values: IPresentation) -> Result<WasmPresentation> {
+    let builder: PresentationBuilder = PresentationBuilder::try_from(values)?;
     builder.build().map(Self).wasm_result()
   }
 
@@ -128,7 +103,7 @@ impl WasmPresentation {
     self.0.holder.as_ref().map(|url| url.to_string())
   }
 
-  /// Returns a copy of the service(s) used to refresh an expired {@link Credential} in this `Presentation`.
+  /// Returns a copy of the service(s) used to refresh an expired {@link Credential} in the `Presentation`.
   #[wasm_bindgen(js_name = "refreshService")]
   pub fn refresh_service(&self) -> Result<ArrayRefreshService> {
     self

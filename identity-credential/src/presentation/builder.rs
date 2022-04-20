@@ -77,7 +77,7 @@ impl<T, U> PresentationBuilder<T, U> {
 
   /// Adds a value to the `refreshService` set.
   #[must_use]
-  pub fn refresh(mut self, value: RefreshService) -> Self {
+  pub fn refresh_service(mut self, value: RefreshService) -> Self {
     self.refresh_service.push(value);
     self
   }

@@ -43,7 +43,7 @@ pub struct Presentation<T = Object, U = Object> {
   /// The entity that generated the `Presentation`.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub holder: Option<Url>,
-  /// Service(s) used to refresh an expired `Presentation`.
+  /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
   pub refresh_service: OneOrMany<RefreshService>,
   /// Terms-of-use specified by the `Presentation` holder.

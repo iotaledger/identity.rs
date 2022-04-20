@@ -140,6 +140,8 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -166,8 +168,6 @@ This variant is the default used if no other variant is specified when construct
 <dd><p>Return after the first error occurs.</p>
 </dd>
 <dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -3020,7 +3020,7 @@ Deserializes a `Network` from a JSON object.
 **Kind**: global class  
 
 * [Presentation](#Presentation)
-    * [new Presentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_Presentation_new)
+    * [new Presentation(values)](#new_Presentation_new)
     * _instance_
         * [.context()](#Presentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
         * [.id()](#Presentation+id) ⇒ <code>string</code> \| <code>undefined</code>
@@ -3040,16 +3040,13 @@ Deserializes a `Network` from a JSON object.
 
 <a name="new_Presentation_new"></a>
 
-### new Presentation(holder_doc, credential_data, presentation_type, presentation_id)
+### new Presentation(values)
 Constructs a new `Presentation`.
 
 
 | Param | Type |
 | --- | --- |
-| holder_doc | [<code>Document</code>](#Document) | 
-| credential_data | <code>any</code> | 
-| presentation_type | <code>string</code> \| <code>undefined</code> | 
-| presentation_id | <code>string</code> \| <code>undefined</code> | 
+| values | <code>IPresentation</code> | 
 
 <a name="Presentation+context"></a>
 
@@ -3084,7 +3081,7 @@ Returns a copy of the URI of the entity that generated the `Presentation`.
 <a name="Presentation+refreshService"></a>
 
 ### presentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
-Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in this `Presentation`.
+Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the `Presentation`.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+termsOfUse"></a>
@@ -4376,6 +4373,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4426,10 +4427,6 @@ Return after the first error occurs.
 <a name="KeyType"></a>
 
 ## KeyType
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

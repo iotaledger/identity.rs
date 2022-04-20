@@ -1,5 +1,20 @@
 const assert = require('assert');
-const {AccountBuilder, AutoSave, MethodScope, MethodContent, KeyType, MethodType, KeyPair} = require("../node");
+const {
+    AccountBuilder,
+    AutoSave,
+    Credential,
+    CredentialValidator,
+    CredentialValidationOptions,
+    FailFast,
+    Document,
+    MethodScope,
+    MethodContent,
+    KeyType,
+    MethodType,
+    Presentation,
+    ProofOptions,
+    KeyPair, VerifierOptions, PresentationValidator, PresentationValidationOptions,
+} = require("../node");
 
 function setupAccountBuilder() {
     return new AccountBuilder({
@@ -86,6 +101,56 @@ describe('Account', function () {
             assert.equal(method2.id().fragment(), fragment2);
             assert.equal(method2.type().toString(), MethodType.X25519KeyAgreementKey2019().toString());
             assert.equal(method2.data().tryDecode().toString(), keypair.public().toString());
+        });
+    });
+});
+
+// Test the duck-typed interfaces for PresentationValidator and CredentialValidator.
+describe('CredentialValidator, PresentationValidator', function () {
+    describe('#validate()', function () {
+        it('should work', async () => {
+            // Set up issuer & subject DID documents.
+            const issuerKeys = new KeyPair(KeyType.Ed25519);
+            const issuerDoc = new Document(issuerKeys);
+
+            const subjectKeys = new KeyPair(KeyType.Ed25519);
+            const subjectDoc = new Document(subjectKeys);
+
+            const subjectDID = subjectDoc.id();
+            const issuerDID = issuerDoc.id();
+            const subject = {
+                id: subjectDID.toString(),
+                name: "Alice",
+                degreeName: "Bachelor of Science and Arts",
+                degreeType: "BachelorDegree",
+                GPA: "4.0"
+            };
+            console.log(issuerDID.toString());
+            const credential = new Credential({
+                id: "https://example.edu/credentials/3732",
+                type: "UniversityDegreeCredential",
+                issuer: issuerDID.toString(),
+                credentialSubject: subject
+            });
+
+            // Sign the credential with the issuer's DID Document.
+            const signedCredential = issuerDoc.signCredential(credential, issuerKeys.private(), "#sign-0", ProofOptions.default());
+
+            // Validate the credential.
+            assert.doesNotThrow(() => CredentialValidator.verifySignature(signedCredential, [issuerDoc, subjectDoc], VerifierOptions.default()));
+            assert.doesNotThrow(() => CredentialValidator.validate(signedCredential, issuerDoc, CredentialValidationOptions.default(), FailFast.FirstError));
+
+            // Construct a presentation.
+            const presentation = new Presentation({
+                id: "https://example.org/credentials/3732",
+                holder: subjectDID.toString(),
+                verifiableCredential: signedCredential
+            });
+            const signedPresentation = subjectDoc.signPresentation(presentation, subjectKeys.private(), "#sign-0", ProofOptions.default());
+
+            // Validate the presentation.
+            assert.doesNotThrow(() => PresentationValidator.verifyPresentationSignature(signedPresentation, subjectDoc, VerifierOptions.default()));
+            assert.doesNotThrow(() => PresentationValidator.validate(signedPresentation, subjectDoc, [issuerDoc], PresentationValidationOptions.default(), FailFast.FirstError));
         });
     });
 });

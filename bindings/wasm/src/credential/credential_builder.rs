@@ -138,7 +138,7 @@ interface ICredential {
   /** A unique URI referencing the subject of the `Credential`. */
   readonly id?: string;
 
-  /** One or more URIs defining the type of the `Credential`. Contains base context by default. */
+  /** One or more URIs defining the type of the `Credential`. Contains the base context by default. */
   readonly type?: string | Array<string>;
 
   /** One or more objects representing the `Credential` subject(s). */
