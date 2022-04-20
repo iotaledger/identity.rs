@@ -34,19 +34,15 @@ async function signing(storage?: Storage) {
     // Signing Example
     // ===========================================================================
 
-    // Add a new Ed25519 Verification Method to the identity.
+    // Add a new Ed25519 Verification Method to the identity for signing issued verifiable credentials.
     await account.createMethod({
         content: MethodContent.GenerateEd25519(),
         fragment: "key_1"
     })
 
-    // Create a subject DID for the recipient of a `UniversityDegree` credential.
-    let keyPair: KeyPair = new KeyPair(KeyType.Ed25519);
-    let subjectDid = new DID(keyPair.public());
-
-    // Prepare a credential subject indicating the degree earned by Alice.
-    let credentialSubject = {
-        id: subjectDid.toString(),
+    // Prepare a credential subject indicating the degree earned by Alice, linked to their DID.
+    const subject = {
+        id: "did:iota:3TT7QsmESw1dcboV2oVTAuJbbxaVYAThexZFct2z5Q2d",
         name: "Alice",
         degree: {
             type: "BachelorDegree",
@@ -58,7 +54,7 @@ async function signing(storage?: Storage) {
     const unsignedVc = new Credential({
         issuer: account.did(),
         type: "UniversityDegreeCredential",
-        credentialSubject,
+        credentialSubject: subject,
     });
 
     // ...and sign the Credential with the previously created Verification Method.

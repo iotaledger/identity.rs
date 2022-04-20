@@ -190,8 +190,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -210,18 +211,6 @@ publishing to the Tangle.
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -236,6 +225,28 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -418,17 +429,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -712,7 +712,7 @@ Creates a new `Client` with the given settings.
     * _instance_
         * [.context()](#Credential+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
         * [.id()](#Credential+id) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.types()](#Credential+types) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.type()](#Credential+type) ⇒ <code>Array.&lt;string&gt;</code>
         * [.credentialSubject()](#Credential+credentialSubject) ⇒ <code>Array.&lt;Subject&gt;</code>
         * [.issuer()](#Credential+issuer) ⇒ <code>string</code> \| <code>Issuer</code>
         * [.issuanceDate()](#Credential+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -754,9 +754,9 @@ Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
 Returns a copy of the unique `URI` referencing the subject of the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
-<a name="Credential+types"></a>
+<a name="Credential+type"></a>
 
-### credential.types() ⇒ <code>Array.&lt;string&gt;</code>
+### credential.type() ⇒ <code>Array.&lt;string&gt;</code>
 Returns a copy of the URIs defining the type of the `Credential`.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
@@ -3022,8 +3022,16 @@ Deserializes a `Network` from a JSON object.
 * [Presentation](#Presentation)
     * [new Presentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_Presentation_new)
     * _instance_
-        * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
+        * [.context()](#Presentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+        * [.id()](#Presentation+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.type()](#Presentation+type) ⇒ <code>Array.&lt;string&gt;</code>
         * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+        * [.holder()](#Presentation+holder) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.refreshService()](#Presentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
+        * [.termsOfUse()](#Presentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
+        * [.proof()](#Presentation+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.properties()](#Presentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
         * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
     * _static_
         * [.BaseContext()](#Presentation.BaseContext) ⇒ <code>string</code>
@@ -3033,6 +3041,8 @@ Deserializes a `Network` from a JSON object.
 <a name="new_Presentation_new"></a>
 
 ### new Presentation(holder_doc, credential_data, presentation_type, presentation_id)
+Constructs a new `Presentation`.
+
 
 | Param | Type |
 | --- | --- |
@@ -3041,16 +3051,64 @@ Deserializes a `Network` from a JSON object.
 | presentation_type | <code>string</code> \| <code>undefined</code> | 
 | presentation_id | <code>string</code> \| <code>undefined</code> | 
 
-<a name="Presentation+toJSON"></a>
+<a name="Presentation+context"></a>
 
-### presentation.toJSON() ⇒ <code>any</code>
-Serializes a `Presentation` object as a JSON object.
+### presentation.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+Returns a copy of the JSON-LD context(s) applicable to the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+id"></a>
+
+### presentation.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the unique `URI` of the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+type"></a>
+
+### presentation.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the URIs defining the type of the `Presentation`.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+verifiableCredential"></a>
 
 ### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-Returns a copy of the credentials contained in the presentation.
+Returns a copy of the [Credential](#Credential)(s) expressing the claims of the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+holder"></a>
+
+### presentation.holder() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the URI of the entity that generated the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+refreshService"></a>
+
+### presentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
+Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in this `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+termsOfUse"></a>
+
+### presentation.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
+Returns a copy of the terms-of-use specified by the `Presentation` holder
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+proof"></a>
+
+### presentation.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+Returns a copy of the proof used to verify the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+properties"></a>
+
+### presentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the miscellaneous properties on the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+toJSON"></a>
+
+### presentation.toJSON() ⇒ <code>any</code>
+Serializes a `Presentation` as a JSON object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+clone"></a>
@@ -3074,7 +3132,7 @@ Returns the base type.
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
-Deserializes a `Presentation` object from a JSON object.
+Deserializes a `Presentation` from a JSON object.
 
 **Kind**: static method of [<code>Presentation</code>](#Presentation)  
 

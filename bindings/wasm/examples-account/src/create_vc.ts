@@ -19,12 +19,12 @@ import {
  This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whomever they please.
  **/
 async function createVC(storage?: Storage) {
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         storage,
     });
 
     // Create an identity for the issuer.
-    let issuer = await builder.createIdentity();
+    const issuer = await builder.createIdentity();
 
     // Add verification method to the issuer.
     await issuer.createMethod({
@@ -33,11 +33,11 @@ async function createVC(storage?: Storage) {
     })
 
     // Create an identity for the holder, in this case also the subject.
-    let alice = await builder.createIdentity();
+    const alice = await builder.createIdentity();
 
-    // Create a credential subject indicating the degree earned by Alice.
-    let credentialSubject = {
-        id: alice.document().id().toString(),
+    // Create a credential subject indicating the degree earned by Alice, linked to their DID.
+    const subject = {
+        id: alice.document().id(),
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
@@ -49,7 +49,7 @@ async function createVC(storage?: Storage) {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.document().id(),
-        credentialSubject: credentialSubject
+        credentialSubject: subject
     });
 
     // Created a signed credential by the issuer.

@@ -118,8 +118,8 @@ const I_SUBJECT: &'static str = r#"
 
 [More Info](https://www.w3.org/TR/vc-data-model/#credential-subject) */
 interface Subject {
-  /** A URL identifying the credential subject. */
-  readonly id?: string;
+  /** A URI identifying the credential subject. */
+  readonly id?: string | DID;
   /** Additional properties of the credential subject. */
   readonly [properties: string | symbol]: unknown;
 }"#;

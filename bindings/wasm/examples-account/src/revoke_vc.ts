@@ -29,12 +29,12 @@ async function revokeVC(storage?: Storage) {
     // Create a Verifiable Credential.
     // ===========================================================================
 
-    let builder = new AccountBuilder({
+    const builder = new AccountBuilder({
         storage,
     });
 
     // Create an identity for the issuer.
-    let issuer = await builder.createIdentity();
+    const issuer = await builder.createIdentity();
 
     // Add a dedicated verification method to the issuer, with which to sign credentials.
     await issuer.createMethod({
@@ -42,8 +42,8 @@ async function revokeVC(storage?: Storage) {
         fragment: "key-1"
     })
 
-    // Create a credential subject indicating the degree earned by Alice.
-    let credentialSubject = {
+    // Create a credential subject indicating the degree earned by Alice, linked to their DID.
+    const subject = {
         id: "did:iota:B8DucnzULJ9E8cmaReYoePU2b7UKE9WKxyEVov8tQA7H",
         name: "Alice",
         degree: "Bachelor of Science and Arts",
@@ -55,7 +55,7 @@ async function revokeVC(storage?: Storage) {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.document().id(),
-        credentialSubject,
+        credentialSubject: subject,
     });
 
     // Created a signed credential by the issuer.

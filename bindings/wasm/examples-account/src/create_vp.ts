@@ -56,9 +56,9 @@ async function createVP(storage?: Storage) {
     // Step 2: Issuer creates and signs a Verifiable Credential.
     // ===========================================================================
 
-    // Create a credential subject indicating the degree earned by Alice.
-    const credentialSubject = {
-        id: alice.document().id().toString(),
+    // Create a credential subject indicating the degree earned by Alice, linked to their DID.
+    const subject = {
+        id: alice.document().id(),
         name: "Alice",
         degreeName: "Bachelor of Science and Arts",
         degreeType: "BachelorDegree",
@@ -70,7 +70,7 @@ async function createVP(storage?: Storage) {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.document().id(),
-        credentialSubject,
+        credentialSubject: subject
     });
 
     // Created a signed credential by the issuer.
