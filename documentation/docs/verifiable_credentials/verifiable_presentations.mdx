@@ -10,7 +10,7 @@ keywords:
 import create_vp_rs from  '!!raw-loader!./../../../examples/account/create_vp.rs';
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-A verifiable presentation is a data format for sharing one or more [verifiable credentials](./overview.md).
+A verifiable presentation is the recommended data format for sharing one or more [verifiable credentials](./overview.md).
 It is constructed and signed by a holder to prove control over their credentials and can be presented to a verifier for [validation](#validation).
 
 For instance: after an issuer [creates and issues a verifiable credential](./create.mdx) to a holder, such as a university issuing a degree to a graduate,
@@ -79,7 +79,7 @@ The framework checks:
 - **Credential proofs**: verifies the credential signatures against the DID Documents of their respective issuers.
 - **Optional validations**: additional checks on signatures and credential fields can be configured by the verifier.
 
-Note that a verifier may specify which DID Documents to use for the holder and issuers, otherwise they are resolved from the IOTA Tangle automatically.
+Note that a verifier may specify which DID Documents to use for the holder and issuers, otherwise they are resolved from the Tangle automatically.
 
 Currently, the following are *not* checked automatically:
 
