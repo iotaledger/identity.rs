@@ -7,13 +7,10 @@ use std::sync::Arc;
 use crate::actor::send_response;
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
-use crate::actor::ActorState;
-use crate::actor::ActorStateRef;
 use crate::actor::Asynchronous;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ObjectId;
-use crate::actor::RawActor;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
@@ -50,7 +47,6 @@ pub struct ActorIdentity {
 }
 
 pub struct DidActorCommState {
-  pub(crate) actor_state: Arc<ActorState>,
   pub(crate) async_handlers: AsyncHandlerMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
@@ -59,18 +55,9 @@ pub struct DidActorCommState {
   pub(crate) identity: ActorIdentity,
 }
 
-impl AsRef<ActorState> for Arc<DidActorCommState> {
-  fn as_ref(&self) -> &ActorState {
-    &self.actor_state
-  }
-}
-
-impl ActorStateRef for Arc<DidActorCommState> {}
-
 impl DidActorCommState {
-  pub(crate) fn new(actor_state: ActorState, async_handlers: AsyncHandlerMap, identity: ActorIdentity) -> Self {
+  pub(crate) fn new(async_handlers: AsyncHandlerMap, identity: ActorIdentity) -> Self {
     Self {
-      actor_state: Arc::new(actor_state),
       async_handlers,
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
@@ -81,60 +68,50 @@ impl DidActorCommState {
 
 #[derive(Clone)]
 pub struct DidCommActor {
-  pub(crate) net_commander: NetCommander,
+  pub(crate) actor: Actor,
   pub(crate) state: Arc<DidActorCommState>,
 }
 
 impl DidCommActor {
-  fn raw(&mut self) -> RawActor<&mut NetCommander, &ActorState> {
-    RawActor::new(&mut self.net_commander, self.state.actor_state.as_ref())
-  }
-
-  fn raw_ref(&self) -> RawActor<&NetCommander, &ActorState> {
-    RawActor::new(&self.net_commander, self.state.actor_state.as_ref())
-  }
-
-  fn to_actor(&self) -> Actor {
-    RawActor::new(self.net_commander.clone(), Arc::clone(&self.state.actor_state))
+  fn commander(&mut self) -> &mut NetCommander {
+    self.actor.commander()
   }
 
   pub(crate) fn handle_request(self, request: InboundRequest) {
     match request.request_mode {
       RequestMode::Asynchronous => self.handle_async_request(request),
-      RequestMode::Synchronous => self.to_actor().handle_sync_request(request),
+      RequestMode::Synchronous => self.actor.handle_sync_request(request),
     }
   }
 
-  // TODO: Is there an automated way to copy docs from the delegated fns?
-
-  /// See [`RawActor::start_listening`].
+  /// See [`Actor::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
-    self.raw().start_listening(address).await
+    self.actor.start_listening(address).await
   }
 
   /// See [`Actor::peer_id`].
   pub fn peer_id(&self) -> PeerId {
-    self.raw_ref().peer_id()
+    self.actor.peer_id()
   }
 
   /// See [`Actor::addresses`].
   pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
-    self.raw().addresses().await
+    self.actor.addresses().await
   }
 
   /// See [`Actor::add_address`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
-    self.raw().add_address(peer_id, address).await
+    self.actor.add_address(peer_id, address).await
   }
 
   /// See [`Actor::add_addresses`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
-    self.raw().add_addresses(peer_id, addresses).await
+    self.actor.add_addresses(peer_id, addresses).await
   }
 
   /// See [`Actor::shutdown`].
   pub async fn shutdown(self) -> ActorResult<()> {
-    self.to_actor().shutdown().await
+    self.actor.shutdown().await
   }
 
   pub(crate) fn get_async_handler(&self, endpoint: &Endpoint) -> Result<AsyncHandlerObjectTuple<'_>, RemoteSendError> {
@@ -142,7 +119,7 @@ impl DidCommActor {
       Some(handler_object) => {
         let object_id = handler_object.object_id;
 
-        if let Some(object) = self.state.actor_state.objects.get(&object_id) {
+        if let Some(object) = self.actor.state().objects.get(&object_id) {
           let object_clone = handler_object.handler.clone_object(object)?;
           Ok((handler_object, object_clone))
         } else {
@@ -162,7 +139,7 @@ impl DidCommActor {
     peer: PeerId,
     request: REQ,
   ) -> ActorResult<REQ::Response> {
-    self.raw().send_request(peer, request).await
+    self.actor.send_request(peer, request).await
   }
 
   /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommActor::await_message`],
@@ -191,7 +168,7 @@ impl DidCommActor {
     log::debug!("Sending `{}` message", endpoint);
     let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
-    let response = self.raw().commander().send_request(peer, message).await?;
+    let response = self.commander().send_request(peer, message).await?;
 
     serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
@@ -214,7 +191,7 @@ impl DidCommActor {
   ) -> ActorResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
-      let inbound_request = tokio::time::timeout(self.raw_ref().state().config.timeout, receiver.1)
+      let inbound_request = tokio::time::timeout(self.actor.state().config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
         .map_err(|_| Error::ThreadNotFound(receiver.0))?;
@@ -440,13 +417,7 @@ impl AsynchronousInvocationStrategy {
         }
       };
 
-    let send_result = send_response(
-      &mut actor.net_commander,
-      result,
-      request.response_channel,
-      request.request_id,
-    )
-    .await;
+    let send_result = send_response(actor.commander(), result, request.response_channel, request.request_id).await;
 
     if let Err(err) = send_result {
       log::error!("could not acknowledge request due to: {err:?}",);
@@ -461,7 +432,7 @@ impl AsynchronousInvocationStrategy {
     error: RemoteSendError,
   ) -> ActorResult<Result<(), InboundFailure>> {
     send_response(
-      &mut actor.net_commander,
+      actor.commander(),
       Result::<(), RemoteSendError>::Err(error),
       channel,
       request_id,
@@ -479,7 +450,7 @@ impl AsynchronousInvocationStrategy {
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
   ) {
-    let send_result = send_response(&mut actor.net_commander, Ok(()), channel, request_id).await;
+    let send_result = send_response(actor.commander(), Ok(()), channel, request_id).await;
 
     if let Err(err) = send_result {
       log::error!(

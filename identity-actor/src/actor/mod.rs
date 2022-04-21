@@ -15,9 +15,7 @@ pub(crate) mod traits;
 
 pub use actor::Actor;
 pub(crate) use actor::ActorState;
-pub(crate) use actor::ActorStateRef;
 pub(crate) use actor::ObjectId;
-pub use actor::RawActor;
 pub(crate) use actor::SyncHandlerMap;
 pub(crate) use actor::SyncHandlerObject;
 pub use actor_builder::ActorBuilder;

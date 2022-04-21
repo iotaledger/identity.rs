@@ -140,14 +140,13 @@ impl DidCommActorBuilder {
     let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
       self.inner.build_actor_constituents(transport, executor.clone()).await?;
 
-    let state: DidActorCommState = DidActorCommState::new(
-      actor_state,
-      self.async_handlers,
-      self.identity.ok_or(Error::IdentityMissing)?,
-    );
+    let state: DidActorCommState =
+      DidActorCommState::new(self.async_handlers, self.identity.ok_or(Error::IdentityMissing)?);
+
+    let actor = Actor::new(net_commander, Arc::new(actor_state));
 
     let didcomm_actor: DidCommActor = DidCommActor {
-      net_commander,
+      actor,
       state: Arc::new(state),
     };
 

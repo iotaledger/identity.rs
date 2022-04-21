@@ -47,7 +47,6 @@ use super::actor::ObjectId;
 use super::actor::ObjectMap;
 use super::actor::SyncHandlerMap;
 use super::ActorState;
-use super::RawActor;
 
 /// An [`Actor`] builder for easy configuration and building of handler and hook functions.
 pub struct ActorBuilder {
@@ -162,7 +161,7 @@ impl ActorBuilder {
     let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
       self.build_actor_constituents(transport, executor.clone()).await?;
 
-    let actor: Actor = RawActor::new(net_commander, Arc::new(actor_state));
+    let actor: Actor = Actor::new(net_commander, Arc::new(actor_state));
     let actor_clone: Actor = actor.clone();
 
     let event_handler = move |event: InboundRequest| {

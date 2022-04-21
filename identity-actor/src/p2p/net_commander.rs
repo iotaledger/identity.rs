@@ -110,17 +110,6 @@ impl NetCommander {
   }
 }
 
-impl AsMut<NetCommander> for NetCommander {
-  fn as_mut(&mut self) -> &mut NetCommander {
-    self
-  }
-}
-
-pub trait NetCommanderMut: AsMut<NetCommander> + Send + Sync {}
-
-impl NetCommanderMut for NetCommander {}
-impl NetCommanderMut for &mut NetCommander {}
-
 /// A command to send to the `EventLoop` with (typically) a channel to return a response through.
 pub enum SwarmCommand {
   SendRequest {
