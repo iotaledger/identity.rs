@@ -14,7 +14,7 @@ use crate::actor::SyncRequestHandler;
 use super::traits::RequestHandlerCore;
 use super::Actor;
 
-/// An abstraction over an asynchronous function that processes some [`ActorRequest`].
+/// An abstraction over an asynchronous function that processes a [`SyncActorRequest`].
 #[derive(Clone)]
 pub struct SyncHandler<ACT, OBJ, REQ, FUT>
 where

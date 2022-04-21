@@ -254,8 +254,8 @@ impl<'builder, OBJ> ActorHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
-  /// Add a synchronous handler function that operates on a shared state object and some
-  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// Add a synchronous handler function that operates on a shared state object and a
+  /// [`SyncActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
   pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self

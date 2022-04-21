@@ -14,7 +14,7 @@ use crate::actor::RequestContext;
 use super::traits::AsyncRequestHandler;
 use super::DidCommActor;
 
-/// An abstraction over an asynchronous function that processes some [`ActorRequest`].
+/// An abstraction over an asynchronous function that processes a [`AsyncActorRequest`].
 #[derive(Clone)]
 pub struct AsyncHandler<OBJ, REQ, FUT>
 where
