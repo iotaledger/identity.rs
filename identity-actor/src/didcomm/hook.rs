@@ -7,8 +7,8 @@ use std::marker::PhantomData;
 use futures::Future;
 
 use crate::actor::traits::RequestHandlerCore;
-use crate::actor::ActorRequest;
 use crate::actor::AnyFuture;
+use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
@@ -18,21 +18,17 @@ use super::termination::DidCommTermination;
 use super::traits::AsyncRequestHandler;
 use super::AsyncHandlerObject;
 use super::DidCommHandlerBuilder;
-use crate::actor::SyncMode;
 
-impl<'builder, MOD, OBJ> DidCommHandlerBuilder<'builder, MOD, OBJ>
+impl<'builder, OBJ> DidCommHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
-  MOD: SyncMode,
 {
   pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT) -> Self
   where
-    REQ: ActorRequest<MOD> + Sync,
-    REQ::Response: Send,
+    REQ: AsyncActorRequest + Sync,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
-    MOD: Send + Sync + 'static,
   {
-    let handler: Hook<_, _, _, _> = Hook::new(handler);
+    let handler: Hook<_, _, _> = Hook::new(handler);
     let mut endpoint: Endpoint = REQ::endpoint();
     endpoint.is_hook = true;
 
@@ -48,12 +44,11 @@ where
 /// A function that hooks and thus extends existing handler logic.
 /// Can modify incoming requests or abort handling.
 #[derive(Clone)]
-pub struct Hook<MOD, OBJ, REQ, FUT>
+pub struct Hook<OBJ, REQ, FUT>
 where
   OBJ: 'static,
-  REQ: ActorRequest<MOD>,
+  REQ: AsyncActorRequest,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
-  MOD: SyncMode + 'static,
 {
   func: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
@@ -62,33 +57,28 @@ where
   // See also the drop check section in the PhantomData doc.
   _marker_obj: PhantomData<&'static OBJ>,
   _marker_req: PhantomData<&'static REQ>,
-  _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<MOD, OBJ, REQ, FUT> Hook<MOD, OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT> Hook<OBJ, REQ, FUT>
 where
   OBJ: 'static,
-  REQ: ActorRequest<MOD>,
+  REQ: AsyncActorRequest,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
-  MOD: SyncMode + 'static,
 {
   pub fn new(func: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
-      _marker_mod: PhantomData,
     }
   }
 }
 
-impl<MOD, OBJ, REQ, FUT> AsyncRequestHandler for Hook<MOD, OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT> AsyncRequestHandler for Hook<OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest<MOD> + Sync,
-  REQ::Response: Send,
+  REQ: AsyncActorRequest + Sync,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
-  MOD: SyncMode + Send + Sync + 'static,
 {
   fn invoke(
     &self,
@@ -125,18 +115,12 @@ where
   }
 }
 
-impl<MOD, OBJ, REQ, FUT> RequestHandlerCore for Hook<MOD, OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT> RequestHandlerCore for Hook<OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest<MOD> + Sync,
-  REQ::Response: Send,
+  REQ: AsyncActorRequest + Sync,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
-  MOD: SyncMode + Send + Sync + 'static,
 {
-  fn serialize_response(&self, _input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
-    unreachable!("serialize_response is never called on hooks");
-  }
-
   fn deserialize_request(&self, _input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
     unreachable!("deserialize_request is never called on hooks");
   }

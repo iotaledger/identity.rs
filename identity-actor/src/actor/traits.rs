@@ -2,25 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::any::Any;
+use std::fmt::Debug;
 use std::pin::Pin;
 
 use futures::Future;
+use serde::de::DeserializeOwned;
 
 use crate::actor::errors::ErrorLocation;
-use crate::actor::ActorRequest;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::SyncMode;
+use crate::actor::SyncActorRequest;
 
 use super::Actor;
 
-/// A future whose output is an `Any` trait object.
+/// A boxed future whose output is an `Any` trait object.
 pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send + 'me>>;
 
 pub trait RequestHandlerCore {
-  /// Serializes the returned result from an invocation of this handler.
-  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError>;
-
   /// Attempts to deserialize bytes into some input type for use in invocations of this handler.
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError>;
 
@@ -40,13 +38,16 @@ pub trait SyncRequestHandler: RequestHandlerCore + Send + Sync {
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
   ) -> Result<AnyFuture<'_>, RemoteSendError>;
+
+  /// Serializes the returned result from an invocation of this handler.
+  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError>;
 }
 
 // Default implementations of some (A)SyncRequestHandler methods. These cannot be implemented on
 // the trait itself, because the trait cannot be made generic without losing its type-erasing nature.
 
 #[inline(always)]
-pub fn request_handler_serialize_response<MOD: SyncMode, REQ: ActorRequest<MOD>>(
+pub fn request_handler_serialize_response<REQ: SyncActorRequest>(
   input: Box<dyn Any>,
 ) -> Result<Vec<u8>, RemoteSendError> {
   log::debug!(
@@ -75,9 +76,10 @@ pub fn request_handler_serialize_response<MOD: SyncMode, REQ: ActorRequest<MOD>>
 }
 
 #[inline(always)]
-pub fn request_handler_deserialize_request<MOD: SyncMode, REQ: ActorRequest<MOD>>(
-  input: Vec<u8>,
-) -> Result<Box<dyn Any + Send>, RemoteSendError> {
+pub fn request_handler_deserialize_request<REQ>(input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError>
+where
+  REQ: Debug + DeserializeOwned + Send + 'static,
+{
   log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
 
   let request: REQ = serde_json::from_slice(&input).map_err(|error| RemoteSendError::DeserializationFailure {

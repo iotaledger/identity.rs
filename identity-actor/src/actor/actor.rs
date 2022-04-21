@@ -7,15 +7,14 @@ use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
 use crate::actor::ActorConfig;
-use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncActorRequest;
 use crate::actor::SyncRequestHandler;
-use crate::actor::Synchronous;
 use crate::actor::SynchronousInvocationStrategy;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
@@ -141,13 +140,13 @@ impl Actor {
   }
 
   /// Sends a synchronous request to a peer and returns its response.
-  pub async fn send_request<REQ: ActorRequest<Synchronous>>(
+  pub async fn send_request<REQ: SyncActorRequest>(
     &mut self,
     peer: PeerId,
     request: REQ,
   ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
-    let request_mode: RequestMode = request.request_mode();
+    let request_mode: RequestMode = REQ::request_mode();
 
     let request_vec = serde_json::to_vec(&request).map_err(|err| Error::SerializationFailure {
       location: ErrorLocation::Local,

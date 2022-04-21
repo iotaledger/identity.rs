@@ -6,8 +6,7 @@ use std::sync::Arc;
 
 use crate::actor::send_response;
 use crate::actor::Actor;
-use crate::actor::ActorRequest;
-use crate::actor::Asynchronous;
+use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ObjectId;
@@ -15,7 +14,7 @@ use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
-use crate::actor::Synchronous;
+use crate::actor::SyncActorRequest;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::traits::AsyncRequestHandler;
@@ -134,7 +133,7 @@ impl DidCommActor {
   }
 
   /// See [`Actor::send_request`].
-  pub async fn send_request<REQ: ActorRequest<Synchronous>>(
+  pub async fn send_request<REQ: SyncActorRequest>(
     &mut self,
     peer: PeerId,
     request: REQ,
@@ -144,14 +143,14 @@ impl DidCommActor {
 
   /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommActor::await_message`],
   /// with the same `thread_id`.
-  pub async fn send_message<REQ: ActorRequest<Asynchronous>>(
+  pub async fn send_message<REQ: AsyncActorRequest>(
     &mut self,
     peer: PeerId,
     thread_id: &ThreadId,
     message: REQ,
   ) -> ActorResult<()> {
     let endpoint: Endpoint = REQ::endpoint();
-    let request_mode: RequestMode = message.request_mode();
+    let request_mode: RequestMode = REQ::request_mode();
 
     let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), endpoint.to_string(), message);
 
@@ -312,7 +311,7 @@ impl DidCommActor {
   }
 
   #[inline(always)]
-  pub(crate) async fn call_send_message_hook<REQ: ActorRequest<Asynchronous>>(
+  pub(crate) async fn call_send_message_hook<REQ: AsyncActorRequest>(
     &self,
     peer: PeerId,
     input: REQ,

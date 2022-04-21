@@ -4,13 +4,12 @@
 use libp2p::PeerId;
 
 use crate::actor::Actor;
-use crate::actor::ActorRequest;
-use crate::actor::Asynchronous;
+use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
-use crate::actor::Synchronous;
+use crate::actor::SyncActorRequest;
 use crate::didcomm::presentation_holder_handler;
 use crate::didcomm::presentation_verifier_handler;
 use crate::didcomm::DidCommActor;
@@ -37,7 +36,7 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct SyncDummy(u16);
 
-  impl ActorRequest<Synchronous> for SyncDummy {
+  impl SyncActorRequest for SyncDummy {
     type Response = u16;
 
     fn endpoint() -> Endpoint {
@@ -79,9 +78,7 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct AsyncDummy(u16);
 
-  impl ActorRequest<Asynchronous> for AsyncDummy {
-    type Response = ();
-
+  impl AsyncActorRequest for AsyncDummy {
     fn endpoint() -> Endpoint {
       "unknown/thread".parse().unwrap()
     }

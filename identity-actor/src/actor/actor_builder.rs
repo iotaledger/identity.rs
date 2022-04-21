@@ -10,14 +10,12 @@ use std::time::Duration;
 
 use crate::actor::Actor;
 use crate::actor::ActorConfig;
-use crate::actor::ActorRequest;
 use crate::actor::Error;
-use crate::actor::Handler;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncActorRequest;
+use crate::actor::SyncHandler;
 use crate::actor::SyncHandlerObject;
-use crate::actor::SyncMode;
-use crate::actor::Synchronous;
 use crate::p2p::ActorProtocol;
 use crate::p2p::ActorRequestResponseCodec;
 use crate::p2p::EventLoop;
@@ -107,10 +105,9 @@ impl ActorBuilder {
 
   /// Add a new shared state object and returns a [`ActorHandlerBuilder`] which can be used to
   /// attach handlers and hooks that operate on that object.
-  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> ActorHandlerBuilder<MOD, OBJ>
+  pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> ActorHandlerBuilder<OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
-    MOD: SyncMode,
   {
     let object_id: ObjectId = Uuid::new_v4();
     self.objects.insert(object_id, Box::new(state_object));
@@ -118,7 +115,6 @@ impl ActorBuilder {
       object_id,
       handler_map: &mut self.handlers,
       _marker_obj: PhantomData,
-      _marker_mod: PhantomData,
     }
   }
 
@@ -245,18 +241,16 @@ impl Default for ActorBuilder {
 }
 
 /// Used to attach handlers and hooks to an [`ActorBuilder`].
-pub struct ActorHandlerBuilder<'builder, MOD, OBJ>
+pub struct ActorHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
-  MOD: SyncMode + 'static,
 {
   pub(crate) object_id: ObjectId,
   pub(crate) handler_map: &'builder mut SyncHandlerMap,
   pub(crate) _marker_obj: PhantomData<&'static OBJ>,
-  pub(crate) _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<'builder, OBJ> ActorHandlerBuilder<'builder, Synchronous, OBJ>
+impl<'builder, OBJ> ActorHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
@@ -266,11 +260,11 @@ where
   /// to return an instance of `REQ::Response`.
   pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self
   where
-    REQ: ActorRequest<Synchronous> + Sync,
+    REQ: SyncActorRequest + Sync,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
   {
-    let handler = Handler::new(handler);
+    let handler = SyncHandler::new(handler);
     self.handler_map.insert(
       REQ::endpoint(),
       SyncHandlerObject::new(self.object_id, Box::new(handler)),
