@@ -16,6 +16,8 @@ use identity::credential::Status;
 use identity::credential::Subject;
 use wasm_bindgen::prelude::*;
 
+use proc_typescript::typescript;
+
 use crate::error::WasmResult;
 
 impl TryFrom<ICredential> for CredentialBuilder {
@@ -101,76 +103,68 @@ impl TryFrom<ICredential> for CredentialBuilder {
   }
 }
 
-/// Helper-struct for constructing a `Credential` by deserializing `ICredential` fields.
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ICredentialHelper {
-  context: Option<OneOrMany<Context>>,
-  id: Option<String>,
-  r#type: Option<OneOrMany<String>>,
-  credential_subject: Option<OneOrMany<Subject>>,
-  issuer: Option<Issuer>,
-  issuance_date: Option<Timestamp>,
-  expiration_date: Option<Timestamp>,
-  credential_status: Option<OneOrMany<Status>>,
-  credential_schema: Option<OneOrMany<Schema>>,
-  refresh_service: Option<OneOrMany<RefreshService>>,
-  terms_of_use: Option<OneOrMany<Policy>>,
-  evidence: Option<OneOrMany<Evidence>>,
-  non_transferable: Option<bool>,
-  #[serde(flatten)]
-  properties: Object,
-}
-
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "ICredential")]
   pub type ICredential;
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const I_CREDENTIAL: &'static str = r#"
-/** Fields for constructing a new {@link Credential}. */
-interface ICredential {
-  /** The JSON-LD context(s) applicable to the `Credential`. */
-  readonly context?: string | Record<string, any> | Array<string | Record<string, any>>;
-
-  /** A unique URI referencing the subject of the `Credential`. */
-  readonly id?: string;
-
-  /** One or more URIs defining the type of the `Credential`. Contains the base context by default. */
-  readonly type?: string | Array<string>;
-
-  /** One or more objects representing the `Credential` subject(s). */
-  readonly credentialSubject: Subject | Array<Subject>;
-
-  /** A reference to the issuer of the `Credential`. */
-  readonly issuer: string | DID | Issuer;
-
-  /** A timestamp of when the `Credential` becomes valid. Defaults to the current datetime. */
-  readonly issuanceDate?: Timestamp;
-
-  /** A timestamp of when the `Credential` should no longer be considered valid. */
-  readonly expirationDate?: Timestamp;
-
-  /** Information used to determine the current status of the `Credential`. */
-  readonly credentialStatus?: Status | Array<Status>;
-
-  /** Information used to assist in the enforcement of a specific `Credential` structure. */
-  readonly credentialSchema?: Schema | Array<Schema>;
-
-  /** Service(s) used to refresh an expired `Credential`. */
-  readonly refreshService?: RefreshService | Array<RefreshService>;
-
-  /** Terms-of-use specified by the `Credential` issuer. */
-  readonly termsOfUse?: Policy | Array<Policy>;
-
-  /** Human-readable evidence used to support the claims within the `Credential`. */
-  readonly evidence?: Evidence | Array<Evidence>;
-
-  /** Indicates that the `Credential` must only be contained within a {@link Presentation} with a proof issued from the `Credential` subject. */
-  readonly nonTransferable?: boolean;
-
-  /** Miscellaneous properties. */
-  readonly [properties: string | symbol]: unknown;
-}"#;
+/// Fields for constructing a new {@link Credential}.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[typescript(name = "ICredential")]
+struct ICredentialHelper {
+  /// The JSON-LD context(s) applicable to the `Credential`.
+  #[typescript(
+    readonly,
+    optional,
+    type = "string | Record<string, any> | Array<string | Record<string, any>>"
+  )]
+  context: Option<OneOrMany<Context>>,
+  /// A unique URI referencing the subject of the `Credential`.
+  #[typescript(readonly, optional, type = "string")]
+  id: Option<String>,
+  /// One or more URIs defining the type of the `Credential`. Contains the base context by default.
+  #[typescript(readonly, optional, name = "type", type = "string | Array<string>")]
+  r#type: Option<OneOrMany<String>>,
+  /// One or more objects representing the `Credential` subject(s).
+  #[typescript(readonly, name = "credentialSubject", type = "Subject | Array<Subject>")]
+  credential_subject: Option<OneOrMany<Subject>>,
+  /// A reference to the issuer of the `Credential`.
+  #[typescript(readonly, type = "string | DID | Issuer")]
+  issuer: Option<Issuer>,
+  /// A timestamp of when the `Credential` becomes valid. Defaults to the current datetime.
+  #[typescript(readonly, optional, name = "issuanceDate", type = "Timestamp")]
+  issuance_date: Option<Timestamp>,
+  /// A timestamp of when the `Credential` should no longer be considered valid.
+  #[typescript(readonly, optional, name = "expirationDate", type = "Timestamp")]
+  expiration_date: Option<Timestamp>,
+  /// Information used to determine the current status of the `Credential`.
+  #[typescript(readonly, optional, name = "credentialStatus", type = "Status | Array<Status>")]
+  credential_status: Option<OneOrMany<Status>>,
+  /// Information used to assist in the enforcement of a specific `Credential` structure.
+  #[typescript(readonly, optional, name = "credentialSchema", type = "Schema | Array<Schema>")]
+  credential_schema: Option<OneOrMany<Schema>>,
+  /// Service(s) used to refresh an expired `Credential`.
+  #[typescript(
+    readonly,
+    optional,
+    name = "refreshService",
+    type = "RefreshService | Array<RefreshService>"
+  )]
+  refresh_service: Option<OneOrMany<RefreshService>>,
+  /// Terms-of-use specified by the `Credential` issuer.
+  #[typescript(readonly, optional, name = "termsOfUse", type = "Policy | Array<Policy>")]
+  terms_of_use: Option<OneOrMany<Policy>>,
+  /// Human-readable evidence used to support the claims within the `Credential`.
+  #[typescript(readonly, optional, type = "Evidence | Array<Evidence>")]
+  evidence: Option<OneOrMany<Evidence>>,
+  /// Indicates that the `Credential` must only be contained within a {@link Presentation} with a proof issued from the
+  /// `Credential` subject.
+  #[typescript(readonly, optional, name = "nonTransferable", type = "boolean")]
+  non_transferable: Option<bool>,
+  /// Miscellaneous properties.
+  #[typescript(readonly, name = "[properties: string | symbol]", type = "unknown")]
+  #[serde(flatten)]
+  properties: Object,
+}
