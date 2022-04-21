@@ -15,7 +15,6 @@ pub use libp2p::PeerId;
 
 #[cfg(feature = "primitives")]
 pub mod primitives {
-  pub use crate::actor::actor_request::SyncMode;
   pub use crate::actor::traits::request_handler_clone_object;
   pub use crate::actor::traits::request_handler_deserialize_request;
   pub use crate::actor::traits::request_handler_serialize_response;

@@ -5,61 +5,56 @@ use std::any::Any;
 use std::future::Future;
 use std::marker::PhantomData;
 
+use crate::actor::actor_request::AsyncActorRequest;
+use crate::actor::traits::RequestHandlerCore;
 use crate::actor::AnyFuture;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::SyncActorRequest;
-use crate::actor::SyncRequestHandler;
 
-use super::traits::RequestHandlerCore;
-use super::Actor;
+use super::traits::AsyncRequestHandler;
+use super::DidCommActor;
 
-/// An abstraction over an asynchronous function that processes a [`SyncActorRequest`].
+/// An abstraction over an asynchronous function that processes a [`AsyncActorRequest`].
 #[derive(Clone)]
-pub struct SyncHandler<ACT, OBJ, REQ, FUT>
+pub struct AsyncHandler<OBJ, REQ, FUT>
 where
-  ACT: Send + Sync + 'static,
   OBJ: 'static,
-  REQ: SyncActorRequest,
-  FUT: Future<Output = REQ::Response>,
+  REQ: AsyncActorRequest,
+  FUT: Future<Output = ()>,
 {
-  pub(crate) func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT,
+  pub(crate) func: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT,
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
   // See also the drop check section in the PhantomData doc.
   _marker_obj: std::marker::PhantomData<&'static OBJ>,
   _marker_req: std::marker::PhantomData<&'static REQ>,
-  _marker_act: std::marker::PhantomData<&'static ACT>,
 }
 
-impl<ACT, OBJ, REQ, FUT> SyncHandler<ACT, OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT> AsyncHandler<OBJ, REQ, FUT>
 where
-  ACT: Send + Sync + 'static,
   OBJ: 'static,
-  REQ: SyncActorRequest,
-  FUT: Future<Output = REQ::Response>,
+  REQ: AsyncActorRequest,
+  FUT: Future<Output = ()>,
 {
-  pub fn new(func: fn(OBJ, ACT, RequestContext<REQ>) -> FUT) -> Self {
+  pub fn new(func: fn(OBJ, DidCommActor, RequestContext<REQ>) -> FUT) -> Self {
     Self {
       func,
       _marker_obj: PhantomData,
       _marker_req: PhantomData,
-      _marker_act: PhantomData,
     }
   }
 }
 
-impl<OBJ, REQ, FUT> SyncRequestHandler for SyncHandler<Actor, OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT> AsyncRequestHandler for AsyncHandler<OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: SyncActorRequest + Sync,
-  REQ::Response: Send,
-  FUT: Future<Output = REQ::Response> + Send,
+  REQ: AsyncActorRequest + Sync,
+  FUT: Future<Output = ()> + Send,
 {
   fn invoke(
     &self,
-    actor: Actor,
+    actor: DidCommActor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,
@@ -83,25 +78,20 @@ where
     })?;
 
     let future = async move {
-      let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
-      Box::new(response) as Box<dyn Any + Send>
+      (self.func)(*boxed_object, actor, request).await;
+      // This doesn't allocate because () is zero-sized.
+      Box::new(()) as Box<dyn Any + Send>
     };
 
     Ok(Box::pin(future))
   }
-
-  fn serialize_response(&self, input: Box<dyn Any>) -> Result<Vec<u8>, RemoteSendError> {
-    crate::actor::request_handler_serialize_response::<REQ>(input)
-  }
 }
 
-impl<ACT, OBJ, REQ, FUT> RequestHandlerCore for SyncHandler<ACT, OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT> RequestHandlerCore for AsyncHandler<OBJ, REQ, FUT>
 where
-  ACT: Send + Sync + 'static,
   OBJ: Clone + Send + Sync + 'static,
-  REQ: SyncActorRequest + Sync,
-  REQ::Response: Send,
-  FUT: Future<Output = REQ::Response> + Send,
+  REQ: AsyncActorRequest + Sync,
+  FUT: Future<Output = ()> + Send,
 {
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
     crate::actor::request_handler_deserialize_request::<REQ>(input)

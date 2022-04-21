@@ -9,8 +9,7 @@ use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaVerificationMethod;
 use libp2p::PeerId;
 
-use crate::actor::ActorRequest;
-use crate::actor::Asynchronous;
+use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
@@ -58,9 +57,7 @@ pub enum UrlOrKey {
   Key(DIDKey),
 }
 
-impl ActorRequest<Asynchronous> for Connection {
-  type Response = ();
-
+impl AsyncActorRequest for Connection {
   fn endpoint() -> Endpoint {
     "didcomm/connection".parse().unwrap()
   }

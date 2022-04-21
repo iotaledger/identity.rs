@@ -3,8 +3,7 @@
 
 use libp2p::PeerId;
 
-use crate::actor::ActorRequest;
-use crate::actor::Asynchronous;
+use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
@@ -107,8 +106,7 @@ pub async fn presentation_verifier_handler(
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest([u8; 2]);
 
-impl ActorRequest<Asynchronous> for PresentationRequest {
-  type Response = ();
+impl AsyncActorRequest for PresentationRequest {
   fn endpoint() -> Endpoint {
     "didcomm/presentation_request".parse().unwrap()
   }
@@ -117,8 +115,7 @@ impl ActorRequest<Asynchronous> for PresentationRequest {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationOffer([u8; 3]);
 
-impl ActorRequest<Asynchronous> for PresentationOffer {
-  type Response = ();
+impl AsyncActorRequest for PresentationOffer {
   fn endpoint() -> Endpoint {
     "didcomm/presentation_offer".parse().unwrap()
   }
@@ -127,8 +124,7 @@ impl ActorRequest<Asynchronous> for PresentationOffer {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Presentation([u8; 4]);
 
-impl ActorRequest<Asynchronous> for Presentation {
-  type Response = ();
+impl AsyncActorRequest for Presentation {
   fn endpoint() -> Endpoint {
     "didcomm/presentation".parse().unwrap()
   }
@@ -137,8 +133,7 @@ impl ActorRequest<Asynchronous> for Presentation {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationResult([u8; 5]);
 
-impl ActorRequest<Asynchronous> for PresentationResult {
-  type Response = ();
+impl AsyncActorRequest for PresentationResult {
   fn endpoint() -> Endpoint {
     "didcomm/presentation_result".parse().unwrap()
   }

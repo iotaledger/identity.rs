@@ -11,13 +11,12 @@ use libp2p::Multiaddr;
 
 use crate::actor::Actor;
 use crate::actor::ActorBuilder;
-use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
-use crate::actor::Synchronous;
+use crate::actor::SyncActorRequest;
 use crate::remote_account::IdentityGet;
 use crate::remote_account::IdentityList;
 use crate::tests::try_init_logger;
@@ -56,7 +55,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
-  impl ActorRequest<Synchronous> for Dummy {
+  impl SyncActorRequest for Dummy {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -117,7 +116,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
-  impl ActorRequest<Synchronous> for Dummy {
+  impl SyncActorRequest for Dummy {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -167,7 +166,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
   #[derive(Debug, serde::Serialize, serde::Deserialize)]
   pub struct MessageRequest(String);
 
-  impl ActorRequest<Synchronous> for MessageRequest {
+  impl SyncActorRequest for MessageRequest {
     type Response = MessageResponse;
 
     fn endpoint() -> Endpoint {
@@ -275,7 +274,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   pub struct CustomRequest2(u8);
 
-  impl ActorRequest<Synchronous> for CustomRequest {
+  impl SyncActorRequest for CustomRequest {
     type Response = String;
 
     fn endpoint() -> Endpoint {
@@ -283,7 +282,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     }
   }
 
-  impl ActorRequest<Synchronous> for CustomRequest2 {
+  impl SyncActorRequest for CustomRequest2 {
     type Response = u32;
 
     fn endpoint() -> Endpoint {
@@ -317,7 +316,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   pub struct CustomRequest3(String);
 
-  impl ActorRequest<Synchronous> for CustomRequest3 {
+  impl SyncActorRequest for CustomRequest3 {
     type Response = String;
 
     fn endpoint() -> Endpoint {

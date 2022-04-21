@@ -7,19 +7,17 @@ use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
 use crate::actor::ActorConfig;
-use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncActorRequest;
 use crate::actor::SyncRequestHandler;
-use crate::actor::Synchronous;
 use crate::actor::SynchronousInvocationStrategy;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
-use crate::p2p::NetCommanderMut;
 use crate::p2p::RequestMessage;
 
 use crate::p2p::ResponseMessage;
@@ -36,17 +34,6 @@ pub struct ActorState {
   pub(crate) config: ActorConfig,
 }
 
-impl AsRef<ActorState> for ActorState {
-  fn as_ref(&self) -> &ActorState {
-    self
-  }
-}
-
-pub trait ActorStateRef: AsRef<ActorState> + Send + Sync {}
-
-impl ActorStateRef for Arc<ActorState> {}
-impl ActorStateRef for &ActorState {}
-
 /// The [`Actor`] can be used to send and receive messages to and from other actors.
 ///
 /// An actor is a frontend for an event loop running in the background, which invokes
@@ -56,21 +43,13 @@ impl ActorStateRef for &ActorState {}
 ///
 /// After shutting down the event loop of an actor using [`Actor::shutdown`], other clones of the
 /// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
-pub type Actor = RawActor<NetCommander, Arc<ActorState>>;
 
-pub struct RawActor<CMD, STA>
-where
-  STA: ActorStateRef,
-{
-  commander: CMD,
-  state: STA,
+pub struct Actor {
+  commander: NetCommander,
+  state: Arc<ActorState>,
 }
 
-impl<CMD, STA> Clone for RawActor<CMD, STA>
-where
-  CMD: NetCommanderMut + Clone,
-  STA: ActorStateRef + Clone,
-{
+impl Clone for Actor {
   fn clone(&self) -> Self {
     Self {
       commander: self.commander.clone(),
@@ -79,11 +58,8 @@ where
   }
 }
 
-impl<CMD, STA> RawActor<CMD, STA>
-where
-  STA: ActorStateRef,
-{
-  pub(crate) fn new(commander: CMD, state: STA) -> RawActor<CMD, STA> {
+impl Actor {
+  pub(crate) fn new(commander: NetCommander, state: Arc<ActorState>) -> Actor {
     Self { commander, state }
   }
 
@@ -114,15 +90,9 @@ where
       None => Err(RemoteSendError::UnexpectedRequest(endpoint.to_string())),
     }
   }
-}
 
-impl<CMD, STA> RawActor<CMD, STA>
-where
-  CMD: NetCommanderMut,
-  STA: ActorStateRef,
-{
   pub fn commander(&mut self) -> &mut NetCommander {
-    self.commander.as_mut()
+    &mut self.commander
   }
 
   /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
@@ -171,13 +141,13 @@ where
   }
 
   /// Sends a synchronous request to a peer and returns its response.
-  pub async fn send_request<REQ: ActorRequest<Synchronous>>(
+  pub async fn send_request<REQ: SyncActorRequest>(
     &mut self,
     peer: PeerId,
     request: REQ,
   ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
-    let request_mode: RequestMode = request.request_mode();
+    let request_mode: RequestMode = REQ::request_mode();
 
     let request_vec = serde_json::to_vec(&request).map_err(|err| Error::SerializationFailure {
       location: ErrorLocation::Local,
@@ -206,9 +176,7 @@ where
       error_message: err.to_string(),
     })
   }
-}
 
-impl RawActor<NetCommander, Arc<ActorState>> {
   pub fn handle_request(self, request: InboundRequest) {
     if request.request_mode == RequestMode::Asynchronous {
       todo!("return `NotSupported` error or similar");

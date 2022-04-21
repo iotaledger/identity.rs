@@ -15,20 +15,18 @@ use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
+use crate::actor::actor_request::AsyncActorRequest;
 use crate::actor::Actor;
 use crate::actor::ActorBuilder;
-use crate::actor::ActorRequest;
 use crate::actor::ActorState;
-use crate::actor::Asynchronous;
 use crate::actor::Error;
-use crate::actor::Handler;
 use crate::actor::ObjectId;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncActorRequest;
+use crate::actor::SyncHandler;
 use crate::actor::SyncHandlerMap;
 use crate::actor::SyncHandlerObject;
-use crate::actor::SyncMode;
-use crate::actor::Synchronous;
 use crate::didcomm::AsyncHandlerMap;
 use crate::didcomm::AsyncHandlerObject;
 use crate::p2p::EventLoop;
@@ -37,6 +35,7 @@ use crate::p2p::NetCommander;
 
 use super::didcomm_actor::DidActorCommState;
 use super::didcomm_actor::DidCommActor;
+use super::handler::AsyncHandler;
 use super::ActorIdentity;
 use super::DidCommPlaintextMessage;
 
@@ -85,10 +84,9 @@ impl DidCommActorBuilder {
   }
 
   /// See [`ActorBuilder::add_state`].
-  pub fn add_state<MOD, OBJ>(&mut self, state_object: OBJ) -> DidCommHandlerBuilder<MOD, OBJ>
+  pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> DidCommHandlerBuilder<OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
-    MOD: SyncMode,
   {
     let object_id: ObjectId = ObjectId::new_v4();
     self.inner.objects.insert(object_id, Box::new(state_object));
@@ -97,7 +95,6 @@ impl DidCommActorBuilder {
       sync_handlers: &mut self.inner.handlers,
       async_handlers: &mut self.async_handlers,
       _marker_obj: PhantomData,
-      _marker_mod: PhantomData,
     }
   }
 
@@ -140,14 +137,13 @@ impl DidCommActorBuilder {
     let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
       self.inner.build_actor_constituents(transport, executor.clone()).await?;
 
-    let state: DidActorCommState = DidActorCommState::new(
-      actor_state,
-      self.async_handlers,
-      self.identity.ok_or(Error::IdentityMissing)?,
-    );
+    let state: DidActorCommState =
+      DidActorCommState::new(self.async_handlers, self.identity.ok_or(Error::IdentityMissing)?);
+
+    let actor = Actor::new(net_commander, Arc::new(actor_state));
 
     let didcomm_actor: DidCommActor = DidCommActor {
-      net_commander,
+      actor,
       state: Arc::new(state),
     };
 
@@ -170,24 +166,22 @@ impl Default for DidCommActorBuilder {
 }
 
 /// Used to attach handlers and hooks to an [`DidCommActorBuilder`].
-pub struct DidCommHandlerBuilder<'builder, MOD, OBJ>
+pub struct DidCommHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
-  MOD: SyncMode + 'static,
 {
   pub(crate) object_id: ObjectId,
   pub(crate) sync_handlers: &'builder mut SyncHandlerMap,
   pub(crate) async_handlers: &'builder mut AsyncHandlerMap,
   pub(crate) _marker_obj: PhantomData<&'static OBJ>,
-  pub(crate) _marker_mod: PhantomData<&'static MOD>,
 }
 
-impl<'builder, OBJ> DidCommHandlerBuilder<'builder, Asynchronous, OBJ>
+impl<'builder, OBJ> DidCommHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,
 {
-  /// Add an asynchronous handler function that operates on a shared state object and some
-  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// Add a synchronous handler function that operates on a shared state object and a
+  /// [`AsyncActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `DidCommPlaintextMessage<REQ>`.
   /// The handler is not expected to return anything.
   pub fn add_async_handler<REQ, FUT>(
@@ -195,10 +189,10 @@ where
     handler: fn(OBJ, DidCommActor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
   ) -> Self
   where
-    REQ: ActorRequest<Asynchronous> + Sync,
+    REQ: AsyncActorRequest + Sync,
     FUT: Future<Output = ()> + Send + 'static,
   {
-    let handler: Handler<_, DidCommActor, _, _, _> = Handler::new(handler);
+    let handler: AsyncHandler<_, _, _> = AsyncHandler::new(handler);
     self.async_handlers.insert(
       REQ::endpoint(),
       AsyncHandlerObject::new(self.object_id, Box::new(handler)),
@@ -206,17 +200,17 @@ where
     self
   }
 
-  /// Add a synchronous handler function that operates on a shared state object and some
-  /// [`ActorRequest`]. The function will be called if the actor receives a request
+  /// Add a synchronous handler function that operates on a shared state object and a
+  /// [`SyncActorRequest`]. The function will be called if the actor receives a request
   /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
   /// to return an instance of `REQ::Response`.
   pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self
   where
-    REQ: ActorRequest<Synchronous> + Sync,
+    REQ: SyncActorRequest + Sync,
     REQ::Response: Send,
     FUT: Future<Output = REQ::Response> + Send + 'static,
   {
-    let handler = Handler::new(handler);
+    let handler = SyncHandler::new(handler);
     self.sync_handlers.insert(
       REQ::endpoint(),
       SyncHandlerObject::new(self.object_id, Box::new(handler)),

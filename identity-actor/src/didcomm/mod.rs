@@ -4,6 +4,7 @@
 mod connection;
 mod didcomm_actor;
 mod didcomm_actor_builder;
+mod handler;
 mod hook;
 mod identity;
 mod message;
