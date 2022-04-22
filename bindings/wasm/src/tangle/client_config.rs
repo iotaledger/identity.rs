@@ -137,27 +137,22 @@ extern "C" {
   pub type IClientConfig;
 }
 
-/// Helper-struct for deserializing [`INodeAuth`].
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// IOTA node details with optional authentication.
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[typescript(name = "INodeAuth", readonly, optional)]
 struct NodeAuth {
+  #[typescript(optional = false, type = "string")]
   url: String,
+  #[typescript(type = "string")]
   jwt: Option<String>,
+  #[typescript(type = "string")]
   username: Option<String>,
+  #[typescript(type = "string")]
   password: Option<String>,
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const I_NODE_AUTH: &'static str = r#"
-/** IOTA node details with optional authentication. */
-interface INodeAuth {
-    readonly url: string;
-    readonly jwt?: string;
-    readonly username?: string;
-    readonly password?: string;
-}"#;
-
 /// {@link Client} configuration options.
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[typescript(name = "IClientConfig", readonly, optional)]
 struct ClientConfig {
