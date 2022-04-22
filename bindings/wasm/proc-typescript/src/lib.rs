@@ -17,6 +17,11 @@ use syn::LitStr;
 struct InterfaceArguments {
   /// Name of the Typescript interface. Otherwise use the struct identifier.
   name: Option<String>,
+
+  /// Whether all fields should be marked as optional. Can be overridden per field.
+  optional: darling::util::Flag,
+  /// Whether all fields should be marked as readonly. Can be overridden per field.
+  readonly: darling::util::Flag,
 }
 
 #[derive(Debug, FromField)]
@@ -29,10 +34,10 @@ struct FieldArguments {
   ts_type: Option<String>,
   /// Whether the field should be marked as an optional property with a question mark.
   /// E.g. "name?: type".
-  optional: darling::util::Flag,
+  optional: Option<bool>,
   /// Whether the field should be marked as readonly.
   /// E.g. "readonly name: type".
-  readonly: darling::util::Flag,
+  readonly: Option<bool>,
 }
 
 /// Extracts the doc-comment, if present, from a list of attributes.
@@ -109,12 +114,14 @@ pub fn typescript(args: TokenStream, input: TokenStream) -> TokenStream {
         .name
         .or_else(|| field.ident.as_ref().map(|ident| ident.to_string()))
         .expect("typescript attribute missing name and field has no identifier");
-      let readonly: &str = if field_args.readonly.is_present() {
-        "readonly "
-      } else {
-        ""
+      let readonly: &str = match (field_args.readonly, interface_args.readonly.is_present()) {
+        (Some(true), _) | (None, true) => "readonly ",
+        _ => "",
       };
-      let optional: &str = if field_args.optional.is_present() { "?" } else { "" };
+      let optional: &str = match (field_args.optional, interface_args.optional.is_present()) {
+        (Some(true), _) | (None, true) => "?",
+        _ => "",
+      };
       let typescript_type: String = match field_args.ts_type {
         Some(ts_type) => ts_type,
         None => panic!("typescript field `{}` missing type", field_name),

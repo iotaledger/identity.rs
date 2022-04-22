@@ -112,59 +112,50 @@ extern "C" {
 /// Fields for constructing a new {@link Credential}.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[typescript(name = "ICredential")]
+#[typescript(name = "ICredential", readonly, optional)]
 struct ICredentialHelper {
   /// The JSON-LD context(s) applicable to the `Credential`.
-  #[typescript(
-    readonly,
-    optional,
-    type = "string | Record<string, any> | Array<string | Record<string, any>>"
-  )]
+  #[typescript(type = "string | Record<string, any> | Array<string | Record<string, any>>")]
   context: Option<OneOrMany<Context>>,
   /// A unique URI referencing the subject of the `Credential`.
-  #[typescript(readonly, optional, type = "string")]
+  #[typescript(type = "string")]
   id: Option<String>,
   /// One or more URIs defining the type of the `Credential`. Contains the base context by default.
-  #[typescript(readonly, optional, name = "type", type = "string | Array<string>")]
+  #[typescript(name = "type", type = "string | Array<string>")]
   r#type: Option<OneOrMany<String>>,
   /// One or more objects representing the `Credential` subject(s).
-  #[typescript(readonly, name = "credentialSubject", type = "Subject | Array<Subject>")]
+  #[typescript(optional = false, name = "credentialSubject", type = "Subject | Array<Subject>")]
   credential_subject: Option<OneOrMany<Subject>>,
   /// A reference to the issuer of the `Credential`.
-  #[typescript(readonly, type = "string | DID | Issuer")]
+  #[typescript(optional = false, type = "string | DID | Issuer")]
   issuer: Option<Issuer>,
   /// A timestamp of when the `Credential` becomes valid. Defaults to the current datetime.
-  #[typescript(readonly, optional, name = "issuanceDate", type = "Timestamp")]
+  #[typescript(name = "issuanceDate", type = "Timestamp")]
   issuance_date: Option<Timestamp>,
   /// A timestamp of when the `Credential` should no longer be considered valid.
-  #[typescript(readonly, optional, name = "expirationDate", type = "Timestamp")]
+  #[typescript(name = "expirationDate", type = "Timestamp")]
   expiration_date: Option<Timestamp>,
   /// Information used to determine the current status of the `Credential`.
-  #[typescript(readonly, optional, name = "credentialStatus", type = "Status | Array<Status>")]
+  #[typescript(name = "credentialStatus", type = "Status | Array<Status>")]
   credential_status: Option<OneOrMany<Status>>,
   /// Information used to assist in the enforcement of a specific `Credential` structure.
-  #[typescript(readonly, optional, name = "credentialSchema", type = "Schema | Array<Schema>")]
+  #[typescript(name = "credentialSchema", type = "Schema | Array<Schema>")]
   credential_schema: Option<OneOrMany<Schema>>,
   /// Service(s) used to refresh an expired `Credential`.
-  #[typescript(
-    readonly,
-    optional,
-    name = "refreshService",
-    type = "RefreshService | Array<RefreshService>"
-  )]
+  #[typescript(name = "refreshService", type = "RefreshService | Array<RefreshService>")]
   refresh_service: Option<OneOrMany<RefreshService>>,
   /// Terms-of-use specified by the `Credential` issuer.
-  #[typescript(readonly, optional, name = "termsOfUse", type = "Policy | Array<Policy>")]
+  #[typescript(name = "termsOfUse", type = "Policy | Array<Policy>")]
   terms_of_use: Option<OneOrMany<Policy>>,
   /// Human-readable evidence used to support the claims within the `Credential`.
-  #[typescript(readonly, optional, type = "Evidence | Array<Evidence>")]
+  #[typescript(type = "Evidence | Array<Evidence>")]
   evidence: Option<OneOrMany<Evidence>>,
   /// Indicates that the `Credential` must only be contained within a {@link Presentation} with a proof issued from the
   /// `Credential` subject.
-  #[typescript(readonly, optional, name = "nonTransferable", type = "boolean")]
+  #[typescript(name = "nonTransferable", type = "boolean")]
   non_transferable: Option<bool>,
   /// Miscellaneous properties.
-  #[typescript(readonly, name = "[properties: string | symbol]", type = "unknown")]
+  #[typescript(optional = false, name = "[properties: string | symbol]", type = "unknown")]
   #[serde(flatten)]
   properties: Object,
 }
