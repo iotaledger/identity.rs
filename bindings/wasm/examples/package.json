@@ -8,6 +8,6 @@
   "private": true,
   "license": "UNLICENSED",
   "dependencies": {
-    "@iota/identity-wasm": "^0.5.1"
+    "@iota/identity-wasm": "file:.."
   }
 }

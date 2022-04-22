@@ -2,32 +2,22 @@
 
 ## IOTA Identity Examples
 
-This folder provides code examples for you to learn how the IOTA Identity WASM bindings can be used in JavaScript.
+This folder provides code examples for you to learn how the IOTA Identity WASM bindings can be used in JavaScript/Typescript.
 
-These examples are compiled with webpack for convenience but can be run independently. If you intend to use any code
-examples with a published version of this package, replace `@iota/identity-wasm` imports with
-`@iota/identity-wasm/node` for Node.js or `@iota/identity-wasm/web` for use in the browser.
+The examples are written in Typescript and can be run independently with Node.js.
 
-If you are writing code against the test network then, most function calls will need to include information about the
-network, since this is not automatically inferred from the arguments in all cases currently.
-
-We recommend that you **always** use a `CLIENT_CONFIG` parameter that you define when calling any functions that take a
-`ClientConfig` object. This will ensure that all the API calls use a consistent node and network throughout. If you
-mismatch the network across calls you will encounter errors.
-
-A `ClientConfig` is a record consisting of two string fields: `network` and `node`. There is an example client config
-that can be found in the `config.js` file for node and in `main.js` for the browser.
+If you are writing code against the test or a private network, see the [config example](node/advanced/3_config.ts) on how to configure the account to use non default networks.
 
 ### Node.js Examples
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `node.js`.
 
-- To build the examples use:
+- Install dependencies in the example (`/example`) folder:
     ```bash
-    npm run build:examples
+    npm i
     ```
 
-- You can then run each example with:
+- You can then run each example with from the root of the wasm bindings:
     ```bash
     npm run example:node -- <example_name>
     ```
@@ -39,25 +29,28 @@ Before running the examples, make sure you have [built the bindings](../README.m
 
 The following examples are currently available:
 
-|  #  | Name                                      | Information                                                                                                                                                                                                                                |
-| :-: | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | [create_did](src/create_did.js)           | Generates and publishes a DID Document, the fundamental building block for decentralized identity.                                                                                                                                         |
-|  2  | [manipulate_did](src/manipulate_did.js)   | Add verification methods and service endpoints to a DID Document and update an already existing DID Document.                                                                                                                              | |
-|  3  | [resolve_history](src/resolve_history.js) | Advanced example that performs multiple updates and demonstrates how to resolve the DID Document history to view them.                                                                            |
-|  4  | [resolution](src/resolution.js)           | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
-|  5   | [key_exchange](src/key_exchange.js) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. | |
-|  6   | [private_tangle](src/private_tangle.js)   | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
+| # | Name | Details |
+| -------- | -------- | -------- |
+|1| [create_did](node/basic/1_create_did.ts)| A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity.    |
+|2| [manipulate_did](node/basic/2_manipulate_did.ts)|  How to manipulate a DID Document by adding/removing Verification Methods and Services. |
+|3| [create_vc](node/basic/3_create_vc.ts)             | Generate and publish subject and issuer DID Documents, then create a Verifiable Credential (VC) specifying claims about the subject, and verify it.|
+|4| [create_vp](node/basic/4_create_vp.ts)             | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verify it.      
+|5| [revoke_vc](node/basic/5_revoke_vc.ts)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.            
+|6| [signing](node/advanced/1_signing.ts) | Using a DID to sign arbitrary statements and validating them. |
+|7| [key_exchange](node/advanced/2_key_exchange.ts) | Use DID key-material to negotiate a shred communication key |
+|8| [config](node/advanced/3_config.ts) | Configure the account to work with different networks and other settings. |
+|9| [lazy](node/advanced/4_lazy.ts)| Configure the account to allow manual batching and publishing changes for granular control | 
+|10| [multiple_identities](node/advanced/5_multiple_identities.ts) | Create multiple identities from a builder and load existing identities into an account. |
+|11| [resolve_history](node/advanced/6_resolve_history.ts) | Resolve the history of a DID and inspect changes over historical versions |
+|12| [unchecked](node/advanced/7_unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
+|13| [custom_storage](node/advanced/8_custom_storage.ts) | Example implementation of a custom storage and testing it with the storage test suite. |
 
 ### Browser Examples
 
-All the Node.js examples are also available for the browser.
+All examples are also available for the browser.
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `web`.
 
-- To build the examples use:
-    ```bash
-    npm run build:examples
-    ```
 
 - You can then run the browser examples with:
     ```bash
