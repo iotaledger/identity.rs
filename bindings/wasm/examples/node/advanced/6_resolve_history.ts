@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    AccountBuilder,
     Client,
     Document,
+    ExplorerUrl,
     KeyPair,
     KeyType,
+    MethodContent,
     MethodScope,
     Service,
     Timestamp,
@@ -18,22 +21,23 @@ import {createIdentity} from "../basic/1_create_did";
 
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
-async function resolveHistory(clientConfig) {
-    // Create a client instance to publish messages to the configured Tangle network.
-    const client = await Client.fromConfig({
-        network: clientConfig.network
-    });
+async function resolveHistory() {
 
     // ===========================================================================
     // DID Creation
     // ===========================================================================
+    let builder = new AccountBuilder();
+    let account = await builder.createIdentity();
 
-    // Create a new identity (see "account/create_did.ts" example).
-    const {doc, key, receipt: originalReceipt} = await createIdentity();
-
+    // Retrieve the DID document of the newly created identity.
+    const doc = account.document(); 
+    
     // ===========================================================================
     // Integration Chain Spam
     // ===========================================================================
+    
+    // Create a client instance to publish messages to the configured Tangle network.
+    const client = await new Client();
 
     // Publish several spam messages to the same index as the integration chain on the Tangle.
     // These are not valid DID documents and are simply to demonstrate that invalid messages can be
@@ -49,47 +53,26 @@ async function resolveHistory(clientConfig) {
     // Integration Chain Update 1
     // ===========================================================================
 
-    // Prepare an integration chain update, which writes the full updated DID document to the Tangle.
-    const intDoc1 = doc.clone();
-
-    // Add a new Service with the tag "linked-domain-1"
-    const service1 = new Service({
-        id: intDoc1.id().toUrl().join("#linked-domain-1"),
+    await account.createService({
+        fragment: "linked-domain-1",
         type: "LinkedDomains",
-        serviceEndpoint: "https://iota.org",
+        endpoint: "https://iota.org",
     });
-    intDoc1.insertService(service1);
 
-    // Add a second Service with the tag "linked-domain-2"
-    const service2 = new Service({
-        id: intDoc1.id().toUrl().join("#linked-domain-2"),
+    //TODO: How to add `serviceEndpoint: { "origins": ["https://iota.org/", "https://example.com/"] },`
+    await account.createService({
+        fragment: "linked-domain-2",
         type: "LinkedDomains",
-        serviceEndpoint: {
-            "origins": ["https://iota.org/", "https://example.com/"]
-        },
+        endpoint: "https://iota.org",
     });
-    intDoc1.insertService(service2);
 
-    // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
-    const keys1 = new KeyPair(KeyType.Ed25519);
-    const method1 = new VerificationMethod(intDoc1.id(), keys1.type(), keys1.public(), "keys-1");
-    intDoc1.insertMethod(method1, MethodScope.VerificationMethod());
-
-    // Add the `messageId` of the previous message in the chain.
-    // This is REQUIRED in order for the messages to form a chain.
-    // Skipping / forgetting this will render the publication useless.
-    intDoc1.setMetadataPreviousMessageId(originalReceipt.messageId());
-    intDoc1.setMetadataUpdated(Timestamp.nowUTC());
-
-    // Sign the DID Document with the original private key.
-    intDoc1.signSelf(key, intDoc1.defaultSigningMethod().id());
-
-    // Publish the updated DID Document to the Tangle, updating the integration chain.
-    // This may take a few seconds to complete proof-of-work.
-    const intReceipt1 = await client.publishDocument(intDoc1);
+    await account.createMethod({
+        fragment: "keys-1",
+        content: MethodContent.GenerateEd25519(),
+    });
 
     // Log the results.
-    console.log(`Int. Chain Update (1): ${clientConfig.explorer.messageUrl(intReceipt1.messageId())}`);
+    console.log(`Int. Chain Update (1): ${ExplorerUrl.mainnet().resolverUrl(account.did())}`);
 
     // ===========================================================================
     // DID History 1
@@ -101,43 +84,43 @@ async function resolveHistory(clientConfig) {
     // The history shows two documents in the integration chain.
     console.log(`History (1): ${JSON.stringify(history1, null, 2)}`);
 
-    // ===========================================================================
-    // Integration Chain Update 2
-    // ===========================================================================
+    // // ===========================================================================
+    // // Integration Chain Update 2
+    // // ===========================================================================
 
-    // Publish a second integration chain update
-    let intDoc2 = Document.fromJSON(intDoc1.toJSON());
+    // // Publish a second integration chain update
+    // let intDoc2 = Document.fromJSON(intDoc1.toJSON());
 
-    // Remove the #keys-1 VerificationMethod
-    intDoc2.removeMethod(intDoc2.id().toUrl().join("#keys-1"));
+    // // Remove the #keys-1 VerificationMethod
+    // intDoc2.removeMethod(intDoc2.id().toUrl().join("#keys-1"));
 
-    // Remove the #linked-domain-1 Service
-    intDoc2.removeService(intDoc2.id().toUrl().join("#linked-domain-1"));
+    // // Remove the #linked-domain-1 Service
+    // intDoc2.removeService(intDoc2.id().toUrl().join("#linked-domain-1"));
 
-    // Add a VerificationMethod with a new KeyPair, called "keys-2"
-    const keys2 = new KeyPair(KeyType.Ed25519);
-    const method2 = new VerificationMethod(intDoc2.id(), keys2.type(), keys2.public(), "keys-2");
-    intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
+    // // Add a VerificationMethod with a new KeyPair, called "keys-2"
+    // const keys2 = new KeyPair(KeyType.Ed25519);
+    // const method2 = new VerificationMethod(intDoc2.id(), keys2.type(), keys2.public(), "keys-2");
+    // intDoc2.insertMethod(method2, MethodScope.VerificationMethod());
 
-    // Note: the `previous_message_id` points to the `message_id` of the last integration chain
-    //       update.
-    intDoc2.setMetadataPreviousMessageId(intReceipt1.messageId());
-    intDoc2.setMetadataUpdated(Timestamp.nowUTC());
-    intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id());
-    const intReceipt2 = await client.publishDocument(intDoc2);
+    // // Note: the `previous_message_id` points to the `message_id` of the last integration chain
+    // //       update.
+    // intDoc2.setMetadataPreviousMessageId(intReceipt1.messageId());
+    // intDoc2.setMetadataUpdated(Timestamp.nowUTC());
+    // intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id());
+    // const intReceipt2 = await client.publishDocument(intDoc2);
 
-    // Log the results.
-    console.log(`Int. Chain Update (2): ${clientConfig.explorer.messageUrl(intReceipt2.messageId())}`);
+    // // Log the results.
+    // console.log(`Int. Chain Update (2): ${clientConfig.explorer.messageUrl(intReceipt2.messageId())}`);
 
-    // ===========================================================================
-    // DID History 2
-    // ===========================================================================
+    // // ===========================================================================
+    // // DID History 2
+    // // ===========================================================================
 
-    // Retrieve the updated message history of the DID.
-    const history2 = await client.resolveHistory(doc.id());
+    // // Retrieve the updated message history of the DID.
+    // const history2 = await client.resolveHistory(doc.id());
 
-    // The history now shows three documents in the integration chain.
-    console.log(`History (2): ${JSON.stringify(history2, null, 2)}`);
+    // // The history now shows three documents in the integration chain.
+    // console.log(`History (2): ${JSON.stringify(history2, null, 2)}`);
 }
 
 export {resolveHistory};

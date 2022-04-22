@@ -1,17 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { config } from "./config";
-import { createIdentity } from "./create_did";
-import { createVC } from "./create_vc";
-import { createVP } from "./create_vp";
-import { lazy } from "./lazy";
-import { manipulateIdentity } from "./manipulate_did";
-import { multipleIdentities } from "./multiple_identities";
-import { revokeVC } from "./revoke_vc";
-import { signing } from "./signing";
-import { storageTestSuite } from "./custom_storage";
-import { unchecked } from "./unchecked";
+import { createIdentity } from "./basic/1_create_did";
+import { manipulateIdentity } from "./basic/2_manipulate_did";
+import { createVC } from "./basic/3_create_vc";
+import { createVP } from "./basic/4_create_vp";
+import { revokeVC } from "./basic/5_revoke_vc";
+import { signing } from "./advanced/1_signing";
+import { keyExchange } from "./advanced/2_key_exchange";
+import { config } from "./advanced/3_config";
+import { lazy } from "./advanced/4_lazy";
+import { multipleIdentities } from "./advanced/5_multiple_identities";
+import { resolveHistory } from "./advanced/6_resolve_history";
+import { unchecked } from "./advanced/7_unchecked";
+import { storageTestSuite } from "./advanced/8_custom_storage";
 
 async function main() {
     //Check if an example is mentioned
@@ -44,6 +46,8 @@ async function main() {
             return await revokeVC();
         case "custom_storage":
             return await storageTestSuite()
+        case "resolve_history":
+            return await resolveHistory()
         default:
             throw "Unknown example name";
     }

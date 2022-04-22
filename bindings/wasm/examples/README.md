@@ -31,8 +31,8 @@ The following examples are currently available:
 
 | # | Name | Details |
 | -------- | -------- | -------- |
-|1| [create_did](node/basic/1_create_did.ts)| A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity.    |
-|2| [manipulate_did](node/basic/2_manipulate_did.ts)|  How to manipulate a DID Document by adding/removing Verification Methods and Services. |
+|1| [create_did](node/basic/1_create_did.ts)| Generate and publish a DID Document, the fundamental building block for decentralized identity.    |
+|2| [manipulate_did](node/basic/2_manipulate_did.ts)|  Manipulate a DID Document by adding/removing Verification Methods and Services. |
 |3| [create_vc](node/basic/3_create_vc.ts)             | Generate and publish subject and issuer DID Documents, then create a Verifiable Credential (VC) specifying claims about the subject, and verify it.|
 |4| [create_vp](node/basic/4_create_vp.ts)             | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verify it.      
 |5| [revoke_vc](node/basic/5_revoke_vc.ts)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.            
