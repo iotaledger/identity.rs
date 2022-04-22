@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use std::collections::HashSet;
 
 use async_trait::async_trait;
 use hashbrown::HashMap;
@@ -31,11 +30,9 @@ use crate::utils::Shared;
 // The map from DIDs to chain states.
 type ChainStates = HashMap<IotaDID, ChainState>;
 // The map from DIDs to DID documents.
-type States = HashMap<IotaDID, IotaDocument>;
+type Documents = HashMap<IotaDID, IotaDocument>;
 // The map from DIDs to vaults.
 type Vaults = HashMap<IotaDID, MemVault>;
-// The set of DIDs stored in this storage.
-type Index = HashSet<IotaDID>;
 // The map from key locations to key pairs, that lives within a DID partition.
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
@@ -45,9 +42,8 @@ pub struct MemStore {
   expand: bool,
   // The `Shared<T>` type is simply a light wrapper around `Rwlock<T>`.
   chain_states: Shared<ChainStates>,
-  documents: Shared<States>,
+  documents: Shared<Documents>,
   vaults: Shared<Vaults>,
-  index: Shared<Index>,
 }
 
 impl MemStore {
@@ -58,7 +54,6 @@ impl MemStore {
       chain_states: Shared::new(HashMap::new()),
       documents: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
-      index: Shared::new(HashSet::new()),
     }
   }
 
@@ -99,20 +94,14 @@ impl Storage for MemStore {
     let did: IotaDID = IotaDID::new_with_network(keypair.public().as_ref(), network)
       .map_err(|err| crate::Error::DIDCreationError(err.to_string()))?;
 
-    // Since storages can be called from different threads or tasks, we need to obtain
-    // mutually exclusive access to the index, before writing.
-    let mut index: RwLockWriteGuard<'_, _> = self.index.write()?;
-
-    // If the DID already exists in our index, we need to return an error.
-    // We don't want to overwrite an existing DID.
-    // Otherwise we add it to the index.
-    if index.contains(&did) {
-      return Err(Error::IdentityAlreadyExists);
-    } else {
-      index.insert(did.clone());
-    }
-
+    // Obtain exclusive access to the vaults.
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+
+    // We use the vaults as the index of DIDs stored in this storage instance.
+    // If the DID already exists, we need to return an error. We don't want to overwrite an existing DID.
+    if vaults.contains_key(&did) {
+      return Err(Error::IdentityAlreadyExists);
+    }
 
     // Obtain the exiting mem vault or create a new one.
     let vault: &mut MemVault = vaults.entry(did.clone()).or_default();
@@ -127,10 +116,9 @@ impl Storage for MemStore {
   async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
     // This method is supposed to be idempotent,
     // so we only need to do work if the DID still exists.
-    // The return value signals whether the DID was actually removed.
-    if self.index.write()?.remove(did) {
+    // The return value signals whether the DID was actually removed during this operation.
+    if self.vaults.write()?.remove(did).is_some() {
       let _ = self.documents.write()?.remove(did);
-      let _ = self.vaults.write()?.remove(did);
       let _ = self.chain_states.write()?.remove(did);
 
       Ok(true)
@@ -142,11 +130,11 @@ impl Storage for MemStore {
   async fn did_exists(&self, did: &IotaDID) -> Result<bool> {
     // Note that any failure to get access to the storage and do the actual existence check
     // should result in an error rather than returning `false`.
-    Ok(self.index.read()?.contains(did))
+    Ok(self.vaults.read()?.contains_key(did))
   }
 
   async fn did_list(&self) -> Result<Vec<IotaDID>> {
-    Ok(self.index.read()?.iter().cloned().collect())
+    Ok(self.vaults.read()?.keys().cloned().collect())
   }
 
   async fn key_generate(&self, did: &IotaDID, key_type: KeyType, fragment: &str) -> Result<KeyLocation> {
@@ -158,11 +146,12 @@ impl Storage for MemStore {
     // Generate a new key pair for the given `key_type`.
     let keypair: KeyPair = KeyPair::new(key_type)?;
 
-    // Derive the key location from the fragmnent and public key and set the `KeyType` of the location.
+    // Derive the key location from the fragment and public key and set the `KeyType` of the location.
     let location: KeyLocation = KeyLocation::new(key_type, fragment.to_owned(), keypair.public().as_ref());
 
     vault.insert(location.clone(), keypair);
 
+    // Return the location at which the key was generated.
     Ok(location)
   }
 
@@ -200,7 +189,7 @@ impl Storage for MemStore {
     // Obtain read access to the vaults.
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
-    // Within the DID partition of vaults, check for existence of the given location.
+    // Within the DID vault, check for existence of the given location.
     if let Some(vault) = vaults.get(did) {
       return Ok(vault.contains_key(location));
     }
@@ -226,7 +215,8 @@ impl Storage for MemStore {
     // Lookup the vault for the given DID.
     let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
 
-    // Remove the key and return whether it existed.
+    // This method is supposed to be idempotent, so we delete the key
+    // if it exists and return whether it was actually deleted during this operation.
     Ok(vault.remove(location).is_some())
   }
 
@@ -293,7 +283,6 @@ impl Debug for MemStore {
         .field("chain_states", &self.chain_states)
         .field("states", &self.documents)
         .field("vaults", &self.vaults)
-        .field("index", &self.index)
         .finish()
     } else {
       f.write_str("MemStore")
