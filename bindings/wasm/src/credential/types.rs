@@ -41,7 +41,7 @@ interface Evidence {
   /** The type(s) of the credential evidence. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential evidence. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -53,7 +53,7 @@ interface Issuer {
   /** A URL identifying the credential issuer. */
   readonly id: string;
   /** Additional properties of the credential issuer. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -67,7 +67,7 @@ interface Policy {
   /** The type(s) of the credential terms-of-use. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential terms-of-use. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -81,7 +81,7 @@ interface RefreshService {
   /** The type(s) of the credential refresh service. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential refresh service. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -95,7 +95,7 @@ interface Schema {
   /** The type(s) of the credential schema. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential schema. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -109,7 +109,7 @@ interface Status {
   /** The type(s) of the credential status. */
   readonly types: string | Array<string>;
   /** Additional properties of the credential status. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -121,5 +121,5 @@ interface Subject {
   /** A URI identifying the credential subject. */
   readonly id?: string | DID;
   /** Additional properties of the credential subject. */
-  readonly [properties: string | symbol]: unknown;
+  readonly [properties: string]: unknown;
 }"#;

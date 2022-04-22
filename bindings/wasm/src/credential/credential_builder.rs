@@ -156,6 +156,6 @@ struct ICredentialHelper {
   non_transferable: Option<bool>,
   /// Miscellaneous properties.
   #[serde(flatten)]
-  #[typescript(optional = false, name = "[properties: string | symbol]", type = "unknown")]
+  #[typescript(optional = false, name = "[properties: string]", type = "unknown")]
   properties: Object,
 }

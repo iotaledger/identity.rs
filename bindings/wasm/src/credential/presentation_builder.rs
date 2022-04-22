@@ -105,6 +105,6 @@ struct IPresentationHelper {
   terms_of_use: Option<OneOrMany<Policy>>,
   /// Miscellaneous properties.
   #[serde(flatten)]
-  #[typescript(optional = false, name = "[properties: string | symbol]", type = "unknown")]
+  #[typescript(optional = false, name = "[properties: string]", type = "unknown")]
   properties: Object,
 }
