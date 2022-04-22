@@ -6,6 +6,7 @@ edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "wasm"]
 license = "Apache-2.0"
+publish = false
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 resolver = "2"
