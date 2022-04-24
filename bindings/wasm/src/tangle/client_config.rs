@@ -394,6 +394,6 @@ mod tests {
     assert_eq!(fallback_to_local_pow, Some(false));
     assert_eq!(tips_interval, Some(7));
     assert_eq!(request_timeout, Some(60));
-    assert_eq!(retry_until_included: Some(false));
+    assert_eq!(retry_until_included, Some(false));
   }
 }
