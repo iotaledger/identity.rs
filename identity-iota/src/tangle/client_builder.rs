@@ -19,6 +19,7 @@ pub struct ClientBuilder {
   pub(super) network: Network,
   pub(super) builder: iota_client::ClientBuilder,
   pub(super) encoding: DIDMessageEncoding,
+  pub(crate) retry_until_included: bool,
 }
 
 impl ClientBuilder {
@@ -29,6 +30,7 @@ impl ClientBuilder {
       network: Default::default(),
       builder: iota_client::ClientBuilder::new().with_local_pow(DEFAULT_LOCAL_POW),
       encoding: DIDMessageEncoding::JsonBrotli,
+      retry_until_included: true,
     }
   }
 
@@ -44,6 +46,11 @@ impl ClientBuilder {
   #[must_use]
   pub fn encoding(mut self, encoding: DIDMessageEncoding) -> Self {
     self.encoding = encoding;
+    self
+  }
+
+  pub fn retry_until_included(mut self, value: bool) -> Self {
+    self.retry_until_included = value;
     self
   }
 

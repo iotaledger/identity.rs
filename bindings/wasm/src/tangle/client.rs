@@ -66,7 +66,7 @@ impl WasmClient {
     self.client.network().into()
   }
 
-  /// Publishes an `IotaDocument` to the Tangle.
+  /// Publishes a {@link Document} to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
   pub fn publish_document(&self, document: &WasmDocument) -> Result<PromiseReceipt> {
     let document: IotaDocument = document.0.clone();
@@ -158,6 +158,26 @@ impl WasmClient {
     Ok(promise)
   }
 
+  /// Checks if a message is confirmed by a milestone.
+  #[wasm_bindgen(js_name = isMessageIncluded)]
+  pub fn is_message_included(&self, message_id: &str,) -> Result<PromiseBoolean>{
+    let message: MessageId = MessageId::from_str(message_id)
+      .map_err(identity::iota_core::Error::InvalidMessage)
+      .wasm_result()?;
+
+    let client: Rc<Client> = self.client.clone();
+    let promise: Promise = future_to_promise(async move {
+      
+      client
+        .is_message_included(&message)
+        .await
+        .map(Into::into)
+        .wasm_result()
+    });
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseBoolean>())
+  }
+
   /// Fetch the DID document specified by the given `DID`.
   #[wasm_bindgen]
   pub fn resolve(&self, did: UWasmDID) -> Result<PromiseResolvedDocument> {
@@ -240,4 +260,7 @@ impl From<Client> for WasmClient {
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Client>")]
   pub type PromiseClient;
+
+  #[wasm_bindgen(typescript_type = "Promise<boolean>")]
+  pub type PromiseBoolean;
 }
