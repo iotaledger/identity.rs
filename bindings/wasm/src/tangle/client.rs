@@ -160,20 +160,14 @@ impl WasmClient {
 
   /// Checks if a message is confirmed by a milestone.
   #[wasm_bindgen(js_name = isMessageIncluded)]
-  pub fn is_message_included(&self, message_id: &str,) -> Result<PromiseBoolean>{
+  pub fn is_message_included(&self, message_id: &str) -> Result<PromiseBoolean> {
     let message: MessageId = MessageId::from_str(message_id)
       .map_err(identity::iota_core::Error::InvalidMessage)
       .wasm_result()?;
 
     let client: Rc<Client> = self.client.clone();
-    let promise: Promise = future_to_promise(async move {
-      
-      client
-        .is_message_included(&message)
-        .await
-        .map(Into::into)
-        .wasm_result()
-    });
+    let promise: Promise =
+      future_to_promise(async move { client.is_message_included(&message).await.map(Into::into).wasm_result() });
     // WARNING: this does not validate the return type. Check carefully.
     Ok(promise.unchecked_into::<PromiseBoolean>())
   }
