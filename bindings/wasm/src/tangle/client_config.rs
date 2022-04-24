@@ -285,7 +285,7 @@ mod tests {
       "fallbackToLocalPow": false,
       "tipsInterval": 7,
       "requestTimeout": 60,
-      "retryUntilIncluded": false,
+      "retryUntilIncluded": false
     }"#,
       )
       .unwrap(),
