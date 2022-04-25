@@ -404,7 +404,7 @@ Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is g
 | associated_data | <code>Uint8Array</code> | 
 | encryption_options | [<code>EncryptionOptions</code>](#EncryptionOptions) | 
 | fragment | <code>string</code> | 
-| public_key | <code>Uint8Array</code> \| <code>undefined</code> | 
+| public_key | <code>Uint8Array</code> | 
 
 <a name="Account+decryptData"></a>
 
@@ -420,7 +420,7 @@ Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is g
 | data | [<code>EncryptedData</code>](#EncryptedData) | 
 | encryption_options | [<code>EncryptionOptions</code>](#EncryptionOptions) | 
 | fragment | <code>string</code> | 
-| public_key | <code>Uint8Array</code> \| <code>undefined</code> | 
+| public_key | <code>Uint8Array</code> | 
 
 <a name="Account+deleteService"></a>
 

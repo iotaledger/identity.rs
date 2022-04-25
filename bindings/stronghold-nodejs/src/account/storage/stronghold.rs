@@ -189,9 +189,9 @@ impl NapiStronghold {
     associated_data: Vec<u32>,
     encryption_options: &NapiEncryptionOptions,
     private_key: &NapiKeyLocation,
-    public_key: Option<Vec<u32>>,
+    public_key: Vec<u32>,
   ) -> Result<NapiEncryptedData> {
-    let public_key: Option<Vec<u8>> = public_key.map(|key| key.try_into_bytes()).transpose()?;
+    let public_key: Vec<u8> = public_key.try_into_bytes()?;
     let data: Vec<u8> = data.try_into_bytes()?;
     let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
     let encrypted_data: EncryptedData = self
@@ -202,7 +202,7 @@ impl NapiStronghold {
         associated_data,
         &encryption_options.0,
         &private_key.0,
-        public_key.map(|key| key.into()),
+        public_key.into(),
       )
       .await
       .napi_result()?;
@@ -219,9 +219,9 @@ impl NapiStronghold {
     data: &NapiEncryptedData,
     encryption_options: &NapiEncryptionOptions,
     private_key: &NapiKeyLocation,
-    public_key: Option<Vec<u32>>,
+    public_key: Vec<u32>,
   ) -> Result<Vec<u32>> {
-    let public_key: Option<Vec<u8>> = public_key.map(|key| key.try_into_bytes()).transpose()?;
+    let public_key: Vec<u8> = public_key.try_into_bytes()?;
     let data: Vec<u8> = self
       .0
       .decrypt_data(
@@ -229,7 +229,7 @@ impl NapiStronghold {
         data.0.clone(),
         &encryption_options.0,
         &private_key.0,
-        public_key.map(|key| key.into()),
+        public_key.into(),
       )
       .await
       .napi_result()?;

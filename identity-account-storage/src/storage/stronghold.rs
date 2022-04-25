@@ -288,14 +288,15 @@ impl Storage for Stronghold {
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> Result<EncryptedData> {
     let vault: Vault<'_> = self.vault(did);
     match private_key.key_type {
-      KeyType::Ed25519 => unimplemented!(),
+      KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
+        "ED25519 keys are not suported for encrypting/decrypting data".to_owned(),
+      )),
       KeyType::X25519 => {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
-          .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
           .as_ref()
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
@@ -324,14 +325,15 @@ impl Storage for Stronghold {
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> Result<Vec<u8>> {
     let vault: Vault<'_> = self.vault(did);
     match private_key.key_type {
-      KeyType::Ed25519 => unimplemented!(),
+      KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
+        "ED25519 keys are not suported for encrypting/decrypting data".to_owned(),
+      )),
       KeyType::X25519 => {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
-          .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
           .as_ref()
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;

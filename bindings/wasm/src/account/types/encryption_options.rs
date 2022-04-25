@@ -20,7 +20,10 @@ pub struct WasmEncryptionOptions(EncryptionOptions);
 impl WasmEncryptionOptions {
   /// Creates an `EncryptionOptions` object.
   #[wasm_bindgen(js_name = new)]
-  pub fn new(encryption_algorithm: &WasmEncryptionAlgorithm, cek_algorithm: &WasmCEKAlgorithm) -> WasmEncryptionOptions {
+  pub fn new(
+    encryption_algorithm: &WasmEncryptionAlgorithm,
+    cek_algorithm: &WasmCEKAlgorithm,
+  ) -> WasmEncryptionOptions {
     WasmEncryptionOptions(EncryptionOptions::new(
       encryption_algorithm.clone().into(),
       cek_algorithm.clone().into(),

@@ -277,11 +277,11 @@ impl WasmAccount {
     associated_data: Vec<u8>,
     encryption_options: &WasmEncryptionOptions,
     fragment: String,
-    public_key: Option<Vec<u8>>,
+    public_key: Vec<u8>,
   ) -> PromiseEncryptedData {
     let account = self.0.clone();
     let encryption_options: WasmEncryptionOptions = encryption_options.clone();
-    let public_key: Option<PublicKey> = public_key.map(|key| key.to_vec().into());
+    let public_key: PublicKey = public_key.to_vec().into();
 
     future_to_promise(async move {
       let encrypted_data: EncryptedData = account
@@ -310,11 +310,11 @@ impl WasmAccount {
     data: &WasmEncryptedData,
     encryption_options: &WasmEncryptionOptions,
     fragment: String,
-    public_key: Option<Vec<u8>>,
+    public_key: Vec<u8>,
   ) -> PromiseData {
     let account = self.0.clone();
     let encryption_options: WasmEncryptionOptions = encryption_options.clone();
-    let public_key: Option<PublicKey> = public_key.map(|key| key.to_vec().into());
+    let public_key: PublicKey = public_key.to_vec().into();
     let data: EncryptedData = data.0.clone();
 
     future_to_promise(async move {

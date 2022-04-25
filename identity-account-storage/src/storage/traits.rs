@@ -130,7 +130,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     associated_data: Vec<u8>,
     algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> Result<EncryptedData>;
 
   /// Decrypts the given `data` with the specified `algorithm`
@@ -142,7 +142,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     data: EncryptedData,
     algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> Result<Vec<u8>>;
 
   /// Returns the chain state of the identity specified by `did`.

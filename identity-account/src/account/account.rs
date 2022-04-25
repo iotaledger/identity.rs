@@ -315,7 +315,7 @@ where
     associated_data: &[u8],
     algorithm: &EncryptionOptions,
     fragment: &str,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> Result<EncryptedData> {
     let method: &IotaVerificationMethod = self
       .document()
@@ -344,7 +344,7 @@ where
     data: EncryptedData,
     algorithm: &EncryptionOptions,
     fragment: &str,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> Result<Vec<u8>> {
     let method: &IotaVerificationMethod = self
       .document()

@@ -99,7 +99,7 @@ extern "C" {
     associated_data: Vec<u8>,
     encryption_options: WasmEncryptionOptions,
     private_key: WasmKeyLocation,
-    public_key: Option<Vec<u8>>,
+    public_key: Vec<u8>,
   ) -> PromiseEncryptedData;
   #[wasm_bindgen(method, js_name = decryptData)]
   pub fn decrypt_data(
@@ -108,7 +108,7 @@ extern "C" {
     data: WasmEncryptedData,
     encryption_options: WasmEncryptionOptions,
     private_key: WasmKeyLocation,
-    public_key: Option<Vec<u8>>,
+    public_key: Vec<u8>,
   ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = chainStateGet)]
   pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
@@ -247,7 +247,7 @@ impl Storage for WasmStorage {
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> AccountStorageResult<EncryptedData> {
     let promise: Promise = Promise::resolve(&self.encrypt_data(
       did.clone().into(),
@@ -255,7 +255,7 @@ impl Storage for WasmStorage {
       associated_data,
       encryption_options.clone().into(),
       private_key.clone().into(),
-      public_key.map(|key| key.as_ref().to_vec()),
+      public_key.as_ref().to_vec(),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let encrypted_data: EncryptedData = result
@@ -271,14 +271,14 @@ impl Storage for WasmStorage {
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
-    public_key: Option<PublicKey>,
+    public_key: PublicKey,
   ) -> AccountStorageResult<Vec<u8>> {
     let promise: Promise = Promise::resolve(&self.decrypt_data(
       did.clone().into(),
       data.into(),
       encryption_options.clone().into(),
       private_key.clone().into(),
-      public_key.map(|key| key.as_ref().to_vec()),
+      public_key.as_ref().to_vec(),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let data: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
@@ -407,13 +407,13 @@ interface Storage {
    * 
    *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
    */
-  encryptData: (did: DID, data: Uint8Array, associatedData: Uint8Array, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<EncryptedData>;
+  encryptData: (did: DID, data: Uint8Array, associatedData: Uint8Array, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array) => Promise<EncryptedData>;
 
   /** Decrypts the given `data` with the specified `algorithm`.
    * 
    *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
    */
-  decryptData: (did: DID, data: EncryptedData, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<Uint8Array>;
+  decryptData: (did: DID, data: EncryptedData, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined>;
