@@ -14,7 +14,7 @@ use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::EncryptedData;
-use identity_account_storage::types::EncryptionAlgorithm;
+use identity_account_storage::types::EncryptionOptions;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
@@ -313,7 +313,7 @@ where
     &self,
     data: &[u8],
     associated_data: &[u8],
-    algorithm: &EncryptionAlgorithm,
+    algorithm: &EncryptionOptions,
     fragment: &str,
     public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
@@ -342,7 +342,7 @@ where
   pub async fn decrypt_data(
     &self,
     data: EncryptedData,
-    algorithm: &EncryptionAlgorithm,
+    algorithm: &EncryptionOptions,
     fragment: &str,
     public_key: Option<PublicKey>,
   ) -> Result<Vec<u8>> {

@@ -15,7 +15,7 @@ use identity_iota_core::tangle::NetworkName;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::types::EncryptedData;
-use crate::types::EncryptionAlgorithm;
+use crate::types::EncryptionOptions;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -128,7 +128,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     did: &IotaDID,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: &EncryptionAlgorithm,
+    algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<EncryptedData>;
@@ -140,7 +140,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    algorithm: &EncryptionAlgorithm,
+    algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<Vec<u8>>;

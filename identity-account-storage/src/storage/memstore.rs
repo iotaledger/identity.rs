@@ -29,6 +29,7 @@ use crate::identity::ChainState;
 use crate::storage::Storage;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
+use crate::types::EncryptionOptions;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
@@ -212,7 +213,7 @@ impl Storage for MemStore {
     did: &IotaDID,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: &EncryptionAlgorithm,
+    algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
@@ -222,14 +223,9 @@ impl Storage for MemStore {
     let key_pair: &KeyPair = vault.get(private_key).ok_or(Error::KeyNotFound)?;
     // Encrypts the data
     match key_pair.type_() {
-      KeyType::Ed25519 => try_encrypt(key_pair.private().as_ref(), algorithm, &data, associated_data),
+      KeyType::Ed25519 => unimplemented!(),
       KeyType::X25519 => {
-        // Computes the shared secret
-        let shared_secret: [u8; 32] = X25519::key_exchange(
-          key_pair.private(),
-          &public_key.ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?,
-        )?;
-        try_encrypt(shared_secret.as_ref(), algorithm, &data, associated_data)
+        unimplemented!();
       }
     }
   }
@@ -238,7 +234,7 @@ impl Storage for MemStore {
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    algorithm: &EncryptionAlgorithm,
+    algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<Vec<u8>> {
@@ -248,14 +244,9 @@ impl Storage for MemStore {
     let key_pair: &KeyPair = vault.get(private_key).ok_or(Error::KeyNotFound)?;
     // Decrypts the data
     match key_pair.type_() {
-      KeyType::Ed25519 => try_decrypt(key_pair.private().as_ref(), algorithm, &data),
+      KeyType::Ed25519 => unimplemented!(),
       KeyType::X25519 => {
-        // Computes the shared secret
-        let shared_secret: [u8; 32] = X25519::key_exchange(
-          key_pair.private(),
-          &public_key.ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?,
-        )?;
-        try_decrypt(shared_secret.as_ref(), algorithm, &data)
+        unimplemented!();
       }
     }
   }

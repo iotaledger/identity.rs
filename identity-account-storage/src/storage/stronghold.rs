@@ -41,10 +41,11 @@ use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::Vault;
+use crate::types::CEKAlgorithm;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
+use crate::types::EncryptionOptions;
 use crate::types::KeyLocation;
-use crate::types::SharedSecretLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 
@@ -285,30 +286,34 @@ impl Storage for Stronghold {
     did: &IotaDID,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: &EncryptionAlgorithm,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
     let vault: Vault<'_> = self.vault(did);
     match private_key.key_type {
-      KeyType::Ed25519 => aead_encrypt(&vault, algorithm, private_key, data, associated_data).await,
+      KeyType::Ed25519 => unimplemented!(),
       KeyType::X25519 => {
-        let shared_secret: SharedSecretLocation = SharedSecretLocation::random();
-        diffie_hellman(
-          &vault,
-          private_key,
-          public_key
-            .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
-            .as_ref()
-            .try_into()
-            .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?,
-          &shared_secret,
-        )
-        .await?;
-        let encrypted_data: Result<EncryptedData> =
-          aead_encrypt(&vault, algorithm, &shared_secret, data, associated_data).await;
-        revoke_data(&vault, &shared_secret, true).await?;
-        encrypted_data
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+          .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
+          .as_ref()
+          .try_into()
+          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+        match encryption_options.cek_algorithm() {
+          CEKAlgorithm::ECDH_ES => {
+            let shared_key: Location = diffie_hellman(&vault, private_key, public_key).await?;
+            let encrypted_data: Result<EncryptedData> = aead_encrypt(
+              &vault,
+              &encryption_options.encryption_algorithm(),
+              shared_key.clone(),
+              data,
+              associated_data,
+            )
+            .await;
+            revoke_data(&vault, shared_key, true).await?;
+            encrypted_data
+          }
+        }
       }
     }
   }
@@ -317,29 +322,33 @@ impl Storage for Stronghold {
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    algorithm: &EncryptionAlgorithm,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<Vec<u8>> {
     let vault: Vault<'_> = self.vault(did);
     match private_key.key_type {
-      KeyType::Ed25519 => aead_decrypt(&vault, algorithm, private_key, data).await,
+      KeyType::Ed25519 => unimplemented!(),
       KeyType::X25519 => {
-        let shared_secret: SharedSecretLocation = SharedSecretLocation::random();
-        diffie_hellman(
-          &vault,
-          private_key,
-          public_key
-            .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
-            .as_ref()
-            .try_into()
-            .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?,
-          &shared_secret,
-        )
-        .await?;
-        let decrypted_data: Result<Vec<u8>> = aead_decrypt(&vault, algorithm, &shared_secret, data).await;
-        revoke_data(&vault, &shared_secret, true).await?;
-        decrypted_data
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+          .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
+          .as_ref()
+          .try_into()
+          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+        match encryption_options.cek_algorithm() {
+          CEKAlgorithm::ECDH_ES => {
+            let shared_key: Location = diffie_hellman(&vault, private_key, public_key).await?;
+            let decrypted_data: Result<Vec<u8>> = aead_decrypt(
+              &vault,
+              &encryption_options.encryption_algorithm(),
+              shared_key.clone(),
+              data,
+            )
+            .await;
+            revoke_data(&vault, shared_key, true).await?;
+            decrypted_data
+          }
+        }
       }
     }
   }
@@ -436,25 +445,27 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   Ok(Signature::new(signature.into()))
 }
 
-async fn diffie_hellman<T: Into<Location>>(
+async fn diffie_hellman(
   vault: &Vault<'_>,
   private_key: &KeyLocation,
   public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
-  shared_key: T,
-) -> Result<()> {
+) -> Result<Location> {
+  let location: [u8; 32] = OsRng.sample(rand::distributions::Standard);
+  let shared_key: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
   let diffie_hellman: procedures::X25519DiffieHellman = procedures::X25519DiffieHellman {
     public_key,
     private_key: private_key.into(),
-    shared_key: shared_key.into(),
+    shared_key: shared_key.clone(),
     hint: default_hint(),
   };
-  vault.execute(diffie_hellman).await.map_err(Into::into)
+  vault.execute(diffie_hellman).await?;
+  Ok(shared_key)
 }
 
-async fn aead_encrypt<T: Into<Location>>(
+async fn aead_encrypt(
   vault: &Vault<'_>,
   algorithm: &EncryptionAlgorithm,
-  location: T,
+  key: Location,
   plaintext: Vec<u8>,
   associated_data: Vec<u8>,
 ) -> Result<EncryptedData> {
@@ -466,7 +477,7 @@ async fn aead_encrypt<T: Into<Location>>(
         associated_data: associated_data.clone(),
         plaintext,
         nonce: nonce.to_vec(),
-        key: location.into(),
+        key,
       };
       let mut data = vault.execute(aead_encrypt).await?;
       Ok(EncryptedData::new(
@@ -479,17 +490,17 @@ async fn aead_encrypt<T: Into<Location>>(
   }
 }
 
-async fn aead_decrypt<T: Into<Location>>(
+async fn aead_decrypt(
   vault: &Vault<'_>,
   algorithm: &EncryptionAlgorithm,
-  location: T,
+  key: Location,
   encrypted_data: EncryptedData,
 ) -> Result<Vec<u8>> {
   match algorithm {
     EncryptionAlgorithm::Aes256Gcm => {
       let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
         cipher: procedures::AeadCipher::Aes256Gcm,
-        key: location.into(),
+        key,
         ciphertext: encrypted_data.ciphertext().to_vec(),
         associated_data: encrypted_data.associated_data().to_vec(),
         tag: encrypted_data.tag().to_vec(),
@@ -549,12 +560,6 @@ impl From<&KeyLocation> for Location {
   fn from(key_location: &KeyLocation) -> Self {
     let record_path: Vec<u8> = key_location.canonical().into_bytes();
     Location::generic(VAULT_PATH.to_vec(), record_path)
-  }
-}
-
-impl From<&SharedSecretLocation> for Location {
-  fn from(shared_secret_location: &SharedSecretLocation) -> Self {
-    Location::generic(VAULT_PATH.to_vec(), shared_secret_location.0.clone())
   }
 }
 
