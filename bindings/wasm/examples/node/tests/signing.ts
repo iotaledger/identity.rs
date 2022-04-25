@@ -1,4 +1,4 @@
-import {signing} from "../advanced/1_signing";
+import {signing} from "../basic/7_signing";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test node examples", function () {

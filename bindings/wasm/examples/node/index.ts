@@ -6,14 +6,14 @@ import { manipulateIdentity } from "./basic/2_manipulate_did";
 import { createVC } from "./basic/3_create_vc";
 import { createVP } from "./basic/4_create_vp";
 import { revokeVC } from "./basic/5_revoke_vc";
-import { signing } from "./advanced/1_signing";
-import { keyExchange } from "./advanced/2_key_exchange";
-import { config } from "./advanced/3_config";
-import { lazy } from "./advanced/4_lazy";
-import { multipleIdentities } from "./advanced/5_multiple_identities";
-import { resolveHistory } from "./advanced/6_resolve_history";
-import { unchecked } from "./advanced/7_unchecked";
-import { storageTestSuite } from "./advanced/8_custom_storage";
+import { signing } from "./basic/7_signing";
+import { keyExchange } from "./advanced/1_key_exchange";
+import { config } from "./basic/8_config";
+import { lazy } from "./basic/9_lazy";
+import { multipleIdentities } from "./basic/6_multiple_identities";
+import { resolveHistory } from "./advanced/2_resolve_history";
+import { unchecked } from "./advanced/3_unchecked";
+import { storageTestSuite } from "./advanced/4_custom_storage";
 
 async function main() {
     //Check if an example is mentioned

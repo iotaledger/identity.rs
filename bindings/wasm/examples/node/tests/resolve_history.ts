@@ -1,4 +1,4 @@
-import {resolveHistory} from "../advanced/6_resolve_history";
+import {resolveHistory} from "../advanced/2_resolve_history";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test node examples", function () {

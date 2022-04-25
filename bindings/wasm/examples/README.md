@@ -36,14 +36,14 @@ The following examples are currently available:
 |3| [create_vc](node/basic/3_create_vc.ts)             | Generate and publish subject and issuer DID Documents, then create a Verifiable Credential (VC) specifying claims about the subject, and verify it.|
 |4| [create_vp](node/basic/4_create_vp.ts)             | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verify it.      
 |5| [revoke_vc](node/basic/5_revoke_vc.ts)             | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.            
-|6| [signing](node/advanced/1_signing.ts) | Using a DID to sign arbitrary statements and validating them. |
-|7| [key_exchange](node/advanced/2_key_exchange.ts) | Use DID key-material to negotiate a shred communication key |
-|8| [config](node/advanced/3_config.ts) | Configure the account to work with different networks and other settings. |
-|9| [lazy](node/advanced/4_lazy.ts)| Configure the account to allow manual batching and publishing changes for granular control | 
-|10| [multiple_identities](node/advanced/5_multiple_identities.ts) | Create multiple identities from a builder and load existing identities into an account. |
-|11| [resolve_history](node/advanced/6_resolve_history.ts) | Resolve the history of a DID and inspect changes over historical versions |
-|12| [unchecked](node/advanced/7_unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
-|13| [custom_storage](node/advanced/8_custom_storage.ts) | Example implementation of a custom storage and testing it with the storage test suite. |
+|6| [multiple_identities](node/basic/6_multiple_identities.ts) | Create multiple identities from a builder and load existing identities into an account. |
+|7| [signing](node/basic/7_signing.ts) | Using a DID to sign arbitrary statements and validating them. |
+|8| [config](node/basic/8_config.ts) | Configure the account to work with different networks and other settings. |
+|9| [lazy](node/basic/9_lazy.ts)| Configure the account to allow manual batching and publishing changes for granular control | 
+|10| [key_exchange](node/advanced/1_key_exchange.ts) | Use DID key-material to negotiate a shred communication key |
+|11| [resolve_history](node/advanced/2_resolve_history.ts) | Resolve the history of a DID and inspect changes over historical versions |
+|12| [unchecked](node/advanced/3_unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
+|13| [custom_storage](node/advanced/4_custom_storage.ts) | Example implementation of a custom storage and testing it with the storage test suite. |
 
 ### Browser Examples
 
