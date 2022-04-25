@@ -582,7 +582,7 @@ Deserializes a JSON object as `ChainState`.
         * ~~[.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.isMessageIncluded(message_id)](#Client+isMessageIncluded) ⇒ <code>Promise.&lt;boolean&gt;</code>
+        * [.isMessageIncluded(messageId)](#Client+isMessageIncluded) ⇒ <code>Promise.&lt;boolean&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * ~~[.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
@@ -655,14 +655,14 @@ Default interval is 5 seconds and max attempts is 40.
 
 <a name="Client+isMessageIncluded"></a>
 
-### client.isMessageIncluded(message_id) ⇒ <code>Promise.&lt;boolean&gt;</code>
+### client.isMessageIncluded(messageId) ⇒ <code>Promise.&lt;boolean&gt;</code>
 Checks if a message is confirmed by a milestone.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| message_id | <code>string</code> | 
+| messageId | <code>string</code> | 
 
 <a name="Client+resolve"></a>
 

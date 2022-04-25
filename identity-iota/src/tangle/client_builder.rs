@@ -12,6 +12,7 @@ use crate::tangle::Client;
 use crate::tangle::DIDMessageEncoding;
 
 const DEFAULT_LOCAL_POW: bool = false;
+const DEFAULT_RETRY_UNTIL_INCLUDED: bool = true;
 
 /// A [`ClientBuilder`] is used to generated a customized [`Client`].
 pub struct ClientBuilder {
@@ -30,7 +31,7 @@ impl ClientBuilder {
       network: Default::default(),
       builder: iota_client::ClientBuilder::new().with_local_pow(DEFAULT_LOCAL_POW),
       encoding: DIDMessageEncoding::JsonBrotli,
-      retry_until_included: true,
+      retry_until_included: DEFAULT_RETRY_UNTIL_INCLUDED,
     }
   }
 
@@ -49,6 +50,10 @@ impl ClientBuilder {
     self
   }
 
+  
+  /// When publishing to the Tangle, sets whether to retry until the message is 
+  /// confirmed by a milestone.
+  /// Default: true.
   pub fn retry_until_included(mut self, value: bool) -> Self {
     self.retry_until_included = value;
     self

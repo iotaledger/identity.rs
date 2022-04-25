@@ -77,7 +77,7 @@ impl Client {
 
   /// Publishes an [`IotaDocument`] to the Tangle.
   /// If `retry_until_included` is true, this method calls `publish_json_with_retry` with its default `interval`
-  /// and `max_attempts` values for increasing the probability that the message will be referenced by a milestone.
+  /// and `max_attempts` values to increase the probability that the message will be referenced by a milestone.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
     if document.id().network_str() != self.network.name_str() {
       return Err(Error::IncompatibleNetwork(format!(
