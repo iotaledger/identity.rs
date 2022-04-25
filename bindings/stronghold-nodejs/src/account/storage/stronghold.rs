@@ -15,7 +15,7 @@ use napi_derive::napi;
 
 use crate::account::identity::NapiDidLocation;
 use crate::account::types::NapiEncryptedData;
-use crate::account::types::NapiEncryptionAlgorithm;
+use crate::account::types::NapiEncryptionOptions;
 use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
 use crate::account::NapiDocument;
@@ -187,7 +187,7 @@ impl NapiStronghold {
     did: &NapiDID,
     data: Vec<u32>,
     associated_data: Vec<u32>,
-    algorithm: &NapiEncryptionAlgorithm,
+    encryption_options: &NapiEncryptionOptions,
     private_key: &NapiKeyLocation,
     public_key: Option<Vec<u32>>,
   ) -> Result<NapiEncryptedData> {
@@ -200,7 +200,7 @@ impl NapiStronghold {
         &did.0,
         data,
         associated_data,
-        &algorithm.0,
+        &encryption_options.0,
         &private_key.0,
         public_key.map(|key| key.into()),
       )
@@ -217,7 +217,7 @@ impl NapiStronghold {
     &self,
     did: &NapiDID,
     data: &NapiEncryptedData,
-    algorithm: &NapiEncryptionAlgorithm,
+    encryption_options: &NapiEncryptionOptions,
     private_key: &NapiKeyLocation,
     public_key: Option<Vec<u32>>,
   ) -> Result<Vec<u32>> {
@@ -227,7 +227,7 @@ impl NapiStronghold {
       .decrypt_data(
         &did.0,
         data.0.clone(),
-        &algorithm.0,
+        &encryption_options.0,
         &private_key.0,
         public_key.map(|key| key.into()),
       )

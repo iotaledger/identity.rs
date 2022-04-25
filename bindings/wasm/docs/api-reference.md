@@ -16,6 +16,9 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
+<dt><a href="#CEKAlgorithm">CEKAlgorithm</a></dt>
+<dd><p>Supported CEK algorithms</p>
+</dd>
 <dt><a href="#ChainState">ChainState</a></dt>
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
@@ -54,6 +57,9 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#EncryptionAlgorithm">EncryptionAlgorithm</a></dt>
 <dd><p>Supported keys for encrypting data</p>
+</dd>
+<dt><a href="#EncryptionOptions">EncryptionOptions</a></dt>
+<dd><p>Object used for defining the algorithms used for encrypting/decrypting data</p>
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
@@ -196,8 +202,8 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
@@ -212,13 +218,24 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptData(data, associated_data, algorithm, fragment, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-    * [.decryptData(data, algorithm, fragment, public_key)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.encryptData(data, associated_data, encryption_options, fragment, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(data, encryption_options, fragment, public_key)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -233,17 +250,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -385,7 +391,7 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+encryptData"></a>
 
-### account.encryptData(data, associated_data, algorithm, fragment, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+### account.encryptData(data, associated_data, encryption_options, fragment, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
 Encrypts the given `data` with the specified `algorithm`
 
 Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
@@ -396,13 +402,13 @@ Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is g
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 | associated_data | <code>Uint8Array</code> | 
-| algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| encryption_options | [<code>EncryptionOptions</code>](#EncryptionOptions) | 
 | fragment | <code>string</code> | 
 | public_key | <code>Uint8Array</code> \| <code>undefined</code> | 
 
 <a name="Account+decryptData"></a>
 
-### account.decryptData(data, algorithm, fragment, public_key) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+### account.decryptData(data, encryption_options, fragment, public_key) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
 Decrypts the given `data` with the specified `algorithm`
 
 Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
@@ -412,7 +418,7 @@ Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is g
 | Param | Type |
 | --- | --- |
 | data | [<code>EncryptedData</code>](#EncryptedData) | 
-| algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| encryption_options | [<code>EncryptionOptions</code>](#EncryptionOptions) | 
 | fragment | <code>string</code> | 
 | public_key | <code>Uint8Array</code> \| <code>undefined</code> | 
 
@@ -577,6 +583,43 @@ Save after every N actions.
 Deserializes `AutoSave` from a JSON object.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="CEKAlgorithm"></a>
+
+## CEKAlgorithm
+Supported CEK algorithms
+
+**Kind**: global class  
+
+* [CEKAlgorithm](#CEKAlgorithm)
+    * _instance_
+        * [.toJSON()](#CEKAlgorithm+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.ecdhES()](#CEKAlgorithm.ecdhES) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+        * [.fromJSON(json_value)](#CEKAlgorithm.fromJSON) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+
+<a name="CEKAlgorithm+toJSON"></a>
+
+### cekAlgorithm.toJSON() ⇒ <code>any</code>
+Serializes `CEKAlgorithm` as a JSON object.
+
+**Kind**: instance method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
+<a name="CEKAlgorithm.ecdhES"></a>
+
+### CEKAlgorithm.ecdhES() ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+ECDH-ES will be used as the content encryption key.
+
+**Kind**: static method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
+<a name="CEKAlgorithm.fromJSON"></a>
+
+### CEKAlgorithm.fromJSON(json_value) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+Deserializes `CEKAlgorithm` from a JSON object.
+
+**Kind**: static method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
 
 | Param | Type |
 | --- | --- |
@@ -2359,6 +2402,49 @@ Encrypts/Decrypts data using Aes256Gcm.
 Deserializes `EncryptionAlgorithm` from a JSON object.
 
 **Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="EncryptionOptions"></a>
+
+## EncryptionOptions
+Object used for defining the algorithms used for encrypting/decrypting data
+
+**Kind**: global class  
+
+* [EncryptionOptions](#EncryptionOptions)
+    * _instance_
+        * [.toJSON()](#EncryptionOptions+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.new(encryption_algorithm, cek_algorithm)](#EncryptionOptions.new) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
+        * [.fromJSON(json_value)](#EncryptionOptions.fromJSON) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
+
+<a name="EncryptionOptions+toJSON"></a>
+
+### encryptionOptions.toJSON() ⇒ <code>any</code>
+Serializes `EncryptionOptions` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
+<a name="EncryptionOptions.new"></a>
+
+### EncryptionOptions.new(encryption_algorithm, cek_algorithm) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
+Creates an `EncryptionOptions` object.
+
+**Kind**: static method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
+
+| Param | Type |
+| --- | --- |
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CEKAlgorithm</code>](#CEKAlgorithm) | 
+
+<a name="EncryptionOptions.fromJSON"></a>
+
+### EncryptionOptions.fromJSON(json_value) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
+Deserializes `EncryptionOptions` from a JSON object.
+
+**Kind**: static method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
 
 | Param | Type |
 | --- | --- |

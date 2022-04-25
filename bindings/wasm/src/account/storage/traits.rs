@@ -6,7 +6,7 @@ use core::fmt::Formatter;
 
 use identity::account_storage::ChainState;
 use identity::account_storage::EncryptedData;
-use identity::account_storage::EncryptionAlgorithm;
+use identity::account_storage::EncryptionOptions;
 use identity::account_storage::Error as AccountStorageError;
 use identity::account_storage::KeyLocation;
 use identity::account_storage::Result as AccountStorageResult;
@@ -27,7 +27,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::types::WasmEncryptedData;
-use crate::account::types::WasmEncryptionAlgorithm;
+use crate::account::types::WasmEncryptionOptions;
 use crate::account::types::WasmKeyLocation;
 use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
@@ -97,7 +97,7 @@ extern "C" {
     did: WasmDID,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: WasmEncryptionAlgorithm,
+    encryption_options: WasmEncryptionOptions,
     private_key: WasmKeyLocation,
     public_key: Option<Vec<u8>>,
   ) -> PromiseEncryptedData;
@@ -106,7 +106,7 @@ extern "C" {
     this: &WasmStorage,
     did: WasmDID,
     data: WasmEncryptedData,
-    algorithm: WasmEncryptionAlgorithm,
+    encryption_options: WasmEncryptionOptions,
     private_key: WasmKeyLocation,
     public_key: Option<Vec<u8>>,
   ) -> Uint8Array;
@@ -245,7 +245,7 @@ impl Storage for WasmStorage {
     did: &IotaDID,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: &EncryptionAlgorithm,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> AccountStorageResult<EncryptedData> {
@@ -253,7 +253,7 @@ impl Storage for WasmStorage {
       did.clone().into(),
       data,
       associated_data,
-      algorithm.clone().into(),
+      encryption_options.clone().into(),
       private_key.clone().into(),
       public_key.map(|key| key.as_ref().to_vec()),
     ));
@@ -269,14 +269,14 @@ impl Storage for WasmStorage {
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    algorithm: &EncryptionAlgorithm,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> AccountStorageResult<Vec<u8>> {
     let promise: Promise = Promise::resolve(&self.decrypt_data(
       did.clone().into(),
       data.into(),
-      algorithm.clone().into(),
+      encryption_options.clone().into(),
       private_key.clone().into(),
       public_key.map(|key| key.as_ref().to_vec()),
     ));
@@ -407,13 +407,13 @@ interface Storage {
    * 
    *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
    */
-  encryptData: (did: DID, data: Uint8Array, associatedData: Uint8Array, algorithm: EncryptionAlgorithm, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<EncryptedData>;
+  encryptData: (did: DID, data: Uint8Array, associatedData: Uint8Array, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<EncryptedData>;
 
   /** Decrypts the given `data` with the specified `algorithm`.
    * 
    *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
    */
-  decryptData: (did: DID, data: EncryptedData, algorithm: EncryptionAlgorithm, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<Uint8Array>;
+  decryptData: (did: DID, data: EncryptedData, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey?: Uint8Array) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined>;

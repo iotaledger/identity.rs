@@ -27,6 +27,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
+use crate::types::CEKAlgorithm;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
 use crate::types::EncryptionOptions;
@@ -213,7 +214,7 @@ impl Storage for MemStore {
     did: &IotaDID,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: &EncryptionOptions,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<EncryptedData> {
@@ -225,7 +226,22 @@ impl Storage for MemStore {
     match key_pair.type_() {
       KeyType::Ed25519 => unimplemented!(),
       KeyType::X25519 => {
-        unimplemented!();
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+          .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
+          .as_ref()
+          .try_into()
+          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+        match encryption_options.cek_algorithm() {
+          CEKAlgorithm::ECDH_ES => {
+            let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
+            try_encrypt(
+              shared_secret.as_ref(),
+              &encryption_options.encryption_algorithm(),
+              &data,
+              associated_data,
+            )
+          }
+        }
       }
     }
   }
@@ -234,7 +250,7 @@ impl Storage for MemStore {
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    algorithm: &EncryptionOptions,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: Option<PublicKey>,
   ) -> Result<Vec<u8>> {
@@ -246,7 +262,21 @@ impl Storage for MemStore {
     match key_pair.type_() {
       KeyType::Ed25519 => unimplemented!(),
       KeyType::X25519 => {
-        unimplemented!();
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+          .ok_or_else(|| Error::InvalidPublicKey("missing second party public key".to_owned()))?
+          .as_ref()
+          .try_into()
+          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+        match encryption_options.cek_algorithm() {
+          CEKAlgorithm::ECDH_ES => {
+            let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
+            try_decrypt(
+              shared_secret.as_ref(),
+              &encryption_options.encryption_algorithm(),
+              &data,
+            )
+          }
+        }
       }
     }
   }

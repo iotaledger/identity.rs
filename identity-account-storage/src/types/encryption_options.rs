@@ -5,6 +5,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
+#[derive(Clone, Deserialize, Serialize)]
 pub struct EncryptionOptions {
   encryption_algorithm: EncryptionAlgorithm,
   cek_algorithm: CEKAlgorithm,
