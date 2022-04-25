@@ -25,6 +25,7 @@ use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
 use crate::account::types::WasmKeyLocation;
+use crate::common::PromiseBool;
 use crate::common::PromiseVoid;
 use crate::crypto::WasmKeyType;
 use crate::did::WasmDID;
@@ -37,8 +38,6 @@ extern "C" {
   pub type PromisePublicKey;
   #[wasm_bindgen(typescript_type = "Promise<Signature>")]
   pub type PromiseSignature;
-  #[wasm_bindgen(typescript_type = "Promise<boolean>")]
-  pub type PromiseBool;
   #[wasm_bindgen(typescript_type = "Promise<ChainState | undefined>")]
   pub type PromiseOptionChainState;
   #[wasm_bindgen(typescript_type = "Promise<Document | undefined>")]

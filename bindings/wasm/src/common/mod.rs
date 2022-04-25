@@ -4,7 +4,9 @@
 pub use promise_void::*;
 pub use timestamp::*;
 pub(crate) use utils::*;
+pub use types::*;
 
 mod promise_void;
 mod timestamp;
 mod utils;
+mod types;
