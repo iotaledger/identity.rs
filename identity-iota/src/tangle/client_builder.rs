@@ -50,8 +50,7 @@ impl ClientBuilder {
     self
   }
 
-  
-  /// When publishing to the Tangle, sets whether to retry until the message is 
+  /// When publishing to the Tangle, sets whether to retry until the message is
   /// confirmed by a milestone.
   /// Default: true.
   pub fn retry_until_included(mut self, value: bool) -> Self {
