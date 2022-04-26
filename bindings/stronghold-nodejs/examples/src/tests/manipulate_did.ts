@@ -1,4 +1,4 @@
-import {manipulateIdentity} from "../../../../wasm/examples-account/src/manipulate_did";
+import {manipulateIdentity} from "../../../../wasm/examples/node/basic/2_manipulate_did";
 import { stronghold } from '../stronghold';
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.

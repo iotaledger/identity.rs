@@ -1,4 +1,4 @@
-import {lazy} from "../../../../wasm/examples-account/src/lazy";
+import {lazy} from "../../../../wasm/examples/node/basic/9_lazy";
 import { stronghold } from '../stronghold';
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.

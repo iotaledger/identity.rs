@@ -1,4 +1,4 @@
-import {unchecked} from "../../../../wasm/examples-account/src/unchecked";
+import {unchecked} from "../../../../wasm/examples/node/advanced/3_unchecked";
 import { stronghold } from '../stronghold';
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
