@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_config
+//! cargo run --example config
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
@@ -10,6 +10,7 @@ use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::account_storage::MemStore;
 use identity::iota::ClientBuilder;
+use identity::iota::DIDMessageEncoding;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
 use identity::iota_core::Network;
@@ -34,6 +35,9 @@ async fn main() -> Result<()> {
   // In a locally running one-click tangle, this would usually be `http://127.0.0.1:14265`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
+  // Use `DIDMessageEncoding::Json` instead to publish plaintext messages to the Tangle for debugging.
+  let encoding = DIDMessageEncoding::JsonBrotli;
+
   // Create a new Account with explicit configuration
   let mut builder: AccountBuilder = Account::builder()
     .autosave(AutoSave::Never) // never auto-save. rely on the drop save
@@ -45,6 +49,7 @@ async fn main() -> Result<()> {
       // Configure a client for the private network
       ClientBuilder::new()
         .network(network.clone())
+        .encoding(encoding)
         .primary_node(private_node_url, None, None)?,
       // set a permanode for the same network
       // .permanode(<permanode_url>, None, None)?

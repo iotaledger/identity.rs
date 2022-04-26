@@ -4,7 +4,7 @@
 //! A Verifiable Presentation (VP) represents a bundle of one or more Verifiable Credentials.
 //! This example demonstrates building and usage of VPs.
 //!
-//! cargo run --example account_create_vp
+//! cargo run --example create_vp
 
 use identity::account::Account;
 use identity::account::AccountBuilder;

@@ -15,8 +15,6 @@ use identity::iota_core::IotaDID;
 use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
 
-mod create_did;
-
 pub async fn run() -> Result<()> {
   // Alice and Bob want to communicate securely by encrypting their messages so only they
   // can read them. They both publish DID Documents with X25519 public keys and use them

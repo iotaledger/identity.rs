@@ -12,9 +12,7 @@ import {
 } from '@iota/identity-wasm/node';
 
 /**
- Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.
-
- @param {{network: Network, explorer: ExplorerUrl}} clientConfig
+ * Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents.
  **/
 async function keyExchange() {
     // Create a client instance to publish messages to the configured Tangle network.

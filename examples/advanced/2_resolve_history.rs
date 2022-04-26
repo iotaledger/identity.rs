@@ -22,8 +22,6 @@ use identity::iota_core::IotaService;
 use identity::iota_core::IotaVerificationMethod;
 use identity::prelude::*;
 
-mod create_did;
-
 #[rustfmt::skip]
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -34,8 +32,18 @@ async fn main() -> Result<()> {
   // DID Creation
   // ===========================================================================
 
-  // Create a signed DID Document and KeyPair (see "create_did.rs" example).
-  let (document, keypair, original_receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+  // Generate a new Ed25519 public/private key pair.
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+
+  // Create a DID Document (an identity) from the generated key pair.
+  let mut document: IotaDocument = IotaDocument::new(&keypair)?;
+
+  // Sign the DID Document with the default signing method.
+  document.sign_self(keypair.private(), document.default_signing_method()?.id().clone())?;
+
+
+  // Publish the DID Document to the Tangle.
+  let original_receipt: Receipt = client.publish_document(&document).await?;
 
   // ===========================================================================
   // Integration Chain Spam

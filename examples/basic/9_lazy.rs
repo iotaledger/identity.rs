@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_lazy
+//! cargo run --example lazy
 use std::path::PathBuf;
 
 use identity::account::Account;

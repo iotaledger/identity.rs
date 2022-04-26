@@ -15,65 +15,49 @@ name = "getting_started"
 path = "getting_started.rs"
 
 [[example]]
-name = "account_create"
-path = "account/create_did.rs"
-
-[[example]]
-name = "account_config"
-path = "account/config.rs"
-
-[[example]]
-name = "account_manipulate"
-path = "account/manipulate_did.rs"
-
-[[example]]
-name = "account_lazy"
-path = "account/lazy.rs"
-
-[[example]]
-name = "account_signing"
-path = "account/signing.rs"
-
-[[example]]
-name = "account_multiple"
-path = "account/multiple_identities.rs"
-
-[[example]]
-name = "account_unchecked"
-path = "account/unchecked.rs"
-
-[[example]]
 name = "create_did"
-path = "low-level-api/create_did.rs"
+path = "basic/1_create_did.rs"
 
 [[example]]
-name = "account_create_vc"
-path = "account/create_vc.rs"
-
-[[example]]
-name = "account_create_vp"
-path = "account/create_vp.rs"
-
-[[example]]
-name = "resolve_history"
-path = "low-level-api/resolve_history.rs"
+name = "config"
+path = "basic/8_config.rs"
 
 [[example]]
 name = "manipulate_did"
-path = "low-level-api/manipulate_did.rs"
+path = "basic/2_manipulate_did.rs"
+
+[[example]]
+name = "lazy"
+path = "basic/9_lazy.rs"
+
+[[example]]
+name = "signing"
+path = "basic/7_signing.rs"
+
+[[example]]
+name = "multiple_identities"
+path = "basic/6_multiple_identities.rs"
+
+[[example]]
+name = "unchecked"
+path = "advanced/3_unchecked.rs"
+
+[[example]]
+name = "create_vc"
+path = "basic/3_create_vc.rs"
+
+[[example]]
+name = "create_vp"
+path = "basic/4_create_vp.rs"
+
+[[example]]
+name = "resolve_history"
+path = "advanced/2_resolve_history.rs"
 
 [[example]]
 name = "key_exchange"
-path = "low-level-api/key_exchange.rs"
+path = "advanced/1_key_exchange.rs"
 
 [[example]]
-name = "resolution"
-path = "low-level-api/resolution.rs"
-
-[[example]]
-name = "private_tangle"
-path = "low-level-api/private_tangle.rs"
-
-[[example]]
-name = "account_revoke_vc"
-path = "account/revoke_vc.rs"
+name = "revoke_vc"
+path = "basic/5_revoke_vc.rs"

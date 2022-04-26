@@ -5,7 +5,7 @@
 //! Documents, then creates a Verifiable Credential (vc) specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
 //!
-//! cargo run --example account_create_vc
+//! cargo run --example create_vc
 
 use identity::account::Account;
 use identity::account::AccountBuilder;

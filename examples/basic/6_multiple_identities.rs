@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_multiple
+//! cargo run --example multiple_identities
 
 use std::path::PathBuf;
 

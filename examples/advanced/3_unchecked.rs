@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_create
+//! cargo run --example unchecked
 
 use std::path::PathBuf;
 
@@ -9,8 +9,10 @@ use identity::account::Account;
 use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::account_storage::Stronghold;
+use identity::core::Timestamp;
 use identity::iota::ExplorerUrl;
 use identity::iota_core::IotaDID;
+use identity::prelude::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -28,10 +30,30 @@ async fn main() -> Result<()> {
   //
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
-  let account: Account = Account::builder()
+  let mut account: Account = Account::builder()
     .storage(stronghold)
     .create_identity(IdentitySetup::default())
     .await?;
+
+  // Get a copy of the document this account manages.
+  // We will apply updates to the document, and overwrite the account's current document.
+  let mut document: IotaDocument = account.document().clone();
+
+  // Add a custom property to the document.
+  document
+    .properties_mut()
+    .insert("myCustomPropertyKey".into(), "value".into());
+
+  // Override the updated field timestamp to 24 hours (= 86400 seconds) in the future,
+  // because we can. This is usually set automatically by Account::update_identity.
+  let timestamp: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() + 86400)?;
+  document.metadata.updated = Some(timestamp);
+
+  // Update the identity without validation and publish the result to the Tangle
+  // (depending on the account's autopublish setting).
+  // The responsibility is on the caller to provide a valid document which the account
+  // can continue to use. Failing to do so can corrupt the identity; use with caution!
+  account.update_document_unchecked(document).await?;
 
   // Retrieve the did of the newly created identity.
   let iota_did: &IotaDID = account.did();
