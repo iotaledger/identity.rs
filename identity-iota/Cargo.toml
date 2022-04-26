@@ -43,7 +43,7 @@ default-features = false
 features = ["wasm"]
 
 [dependencies.iota-crypto]
-version = "0.7"
+version = "=0.9.1"
 default-features = false
 features = ["blake2b"]
 
