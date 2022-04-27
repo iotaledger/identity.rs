@@ -6,14 +6,14 @@ use crate::jwk::EcdhCurve;
 use crate::jwk::EcxCurve;
 use crate::utils::Secret;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Recipient<'a> {
   /// The curve used for Ecdh key agreements.
   pub ecdh_curve: EcdhCurve,
   /// The public key used for key agreements and content encryption.
   pub public: Secret<'a>,
   /// The non integrity-protected JOSE header.
-  pub header: Option<&'a JweHeader>,
+  pub header: Option<JweHeader>,
 }
 
 impl<'a> Recipient<'a> {
@@ -30,8 +30,9 @@ impl<'a> Recipient<'a> {
     self
   }
 
-  pub fn header(mut self, value: &'a JweHeader) -> Self {
-    self.header = Some(value);
+  pub fn header(mut self, value: &JweHeader) -> Self {
+    // TODO: Fix clone if kept.
+    self.header = Some(value.clone());
     self
   }
 }

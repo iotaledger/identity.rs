@@ -23,7 +23,7 @@ pub trait Message {
     &self,
     cek_algorithm: CEKAlgorithm,
     enc_algorithm: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<DidCommEncryptedMessage>;
 
@@ -32,7 +32,7 @@ pub trait Message {
     signature: SignatureAlgorithm,
     cek_algorithm: CEKAlgorithm,
     encryption: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<DidCommEncryptedMessage>;
 }
@@ -50,7 +50,7 @@ impl<T: ToJson> Message for T {
     &self,
     cek_algorithm: CEKAlgorithm,
     enc_algorithm: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<DidCommEncryptedMessage> {
     DidCommEncryptedMessage::pack(self, cek_algorithm, enc_algorithm, recipients, sender)
@@ -61,7 +61,7 @@ impl<T: ToJson> Message for T {
     signature: SignatureAlgorithm,
     cek_algorithm: CEKAlgorithm,
     enc_algorithm: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<DidCommEncryptedMessage> {
     Self::pack_signed(self, signature, sender).and_then(|signed| {

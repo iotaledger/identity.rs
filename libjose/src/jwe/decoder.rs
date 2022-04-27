@@ -57,9 +57,9 @@ const COMPACT_SEGMENTS: usize = 5;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Recipient<'a> {
-  header: Option<JweHeader>,
-  encrypted_key: Option<&'a str>,
+pub struct DecoderRecipient<'a> {
+  pub header: Option<JweHeader>,
+  pub encrypted_key: Option<&'a str>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,7 +71,7 @@ struct General<'a> {
   aad: Option<&'a str>,
   ciphertext: &'a str,
   tag: Option<&'a str>,
-  recipients: Vec<Recipient<'a>>,
+  recipients: Vec<DecoderRecipient<'a>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -84,7 +84,7 @@ struct Flatten<'a> {
   ciphertext: &'a str,
   tag: Option<&'a str>,
   #[serde(flatten)]
-  recipient: Recipient<'a>,
+  recipient: DecoderRecipient<'a>,
 }
 
 // =============================================================================
@@ -159,57 +159,48 @@ impl<'a> Decoder<'a> {
   }
 
   pub fn decode(&self, data: &[u8]) -> Result<Token> {
-    self.expand(data, |expanded| {
-      let protected: Option<JweHeader> = expanded.protected.map(decode_b64_json).transpose()?;
-      let unprotected: Option<JweHeader> = expanded.unprotected.map(decode_b64_json).transpose()?;
+    let (expanded, protected, unprotected): (Expanded<'_>, Option<JweHeader>, Option<JweHeader>) =
+      Self::expand(self.format, &self.crits, data)?;
 
-      let protected_ref: Option<&JweHeader> = protected.as_ref();
-      let unprotected_ref: Option<&JweHeader> = unprotected.as_ref();
+    let protected_ref: Option<&JweHeader> = protected.as_ref();
+    let unprotected_ref: Option<&JweHeader> = unprotected.as_ref();
 
-      validate_jwe_headers(
-        protected_ref,
-        unprotected_ref,
-        expanded.recipients.iter().map(|recipient| recipient.header.as_ref()),
-        self.crits.as_deref(),
-      )?;
+    let cek: Option<(Cow<'_, [u8]>, Option<JweHeader>)> = expanded
+      .recipients
+      .into_iter()
+      .find_map(|recipient| self.expand_recipient(protected_ref, unprotected_ref, recipient).ok());
 
-      let cek: Option<(Cow<'_, [u8]>, Option<JweHeader>)> = expanded
-        .recipients
-        .into_iter()
-        .find_map(|recipient| self.expand_recipient(protected_ref, unprotected_ref, recipient).ok());
+    if let Some((cek, header)) = cek {
+      let merged: HeaderSet<'_> = HeaderSet::new()
+        .header(&header)
+        .protected(protected_ref)
+        .unprotected(unprotected_ref);
 
-      if let Some((cek, header)) = cek {
-        let merged: HeaderSet<'_> = HeaderSet::new()
-          .header(&header)
-          .protected(protected_ref)
-          .unprotected(unprotected_ref);
+      let iv: Vec<u8> = expanded.iv.map(decode_b64).transpose()?.unwrap_or_default();
+      let tag: Vec<u8> = expanded.tag.map(decode_b64).transpose()?.unwrap_or_default();
+      let aad: Vec<u8> = create_aad(expanded.protected, expanded.aad);
+      let ciphertext: Vec<u8> = decode_b64(expanded.ciphertext)?;
+      let encryption: JweEncryption = merged.try_enc()?;
+      let plaintext: Vec<u8> = decrypt_content(encryption, &cek, &iv, &aad, &tag, &ciphertext)?;
 
-        let iv: Vec<u8> = expanded.iv.map(decode_b64).transpose()?.unwrap_or_default();
-        let tag: Vec<u8> = expanded.tag.map(decode_b64).transpose()?.unwrap_or_default();
-        let aad: Vec<u8> = create_aad(expanded.protected, expanded.aad);
-        let ciphertext: Vec<u8> = decode_b64(expanded.ciphertext)?;
-        let encryption: JweEncryption = merged.try_enc()?;
-        let plaintext: Vec<u8> = decrypt_content(encryption, &cek, &iv, &aad, &tag, &ciphertext)?;
-
-        let claims: Vec<u8> = if let Some(zip) = protected_ref.and_then(JweHeader::zip) {
-          zip.decompress(&plaintext)?
-        } else {
-          plaintext
-        };
-
-        // TODO: Return Owned Header Set
-        Ok((header.or(protected).or(unprotected).unwrap(), claims))
+      let claims: Vec<u8> = if let Some(zip) = protected_ref.and_then(JweHeader::zip) {
+        zip.decompress(&plaintext)?
       } else {
-        Err(Error::InvalidContent("Recipient (not found)"))
-      }
-    })
+        plaintext
+      };
+
+      // TODO: Return Owned Header Set
+      Ok((header.or(protected).or(unprotected).unwrap(), claims))
+    } else {
+      Err(Error::InvalidContent("Recipient (not found)"))
+    }
   }
 
   fn expand_recipient(
     &self,
     protected: Option<&JweHeader>,
     unprotected: Option<&JweHeader>,
-    mut recipient: Recipient<'_>,
+    mut recipient: DecoderRecipient<'_>,
   ) -> Result<(Cek<'a>, Option<JweHeader>)> {
     let header: Option<JweHeader> = recipient.header.take();
 
@@ -221,7 +212,7 @@ impl<'a> Decoder<'a> {
     Ok((self.decrypt_cek(merged, recipient)?, header))
   }
 
-  fn decrypt_cek(&self, header: HeaderSet<'_>, recipient: Recipient<'_>) -> Result<Cek<'a>> {
+  fn decrypt_cek(&self, header: HeaderSet<'_>, recipient: DecoderRecipient<'_>) -> Result<Cek<'a>> {
     let alg: JweAlgorithm = header.try_alg()?;
     let enc: JweEncryption = header.try_enc()?;
 
@@ -246,7 +237,7 @@ impl<'a> Decoder<'a> {
       protected.alg(),
       protected.enc(),
       HeaderSet::new().protected(protected),
-      Recipient {
+      DecoderRecipient {
         header: None,
         encrypted_key: None,
       },
@@ -258,7 +249,7 @@ impl<'a> Decoder<'a> {
     algorithm: JweAlgorithm,
     encryption: JweEncryption,
     header: HeaderSet<'_>,
-    recipient: Recipient<'_>,
+    recipient: DecoderRecipient<'_>,
   ) -> Result<Cek<'a>> {
     macro_rules! rsa {
       ($padding:ident, $recipient:expr, $secret:expr) => {{
@@ -448,8 +439,12 @@ impl<'a> Decoder<'a> {
     }
   }
 
-  fn expand<T>(&self, data: &[u8], format: impl Fn(Expanded<'_>) -> Result<T>) -> Result<T> {
-    match self.format {
+  pub fn expand<'data>(
+    format: JweFormat,
+    crits: &Option<Vec<String>>,
+    data: &'data [u8],
+  ) -> Result<(Expanded<'data>, Option<JweHeader>, Option<JweHeader>)> {
+    let expanded: Expanded<'_> = match format {
       JweFormat::Compact => {
         let split: Vec<&[u8]> = data.split(|byte| *byte == b'.').collect();
 
@@ -457,10 +452,10 @@ impl<'a> Decoder<'a> {
           return Err(Error::InvalidContent("Invalid Segments"));
         }
 
-        format(Expanded {
+        Expanded {
           protected: filter_non_empty_bytes(split[0]),
           unprotected: None,
-          recipients: vec![Recipient {
+          recipients: vec![DecoderRecipient {
             header: None,
             encrypted_key: filter_non_empty_bytes(split[1]).map(parse_utf8).transpose()?,
           }],
@@ -468,12 +463,12 @@ impl<'a> Decoder<'a> {
           aad: None,
           ciphertext: split[3],
           tag: filter_non_empty_bytes(split[4]),
-        })
+        }
       }
       JweFormat::General => {
         let data: General<'_> = from_slice(data)?;
 
-        format(Expanded {
+        Expanded {
           protected: filter_non_empty_bytes(data.protected),
           unprotected: filter_non_empty_bytes(data.unprotected),
           recipients: data.recipients,
@@ -481,12 +476,12 @@ impl<'a> Decoder<'a> {
           aad: filter_non_empty_bytes(data.aad),
           ciphertext: data.ciphertext.as_bytes(),
           tag: filter_non_empty_bytes(data.tag),
-        })
+        }
       }
       JweFormat::Flatten => {
         let data: Flatten<'_> = from_slice(data)?;
 
-        format(Expanded {
+        Expanded {
           protected: filter_non_empty_bytes(data.protected),
           unprotected: filter_non_empty_bytes(data.unprotected),
           recipients: vec![data.recipient],
@@ -494,9 +489,24 @@ impl<'a> Decoder<'a> {
           aad: filter_non_empty_bytes(data.aad),
           ciphertext: data.ciphertext.as_bytes(),
           tag: filter_non_empty_bytes(data.tag),
-        })
+        }
       }
-    }
+    };
+
+    let protected: Option<JweHeader> = expanded.protected.map(decode_b64_json).transpose()?;
+    let unprotected: Option<JweHeader> = expanded.unprotected.map(decode_b64_json).transpose()?;
+
+    let protected_ref: Option<&JweHeader> = protected.as_ref();
+    let unprotected_ref: Option<&JweHeader> = unprotected.as_ref();
+
+    validate_jwe_headers(
+      protected_ref,
+      unprotected_ref,
+      expanded.recipients.iter().map(|recipient| recipient.header.as_ref()),
+      crits.as_deref(),
+    )?;
+
+    Ok((expanded, protected, unprotected))
   }
 
   fn check_alg(&self, value: JweAlgorithm) -> Result<()> {
@@ -520,14 +530,14 @@ impl<'a> Decoder<'a> {
 // =============================================================================
 
 #[derive(Debug)]
-struct Expanded<'a> {
-  protected: Option<&'a [u8]>,
-  unprotected: Option<&'a [u8]>,
-  recipients: Vec<Recipient<'a>>,
-  iv: Option<&'a [u8]>,
-  aad: Option<&'a [u8]>,
-  ciphertext: &'a [u8],
-  tag: Option<&'a [u8]>,
+pub struct Expanded<'a> {
+  pub protected: Option<&'a [u8]>,
+  pub unprotected: Option<&'a [u8]>,
+  pub recipients: Vec<DecoderRecipient<'a>>,
+  pub iv: Option<&'a [u8]>,
+  pub aad: Option<&'a [u8]>,
+  pub ciphertext: &'a [u8],
+  pub tag: Option<&'a [u8]>,
 }
 
 fn decrypt_content(
