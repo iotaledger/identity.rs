@@ -25,8 +25,7 @@ pub enum StrongholdError {
   Vault(VaultOperation, #[source] ClientError),
   #[error("procedure `{0}` operating on locations {1:?} failed")]
   Procedure(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
-  // TODO: SnapshotPath should impl Display.
-  #[error("snapshot operation `{0}` on path `{1:?}` failed")]
+  #[error("snapshot operation `{0}` on path `{1}` failed")]
   Snapshot(SnapshotOperation, SnapshotPath, #[source] ClientError),
   // TODO: Make #[source] when Error trait is impl'd for inner MemoryError.
   #[error("failed to load password into key provider")]

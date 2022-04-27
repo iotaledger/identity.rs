@@ -39,14 +39,14 @@ features = ["hmac", "pbkdf", "sha", "std"]
 [dependencies.iota_stronghold]
 package = "iota_stronghold_new"
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "a9ee54f5379f712aa1b8187fee331f5c8999dc93"
+rev = "8a5b993e2753ce88e89b66516a7ac096b2befdea"
 optional = true
 
-# TODO: Remove once `RecordHint` is no longer required.
+# TODO: Remove once `MemoryError` is re-exported from interface crate.
 [dependencies.stronghold_engine]
 package = "stronghold_engine"
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "a9ee54f5379f712aa1b8187fee331f5c8999dc93"
+rev = "8a5b993e2753ce88e89b66516a7ac096b2befdea"
 optional = true
 
 [dependencies.iota_stronghold_old]

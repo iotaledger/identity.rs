@@ -16,7 +16,6 @@ use iota_stronghold::Store;
 use rand::distributions::DistString;
 use rand::rngs::OsRng;
 use rand::Rng;
-use stronghold_engine::vault::RecordHint;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
@@ -110,7 +109,7 @@ impl Storage for Stronghold {
       .write_client(index_client_path.as_ref())
       .map_err(|err| StrongholdError::Client(ClientOperation::Persist, index_client_path, err))?;
 
-    // Explicitly drop the lock so it's not considered unused.
+    // Explicitly release the lock early.
     std::mem::drop(index_lock);
 
     // =============================
@@ -233,7 +232,7 @@ impl Storage for Stronghold {
       // However, the RevokeData procedure does not return an error if the record doesn't exist, so it's fine.
 
       let exists: bool = client
-        .record_exists(location.into())
+        .record_exists(&location.into())
         .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
         .map_err(crate::Error::from)?;
 
@@ -266,7 +265,7 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(did))?;
 
     client
-      .record_exists(location.into())
+      .record_exists(&location.into())
       .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
       .map_err(Into::into)
   }
@@ -342,7 +341,6 @@ fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: location_key_type(location),
     output: location.into(),
-    hint: default_hint(),
   };
 
   client
@@ -404,7 +402,6 @@ fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Resu
   let copy_record = procedures::CopyRecord {
     source: source_location.clone(),
     target: target_location,
-    hint: default_hint(),
   };
 
   client.execute_procedure(copy_record).map_err(|err| {
@@ -470,9 +467,4 @@ fn random_location(key_type: KeyType) -> KeyLocation {
   let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
 
   KeyLocation::new(key_type, fragment, &public_key)
-}
-
-fn default_hint() -> RecordHint {
-  // unwrap is okay, the hint is <= 24 bytes
-  RecordHint::new([0; 24]).unwrap()
 }

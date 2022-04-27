@@ -42,14 +42,14 @@ async fn test_mutate_client_persists_client_into_snapshot() {
     .unwrap();
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
-  assert!(client.record_exists(location.into()).unwrap());
+  assert!(client.record_exists(&location.into()).unwrap());
 
   stronghold.persist_snapshot().await.unwrap();
 
   let stronghold: Stronghold = Stronghold::new(&path, password, None).await.unwrap();
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
-  assert!(client.record_exists(location.into()).unwrap());
+  assert!(client.record_exists(&location.into()).unwrap());
 }
 
 async fn test_stronghold() -> impl Storage {
