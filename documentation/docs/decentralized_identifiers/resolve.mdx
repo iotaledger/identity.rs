@@ -7,12 +7,14 @@ keywords:
 - Resolve
 ---
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
-import resolution from  '!!raw-loader!../../../examples/low-level-api/resolution.rs';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+
 
 DID resolution is the process of obtaining a [DID Document](https://www.w3.org/TR/did-core/#dfn-did-documents) corresponding to a given [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers). 
 The [IOTA Identity Framework](https://github.com/iotaledger/identity.rs) supports resolving DID Documents that are stored on an IOTA Tangle (public or private). The main tool supplied 
 by the IOTA Identity Framework to handle DID Document Resolution in a type safe manner is the `Resolver`. 
-
 
 
 ## Resolving a DID from the main network
@@ -20,6 +22,7 @@ by the IOTA Identity Framework to handle DID Document Resolution in a type safe 
 The following example demonstrates how to resolve the DID: "did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV" from the `main` network. 
 <Tabs>
 <TabItem value="Rust" label="Rust">
+
 ```rust
 use identity::iota::Resolver; 
 use identity::iota_core::IotaDID;
@@ -34,6 +37,7 @@ let doc: ResolvedIotaDocument = resolver.resolve(&did).await?;
 
 </TabItem>
 <TabItem value="node" label="Node.js">
+
 ```js
 const {
     DID,
@@ -48,13 +52,16 @@ const {
 ```
 </TabItem>
 </Tabs>
+The technical details of how resolution exactly works in terms of querying the Tangle is explained in the [IOTA DID Method Specification](./../specs/did/iota_did_method_spec#read). 
 
 ## Resolving from a private tangle 
-Resolving a DID from a private tangle is similar to resolving a DID from the main net, the only difference is that 
-the resolver needs to be configured to use a different client that is configured to operate on said private tangle (TODO: Link to example for doing this). 
+Resolving a DID from a private tangle is similar to resolving a DID from the main net. The only difference is that 
+the resolver needs to be configured to have a client capable of operating on said private tangle. Building a Client configured for a specified Tangle is explained in this [example in Rust](https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/private_tangle.rs) and this [example in Javascript](https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/private_tangle.js).
 
+The following example demonstrates how one can setup a `Resolver` with a given `client` and then attempt resolving a specified `did` which may be on any Tangle (public or private). 
 <Tabs>
 <TabItem value="Rust" label="Rust">
+
 ```rust 
 use identity::iota::Resolver;
 use identity::iota::ResolverBuilder;  
@@ -73,19 +80,38 @@ async fn resolve_from_private_tangle(client: Client, did: IotaDID) -> Result<Res
 <TabItem value="node" label="Node.js">
 
 ```js
+const {
+    DID,
+    Resolver,
+    ResolvedDocument,
+    Client, 
+} = require('@iota/identity-wasm/node');
+
 
 async function resolveFromPrivateTange(client, did) {
         const resolver = await Resolver.builder().client(client).build();
         const resolvedDocument = await resolver.resolve(did);
-        return resolvedDocument
+        return resolvedDocument;
 }
 
 ```
 </TabItem>
 </Tabs>
 
-In the example above the resolver will automatically use the client whose network name corresponds with the network name specified in the provided `did` (See [DID Format](./../specs/did/iota_did_method_spec.md)). 
-If the client was not built with a client configured for the given network name then an error will be thrown. Note that the `ResolverBuilder` can configure the `Resolver` to use as 
+In the example above the resolver will automatically try to resolve the DID from the network specified in the `did` (See [DID Format](./../specs/did/iota_did_method_spec#did-format)). 
+If the resolver was not built with a client configured for the given network name then an error will be thrown. Note that the `ResolverBuilder` can configure the `Resolver` to use as 
 many networks as you wish as long as they have distinct valid names (max six characters). 
+
+## Resolution in the context of Verifiable Presentations 
+As explained in [Verifiable Presentations](./../verifiable_credentials/verifiable_presentations) one resolves the DID Documents of the credential issuers and presentation holder 
+during verification of a verifiable presentation. Resolving the necessary DID Documents is done automatically when verifying presentations via the `Resolver`, but there are certain 
+advanced use cases where more control is desired. To accommodate for such situations the `Resolver` also comes equipped with additional stand alone methods that enable:
+- resolving a holders DID Document, 
+- resolving all DID Documents of the distinct issuers of the credentials of credentials in the presentation,
+- resolving the issuer's DID Document for a given verifiable credential
+
+
+## Resolving the history of a DID Document. 
+
 
 
