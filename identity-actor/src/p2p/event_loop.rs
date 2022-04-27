@@ -22,8 +22,8 @@ use libp2p::PeerId;
 use libp2p::Swarm;
 use libp2p::TransportError;
 
-use crate::Endpoint;
-use crate::RequestMode;
+use crate::actor::Endpoint;
+use crate::actor::RequestMode;
 
 use super::behaviour::ActorRequestResponseCodec;
 use super::message::RequestMessage;

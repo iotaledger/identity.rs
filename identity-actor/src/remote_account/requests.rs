@@ -7,40 +7,40 @@ use identity_iota_core::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::ActorRequest;
-use crate::Synchronous;
+use crate::actor::Endpoint;
+use crate::actor::SyncActorRequest;
 
 use super::RemoteAccountError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IdentityCreate(pub IdentitySetup);
 
-impl ActorRequest<Synchronous> for IdentityCreate {
+impl SyncActorRequest for IdentityCreate {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
-  fn endpoint() -> &'static str {
-    "remote_account/create"
+  fn endpoint() -> Endpoint {
+    "remote_account/create".parse().unwrap()
   }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IdentityList;
 
-impl ActorRequest<Synchronous> for IdentityList {
+impl SyncActorRequest for IdentityList {
   type Response = Vec<IotaDID>;
 
-  fn endpoint() -> &'static str {
-    "remote_account/list"
+  fn endpoint() -> Endpoint {
+    "remote_account/list".parse().unwrap()
   }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IdentityGet(pub IotaDID);
 
-impl ActorRequest<Synchronous> for IdentityGet {
+impl SyncActorRequest for IdentityGet {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
-  fn endpoint() -> &'static str {
-    "remote_account/get"
+  fn endpoint() -> Endpoint {
+    "remote_account/get".parse().unwrap()
   }
 }
