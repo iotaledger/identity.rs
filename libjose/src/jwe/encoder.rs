@@ -200,7 +200,7 @@ impl<'a> Encoder<'a> {
     let mut context: __Context<'_, '_> = __Context::new(self, self.recipients.len());
 
     for recipient in self.recipients.iter() {
-      context.expand_recipient(self.protected, self.unprotected, *recipient)?;
+      context.expand_recipient(self.protected, self.unprotected, recipient.clone())?;
     }
 
     let encryption: JweEncryption = HeaderSet::new()
@@ -551,7 +551,7 @@ impl<'a> Encoder<'a> {
     validate_jwe_headers(
       self.protected,
       self.unprotected,
-      self.recipients.iter().map(|recipient| recipient.header),
+      self.recipients.iter().map(|recipient| recipient.header.as_ref()),
       self.protected.and_then(|header| header.crit()),
     )?;
 
@@ -600,24 +600,25 @@ impl<'a, 'b> __Context<'a, 'b> {
     recipient: Recipient<'a>,
   ) -> Result<()> {
     let merged: HeaderSet<'_> = HeaderSet::new()
-      .header(recipient.header)
+      .header(&recipient.header)
       .protected(protected)
       .unprotected(unprotected);
 
     let algorithm: JweAlgorithm = merged.try_alg()?;
     let encryption: JweEncryption = merged.try_enc()?;
 
-    let mut output: JweHeader = if let Some(recipient) = recipient.header {
-      recipient.clone()
+    let mut output: JweHeader = if let Some(recipient) = recipient.header.clone() {
+      recipient
     } else if self.encoder.format == JweFormat::Compact {
       protected.cloned().unwrap()
     } else {
       JweHeader::new(algorithm, encryption)
     };
 
-    let cek: Option<Cow<'_, [u8]>> = self
-      .encoder
-      .generate_cek(algorithm, encryption, &mut output, recipient)?;
+    let cek: Option<Cow<'_, [u8]>> =
+      self
+        .encoder
+        .generate_cek(algorithm, encryption, &mut output, recipient.clone())?;
 
     if let Some(encryption_key) = cek {
       if let Some(cek) = self.encryption_key.as_ref() {

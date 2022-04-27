@@ -11,11 +11,14 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "An implementation of the DIDComm Messaging Specification."
 
 [dependencies]
-identity-core = { path = "../identity-core", version = "=0.5.0-dev.4" }
-identity-credential = { path = "../identity-credential", version = "=0.5.0-dev.4" }
-identity-did = { path = "../identity-did", version = "=0.5.0-dev.4" }
-identity-iota = { path = "../identity-iota", version = "=0.5.0-dev.4", default-features = false }
-# libjose = { path = "../libjose", version = "=0.1.0" }
+async-trait = { version = "0.1", default-features = false }
+identity-account-storage = { path = "../identity-account-storage", version = "=0.5.0" }
+identity-core = { path = "../identity-core", version = "=0.5.0" }
+identity-credential = { path = "../identity-credential", version = "=0.5.0" }
+identity-did = { path = "../identity-did", version = "=0.5.0" }
+identity-iota = { path = "../identity-iota", version = "=0.5.0" }
+identity-iota-core = { path = "../identity-iota-core", version = "=0.5.0" }
+libjose = { path = "../libjose", version = "=0.1.0" }
 paste = { version = "1.0" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
@@ -23,5 +26,14 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
 uuid = { version = "0.8", features = ["serde", "v4"], default-features = false }
 
+[dependencies.iota-crypto]
+git = "https://github.com/iotaledger/crypto.rs"
+rev = "0967233dd40ba562f575c2073cb8f4a22744e2d4"
+default-features = false
+features = ["aes-kw"]
+
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 uuid = { version = "*", features = ["wasm-bindgen"], default-features = false }
+
+[dev-dependencies]
+tokio = "1.17"

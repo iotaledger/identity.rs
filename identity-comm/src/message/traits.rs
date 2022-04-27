@@ -20,8 +20,9 @@ pub trait Message {
 
   fn pack_encrypted(
     &self,
-    algorithm: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<Encrypted>;
 
@@ -29,7 +30,7 @@ pub trait Message {
     &self,
     signature: SignatureAlgorithm,
     encryption: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<Encrypted>;
 }
@@ -45,8 +46,9 @@ impl<T: ToJson> Message for T {
 
   fn pack_encrypted(
     &self,
-    algorithm: EncryptionAlgorithm,
-    recipients: &[PublicKey],
+    cek_algorithm: CEKAlgorithm,
+    enc_algorithm: EncryptionAlgorithm,
+    recipients: &[(PublicKey, String)],
     sender: &KeyPair,
   ) -> Result<Encrypted> {
     Encrypted::pack(self, algorithm, recipients, sender)
@@ -57,7 +59,7 @@ impl<T: ToJson> Message for T {
     signature: SignatureAlgorithm,
     encryption: EncryptionAlgorithm,
     recipients: &[PublicKey],
-    sender: &KeyPair,
+    cek_algorithm: CEKAlgorithm,
   ) -> Result<Encrypted> {
     Self::pack_signed(self, signature, sender)
       .and_then(|signed| Encrypted::pack_signed(&signed, encryption, recipients, sender))

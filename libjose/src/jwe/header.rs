@@ -115,6 +115,14 @@ impl JweHeader {
     }
   }
 
+  pub fn set_common(&mut self, jwt_header: JwtHeader) {
+    self.common = jwt_header;
+  }
+
+  pub fn common(&self) -> &JwtHeader {
+    &self.common
+  }
+
   /// Returns the value for the algorithm claim (alg).
   pub fn alg(&self) -> JweAlgorithm {
     self.alg
