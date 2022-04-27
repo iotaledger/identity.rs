@@ -9,16 +9,83 @@ keywords:
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 import resolution from  '!!raw-loader!../../../examples/low-level-api/resolution.rs';
 
-TODO: Explain how resolving works including arguments.
+DID resolution is the process of obtaining a [DID Document](https://www.w3.org/TR/did-core/#dfn-did-documents) corresponding to a given [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers). 
+The [IOTA Identity Framework](https://github.com/iotaledger/identity.rs) supports resolving DID Documents that are stored on an IOTA Tangle (public or private). The main tool supplied 
+by the IOTA Identity Framework to handle DID Document Resolution in a type safe manner is the `Resolver`. 
 
-## Example
 
-A short example that shows how you can resolve a DID Document. This example returns the latest DID Document.
 
-<CodeSnippet 
-    nodeReplitLink="https://repl.it/@IOTAFoundation/resolution?lite=true"
-    rustContent={resolution}
-    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/support/v0.5/bindings/wasm/examples/src/resolution.js"
-    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/low-level-api/resolution.rs"
-/>
+## Resolving a DID from the main network
+
+The following example demonstrates how to resolve the DID: "did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV" from the `main` network. 
+<Tabs>
+<TabItem value="Rust" label="Rust">
+```rust
+use identity::iota::Resolver; 
+use identity::iota_core::IotaDID;
+use identity::iota::ResolvedIotaDocument; 
+
+let resolver: Resolver = Resolver::new().await?; 
+let did: IotaDID = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")?;
+
+let doc: ResolvedIotaDocument = resolver.resolve(&did).await?; 
+
+```
+
+</TabItem>
+<TabItem value="node" label="Node.js">
+```js
+const {
+    DID,
+    Resolver,
+    ResolvedDocument,
+} = require('@iota/identity-wasm/node');
+
+ const resolver = new Resolver();
+ const did = DID.parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV");
+ const doc = await resolver.resolve(did);
+
+```
+</TabItem>
+</Tabs>
+
+## Resolving from a private tangle 
+Resolving a DID from a private tangle is similar to resolving a DID from the main net, the only difference is that 
+the resolver needs to be configured to use a different client that is configured to operate on said private tangle (TODO: Link to example for doing this). 
+
+<Tabs>
+<TabItem value="Rust" label="Rust">
+```rust 
+use identity::iota::Resolver;
+use identity::iota::ResolverBuilder;  
+use identity::iota_core::IotaDID;
+use identity::iota::Client;
+use identity::iota::Result; 
+
+
+async fn resolve_from_private_tangle(client: Client, did: IotaDID) -> Result<ResolvedIotaDocument> {
+    let resolver: Resolver = ResolverBuilder.new().client(client).build().await?;
+    resolver.resolve(did).await
+}
+```
+
+</TabItem>
+<TabItem value="node" label="Node.js">
+
+```js
+
+async function resolveFromPrivateTange(client, did) {
+        const resolver = await Resolver.builder().client(client).build();
+        const resolvedDocument = await resolver.resolve(did);
+        return resolvedDocument
+}
+
+```
+</TabItem>
+</Tabs>
+
+In the example above the resolver will automatically use the client whose network name corresponds with the network name specified in the provided `did` (See [DID Format](./../specs/did/iota_did_method_spec.md)). 
+If the client was not built with a client configured for the given network name then an error will be thrown. Note that the `ResolverBuilder` can configure the `Resolver` to use as 
+many networks as you wish as long as they have distinct valid names (max six characters). 
+
 
