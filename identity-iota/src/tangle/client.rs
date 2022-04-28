@@ -34,6 +34,7 @@ pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
   pub(crate) encoding: DIDMessageEncoding,
+  pub(crate) retry_until_included: bool,
 }
 
 impl Client {
@@ -65,6 +66,7 @@ impl Client {
       client: client.finish().await?,
       network: builder.network,
       encoding: builder.encoding,
+      retry_until_included: builder.retry_until_included,
     })
   }
 
@@ -74,8 +76,8 @@ impl Client {
   }
 
   /// Publishes an [`IotaDocument`] to the Tangle.
-  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
-  /// the probability that the message will be referenced by a milestone.
+  /// If `retry_until_included` is true, this method calls `publish_json_with_retry` with its default `interval`
+  /// and `max_attempts` values to increase the probability that the message will be referenced by a milestone.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
     if document.id().network_str() != self.network.name_str() {
       return Err(Error::IncompatibleNetwork(format!(
@@ -84,10 +86,13 @@ impl Client {
         self.network.name_str()
       )));
     }
-
-    self
-      .publish_json_with_retry(document.integration_index(), document, None, None)
-      .await
+    if self.retry_until_included {
+      self
+        .publish_json_with_retry(document.integration_index(), document, None, None)
+        .await
+    } else {
+      self.publish_json(document.integration_index(), document).await
+    }
   }
 
   /// Publishes a [`DiffMessage`] to the Tangle to form part of the diff chain for the integration.
@@ -105,9 +110,12 @@ impl Client {
       )));
     }
 
-    self
-      .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
-      .await
+    let diff_index = &IotaDocument::diff_index(message_id)?;
+    if self.retry_until_included {
+      self.publish_json_with_retry(diff_index, diff, None, None).await
+    } else {
+      self.publish_json(diff_index, diff).await
+    }
   }
 
   /// Compresses and publishes arbitrary JSON data to the specified index on the Tangle.
@@ -254,7 +262,8 @@ impl Client {
       .map_err(Into::into)
   }
 
-  async fn is_message_included(&self, message_id: &MessageId) -> Result<bool> {
+  /// Checks if a message is confirmed by a milestone.
+  pub async fn is_message_included(&self, message_id: &MessageId) -> Result<bool> {
     match self
       .client
       .get_message()
