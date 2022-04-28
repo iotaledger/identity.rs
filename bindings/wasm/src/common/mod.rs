@@ -3,10 +3,10 @@
 
 pub use promise_void::*;
 pub use timestamp::*;
-pub(crate) use utils::*;
 pub use types::*;
+pub(crate) use utils::*;
 
 mod promise_void;
 mod timestamp;
-mod utils;
 mod types;
+mod utils;
