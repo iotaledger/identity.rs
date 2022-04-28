@@ -72,7 +72,7 @@ use identity::iota::Client;
 use identity::iota::Result; 
 
 
-async fn resolve_from_private_tangle(client: Client, did: IotaDID) -> Result<ResolvedIotaDocument> {
+async fn build_and_resolve(client: Client, did: IotaDID) -> Result<ResolvedIotaDocument> {
     let resolver: Resolver = ResolverBuilder.new().client(client).build().await?;
     resolver.resolve(did).await
 }
@@ -90,7 +90,7 @@ const {
 } = require('@iota/identity-wasm/node');
 
 
-async function resolveFromPrivateTangle(client, did) {
+async function buildAndResolve(client, did) {
         const resolver = await Resolver.builder().client(client).build();
         const resolvedDocument = await resolver.resolve(did);
         return resolvedDocument;
@@ -129,7 +129,7 @@ use identity::iota::DocumentHistory;
 use identity::iota::Result; 
 
 
-async fn resolve_history(did: IotaDID) -> Result<DocumentHistory> {
+async fn call_resolve_history(did: IotaDID) -> Result<DocumentHistory> {
     let resolver: Resolver = Resolver::new().await?;
     resolver.resolve_history(did).await?
 }
@@ -147,7 +147,7 @@ const {
 } = require('@iota/identity-wasm/node');
 
 
-async function resolveHistory(did) {
+async function callResolveHistory(did) {
         const resolver = new Resolver();
         const documentHistory = await resolver.resolveHistory(did);
         return documentHistory;
