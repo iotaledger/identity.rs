@@ -58,7 +58,7 @@ The technical details of how resolution exactly works in terms of querying the T
 
 ## Resolving from a private tangle 
 Resolving a DID from a private tangle is similar to resolving a DID from the main net. The only difference is that 
-the resolver needs to be configured to have a client capable of operating on said private tangle. Building a `Client` configured for a specified Tangle is explained in this [example in Rust](https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/private_tangle.rs) and this [example in Javascript](https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/private_tangle.js).
+the resolver needs to be configured to have a client capable of operating on said private tangle. Building a `Client` configured for a specified Tangle is explained in [this example in Rust](https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/private_tangle.rs) and [this example in Javascript](https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/private_tangle.js).
 
 The following example demonstrates how one can setup a `Resolver` with a given `client` and then attempt resolving a specified `did` which may be on any Tangle (public or private). 
 <Tabs>
