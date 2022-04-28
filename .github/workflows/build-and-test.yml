@@ -186,7 +186,8 @@ jobs:
         working-directory: bindings/wasm
 
       - name: Install Wasm examples dependencies
-        run: cd examples && npm i
+        run: npm i
+        working-directory: bindings/wasm/examples
 
       - name: Download bindings/wasm artifacts
         uses: actions/download-artifact@v2
