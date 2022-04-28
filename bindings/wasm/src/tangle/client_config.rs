@@ -238,7 +238,7 @@ interface IClientConfig {
     /** Sets the default request timeout. */
     readonly requestTimeout?: number;
 
-    /** When publishing to the Tangle, sets wheather to retry until the message is confirmed by a milestone.
+    /** When publishing to the Tangle, sets whether to retry until the message is confirmed by a milestone.
      * Default: true.
      */
     readonly retryUntilIncluded?: boolean;
