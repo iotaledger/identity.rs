@@ -76,9 +76,6 @@ jobs:
         if: ${{ inputs.run-unit-tests }}
         run: npm run test:unit
 
-      - name: Install Wasm examples dependencies
-        run: cd examples && npm i
-
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'
         with:    
