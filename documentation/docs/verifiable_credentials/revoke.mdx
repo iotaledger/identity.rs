@@ -11,12 +11,29 @@ keywords:
 import revoke_vc_rs from  '!!raw-loader!./../../../examples/account/revoke_vc.rs';
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-TODO: Explain how Verifiable Credentials are revoked using `credentialStatus` and e.g. `RevocationList2020`.
+The [example](#example) below demonstrates how an issuer can revoke a verifiable credential using the Iota Framework by removing its verification method. But another aspect of it, is how an issuer can easily allow verifiers to check if the credential has been revoked.
+In order to allow this, an issuer can link to a location where a verifier can check the credential status. This can be specified in the [credential status](https://www.w3.org/TR/vc-data-model/#status) property.
 
-## Example
+### Revocation List 2020 {#revocation-list-2020}
 
-This example shows how you can revoke a [Verifiable Credential(VC)](overview) by removing a verification method (public key) from the DID Document of the Issuer. This means the VC can no longer be validated. This would invalidate every VC signed with the same public key, meaning the Issuer would have to sign every VC with a different key.
+One of the ways for an issuer to control the status of its credentials is by using a revocation list. At the most basic level, revocation information for all verifiable credentials issued by an issuer are expressed as simple binary values. The issuer keeps a bitstring list of all verifiable credentials it has issued. Each verifiable credential is associated with a position in the list. If the binary value of the position in the list is 1 (one), the verifiable credential is revoked, if it is 0 (zero) it is not revoked. 
+When using [revocation list 2020](https://w3c-ccg.github.io/vc-status-rl-2020/#core-concept) the [credential status](https://w3c-ccg.github.io/vc-status-rl-2020/#revocationlist2020status) of the credential must be defined as follows:
 
+- **ID**: a URL that identifies the status information associated with the verifiable credential.
+- **Types**: The type property must be RevocationList2020Status. 
+- **Revocation List Index**: an arbitrary size integer greater than or equal to 0, expressed as a string. The value identifies the bit position of the revocation status of the verifiable credential. 
+- **Revocation List Credential**: a URL to a verifiable credential. When the URL is dereferenced, the resulting verifiable credential must have type property that includes the RevocationList2020Credential value.
+
+When a revocation list is published, the result is a verifiable credential that encapsulates the revocation list. This [revocation list credential](https://w3c-ccg.github.io/vc-status-rl-2020/#revocationlist2020credential) must have the following properties:
+
+- **ID**: an id property that matches the value specified in revocationListCredential for the corresponding RevocationList2020Status.
+- **Types**: must contain RevocationList2020Credential.
+- **Credential Subject Type**: the type of the credential subject must be RevocationList2020.
+- **Credential Subject Encoded List**: The encodedList property of the credential subject must be the ZLIB-compressed [RFC1950](https://w3c-ccg.github.io/vc-status-rl-2020/#bib-rfc1950), base-64 encoded [RFC4648](https://w3c-ccg.github.io/vc-status-rl-2020/#bib-rfc4648) bitstring values for the associated range of verifiable credential status values. The uncompressed bitstring must be at least 16KB in size.
+
+## Example {#example}
+
+The following code exemplifies how you can revoke a [Verifiable Credential(VC)](overview) by removing a verification method (public key) from the DID Document of the Issuer. This means the VC can no longer be validated. This would invalidate every VC signed with the same public key, meaning the Issuer would have to sign every VC with a different key.
 
 <CodeSnippet 
     nodeReplitLink="https://repl.it/@IOTAFoundation/revoke-vc?lite=true"
