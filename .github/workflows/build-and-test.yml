@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - support/*
     paths:
       - '.github/workflows/build-and-test.yml'
       - '.github/actions'
