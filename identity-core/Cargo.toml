@@ -15,7 +15,7 @@ base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 hex = { version = "0.4", default-features = false }
-identity-diff = { version = "=0.4.0", path = "../identity-diff", default-features = false }
+identity-diff = { version = "=0.4.1", path = "../identity-diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 roaring = { version = "0.7", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
