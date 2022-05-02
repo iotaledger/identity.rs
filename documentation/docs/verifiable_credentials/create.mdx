@@ -12,13 +12,16 @@ keywords:
 import create_vc_rs from  '!!raw-loader!./../../../examples/account/create_vc.rs';
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-You can create a Verifiable Credential with the following properties:
+A verifiable credential can represent all information that a phisical [credential](https://www.w3.org/TR/vc-data-model/#dfn-credential) represents (i.e a set of one or more claims made by an issuer. However, by allowing other parties to cryptographically verify the authorship of the credential, a VC can be seen as more tamper-evident and more trustworthy than their physical counterparts. 
 
-- [**Context**](https://www.w3.org/TR/vc-data-model/#contexts): list of JSON-LD context URIs. Includes `"https://www.w3.org/2018/credentials/v1"` by default.
+In the IOTA Identity Framework you can create a Verifiable Credential with the following properties:
+
 - [**ID**](https://www.w3.org/TR/vc-data-model/#identifiers): optional URI identifier for the credential.
 - [**Types**](https://www.w3.org/TR/vc-data-model/#types): list of types describing the credential. Includes `"VerifiableCredential"` by default.
 - [**Subject**](https://www.w3.org/TR/vc-data-model/#credential-subject): a set of objects that contain one or more properties that are each related to a subject.
 - [**Issuer**](https://www.w3.org/TR/vc-data-model/#issuer): a URI or an object containing the ID of the issuer.
+
+- [**Context**](https://www.w3.org/TR/vc-data-model/#contexts): list of JSON-LD context URIs. Includes `"https://www.w3.org/2018/credentials/v1"` by default.
 - [**Issuance Date**](https://www.w3.org/TR/vc-data-model/#issuance-date): optional timestamp for expressing the date and time when a credential becomes valid. 
 - [**Expiration Date**](https://www.w3.org/TR/vc-data-model/#expiration): optional timestamp for expressing the date and time when a credential ceases to be valid.
 - [**Status**](https://www.w3.org/TR/vc-data-model/#status): optional ID and Type used to determine the current status of a credential.
@@ -47,8 +50,9 @@ The following metadata properties can be configured by the framework and are opt
 
 ### Credential Validation {#credential-validation}
 
-After creating a verifiable credential, and before sending the VC to the subject, an issuer may want to make sure certain properties of the VC are valid. 
-The Iota Framework allows issuers to perform some validations using the CredentialValidator.
+Both issuers and holders of verifiable credentials might be interested in making sure certain properties of the VC are valid, specially right after creating or receiving a VC, but this checks can be done at any point in time and can be a useful way of making sure the VC has not been revoked. 
+
+The Iota Framework allows issuers and holders to perform some validations using the CredentialValidator.
 
 The following checks can be verified by the validator:
 
@@ -60,6 +64,10 @@ The following checks can be verified by the validator:
 - **Earliest Expiry date**: check that the [`expirationDate`](https://www.w3.org/TR/vc-data-model/#expiration) property, if present, is not before a specific datetime. Defaults to the current datetime if unset.
 
 The last two checks listed above are specified using CredentialValidationOptions.
+
+### Sharing Verifiable Credentials {#sharing-verifiable-credentials}
+
+A verifiable presentation is the recommended data format for sharing one or more verifiable credentials. The next section explains [verifiable presentations](./verifiable_presentations.mdx) in more detail.
 
 ## Example
 

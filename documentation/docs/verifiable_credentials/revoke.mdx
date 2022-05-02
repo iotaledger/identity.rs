@@ -31,6 +31,12 @@ When a revocation list is published, the result is a verifiable credential that 
 - **Credential Subject Type**: the type of the credential subject must be RevocationList2020.
 - **Credential Subject Encoded List**: The encodedList property of the credential subject must be the ZLIB-compressed [RFC1950](https://w3c-ccg.github.io/vc-status-rl-2020/#bib-rfc1950), base-64 encoded [RFC4648](https://w3c-ccg.github.io/vc-status-rl-2020/#bib-rfc4648) bitstring values for the associated range of verifiable credential status values. The uncompressed bitstring must be at least 16KB in size.
 
+:::note
+
+Revocation List 2020 is not yet supported in the IOTA Identity Framework
+
+:::
+
 ## Example {#example}
 
 The following code exemplifies how you can revoke a [Verifiable Credential(VC)](overview) by removing a verification method (public key) from the DID Document of the Issuer. This means the VC can no longer be validated. This would invalidate every VC signed with the same public key, meaning the Issuer would have to sign every VC with a different key.
