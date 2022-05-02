@@ -28,8 +28,6 @@ You can create a Verifiable Credential with the following properties:
 - [**Evidence**](https://www.w3.org/TR/vc-data-model/#evidence): optional list of objects specifying a Type that can be used by the issuer to provide the verifier with additional supporting information in a verifiable credential. 
 - [**Non Transferable**](https://www.w3.org/TR/vc-data-model/#nontransferable-property): optional flag that indicates that a verifiable credential must only be encapsulated into a verifiable presentation whose proof was issued by the credentialSubject.
 
-Of the above, only the subject is required when creating a credential using the framework.
-
 After creation, the issuer signs the verifiable credential using a private key, which will allow verifiers to validate the VC with its public key.
 
 ### Proof Options {#proof-options}
@@ -58,7 +56,7 @@ The following checks can be verified by the validator:
 - **Semantic Validation**: ensures the credential adhere to the specification.
 - **Subject Holder Relationship**: ensures that the credential relationship between the holder and the subject match.
 - **Optional validations**: additional checks on signatures and credential fields can be configured.
-- **Latest Issuance date**: check that that [`issuanceDate`](https://www.w3.org/TR/vc-data-model/#issuance-date) property, if present, is not after a specific datetime. Defaults to the current datetime if unset.
+- **Latest Issuance date**: check that the [`issuanceDate`](https://www.w3.org/TR/vc-data-model/#issuance-date) property, if present, is not after a specific datetime. Defaults to the current datetime if unset.
 - **Earliest Expiry date**: check that the [`expirationDate`](https://www.w3.org/TR/vc-data-model/#expiration) property, if present, is not before a specific datetime. Defaults to the current datetime if unset.
 
 The last two checks listed above are specified using CredentialValidationOptions.
