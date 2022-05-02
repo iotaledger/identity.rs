@@ -18,7 +18,7 @@ crate-type = ["cdylib", "rlib"]
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }
-reqwest = { version = "=0.11.7" } 
+reqwest = { version = ">=0.11.7" } 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "*", default-features = false, features = ["rt"] } # enable "rt" feature to fix build: https://github.com/iotaledger/identity.rs/issues/403
