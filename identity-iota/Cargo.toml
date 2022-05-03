@@ -26,7 +26,8 @@ thiserror = { version = "1.0", default-features = false }
 iota-client = {version = "1.1.1", default-features = false}
 
 [dependencies.iota-crypto]
-version = ">=0.7.0, <=0.9.1"
+# TODO: Why does this not work with ">=0.7, <= 0.9.1". Specifying the aforementioned range results in `0.9.2` getting pulled. Why? 
+version = "=0.9.1"
 default-features = false
 features = ["blake2b"]
 
