@@ -29,7 +29,7 @@ url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.4", default-features = false }
 
 [dependencies.iota-crypto]
-version = "<=0.9.1"
+version = ">=0.7, <=0.9.1"
 default-features = false
 features = ["blake2b", "ed25519", "random", "sha"]
 
