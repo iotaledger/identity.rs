@@ -5,6 +5,7 @@ use std::fmt::Display;
 
 use iota_stronghold::procedures::ProcedureError;
 use iota_stronghold::ClientError;
+use iota_stronghold::MemoryError;
 use iota_stronghold::SnapshotPath;
 
 use crate::types::KeyLocation;
@@ -27,9 +28,8 @@ pub enum StrongholdError {
   Procedure(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
   #[error("snapshot operation `{0}` on path `{1}` failed")]
   Snapshot(SnapshotOperation, SnapshotPath, #[source] ClientError),
-  // TODO: Make #[source] when Error trait is impl'd for inner MemoryError.
   #[error("failed to load password into key provider")]
-  Memory(stronghold_engine::new_runtime::MemoryError),
+  Memory(#[source] MemoryError),
 }
 
 #[derive(Debug, Clone, Copy)]

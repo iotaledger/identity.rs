@@ -37,16 +37,8 @@ default-features = false
 features = ["hmac", "pbkdf", "sha", "std"]
 
 [dependencies.iota_stronghold]
-package = "iota_stronghold_new"
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "8a5b993e2753ce88e89b66516a7ac096b2befdea"
-optional = true
-
-# TODO: Remove once `MemoryError` is re-exported from interface crate.
-[dependencies.stronghold_engine]
-package = "stronghold_engine"
-git = "https://github.com/iotaledger/stronghold.rs"
-rev = "8a5b993e2753ce88e89b66516a7ac096b2befdea"
+rev = "190e1805fd985458e08d7659f815cf4fda96d6de"
 optional = true
 
 [dependencies.iota_stronghold_old]
@@ -73,7 +65,6 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros", "r
 default = ["stronghold", "send-sync-storage", "storage-test-suite"]
 stronghold = [
   "iota_stronghold",
-  "stronghold_engine",
   "iota_stronghold_old",
   "stronghold_engine_old",
   "actix",
