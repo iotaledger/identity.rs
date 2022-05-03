@@ -12,7 +12,7 @@ keywords:
   - encryption
 ---
 
-import memstore_ts from "!!raw-loader!../../../bindings/wasm/examples-account/src/custom_storage.ts";
+import memstore_ts from "!!raw-loader!../../../bindings/wasm/examples-account/src/memory_storage.ts";
 import memstore_rs from "!!raw-loader!../../../identity-account-storage/src/storage/memstore.rs";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
@@ -50,7 +50,15 @@ This illustrates the recommended approach for partitioning the storage layout (w
   - `kex-0:16546298247591944074 -> 0x8e1d037cd343f84276ab737b638da9095bcb6052f7fd9628d21d20f434f9959a`
   - `key:8559754420653090937 -> 0x4ef484a54aa16503878aa1ecaa6d73cb8254aefa3f80a569ed33ca685289d01e`
 
-Note how fragments (such as `kex-0`) can appear more than once, but the hash of the public key - calculated from the stored private key - makes the location unique in general. Although unlikely in practice, even the same private key can be used across different DIDs, which produces the same key location (here `sign-0:16843234495045965331`) and it's important that these are stored independently, so that deleting one does not accidentally delete the other. Hence why a key's full identifier in storage needs to be based on the DID _and_ the key location. That said, the following flattened structure also satisfies the requirements:
+Note how fragments (such as `kex-0`) can appear more than once, but the hash of the public key - calculated from the stored private key - makes the location unique in general.
+
+:::caution
+
+Although unlikely in practice, even the same private key can be used across different DIDs, which produces the same key location (here `sign-0:16843234495045965331`) and it's important that these are stored independently, so that deleting one does not accidentally delete the other. Hence why a key's full identifier in storage needs to be based on the DID _and_ the key location.
+
+:::
+
+That said, the following flattened structure also satisfies the requirements:
 
 - `did:iota:Ft3wA8Tv2nF25hij3aegR54Wvqju7t5zqW9xnCB5L3Wu:sign-0:16843234495045965331 -> 0xc6f0dbacd56156ff4c383d549ac61ada87f8aa69454f3bfae99f5fa9e093a5c3`
 - `did:iota:Ft3wA8Tv2nF25hij3aegR54Wvqju7t5zqW9xnCB5L3Wu:kex-0:7560300328640998700 -> 0xe494e36164e0a760140f3a9ab7dfdad38edac698f93d5239655dbd7499194760`
@@ -68,7 +76,7 @@ If the storage implementation can be accessed concurrently, then access to the i
 
 ## Implementation
 
-The identity.rs framework ships two implementations of `Storage`. The `MemStore` is an insecure in-memory implementation intended as an example implementation and for testing. The secure and recommended `Storage` is `Stronghold`, however `Stronghold` may also be interesting for implementers to look at, as it needs to deal with some challenges the in-memory version does not have.
+The IOTA Identity framework ships two implementations of `Storage`. The `MemStore` is an insecure in-memory implementation intended as an example implementation and for testing. The secure and recommended `Storage` is `Stronghold`. `Stronghold` may be interesting for implementers to look at, as it needs to deal with some challenges the in-memory version does not have.
 
 This section will detail some common challenges and embeds the `MemStore` implementations in Rust and TypeScript.
 
@@ -83,7 +91,13 @@ Since this also needs to happen before the DID can be derived from the public ke
 
 ### Storage Test Suite
 
-The `StorageTestSuite` can be used to test the basic functionality of storage implementations. See its documentation for more details.
+The `StorageTestSuite` can be used to test the basic functionality of storage implementations. See its documentation for more details. 
+
+:::note
+
+This test suite is available in newer versions of the framework, but not yet in version 0.5.
+
+:::
 
 ### Examples
 
@@ -91,16 +105,16 @@ This section shows the Rust and TypeScript `MemStore` implementations, which are
 
 <Tabs
   groupId="programming-languages"
-  defaultValue="rust"
+  defaultValue="nodejs"
   values={[
-    { label: "Rust", value: "rust" },
     { label: "Node.js", value: "nodejs" },
+    { label: "Rust", value: "rust" },
   ]}
 >
-  <TabItem value="rust">
-    <CodeBlock className="language-rust">{memstore_rs}</CodeBlock>
-  </TabItem>
   <TabItem value="nodejs">
     <CodeBlock className="language-javascript">{memstore_ts}</CodeBlock>
+  </TabItem>
+  <TabItem value="rust">
+    <CodeBlock className="language-rust">{memstore_rs}</CodeBlock>
   </TabItem>
 </Tabs>
