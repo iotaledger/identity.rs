@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::path::Path;
-use std::path::PathBuf;
 
 use identity_iota_core::did::IotaDID;
 use iota_stronghold::Client;
@@ -13,17 +12,21 @@ use iota_stronghold::Stronghold as IotaStronghold;
 use tokio::sync::RwLock;
 use zeroize::Zeroize;
 
+use crate::stronghold::error::ClientOperation;
+use crate::stronghold::error::SnapshotOperation;
 use crate::stronghold::error::StrongholdError;
+use crate::stronghold::ClientPath;
+use crate::stronghold::StrongholdResult;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
 use crate::Result;
 
-use super::client_path::ClientPath;
-use super::ClientOperation;
-use super::SnapshotOperation;
-use super::StrongholdResult;
-
-// #[derive(Debug)]
+/// The implementation of the `Storage` interface using `Stronghold`.
+///
+/// Stronghold is a secure storage for sensitive data. Secrets that are stored inside a Stronghold
+/// can never be read, but only be accessed via cryptographic procedures. Data written into a Stronghold
+/// is persisted in snapshots which are encrypted using the provided password.
+#[derive(Debug)]
 pub struct Stronghold {
   pub(crate) stronghold: IotaStronghold,
   pub(crate) snapshot_path: SnapshotPath,
@@ -37,15 +40,15 @@ impl Stronghold {
   ///
   /// Arguments:
   ///
-  /// * path: path to a local Stronghold file, will be created if it does not exist.
-  /// * password: password for the Stronghold file.
-  /// * dropsave: save all changes when the instance is dropped. Default: true.
+  /// * `path`: path to a local Stronghold snapshot file. Will be created if it does not exist.
+  /// * `password`: password for the Stronghold snapshot file. If this is cloned from a reference,
+  /// zeroization of that reference is strongly recommended.
+  /// * `dropsave`: persist all changes when the instance is dropped. Default: true.
   pub async fn new<T>(path: &T, mut password: String, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
   {
     let stronghold: IotaStronghold = IotaStronghold::default();
-    let path: PathBuf = path.as_ref().to_owned();
 
     let mut key: EncryptionKey = derive_encryption_key(&password);
     password.zeroize();
@@ -53,7 +56,9 @@ impl Stronghold {
     let key_provider = KeyProvider::try_from(key.to_vec()).map_err(StrongholdError::Memory)?;
     key.zeroize();
 
-    let snapshot_path: SnapshotPath = if path.exists() {
+    // If the snapshot file exists, we load it.
+    // If it doesn't we write data into the in memory `Stronghold` and only persist to disk on first write.
+    let snapshot_path: SnapshotPath = if path.as_ref().exists() {
       let snapshot_path = SnapshotPath::from_path(path);
 
       stronghold
@@ -74,6 +79,7 @@ impl Stronghold {
     })
   }
 
+  /// Load the client identified by the given `client_path`.
   pub(crate) fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
     match self.stronghold.load_client(client_path.as_ref()) {
       Ok(client) => Ok(client),
@@ -85,7 +91,8 @@ impl Stronghold {
     }
   }
 
-  // TODO: does closure need to be async?
+  /// Load the client for the given `did` and apply function `f` to it.
+  /// The (potentially) modified client is then written to the stronghold's snapshot state.
   pub(crate) fn mutate_client<FUN, OUT>(&self, did: &IotaDID, f: FUN) -> Result<OUT>
   where
     FUN: FnOnce(Client) -> Result<OUT>,
@@ -93,7 +100,7 @@ impl Stronghold {
     let client_path: ClientPath = ClientPath::from(did);
     let client: Client = self.client(&client_path)?;
 
-    // Don't need to write client if this operation fails, hence ?.
+    // Don't need to write client if this fails, so bailing early (`?` operator) is okay.
     let output: OUT = f(client)?;
 
     self
@@ -104,24 +111,13 @@ impl Stronghold {
     Ok(output)
   }
 
-  // TODO: Does not need to be async as of right now, but it should!
+  /// Encrypt the snapshot with the internal key provider and persist it to disk.
+  // TODO: Does not need to be async as of now, but will be eventually, so we already make it async.
   pub(crate) async fn persist_snapshot(&self) -> StrongholdResult<()> {
+    // TODO: Create parent dirs if they don't exist.
     self
       .stronghold
       .commit(&self.snapshot_path, &self.key_provider)
       .map_err(|err| StrongholdError::Snapshot(SnapshotOperation::Write, self.snapshot_path.clone(), err))
-  }
-}
-
-impl std::fmt::Debug for Stronghold {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    // TODO: Include stronghold type(s) once they implement Debug.
-    f.debug_struct("Stronghold")
-      //.field("stronghold", &self.stronghold)
-      .field("snapshot_path", &self.snapshot_path)
-      //.field("key_provider", &self.key_provider)
-      .field("index_lock", &self.index_lock)
-      .field("dropsave", &self.dropsave)
-      .finish()
   }
 }
