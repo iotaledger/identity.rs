@@ -25,9 +25,7 @@ mod storage_sub_trait {
 
 #[cfg(feature = "send-sync-storage")]
 mod storage_sub_trait {
-  // TODO: Temporarily do not require future to be send due to lack of Send-Futures in current Stronghold.
-  // pub trait StorageSendSyncMaybe: Send + Sync {}
-  pub trait StorageSendSyncMaybe: Sync {}
+  pub trait StorageSendSyncMaybe: Send + Sync {}
   impl<S: Send + Sync + super::Storage> StorageSendSyncMaybe for S {}
 }
 
