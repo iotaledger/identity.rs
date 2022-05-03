@@ -72,8 +72,6 @@ pub async fn storage_did_create_test(storage: Box<dyn Storage>) -> anyhow::Resul
     .did_create(network, &fragment, Some(keypair.private().to_owned()))
     .await;
 
-  // TODO: Call did_create without a key.
-
   ensure!(
     result.is_err(),
     "expected did_create to return an error when attempting to create an identity from the same private key twice"
