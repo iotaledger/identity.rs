@@ -27,7 +27,7 @@ pub enum StrongholdError {
   Vault(VaultOperation, #[source] ClientError),
   #[error("procedure `{0}` operating on locations {1:?} failed")]
   Procedure(ProcedureName, Vec<KeyLocation>, #[source] ProcedureError),
-  #[error("snapshot operation `{0}` on path `{1}` failed")]
+  #[error("snapshot operation `{0}` on path `{}` failed", .1.as_path().display())]
   Snapshot(SnapshotOperation, SnapshotPath, #[source] ClientError),
   #[error("failed to load password into key provider")]
   Memory(#[source] MemoryError),

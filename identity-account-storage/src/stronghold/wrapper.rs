@@ -112,9 +112,19 @@ impl Stronghold {
   }
 
   /// Encrypt the snapshot with the internal key provider and persist it to disk.
-  // TODO: Does not need to be async as of now, but will be eventually, so we already make it async.
   pub(crate) async fn persist_snapshot(&self) -> StrongholdResult<()> {
-    // TODO: Create parent dirs if they don't exist.
+    if let Some(parent) = self.snapshot_path.as_path().parent() {
+      if !parent.exists() {
+        tokio::fs::create_dir_all(parent).await.map_err(|err| {
+          StrongholdError::Snapshot(
+            SnapshotOperation::Write,
+            self.snapshot_path.clone(),
+            ClientError::Inner(err.to_string()),
+          )
+        })?;
+      }
+    }
+
     self
       .stronghold
       .commit(&self.snapshot_path, &self.key_provider)

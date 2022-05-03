@@ -22,7 +22,7 @@ async fn test_mutate_client_persists_client_into_snapshot() {
   let path: String = random_temporary_path();
   let password: String = random_string();
 
-  let stronghold: Stronghold = Stronghold::new(&path, password.clone(), None).await.unwrap();
+  let stronghold: Stronghold = Stronghold::new(&path, password.clone(), Some(true)).await.unwrap();
 
   let did: IotaDID = random_did();
   let location: &KeyLocation = &random_key_location();
@@ -44,9 +44,10 @@ async fn test_mutate_client_persists_client_into_snapshot() {
   let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
   assert!(client.record_exists(&location.into()).unwrap());
 
-  stronghold.persist_snapshot().await.unwrap();
+  // Persists the snapshot, because dropsave = true.
+  std::mem::drop(stronghold);
 
-  let stronghold: Stronghold = Stronghold::new(&path, password, None).await.unwrap();
+  let stronghold: Stronghold = Stronghold::new(&path, password, Some(false)).await.unwrap();
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
   assert!(client.record_exists(&location.into()).unwrap());
