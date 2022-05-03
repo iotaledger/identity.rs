@@ -24,11 +24,29 @@ The high-level account API takes care of publishing updates to an identity and s
 
 The key idea behind the interface is strongly inspired by the architecture of key management systems (KMS) or secure enclaves: once private keys are entered into the system, they can never be retrieved again. Instead, all operations using the key will have to go through that system. This approach is what allows `Storage` implementations to be architected more securely than simply storing and loading private keys from a regular database. Of course, the security is directly dependent on the concrete implementation, which is why we provide one such implementation using [Stronghold](https://github.com/iotaledger/stronghold.rs/), and strongly recommend using it. However, there are cases where one cannot use `Stronghold` or may want to integrate key management of identities into their own KMS or similar, which is why the `Storage` interface is an abstraction over such systems. Any implementation of that interface can then be used by the `Account`.
 
-The storage interface has two major categories of functions. One of those is key operations, the other is storing key-value data. The key operations include functionality like generating a key, returning the public key for a stored private key, or signing data. The key-value storage is used for keeping state persistent, such as caching DID documents locally.
+The storage interface has three major categories of functions. A brief overview of those functions:
+
+- DID Operations: Management of identities.
+  - `did_create`: Based on a private key, or a generated one, creates a new DID.
+  - `did_list`: List all DIDs in this `Storage`.
+  - `did_exists`: Returns whether the given DID exists in this `Storage`.
+  - `did_purge`: Wipes all data related to the given DID.
+- Key Operations: Various functionality to managing cryptographic keys.
+  - `key_generate`: Generates a new key for the given DID.
+  - `key_insert`: Inserts a pre-existing private key for the given DID `location`.
+  - `key_public`: Calculates and returns the public key for the given location to a private key.
+  - `key_delete`: Removes the key at the given location.
+  - `key_sign`: Signs the given data with the key at the given location.
+  - `key_exists`: Returns whether the key at the given location exists.
+- Data Operations: Used for keeping state persistent. Storages only need to serialize and store the data.
+  - `chain_state_get`: Returns the `ChainState` data structure for the given `DID`.
+  - `chain_state_set`: Sets the `ChainState` data structure for the given `DID`.
+  - `document_get`: Returns the DID document for the given `DID`.
+  - `document_set`: Sets the DID document for the given `DID`.
 
 ## Storage Layout
 
-## Identifiers
+### Identifiers
 
 There are two types of identifiers in the interface, DIDs and key locations. A DID identifies an identity, while a key location identifies a key. An implementation recommendation is to use the DID as a partition key. Everything related to a DID can be stored in a partition identified by that DID. Importantly, the location of a key is only guaranteed to be unique within the DID partition it belongs to. If no partitioning is used, then DID and key location should be combined (e.g. concatenated) to produce a single, globally unique (i.e. across all identities) identifier for a key in storage.
 
@@ -91,7 +109,7 @@ Since this also needs to happen before the DID can be derived from the public ke
 
 ### Storage Test Suite
 
-The `StorageTestSuite` can be used to test the basic functionality of storage implementations. See its documentation for more details. 
+The `StorageTestSuite` can be used to test the basic functionality of storage implementations. See its documentation for more details.
 
 :::note
 
@@ -108,7 +126,7 @@ This section shows the Rust and TypeScript `MemStore` implementations, which are
   defaultValue="nodejs"
   values={[
     { label: "Node.js", value: "nodejs" },
-    { label: "Rust", value: "rust" },
+    { label: "Rust", value: "rust" }
   ]}
 >
   <TabItem value="nodejs">
