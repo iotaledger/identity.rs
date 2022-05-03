@@ -6,7 +6,7 @@ use identity_iota_core::did::IotaDID;
 /// A helper type to ensure a consistently generated client path, for DIDs and strings
 /// to avoid having `Vec<u8>` everywhere.
 #[derive(Debug, Clone)]
-pub struct ClientPath(pub String);
+pub struct ClientPath(pub(crate) String);
 
 impl AsRef<[u8]> for ClientPath {
   fn as_ref(&self) -> &[u8] {

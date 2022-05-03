@@ -16,6 +16,7 @@ pub(crate) type StrongholdResult<T> = Result<T, StrongholdError>;
 pub(crate) type ProcedureName = &'static str;
 
 /// Caused by errors from the [`iota_stronghold`] crate.
+#[non_exhaustive]
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum StrongholdError {
   #[error("failed to `{0}` stronghold client `{1}`")]
@@ -32,6 +33,7 @@ pub enum StrongholdError {
   Memory(#[source] MemoryError),
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy)]
 pub enum StoreOperation {
   Insert,
@@ -49,6 +51,7 @@ impl Display for StoreOperation {
   }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy)]
 pub enum ClientOperation {
   Load,
@@ -68,6 +71,7 @@ impl Display for ClientOperation {
   }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy)]
 pub enum SnapshotOperation {
   Read,
@@ -83,6 +87,7 @@ impl Display for SnapshotOperation {
   }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy)]
 pub enum VaultOperation {
   RecordExists,

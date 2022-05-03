@@ -7,8 +7,8 @@ mod error;
 pub(crate) mod test_util;
 #[cfg(test)]
 mod tests;
-pub(crate) mod wrapper;
+mod wrapper;
 
-pub(crate) use client_path::*;
-pub(crate) use error::*;
-pub(crate) use wrapper::*;
+pub use client_path::*;
+pub use error::*;
+pub use wrapper::*;
