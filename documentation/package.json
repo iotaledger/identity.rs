@@ -1,6 +1,7 @@
 {
   "name": "identity",
   "version": "0.0.0",
+  "private": true,
   "scripts": {
     "start": "docusaurus start"
   },
