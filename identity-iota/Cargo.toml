@@ -1,6 +1,6 @@
 [package]
 name = "identity-iota"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 homepage = "https://www.iota.org"
@@ -15,15 +15,20 @@ async-trait = { version = "0.1", default-features = false }
 dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity-core = { version = "=0.4.0", path = "../identity-core" }
-identity-credential = { version = "=0.4.0", path = "../identity-credential" }
-identity-did = { version = "=0.4.0", path = "../identity-did" }
+identity-core = { version = "=0.4.1", path = "../identity-core" }
+identity-credential = { version = "=0.4.1", path = "../identity-credential" }
+identity-did = { version = "=0.4.1", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-iota-client = {version = "1.1.1", default-features = false }
+
+[dependencies.iota-client]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "c7d1cc4bae4ef00f16314239463ce115f8c6b35a"
+default-features = false
+features = ["pow-fallback"]
 
 [dependencies.iota-crypto]
 version = "0.7"

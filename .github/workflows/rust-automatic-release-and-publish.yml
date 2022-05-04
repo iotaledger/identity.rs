@@ -1,0 +1,32 @@
+name: Rust Automatic Release and Publish
+
+# Automatically creates a GitHub release and publishes the latest Rust crate versions to crates.io when a release PR is merged.
+on:
+  pull_request:
+    branches:
+      - dev
+      - support/v*
+    types: [closed]
+jobs:
+  call-create-release-workflow:
+    if: github.event.pull_request.merged == true
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@dev
+    with:
+      changelog-config-path: ./.github/.github_changelog_generator
+      dev-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(dev)\.\d*$
+      main-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
+      create-github-release: true
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+  release:
+    runs-on: ubuntu-latest
+    needs: call-create-release-workflow
+    if: ${{ needs.call-create-release-workflow.outputs.is-release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Dummy Publish to crates.io
+        # TODO: implement proper publish
+        run: echo beep boop, pretending to publish

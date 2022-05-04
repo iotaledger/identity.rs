@@ -1,0 +1,55 @@
+name: 'changelog-generator'
+description: 'Runs github changelog generator'
+inputs:
+  changelog-path:
+    description: "path to the changelog file"
+    required: false
+    default: ./CHANGELOG.md
+  changelog-config-path:
+    description: "path to the changelog config"
+    required: true
+  future-release:
+    description: "release name (e.g. `v1.2.3-dev.1`)"
+    required: true
+  optional-arg:
+    description: "optional argument for the generator command"
+    required: false
+  github-token:
+    description: "token used to call github API"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare Repository For Changelog Generator
+      shell: bash
+      run: |
+        GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+        GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+
+        echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+        echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+
+        echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+        echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+
+    - name: Run github-changelog-generator
+      uses: docker://eiha/github-changelog-generator:latest
+      with:
+        args: >
+          --output ${{ inputs.changelog-path }}
+          --config-file ${{ inputs.changelog-config-path }}
+          --user ${{ env.GITHUB_REPOSITORY_USER }}
+          --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+          --token ${{ inputs.github-token }} 
+          --future-release ${{ inputs.future-release }} 
+          ${{ inputs.optional-arg }}
+
+    - name: Populate changelog descriptions
+      shell: bash
+      run: |
+        .github/workflows/scripts/populate-changelog-descriptions.sh ${{ inputs.changelog-path }}
+
+    - name: Log ${{ inputs.changelog-path }}
+      shell: bash
+      run: cat ${{ inputs.changelog-path }}
