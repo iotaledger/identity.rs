@@ -26,7 +26,7 @@ seahash = { version = "4.1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
-tokio = { version = "1.17.0", default-features = false, features = ["sync", "fs", "rt-multi-thread"], optional = true }
+tokio = { version = "1.17.0", default-features = false, features = ["sync", "fs"], optional = true }
 zeroize = { version = "1.4" }
 
 [dependencies.iota-crypto]
