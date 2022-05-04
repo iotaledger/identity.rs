@@ -6,9 +6,7 @@ runs:
     - name: Install sccache (windows-latest)
       shell: pwsh
       run: |
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-        scoop install sccache
-        echo "${HOME}/scoop/apps/sccache/current" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        choco install sccache
     
     - name: Start sccache
       shell: pwsh
