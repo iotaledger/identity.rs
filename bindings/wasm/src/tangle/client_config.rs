@@ -34,6 +34,7 @@ impl TryFrom<IClientConfig> for ClientBuilder {
       fallback_to_local_pow,
       tips_interval,
       request_timeout,
+      retry_until_included,
     } = config.into_serde::<ClientConfig>().wasm_result()?;
 
     let mut builder: ClientBuilder = ClientBuilder::new();
@@ -121,6 +122,9 @@ impl TryFrom<IClientConfig> for ClientBuilder {
     if let Some(request_timeout) = request_timeout {
       builder = builder.request_timeout(Duration::from_secs(u64::from(request_timeout)));
     }
+    if let Some(retry_until_included) = retry_until_included {
+      builder = builder.retry_until_included(retry_until_included);
+    }
 
     Ok(builder)
   }
@@ -206,6 +210,10 @@ struct ClientConfig {
   /// Sets the default request timeout.
   #[typescript(name = "requestTimeout", type = "number")]
   request_timeout: Option<u32>,
+  /// When publishing to the Tangle, sets whether to retry until the message is confirmed by a milestone.
+  /// Default: true.
+  #[typescript(name = "retryUntilIncluded", type = "boolean")]
+  retry_until_included: Option<bool>,
 }
 
 #[cfg(test)]
@@ -242,7 +250,8 @@ mod tests {
       "localPow": false,
       "fallbackToLocalPow": false,
       "tipsInterval": 7,
-      "requestTimeout": 60
+      "requestTimeout": 60,
+      "retryUntilIncluded": false
     }"#,
       )
       .unwrap(),
@@ -276,6 +285,7 @@ mod tests {
       fallback_to_local_pow,
       tips_interval,
       request_timeout,
+      retry_until_included,
     } = json.into_serde::<ClientConfig>().unwrap();
     assert_eq!(network, Some(Network::Devnet));
     assert_eq!(
@@ -350,5 +360,6 @@ mod tests {
     assert_eq!(fallback_to_local_pow, Some(false));
     assert_eq!(tips_interval, Some(7));
     assert_eq!(request_timeout, Some(60));
+    assert_eq!(retry_until_included, Some(false));
   }
 }
