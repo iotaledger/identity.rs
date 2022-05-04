@@ -22,8 +22,6 @@ pub mod identity;
 pub mod storage;
 #[cfg(feature = "stronghold")]
 pub mod stronghold;
-// #[cfg(feature = "stronghold")]
-// pub mod stronghold_old;
 pub mod types;
 pub mod utils;
 

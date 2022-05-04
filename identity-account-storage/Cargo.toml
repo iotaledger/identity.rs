@@ -41,18 +41,6 @@ git = "https://github.com/iotaledger/stronghold.rs"
 rev = "1d9ebb2872b1529150227b6cad094eb5c97a0ca6"
 optional = true
 
-[dependencies.iota_stronghold_old]
-package = "iota_stronghold"
-git = "https://github.com/iotaledger/stronghold.rs"
-rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
-optional = true
-
-[dependencies.stronghold_engine_old]
-package = "stronghold_engine"
-git = "https://github.com/iotaledger/stronghold.rs"
-rev = "969df405661ba4977f2cf30e9909cef7e30cefa2"
-optional = true
-
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 # TODO: Might have to specify version here, 0.2 produces a version selection conflict in Wasm.
 getrandom = { version = "*", features = ["wasm-bindgen"] }
@@ -65,8 +53,6 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros", "r
 default = ["stronghold", "send-sync-storage", "storage-test-suite"]
 stronghold = [
   "iota_stronghold",
-  "iota_stronghold_old",
-  "stronghold_engine_old",
   "actix",
   "tokio/rt-multi-thread",
   "futures",
