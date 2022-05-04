@@ -29,8 +29,8 @@ use crate::Result;
 #[derive(Debug)]
 pub struct Stronghold {
   pub(crate) stronghold: IotaStronghold,
-  pub(crate) snapshot_path: SnapshotPath,
-  pub(crate) key_provider: KeyProvider,
+  snapshot_path: SnapshotPath,
+  key_provider: KeyProvider,
   pub(crate) index_lock: RwLock<()>,
   pub(crate) dropsave: bool,
 }
