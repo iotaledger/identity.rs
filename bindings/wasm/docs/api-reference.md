@@ -582,6 +582,7 @@ Deserializes a JSON object as `ChainState`.
         * ~~[.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.isMessageIncluded(messageId)](#Client+isMessageIncluded) ⇒ <code>Promise.&lt;boolean&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * ~~[.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
@@ -602,7 +603,7 @@ Returns the `Client` Tangle network.
 <a name="Client+publishDocument"></a>
 
 ### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-Publishes an `IotaDocument` to the Tangle.
+Publishes a [Document](#Document) to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
@@ -651,6 +652,17 @@ Default interval is 5 seconds and max attempts is 40.
 | data | <code>any</code> | 
 | interval | <code>number</code> \| <code>undefined</code> | 
 | max_attempts | <code>number</code> \| <code>undefined</code> | 
+
+<a name="Client+isMessageIncluded"></a>
+
+### client.isMessageIncluded(messageId) ⇒ <code>Promise.&lt;boolean&gt;</code>
+Checks if a message is confirmed by a milestone.
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type |
+| --- | --- |
+| messageId | <code>string</code> | 
 
 <a name="Client+resolve"></a>
 
