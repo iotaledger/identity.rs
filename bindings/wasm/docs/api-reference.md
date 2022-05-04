@@ -114,6 +114,14 @@ with a DID subject.</p>
 </dd>
 <dt><a href="#Signature">Signature</a></dt>
 <dd></dd>
+<dt><a href="#StorageTestSuite">StorageTestSuite</a></dt>
+<dd><p>A test suite for the <code>Storage</code> interface.</p>
+<p>This module contains a set of tests that a correct storage implementation
+should pass. Note that not every edge case is tested.</p>
+<p>Tests usually rely on multiple interface methods being implemented, so they should only
+be run on a fully implemented version. That&#39;s why there is not a single test case for every
+interface method.</p>
+</dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
@@ -130,7 +138,7 @@ See <code>IVerifierOptions</code>.</p>
 ## Members
 
 <dl>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
@@ -157,9 +165,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
-<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -183,7 +191,10 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -198,11 +209,8 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -218,6 +226,17 @@ it cannot be an embedded method.
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
 
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
 <a name="Account+detachMethodRelationships"></a>
 
 ### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -228,6 +247,28 @@ Detaches the given relationship from the given method, if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -367,28 +408,6 @@ Deletes a verification method if the method exists.
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
 
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
 <a name="Account+setController"></a>
 
 ### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -410,17 +429,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -574,6 +582,7 @@ Deserializes a JSON object as `ChainState`.
         * ~~[.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.isMessageIncluded(messageId)](#Client+isMessageIncluded) ⇒ <code>Promise.&lt;boolean&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * ~~[.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
@@ -594,7 +603,7 @@ Returns the `Client` Tangle network.
 <a name="Client+publishDocument"></a>
 
 ### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-Publishes an `IotaDocument` to the Tangle.
+Publishes a [Document](#Document) to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
@@ -643,6 +652,17 @@ Default interval is 5 seconds and max attempts is 40.
 | data | <code>any</code> | 
 | interval | <code>number</code> \| <code>undefined</code> | 
 | max_attempts | <code>number</code> \| <code>undefined</code> | 
+
+<a name="Client+isMessageIncluded"></a>
+
+### client.isMessageIncluded(messageId) ⇒ <code>Promise.&lt;boolean&gt;</code>
+Checks if a message is confirmed by a milestone.
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type |
+| --- | --- |
+| messageId | <code>string</code> | 
 
 <a name="Client+resolve"></a>
 
@@ -3794,6 +3814,102 @@ Deserializes a JSON object as `Signature`.
 | --- | --- |
 | json_value | <code>any</code> | 
 
+<a name="StorageTestSuite"></a>
+
+## StorageTestSuite
+A test suite for the `Storage` interface.
+
+This module contains a set of tests that a correct storage implementation
+should pass. Note that not every edge case is tested.
+
+Tests usually rely on multiple interface methods being implemented, so they should only
+be run on a fully implemented version. That's why there is not a single test case for every
+interface method.
+
+**Kind**: global class  
+
+* [StorageTestSuite](#StorageTestSuite)
+    * [.didCreateGenerateKeyTest(storage)](#StorageTestSuite.didCreateGenerateKeyTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.didCreatePrivateKeyTest(storage)](#StorageTestSuite.didCreatePrivateKeyTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.didListTest(storage)](#StorageTestSuite.didListTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.didPurgeTest(storage)](#StorageTestSuite.didPurgeTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keyGenerateTest(storage)](#StorageTestSuite.keyGenerateTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keyDeleteTest(storage)](#StorageTestSuite.keyDeleteTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keyInsertTest(storage)](#StorageTestSuite.keyInsertTest) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.keySignEd25519Test(storage)](#StorageTestSuite.keySignEd25519Test) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="StorageTestSuite.didCreateGenerateKeyTest"></a>
+
+### StorageTestSuite.didCreateGenerateKeyTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.didCreatePrivateKeyTest"></a>
+
+### StorageTestSuite.didCreatePrivateKeyTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.didListTest"></a>
+
+### StorageTestSuite.didListTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.didPurgeTest"></a>
+
+### StorageTestSuite.didPurgeTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keyGenerateTest"></a>
+
+### StorageTestSuite.keyGenerateTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keyDeleteTest"></a>
+
+### StorageTestSuite.keyDeleteTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keyInsertTest"></a>
+
+### StorageTestSuite.keyInsertTest(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.keySignEd25519Test"></a>
+
+### StorageTestSuite.keySignEd25519Test(storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| storage | <code>Storage</code> | 
+
 <a name="Timestamp"></a>
 
 ## Timestamp
@@ -4088,9 +4204,9 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 | --- | --- |
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="MethodRelationship"></a>
+<a name="DIDMessageEncoding"></a>
 
-## MethodRelationship
+## DIDMessageEncoding
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
@@ -4139,13 +4255,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
-**Kind**: global variable  
-<a name="DIDMessageEncoding"></a>
-
-## DIDMessageEncoding
 **Kind**: global variable  
 <a name="start"></a>
 
