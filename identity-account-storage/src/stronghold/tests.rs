@@ -4,6 +4,8 @@
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_iota_core::did::IotaDID;
+use iota_stronghold::procedures;
+use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
 
@@ -51,6 +53,46 @@ async fn test_mutate_client_persists_client_into_snapshot() {
 
   let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
   assert!(client.record_exists(&location.into()).unwrap());
+}
+
+#[tokio::test]
+async fn test_incorrect_password_returns_error() {
+  let path: String = random_temporary_path();
+  let password: String = random_string();
+
+  let stronghold: Stronghold = Stronghold::new(&path, password, Some(false)).await.unwrap();
+
+  let did: IotaDID = random_did();
+  let location: &KeyLocation = &random_key_location();
+
+  stronghold
+    .mutate_client(&did, |client| {
+      client
+        .execute_procedure(GenerateKey {
+          ty: procedures::KeyType::Ed25519,
+          output: location.into(),
+        })
+        .unwrap();
+
+      Ok(())
+    })
+    .unwrap();
+
+  stronghold.persist_snapshot().await.unwrap();
+  std::mem::drop(stronghold);
+
+  let err = Stronghold::new(&path, "not-the-original-password".to_owned(), Some(false))
+    .await
+    .unwrap_err();
+
+  assert!(matches!(
+    err,
+    crate::error::Error::StrongholdError(crate::stronghold::error::StrongholdError::Snapshot(
+      crate::stronghold::error::SnapshotOperation::Read,
+      _,
+      _
+    ))
+  ));
 }
 
 async fn test_stronghold() -> impl Storage {
