@@ -98,7 +98,7 @@ impl Eq for KeyLocation {}
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyType;
-use rand::rngs::OsRng;
+  use rand::rngs::OsRng;
 
   use super::KeyLocation;
 
