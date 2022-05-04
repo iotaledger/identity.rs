@@ -12,26 +12,27 @@ keywords:
 import create_vc_rs from  '!!raw-loader!./../../../examples/account/create_vc.rs';
 import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
-A verifiable credential can represent all information that a phisical [credential](https://www.w3.org/TR/vc-data-model/#dfn-credential) represents (i.e a set of one or more claims made by an issuer. However, by allowing other parties to cryptographically verify the authorship of the credential, a VC can be seen as more tamper-evident and more trustworthy than their physical counterparts. 
+A [verifiable credential (VC)](./verifiable_presentations.mdx) can represent all information that a physical credential represents, such as a passport or university degree. However, by allowing other parties to cryptographically verify the authorship and integrity of the claims, verifiable credentials can be seen as more tamper-evident and more trustworthy than their physical counterparts.
 
 In the IOTA Identity Framework you can create a Verifiable Credential with the following properties:
 
-- [**ID**](https://www.w3.org/TR/vc-data-model/#identifiers): optional URI identifier for the credential.
-- [**Types**](https://www.w3.org/TR/vc-data-model/#types): list of types describing the credential. Includes `"VerifiableCredential"` by default.
-- [**Subject**](https://www.w3.org/TR/vc-data-model/#credential-subject): a set of objects that contain one or more properties that are each related to a subject.
-- [**Issuer**](https://www.w3.org/TR/vc-data-model/#issuer): a URI or an object containing the ID of the issuer.
-
 - [**Context**](https://www.w3.org/TR/vc-data-model/#contexts): list of JSON-LD context URIs. Includes `"https://www.w3.org/2018/credentials/v1"` by default.
+- [**Types**](https://www.w3.org/TR/vc-data-model/#types): list of types describing the credential. Includes `"VerifiableCredential"` by default.
+- [**Subject**](https://www.w3.org/TR/vc-data-model/#credential-subject): the claims of the issuer; a set of objects that contain one or more properties that are each related to a subject.
+- [**Issuer**](https://www.w3.org/TR/vc-data-model/#issuer): the identifier of the issuer, typically their DID.
+- [**ID**](https://www.w3.org/TR/vc-data-model/#identifiers): optional URI identifier for the credential.
 - [**Issuance Date**](https://www.w3.org/TR/vc-data-model/#issuance-date): optional timestamp for expressing the date and time when a credential becomes valid. 
 - [**Expiration Date**](https://www.w3.org/TR/vc-data-model/#expiration): optional timestamp for expressing the date and time when a credential ceases to be valid.
-- [**Status**](https://www.w3.org/TR/vc-data-model/#status): optional ID and Type used to determine the current status of a credential.
-- [**Schema**](https://www.w3.org/TR/vc-data-model/#data-schemas): optional list of objects specifying the ID and Type of the schema that the data must conform to. 
+- [**Status**](https://www.w3.org/TR/vc-data-model/#status): optional information used to determine the current status of a credential, i.e. whether or not it has been [revoked](./revoke.mdx).
+- [**Schema**](https://www.w3.org/TR/vc-data-model/#data-schemas): optional list of objects specifying the schema that the data must conform to. 
 - [**Refresh Service**](https://www.w3.org/TR/vc-data-model/#refreshing): optional link to a service where the recipient may refresh the included credentials.
 - [**Terms of Use**](https://www.w3.org/TR/vc-data-model/#terms-of-use): optional list of policies defining obligations, prohibitions, or permissions of the presentation recipient.
-- [**Evidence**](https://www.w3.org/TR/vc-data-model/#evidence): optional list of objects specifying a Type that can be used by the issuer to provide the verifier with additional supporting information in a verifiable credential. 
-- [**Non Transferable**](https://www.w3.org/TR/vc-data-model/#nontransferable-property): optional flag that indicates that a verifiable credential must only be encapsulated into a verifiable presentation whose proof was issued by the credentialSubject.
+- [**Evidence**](https://www.w3.org/TR/vc-data-model/#evidence): optional list of objects that can be used by the issuer to provide the verifier with additional supporting information in a verifiable credential.
+- [**Non-Transferable**](https://www.w3.org/TR/vc-data-model/#nontransferable-property): optional flag that indicates that a verifiable credential must only be encapsulated in a [verifiable presentation](./verifiable_presentations.md) whose proof was issued by the credential subject.
 
-After creation, the issuer signs the verifiable credential using a private key, which will allow verifiers to validate the VC with its public key.
+## Signing {#signing}
+
+After creation, the issuer signs the verifiable credential using one of their private keys, embedding the digital signature in its [proof](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section. This is what allows verifiers to independently validate the credential using the corresponding public key from the issuer's DID Document.
 
 ### Proof Options {#proof-options}
 
@@ -40,34 +41,37 @@ The proof section embedded in a credential may also include additional metadata.
 
 The following metadata properties can be configured by the framework and are optional and omitted by default:
 
-- **Created**: timestamp of when the credential was signed.
-- **Expires**: timestamp after which the credential is no longer considered valid.
-- **Challenge**: arbitrary random string. Sent by the issuer and mitigates replay attacks; should be sufficiently random and uniquely generated per credential request.
-- **Domain**: arbitrary string. Sent by the issuer and can help mitigate replay attacks when used with a challenge.
+- **Created**: timestamp of when the credential was signed, recommended.
+- **Expires**: timestamp after which the signature is no longer considered valid. Implementers should prefer to set the dedicated **Expiration Date** property on credentials instead.
 - **Proof Purpose**: indicates the purpose of the signature.
   - **AssertionMethod**: to assert a claim. The signing verification method must have an [`assertionMethod`](https://www.w3.org/TR/did-core/#assertion) relationship to be valid.
   - **Authentication**: to authenticate the signer. The signing verification method must have an [`authentication`](https://www.w3.org/TR/did-core/#authentication) relationship to be valid.
 
-### Credential Validation {#credential-validation}
+Most verifiable credentials should be signed with the assertion method proof purpose to clearly indicate that the signature is asserting a claim and restrict it to valid verification methods. Whereas a proof is typically attached to a [verifiable presentation](./verifiable_presentations.md) for authentication purposes. 
 
-Both issuers and holders of verifiable credentials might be interested in making sure certain properties of the VC are valid, specially right after creating or receiving a VC, but this checks can be done at any point in time and can be a useful way of making sure the VC has not been revoked. 
+Other metadata fields such as `challenge` and `domain` may be included, however they are more pertinent for [verifiable presentations](./verifiable_presentations.md).
 
-The Iota Framework allows issuers and holders to perform some validations using the CredentialValidator.
+## Validation {#validation}
 
-The following checks can be verified by the validator:
+Verifiers may want to ensure certain properties of a credential are valid when receiving one or more in a [verifiable presentation](./verifiable_presentations.md). Both issuers and holders of verifiable credentials may also wish to validate their credentials, particularly directly after creating or receiving one. Validation may be performed at any point in time and can be a useful way of checking whether a credential has expired or been revoked. 
 
-- **Credential proofs**: verifies the credential signatures against the DID Documents of the issuer.
-- **Semantic Validation**: ensures the credential adhere to the specification.
-- **Subject Holder Relationship**: ensures that the credential relationship between the holder and the subject match.
-- **Optional validations**: additional checks on signatures and credential fields can be configured.
-- **Latest Issuance date**: check that the [`issuanceDate`](https://www.w3.org/TR/vc-data-model/#issuance-date) property, if present, is not after a specific datetime. Defaults to the current datetime if unset.
-- **Earliest Expiry date**: check that the [`expirationDate`](https://www.w3.org/TR/vc-data-model/#expiration) property, if present, is not before a specific datetime. Defaults to the current datetime if unset.
+The IOTA Identity Framework supports the following checks during credential validation:
 
-The last two checks listed above are specified using CredentialValidationOptions.
+- **Semantic structure**: ensures the credential adheres to the specification.
+- **Proof**: verifies the signature against the DID Document of the issuer.
+- **Optional validations**: additional checks on credential properties and the signature can be configured by specifying [Validation Options](#validation-options).
+
+### Validation Options {#validation-options}
+
+These options specify conditions that specific properties in a credential must satisfy.
+
+- **Expiry Date**: check that the [`expirationDate`](https://www.w3.org/TR/vc-data-model/#expiration) property, if present, is not before a specific datetime. Defaults to the current datetime if unset.
+- **Issuance Date**: check that that [`issuanceDate`](https://www.w3.org/TR/vc-data-model/#issuance-date) property, if present, is not after a specific datetime. Defaults to the current datetime if unset.
+- **Verifier Options**: validates aspects of the credential signature and its metadata, see [Proof Options](#proof-options).
 
 ### Sharing Verifiable Credentials {#sharing-verifiable-credentials}
 
-A verifiable presentation is the recommended data format for sharing one or more verifiable credentials. The next section explains [verifiable presentations](./verifiable_presentations.mdx) in more detail.
+A [verifiable presentation](./verifiable_presentations.md) is the recommended data format for sharing one or more verifiable credentials, as it provides cryptographic means of proving the DID of the holder presenting them, and for enforcing [subject-holder relationships](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). See the [Verifiable Presentations](./verifiable_presentations.md) page for further detail.
 
 ## Example
 
