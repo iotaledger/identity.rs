@@ -1,5 +1,15 @@
+export {};
+
 const assert = require('assert');
-const {AccountBuilder, AutoSave, MethodScope, MethodContent, KeyType, MethodType, KeyPair} = require("../node");
+const {
+    AccountBuilder,
+    AutoSave,
+    MethodScope,
+    MethodContent,
+    KeyType,
+    MethodType,
+    KeyPair,
+} = require("../node");
 
 function setupAccountBuilder() {
     return new AccountBuilder({
