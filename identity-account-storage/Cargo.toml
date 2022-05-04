@@ -38,7 +38,7 @@ features = ["hmac", "pbkdf", "sha", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "190e1805fd985458e08d7659f815cf4fda96d6de"
+rev = "1d9ebb2872b1529150227b6cad094eb5c97a0ca6"
 optional = true
 
 [dependencies.iota_stronghold_old]

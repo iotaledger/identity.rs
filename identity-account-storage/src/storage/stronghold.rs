@@ -84,10 +84,6 @@ impl Storage for Stronghold {
     // ADD DID TO INDEX
     // =============================
 
-    // TODO: Do we have to roll back changes to a client if the entire did_create "transaction"
-    // doesn't complete successfully? Otherwise, someone re-trying to create an identity from an existing
-    // keypair might fail every time, because the DID was added to the index, but e.g. the client syncing later failed.
-
     let index_lock: RwLockWriteGuard<'_, _> = self.index_lock.write().await;
 
     let index_client_path: ClientPath = ClientPath::from(INDEX_CLIENT_PATH);
@@ -143,7 +139,8 @@ impl Storage for Stronghold {
   async fn did_purge(&self, did: &IotaDID) -> Result<bool> {
     let index_lock: RwLockReadGuard<'_, _> = self.index_lock.read().await;
 
-    let index_client: Client = self.client(&ClientPath::from(INDEX_CLIENT_PATH))?;
+    let index_client_path: ClientPath = ClientPath::from(INDEX_CLIENT_PATH);
+    let index_client: Client = self.client(&index_client_path)?;
     let index_store: Store = index_client.store();
 
     let mut index: BTreeSet<IotaDID> = get_index(&index_store)?;
@@ -154,6 +151,12 @@ impl Storage for Stronghold {
     }
 
     set_index(&index_store, index)?;
+
+    self
+      .stronghold
+      .write_client(index_client_path.as_ref())
+      .map_err(|err| StrongholdError::Client(ClientOperation::Persist, index_client_path, err))?;
+
     // Explicitly release the lock early.
     std::mem::drop(index_lock);
 

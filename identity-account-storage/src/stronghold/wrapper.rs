@@ -79,7 +79,7 @@ impl Stronghold {
     })
   }
 
-  /// Load the client identified by the given `client_path`.
+  /// Load the client identified by the given `client_path` or create it, if it doesn't exist.
   pub(crate) fn client(&self, client_path: &ClientPath) -> StrongholdResult<Client> {
     match self.stronghold.load_client(client_path.as_ref()) {
       Ok(client) => Ok(client),
