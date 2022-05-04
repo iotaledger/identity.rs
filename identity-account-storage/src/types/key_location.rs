@@ -98,6 +98,7 @@ impl Eq for KeyLocation {}
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyType;
+use rand::rngs::OsRng;
 
   use super::KeyLocation;
 
@@ -123,7 +124,7 @@ mod tests {
   #[test]
   fn test_key_location_canonical_representation() {
     for (test_vector, expected_hash) in [TEST_VECTOR_1, TEST_VECTOR_2] {
-      let fragment: String = rand::Rng::sample_iter(rand::thread_rng(), rand::distributions::Alphanumeric)
+      let fragment: String = rand::Rng::sample_iter(&mut OsRng, rand::distributions::Alphanumeric)
         .take(32)
         .map(char::from)
         .collect::<String>();

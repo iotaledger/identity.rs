@@ -18,9 +18,8 @@ pub(crate) fn random_did() -> identity_iota_core::did::IotaDID {
 }
 
 pub(crate) fn random_key_location() -> crate::types::KeyLocation {
-  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
   let fragment: String = random_string();
-  let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
+  let public_key: [u8; 32] = OsRng.gen();
 
   crate::types::KeyLocation::new(identity_core::crypto::KeyType::Ed25519, fragment, &public_key)
 }
