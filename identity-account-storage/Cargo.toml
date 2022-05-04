@@ -38,7 +38,7 @@ features = ["hmac", "pbkdf", "sha", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "1d9ebb2872b1529150227b6cad094eb5c97a0ca6"
+rev = "629466da83a677925904b2e733ef7bfad5a42864"
 optional = true
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
