@@ -20,7 +20,6 @@ the W3C specification.
 
 
 ## Resolving a DID from the main network
-
 The following example demonstrates how to resolve the DID: "did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV" from the `main` network. 
 <Tabs>
 <TabItem value="Rust" label="Rust">
@@ -54,11 +53,11 @@ const {
 ```
 </TabItem>
 </Tabs>
-The technical details of how resolution exactly works in terms of querying the Tangle is explained in the [IOTA DID Method Specification](./../specs/did/iota_did_method_spec#read). 
+What happens in this example can be explained on a high level as follows: The Resolver queries the Tangle for the history of the DID Document and utilizes it to recreate and validate the latest state of the DID Document. 
 
 ## Resolving from a private tangle 
 Resolving a DID from a private tangle is similar to resolving a DID from the main net. The only difference is that 
-the resolver needs to be configured to have a client capable of operating on said private tangle. Building a `Client` configured for a specified Tangle is explained in [this example in Rust](https://github.com/iotaledger/identity.rs/blob/dev/examples/low-level-api/private_tangle.rs) and [this example in Javascript](https://github.com/iotaledger/identity.rs/blob/dev/bindings/wasm/examples/src/private_tangle.js).
+the resolver needs to be configured to have a client capable of operating on said private tangle. Building a `Client` configured for a specified Tangle is explained in [this example in Rust](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/low-level-api/private_tangle.rs) and [this example in Javascript](https://github.com/iotaledger/identity.rs/blob/support/v0.5/bindings/wasm/examples/src/private_tangle.js).
 
 The following example demonstrates how one can setup a `Resolver` with a given `client` and then attempt resolving a specified `did` which may be on any Tangle (public or private). 
 <Tabs>
@@ -110,8 +109,8 @@ Note that in the context of an identity managed by an `Account` the DID document
 As explained in [Verifiable Presentations](./../verifiable_credentials/verifiable_presentations) one resolves the DID Documents of the credential issuers and presentation holder 
 during verification of a verifiable presentation. Resolving the necessary DID Documents is done automatically when verifying presentations via the `Resolver`, but there are certain 
 advanced use cases where more control is desired. To accommodate for such situations the `Resolver` also comes equipped with additional stand alone methods that enable:
-- resolving a presentation holder's DID Document, 
-- resolving all DID Documents of the distinct issuers of the credentials contained in the presentation,
+- resolving a presentation holder's DID Document
+- resolving all DID Documents of the distinct issuers of the credentials contained in the presentation
 - resolving the issuer's DID Document for a given verifiable credential
 
 
