@@ -34,10 +34,9 @@ path = "account/lazy.rs"
 name = "account_signing"
 path = "account/signing.rs"
 
-# TODO: Reactivate before merge.
-# [[example]]
-# name = "account_multiple"
-# path = "account/multiple_identities.rs"
+[[example]]
+name = "account_multiple"
+path = "account/multiple_identities.rs"
 
 [[example]]
 name = "account_unchecked"
