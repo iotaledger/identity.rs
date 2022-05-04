@@ -60,7 +60,7 @@ module.exports = {
                 'advanced/overview',
                 'advanced/client',
                 'advanced/did_messages',
-                'advanced/storage_adapter',
+                'advanced/storage_interface',
                 'advanced/signature_schemes',
 
             ]
