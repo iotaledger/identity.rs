@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
 
 - [identity.rs](https://github.com/iotaledger/identity.rs): Rust source code of this library on GitHub.
 - [Identity Documentation Pages](https://wiki.iota.org/identity.rs/introduction): Supplementing documentation with simple examples on library usage to get you started.
-- [More Examples](https://github.com/iotaledger/identity.rs/tree/dev/examples): Practical examples to get started with the library.
+- [More Examples](https://github.com/iotaledger/identity.rs/tree/support/v0.5/examples): Practical examples to get started with the library.
 - [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website of aforementioned team.
 
 ## Structure (Temporary)
