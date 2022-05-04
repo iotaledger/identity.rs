@@ -42,7 +42,6 @@ rev = "1d9ebb2872b1529150227b6cad094eb5c97a0ca6"
 optional = true
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
-# TODO: Might have to specify version here, 0.2 produces a version selection conflict in Wasm.
 getrandom = { version = "*", features = ["wasm-bindgen"] }
 
 [dev-dependencies]
