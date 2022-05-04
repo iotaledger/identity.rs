@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::any::type_name;
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
@@ -248,7 +247,13 @@ impl Storage for Stronghold {
           location: location.into(),
           should_gc: true,
         })
-        .map_err(|err| StrongholdError::Procedure(type_name::<procedures::RevokeData>(), vec![location.clone()], err))
+        .map_err(|err| {
+          StrongholdError::Procedure(
+            std::any::type_name::<procedures::RevokeData>(),
+            vec![location.clone()],
+            err,
+          )
+        })
         .map_err(crate::Error::from)?;
 
       Ok(exists)
@@ -346,9 +351,13 @@ fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
     output: location.into(),
   };
 
-  client
-    .execute_procedure(generate_key)
-    .map_err(|err| StrongholdError::Procedure(type_name::<procedures::GenerateKey>(), vec![location.clone()], err))?;
+  client.execute_procedure(generate_key).map_err(|err| {
+    StrongholdError::Procedure(
+      std::any::type_name::<procedures::GenerateKey>(),
+      vec![location.clone()],
+      err,
+    )
+  })?;
 
   Ok(())
 }
@@ -375,9 +384,13 @@ fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<Public
         private_key: location.into(),
       };
 
-      let public = client
-        .execute_procedure(public_key)
-        .map_err(|err| StrongholdError::Procedure(type_name::<procedures::PublicKey>(), vec![location.clone()], err))?;
+      let public = client.execute_procedure(public_key).map_err(|err| {
+        StrongholdError::Procedure(
+          std::any::type_name::<procedures::PublicKey>(),
+          vec![location.clone()],
+          err,
+        )
+      })?;
 
       Ok(public.to_vec().into())
     }
@@ -390,9 +403,13 @@ fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation) -> Re
     msg: payload,
   };
 
-  let signature: [u8; 64] = client
-    .execute_procedure(procedure)
-    .map_err(|err| StrongholdError::Procedure(type_name::<procedures::Ed25519Sign>(), vec![location.clone()], err))?;
+  let signature: [u8; 64] = client.execute_procedure(procedure).map_err(|err| {
+    StrongholdError::Procedure(
+      std::any::type_name::<procedures::Ed25519Sign>(),
+      vec![location.clone()],
+      err,
+    )
+  })?;
 
   Ok(Signature::new(signature.into()))
 }
@@ -409,7 +426,7 @@ fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Resu
 
   client.execute_procedure(copy_record).map_err(|err| {
     StrongholdError::Procedure(
-      type_name::<procedures::CopyRecord>(),
+      std::any::type_name::<procedures::CopyRecord>(),
       vec![source.clone(), target.clone()],
       err,
     )
@@ -420,9 +437,13 @@ fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Resu
     should_gc: true,
   };
 
-  client
-    .execute_procedure(revoke_data)
-    .map_err(|err| StrongholdError::Procedure(type_name::<procedures::RevokeData>(), vec![source.clone()], err))?;
+  client.execute_procedure(revoke_data).map_err(|err| {
+    StrongholdError::Procedure(
+      std::any::type_name::<procedures::RevokeData>(),
+      vec![source.clone()],
+      err,
+    )
+  })?;
 
   Ok(())
 }
