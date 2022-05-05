@@ -1,0 +1,21 @@
+name: 'stop-sccache'
+description: 'Stop sccache.'
+inputs:
+  os:
+    description: 'OS of the runner, used for sccache installation and start.'
+    required: true
+runs:
+  using: "composite"
+  steps:
+  
+    - name: Stop sccache
+      if: inputs.os == 'macos-latest' || inputs.os == 'ubuntu-latest'
+      shell: sh
+      run: |
+        sccache --stop-server || true
+
+    - name: Stop sccache
+      if: inputs.os == 'windows-latest'
+      shell: 'pwsh'
+      run: |
+        sccache --stop-server || true
