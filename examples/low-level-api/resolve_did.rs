@@ -8,10 +8,9 @@
 //!
 //! cargo run --example resolution
 
-
 use identity::iota::Receipt;
+use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
-use identity::iota::ResolvedIotaDocument; 
 use identity::iota_core::IotaDID;
 use identity::prelude::*;
 
@@ -30,15 +29,12 @@ async fn main() -> Result<()> {
 
   // Retrieve the published DID Document from the Tangle.
   let resolver: Resolver = Resolver::new().await?;
-  let resolved_did_document: ResolvedIotaDocument = resolver.resolve(doc_did).await?; 
+  let resolved_did_document: ResolvedIotaDocument = resolver.resolve(doc_did).await?;
 
   println!("Resolved DID Document > {:#?}", resolved_did_document);
 
   // The resolved Document should be the same as what we published.
-  assert_eq!(
-    resolved_did_document.document, 
-    document
-  );
+  assert_eq!(resolved_did_document.document, document);
 
   Ok(())
 }
