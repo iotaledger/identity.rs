@@ -116,7 +116,7 @@ impl Stronghold {
     self
       .stronghold
       .write_client(client_path.as_ref())
-      .map_err(|err| StrongholdError::Client(ClientOperation::Persist, client_path.clone(), err))?;
+      .map_err(|err| StrongholdError::Client(ClientOperation::Persist, client_path, err))?;
 
     Ok(output)
   }
