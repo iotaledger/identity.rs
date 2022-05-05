@@ -28,7 +28,7 @@ In the IOTA Identity Framework you can create a Verifiable Credential with the f
 - [**Refresh Service**](https://www.w3.org/TR/vc-data-model/#refreshing): optional link to a service where the recipient may refresh the included credentials.
 - [**Terms of Use**](https://www.w3.org/TR/vc-data-model/#terms-of-use): optional list of policies defining obligations, prohibitions, or permissions of the presentation recipient.
 - [**Evidence**](https://www.w3.org/TR/vc-data-model/#evidence): optional list of objects that can be used by the issuer to provide the verifier with additional supporting information in a verifiable credential.
-- [**Non-Transferable**](https://www.w3.org/TR/vc-data-model/#nontransferable-property): optional flag that indicates that a verifiable credential must only be encapsulated in a [verifiable presentation](./verifiable_presentations.md) whose proof was issued by the credential subject.
+- [**Non-Transferable**](https://www.w3.org/TR/vc-data-model/#nontransferable-property): optional flag that indicates that a verifiable credential must only be encapsulated in a [verifiable presentation](./verifiable_presentations.mdx) whose proof was issued by the credential subject.
 
 ## Signing {#signing}
 
@@ -47,13 +47,13 @@ The following metadata properties can be configured by the framework and are opt
   - **AssertionMethod**: to assert a claim. The signing verification method must have an [`assertionMethod`](https://www.w3.org/TR/did-core/#assertion) relationship to be valid.
   - **Authentication**: to authenticate the signer. The signing verification method must have an [`authentication`](https://www.w3.org/TR/did-core/#authentication) relationship to be valid.
 
-Most verifiable credentials should be signed with the assertion method proof purpose to clearly indicate that the signature is asserting a claim and restrict it to valid verification methods. Whereas a proof is typically attached to a [verifiable presentation](./verifiable_presentations.md) for authentication purposes. 
+Most verifiable credentials should be signed with the assertion method proof purpose to clearly indicate that the signature is asserting a claim and restrict it to valid verification methods. Whereas a proof may be attached to a [verifiable presentation](./verifiable_presentations.mdx) for authentication purposes. 
 
-Other metadata fields such as `challenge` and `domain` may be included, however they are more pertinent for [verifiable presentations](./verifiable_presentations.md).
+Other metadata fields such as `challenge` and `domain` may be included, however they are more pertinent for [verifiable presentations](./verifiable_presentations.mdx).
 
 ## Validation {#validation}
 
-Verifiers may want to ensure certain properties of a credential are valid when receiving one or more in a [verifiable presentation](./verifiable_presentations.md). Both issuers and holders of verifiable credentials may also wish to validate their credentials, particularly directly after creating or receiving one. Validation may be performed at any point in time and can be a useful way of checking whether a credential has expired or been revoked. 
+Verifiers should ensure certain properties of a credential are valid when receiving one or more in a [verifiable presentation](./verifiable_presentations.mdx). Both issuers and holders may also wish to validate their credentials, particularly directly after creating or receiving one. Validation may be performed at any point in time and can be a useful way of checking whether a credential has expired or been revoked. 
 
 The IOTA Identity Framework supports the following checks during credential validation:
 
@@ -71,7 +71,7 @@ These options specify conditions that specific properties in a credential must s
 
 ### Sharing Verifiable Credentials {#sharing-verifiable-credentials}
 
-A [verifiable presentation](./verifiable_presentations.md) is the recommended data format for sharing one or more verifiable credentials, as it provides cryptographic means of proving the DID of the holder presenting them, and for enforcing [subject-holder relationships](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). See the [Verifiable Presentations](./verifiable_presentations.md) page for further detail.
+A [verifiable presentation](./verifiable_presentations.mdx) is the recommended data format for sharing one or more verifiable credentials, as it provides cryptographic means of proving the DID of the holder presenting them, and for enforcing [subject-holder relationships](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). See the [Verifiable Presentations](./verifiable_presentations.mdx) page for further detail.
 
 ## Example
 
