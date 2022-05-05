@@ -6,7 +6,7 @@
 //!
 //! See also https://www.w3.org/TR/did-core/#did-resolution and https://www.w3.org/TR/did-core/#did-url-dereferencing
 //!
-//! cargo run --example resolution
+//! cargo run --example resolve_did
 
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
