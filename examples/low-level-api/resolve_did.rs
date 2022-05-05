@@ -6,7 +6,7 @@
 //!
 //! See also https://www.w3.org/TR/did-core/#did-resolution and https://www.w3.org/TR/did-core/#did-url-dereferencing
 //!
-//! cargo run --example resolution
+//! cargo run --example resolve_did
 
 use identity::iota::Receipt;
 use identity::iota::ResolvedIotaDocument;
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
 
   println!("Resolved DID Document > {:#?}", resolved_did_document);
 
-  // The resolved Document should be the same as what we published.
+  // The resolved document should be the same as what we published.
   assert_eq!(resolved_did_document.document, document);
 
   Ok(())
