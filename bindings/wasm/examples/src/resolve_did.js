@@ -8,9 +8,8 @@ import {createIdentity} from "./create_did";
  A short example to show how to resolve a DID. This returns the latest DID Document.
 
  @param {{network: Network, explorer: ExplorerUrl}} clientConfig
- @param {string} did
  **/
-async function resolveDID(clientConfig, did) {
+async function resolveDID(clientConfig) {
 
     // Creates a new identity (see "create_did" example)
     const {key, doc, receipt} = await createIdentity(clientConfig);

@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
 
   println!("Resolved DID Document > {:#?}", resolved_did_document);
 
-  // The resolved Document should be the same as what we published.
+  // The resolved document should be the same as what we published.
   assert_eq!(resolved_did_document.document, document);
 
   Ok(())
