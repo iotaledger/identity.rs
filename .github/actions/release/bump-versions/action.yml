@@ -38,15 +38,6 @@ runs:
       run: |
         cargo add identity@=${{ inputs.version }} --path=../../identity
     
-    - name: Replace identity version in stronghold nodejs bindings
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      working-directory: bindings/stronghold-nodejs
-      run: |
-        cargo add identity-core@=${{ inputs.version }} --path=../../identity-core
-        cargo add identity-iota-core@=${{ inputs.version }} --path=../../identity-iota-core
-        cargo add identity-account-storage@=${{ inputs.version }} --path=../../identity-account-storage
-    
     - name: Bump Rust crate version
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
