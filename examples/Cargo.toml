@@ -34,9 +34,10 @@ path = "account/lazy.rs"
 name = "account_signing"
 path = "account/signing.rs"
 
-[[example]]
-name = "account_multiple"
-path = "account/multiple_identities.rs"
+# TODO: Temporarily disabled until iotaledger/stronghold.rs#353 is fixed.
+# [[example]]
+# name = "account_multiple"
+# path = "account/multiple_identities.rs"
 
 [[example]]
 name = "account_unchecked"
