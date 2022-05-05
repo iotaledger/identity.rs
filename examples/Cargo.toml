@@ -67,8 +67,8 @@ name = "key_exchange"
 path = "low-level-api/key_exchange.rs"
 
 [[example]]
-name = "resolution"
-path = "low-level-api/resolution.rs"
+name = "resolve_did"
+path = "low-level-api/resolve_did.rs"
 
 [[example]]
 name = "private_tangle"

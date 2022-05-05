@@ -2,7 +2,7 @@ import { defaultClientConfig, initIdentity, setupDOMLog } from "./utils_web.js";
 import { createIdentity } from "./create_did.js";
 import { manipulateIdentity } from "./manipulate_did.js";
 import { keyExchange } from "./key_exchange.js";
-import { resolution } from "./resolution.js";
+import { resolveDID } from "./resolve_did";
 import { privateTangle } from "./private_tangle.js";
 import { resolveHistory } from "./resolve_history.js";
 
@@ -12,7 +12,7 @@ export {
     createIdentity,
     manipulateIdentity,
     keyExchange,
-    resolution,
+    resolveDID,
     privateTangle,
     resolveHistory,
 };
@@ -34,7 +34,7 @@ window.onload = async() => {
         .querySelector("#resolve-did-btn")
         .addEventListener("click", async() => {
             const inputDid = document.querySelector("#resolve-did-input").value;
-            const result = await resolution(CLIENT_CONFIG, inputDid);
+            const result = await resolveDID(CLIENT_CONFIG, inputDid);
             console.log(result);
         });
 
