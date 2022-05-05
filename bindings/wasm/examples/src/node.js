@@ -4,7 +4,7 @@
 import {createIdentity} from "./create_did";
 import {manipulateIdentity} from "./manipulate_did";
 import {privateTangle} from "./private_tangle";
-import {resolution} from "./resolution";
+import {resolveDID} from "./resolve_did";
 import {createVC} from "./create_vc";
 import {createVP} from "./create_vp";
 import {revokeVC} from "./revoke_vc";
@@ -25,8 +25,8 @@ async function main() {
             return await createIdentity(CLIENT_CONFIG);
         case "manipulate_did":
             return await manipulateIdentity(CLIENT_CONFIG);
-        case "resolution":
-            return await resolution(CLIENT_CONFIG);
+        case "resolve_did":
+            return await resolveDID(CLIENT_CONFIG);
         case "create_vc":
             return await createVC(CLIENT_CONFIG);
         case "revoke_vc":
@@ -44,7 +44,7 @@ async function main() {
 
             await createIdentity(CLIENT_CONFIG);
             await manipulateIdentity(CLIENT_CONFIG);
-            await resolution(CLIENT_CONFIG);
+            await resolveDID(CLIENT_CONFIG);
             await createVC(CLIENT_CONFIG);
             await keyExchange(CLIENT_CONFIG);
             await revokeVC(CLIENT_CONFIG);

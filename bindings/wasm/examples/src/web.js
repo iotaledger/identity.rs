@@ -3,7 +3,7 @@ import {createIdentity} from "./create_did.js";
 import {createVC} from "./create_vc.js";
 import {manipulateIdentity} from "./manipulate_did.js";
 import {keyExchange} from "./key_exchange.js";
-import {resolution} from "./resolution.js";
+import {resolveDID} from "./resolve_did.js";
 import {createVP} from "./create_vp.js";
 import {revokeVC} from "./revoke_vc.js";
 import {privateTangle} from "./private_tangle.js";
@@ -16,7 +16,7 @@ export {
     createVC,
     manipulateIdentity,
     keyExchange,
-    resolution,
+    resolveDID,
     createVP,
     revokeVC,
     privateTangle,
@@ -40,7 +40,7 @@ window.onload = async () => {
         .querySelector("#resolve-did-btn")
         .addEventListener("click", async () => {
             const inputDid = document.querySelector("#resolve-did-input").value;
-            const result = await resolution(CLIENT_CONFIG, inputDid);
+            const result = await resolveDID(CLIENT_CONFIG, inputDid);
             console.log(result);
         });
 
