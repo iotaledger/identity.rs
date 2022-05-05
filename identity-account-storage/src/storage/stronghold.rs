@@ -45,8 +45,9 @@ static INDEX_CLIENT_PATH: &str = "$index";
 // The key in the index store that contains the serialized index.
 // This happens to be the same as the client path, but for explicitness we define them separately.
 static INDEX_STORE_KEY: &str = INDEX_CLIENT_PATH;
-static CHAIN_STATE_CLIENT_PATH: &str = "$chain_state";
-static DOCUMENT_CLIENT_PATH: &str = "$document";
+static CHAIN_STATE_STORE_KEY: &str = "$chain_state";
+static DOCUMENT_STORE_KEY: &str = "$document";
+// The static identifier for vaults inside clients.
 static VAULT_PATH: &[u8; 6] = b"$vault";
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
@@ -115,7 +116,7 @@ impl Storage for Stronghold {
     self.mutate_client(&did, |client| {
       // Sync the vault identified by VAULT_PATH from the tmp client to the client identified by the DID.
       let mut sync_config: SyncClientsConfig = SyncClientsConfig::new(MergePolicy::Replace);
-      sync_config.sync_selected_vaults(vec![VAULT_PATH.to_vec()]);
+      sync_config.sync_selected_vaults(vec![VAULT_PATH]);
 
       client
         .sync_with(&tmp_client, sync_config)
@@ -279,7 +280,7 @@ impl Storage for Stronghold {
     let store: Store = client.store();
 
     let data: Option<Vec<u8>> = store
-      .get(CHAIN_STATE_CLIENT_PATH.as_bytes())
+      .get(CHAIN_STATE_STORE_KEY.as_bytes())
       .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
 
     match data {
@@ -295,7 +296,7 @@ impl Storage for Stronghold {
       let store: Store = client.store();
 
       store
-        .insert(CHAIN_STATE_CLIENT_PATH.as_bytes().to_vec(), json, None)
+        .insert(CHAIN_STATE_STORE_KEY.as_bytes().to_vec(), json, None)
         .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
     })
   }
@@ -305,7 +306,7 @@ impl Storage for Stronghold {
     let store: Store = client.store();
 
     let data: Option<Vec<u8>> = store
-      .get(DOCUMENT_CLIENT_PATH.as_bytes())
+      .get(DOCUMENT_STORE_KEY.as_bytes())
       .map_err(|err| StrongholdError::Store(StoreOperation::Get, err))?;
 
     match data {
@@ -321,7 +322,7 @@ impl Storage for Stronghold {
       let store: Store = client.store();
 
       store
-        .insert(DOCUMENT_CLIENT_PATH.as_bytes().to_vec(), json, None)
+        .insert(DOCUMENT_STORE_KEY.as_bytes().to_vec(), json, None)
         .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
     })
   }
