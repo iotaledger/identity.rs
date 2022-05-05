@@ -36,6 +36,7 @@ impl From<SecondaryResource> for Resource {
 /// A primary resource returned from a [DID URL dereferencing][SPEC] process.
 ///
 /// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-url-dereferencing
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum PrimaryResource {

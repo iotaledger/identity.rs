@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - epic/*
     paths:
       - '.github/workflows/coverage.yml'
       - '.github/workflows/scripts/coverage.sh'
@@ -25,19 +26,25 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2021-09-07
+          toolchain: nightly-2022-01-08
           override: true
           components: llvm-tools-preview
-      - uses: actions-rs/install@v0.1
+
+      - name: Install cargo-binutils
+        uses: actions-rs/install@v0.1
         with:
           crate: cargo-binutils
-          version: 0.3.3
-      - uses: actions-rs/install@v0.1
+          version: 0.3.4
+
+      - name: Install rustfilt
+        uses: actions-rs/install@v0.1
         with:
           crate: rustfilt
           version: 0.2.1
+
       - name: Run test coverage
         run: bash .github/workflows/scripts/coverage.sh
+
       - uses: coverallsapp/github-action@v1.1.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

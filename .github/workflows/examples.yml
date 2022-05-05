@@ -98,10 +98,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 15.x
+          node-version: 16.x
 
       - name: Install txm # for running README.md examples https://github.com/anko/txm
-        run: npm install -g txm
+        run: npm install -g txm@7 # pin to version 7.x.x (currently 7.4.7 works)
 
       - name: Install wasm-pack
         run: npm install -g wasm-pack
