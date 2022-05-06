@@ -77,7 +77,8 @@ use identity::iota::Result;
 
 
 async fn build_and_resolve(client: Client, did: IotaDID) -> Result<ResolvedIotaDocument> {
-    let resolver: Resolver = ResolverBuilder.new().client(client).build().await?;
+    let resolver_builder: ResolverBuilder = ResolverBuilder::new().await?;
+    let resolver: Resolver = resolver_builder.client(client).build().await?;
     resolver.resolve(did).await
 }
 ```
