@@ -66,6 +66,8 @@ jobs:
               test: |
                 npm run test
             - host: ubuntu-latest
+              # Use container to build musl as `rand::thread_rng()` or `rand::random()` (in our code or dependencies)
+              # causes the '__register_atfork' symbol to not be found at runtime when cross-compiled.
               container: rust:1.60-alpine
               target: x86_64-unknown-linux-musl
               architecture: x64
