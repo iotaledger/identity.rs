@@ -20,7 +20,7 @@ strum = { version = "0.24.0", default-features = false, features = ["std", "deri
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-crypto]
-version = "0.7"
+version = ">=0.7, <0.10"
 default-features = false
 features = ["blake2b"]
 

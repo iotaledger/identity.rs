@@ -13,7 +13,9 @@ use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
 use identity::account_storage::EncryptedData;
+use identity::account_storage::CEKAlgorithm;
 use identity::account_storage::EncryptionAlgorithm;
+use identity::account_storage::EncryptionOptions;
 use identity::account_storage::Stronghold;
 use identity::did::MethodScope;
 use identity::iota::Client;
@@ -79,23 +81,24 @@ pub async fn run() -> Result<()> {
   let alice_public_key: Vec<u8> = alice_method.data().try_decode()?;
 
   // Alice encrypts the data using Diffie-Hellman key exchange
+  let encryption_options: EncryptionOptions = EncryptionOptions::new(EncryptionAlgorithm::Aes256Gcm, CEKAlgorithm::ECDH_ES);
   let message: &[u8] = b"This msg will be encrypted and decrypted";
   let encrypted_data: EncryptedData = alice_account
     .encrypt_data(
       message,
       b"associated_data",
-      &EncryptionAlgorithm::Aes256Gcm,
+      &encryption_options,
       "kex-0",
-      Some(bob_public_key.into()),
+      bob_public_key.into(),
     )
     .await?;
   // Bob must be able to decrypt the message using the shared secret
   let decrypted_msg: Vec<u8> = bob_account
     .decrypt_data(
       encrypted_data,
-      &EncryptionAlgorithm::Aes256Gcm,
+      &encryption_options,
       "kex-0",
-      Some(alice_public_key.into()),
+      alice_public_key.into(),
     )
     .await?;
   assert_eq!(message, &decrypted_msg);

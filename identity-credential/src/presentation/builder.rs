@@ -8,7 +8,7 @@ use identity_core::common::Value;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::error::Result;
 use crate::presentation::Presentation;
 
@@ -20,8 +20,8 @@ pub struct PresentationBuilder<T = Object, U = Object> {
   pub(crate) types: Vec<String>,
   pub(crate) credentials: Vec<Credential<U>>,
   pub(crate) holder: Option<Url>,
-  pub(crate) refresh: Vec<Refresh>,
-  pub(crate) policy: Vec<Policy>,
+  pub(crate) refresh_service: Vec<RefreshService>,
+  pub(crate) terms_of_use: Vec<Policy>,
   pub(crate) properties: T,
 }
 
@@ -34,8 +34,8 @@ impl<T, U> PresentationBuilder<T, U> {
       types: vec![Presentation::<T, U>::base_type().into()],
       credentials: Vec::new(),
       holder: None,
-      refresh: Vec::new(),
-      policy: Vec::new(),
+      refresh_service: Vec::new(),
+      terms_of_use: Vec::new(),
       properties,
     }
   }
@@ -61,7 +61,7 @@ impl<T, U> PresentationBuilder<T, U> {
     self
   }
 
-  /// Adds a value to the `Credential` set.
+  /// Adds a value to the `verifiableCredential` set.
   #[must_use]
   pub fn credential(mut self, value: Credential<U>) -> Self {
     self.credentials.push(value);
@@ -77,15 +77,15 @@ impl<T, U> PresentationBuilder<T, U> {
 
   /// Adds a value to the `refreshService` set.
   #[must_use]
-  pub fn refresh(mut self, value: Refresh) -> Self {
-    self.refresh.push(value);
+  pub fn refresh_service(mut self, value: RefreshService) -> Self {
+    self.refresh_service.push(value);
     self
   }
 
   /// Adds a value to the `termsOfUse` set.
   #[must_use]
-  pub fn policy(mut self, value: Policy) -> Self {
-    self.policy.push(value);
+  pub fn terms_of_use(mut self, value: Policy) -> Self {
+    self.terms_of_use.push(value);
     self
   }
 

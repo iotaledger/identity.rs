@@ -152,6 +152,8 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -177,8 +179,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
@@ -202,8 +202,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
@@ -220,36 +218,13 @@ publishing to the Tangle.
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(data, associated_data, encryption_options, fragment, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_options, fragment, public_key)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+detachMethodRelationships"></a>
 
@@ -422,6 +397,17 @@ Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is g
 | fragment | <code>string</code> | 
 | public_key | <code>Uint8Array</code> | 
 
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -455,17 +441,6 @@ Sets the controllers of the DID document.
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
 
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -476,6 +451,31 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -666,6 +666,7 @@ Deserializes a JSON object as `ChainState`.
         * ~~[.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)~~
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.isMessageIncluded(messageId)](#Client+isMessageIncluded) ⇒ <code>Promise.&lt;boolean&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
         * ~~[.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)~~
@@ -686,7 +687,7 @@ Returns the `Client` Tangle network.
 <a name="Client+publishDocument"></a>
 
 ### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-Publishes an `IotaDocument` to the Tangle.
+Publishes a [Document](#Document) to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
@@ -735,6 +736,17 @@ Default interval is 5 seconds and max attempts is 40.
 | data | <code>any</code> | 
 | interval | <code>number</code> \| <code>undefined</code> | 
 | max_attempts | <code>number</code> \| <code>undefined</code> | 
+
+<a name="Client+isMessageIncluded"></a>
+
+### client.isMessageIncluded(messageId) ⇒ <code>Promise.&lt;boolean&gt;</code>
+Checks if a message is confirmed by a milestone.
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type |
+| --- | --- |
+| messageId | <code>string</code> | 
 
 <a name="Client+resolve"></a>
 
@@ -792,18 +804,135 @@ Creates a new `Client` with the given settings.
 **Kind**: global class  
 
 * [Credential](#Credential)
+    * [new Credential(values)](#new_Credential_new)
     * _instance_
+        * [.context()](#Credential+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+        * [.id()](#Credential+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.type()](#Credential+type) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.credentialSubject()](#Credential+credentialSubject) ⇒ <code>Array.&lt;Subject&gt;</code>
+        * [.issuer()](#Credential+issuer) ⇒ <code>string</code> \| <code>Issuer</code>
+        * [.issuanceDate()](#Credential+issuanceDate) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.expirationDate()](#Credential+expirationDate) ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+        * [.credentialStatus()](#Credential+credentialStatus) ⇒ <code>Array.&lt;Status&gt;</code>
+        * [.credentialSchema()](#Credential+credentialSchema) ⇒ <code>Array.&lt;Schema&gt;</code>
+        * [.refreshService()](#Credential+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
+        * [.termsOfUse()](#Credential+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
+        * [.evidence()](#Credential+evidence) ⇒ <code>Array.&lt;Evidence&gt;</code>
+        * [.nonTransferable()](#Credential+nonTransferable) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.proof()](#Credential+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.properties()](#Credential+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.toJSON()](#Credential+toJSON) ⇒ <code>any</code>
         * [.clone()](#Credential+clone) ⇒ [<code>Credential</code>](#Credential)
     * _static_
-        * [.extend(value)](#Credential.extend) ⇒ [<code>Credential</code>](#Credential)
-        * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#Credential.issue) ⇒ [<code>Credential</code>](#Credential)
+        * [.BaseContext()](#Credential.BaseContext) ⇒ <code>string</code>
+        * [.BaseType()](#Credential.BaseType) ⇒ <code>string</code>
         * [.fromJSON(json)](#Credential.fromJSON) ⇒ [<code>Credential</code>](#Credential)
 
+<a name="new_Credential_new"></a>
+
+### new Credential(values)
+Constructs a new `Credential`.
+
+
+| Param | Type |
+| --- | --- |
+| values | <code>ICredential</code> | 
+
+<a name="Credential+context"></a>
+
+### credential.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+id"></a>
+
+### credential.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the unique `URI` referencing the subject of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+type"></a>
+
+### credential.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the URIs defining the type of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+credentialSubject"></a>
+
+### credential.credentialSubject() ⇒ <code>Array.&lt;Subject&gt;</code>
+Returns a copy of the `Credential` subject(s).
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+issuer"></a>
+
+### credential.issuer() ⇒ <code>string</code> \| <code>Issuer</code>
+Returns a copy of the issuer of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+issuanceDate"></a>
+
+### credential.issuanceDate() ⇒ [<code>Timestamp</code>](#Timestamp)
+Returns a copy of the timestamp of when the `Credential` becomes valid.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+expirationDate"></a>
+
+### credential.expirationDate() ⇒ [<code>Timestamp</code>](#Timestamp) \| <code>undefined</code>
+Returns a copy of the timestamp of when the `Credential` should no longer be considered valid.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+credentialStatus"></a>
+
+### credential.credentialStatus() ⇒ <code>Array.&lt;Status&gt;</code>
+Returns a copy of the information used to determine the current status of the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+credentialSchema"></a>
+
+### credential.credentialSchema() ⇒ <code>Array.&lt;Schema&gt;</code>
+Returns a copy of the information used to assist in the enforcement of a specific `Credential` structure.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+refreshService"></a>
+
+### credential.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
+Returns a copy of the service(s) used to refresh an expired `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+termsOfUse"></a>
+
+### credential.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
+Returns a copy of the terms-of-use specified by the `Credential` issuer.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+evidence"></a>
+
+### credential.evidence() ⇒ <code>Array.&lt;Evidence&gt;</code>
+Returns a copy of the human-readable evidence used to support the claims within the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+nonTransferable"></a>
+
+### credential.nonTransferable() ⇒ <code>boolean</code> \| <code>undefined</code>
+Returns whether or not the `Credential` must only be contained within a [Presentation](#Presentation)
+with a proof issued from the `Credential` subject.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+proof"></a>
+
+### credential.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+Returns a copy of the proof used to verify the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
+<a name="Credential+properties"></a>
+
+### credential.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the miscellaneous properties on the `Credential`.
+
+**Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+toJSON"></a>
 
 ### credential.toJSON() ⇒ <code>any</code>
-Serializes a `Credential` object as a JSON object.
+Serializes a `Credential` to a JSON object.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+clone"></a>
@@ -812,31 +941,22 @@ Serializes a `Credential` object as a JSON object.
 Deep clones the object.
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
-<a name="Credential.extend"></a>
+<a name="Credential.BaseContext"></a>
 
-### Credential.extend(value) ⇒ [<code>Credential</code>](#Credential)
+### Credential.BaseContext() ⇒ <code>string</code>
+Returns the base JSON-LD context.
+
 **Kind**: static method of [<code>Credential</code>](#Credential)  
+<a name="Credential.BaseType"></a>
 
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
+### Credential.BaseType() ⇒ <code>string</code>
+Returns the base type.
 
-<a name="Credential.issue"></a>
-
-### Credential.issue(issuer_doc, subject_data, credential_type, credential_id) ⇒ [<code>Credential</code>](#Credential)
 **Kind**: static method of [<code>Credential</code>](#Credential)  
-
-| Param | Type |
-| --- | --- |
-| issuer_doc | [<code>Document</code>](#Document) | 
-| subject_data | <code>any</code> | 
-| credential_type | <code>string</code> \| <code>undefined</code> | 
-| credential_id | <code>string</code> \| <code>undefined</code> | 
-
 <a name="Credential.fromJSON"></a>
 
 ### Credential.fromJSON(json) ⇒ [<code>Credential</code>](#Credential)
-Deserializes a `Credential` object from a JSON object.
+Deserializes a `Credential` from a JSON object.
 
 **Kind**: static method of [<code>Credential</code>](#Credential)  
 
@@ -1487,8 +1607,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.detachMethodRelationship(did_url, relationship)](#Document+detachMethodRelationship) ⇒ <code>boolean</code>
         * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.signDocument(document, key_pair, method_query)](#Document+signDocument)
-        * [.signCredential(data, privateKey, methodQuery, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
-        * [.signPresentation(data, privateKey, methodQuery, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
+        * [.signCredential(credential, privateKey, methodQuery, options)](#Document+signCredential) ⇒ [<code>Credential</code>](#Credential)
+        * [.signPresentation(presentation, privateKey, methodQuery, options)](#Document+signPresentation) ⇒ [<code>Presentation</code>](#Presentation)
         * [.signData(data, privateKey, methodQuery, options)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data, options)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.verifyDocument(signed)](#Document+verifyDocument)
@@ -1764,7 +1884,7 @@ verification method. See [Document.verifyDocument](Document.verifyDocument).
 
 <a name="Document+signCredential"></a>
 
-### document.signCredential(data, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
+### document.signCredential(credential, privateKey, methodQuery, options) ⇒ [<code>Credential</code>](#Credential)
 Creates a signature for the given `Credential` with the specified DID Document
 Verification Method.
 
@@ -1772,14 +1892,14 @@ Verification Method.
 
 | Param | Type |
 | --- | --- |
-| data | <code>any</code> | 
+| credential | [<code>Credential</code>](#Credential) | 
 | privateKey | <code>Uint8Array</code> | 
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
 
 <a name="Document+signPresentation"></a>
 
-### document.signPresentation(data, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
+### document.signPresentation(presentation, privateKey, methodQuery, options) ⇒ [<code>Presentation</code>](#Presentation)
 Creates a signature for the given `Presentation` with the specified DID Document
 Verification Method.
 
@@ -1787,7 +1907,7 @@ Verification Method.
 
 | Param | Type |
 | --- | --- |
-| data | <code>any</code> | 
+| presentation | [<code>Presentation</code>](#Presentation) | 
 | privateKey | <code>Uint8Array</code> | 
 | methodQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | options | [<code>ProofOptions</code>](#ProofOptions) | 
@@ -3134,35 +3254,92 @@ Deserializes a `Network` from a JSON object.
 **Kind**: global class  
 
 * [Presentation](#Presentation)
-    * [new Presentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_Presentation_new)
+    * [new Presentation(values)](#new_Presentation_new)
     * _instance_
-        * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
+        * [.context()](#Presentation+context) ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+        * [.id()](#Presentation+id) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.type()](#Presentation+type) ⇒ <code>Array.&lt;string&gt;</code>
         * [.verifiableCredential()](#Presentation+verifiableCredential) ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
+        * [.holder()](#Presentation+holder) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.refreshService()](#Presentation+refreshService) ⇒ <code>Array.&lt;RefreshService&gt;</code>
+        * [.termsOfUse()](#Presentation+termsOfUse) ⇒ <code>Array.&lt;Policy&gt;</code>
+        * [.proof()](#Presentation+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.properties()](#Presentation+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
+        * [.toJSON()](#Presentation+toJSON) ⇒ <code>any</code>
         * [.clone()](#Presentation+clone) ⇒ [<code>Presentation</code>](#Presentation)
     * _static_
+        * [.BaseContext()](#Presentation.BaseContext) ⇒ <code>string</code>
+        * [.BaseType()](#Presentation.BaseType) ⇒ <code>string</code>
         * [.fromJSON(json)](#Presentation.fromJSON) ⇒ [<code>Presentation</code>](#Presentation)
 
 <a name="new_Presentation_new"></a>
 
-### new Presentation(holder_doc, credential_data, presentation_type, presentation_id)
+### new Presentation(values)
+Constructs a new `Presentation`.
+
 
 | Param | Type |
 | --- | --- |
-| holder_doc | [<code>Document</code>](#Document) | 
-| credential_data | <code>any</code> | 
-| presentation_type | <code>string</code> \| <code>undefined</code> | 
-| presentation_id | <code>string</code> \| <code>undefined</code> | 
+| values | <code>IPresentation</code> | 
 
-<a name="Presentation+toJSON"></a>
+<a name="Presentation+context"></a>
 
-### presentation.toJSON() ⇒ <code>any</code>
-Serializes a `Presentation` object as a JSON object.
+### presentation.context() ⇒ <code>Array.&lt;(string\|Record.&lt;string, any&gt;)&gt;</code>
+Returns a copy of the JSON-LD context(s) applicable to the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+id"></a>
+
+### presentation.id() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the unique `URI` of the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+type"></a>
+
+### presentation.type() ⇒ <code>Array.&lt;string&gt;</code>
+Returns a copy of the URIs defining the type of the `Presentation`.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+verifiableCredential"></a>
 
 ### presentation.verifiableCredential() ⇒ [<code>Array.&lt;Credential&gt;</code>](#Credential)
-Returns a copy of the credentials contained in the presentation.
+Returns a copy of the [Credential](#Credential)(s) expressing the claims of the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+holder"></a>
+
+### presentation.holder() ⇒ <code>string</code> \| <code>undefined</code>
+Returns a copy of the URI of the entity that generated the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+refreshService"></a>
+
+### presentation.refreshService() ⇒ <code>Array.&lt;RefreshService&gt;</code>
+Returns a copy of the service(s) used to refresh an expired [Credential](#Credential) in the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+termsOfUse"></a>
+
+### presentation.termsOfUse() ⇒ <code>Array.&lt;Policy&gt;</code>
+Returns a copy of the terms-of-use specified by the `Presentation` holder
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+proof"></a>
+
+### presentation.proof() ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+Returns a copy of the proof used to verify the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+properties"></a>
+
+### presentation.properties() ⇒ <code>Map.&lt;string, any&gt;</code>
+Returns a copy of the miscellaneous properties on the `Presentation`.
+
+**Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation+toJSON"></a>
+
+### presentation.toJSON() ⇒ <code>any</code>
+Serializes a `Presentation` as a JSON object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+clone"></a>
@@ -3171,10 +3348,22 @@ Returns a copy of the credentials contained in the presentation.
 Deep clones the object.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation.BaseContext"></a>
+
+### Presentation.BaseContext() ⇒ <code>string</code>
+Returns the base JSON-LD context.
+
+**Kind**: static method of [<code>Presentation</code>](#Presentation)  
+<a name="Presentation.BaseType"></a>
+
+### Presentation.BaseType() ⇒ <code>string</code>
+Returns the base type.
+
+**Kind**: static method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation.fromJSON"></a>
 
 ### Presentation.fromJSON(json) ⇒ [<code>Presentation</code>](#Presentation)
-Deserializes a `Presentation` object from a JSON object.
+Deserializes a `Presentation` from a JSON object.
 
 **Kind**: static method of [<code>Presentation</code>](#Presentation)  
 
@@ -4418,6 +4607,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4464,10 +4657,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="KeyType"></a>
 

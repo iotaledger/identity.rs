@@ -1,6 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::common::ArrayString;
 use identity::iota::ChainHistory;
 use identity::iota::DocumentHistory;
 use identity::iota::ResolvedIotaDocument;
@@ -30,9 +31,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Promise<DiffChainHistory>")]
   pub type PromiseDiffChainHistory;
-
-  #[wasm_bindgen(typescript_type = "Array<string>")]
-  pub type ArrayString;
 
   #[wasm_bindgen(typescript_type = "Array<DiffMessage>")]
   pub type ArrayDiffMessage;

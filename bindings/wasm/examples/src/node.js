@@ -4,7 +4,7 @@
 import { createIdentity } from "./create_did";
 import { manipulateIdentity } from "./manipulate_did";
 import { privateTangle } from "./private_tangle";
-import { resolution } from "./resolution";
+import { resolveDID } from "./resolve_did";
 import { CLIENT_CONFIG } from "./config";
 import { resolveHistory } from "./resolve_history";
 import { keyExchange } from "./key_exchange";
@@ -22,8 +22,8 @@ async function main() {
             return await createIdentity(CLIENT_CONFIG);
         case "manipulate_did":
             return await manipulateIdentity(CLIENT_CONFIG);
-        case "resolution":
-            return await resolution(CLIENT_CONFIG);
+        case "resolve_did":
+            return await resolveDID(CLIENT_CONFIG);
         case "key_exchange":
             return await keyExchange(CLIENT_CONFIG);
         case "private_tangle":
