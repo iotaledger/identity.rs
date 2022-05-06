@@ -24,9 +24,7 @@ describe("Test Stronghold Node.js", function () {
     it("keySignEd25519", async () => {
         await StorageTestSuite.keySignEd25519Test(await stronghold());
     });
-    // TODO: Deliberately exclude didPurge test because key deletion
-    // is not implemented properly in stronghold. Should be activated with #757.
-    // it("didPurge", async () => {
-    //     await StorageTestSuite.didPurgeTest(await stronghold());
-    // });
+    it("didPurge", async () => {
+        await StorageTestSuite.didPurgeTest(await stronghold());
+    });
 });

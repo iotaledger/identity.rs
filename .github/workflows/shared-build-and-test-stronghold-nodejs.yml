@@ -63,17 +63,18 @@ jobs:
                 npm run build && strip dist/*.node
               test: |
                 npm run test
-            - host: ubuntu-latest
-              target: x86_64-unknown-linux-musl
-              architecture: x64
-              setup: |
-               sudo apt-get install -y musl-tools
-              build: |
-               export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
-               npm run build && strip dist/*.node
-              test-docker: |
-               docker build -f .github/Dockerfile.alpine -t tester .github
-               docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "ldd dist/identity-stronghold-nodejs.linux-x64-musl.node || true && npm run test:examples"
+            # TODO: Disabled until we have a fix for building Rust code for musl that includes rand::thread_rng.
+            # - host: ubuntu-latest
+            #   target: x86_64-unknown-linux-musl
+            #   architecture: x64
+            #   setup: |
+            #    sudo apt-get install -y musl-tools
+            #   build: |
+            #    export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+            #    npm run build && strip dist/*.node
+            #   test-docker: |
+            #    docker build -f .github/Dockerfile.alpine -t tester .github
+            #    docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "ldd dist/identity-stronghold-nodejs.linux-x64-musl.node || true && npm run test:examples"
             - host: macos-latest
               target: aarch64-apple-darwin
               build: |

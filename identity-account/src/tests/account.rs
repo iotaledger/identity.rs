@@ -508,7 +508,7 @@ async fn test_account_sync_diff_msg_update() {
 async fn create_account(network: Network) -> Account {
   Account::builder()
     .storage(
-      Stronghold::new("./example-strong.hodl", "my-password".to_owned(), None)
+      Stronghold::new(&temporary_random_path(), "my-password".to_owned(), None)
         .await
         .unwrap(),
     )

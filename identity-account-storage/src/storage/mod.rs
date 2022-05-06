@@ -9,8 +9,8 @@ mod test_suite;
 mod traits;
 
 pub use self::memstore::*;
-#[cfg(feature = "stronghold")]
-pub use self::stronghold::*;
 pub use self::traits::*;
+#[cfg(feature = "stronghold")]
+pub use crate::stronghold::Stronghold;
 #[cfg(feature = "storage-test-suite")]
 pub use test_suite::StorageTestSuite;
