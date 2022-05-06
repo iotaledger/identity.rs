@@ -97,7 +97,6 @@ jobs:
           uses: actions/setup-node@v2
           with:
             node-version: 16
-            check-latest: true
             architecture: ${{ matrix.settings.architecture }}
 
         - name: Setup Rust and cache
