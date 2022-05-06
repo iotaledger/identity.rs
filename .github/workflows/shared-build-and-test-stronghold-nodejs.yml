@@ -30,7 +30,6 @@ jobs:
       defaults:
         run:
           working-directory: bindings/stronghold-nodejs
-          shell: bash
       env:
         DEBUG: napi:*
         APP_NAME: identity-stronghold-nodejs
@@ -42,7 +41,6 @@ jobs:
           settings:
             - host: macos-latest
               container: null
-              shell: bash
               target: x86_64-apple-darwin
               architecture: x64
               build: |
@@ -52,7 +50,6 @@ jobs:
                 npm run test
             - host: windows-latest
               container: null
-              shell: pwsh
               target: x86_64-pc-windows-msvc
               architecture: x64
               build: |
@@ -61,7 +58,6 @@ jobs:
                 npm run test:examples
             - host: ubuntu-latest
               container: null
-              shell: bash
               generate-dist: true
               target: x86_64-unknown-linux-gnu
               architecture: x64
@@ -71,11 +67,12 @@ jobs:
                 npm run test
             - host: ubuntu-latest
               container: rust:1.60-alpine
-              shell: sh
               target: x86_64-unknown-linux-musl
               architecture: x64
+              setup: |
+                # build-base required for libsodium compilation.
+                apk add --no-cache build-base
               build: |
-                apk add build-base
                 export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
                 npm run build && strip dist/*.node
               test: |
@@ -83,7 +80,6 @@ jobs:
                 npm run test:examples
             - host: macos-latest
               container: null
-              shell: bash
               target: aarch64-apple-darwin
               build: |
                 export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
@@ -111,6 +107,10 @@ jobs:
             job: ${{ github.job }}
             target: ${{ matrix.settings.target }}
 
+        - name: Setup
+          if: ${{ matrix.settings.setup }}
+          run: ${{ matrix.settings.setup }}
+
         - name: Download bindings/wasm artifacts
           uses: actions/download-artifact@v2
           with:
@@ -118,27 +118,22 @@ jobs:
             path: bindings/wasm
 
         - name: Prepare Wasm bindings link
-          shell: ${{ matrix.shell }}
           run: |
             npm ci
             npm link
           working-directory: ./bindings/wasm
 
         - name: Install dependencies
-          shell: ${{ matrix.shell }}
           # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
           run: npm ci --ignore-scripts --legacy-peer-deps && npm link @iota/identity-wasm
 
         - name: Build
-          shell: ${{ matrix.shell }}
           run: ${{ matrix.settings.build }}
 
         - name: List packages
-          shell: ${{ matrix.shell }}
           run: ls -R .
 
         - name: Test bindings
-          shell: ${{ matrix.shell }}
           if: ${{ inputs.run-tests && matrix.settings.test }}
           run: ${{ matrix.settings.test }}
 
