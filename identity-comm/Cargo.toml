@@ -1,6 +1,6 @@
 [package]
 name = "identity-comm"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 homepage = "https://www.iota.org"
@@ -11,10 +11,10 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "An implementation of the DIDComm Messaging Specification."
 
 [dependencies]
-identity-core = { path = "../identity-core", version = "=0.4.0" }
-identity-credential = { path = "../identity-credential", version = "=0.4.0" }
-identity-did = { path = "../identity-did", version = "=0.4.0" }
-identity-iota = { path = "../identity-iota", version = "=0.4.0", default-features = false }
+identity-core = { path = "../identity-core", version = "=0.4.1" }
+identity-credential = { path = "../identity-credential", version = "=0.4.1" }
+identity-did = { path = "../identity-did", version = "=0.4.1" }
+identity-iota = { path = "../identity-iota", version = "=0.4.1", default-features = false }
 libjose = { path = "../libjose", version = "=0.1.0" }
 paste = { version = "1.0" }
 serde = { version = "1.0", features = ["derive"] }
