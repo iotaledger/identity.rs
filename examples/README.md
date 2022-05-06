@@ -41,6 +41,6 @@ The following examples are available for using the low-level APIs, which provide
 | 1 | [create_did](./low-level-api/create_did.rs) | A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity. |
 | 2 | [manipulate_did](low-level-api/manipulate_did.rs) | This example demonstrates how to perform a basic update to the integration chain of a DID Document. |
 | 3 | [resolve_history](low-level-api/resolve_history.rs) | Advanced example that performs multiple updates and demonstrates how to resolve the DID Document history to view them. |
-| 4 | [resolution](./low-level-api/resolution.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
+| 4 | [resolve_did](./low-level-api/resolve_did.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
 | 5 | [key_exchange](./low-level-api/key_exchange.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
 | 6 | [private_tangle](./low-level-api/private_tangle.rs) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
