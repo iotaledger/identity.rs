@@ -70,8 +70,6 @@ jobs:
               container: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
               target: x86_64-unknown-linux-musl
               architecture: x64
-              setup: |
-                sudo apt-get install -y musl-tools
               build: |
                 export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
                 npm run build && strip dist/*.node
@@ -118,10 +116,6 @@ jobs:
             npm ci
             npm link
           working-directory: ./bindings/wasm
-
-        - name: Setup
-          if: ${{ matrix.settings.setup }}
-          run: ${{ matrix.settings.setup }}
 
         - name: Install dependencies
           # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
