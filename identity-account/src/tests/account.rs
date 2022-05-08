@@ -376,6 +376,7 @@ async fn test_account_has_document_with_valid_signature_after_publication() {
   let initial_doc: IotaDocument = account.document().to_owned();
   initial_doc.verify_document(account.document()).unwrap();
 
+  // Rotate signing methods.
   account
     .update_identity()
     .create_method()
@@ -394,7 +395,7 @@ async fn test_account_has_document_with_valid_signature_after_publication() {
     .await
     .unwrap();
 
-  // We have to force an integratino update here, because in test mode,
+  // We have to force an integration update here, because in test mode,
   // the account still publishes a diff update otherwise.
   account
     .publish_with_options(PublishOptions::default().force_integration_update(true))
