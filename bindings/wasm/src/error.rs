@@ -211,9 +211,15 @@ impl JsValueResult {
   /// Consumes the struct and returns a Result<_, AccountStorageError>
   pub fn account_err(self) -> StdResult<JsValue, AccountStorageError> {
     self.0.map_err(|js_value| {
-      // Using the debug format includes a backtrace, which is awkwardly formatted,
-      // but no other way of extracting the error, like serialization, works.
-      AccountStorageError::JsError(format!("{:?}", js_value))
+      let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
+        Ok(js_err) => ToString::to_string(&js_err.to_string()),
+        Err(js_val) => {
+          // Fall back to debug formatting if this is not a proper JS Error instance.
+          format!("{js_val:?}")
+        }
+      };
+
+      AccountStorageError::JsError(error_string)
     })
   }
 }
