@@ -147,8 +147,9 @@ impl TryFrom<&'_ str> for Timestamp {
   }
 }
 
-// Inspired by https://crates.io/crates/serde_str_helpers, but with only the functionality we need here.
-// Timestamp is deserialized via this struct to avoid an allocation when possible.
+// This struct is only used to (potentially) avoid an allocation when deserializing a Timestamp. We cannot deserialize
+// via &str, because that breaks serde_json::from_value which we use extensively in the Stronghold bindings.
+// This approach is inspired by https://crates.io/crates/serde_str_helpers, but we only use a subset of the functionality offered by that crate.
 #[derive(Deserialize, Serialize)]
 struct ProvisionalTimestamp<'a>(#[serde(borrow)] Cow<'a, str>);
 
