@@ -38,10 +38,6 @@ proptest = { version = "1.0.0" }
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
 
-[[bench]]
-name = "timestamp"
-harness = false
-
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

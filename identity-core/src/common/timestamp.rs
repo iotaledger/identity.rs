@@ -6,6 +6,9 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
+use std::borrow::Borrow;
+use std::borrow::Cow;
+use std::ops::Deref;
 
 use serde;
 use serde::Deserialize;
@@ -24,7 +27,7 @@ use crate::error::Result;
 /// A parsed Timestamp.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-#[serde(try_from = "&str", into = "String")]
+#[serde(try_from = "ProvisionalTimestamp<'_>", into = "String")]
 pub struct Timestamp(OffsetDateTime);
 
 impl Timestamp {
@@ -141,6 +144,26 @@ impl TryFrom<&'_ str> for Timestamp {
 
   fn try_from(string: &'_ str) -> Result<Self, Self::Error> {
     Self::parse(string)
+  }
+}
+
+// Inspired by https://crates.io/crates/serde_str_helpers, but with only the functionality we need here.
+// Timestamp is deserialized via this struct to avoid an allocation when possible.
+#[derive(Deserialize, Serialize)]
+struct ProvisionalTimestamp<'a>(#[serde(borrow)] Cow<'a, str>);
+
+impl<'a> Deref for ProvisionalTimestamp<'a> {
+  type Target = str;
+  fn deref(&self) -> &Self::Target {
+    self.0.borrow()
+  }
+}
+
+impl<'a> TryFrom<ProvisionalTimestamp<'a>> for Timestamp {
+  type Error = Error;
+
+  fn try_from(value: ProvisionalTimestamp<'a>) -> Result<Self, Self::Error> {
+    Timestamp::parse(&value)
   }
 }
 
@@ -364,10 +387,19 @@ mod tests {
   }
 
   #[test]
-  fn test_json_roundtrip() {
+  fn test_json_vec_roundtrip() {
     let time1: Timestamp = Timestamp::now_utc();
     let json: Vec<u8> = time1.to_json_vec().unwrap();
     let time2: Timestamp = Timestamp::from_json_slice(&json).unwrap();
+
+    assert_eq!(time1, time2);
+  }
+
+  #[test]
+  fn test_json_value_roundtrip() {
+    let time1: Timestamp = Timestamp::now_utc();
+    let json: serde_json::Value = time1.to_json_value().unwrap();
+    let time2: Timestamp = Timestamp::from_json_value(json).unwrap();
 
     assert_eq!(time1, time2);
   }
