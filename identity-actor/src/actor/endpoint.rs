@@ -162,7 +162,6 @@ mod tests {
   #[test]
   fn test_endpoint_valid() {
     assert!(Endpoint::try_from("a/b").is_ok());
-    assert!(Endpoint::try_from("a/b").is_ok());
     assert!(Endpoint::try_from("longer/word").is_ok());
     assert!(Endpoint::try_from("longer_endpoint/underscored_word").is_ok());
   }
