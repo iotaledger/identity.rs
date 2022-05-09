@@ -12,8 +12,9 @@ use identity::account::AccountBuilder;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
-use identity::account_storage::EncryptedData;
+use identity::account_storage::AgreementInfo;
 use identity::account_storage::CEKAlgorithm;
+use identity::account_storage::EncryptedData;
 use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::EncryptionOptions;
 use identity::account_storage::Stronghold;
@@ -81,7 +82,14 @@ pub async fn run() -> Result<()> {
   let alice_public_key: Vec<u8> = alice_method.data().try_decode()?;
 
   // Alice encrypts the data using Diffie-Hellman key exchange
-  let encryption_options: EncryptionOptions = EncryptionOptions::new(EncryptionAlgorithm::Aes256Gcm, CEKAlgorithm::ECDH_ES);
+  let agreement: AgreementInfo = AgreementInfo::new(
+    b"apu".to_vec(),
+    b"apv".to_vec(),
+    b"pub_info".to_vec(),
+    b"priv_info".to_vec(),
+  );
+  let encryption_options: EncryptionOptions =
+    EncryptionOptions::new(EncryptionAlgorithm::Aes256Gcm, CEKAlgorithm::ECDH_ES { agreement });
   let message: &[u8] = b"This msg will be encrypted and decrypted";
   let encrypted_data: EncryptedData = alice_account
     .encrypt_data(
@@ -94,12 +102,7 @@ pub async fn run() -> Result<()> {
     .await?;
   // Bob must be able to decrypt the message using the shared secret
   let decrypted_msg: Vec<u8> = bob_account
-    .decrypt_data(
-      encrypted_data,
-      &encryption_options,
-      "kex-0",
-      alice_public_key.into(),
-    )
+    .decrypt_data(encrypted_data, &encryption_options, "kex-0", alice_public_key.into())
     .await?;
   assert_eq!(message, &decrypted_msg);
 

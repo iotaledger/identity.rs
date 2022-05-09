@@ -276,7 +276,7 @@ impl Storage for MemStore {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES => {
+          CEKAlgorithm::ECDH_ES { agreement } => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
             try_encrypt(
               shared_secret.as_ref(),
@@ -313,7 +313,7 @@ impl Storage for MemStore {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES => {
+          CEKAlgorithm::ECDH_ES { agreement } => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
             try_decrypt(
               shared_secret.as_ref(),

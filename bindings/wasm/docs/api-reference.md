@@ -14,6 +14,8 @@ used to store identities, and the same <a href="#Client">Client</a> used to publ
 This means a builder can be reconfigured in-between account creations, without affecting
 the configuration of previously built accounts.</p>
 </dd>
+<dt><a href="#AgreementInfo">AgreementInfo</a></dt>
+<dd></dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
 <dt><a href="#CEKAlgorithm">CEKAlgorithm</a></dt>
@@ -152,8 +154,6 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -179,6 +179,8 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
@@ -534,6 +536,77 @@ by the [Client](#Client) used to publish it.
 | --- | --- |
 | identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
 
+<a name="AgreementInfo"></a>
+
+## AgreementInfo
+**Kind**: global class  
+
+* [AgreementInfo](#AgreementInfo)
+    * _instance_
+        * [.apu()](#AgreementInfo+apu) ⇒ <code>Uint8Array</code>
+        * [.apv()](#AgreementInfo+apv) ⇒ <code>Uint8Array</code>
+        * [.pubInfo()](#AgreementInfo+pubInfo) ⇒ <code>Uint8Array</code>
+        * [.privInfo()](#AgreementInfo+privInfo) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#AgreementInfo+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.new(apu, apv, pub_info, priv_info)](#AgreementInfo.new) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+        * [.fromJSON(json_value)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+
+<a name="AgreementInfo+apu"></a>
+
+### agreementInfo.apu() ⇒ <code>Uint8Array</code>
+Returns a copy of `apu'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+apv"></a>
+
+### agreementInfo.apv() ⇒ <code>Uint8Array</code>
+Returns a copy of `apv'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+pubInfo"></a>
+
+### agreementInfo.pubInfo() ⇒ <code>Uint8Array</code>
+Returns a copy of `pubInfo'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+privInfo"></a>
+
+### agreementInfo.privInfo() ⇒ <code>Uint8Array</code>
+Returns a copy of `privInfo'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+toJSON"></a>
+
+### agreementInfo.toJSON() ⇒ <code>any</code>
+Serializes `AgreementInfo` as a JSON object.
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo.new"></a>
+
+### AgreementInfo.new(apu, apv, pub_info, priv_info) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+Creates an `AgreementInfo` Object
+
+**Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
+
+| Param | Type |
+| --- | --- |
+| apu | <code>Uint8Array</code> | 
+| apv | <code>Uint8Array</code> | 
+| pub_info | <code>Uint8Array</code> | 
+| priv_info | <code>Uint8Array</code> | 
+
+<a name="AgreementInfo.fromJSON"></a>
+
+### AgreementInfo.fromJSON(json_value) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+Deserializes `AgreementInfo` from a JSON object.
+
+**Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="AutoSave"></a>
 
 ## AutoSave
@@ -599,7 +672,7 @@ Supported CEK algorithms
     * _instance_
         * [.toJSON()](#CEKAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.ecdhES()](#CEKAlgorithm.ecdhES) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+        * [.ecdhES(agreement)](#CEKAlgorithm.ecdhES) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
         * [.fromJSON(json_value)](#CEKAlgorithm.fromJSON) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
 
 <a name="CEKAlgorithm+toJSON"></a>
@@ -610,10 +683,15 @@ Serializes `CEKAlgorithm` as a JSON object.
 **Kind**: instance method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
 <a name="CEKAlgorithm.ecdhES"></a>
 
-### CEKAlgorithm.ecdhES() ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+### CEKAlgorithm.ecdhES(agreement) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
 ECDH-ES will be used as the content encryption key.
 
 **Kind**: static method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+
 <a name="CEKAlgorithm.fromJSON"></a>
 
 ### CEKAlgorithm.fromJSON(json_value) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
@@ -4607,10 +4685,6 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4657,6 +4731,10 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="KeyType"></a>
 

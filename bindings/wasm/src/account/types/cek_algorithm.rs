@@ -6,6 +6,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
+use crate::account::types::WasmAgreementInfo;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -18,8 +19,10 @@ pub struct WasmCEKAlgorithm(CEKAlgorithm);
 impl WasmCEKAlgorithm {
   /// ECDH-ES will be used as the content encryption key.
   #[wasm_bindgen(js_name = ecdhES)]
-  pub fn ecdh_es() -> WasmCEKAlgorithm {
-    Self(CEKAlgorithm::ECDH_ES)
+  pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCEKAlgorithm {
+    Self(CEKAlgorithm::ECDH_ES {
+      agreement: agreement.clone().into(),
+    })
   }
 
   /// Serializes `CEKAlgorithm` as a JSON object.

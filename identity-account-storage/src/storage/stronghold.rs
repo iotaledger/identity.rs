@@ -9,6 +9,7 @@ use crypto::ciphers::traits::Aead;
 use futures::executor;
 use iota_stronghold::procedures;
 use iota_stronghold::procedures::ProcedureError;
+use iota_stronghold::procedures::Sha2Hash;
 use iota_stronghold::sync::MergePolicy;
 use iota_stronghold::sync::SyncClientsConfig;
 use iota_stronghold::Client;
@@ -42,6 +43,7 @@ use crate::stronghold::StoreOperation;
 use crate::stronghold::Stronghold;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::VaultOperation;
+use crate::types::AgreementInfo;
 use crate::types::CEKAlgorithm;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
@@ -58,6 +60,8 @@ static CHAIN_STATE_STORE_KEY: &str = "$chain_state";
 static DOCUMENT_STORE_KEY: &str = "$document";
 // The static identifier for vaults inside clients.
 static VAULT_PATH: &[u8; 6] = b"$vault";
+// Number of bytes of the Key using AES256GCM encryption algorithm
+const AES_256_GCM_KEY_LENGTH: usize = 32;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -298,17 +302,26 @@ impl Storage for Stronghold {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES => {
+          CEKAlgorithm::ECDH_ES { agreement } => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
+            let concat_kdf: Location = concat_kdf(
+              &client,
+              &encryption_options.encryption_algorithm(),
+              "ECDH-ES".to_owned(),
+              agreement,
+              shared_key.clone(),
+            )
+            .await?;
             let encrypted_data: Result<EncryptedData> = aead_encrypt(
               &client,
               &encryption_options.encryption_algorithm(),
-              shared_key.clone(),
+              concat_kdf.clone(),
               data,
               associated_data,
             )
             .await;
             revoke_data(&client, shared_key, true).await?;
+            revoke_data(&client, concat_kdf, true).await?;
             encrypted_data
           }
         }
@@ -335,16 +348,25 @@ impl Storage for Stronghold {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES => {
+          CEKAlgorithm::ECDH_ES { agreement } => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
+            let concat_kdf: Location = concat_kdf(
+              &client,
+              &encryption_options.encryption_algorithm(),
+              "ECDH-ES".to_owned(),
+              agreement,
+              shared_key.clone(),
+            )
+            .await?;
             let decrypted_data: Result<Vec<u8>> = aead_decrypt(
               &client,
               &encryption_options.encryption_algorithm(),
-              shared_key.clone(),
+              concat_kdf.clone(),
               data,
             )
             .await;
             revoke_data(&client, shared_key, true).await?;
+            revoke_data(&client, concat_kdf, true).await?;
             decrypted_data
           }
         }
@@ -492,6 +514,36 @@ async fn diffie_hellman(
     .execute_procedure(diffie_hellman)
     .map_err(|err| procedure_error::<procedures::X25519DiffieHellman>(private_key, err))?;
   Ok(shared_key)
+}
+
+async fn concat_kdf(
+  client: &Client,
+  encryption_algorithm: &EncryptionAlgorithm,
+  algorithm_id: String,
+  agreement: &AgreementInfo,
+  shared_secret: Location,
+) -> Result<Location> {
+  let location: [u8; 32] = OsRng.sample(rand::distributions::Standard);
+  let output: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
+  let concat_kdf: procedures::ConcatKdf = {
+    match encryption_algorithm {
+      EncryptionAlgorithm::Aes256Gcm => procedures::ConcatKdf {
+        hash: Sha2Hash::Sha256,
+        algorithm_id,
+        shared_secret,
+        key_len: AES_256_GCM_KEY_LENGTH,
+        apu: agreement.apu().to_vec(),
+        apv: agreement.apv().to_vec(),
+        pub_info: agreement.pub_info().to_vec(),
+        priv_info: agreement.priv_info().to_vec(),
+        output: output.clone(),
+      },
+    }
+  };
+  client
+    .execute_procedure(concat_kdf)
+    .map_err(|err| StrongholdError::Procedure(std::any::type_name::<procedures::ConcatKdf>(), vec![], err))?;
+  Ok(output)
 }
 
 async fn aead_encrypt(

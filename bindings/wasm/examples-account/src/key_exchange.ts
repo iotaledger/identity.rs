@@ -1,4 +1,4 @@
-import {AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, EncryptionOptions, CEKAlgorithm, Network} from './../../node/identity_wasm.js';
+import {AgreementInfo, AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, EncryptionOptions, CEKAlgorithm, Network} from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange
@@ -41,7 +41,8 @@ async function keyExchange(storage?: Storage) {
     const alicePublicKey = aliceMethod.data().tryDecode();
 
     // Alice encrypts the data using Diffie-Hellman key exchange
-    const encryptionOptions = EncryptionOptions.new(EncryptionAlgorithm.aes256gcm(), CEKAlgorithm.ecdhES());
+    const agreementInfo = AgreementInfo.new(Buffer.from("apu"), Buffer.from("apv"), Buffer.from("pub_info"), Buffer.from("priv_info"));
+    const encryptionOptions = EncryptionOptions.new(EncryptionAlgorithm.aes256gcm(), CEKAlgorithm.ecdhES(agreementInfo));
     const message = Buffer.from("This msg will be encrypted and decrypted");
     const associatedData = Buffer.from("associatedData");
     const encryptedData = await aliceAccount.encryptData(message, associatedData, encryptionOptions, "kex-0", bobPublicKey);

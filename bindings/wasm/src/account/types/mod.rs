@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub use agreement_info::WasmAgreementInfo;
 pub use auto_save::OptionAutoSave;
 pub use auto_save::WasmAutoSave;
 pub use cek_algorithm::WasmCEKAlgorithm;
@@ -12,6 +13,7 @@ pub use key_location::WasmKeyLocation;
 pub use method_content::*;
 pub use signature::WasmSignature;
 
+mod agreement_info;
 mod auto_save;
 mod cek_algorithm;
 mod encrypted_data;

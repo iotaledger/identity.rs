@@ -3,51 +3,6 @@
 version = 3
 
 [[package]]
-name = "actix"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3720d0064a0ce5c0de7bd93bdb0a6caebab2a9b5668746145d7b3b0c5da02914"
-dependencies = [
- "actix-rt",
- "actix_derive",
- "bitflags",
- "bytes",
- "crossbeam-channel",
- "futures-core",
- "futures-sink",
- "futures-task",
- "futures-util",
- "log",
- "once_cell",
- "parking_lot 0.11.2",
- "pin-project-lite",
- "smallvec",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "actix-rt"
-version = "2.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ea16c295198e958ef31930a6ef37d0fb64e9ca3b6116e6b93a8bdae96ee1000"
-dependencies = [
- "futures-core",
- "tokio",
-]
-
-[[package]]
-name = "actix_derive"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d44b8fee1ced9671ba043476deddef739dd0959bf77030b26b738cc591737a7"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "aead"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -118,6 +73,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "atom"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dcfa7026c8fa43fa767bff0b7cd4d1963cdfd946e0386bee93003e9b2498562"
 
 [[package]]
 name = "atty"
@@ -262,12 +223,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
-name = "bytes"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
-
-[[package]]
 name = "cc"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -346,26 +301,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59a6001667ab124aebae2a495118e11d30984c3a653e99d86d58971708cf5e4b"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "crossbeam-channel"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aaa7bd5fb665c6864b5f963dd9097905c54125909c7aa94c9e18507cdbe6c53"
-dependencies = [
- "cfg-if",
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-utils"
-version = "0.8.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bf124c720b7686e3c2663cf54062ab0f68a88af2fb6a030e87e30bf721fcb38"
-dependencies = [
- "cfg-if",
- "lazy_static",
 ]
 
 [[package]]
@@ -466,6 +401,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dirs"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
+dependencies = [
+ "dirs-sys",
+]
+
+[[package]]
 name = "dirs-next"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -473,6 +417,17 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
+dependencies = [
+ "libc",
+ "redox_users",
+ "winapi",
 ]
 
 [[package]]
@@ -716,7 +671,6 @@ dependencies = [
 name = "identity-account-storage"
 version = "0.5.0"
 dependencies = [
- "actix",
  "async-trait",
  "futures",
  "hashbrown",
@@ -726,11 +680,10 @@ dependencies = [
  "iota-crypto 0.9.1",
  "iota_stronghold",
  "once_cell",
- "parking_lot 0.12.0",
+ "parking_lot",
  "rand",
  "seahash",
  "serde",
- "stronghold_engine",
  "strum 0.24.0",
  "thiserror",
  "tokio",
@@ -832,15 +785,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "instant"
-version = "0.1.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
-dependencies = [
- "cfg-if",
-]
-
-[[package]]
 name = "iota-crypto"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -869,11 +813,14 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c98a3248cde6b42cb479a52089fe4fc20d12de51b8edd923294cd5240ec89b0"
 dependencies = [
+ "aead",
+ "aes-gcm",
  "bee-ternary",
  "blake2",
  "curve25519-dalek",
  "digest",
  "ed25519-zebra",
+ "generic-array",
  "getrandom 0.2.6",
  "hmac",
  "lazy_static",
@@ -884,22 +831,19 @@ dependencies = [
 
 [[package]]
 name = "iota_stronghold"
-version = "0.4.1"
-source = "git+https://github.com/iotaledger/stronghold.rs?rev=969df405661ba4977f2cf30e9909cef7e30cefa2#969df405661ba4977f2cf30e9909cef7e30cefa2"
+version = "0.4.0"
+source = "git+https://github.com/iotaledger/stronghold.rs?rev=629466da83a677925904b2e733ef7bfad5a42864#629466da83a677925904b2e733ef7bfad5a42864"
 dependencies = [
- "actix",
- "anyhow",
  "bincode",
  "hkdf",
  "iota-crypto 0.8.0",
- "rand",
  "serde",
  "stronghold-derive",
+ "stronghold-rlu",
  "stronghold-utils",
  "stronghold_engine",
  "thiserror",
  "zeroize",
- "zeroize_derive",
 ]
 
 [[package]]
@@ -977,29 +921,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
-name = "mio"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52da4364ffb0e4fe33a9841a98a3f3014fb964045ce4f7a45a398243c8d6b0c9"
-dependencies = [
- "libc",
- "log",
- "miow",
- "ntapi",
- "wasi 0.11.0+wasi-snapshot-preview1",
- "winapi",
-]
-
-[[package]]
-name = "miow"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "multibase"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1065,15 +986,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a385494dac3c52cbcacb393bb3b42669e7db8ab240c7ad5115f549eb061f2cc"
 
 [[package]]
-name = "ntapi"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c28774a7fd2fbb4f0babd8237ce554b73af68021b5f695a3cebd6c59bac0980f"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1115,37 +1027,12 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "parking_lot"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
-dependencies = [
- "instant",
- "lock_api",
- "parking_lot_core 0.8.5",
-]
-
-[[package]]
-name = "parking_lot"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87f5ec2493a61ac0506c0f4199f99070cbe83857b0337006a30f3e6719b8ef58"
 dependencies = [
  "lock_api",
- "parking_lot_core 0.9.2",
-]
-
-[[package]]
-name = "parking_lot_core"
-version = "0.8.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d76e8e1493bcac0d2766c42737f34458f1c8c50c0d23bcb24ea953affb273216"
-dependencies = [
- "cfg-if",
- "instant",
- "libc",
- "redox_syscall",
- "smallvec",
- "winapi",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -1418,15 +1305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signal-hook-registry"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e51e73328dc4ac0c7ccbda3a494dfa03df1de2f46018127f60c693f2648455b0"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "slab"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1439,16 +1317,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
 
 [[package]]
-name = "socket2"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
-dependencies = [
- "libc",
- "winapi",
-]
-
-[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1457,7 +1325,7 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "stronghold-derive"
 version = "0.2.0"
-source = "git+https://github.com/iotaledger/stronghold.rs?rev=969df405661ba4977f2cf30e9909cef7e30cefa2#969df405661ba4977f2cf30e9909cef7e30cefa2"
+source = "git+https://github.com/iotaledger/stronghold.rs?rev=629466da83a677925904b2e733ef7bfad5a42864#629466da83a677925904b2e733ef7bfad5a42864"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1465,18 +1333,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "stronghold-runtime"
-version = "0.3.0"
-source = "git+https://github.com/iotaledger/stronghold.rs?rev=969df405661ba4977f2cf30e9909cef7e30cefa2#969df405661ba4977f2cf30e9909cef7e30cefa2"
+name = "stronghold-rlu"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/stronghold.rs?rev=629466da83a677925904b2e733ef7bfad5a42864#629466da83a677925904b2e733ef7bfad5a42864"
 dependencies = [
+ "atom",
+ "lazy_static",
+ "log",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "stronghold-runtime"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/stronghold.rs?rev=629466da83a677925904b2e733ef7bfad5a42864#629466da83a677925904b2e733ef7bfad5a42864"
+dependencies = [
+ "dirs",
+ "iota-crypto 0.8.0",
  "libsodium-sys",
+ "rand",
  "serde",
+ "thiserror",
+ "zeroize",
 ]
 
 [[package]]
 name = "stronghold-utils"
 version = "0.3.0"
-source = "git+https://github.com/iotaledger/stronghold.rs?rev=969df405661ba4977f2cf30e9909cef7e30cefa2#969df405661ba4977f2cf30e9909cef7e30cefa2"
+source = "git+https://github.com/iotaledger/stronghold.rs?rev=629466da83a677925904b2e733ef7bfad5a42864#629466da83a677925904b2e733ef7bfad5a42864"
 dependencies = [
  "rand",
  "stronghold-derive",
@@ -1485,7 +1370,7 @@ dependencies = [
 [[package]]
 name = "stronghold_engine"
 version = "0.4.0"
-source = "git+https://github.com/iotaledger/stronghold.rs?rev=969df405661ba4977f2cf30e9909cef7e30cefa2#969df405661ba4977f2cf30e9909cef7e30cefa2"
+source = "git+https://github.com/iotaledger/stronghold.rs?rev=629466da83a677925904b2e733ef7bfad5a42864#629466da83a677925904b2e733ef7bfad5a42864"
 dependencies = [
  "anyhow",
  "dirs-next",
@@ -1496,6 +1381,7 @@ dependencies = [
  "serde",
  "stronghold-runtime",
  "thiserror",
+ "zeroize",
 ]
 
 [[package]]
@@ -1623,31 +1509,8 @@ version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af73ac49756f3f7c01172e34a23e5d0216f6c32333757c2c61feb2bbff5a5ee"
 dependencies = [
- "bytes",
- "libc",
- "memchr",
- "mio",
  "num_cpus",
- "once_cell",
- "parking_lot 0.12.0",
  "pin-project-lite",
- "signal-hook-registry",
- "socket2",
- "winapi",
-]
-
-[[package]]
-name = "tokio-util"
-version = "0.6.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e99e1983e5d376cd8eb4b66604d2e99e79f5bd988c3055891dcd8c9e2604cc0"
-dependencies = [
- "bytes",
- "futures-core",
- "futures-sink",
- "log",
- "pin-project-lite",
- "tokio",
 ]
 
 [[package]]
@@ -1734,12 +1597,6 @@ name = "wasi"
 version = "0.10.2+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
-
-[[package]]
-name = "wasi"
-version = "0.11.0+wasi-snapshot-preview1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasm-bindgen"
