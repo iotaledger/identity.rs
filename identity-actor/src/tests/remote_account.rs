@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account::types::IdentitySetup;
 use identity_iota_core::document::IotaDocument;
 
 use crate::actor::Result as ActorResult;
@@ -30,10 +29,7 @@ async fn test_remote_account() -> ActorResult<()> {
 
   sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 
-  let doc: IotaDocument = sender
-    .send_request(receiver_peer_id, IdentityCreate(IdentitySetup::new()))
-    .await?
-    .unwrap();
+  let doc: IotaDocument = sender.send_request(receiver_peer_id, IdentityCreate).await?.unwrap();
 
   assert_eq!(sender.send_request(receiver_peer_id, IdentityList).await?.len(), 1);
 

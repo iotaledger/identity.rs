@@ -5,7 +5,6 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use identity_account::types::IdentitySetup;
 use identity_actor::actor::Actor;
 use identity_actor::actor::ActorBuilder;
 use identity_actor::remote_account::IdentityCreate;
@@ -54,7 +53,7 @@ fn bench_create_remote_account(c: &mut Criterion) {
 
         async move {
           sender_clone
-            .send_request(receiver_peer_id, IdentityCreate(IdentitySetup::new()))
+            .send_request(receiver_peer_id, IdentityCreate::default())
             .await
             .unwrap()
             .unwrap();

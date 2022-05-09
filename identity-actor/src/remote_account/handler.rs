@@ -40,7 +40,7 @@ impl RemoteAccount {
     _actor: Actor,
     request: RequestContext<IdentityCreate>,
   ) -> Result<IotaDocument, RemoteAccountError> {
-    let account: Account = self.builder.lock().await.create_identity(request.input.0).await?;
+    let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
     let doc = account.document().to_owned();
     self.accounts.insert(account.did().to_owned(), account);
     Ok(doc)

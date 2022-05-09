@@ -12,8 +12,14 @@ use crate::actor::SyncActorRequest;
 
 use super::RemoteAccountError;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IdentityCreate(pub IdentitySetup);
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct IdentityCreate;
+
+impl From<IdentityCreate> for IdentitySetup {
+  fn from(_: IdentityCreate) -> Self {
+    IdentitySetup::default()
+  }
+}
 
 impl SyncActorRequest for IdentityCreate {
   type Response = Result<IotaDocument, RemoteAccountError>;
