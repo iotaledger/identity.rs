@@ -12,7 +12,6 @@ use serde::Serialize;
 
 static HOOK: &str = "hook";
 
-// TODO: Deserialization skips endpoint validation, but that is okay-ish at present.
 /// A path-like identifier for a handler function. As an example, `identity/create`
 /// could be an endpoint of the "identity" namespace and the concrete action "create".
 ///
@@ -20,6 +19,7 @@ static HOOK: &str = "hook";
 ///
 /// Endpoints are separated by slashes and only allow alphabetic ascii characters and `_`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
 pub struct Endpoint {
   name: Cow<'static, str>,
 }
@@ -109,8 +109,16 @@ impl AsRef<str> for Endpoint {
   }
 }
 
+impl From<Endpoint> for String {
+  fn from(endpoint: Endpoint) -> Self {
+    endpoint.name.into_owned()
+  }
+}
+
 #[cfg(test)]
 mod tests {
+  use identity_core::convert::FromJson;
+
   use crate::actor::Endpoint;
   use crate::actor::Error;
 
@@ -167,5 +175,14 @@ mod tests {
     let endpoint: Endpoint = Endpoint::try_from("a/b").unwrap().into_hook();
     assert_eq!(endpoint.as_ref(), "a/b/hook");
     assert_eq!(endpoint.into_hook().as_ref(), "a/b/hook");
+  }
+
+  #[test]
+  fn test_endpoint_deserialization_validates() {
+    let err = Endpoint::from_json(r#"{ "name": "a/b/invalid" }"#).unwrap_err();
+    assert!(matches!(
+      err,
+      identity_core::Error::DecodeJSON(serde_json::Error { .. })
+    ));
   }
 }
