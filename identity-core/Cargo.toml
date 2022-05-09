@@ -32,10 +32,15 @@ features = ["ed25519", "random", "sha", "x25519"]
 js-sys = { version = "0.3.55", default-features = false }
 
 [dev-dependencies]
+criterion = { version = "0.3" }
 hex = { version = "0.4", default-features = false }
 proptest = { version = "1.0.0" }
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
+
+[[bench]]
+name = "timestamp"
+harness = false
 
 [package.metadata.docs.rs]
 # To build locally:

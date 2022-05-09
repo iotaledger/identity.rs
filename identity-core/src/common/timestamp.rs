@@ -24,7 +24,7 @@ use crate::error::Result;
 /// A parsed Timestamp.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-#[serde(try_from = "String", into = "String")]
+#[serde(try_from = "&str", into = "String")]
 pub struct Timestamp(OffsetDateTime);
 
 impl Timestamp {
