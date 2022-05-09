@@ -27,10 +27,13 @@ pub struct NetCommander {
 }
 
 impl NetCommander {
+  /// Create a new [`NetCommander`] from the sender half of a channel.
+  /// The receiver half needs to be passed to the `EventLoop`.
   pub fn new(command_sender: mpsc::Sender<SwarmCommand>) -> Self {
     NetCommander { command_sender }
   }
 
+  /// Send the `request` to `peer` and returns the response.
   pub async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> ActorResult<ResponseMessage> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
@@ -45,6 +48,8 @@ impl NetCommander {
       .map_err(Error::OutboundFailure)
   }
 
+  /// Send `data` as a response for the `request_id` using the provided `channel`.
+  /// The inner result signals whether sending the response was successful.
   pub async fn send_response(
     &mut self,
     data: Vec<u8>,
@@ -62,6 +67,7 @@ impl NetCommander {
     receiver.await.map_err(|_| Error::Shutdown)
   }
 
+  /// Start listening on the given address.
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::StartListening {
@@ -78,10 +84,12 @@ impl NetCommander {
       })
   }
 
+  /// Add additional `addresses` to listen on.
   pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
     self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await
   }
 
+  /// Returns all addresses the event loop is listening on.
   pub async fn get_addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
     let (sender, receiver) = oneshot::channel();
     self
@@ -92,6 +100,7 @@ impl NetCommander {
     receiver.await.map_err(|_| Error::Shutdown)
   }
 
+  /// Shut down the event loop. This will return `Error::Shutdown` from all outstanding requests.
   pub async fn shutdown(&mut self) -> ActorResult<()> {
     let (sender, receiver) = oneshot::channel();
     self
@@ -102,6 +111,7 @@ impl NetCommander {
     receiver.await.map_err(|_| Error::Shutdown)
   }
 
+  /// Send a command to the event loop.
   async fn send_command(&mut self, command: SwarmCommand) -> ActorResult<()> {
     poll_fn(|cx| self.command_sender.poll_ready(cx))
       .await
@@ -111,6 +121,8 @@ impl NetCommander {
 }
 
 /// A command to send to the `EventLoop` with (typically) a channel to return a response through.
+///
+/// See the [`NetCommander`] methods for documentation.
 pub enum SwarmCommand {
   SendRequest {
     peer: PeerId,

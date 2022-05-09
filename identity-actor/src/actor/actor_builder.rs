@@ -103,7 +103,7 @@ impl ActorBuilder {
     &mut self.objects
   }
 
-  /// Add a new shared state object and returns a [`ActorHandlerBuilder`] which can be used to
+  /// Add a new shared state object and returns an [`ActorHandlerBuilder`] which can be used to
   /// attach handlers and hooks that operate on that object.
   pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> ActorHandlerBuilder<OBJ>
   where

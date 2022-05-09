@@ -35,8 +35,10 @@ impl RemoteAccount {
     })
   }
 
+  /// Creates a new identity using the `Account` API and returns the DID document.
   pub async fn create(
     self,
+    // The request handler interface takes an Actor, but we don't use it here.
     _actor: Actor,
     request: RequestContext<IdentityCreate>,
   ) -> Result<IotaDocument, RemoteAccountError> {
@@ -46,21 +48,27 @@ impl RemoteAccount {
     Ok(doc)
   }
 
-  pub async fn list(self, _actor: Actor, _request: RequestContext<IdentityList>) -> Vec<IotaDID> {
+  /// List all the stored identities.
+  pub async fn list(
+    self,
+    // The request handler interface takes an Actor, but we don't use it here.
+    _actor: Actor,
+    _request: RequestContext<IdentityList>,
+  ) -> Vec<IotaDID> {
     self.accounts.iter().map(|entry| entry.key().to_owned()).collect()
   }
 
+  /// Get the DID document of a given DID.
   pub async fn get(
     self,
+    // The request handler interface takes an Actor, but we don't use it here.
     _actor: Actor,
     request: RequestContext<IdentityGet>,
   ) -> Result<IotaDocument, RemoteAccountError> {
-    let document_result = self
+    self
       .accounts
       .get(&request.input.0)
       .map(|account| account.document().to_owned())
-      .ok_or(RemoteAccountError::IdentityNotFound);
-
-    document_result
+      .ok_or(RemoteAccountError::IdentityNotFound)
   }
 }

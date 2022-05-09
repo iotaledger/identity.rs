@@ -9,10 +9,13 @@ pub use requests::IdentityCreate;
 pub use requests::IdentityGet;
 pub use requests::IdentityList;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+/// The error type for the [`RemoteAccount`].
+#[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]
 pub enum RemoteAccountError {
+  #[error("identity not found")]
   IdentityNotFound,
+  #[error("{0}")]
   AccountError(String),
 }
 

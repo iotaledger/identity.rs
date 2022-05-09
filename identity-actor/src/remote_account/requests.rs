@@ -12,6 +12,7 @@ use crate::actor::SyncActorRequest;
 
 use super::RemoteAccountError;
 
+/// Can be sent to a `RemoteAccount` to instruct it to create an identity.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct IdentityCreate;
 
@@ -29,6 +30,7 @@ impl SyncActorRequest for IdentityCreate {
   }
 }
 
+/// Can be sent to a `RemoteAccount` to instruct it to return the identities it contains.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IdentityList;
 
@@ -40,6 +42,7 @@ impl SyncActorRequest for IdentityList {
   }
 }
 
+/// Can be sent to a `RemoteAccount` to instruct it to return the given identities' DID document.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IdentityGet(pub IotaDID);
 

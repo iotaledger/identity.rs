@@ -76,6 +76,9 @@ impl DidCommActor {
     self.actor.commander()
   }
 
+  /// Let this actor handle the given `request`, by invoking a handler function.
+  /// This consumes the actor because it passes the actor to the handler.
+  /// The actor will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(self, request: InboundRequest) {
     match request.request_mode {
       RequestMode::Asynchronous => self.handle_async_request(request),

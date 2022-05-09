@@ -176,7 +176,10 @@ impl Actor {
     })
   }
 
-  pub fn handle_request(self, request: InboundRequest) {
+  /// Let this actor handle the given `request`, by invoking a handler function.
+  /// This consumes the actor because it passes the actor to the handler.
+  /// The actor will thus typically be cloned before calling this method.
+  pub(crate) fn handle_request(self, request: InboundRequest) {
     if request.request_mode == RequestMode::Asynchronous {
       todo!("return `NotSupported` error or similar");
     }
