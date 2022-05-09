@@ -36,7 +36,11 @@ async fn test_unknown_request_returns_error() -> ActorResult<()> {
   let result = sending_actor
     .send_request(
       peer_id,
-      IdentityGet("did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942".parse().unwrap()),
+      IdentityGet(
+        "did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942"
+          .try_into()
+          .unwrap(),
+      ),
     )
     .await;
 
@@ -59,7 +63,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
     type Response = ();
 
     fn endpoint() -> Endpoint {
-      "request/test".parse().unwrap()
+      "request/test".try_into().unwrap()
     }
   }
 
@@ -88,7 +92,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   let mut actor2: Actor = actor2_builder.build().await.unwrap();
 
   actor2
-    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
+    .start_listening("/ip4/0.0.0.0/tcp/0".try_into().unwrap())
     .await
     .unwrap();
 
@@ -120,7 +124,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
     type Response = ();
 
     fn endpoint() -> Endpoint {
-      "request/test".parse().unwrap()
+      "request/test".try_into().unwrap()
     }
   }
 
@@ -170,7 +174,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
     type Response = MessageResponse;
 
     fn endpoint() -> Endpoint {
-      "test/message".parse().unwrap()
+      "test/message".try_into().unwrap()
     }
   }
 
@@ -278,7 +282,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     type Response = String;
 
     fn endpoint() -> Endpoint {
-      "test/request".parse().unwrap()
+      "test/request".try_into().unwrap()
     }
   }
 
@@ -286,7 +290,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     type Response = u32;
 
     fn endpoint() -> Endpoint {
-      "test/request".parse().unwrap()
+      "test/request".try_into().unwrap()
     }
   }
 
@@ -320,7 +324,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     type Response = String;
 
     fn endpoint() -> Endpoint {
-      "test/request".parse().unwrap()
+      "test/request".try_into().unwrap()
     }
   }
 

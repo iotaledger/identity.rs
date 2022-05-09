@@ -205,8 +205,7 @@ impl DidCommActor {
       log::debug!("awaited message {}", inbound_request.endpoint);
 
       // Hooking
-      let mut hook_endpoint: Endpoint = inbound_request.endpoint;
-      hook_endpoint.is_hook = true;
+      let hook_endpoint: Endpoint = inbound_request.endpoint.into_hook();
 
       if self.state.async_handlers.contains_key(&hook_endpoint) {
         log::debug!("Calling hook: {}", hook_endpoint);
@@ -316,8 +315,7 @@ impl DidCommActor {
     peer: PeerId,
     input: REQ,
   ) -> ActorResult<REQ> {
-    let mut endpoint: Endpoint = REQ::endpoint();
-    endpoint.is_hook = true;
+    let endpoint: Endpoint = REQ::endpoint().into_hook();
 
     if self.state.async_handlers.contains_key(&endpoint) {
       log::debug!("Calling send hook: {}", endpoint);

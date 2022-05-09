@@ -116,7 +116,7 @@ pub struct PresentationRequest([u8; 2]);
 
 impl AsyncActorRequest for PresentationRequest {
   fn endpoint() -> Endpoint {
-    "didcomm/presentation_request".parse().unwrap()
+    "didcomm/presentation_request".try_into().unwrap()
   }
 }
 
@@ -125,7 +125,7 @@ pub struct PresentationOffer([u8; 3]);
 
 impl AsyncActorRequest for PresentationOffer {
   fn endpoint() -> Endpoint {
-    "didcomm/presentation_offer".parse().unwrap()
+    "didcomm/presentation_offer".try_into().unwrap()
   }
 }
 
@@ -134,7 +134,7 @@ pub struct Presentation([u8; 4]);
 
 impl AsyncActorRequest for Presentation {
   fn endpoint() -> Endpoint {
-    "didcomm/presentation".parse().unwrap()
+    "didcomm/presentation".try_into().unwrap()
   }
 }
 
@@ -143,6 +143,6 @@ pub struct PresentationResult([u8; 5]);
 
 impl AsyncActorRequest for PresentationResult {
   fn endpoint() -> Endpoint {
-    "didcomm/presentation_result".parse().unwrap()
+    "didcomm/presentation_result".try_into().unwrap()
   }
 }

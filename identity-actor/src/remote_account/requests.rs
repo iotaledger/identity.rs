@@ -25,7 +25,7 @@ impl SyncActorRequest for IdentityCreate {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
   fn endpoint() -> Endpoint {
-    "remote_account/create".parse().unwrap()
+    "remote_account/create".try_into().unwrap()
   }
 }
 
@@ -36,7 +36,7 @@ impl SyncActorRequest for IdentityList {
   type Response = Vec<IotaDID>;
 
   fn endpoint() -> Endpoint {
-    "remote_account/list".parse().unwrap()
+    "remote_account/list".try_into().unwrap()
   }
 }
 
@@ -47,6 +47,6 @@ impl SyncActorRequest for IdentityGet {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
   fn endpoint() -> Endpoint {
-    "remote_account/get".parse().unwrap()
+    "remote_account/get".try_into().unwrap()
   }
 }

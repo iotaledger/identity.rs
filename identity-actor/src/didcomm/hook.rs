@@ -29,8 +29,7 @@ where
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
   {
     let handler: Hook<_, _, _> = Hook::new(handler);
-    let mut endpoint: Endpoint = REQ::endpoint();
-    endpoint.is_hook = true;
+    let endpoint: Endpoint = REQ::endpoint().into_hook();
 
     println!("adding hook {endpoint}");
 

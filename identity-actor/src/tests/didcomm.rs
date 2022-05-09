@@ -40,7 +40,7 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
     type Response = u16;
 
     fn endpoint() -> Endpoint {
-      "test/request".parse().unwrap()
+      "test/request".try_into().unwrap()
     }
   }
 
@@ -80,7 +80,7 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
 
   impl AsyncActorRequest for AsyncDummy {
     fn endpoint() -> Endpoint {
-      "unknown/thread".parse().unwrap()
+      "unknown/thread".try_into().unwrap()
     }
   }
 
