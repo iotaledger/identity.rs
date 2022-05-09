@@ -60,8 +60,6 @@ static CHAIN_STATE_STORE_KEY: &str = "$chain_state";
 static DOCUMENT_STORE_KEY: &str = "$document";
 // The static identifier for vaults inside clients.
 static VAULT_PATH: &[u8; 6] = b"$vault";
-// Number of bytes of the Key using AES256GCM encryption algorithm
-const AES_256_GCM_KEY_LENGTH: usize = 32;
 
 #[cfg_attr(not(feature = "send-sync-storage"), async_trait(?Send))]
 #[cfg_attr(feature = "send-sync-storage", async_trait)]
@@ -531,7 +529,7 @@ async fn concat_kdf(
         hash: Sha2Hash::Sha256,
         algorithm_id,
         shared_secret,
-        key_len: AES_256_GCM_KEY_LENGTH,
+        key_len: Aes256Gcm::KEY_LENGTH,
         apu: agreement.apu().to_vec(),
         apv: agreement.apv().to_vec(),
         pub_info: agreement.pub_info().to_vec(),

@@ -1,12 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use async_trait::async_trait;
 use crypto::ciphers::aes::Aes256Gcm;
 use crypto::ciphers::traits::Aead;
+use crypto::hashes::sha::Sha256;
+use crypto::hashes::Digest;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
@@ -278,8 +281,15 @@ impl Storage for MemStore {
         match encryption_options.cek_algorithm() {
           CEKAlgorithm::ECDH_ES { agreement } => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
+            let concat_kdf: Vec<u8> = concat_kdf(
+              "ECDH-ES",
+              Aes256Gcm::KEY_LENGTH,
+              &shared_secret,
+              agreement.apu(),
+              agreement.apv(),
+            )?;
             try_encrypt(
-              shared_secret.as_ref(),
+              &concat_kdf,
               &encryption_options.encryption_algorithm(),
               &data,
               associated_data,
@@ -315,11 +325,14 @@ impl Storage for MemStore {
         match encryption_options.cek_algorithm() {
           CEKAlgorithm::ECDH_ES { agreement } => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
-            try_decrypt(
-              shared_secret.as_ref(),
-              &encryption_options.encryption_algorithm(),
-              &data,
-            )
+            let concat_kdf: Vec<u8> = concat_kdf(
+              "ECDH-ES",
+              Aes256Gcm::KEY_LENGTH,
+              &shared_secret,
+              agreement.apu(),
+              agreement.apv(),
+            )?;
+            try_decrypt(&concat_kdf, &encryption_options.encryption_algorithm(), &data)
           }
         }
       }
@@ -391,6 +404,44 @@ fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData
       Ok(plaintext)
     }
   }
+}
+
+/// The Concat KDF (using SHA-256) as defined in Section 5.8.1 of NIST.800-56A
+fn concat_kdf(alg: &str, len: usize, shared_secret: &[u8], apu: &[u8], apv: &[u8]) -> Result<Vec<u8>> {
+  let mut digest: Sha256 = Sha256::new();
+  let mut output: Vec<u8> = Vec::new();
+
+  let target: usize = (len + (Sha256::output_size() - 1)) / Sha256::output_size();
+  let rounds: u32 = u32::try_from(target).map_err(|_| Error::IterationOverflow)?;
+
+  for count in 0..rounds {
+    // Iteration Count
+    digest.update(&(count as u32 + 1).to_be_bytes());
+
+    // Derived Secret
+    digest.update(shared_secret);
+
+    // AlgorithmId
+    digest.update(&(alg.len() as u32).to_be_bytes());
+    digest.update(alg.as_bytes());
+
+    // PartyUInfo
+    digest.update(&(apu.len() as u32).to_be_bytes());
+    digest.update(apu);
+
+    // PartyVInfo
+    digest.update(&(apv.len() as u32).to_be_bytes());
+    digest.update(apv);
+
+    // Shared Key Length
+    digest.update(&((len * 8) as u32).to_be_bytes());
+
+    output.extend_from_slice(&digest.finalize_reset());
+  }
+
+  output.truncate(len);
+
+  Ok(output)
 }
 
 impl Debug for MemStore {

@@ -42,6 +42,9 @@ pub enum Error {
   /// Caused by failing to encrypt data
   #[error("failed to encrypt data")]
   FailedToEncryptData(#[source] crypto::error::Error),
+  /// Cased by trying to call the concat KDF fucntion with keydatalen greater than or equal to (2^32 −1) .
+  #[error("Iteration Overflow")]
+  IterationOverflow,
   /// Caused by attempting to find a key in storage that does not exist.
   #[error("key not found")]
   KeyNotFound,
