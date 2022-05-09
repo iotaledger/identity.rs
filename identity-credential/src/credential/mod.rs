@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! The core types used to create Verifiable Credentials
@@ -20,7 +20,7 @@ pub use self::credential::Credential;
 pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
 pub use self::policy::Policy;
-pub use self::refresh::Refresh;
+pub use self::refresh::RefreshService;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;

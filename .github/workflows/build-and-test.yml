@@ -11,6 +11,7 @@ on:
       - main
       - dev
       - epic/*
+      - support/*
     paths:
       - '.github/workflows/build-and-test.yml'
       - '.github/actions/**'
@@ -107,7 +108,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --release
+          args: --all --all-features --release
 
       - name: Run Rust examples
         # run examples only on ubuntu for now

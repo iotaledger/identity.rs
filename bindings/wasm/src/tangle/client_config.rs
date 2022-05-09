@@ -6,6 +6,7 @@ use std::time::Duration;
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
 use identity::iota_core::Network;
+use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;
 
 use crate::error::WasmResult;
@@ -16,7 +17,7 @@ impl TryFrom<IClientConfig> for ClientBuilder {
   type Error = JsValue;
 
   fn try_from(config: IClientConfig) -> std::result::Result<Self, Self::Error> {
-    let ConfigOptions {
+    let ClientConfig {
       network,
       encoding,
       nodes,
@@ -33,7 +34,8 @@ impl TryFrom<IClientConfig> for ClientBuilder {
       fallback_to_local_pow,
       tips_interval,
       request_timeout,
-    } = config.into_serde::<ConfigOptions>().wasm_result()?;
+      retry_until_included,
+    } = config.into_serde::<ClientConfig>().wasm_result()?;
 
     let mut builder: ClientBuilder = ClientBuilder::new();
     if let Some(network) = network {
@@ -120,6 +122,9 @@ impl TryFrom<IClientConfig> for ClientBuilder {
     if let Some(request_timeout) = request_timeout {
       builder = builder.request_timeout(Duration::from_secs(u64::from(request_timeout)));
     }
+    if let Some(retry_until_included) = retry_until_included {
+      builder = builder.retry_until_included(retry_until_included);
+    }
 
     Ok(builder)
   }
@@ -136,118 +141,89 @@ extern "C" {
   pub type IClientConfig;
 }
 
-/// Helper-struct for deserializing [`INodeAuth`].
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// IOTA node details with optional authentication.
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[typescript(name = "INodeAuth", readonly, optional)]
 struct NodeAuth {
+  #[typescript(optional = false, type = "string")]
   url: String,
+  #[typescript(type = "string")]
   jwt: Option<String>,
+  #[typescript(type = "string")]
   username: Option<String>,
+  #[typescript(type = "string")]
   password: Option<String>,
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const I_NODE_AUTH: &'static str = r#"
-/** IOTA node details with optional authentication. */
-interface INodeAuth {
-    readonly url: string;
-    readonly jwt?: string;
-    readonly username?: string;
-    readonly password?: string;
-}"#;
-
-/// Helper-struct for deserializing [`IConfigOptions`].
-#[derive(Default, Serialize, Deserialize)]
+/// {@link Client} configuration options.
+#[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ConfigOptions {
+#[typescript(name = "IClientConfig", readonly, optional)]
+struct ClientConfig {
+  /// Sets the IOTA Tangle network.
+  #[typescript(type = "Network")]
   network: Option<Network>,
+  /// Sets the DID message encoding used when publishing to the Tangle.
+  #[typescript(type = "DIDMessageEncoding")]
   encoding: Option<WasmDIDMessageEncoding>,
+  /// Adds a list of IOTA nodes to use by their URLs.
+  #[typescript(type = "Array<string>")]
   nodes: Option<Vec<String>>,
+  /// Sets an IOTA node by its URL to be used as primary node.
+  #[typescript(name = "primaryNode", type = "INodeAuth")]
   primary_node: Option<NodeAuth>,
+  /// Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
+  #[typescript(name = "primaryPowNode", type = "INodeAuth")]
   primary_pow_node: Option<NodeAuth>,
+  /// Adds a list of IOTA permanodes by their URLs.
+  #[typescript(type = "Array<INodeAuth>")]
   permanodes: Option<Vec<NodeAuth>>,
+  /// Adds a list of IOTA nodes to be used by their URLs.
+  #[typescript(name = "nodeAuth", type = "Array<INodeAuth>")]
   node_auth: Option<Vec<NodeAuth>>,
+  /// Sets the node sync interval in seconds.
+  #[typescript(name = "nodeSyncInterval", type = "number")]
   node_sync_interval: Option<u32>,
+  /// Disables the node sync process.
+  #[typescript(name = "nodeSyncDisabled", type = "boolean")]
   node_sync_disabled: Option<bool>,
+  /// Enables/disables quorum.
+  #[typescript(type = "boolean")]
   quorum: Option<bool>,
+  /// Sets the number of nodes used for quorum.
+  #[typescript(name = "quorumSize", type = "number")]
   quorum_size: Option<usize>,
+  /// Sets the quorum threshold.
+  #[typescript(name = "quorumThreshold", type = "number")]
   quorum_threshold: Option<usize>,
+  /// Sets whether proof-of-work (PoW) is performed locally or remotely.
+  /// Default: false.
+  #[typescript(name = "localPow", type = "boolean")]
   local_pow: Option<bool>,
+  /// Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
+  /// Default: true.
+  #[typescript(name = "fallbackToLocalPow", type = "boolean")]
   fallback_to_local_pow: Option<bool>,
+  /// Sets the number of seconds that new tips will be requested during PoW.
+  #[typescript(name = "tipsInterval", type = "number")]
   tips_interval: Option<u32>,
+  /// Sets the default request timeout.
+  #[typescript(name = "requestTimeout", type = "number")]
   request_timeout: Option<u32>,
+  /// When publishing to the Tangle, sets whether to retry until the message is confirmed by a milestone.
+  /// Default: true.
+  #[typescript(name = "retryUntilIncluded", type = "boolean")]
+  retry_until_included: Option<bool>,
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const I_CLIENT_CONFIG: &'static str = r#"
-/** {@link Client} configuration options. */
-interface IClientConfig {
-    /** Sets the IOTA Tangle network. */
-    readonly network?: Network;
-
-    /** Sets the DID message encoding used when publishing to the Tangle. */
-    readonly encoding?: DIDMessageEncoding;
-
-    /** Adds a list of IOTA nodes to use by their URLs. */
-    readonly nodes?: string[];
-
-    /** Sets an IOTA node by its URL to be used as primary node. */
-    readonly primaryNode?: INodeAuth;
-
-    /** Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW). */
-    readonly primaryPowNode?: INodeAuth;
-
-    /** Adds a list of IOTA permanodes by their URLs. */
-    readonly permanodes?: INodeAuth[];
-
-    /** Adds a list of IOTA nodes to be used by their URLs. */
-    readonly nodeAuth?: INodeAuth[];
-
-    /** Sets the node sync interval in seconds. */
-    readonly nodeSyncInterval?: number;
-
-    /** Disables the node sync process. */
-    readonly nodeSyncDisabled?: boolean;
-
-    /** Enables/disables quorum. */
-    readonly quorum?: boolean;
-
-    /** Sets the number of nodes used for quorum. */
-    readonly quorumSize?: number;
-
-    /** Sets the quorum threshold. */
-    readonly quorumThreshold?: number;
-
-    /** Sets whether proof-of-work (PoW) is performed locally or remotely.
-     * Default: false.
-     */
-    readonly localPow?: boolean;
-
-    /** Sets whether the PoW should be done locally in case a node doesn't support remote PoW.
-     *  Default: true.
-     */
-    readonly fallbackToLocalPow?: boolean;
-
-    /** Sets the number of seconds that new tips will be requested during PoW. */
-    readonly tipsInterval?: number;
-
-    /** Sets the default request timeout. */
-    readonly requestTimeout?: number;
-}"#;
 
 #[cfg(test)]
 mod tests {
   use identity::core::FromJson;
   use identity::core::Object;
-  use identity::iota::ClientBuilder;
-  use identity::iota::DIDMessageEncoding;
-  use identity::iota_core::Network;
   use wasm_bindgen::JsCast;
-  use wasm_bindgen::JsValue;
   use wasm_bindgen_test::*;
 
-  use crate::tangle::client_config::ConfigOptions;
-  use crate::tangle::client_config::NodeAuth;
-  use crate::tangle::IClientConfig;
+  use super::*;
 
   fn mock_client_config_json() -> JsValue {
     JsValue::from_serde(
@@ -274,7 +250,8 @@ mod tests {
       "localPow": false,
       "fallbackToLocalPow": false,
       "tipsInterval": 7,
-      "requestTimeout": 60
+      "requestTimeout": 60,
+      "retryUntilIncluded": false
     }"#,
       )
       .unwrap(),
@@ -291,7 +268,7 @@ mod tests {
   #[wasm_bindgen_test]
   fn test_client_config_serde() {
     let json: JsValue = mock_client_config_json();
-    let ConfigOptions {
+    let ClientConfig {
       network,
       encoding,
       nodes,
@@ -308,7 +285,8 @@ mod tests {
       fallback_to_local_pow,
       tips_interval,
       request_timeout,
-    } = json.into_serde::<ConfigOptions>().unwrap();
+      retry_until_included,
+    } = json.into_serde::<ClientConfig>().unwrap();
     assert_eq!(network, Some(Network::Devnet));
     assert_eq!(
       encoding.map(DIDMessageEncoding::from),
@@ -382,5 +360,6 @@ mod tests {
     assert_eq!(fallback_to_local_pow, Some(false));
     assert_eq!(tips_interval, Some(7));
     assert_eq!(request_timeout, Some(60));
+    assert_eq!(retry_until_included, Some(false));
   }
 }

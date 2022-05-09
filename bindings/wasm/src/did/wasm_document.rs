@@ -8,6 +8,8 @@ use identity::core::OneOrSet;
 use identity::core::OrderedSet;
 use identity::core::Timestamp;
 use identity::core::Url;
+use identity::credential::Credential;
+use identity::credential::Presentation;
 use identity::crypto::PrivateKey;
 use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifiableProperties;
@@ -19,6 +21,7 @@ use identity::iota_core::MessageId;
 use identity::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
+use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -26,7 +29,7 @@ use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmProof;
 use crate::crypto::WasmProofOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
-use crate::did::OptionMethodScope;
+use crate::did::RefMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
@@ -270,10 +273,10 @@ impl WasmDocument {
   pub fn resolve_method(
     &self,
     query: &UDIDUrlQuery,
-    scope: OptionMethodScope,
+    scope: Option<RefMethodScope>,
   ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
-    let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
+    let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
     let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
       self.0.resolve_method(&method_query, Some(scope))
@@ -375,15 +378,21 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = signCredential)]
   pub fn sign_credential(
     &self,
-    data: &JsValue,
+    credential: &WasmCredential,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
-    let data: WasmCredential = WasmCredential::from_json(&json)?;
+    let mut data: Credential = credential.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-    Ok(data)
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmCredential::from(data))
   }
 
   /// Creates a signature for the given `Presentation` with the specified DID Document
@@ -392,15 +401,21 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = signPresentation)]
   pub fn sign_presentation(
     &self,
-    data: &JsValue,
+    presentation: &WasmPresentation,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
-    let data: WasmPresentation = WasmPresentation::from_json(&json)?;
+    let mut data: Presentation = presentation.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-    Ok(data)
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmPresentation::from(data))
   }
 
   /// Creates a signature for the given `data` with the specified DID Document
@@ -662,9 +677,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayVerificationMethods;
-
-  #[wasm_bindgen(typescript_type = "Map<string, any>")]
-  pub type MapStringAny;
 
   #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
   pub type OptionTimestamp;

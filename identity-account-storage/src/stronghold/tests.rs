@@ -1,314 +1,161 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::iter;
-use futures::executor::block_on;
-use iota_stronghold::procedures::KeyType;
-use iota_stronghold::Location;
-use rand::distributions::Alphanumeric;
-use rand::rngs::OsRng;
-use rand::Rng;
-use rusty_fork::rusty_fork_test;
-use std::fs;
-use std::path::Path;
-use std::path::PathBuf;
-use std::thread;
-use std::time::Duration;
-use std::time::Instant;
-
-use crate::stronghold::default_hint;
-use crate::stronghold::IotaStrongholdResult;
-use crate::stronghold::Snapshot;
-use crate::stronghold::SnapshotStatus;
-use crate::stronghold::Store;
-use crate::stronghold::StrongholdError;
-use crate::utils::derive_encryption_key;
-use crate::utils::EncryptionKey;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
+use identity_iota_core::did::IotaDID;
+use iota_stronghold::procedures;
+use iota_stronghold::procedures::GenerateKey;
+use iota_stronghold::Client;
+use iota_stronghold::ClientVault;
 
-const TEST_DIR: &str = "./test-storage";
-const RANDOM_FILENAME_SIZE: usize = 10;
+use crate::storage::Storage;
+use crate::storage::StorageTestSuite;
+use crate::stronghold::test_util::random_did;
+use crate::stronghold::test_util::random_key_location;
+use crate::stronghold::test_util::random_string;
+use crate::stronghold::test_util::random_temporary_path;
+use crate::stronghold::ClientPath;
+use crate::stronghold::Stronghold;
+use crate::types::KeyLocation;
 
-fn location(name: &str) -> Location {
-  Location::generic("$fixed_vault_path", name)
+#[tokio::test]
+async fn test_mutate_client_persists_client_into_snapshot() {
+  let path: String = random_temporary_path();
+  let password: String = random_string();
+
+  let stronghold: Stronghold = Stronghold::new(&path, password.clone(), Some(true)).await.unwrap();
+
+  let did: IotaDID = random_did();
+  let location: &KeyLocation = &random_key_location();
+
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+
+  stronghold
+    .mutate_client(&did, |client| {
+      let vault: ClientVault = client.vault(b"vault");
+
+      vault
+        .write_secret(location.into(), keypair.private().as_ref().to_vec())
+        .unwrap();
+
+      Ok(())
+    })
+    .unwrap();
+
+  let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
+  assert!(client.record_exists(&location.into()).unwrap());
+
+  // Persists the snapshot, because dropsave = true.
+  std::mem::drop(stronghold);
+
+  let stronghold: Stronghold = Stronghold::new(&path, password, Some(false)).await.unwrap();
+
+  let client: Client = stronghold.client(&ClientPath::from(&did)).unwrap();
+  assert!(client.record_exists(&location.into()).unwrap());
 }
 
-fn rand_string(chars: usize) -> String {
-  iter::repeat(())
-    .map(|_| OsRng.sample(Alphanumeric))
-    .map(char::from)
-    .take(chars)
-    .collect()
+#[tokio::test]
+async fn test_incorrect_password_returns_error() {
+  let path: String = random_temporary_path();
+  let password: String = random_string();
+
+  let stronghold: Stronghold = Stronghold::new(&path, password, Some(false)).await.unwrap();
+
+  let did: IotaDID = random_did();
+  let location: &KeyLocation = &random_key_location();
+
+  stronghold
+    .mutate_client(&did, |client| {
+      client
+        .execute_procedure(GenerateKey {
+          ty: procedures::KeyType::Ed25519,
+          output: location.into(),
+        })
+        .unwrap();
+
+      Ok(())
+    })
+    .unwrap();
+
+  stronghold.persist_snapshot().await.unwrap();
+  std::mem::drop(stronghold);
+
+  let err = Stronghold::new(&path, "not-the-original-password".to_owned(), Some(false))
+    .await
+    .unwrap_err();
+
+  assert!(matches!(
+    err,
+    crate::error::Error::StrongholdError(crate::stronghold::error::StrongholdError::Snapshot(
+      crate::stronghold::error::SnapshotOperation::Read,
+      _,
+      _
+    ))
+  ));
 }
 
-fn generate_filename() -> PathBuf {
-  AsRef::<Path>::as_ref(TEST_DIR).join(format!("{}.stronghold", rand_string(RANDOM_FILENAME_SIZE)))
+async fn test_stronghold() -> impl Storage {
+  Stronghold::new(&random_temporary_path(), random_string(), Some(false))
+    .await
+    .unwrap()
 }
 
-async fn open_snapshot(path: &Path, password: EncryptionKey) -> Snapshot {
-  if path.exists() {
-    fs::remove_file(path).unwrap();
-  }
-
-  load_snapshot(path, password).await
+#[tokio::test]
+async fn test_stronghold_did_create_with_private_key() {
+  StorageTestSuite::did_create_private_key_test(test_stronghold().await)
+    .await
+    .unwrap()
 }
 
-async fn load_snapshot(path: &Path, password: EncryptionKey) -> Snapshot {
-  let snapshot: Snapshot = Snapshot::new(path);
-  snapshot.load(password).await.unwrap();
-  snapshot
+#[tokio::test]
+async fn test_stronghold_did_create_generate_key() {
+  StorageTestSuite::did_create_generate_key_test(test_stronghold().await)
+    .await
+    .unwrap()
 }
 
-rusty_fork_test! {
-  #[test]
-  fn test_password_expiration() {
-    block_on(async {
-      let interval: Duration = Duration::from_millis(100);
+#[tokio::test]
+async fn test_stronghold_key_generate() {
+  StorageTestSuite::key_generate_test(test_stronghold().await)
+    .await
+    .unwrap()
+}
 
-      Snapshot::set_password_clear(interval).await.unwrap();
+#[tokio::test]
+async fn test_stronghold_key_delete() {
+  StorageTestSuite::key_delete_test(test_stronghold().await)
+    .await
+    .unwrap()
+}
 
-      let filename: PathBuf = generate_filename();
-      let snapshot: Snapshot = Snapshot::new(&filename);
+#[tokio::test]
+async fn test_stronghold_did_list() {
+  StorageTestSuite::did_list_test(test_stronghold().await).await.unwrap()
+}
 
-      snapshot.load(Default::default()).await.unwrap();
+#[tokio::test]
+async fn test_stronghold_key_insert() {
+  StorageTestSuite::key_insert_test(test_stronghold().await)
+    .await
+    .unwrap()
+}
 
-      // Wait for password to be cleared
-      thread::sleep(interval * 3);
+#[tokio::test]
+async fn test_stronghold_key_sign_ed25519() {
+  StorageTestSuite::key_sign_ed25519_test(test_stronghold().await)
+    .await
+    .unwrap()
+}
 
-      let store: Store<'_> = snapshot.store("".into());
-      let error: StrongholdError = store.get("expires").await.unwrap_err();
+#[tokio::test]
+async fn test_stronghold_key_value_store() {
+  StorageTestSuite::key_value_store_test(test_stronghold().await)
+    .await
+    .unwrap()
+}
 
-      assert!(
-        matches!(error, StrongholdError::StrongholdPasswordNotSet),
-        "unexpected error: {:?}",
-        error
-      );
-
-      assert!(
-        matches!(snapshot.status().await.unwrap(), SnapshotStatus::Locked),
-        "unexpected snapshot status",
-      );
-    })
-  }
-
-  #[test]
-  fn test_password_persistence() {
-    block_on(async {
-      let interval: Duration = Duration::from_millis(300);
-
-      Snapshot::set_password_clear(interval).await.unwrap();
-
-      let filename: PathBuf = generate_filename();
-      let snapshot: Snapshot = Snapshot::new(&filename);
-
-      snapshot.load(Default::default()).await.unwrap();
-      let mut instant: Instant = Instant::now();
-
-      let store: Store<'_> = snapshot.store("".into());
-      for index in 1..=5u8 {
-        let location: String = format!("persists{}", index);
-
-        let set_result = store.set(location, format!("STRONGHOLD{}", index), None).await;
-        let status: SnapshotStatus = snapshot.status().await.unwrap();
-
-        if let Some(timeout) = interval.checked_sub(instant.elapsed()) {
-          // Prior to the expiration time, the password should not be cleared yet
-          assert!(
-            set_result.is_ok(),
-            "set failed"
-          );
-          assert!(
-            matches!(status, SnapshotStatus::Unlocked(_)),
-            "unexpected snapshot status",
-          );
-
-          thread::sleep(timeout / 2);
-        } else {
-          // If elapsed > interval, set the password again.
-          // This might happen if the test is stopped by another thread.
-          snapshot.set_password(Default::default()).await.unwrap();
-          instant = Instant::now();
-        }
-      }
-
-      let mut result: IotaStrongholdResult<Option<Vec<u8>>> = store.get("persists1").await;
-
-      // Test may have taken too long / been interrupted and cleared the password already, retry
-      if matches!(result, Err(StrongholdError::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
-        snapshot.set_password(Default::default()).await.unwrap();
-        result = store.get("persists1").await;
-      }
-      assert_eq!(result.unwrap(), Some(b"STRONGHOLD1".to_vec()));
-
-      // Wait for password to be cleared
-      thread::sleep(interval * 2);
-
-      let error: StrongholdError = store.get("persists1").await.unwrap_err();
-      assert!(
-        matches!(error, StrongholdError::StrongholdPasswordNotSet),
-        "unexpected error: {:?}",
-        error
-      );
-      assert!(
-        matches!(snapshot.status().await.unwrap(), SnapshotStatus::Locked),
-        "unexpected snapshot status",
-      );
-    })
-  }
-
-  #[test]
-  fn test_store_basics() {
-    block_on(async {
-      let password: EncryptionKey = derive_encryption_key("my-password:test_store_basics");
-      let snapshot: Snapshot = open_snapshot(&generate_filename(), password).await;
-
-      let store: Store<'_> = snapshot.store("store".into());
-
-      assert!(store.get("A").await.unwrap().is_none());
-      assert!(store.get("B").await.unwrap().is_none());
-      assert!(store.get("C").await.unwrap().is_none());
-
-      store.set("A", b"foo".to_vec(), None).await.unwrap();
-      store.set("B", b"bar".to_vec(), None).await.unwrap();
-      store.set("C", b"baz".to_vec(), None).await.unwrap();
-
-      assert_eq!(store.get("A").await.unwrap(), Some(b"foo".to_vec()));
-      assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-      assert_eq!(store.get("C").await.unwrap(), Some(b"baz".to_vec()));
-
-      store.del("A").await.unwrap();
-      store.del("C").await.unwrap();
-
-      assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-
-      snapshot.unload(true).await.unwrap();
-
-      fs::remove_file(store.path()).unwrap();
-    })
-  }
-
-  #[test]
-  fn test_store_multiple_snapshots() {
-    block_on(async {
-      let password: EncryptionKey = derive_encryption_key("my-password:test_store_multiple_snapshots");
-      let snapshot1: Snapshot = open_snapshot(&generate_filename(), password).await;
-      let snapshot2: Snapshot = open_snapshot(&generate_filename(), password).await;
-      let snapshot3: Snapshot = open_snapshot(&generate_filename(), password).await;
-
-      let store1: Store<'_> = snapshot1.store("store1".into());
-      let store2: Store<'_> = snapshot2.store("store2".into());
-      let store3: Store<'_> = snapshot3.store("store3".into());
-      let stores: &[_] = &[&store1, &store2, &store3];
-
-      for store in stores {
-        assert!(store.get("A").await.unwrap().is_none());
-        assert!(store.get("B").await.unwrap().is_none());
-        assert!(store.get("C").await.unwrap().is_none());
-      }
-
-      for store in stores {
-        store.set("A", b"foo".to_vec(), None).await.unwrap();
-        store.set("B", b"bar".to_vec(), None).await.unwrap();
-        store.set("C", b"baz".to_vec(), None).await.unwrap();
-      }
-
-      for store in stores {
-        assert_eq!(store.get("A").await.unwrap(), Some(b"foo".to_vec()));
-        assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-        assert_eq!(store.get("C").await.unwrap(), Some(b"baz".to_vec()));
-      }
-
-      for store in stores {
-        store.del("A").await.unwrap();
-        store.del("C").await.unwrap();
-      }
-
-      for store in stores {
-        assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-      }
-
-      snapshot1.unload(true).await.unwrap();
-      snapshot2.unload(true).await.unwrap();
-      snapshot3.unload(true).await.unwrap();
-
-      for store in stores {
-        fs::remove_file(store.path()).unwrap();
-      }
-    })
-  }
-
-  #[test]
-  fn test_store_persistence() {
-    block_on(async {
-      let password: EncryptionKey = derive_encryption_key("my-password:test_store_persistence");
-      let filename: PathBuf = generate_filename();
-
-      {
-        let snapshot: Snapshot = open_snapshot(&filename, password).await;
-        let store: Store<'_> = snapshot.store("persistence".into());
-
-        assert!(store.get("A").await.unwrap().is_none());
-        assert!(store.get("B").await.unwrap().is_none());
-        assert!(store.get("C").await.unwrap().is_none());
-
-        store.set("A", b"foo".to_vec(), None).await.unwrap();
-        store.set("B", b"bar".to_vec(), None).await.unwrap();
-        store.set("C", b"baz".to_vec(), None).await.unwrap();
-
-        assert_eq!(store.get("A").await.unwrap(), Some(b"foo".to_vec()));
-        assert_eq!(store.get("B").await.unwrap(), Some( b"bar".to_vec()));
-        assert_eq!(store.get("C").await.unwrap(), Some(b"baz".to_vec()));
-
-        snapshot.unload(true).await.unwrap();
-      }
-
-      {
-        let snapshot: Snapshot = load_snapshot(&filename, password).await;
-        let store: Store<'_> = snapshot.store("persistence".into());
-
-        assert_eq!(store.get("A").await.unwrap(), Some(b"foo".to_vec()));
-        assert_eq!(store.get("B").await.unwrap(), Some(b"bar".to_vec()));
-        assert_eq!(store.get("C").await.unwrap(), Some(b"baz".to_vec()));
-
-        fs::remove_file(store.path()).unwrap();
-      }
-    })
-  }
-
-
-  #[test]
-  fn test_store_private_key() {
-    block_on(async {
-      let password: EncryptionKey = derive_encryption_key("my-password:test_vault_persistence");
-      let filename: PathBuf = generate_filename();
-
-      let keypair = KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
-
-      {
-        let snapshot: Snapshot = open_snapshot(&filename, password).await;
-        let vault = snapshot.vault("persistence".into());
-
-        vault.insert(location("A"), keypair.private().as_ref(), default_hint(), &[]).await.unwrap();
-
-        snapshot.unload(true).await.unwrap();
-      }
-
-      {
-        let snapshot: Snapshot = load_snapshot(&filename, password).await;
-
-        let vault = snapshot.vault("persistence".into());
-        assert!(vault.exists(location("A")).await.unwrap());
-
-        let procedure = iota_stronghold::procedures::PublicKey{
-          private_key: location("A"),
-          ty: KeyType::Ed25519
-        };
-        let pubkey = vault.execute(procedure).await.unwrap();
-
-        assert_eq!(pubkey, keypair.public().as_ref());
-
-        fs::remove_file(filename).unwrap();
-      }
-    })
-  }
+#[tokio::test]
+async fn test_stronghold_did_purge() {
+  StorageTestSuite::did_purge_test(test_stronghold().await).await.unwrap()
 }

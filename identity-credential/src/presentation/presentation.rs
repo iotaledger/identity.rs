@@ -20,7 +20,7 @@ use identity_did::verification::TryMethod;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::error::Error;
 use crate::error::Result;
 use crate::presentation::PresentationBuilder;
@@ -43,9 +43,9 @@ pub struct Presentation<T = Object, U = Object> {
   /// The entity that generated the `Presentation`.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub holder: Option<Url>,
-  /// Service(s) used to refresh an expired `Presentation`.
+  /// Service(s) used to refresh an expired [`Credential`] in the `Presentation`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
-  pub refresh_service: OneOrMany<Refresh>,
+  pub refresh_service: OneOrMany<RefreshService>,
   /// Terms-of-use specified by the `Presentation` holder.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   pub terms_of_use: OneOrMany<Policy>,
@@ -83,8 +83,8 @@ impl<T, U> Presentation<T, U> {
       types: builder.types.into(),
       verifiable_credential: builder.credentials.into(),
       holder: builder.holder,
-      refresh_service: builder.refresh.into(),
-      terms_of_use: builder.policy.into(),
+      refresh_service: builder.refresh_service.into(),
+      terms_of_use: builder.terms_of_use.into(),
       properties: builder.properties,
       proof: None,
     };
