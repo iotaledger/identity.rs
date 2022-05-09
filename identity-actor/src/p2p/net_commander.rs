@@ -78,10 +78,7 @@ impl NetCommander {
     receiver
       .await
       .map_err(|_| Error::Shutdown)?
-      .map_err(|transport_err| Error::TransportError {
-        context: "unable to start listening",
-        source: transport_err,
-      })
+      .map_err(|transport_err| Error::TransportError("start listening", transport_err))
   }
 
   /// Add additional `addresses` to listen on.

@@ -7,18 +7,18 @@ use crate::didcomm::ThreadId;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Errors that can occur during actor execution.
+#[non_exhaustive]
 #[derive(Debug, thiserror::Error)]
-/// Errors that can occur during the actor operation.
 pub enum Error {
-  #[error("{context}: {source}")]
-  TransportError {
-    context: &'static str,
-    source: libp2p::TransportError<std::io::Error>,
-  },
+  #[non_exhaustive]
+  #[error("transport error during {0}")]
+  TransportError(&'static str, #[source] libp2p::TransportError<std::io::Error>),
   #[error("invalid endpoint")]
   InvalidEndpoint,
-  #[error("{0}")]
-  OutboundFailure(#[from] OutboundFailure),
+  #[non_exhaustive]
+  #[error("failure during sending an outbound request and receiving the response")]
+  OutboundFailure(#[source] OutboundFailure),
   #[error("unexpected request `{0}`")]
   UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]

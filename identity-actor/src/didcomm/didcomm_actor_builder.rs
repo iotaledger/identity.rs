@@ -101,11 +101,8 @@ impl DidCommActorBuilder {
   /// See [`ActorBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> ActorResult<DidCommActor> {
-    let dns_transport =
-      libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new()).map_err(|err| Error::TransportError {
-        context: "unable to build transport",
-        source: libp2p::TransportError::Other(err),
-      })?;
+    let dns_transport = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new())
+      .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
 
     let transport = dns_transport
       .clone()
