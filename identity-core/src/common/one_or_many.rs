@@ -184,6 +184,7 @@ impl<T> FromIterator<T> for OneOrMany<T> {
 // Iterator
 // =============================================================================
 
+/// This struct is created by the `iter` method on [`OneOrMany`].
 struct OneOrManyIter<'a, T> {
   inner: &'a OneOrMany<T>,
   index: usize,
@@ -213,11 +214,13 @@ enum Either<L, R> {
   Right(R),
 }
 
-pub struct OneOrManyIterator<T> {
+/// This struct is created by the `into_iter` method on [`OneOrMany`]
+/// (provided by the [IntoIterator](https://doc.rust-lang.org/std/iter/trait.IntoIterator.html) trait).
+pub struct OneOrManyIntoIterator<T> {
   iter: Either<Option<T>, IntoIter<T>>,
 }
 
-impl<T> OneOrManyIterator<T> {
+impl<T> OneOrManyIntoIterator<T> {
   fn new(inner: OneOrMany<T>) -> Self {
     let iter = match inner {
       OneOrMany::One(item) => Either::Left(Some(item)),
@@ -228,7 +231,7 @@ impl<T> OneOrManyIterator<T> {
   }
 }
 
-impl<T> Iterator for OneOrManyIterator<T> {
+impl<T> Iterator for OneOrManyIntoIterator<T> {
   type Item = T;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -242,10 +245,10 @@ impl<T> Iterator for OneOrManyIterator<T> {
 impl<T> IntoIterator for OneOrMany<T> {
   type Item = T;
 
-  type IntoIter = OneOrManyIterator<T>;
+  type IntoIter = OneOrManyIntoIterator<T>;
 
   fn into_iter(self) -> Self::IntoIter {
-    OneOrManyIterator::new(self)
+    OneOrManyIntoIterator::new(self)
   }
 }
 
@@ -303,5 +306,45 @@ mod tests {
     let mut collection = OneOrMany::Many(v);
     collection.push(42);
     assert_eq!(collection, OneOrMany::Many((0..=42).collect()));
+  }
+
+  #[test]
+  fn test_iter() {
+    let one_or_many = OneOrMany::Many(Vec::<u32>::new());
+    assert!(one_or_many.iter().next().is_none());
+
+    let one_or_many = OneOrMany::One(1u32);
+    assert_eq!(one_or_many.iter().next().unwrap(), &1);
+
+    let one_or_many = OneOrMany::Many(vec![42u32]);
+    let mut iter = one_or_many.iter();
+    assert_eq!(iter.next().unwrap(), &42);
+    assert!(iter.next().is_none());
+
+    let one_or_many = OneOrMany::Many(vec![42u32, 1337u32]);
+    let mut iter = one_or_many.iter();
+    assert_eq!(iter.next().unwrap(), &42);
+    assert_eq!(iter.next().unwrap(), &1337);
+    assert!(iter.next().is_none());
+  }
+
+  #[test]
+  fn test_into_iter() {
+    let one_or_many = OneOrMany::Many(Vec::<u32>::new());
+    assert!(one_or_many.into_iter().next().is_none());
+
+    let one_or_many = OneOrMany::One(1u32);
+    assert_eq!(one_or_many.into_iter().next().unwrap(), 1);
+
+    let one_or_many = OneOrMany::Many(vec![42u32]);
+    let mut into_iter = one_or_many.into_iter();
+    assert_eq!(into_iter.next().unwrap(), 42);
+    assert!(into_iter.next().is_none());
+
+    let one_or_many = OneOrMany::Many(vec![42u32, 1337u32]);
+    let mut into_iter = one_or_many.into_iter();
+    assert_eq!(into_iter.next().unwrap(), 42);
+    assert_eq!(into_iter.next().unwrap(), 1337);
+    assert!(into_iter.next().is_none());
   }
 }
