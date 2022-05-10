@@ -177,9 +177,9 @@ where
   /// Returns the DID document of the identity, which this account manages,
   /// with all updates applied.
   ///
-  /// Note that the returned document only has a valid signature after publication.
-  /// In general for use cases where the signature is required, it is advisable to resolve the
-  /// document from tangle, for instance by using [`Account::resolve_identity`].
+  /// Note: the returned document only has a valid signature after publishing an integration chain update.
+  /// In general, for use cases where the signature is required, it is advisable to resolve the
+  /// document from the Tangle.
   pub fn document(&self) -> &IotaDocument {
     &self.document
   }
