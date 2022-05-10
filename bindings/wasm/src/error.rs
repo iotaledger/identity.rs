@@ -208,8 +208,8 @@ impl From<UpdateError> for WasmError<'_> {
 pub struct JsValueResult(pub(crate) Result<JsValue>);
 
 impl JsValueResult {
-  /// Consumes the struct and returns a Result<_, AccountStorageError>
-  pub fn account_err(self) -> StdResult<JsValue, AccountStorageError> {
+  /// Consumes the struct and returns a Result<_, AccountStorageError>, leaving an `Ok` value untouched.
+  pub fn to_account_error(self) -> StdResult<JsValue, AccountStorageError> {
     self.0.map_err(|js_value| {
       let error_string: String = match wasm_bindgen::JsCast::dyn_into::<js_sys::Error>(js_value) {
         Ok(js_err) => ToString::to_string(&js_err.to_string()),
@@ -232,7 +232,7 @@ impl From<Result<JsValue>> for JsValueResult {
 
 impl From<JsValueResult> for AccountStorageResult<()> {
   fn from(result: JsValueResult) -> Self {
-    result.account_err().and_then(|js_value| {
+    result.to_account_error().and_then(|js_value| {
       js_value
         .into_serde()
         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
@@ -242,7 +242,7 @@ impl From<JsValueResult> for AccountStorageResult<()> {
 
 impl From<JsValueResult> for AccountStorageResult<bool> {
   fn from(result: JsValueResult) -> Self {
-    result.account_err().and_then(|js_value| {
+    result.to_account_error().and_then(|js_value| {
       js_value
         .into_serde()
         .map_err(|e| AccountStorageError::SerializationError(e.to_string()))
