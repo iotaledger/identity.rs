@@ -8,7 +8,6 @@ use core::fmt::Formatter;
 use core::str::FromStr;
 use std::borrow::Borrow;
 use std::borrow::Cow;
-use std::ops::Deref;
 
 use serde;
 use serde::Deserialize;
@@ -150,21 +149,14 @@ impl TryFrom<&'_ str> for Timestamp {
 // This struct is only used to (potentially) avoid an allocation when deserializing a Timestamp. We cannot deserialize
 // via &str because that breaks serde_json::from_value which we use extensively in the Stronghold bindings.
 // This approach is inspired by https://crates.io/crates/serde_str_helpers, but we only use a subset of the functionality offered by that crate.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 struct ProvisionalTimestamp<'a>(#[serde(borrow)] Cow<'a, str>);
-
-impl<'a> Deref for ProvisionalTimestamp<'a> {
-  type Target = str;
-  fn deref(&self) -> &Self::Target {
-    self.0.borrow()
-  }
-}
 
 impl<'a> TryFrom<ProvisionalTimestamp<'a>> for Timestamp {
   type Error = Error;
 
   fn try_from(value: ProvisionalTimestamp<'a>) -> Result<Self, Self::Error> {
-    Timestamp::parse(&value)
+    Timestamp::parse(value.0.borrow())
   }
 }
 
