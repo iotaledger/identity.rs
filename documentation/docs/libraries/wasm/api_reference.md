@@ -9,7 +9,7 @@ keywords:
 ---
 
 ```mdx-code-block
-import ApiRef, {toc as ChangelogTOC} from "./@site/../../../../../bindings/wasm/docs/api-reference.md"
+import ApiRef, {toc as ChangelogTOC} from "@site/../bindings/wasm/docs/api-reference.md"
 
 <ApiRef />
 
