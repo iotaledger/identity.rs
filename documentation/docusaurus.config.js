@@ -1,6 +1,8 @@
 const path = require('path');
 
 module.exports = {
+    // TODO Remove, we don't want broken links ;)
+    onBrokenLinks: 'warn',
     title: 'Identity',
     url: '/',
     baseUrl: '/',
