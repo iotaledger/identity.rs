@@ -30,7 +30,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async"]
+default = ["async", "account", "stronghold", "send-sync-storage"]
 
 # Enables async runtime support (Tokio).
 async = ["identity-iota/async"]
