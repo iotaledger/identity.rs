@@ -40,7 +40,7 @@ Negotiates [verifiable credentials][VC] using their [`type`][TYPE] and optional 
 
 [^1] The [`type`][TYPE] MAY be under-specified depending on the protocol but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`. 
 
-[^2] The [`issuer`][ISSUER] field MAY either be the single issuer of an existing credential, one or more issuers that a [verifier](./presentation#roles) would trust during a [presentation](./presentation), or one or more trusted issuers that a [holder](./issuance#roles) requests to sign their credential during an [issuance](./issuance). The [`issuer`][ISSUER] field is OPTIONAL as the [holder](./presentation#roles) may not want to reveal too much information up-front about the exact credentials they possess during a [presentation](./presentation); they may want a non-repudiable signed request from the verifier first. 
+[^2] The [`issuer`][ISSUER] field MAY either be the single issuer of an existing credential, one or more issuers that a [verifier](../protocols/presentation#roles) would trust during a [presentation](../protocols/presentation), or one or more trusted issuers that a [holder](../protocols/issuance#roles) requests to sign their credential during an [issuance](../protocols/issuance). The [`issuer`][ISSUER] field is OPTIONAL as the [holder](../protocols/presentation#roles) may not want to reveal too much information up-front about the exact credentials they possess during a [presentation](../protocols/presentation); they may want a non-repudiable signed request from the verifier first. 
 
 #### Examples
 
