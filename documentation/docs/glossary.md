@@ -14,7 +14,7 @@ keywords:
 
 This section defines the terms used in this specification, [sourced from W3](https://www.w3.org/TR/did-core/#terminology), and throughout decentralized identifier infrastructure. A link to these terms is included whenever they appear in this specification.
 
-The first part of the glossary describes the terminology by the W3C. The [second describes](../docs/glossary.md/IOTA-terminology) the terminology for IOTA-related topics.
+The first part of the glossary describes the terminology by the W3C. The [second describes](#iota-terminology) the terminology for IOTA-related topics.
 
 ## W3C Terminology
 
