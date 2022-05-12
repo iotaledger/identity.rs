@@ -1,9 +1,16 @@
 name: Test Docs Build
 
 on:
+  push:
+    branches:
+      - main
+      - dev
   pull_request:
     branches:
-      - support/v0.5
+      - main
+      - dev
+      - epic/*
+      - support/*
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
