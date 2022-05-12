@@ -1,21 +1,6 @@
 const path = require('path');
 
 module.exports = {
-    // TODO Remove, we don't want broken links ;)
-    onBrokenLinks: 'warn',
-    title: 'Identity',
-    url: '/',
-    baseUrl: '/',
-    themes: ['@docusaurus/theme-classic'],
-    themeConfig: {
-        navbar: {
-            // Workaround to disable broken logo href on test build
-            logo: {
-                src: 'img/identity_logo.svg',
-                href: 'https://wiki.iota.org/',
-            },
-        },
-    },
     plugins: [
         [
             '@docusaurus/plugin-content-docs',

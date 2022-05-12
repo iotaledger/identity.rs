@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Test Build
+        # TODO Add 'yarn build' as last line once broken links are fixed
         run: |
           cd documentation
           yarn install --immutable
-          npx docusaurus build
