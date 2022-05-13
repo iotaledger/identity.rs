@@ -42,7 +42,6 @@ module.exports = {
                 'decentralized_identifiers/create',
                 'decentralized_identifiers/update',
                 'decentralized_identifiers/resolve',
-                'decentralized_identifiers/resolve_history',
                 'decentralized_identifiers/private_tangle',
             ],
             'Verifiable Credentials': [
@@ -60,7 +59,7 @@ module.exports = {
                 'advanced/overview',
                 'advanced/client',
                 'advanced/did_messages',
-                'advanced/storage_adapter',
+                'advanced/storage_interface',
                 'advanced/signature_schemes',
 
             ]

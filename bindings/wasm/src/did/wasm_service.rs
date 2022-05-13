@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common::deserialize_map_or_any;
+use crate::common::MapStringAny;
 use identity::did::ServiceEndpoint;
 use identity::iota_core::IotaDIDUrl;
 use identity::iota_core::IotaService;
@@ -79,16 +80,9 @@ impl WasmService {
   }
 
   /// Returns a copy of the custom properties on the `Service`.
-  #[wasm_bindgen(js_name = properties)]
+  #[wasm_bindgen]
   pub fn properties(&self) -> Result<MapStringAny> {
-    let map: js_sys::Map = js_sys::Map::new();
-    for (key, value) in self.0.properties().iter() {
-      map.set(
-        &JsValue::from_str(key.as_str()),
-        &JsValue::from_serde(&value).wasm_result()?,
-      );
-    }
-    Ok(map.unchecked_into::<MapStringAny>())
+    MapStringAny::try_from(self.0.properties())
   }
 
   /// Serializes a `Service` object as a JSON object.
@@ -116,9 +110,6 @@ impl From<IotaService> for WasmService {
 extern "C" {
   #[wasm_bindgen(typescript_type = "string | string[] | Map<string, string[]>")]
   pub type UServiceEndpoint;
-
-  #[wasm_bindgen(typescript_type = "Map<string, any>")]
-  pub type MapStringAny;
 }
 
 #[wasm_bindgen]

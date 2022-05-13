@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
@@ -23,7 +23,7 @@ use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
-use crate::credential::Refresh;
+use crate::credential::RefreshService;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
@@ -65,7 +65,7 @@ pub struct Credential<T = Object> {
   pub credential_schema: OneOrMany<Schema>,
   /// Service(s) used to refresh an expired `Credential`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
-  pub refresh_service: OneOrMany<Refresh>,
+  pub refresh_service: OneOrMany<RefreshService>,
   /// Terms-of-use specified by the `Credential` issuer.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   pub terms_of_use: OneOrMany<Policy>,
@@ -114,8 +114,8 @@ impl<T> Credential<T> {
       expiration_date: builder.expiration_date,
       credential_status: builder.status.into(),
       credential_schema: builder.schema.into(),
-      refresh_service: builder.refresh.into(),
-      terms_of_use: builder.policy.into(),
+      refresh_service: builder.refresh_service.into(),
+      terms_of_use: builder.terms_of_use.into(),
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,

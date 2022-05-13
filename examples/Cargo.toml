@@ -15,6 +15,35 @@ name = "getting_started"
 path = "getting_started.rs"
 
 [[example]]
+name = "account_create"
+path = "account/create_did.rs"
+
+[[example]]
+name = "account_config"
+path = "account/config.rs"
+
+[[example]]
+name = "account_manipulate"
+path = "account/manipulate_did.rs"
+
+[[example]]
+name = "account_lazy"
+path = "account/lazy.rs"
+
+[[example]]
+name = "account_signing"
+path = "account/signing.rs"
+
+# TODO: Temporarily disabled until iotaledger/stronghold.rs#353 is fixed.
+# [[example]]
+# name = "account_multiple"
+# path = "account/multiple_identities.rs"
+
+[[example]]
+name = "account_unchecked"
+path = "account/unchecked.rs"
+
+[[example]]
 name = "create_did"
 path = "basic/1_create_did.rs"
 
@@ -59,5 +88,13 @@ name = "key_exchange"
 path = "advanced/1_key_exchange.rs"
 
 [[example]]
-name = "revoke_vc"
-path = "basic/5_revoke_vc.rs"
+name = "resolve_did"
+path = "low-level-api/resolve_did.rs"
+
+[[example]]
+name = "private_tangle"
+path = "low-level-api/private_tangle.rs"
+
+[[example]]
+name = "account_revoke_vc"
+path = "account/revoke_vc.rs"

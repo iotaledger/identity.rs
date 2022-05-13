@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
@@ -9,7 +9,7 @@ use identity_core::common::Url;
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Refresh {
+pub struct RefreshService {
   /// The Url of the credential refresh service.
   pub id: Url,
   /// The type(s) of the credential refresh service.
@@ -20,8 +20,8 @@ pub struct Refresh {
   pub properties: Object,
 }
 
-impl Refresh {
-  /// Creates a new `Refresh`.
+impl RefreshService {
+  /// Creates a new `RefreshService`.
   pub fn new<T>(id: Url, types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -29,7 +29,7 @@ impl Refresh {
     Self::with_properties(id, types, Object::new())
   }
 
-  /// Creates a new `Refresh` with the given `properties`.
+  /// Creates a new `RefreshService` with the given `properties`.
   pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -46,13 +46,13 @@ impl Refresh {
 mod tests {
   use identity_core::convert::FromJson;
 
-  use crate::credential::Refresh;
+  use crate::credential::RefreshService;
 
   const JSON: &str = include_str!("../../tests/fixtures/refresh-1.json");
 
   #[test]
   fn test_from_json() {
-    let service: Refresh = Refresh::from_json(JSON).unwrap();
+    let service: RefreshService = RefreshService::from_json(JSON).unwrap();
     assert_eq!(service.id, "https://example.edu/refresh/3732");
     assert_eq!(service.types.as_slice(), ["ManualRefreshService2018"]);
   }

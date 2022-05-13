@@ -9,7 +9,7 @@ use identity_core::common::Url;
 /// [More Info](https://www.w3.org/TR/vc-data-model/#credential-subject)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Subject {
-  /// A Url identifying the credential subject.
+  /// A URI identifying the credential subject.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub id: Option<Url>,
   /// Additional properties of the credential subject.

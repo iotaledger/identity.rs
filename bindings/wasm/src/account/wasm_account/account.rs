@@ -64,6 +64,10 @@ impl WasmAccount {
   }
 
   /// Returns a copy of the document managed by the `Account`.
+  ///
+  /// Note: the returned document only has a valid signature after publishing an integration chain update.
+  /// In general, for use cases where the signature is required, it is advisable to resolve the
+  /// document from the Tangle.
   #[wasm_bindgen]
   pub fn document(&self) -> WasmDocument {
     let document: IotaDocument = self.0.borrow().document().clone();

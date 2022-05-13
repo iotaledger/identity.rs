@@ -6,6 +6,7 @@ edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "wasm"]
 license = "Apache-2.0"
+publish = false
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 resolver = "2"
@@ -19,6 +20,7 @@ async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }
+proc-typescript = { version = "0.1.0", path = "./proc-typescript" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
