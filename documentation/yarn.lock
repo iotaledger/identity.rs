@@ -6298,9 +6298,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"identity@workspace:.":
+"identity-develop@workspace:.":
   version: 0.0.0-use.local
-  resolution: "identity@workspace:."
+  resolution: "identity-develop@workspace:."
   dependencies:
     "@iota-community/iota-wiki-cli": "iota-community/iota-wiki-cli#v2"
     raw-loader: ^4.0.2
