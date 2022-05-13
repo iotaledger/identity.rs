@@ -5,7 +5,7 @@ module.exports = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'identity-rs',
+                id: 'identity-rs-develop',
                 path: path.resolve(__dirname, 'docs'),
                 routeBasePath: 'identity.rs',
                 sidebarPath: path.resolve(__dirname, 'sidebars.js'),
