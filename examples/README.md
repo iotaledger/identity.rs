@@ -33,7 +33,7 @@ The following examples are available for using the basic account (A high-level A
 | 9 | [account_revoke_vc](account/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
 | 10 | [account_multiple](./account/multiple_identities.rs) | How to create multiple identities from a builder and how to load existing identities into an account. |
 | 11 | [account_unchecked](./account/unchecked.rs) | How to update the custom properties of a DID document directly by using the account's unchecked methods. |
-| 12 | [account_key_exchange](./account/key_exchange.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
+| 12 | [account_encryption](./account/encryption.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange with DID Documents. |
 
 The following examples are available for using the low-level APIs, which provides more flexibility at the cost of complexity:
 

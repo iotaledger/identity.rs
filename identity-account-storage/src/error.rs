@@ -27,35 +27,32 @@ pub enum Error {
   StrongholdError(#[from] crate::stronghold::StrongholdError),
   /// Caused by providing bytes that cannot be used as a private key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
-  #[error("Invalid Private Key: {0}")]
+  #[error("invalid private key: {0}")]
   InvalidPrivateKey(String),
   /// Caused by providing bytes that cannot be used as a public key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
-  #[error("Invalid Public Key: {0}")]
+  #[error("invalid public key: {0}")]
   InvalidPublicKey(String),
   /// Caused by failing to generate a random nonce
   #[error("nonce generation failed")]
   NonceGenerationFailed(#[source] crypto::error::Error),
   /// Caused by failing to decrypt data
   #[error("failed to decrypt data")]
-  FailedToDecryptData(#[source] crypto::error::Error),
+  DecryptionFailure(#[source] crypto::error::Error),
   /// Caused by failing to encrypt data
   #[error("failed to encrypt data")]
-  FailedToEncryptData(#[source] crypto::error::Error),
-  /// Cased by trying to call the concat KDF fucntion with keydatalen greater than or equal to (2^32 −1) .
-  #[error("Iteration Overflow")]
-  IterationOverflow,
+  EncryptionFailure(#[source] crypto::error::Error),
   /// Caused by attempting to find a key in storage that does not exist.
   #[error("key not found")]
   KeyNotFound,
   /// Caused by attempting to find an identity key vault that does not exist.
-  #[error("Key vault not found")]
+  #[error("key vault not found")]
   KeyVaultNotFound,
   /// Caused by attempting to read a poisoned shared resource.
-  #[error("Shared resource poisoned: read")]
+  #[error("shared resource poisoned: read")]
   SharedReadPoisoned,
   /// Caused by attempting to write a poisoned shared resource.
-  #[error("Shared resource poisoned: write")]
+  #[error("shared resource poisoned: write")]
   SharedWritePoisoned,
   /// Caused by attempting to create a DID that already exists.
   #[error("identity already exists")]

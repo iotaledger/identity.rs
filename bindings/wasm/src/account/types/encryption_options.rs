@@ -19,7 +19,7 @@ pub struct WasmEncryptionOptions(EncryptionOptions);
 #[wasm_bindgen(js_class = EncryptionOptions)]
 impl WasmEncryptionOptions {
   /// Creates an `EncryptionOptions` object.
-  #[wasm_bindgen(js_name = new)]
+  #[wasm_bindgen(constructor)]
   pub fn new(
     encryption_algorithm: &WasmEncryptionAlgorithm,
     cek_algorithm: &WasmCEKAlgorithm,

@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account_storage::CEKAlgorithm;
+use identity::account_storage::CekAlgorithm;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -12,15 +12,15 @@ use crate::error::WasmResult;
 
 /// Supported CEK algorithms
 #[derive(Clone, Serialize, Deserialize)]
-#[wasm_bindgen(js_name = CEKAlgorithm, inspectable)]
-pub struct WasmCEKAlgorithm(CEKAlgorithm);
+#[wasm_bindgen(js_name = CekAlgorithm, inspectable)]
+pub struct WasmCekAlgorithm(CekAlgorithm);
 
-#[wasm_bindgen(js_class = CEKAlgorithm)]
-impl WasmCEKAlgorithm {
+#[wasm_bindgen(js_class = CekAlgorithm)]
+impl WasmCekAlgorithm {
   /// ECDH-ES will be used as the content encryption key.
-  #[wasm_bindgen(js_name = ecdhES)]
-  pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCEKAlgorithm {
-    Self(CEKAlgorithm::ECDH_ES {
+  #[wasm_bindgen(js_name = EcdhEs)]
+  pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
+    Self(CekAlgorithm::ECDH_ES {
       agreement: agreement.clone().into(),
     })
   }
@@ -33,19 +33,19 @@ impl WasmCEKAlgorithm {
 
   /// Deserializes `CEKAlgorithm` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmCEKAlgorithm> {
+  pub fn from_json(json_value: JsValue) -> Result<WasmCekAlgorithm> {
     json_value.into_serde().map(Self).wasm_result()
   }
 }
 
-impl From<WasmCEKAlgorithm> for CEKAlgorithm {
-  fn from(wasm_cek_algorithm: WasmCEKAlgorithm) -> Self {
+impl From<WasmCekAlgorithm> for CekAlgorithm {
+  fn from(wasm_cek_algorithm: WasmCekAlgorithm) -> Self {
     wasm_cek_algorithm.0
   }
 }
 
-impl From<CEKAlgorithm> for WasmCEKAlgorithm {
-  fn from(cek_algorithm: CEKAlgorithm) -> Self {
-    WasmCEKAlgorithm(cek_algorithm)
+impl From<CekAlgorithm> for WasmCekAlgorithm {
+  fn from(cek_algorithm: CekAlgorithm) -> Self {
+    WasmCekAlgorithm(cek_algorithm)
   }
 }

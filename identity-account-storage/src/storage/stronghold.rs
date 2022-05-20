@@ -44,7 +44,7 @@ use crate::stronghold::Stronghold;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::VaultOperation;
 use crate::types::AgreementInfo;
-use crate::types::CEKAlgorithm;
+use crate::types::CekAlgorithm;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
 use crate::types::EncryptionOptions;
@@ -292,20 +292,19 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(did))?;
     match private_key.key_type {
       KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
-        "ED25519 keys are not suported for encrypting/decrypting data".to_owned(),
+        "Ed25519 keys are not supported for encryption".to_owned(),
       )),
       KeyType::X25519 => {
-        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
-          .as_ref()
-          .try_into()
-          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key.as_ref().try_into().map_err(|_| {
+          Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
+        })?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES { agreement } => {
+          CekAlgorithm::ECDH_ES(agreement) => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
-            let concat_kdf: Location = concat_kdf(
+            let concat_kdf_output: Location = concat_kdf(
               &client,
               &encryption_options.encryption_algorithm(),
-              "ECDH-ES".to_owned(),
+              encryption_options.cek_algorithm().name().to_string(),
               agreement,
               shared_key.clone(),
             )
@@ -313,13 +312,11 @@ impl Storage for Stronghold {
             let encrypted_data: Result<EncryptedData> = aead_encrypt(
               &client,
               &encryption_options.encryption_algorithm(),
-              concat_kdf.clone(),
+              concat_kdf_output.clone(),
               data,
               associated_data,
             )
             .await;
-            revoke_data(&client, shared_key, true).await?;
-            revoke_data(&client, concat_kdf, true).await?;
             encrypted_data
           }
         }
@@ -338,7 +335,7 @@ impl Storage for Stronghold {
     let client: Client = self.client(&ClientPath::from(did))?;
     match private_key.key_type {
       KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
-        "ED25519 keys are not suported for encrypting/decrypting data".to_owned(),
+        "Ed25519 keys are not suported for decryption".to_owned(),
       )),
       KeyType::X25519 => {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
@@ -346,7 +343,7 @@ impl Storage for Stronghold {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES { agreement } => {
+          CekAlgorithm::ECDH_ES(agreement) => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
             let concat_kdf: Location = concat_kdf(
               &client,
@@ -363,8 +360,6 @@ impl Storage for Stronghold {
               data,
             )
             .await;
-            revoke_data(&client, shared_key, true).await?;
-            revoke_data(&client, concat_kdf, true).await?;
             decrypted_data
           }
         }
@@ -596,17 +591,6 @@ async fn aead_decrypt(
       Ok(data)
     }
   }
-}
-
-async fn revoke_data<T: Into<Location>>(client: &Client, location: T, should_gc: bool) -> Result<()> {
-  let revoke_data: procedures::RevokeData = procedures::RevokeData {
-    location: location.into(),
-    should_gc,
-  };
-  client
-    .execute_procedure(revoke_data)
-    .map_err(|err| StrongholdError::Procedure(std::any::type_name::<procedures::RevokeData>(), vec![], err))?;
-  Ok(())
 }
 
 // Moves a key from one location to another, deleting the old one.

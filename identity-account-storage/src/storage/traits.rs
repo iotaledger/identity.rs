@@ -122,11 +122,11 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Encrypts the given `data` with the specified `algorithm`
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Hellman key exchange will be performed in case a [`KeyType::X25519`] is given.
   async fn encrypt_data(
     &self,
     did: &IotaDID,
-    data: Vec<u8>,
+    plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     algorithm: &EncryptionOptions,
     private_key: &KeyLocation,
@@ -135,7 +135,7 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Decrypts the given `data` with the specified `algorithm`
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Hellman key exchange will be performed in case a [`KeyType::X25519`] is given.
   async fn decrypt_data(
     &self,
     did: &IotaDID,

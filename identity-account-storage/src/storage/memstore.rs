@@ -29,7 +29,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
-use crate::types::CEKAlgorithm;
+use crate::types::CekAlgorithm;
 use crate::types::EncryptedData;
 use crate::types::EncryptionAlgorithm;
 use crate::types::EncryptionOptions;
@@ -271,7 +271,7 @@ impl Storage for MemStore {
     // Encrypts the data
     match key_pair.type_() {
       KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
-        "ED25519 keys are not suported for encrypting/decrypting data".to_owned(),
+        "Ed25519 keys are not supported for encryption".to_owned(),
       )),
       KeyType::X25519 => {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
@@ -279,15 +279,16 @@ impl Storage for MemStore {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES { agreement } => {
+          CekAlgorithm::ECDH_ES(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
             let concat_kdf: Vec<u8> = concat_kdf(
-              "ECDH-ES",
+              encryption_options.cek_algorithm().name(),
               Aes256Gcm::KEY_LENGTH,
               &shared_secret,
               agreement.apu(),
               agreement.apv(),
-            )?;
+            )
+            .map_err(|e| Error::EncryptionFailure(e))?;
             try_encrypt(
               &concat_kdf,
               &encryption_options.encryption_algorithm(),
@@ -315,7 +316,7 @@ impl Storage for MemStore {
     // Decrypts the data
     match key_pair.type_() {
       KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
-        "ED25519 keys are not suported for encrypting/decrypting data".to_owned(),
+        "Ed25519 keys are not supported for decryption".to_owned(),
       )),
       KeyType::X25519 => {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
@@ -323,15 +324,16 @@ impl Storage for MemStore {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CEKAlgorithm::ECDH_ES { agreement } => {
+          CekAlgorithm::ECDH_ES(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
             let concat_kdf: Vec<u8> = concat_kdf(
-              "ECDH-ES",
+              encryption_options.cek_algorithm().name(),
               Aes256Gcm::KEY_LENGTH,
               &shared_secret,
               agreement.apu(),
               agreement.apv(),
-            )?;
+            )
+            .map_err(|e| Error::DecryptionFailure(e))?;
             try_decrypt(&concat_kdf, &encryption_options.encryption_algorithm(), &data)
           }
         }
@@ -382,7 +384,7 @@ fn try_encrypt(
       let mut ciphertext: Vec<u8> = vec![0; data.len()];
       let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
       Aes256Gcm::try_encrypt(key, nonce, associated_data.as_ref(), data, &mut ciphertext, &mut tag)
-        .map_err(Error::FailedToEncryptData)?;
+        .map_err(Error::EncryptionFailure)?;
       Ok(EncryptedData::new(nonce.to_vec(), associated_data, tag, ciphertext))
     }
   }
@@ -400,19 +402,28 @@ fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData
         data.ciphertext(),
         data.tag(),
       )
-      .map_err(Error::FailedToDecryptData)?;
+      .map_err(Error::DecryptionFailure)?;
       Ok(plaintext)
     }
   }
 }
 
 /// The Concat KDF (using SHA-256) as defined in Section 5.8.1 of NIST.800-56A
-fn concat_kdf(alg: &str, len: usize, shared_secret: &[u8], apu: &[u8], apv: &[u8]) -> Result<Vec<u8>> {
+fn concat_kdf(
+  alg: &'static str,
+  len: usize,
+  shared_secret: &[u8],
+  apu: &[u8],
+  apv: &[u8],
+) -> crypto::error::Result<Vec<u8>> {
   let mut digest: Sha256 = Sha256::new();
   let mut output: Vec<u8> = Vec::new();
 
   let target: usize = (len + (Sha256::output_size() - 1)) / Sha256::output_size();
-  let rounds: u32 = u32::try_from(target).map_err(|_| Error::IterationOverflow)?;
+  let rounds: u32 = u32::try_from(target).map_err(|_| crypto::error::Error::InvalidArgumentError {
+    alg,
+    expected: "iterations can't exceed 2^32 - 1",
+  })?;
 
   for count in 0..rounds {
     // Iteration Count

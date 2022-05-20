@@ -3,7 +3,7 @@
 
 //! Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange.
 //!
-//! cargo run --example account_key_exchange
+//! cargo run --example account_encryption
 
 use std::path::PathBuf;
 
@@ -82,12 +82,7 @@ pub async fn run() -> Result<()> {
   let alice_public_key: Vec<u8> = alice_method.data().try_decode()?;
 
   // Alice encrypts the data using Diffie-Hellman key exchange
-  let agreement: AgreementInfo = AgreementInfo::new(
-    b"apu".to_vec(),
-    b"apv".to_vec(),
-    b"pub_info".to_vec(),
-    b"priv_info".to_vec(),
-  );
+  let agreement: AgreementInfo = AgreementInfo::new(b"Alice".to_vec(), b"Bob".to_vec(), Vec::new(), Vec::new());
   let encryption_options: EncryptionOptions =
     EncryptionOptions::new(EncryptionAlgorithm::Aes256Gcm, CEKAlgorithm::ECDH_ES { agreement });
   let message: &[u8] = b"This msg will be encrypted and decrypted";

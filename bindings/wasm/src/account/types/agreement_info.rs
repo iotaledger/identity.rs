@@ -16,7 +16,7 @@ pub struct WasmAgreementInfo(AgreementInfo);
 #[wasm_bindgen(js_class = AgreementInfo)]
 impl WasmAgreementInfo {
   /// Creates an `AgreementInfo` Object
-  #[wasm_bindgen(js_name = new)]
+  #[wasm_bindgen(constructor)]
   pub fn new(apu: Vec<u8>, apv: Vec<u8>, pub_info: Vec<u8>, priv_info: Vec<u8>) -> WasmAgreementInfo {
     WasmAgreementInfo(AgreementInfo::new(apu, apv, pub_info, priv_info))
   }

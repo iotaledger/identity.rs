@@ -44,8 +44,8 @@ name = "account_unchecked"
 path = "account/unchecked.rs"
 
 [[example]]
-name = "account_key_exchange"
-path = "account/key_exchange.rs"
+name = "account_encryption"
+path = "account/encryption.rs"
 
 [[example]]
 name = "create_did"
