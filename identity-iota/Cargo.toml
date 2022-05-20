@@ -25,6 +25,7 @@ lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
+roaring = { version = "0.9.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_repr = { version = "0.1", default-features = false }
 strum = { version = "0.21", features = ["derive"] }

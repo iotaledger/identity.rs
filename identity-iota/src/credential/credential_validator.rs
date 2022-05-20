@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::OneOrMany;
+use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
+use identity_credential::credential::Status;
+use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::document::IotaService;
 use serde::Serialize;
 
 use super::errors::SignerContext;
@@ -16,6 +20,7 @@ use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
 use crate::credential::errors::CompoundCredentialValidationError;
+use crate::tangle::Resolver;
 use crate::Result;
 
 /// A struct for validating [`Credential`]s.
@@ -168,6 +173,36 @@ impl CredentialValidator {
     } else {
       Err(ValidationError::SubjectHolderRelationship)
     }
+  }
+
+  /// Checks if the credential has been revoked by fetching the issuer's DID Document from the tangle
+  pub async fn check_revoked<T>(credential: &Credential<T>) -> ValidationUnitResult {
+    match &credential.credential_status {
+      OneOrMany::One(status) => CredentialValidator::check_revocation_list(&status).await,
+      OneOrMany::Many(vec_status) => {
+        for status in vec_status {
+          let _ = CredentialValidator::check_revocation_list(&status).await?;
+        }
+        Ok(())
+      }
+    }
+  }
+
+  async fn check_revocation_list(credential_status: &Status) -> ValidationUnitResult {
+    // Fetches the issuer's DID document from the tangle
+    let resolver: Resolver = Resolver::new().await.unwrap();
+    let issuer_did: IotaDID = IotaDID::parse(credential_status.id.clone().into_string()).unwrap();
+    let issuer_document: IotaDocument = resolver.resolve(&issuer_did).await.unwrap().document;
+    // Looks for the appropriate service to check for revocation
+    for service in issuer_document.service().iter() {
+      if &issuer_did.to_url() == service.id() {
+        if service.type_() == "" {
+          unimplemented!();
+        }
+      }
+    }
+    // No service with the appropriate DID or type was found
+    unimplemented!();
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
