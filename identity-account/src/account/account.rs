@@ -179,6 +179,10 @@ where
 
   /// Returns the DID document of the identity, which this account manages,
   /// with all updates applied.
+  ///
+  /// Note: the returned document only has a valid signature after publishing an integration chain update.
+  /// In general, for use cases where the signature is required, it is advisable to resolve the
+  /// document from the Tangle.
   pub fn document(&self) -> &IotaDocument {
     &self.document
   }
@@ -503,6 +507,8 @@ where
     };
 
     self.chain_state.set_last_integration_message_id(message_id);
+    // Overwrite the internal document with the published one, that has a signature.
+    self.document = new_doc;
 
     Ok(())
   }

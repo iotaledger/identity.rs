@@ -9,14 +9,14 @@ use crate::types::AgreementInfo;
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum CekAlgorithm {
-  ECDH_ES(AgreementInfo),
+  EcdhEs(AgreementInfo),
 }
 
 impl CekAlgorithm {
   /// Returns the JWE algorithm as a `str` slice.
   pub const fn name(&self) -> &'static str {
     match self {
-      CekAlgorithm::ECDH_ES(_agreement) => "ECDH-ES",
+      CekAlgorithm::EcdhEs(_agreement) => "ECDH-ES",
     }
   }
 }

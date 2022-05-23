@@ -20,9 +20,7 @@ impl WasmCekAlgorithm {
   /// ECDH-ES will be used as the content encryption key.
   #[wasm_bindgen(js_name = EcdhEs)]
   pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
-    Self(CekAlgorithm::ECDH_ES {
-      agreement: agreement.clone().into(),
-    })
+    Self(CekAlgorithm::EcdhEs(agreement.clone().into()))
   }
 
   /// Serializes `CEKAlgorithm` as a JSON object.

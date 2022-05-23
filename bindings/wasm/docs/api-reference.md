@@ -18,7 +18,7 @@ the configuration of previously built accounts.</p>
 <dd></dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
-<dt><a href="#CEKAlgorithm">CEKAlgorithm</a></dt>
+<dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
 <dd><p>Supported CEK algorithms</p>
 </dd>
 <dt><a href="#ChainState">ChainState</a></dt>
@@ -261,6 +261,10 @@ Returns the auto-save configuration value.
 
 ### account.document() ⇒ [<code>Document</code>](#Document)
 Returns a copy of the document managed by the `Account`.
+
+Note: the returned document only has a valid signature after publishing an integration chain update.
+In general, for use cases where the signature is required, it is advisable to resolve the
+document from the Tangle.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+resolveIdentity"></a>
@@ -542,6 +546,7 @@ by the [Client](#Client) used to publish it.
 **Kind**: global class  
 
 * [AgreementInfo](#AgreementInfo)
+    * [new AgreementInfo(apu, apv, pub_info, priv_info)](#new_AgreementInfo_new)
     * _instance_
         * [.apu()](#AgreementInfo+apu) ⇒ <code>Uint8Array</code>
         * [.apv()](#AgreementInfo+apv) ⇒ <code>Uint8Array</code>
@@ -549,8 +554,20 @@ by the [Client](#Client) used to publish it.
         * [.privInfo()](#AgreementInfo+privInfo) ⇒ <code>Uint8Array</code>
         * [.toJSON()](#AgreementInfo+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.new(apu, apv, pub_info, priv_info)](#AgreementInfo.new) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
         * [.fromJSON(json_value)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+
+<a name="new_AgreementInfo_new"></a>
+
+### new AgreementInfo(apu, apv, pub_info, priv_info)
+Creates an `AgreementInfo` Object
+
+
+| Param | Type |
+| --- | --- |
+| apu | <code>Uint8Array</code> | 
+| apv | <code>Uint8Array</code> | 
+| pub_info | <code>Uint8Array</code> | 
+| priv_info | <code>Uint8Array</code> | 
 
 <a name="AgreementInfo+apu"></a>
 
@@ -582,20 +599,6 @@ Returns a copy of `privInfo'
 Serializes `AgreementInfo` as a JSON object.
 
 **Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
-<a name="AgreementInfo.new"></a>
-
-### AgreementInfo.new(apu, apv, pub_info, priv_info) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
-Creates an `AgreementInfo` Object
-
-**Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
-
-| Param | Type |
-| --- | --- |
-| apu | <code>Uint8Array</code> | 
-| apv | <code>Uint8Array</code> | 
-| pub_info | <code>Uint8Array</code> | 
-| priv_info | <code>Uint8Array</code> | 
-
 <a name="AgreementInfo.fromJSON"></a>
 
 ### AgreementInfo.fromJSON(json_value) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
@@ -661,43 +664,43 @@ Deserializes `AutoSave` from a JSON object.
 | --- | --- |
 | json_value | <code>any</code> | 
 
-<a name="CEKAlgorithm"></a>
+<a name="CekAlgorithm"></a>
 
-## CEKAlgorithm
+## CekAlgorithm
 Supported CEK algorithms
 
 **Kind**: global class  
 
-* [CEKAlgorithm](#CEKAlgorithm)
+* [CekAlgorithm](#CekAlgorithm)
     * _instance_
-        * [.toJSON()](#CEKAlgorithm+toJSON) ⇒ <code>any</code>
+        * [.toJSON()](#CekAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.ecdhES(agreement)](#CEKAlgorithm.ecdhES) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
-        * [.fromJSON(json_value)](#CEKAlgorithm.fromJSON) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+        * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 
-<a name="CEKAlgorithm+toJSON"></a>
+<a name="CekAlgorithm+toJSON"></a>
 
 ### cekAlgorithm.toJSON() ⇒ <code>any</code>
 Serializes `CEKAlgorithm` as a JSON object.
 
-**Kind**: instance method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
-<a name="CEKAlgorithm.ecdhES"></a>
+**Kind**: instance method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+<a name="CekAlgorithm.EcdhEs"></a>
 
-### CEKAlgorithm.ecdhES(agreement) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 ECDH-ES will be used as the content encryption key.
 
-**Kind**: static method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
 | Param | Type |
 | --- | --- |
 | agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
 
-<a name="CEKAlgorithm.fromJSON"></a>
+<a name="CekAlgorithm.fromJSON"></a>
 
-### CEKAlgorithm.fromJSON(json_value) ⇒ [<code>CEKAlgorithm</code>](#CEKAlgorithm)
+### CekAlgorithm.fromJSON(json_value) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 Deserializes `CEKAlgorithm` from a JSON object.
 
-**Kind**: static method of [<code>CEKAlgorithm</code>](#CEKAlgorithm)  
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
 | Param | Type |
 | --- | --- |
@@ -2579,7 +2582,7 @@ Supported keys for encrypting data
     * _instance_
         * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.aes256gcm()](#EncryptionAlgorithm.aes256gcm) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.Aes256Gcm()](#EncryptionAlgorithm.Aes256Gcm) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
         * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 
 <a name="EncryptionAlgorithm+toJSON"></a>
@@ -2588,9 +2591,9 @@ Supported keys for encrypting data
 Serializes `EncryptionAlgorithm` as a JSON object.
 
 **Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
-<a name="EncryptionAlgorithm.aes256gcm"></a>
+<a name="EncryptionAlgorithm.Aes256Gcm"></a>
 
-### EncryptionAlgorithm.aes256gcm() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+### EncryptionAlgorithm.Aes256Gcm() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 Encrypts/Decrypts data using Aes256Gcm.
 
 **Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
@@ -2613,11 +2616,22 @@ Object used for defining the algorithms used for encrypting/decrypting data
 **Kind**: global class  
 
 * [EncryptionOptions](#EncryptionOptions)
+    * [new EncryptionOptions(encryption_algorithm, cek_algorithm)](#new_EncryptionOptions_new)
     * _instance_
         * [.toJSON()](#EncryptionOptions+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.new(encryption_algorithm, cek_algorithm)](#EncryptionOptions.new) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
         * [.fromJSON(json_value)](#EncryptionOptions.fromJSON) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
+
+<a name="new_EncryptionOptions_new"></a>
+
+### new EncryptionOptions(encryption_algorithm, cek_algorithm)
+Creates an `EncryptionOptions` object.
+
+
+| Param | Type |
+| --- | --- |
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 
 <a name="EncryptionOptions+toJSON"></a>
 
@@ -2625,18 +2639,6 @@ Object used for defining the algorithms used for encrypting/decrypting data
 Serializes `EncryptionOptions` as a JSON object.
 
 **Kind**: instance method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
-<a name="EncryptionOptions.new"></a>
-
-### EncryptionOptions.new(encryption_algorithm, cek_algorithm) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
-Creates an `EncryptionOptions` object.
-
-**Kind**: static method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
-
-| Param | Type |
-| --- | --- |
-| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
-| cek_algorithm | [<code>CEKAlgorithm</code>](#CEKAlgorithm) | 
-
 <a name="EncryptionOptions.fromJSON"></a>
 
 ### EncryptionOptions.fromJSON(json_value) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)

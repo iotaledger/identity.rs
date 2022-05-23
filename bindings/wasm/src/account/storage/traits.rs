@@ -143,7 +143,7 @@ impl Storage for WasmStorage {
 
     let promise: Promise = Promise::resolve(&self.did_create(network.as_ref(), fragment, private_key));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let did_location_tuple: js_sys::Array = js_sys::Array::from(&result.account_err()?);
+    let did_location_tuple: js_sys::Array = js_sys::Array::from(&result.to_account_error()?);
     let mut did_location_tuple: js_sys::ArrayIter = did_location_tuple.iter();
 
     let did: IotaDID = did_location_tuple
@@ -176,7 +176,7 @@ impl Storage for WasmStorage {
   async fn did_list(&self) -> AccountStorageResult<Vec<IotaDID>> {
     let promise: Promise = Promise::resolve(&self.did_list());
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
+    let js_value: JsValue = result.to_account_error()?;
 
     js_value
       .into_serde()
@@ -188,7 +188,7 @@ impl Storage for WasmStorage {
       Promise::resolve(&self.key_generate(did.clone().into(), key_type.into(), fragment.to_owned()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let location: KeyLocation = result
-      .account_err()?
+      .to_account_error()?
       .into_serde()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
 
@@ -213,7 +213,7 @@ impl Storage for WasmStorage {
   async fn key_public(&self, did: &IotaDID, location: &KeyLocation) -> AccountStorageResult<PublicKey> {
     let promise: Promise = Promise::resolve(&self.key_public(did.clone().into(), location.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let public_key: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
+    let public_key: Vec<u8> = result.to_account_error().map(uint8array_to_bytes)??;
     Ok(public_key.into())
   }
 
@@ -226,7 +226,7 @@ impl Storage for WasmStorage {
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> AccountStorageResult<Signature> {
     let promise: Promise = Promise::resolve(&self.key_sign(did.clone().into(), location.clone().into(), data));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
+    let js_value: JsValue = result.to_account_error()?;
     let signature: Signature = js_value
       .into_serde()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
@@ -258,7 +258,7 @@ impl Storage for WasmStorage {
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
     let encrypted_data: EncryptedData = result
-      .account_err()?
+      .to_account_error()?
       .into_serde()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
     Ok(encrypted_data)
@@ -280,14 +280,14 @@ impl Storage for WasmStorage {
       public_key.as_ref().to_vec(),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let data: Vec<u8> = result.account_err().map(uint8array_to_bytes)??;
+    let data: Vec<u8> = result.to_account_error().map(uint8array_to_bytes)??;
     Ok(data)
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
     let promise: Promise = Promise::resolve(&self.chain_state_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
+    let js_value: JsValue = result.to_account_error()?;
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }
@@ -306,7 +306,7 @@ impl Storage for WasmStorage {
   async fn document_get(&self, did: &IotaDID) -> AccountStorageResult<Option<IotaDocument>> {
     let promise: Promise = Promise::resolve(&self.document_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let js_value: JsValue = result.account_err()?;
+    let js_value: JsValue = result.to_account_error()?;
     if js_value.is_null() || js_value.is_undefined() {
       return Ok(None);
     }

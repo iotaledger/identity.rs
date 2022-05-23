@@ -6,7 +6,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::account::types::WasmCEKAlgorithm;
+use crate::account::types::WasmCekAlgorithm;
 use crate::account::types::WasmEncryptionAlgorithm;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -22,7 +22,7 @@ impl WasmEncryptionOptions {
   #[wasm_bindgen(constructor)]
   pub fn new(
     encryption_algorithm: &WasmEncryptionAlgorithm,
-    cek_algorithm: &WasmCEKAlgorithm,
+    cek_algorithm: &WasmCekAlgorithm,
   ) -> WasmEncryptionOptions {
     WasmEncryptionOptions(EncryptionOptions::new(
       encryption_algorithm.clone().into(),

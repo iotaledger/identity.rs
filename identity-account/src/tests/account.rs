@@ -363,6 +363,63 @@ async fn test_account_publish_options_force_integration() {
 }
 
 #[tokio::test]
+async fn test_account_has_document_with_valid_signature_after_publication() {
+  let config = AccountConfig::default().autopublish(false).testmode(true);
+  let client = ClientBuilder::new().node_sync_disabled().build().await.unwrap();
+  let account_setup = AccountSetup::new(Arc::new(MemStore::new()), Arc::new(client), config);
+  let mut account = Account::create_identity(account_setup, IdentitySetup::new())
+    .await
+    .unwrap();
+
+  account.publish().await.unwrap();
+
+  let initial_doc: IotaDocument = account.document().to_owned();
+  initial_doc.verify_document(account.document()).unwrap();
+
+  // Rotate signing methods.
+  account
+    .update_identity()
+    .create_method()
+    .content(MethodContent::GenerateEd25519)
+    .fragment("another-sign")
+    .scope(MethodScope::capability_invocation())
+    .apply()
+    .await
+    .unwrap();
+
+  account
+    .update_identity()
+    .delete_method()
+    .fragment(IotaDocument::DEFAULT_METHOD_FRAGMENT)
+    .apply()
+    .await
+    .unwrap();
+
+  // We have to force an integration update here, because in test mode,
+  // the account still publishes a diff update otherwise.
+  account
+    .publish_with_options(PublishOptions::default().force_integration_update(true))
+    .await
+    .unwrap();
+
+  // Account document has a valid signature with respect to the initial doc.
+  initial_doc.verify_document(account.document()).unwrap();
+
+  account
+    .update_identity()
+    .create_method()
+    .content(MethodContent::GenerateEd25519)
+    .fragment("test-key-2")
+    .scope(MethodScope::authentication())
+    .apply()
+    .await
+    .unwrap();
+
+  // If we don't publish, the document will not be signed.
+  initial_doc.verify_document(account.document()).unwrap_err();
+}
+
+#[tokio::test]
 async fn test_account_sync_no_changes() -> Result<()> {
   network_resilient_test(2, |n| {
     Box::pin(async move {

@@ -279,7 +279,7 @@ impl Storage for MemStore {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CekAlgorithm::ECDH_ES(agreement) => {
+          CekAlgorithm::EcdhEs(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
             let concat_kdf: Vec<u8> = concat_kdf(
               encryption_options.cek_algorithm().name(),
@@ -288,7 +288,7 @@ impl Storage for MemStore {
               agreement.apu(),
               agreement.apv(),
             )
-            .map_err(|e| Error::EncryptionFailure(e))?;
+            .map_err(Error::EncryptionFailure)?;
             try_encrypt(
               &concat_kdf,
               &encryption_options.encryption_algorithm(),
@@ -324,7 +324,7 @@ impl Storage for MemStore {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CekAlgorithm::ECDH_ES(agreement) => {
+          CekAlgorithm::EcdhEs(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
             let concat_kdf: Vec<u8> = concat_kdf(
               encryption_options.cek_algorithm().name(),
@@ -333,7 +333,7 @@ impl Storage for MemStore {
               agreement.apu(),
               agreement.apv(),
             )
-            .map_err(|e| Error::DecryptionFailure(e))?;
+            .map_err(Error::DecryptionFailure)?;
             try_decrypt(&concat_kdf, &encryption_options.encryption_algorithm(), &data)
           }
         }

@@ -4,7 +4,7 @@
 pub use agreement_info::WasmAgreementInfo;
 pub use auto_save::OptionAutoSave;
 pub use auto_save::WasmAutoSave;
-pub use cek_algorithm::WasmCEKAlgorithm;
+pub use cek_algorithm::WasmCekAlgorithm;
 pub use encrypted_data::WasmEncryptedData;
 pub use encryption_algorithm::WasmEncryptionAlgorithm;
 pub use encryption_options::WasmEncryptionOptions;

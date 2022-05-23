@@ -299,7 +299,7 @@ impl Storage for Stronghold {
           Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
         })?;
         match encryption_options.cek_algorithm() {
-          CekAlgorithm::ECDH_ES(agreement) => {
+          CekAlgorithm::EcdhEs(agreement) => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
             let concat_kdf_output: Location = concat_kdf(
               &client,
@@ -343,7 +343,7 @@ impl Storage for Stronghold {
           .try_into()
           .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
-          CekAlgorithm::ECDH_ES(agreement) => {
+          CekAlgorithm::EcdhEs(agreement) => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
             let concat_kdf: Location = concat_kdf(
               &client,
@@ -661,7 +661,6 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
 }
 
 fn random_location(key_type: KeyType) -> KeyLocation {
-  // NOTE: do not use rand::thread_rng() or rand::random(), breaks musl-libc cross-compilation.
   let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
   let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
 
