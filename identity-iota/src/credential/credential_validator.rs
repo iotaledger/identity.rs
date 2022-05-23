@@ -22,9 +22,9 @@ use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
 use crate::credential::errors::CompoundCredentialValidationError;
-use crate::revocation::Error as RevocationError;
-use crate::revocation::RevocationMethods;
+use crate::revocation::RevocationMethod;
 use crate::revocation::SimpleRevocationList2022;
+use crate::revocation::SIMPLE_REVOCATION_METHOD_NAME;
 use crate::tangle::Resolver;
 use crate::Result;
 
@@ -183,13 +183,8 @@ impl CredentialValidator {
   /// Checks if the credential has been revoked by fetching the issuer's DID Document from the tangle
   pub async fn check_revoked<T>(credential: &Credential<T>) -> ValidationUnitResult {
     match &credential.credential_status {
-      OneOrMany::One(status) => CredentialValidator::check_revocation(status).await,
-      OneOrMany::Many(vec_status) => {
-        for status in vec_status {
-          let _ = CredentialValidator::check_revocation(status).await?;
-        }
-        Ok(())
-      }
+      Some(status) => CredentialValidator::check_revocation(status).await,
+      None => Ok(()),
     }
   }
 
@@ -211,17 +206,16 @@ impl CredentialValidator {
       .iter()
       .find(|service| &issuer_did.to_url() == service.id())
     {
-      Some(service) => {
-        match RevocationMethods::try_from(service.type_()).map_err(ValidationError::RevocationCheckError)? {
-          RevocationMethods::SimpleRevocationList2022 => match service.service_endpoint() {
-            ServiceEndpoint::One(url) => CredentialValidator::check_simple_revocation_list(credential_status, url),
-            ServiceEndpoint::Set(_) | ServiceEndpoint::Map(_) => Err(ValidationError::InvalidServiceEnpoint(format!(
-              "{} should contain a single URL as value",
-              issuer_did.to_url()
-            ))),
-          },
-        }
-      }
+      Some(service) => match service.type_() {
+        SIMPLE_REVOCATION_METHOD_NAME => match service.service_endpoint() {
+          ServiceEndpoint::One(url) => CredentialValidator::check_simple_revocation_list(credential_status, url),
+          ServiceEndpoint::Set(_) | ServiceEndpoint::Map(_) => Err(ValidationError::InvalidServiceEnpoint(format!(
+            "{} should contain a single URL as value",
+            issuer_did.to_url()
+          ))),
+        },
+        _ => Err(ValidationError::UnsupportedRevocationMethod(service.type_().to_owned())),
+      },
       None => {
         // No revocation service endpoint was found
         Err(ValidationError::InvalidServiceEnpoint(format!(
@@ -232,22 +226,21 @@ impl CredentialValidator {
     }
   }
 
-  /// By deserializing the `Url` path into a `SimpleRevocationList2022`, checks if the index given in `Status` is revoked.
+  /// By deserializing the `Url` path into a `SimpleRevocationList2022`, checks if the index given in `Status` is
+  /// revoked.
   fn check_simple_revocation_list(credential_status: &Status, url: &Url) -> ValidationUnitResult {
-    let revocation_list: SimpleRevocationList2022 =
-      SimpleRevocationList2022::deserialize_b64(url.path()).map_err(ValidationError::RevocationCheckError)?;
+    let revocation_list: SimpleRevocationList2022 = SimpleRevocationList2022::deserialize_compressed_b64(url.path())
+      .map_err(ValidationError::RevocationCheckError)?;
     let credential_index: &Value = credential_status
       .properties
-      .get(SimpleRevocationList2022::index_property())
+      .get(SimpleRevocationList2022::credential_list_index_property())
       .ok_or_else(|| ValidationError::InvalidRevocationIndex("property not found".to_owned()))?;
     match credential_index {
       Value::String(index) => {
         let index: u32 =
           u32::from_str(index).map_err(|_e| ValidationError::InvalidRevocationIndex(format!("value: {}", index)))?;
         if revocation_list.is_revoked(index) {
-          Err(ValidationError::RevocationCheckError(
-            RevocationError::RevokedCredential(index),
-          ))
+          Err(ValidationError::RevokedCredential(index))
         } else {
           Ok(())
         }
