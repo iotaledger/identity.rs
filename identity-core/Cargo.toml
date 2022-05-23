@@ -11,6 +11,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
+base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 identity-diff = { version = "=0.5.0", path = "../identity-diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }

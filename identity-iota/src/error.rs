@@ -41,7 +41,4 @@ pub enum Error {
   /// Caused by one or more failures when validating a presentation.
   #[error("presentation validation failed")]
   PresentationValidationError(#[from] crate::credential::CompoundPresentationValidationError),
-  /// Caused failing to check for revocation or by finding a revoked credential.
-  #[error("revocation check failed")]
-  RevocationCheckError(#[from] crate::revocation::Error),
 }

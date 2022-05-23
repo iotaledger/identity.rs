@@ -53,6 +53,21 @@ pub enum ValidationError {
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
+  /// Indicates that revocation could not be checked or by finding a revoked credential.
+  #[error("revocation check failed")]
+  RevocationCheckError(#[from] crate::revocation::Error),
+  /// Indicates that the issuer DID is an invalid `IotaDID`.
+  #[error("invalid IotaDID: {0}")]
+  InvalidIssuerDID(String, #[source] identity_iota_core::error::Error),
+  /// Indicates that the issuer's DID  document could not be obtained from the given DID.
+  #[error("did resolotion error: {0}")]
+  DIDResolutionError(String),
+  /// Indicates that the revocation index is invalid.
+  #[error("revocation index {0}")]
+  InvalidRevocationIndex(String),
+  /// Indicates that the service for checking revocation is not present in the issuer's document.
+  #[error("revocation service {0}")]
+  InvalidServiceEnpoint(String),
 }
 
 #[derive(Debug)]

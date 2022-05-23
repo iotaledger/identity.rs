@@ -1,17 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use identity_core::common::OneOrMany;
-use identity_core::common::OrderedSet;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_core::common::Value;
 use identity_credential::credential::Credential;
 use identity_credential::credential::Status;
 use identity_did::did::DID;
+use identity_did::service::ServiceEndpoint;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::document::IotaService;
 use serde::Serialize;
 
 use super::errors::SignerContext;
@@ -20,6 +22,9 @@ use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
 use crate::credential::errors::CompoundCredentialValidationError;
+use crate::revocation::Error as RevocationError;
+use crate::revocation::RevocationMethods;
+use crate::revocation::SimpleRevocationList2022;
 use crate::tangle::Resolver;
 use crate::Result;
 
@@ -178,31 +183,79 @@ impl CredentialValidator {
   /// Checks if the credential has been revoked by fetching the issuer's DID Document from the tangle
   pub async fn check_revoked<T>(credential: &Credential<T>) -> ValidationUnitResult {
     match &credential.credential_status {
-      OneOrMany::One(status) => CredentialValidator::check_revocation_list(&status).await,
+      OneOrMany::One(status) => CredentialValidator::check_revocation(status).await,
       OneOrMany::Many(vec_status) => {
         for status in vec_status {
-          let _ = CredentialValidator::check_revocation_list(&status).await?;
+          let _ = CredentialValidator::check_revocation(status).await?;
         }
         Ok(())
       }
     }
   }
 
-  async fn check_revocation_list(credential_status: &Status) -> ValidationUnitResult {
+  async fn check_revocation(credential_status: &Status) -> ValidationUnitResult {
     // Fetches the issuer's DID document from the tangle
-    let resolver: Resolver = Resolver::new().await.unwrap();
-    let issuer_did: IotaDID = IotaDID::parse(credential_status.id.clone().into_string()).unwrap();
-    let issuer_document: IotaDocument = resolver.resolve(&issuer_did).await.unwrap().document;
+    let issuer_did: IotaDID = IotaDID::parse(credential_status.id.clone().into_string())
+      .map_err(|e| ValidationError::InvalidIssuerDID(credential_status.id.clone().into_string(), e))?;
+    let resolver: Resolver = Resolver::new()
+      .await
+      .map_err(|e| ValidationError::DIDResolutionError(format!("{}", e)))?;
+    let issuer_document: IotaDocument = resolver
+      .resolve(&issuer_did)
+      .await
+      .map_err(|e| ValidationError::DIDResolutionError(format!("{}", e)))?
+      .document;
     // Looks for the appropriate service to check for revocation
-    for service in issuer_document.service().iter() {
-      if &issuer_did.to_url() == service.id() {
-        if service.type_() == "" {
-          unimplemented!();
+    match issuer_document
+      .service()
+      .iter()
+      .find(|service| &issuer_did.to_url() == service.id())
+    {
+      Some(service) => {
+        match RevocationMethods::try_from(service.type_()).map_err(ValidationError::RevocationCheckError)? {
+          RevocationMethods::SimpleRevocationList2022 => match service.service_endpoint() {
+            ServiceEndpoint::One(url) => CredentialValidator::check_simple_revocation_list(credential_status, url),
+            ServiceEndpoint::Set(_) | ServiceEndpoint::Map(_) => Err(ValidationError::InvalidServiceEnpoint(format!(
+              "{} should contain a single URL as value",
+              issuer_did.to_url()
+            ))),
+          },
         }
       }
+      None => {
+        // No revocation service endpoint was found
+        Err(ValidationError::InvalidServiceEnpoint(format!(
+          "{} not found",
+          issuer_did.to_url()
+        )))
+      }
     }
-    // No service with the appropriate DID or type was found
-    unimplemented!();
+  }
+
+  /// By deserializing the `Url` path into a `SimpleRevocationList2022`, checks if the index given in `Status` is revoked.
+  fn check_simple_revocation_list(credential_status: &Status, url: &Url) -> ValidationUnitResult {
+    let revocation_list: SimpleRevocationList2022 =
+      SimpleRevocationList2022::deserialize_b64(url.path()).map_err(ValidationError::RevocationCheckError)?;
+    let credential_index: &Value = credential_status
+      .properties
+      .get(SimpleRevocationList2022::index_property())
+      .ok_or_else(|| ValidationError::InvalidRevocationIndex("property not found".to_owned()))?;
+    match credential_index {
+      Value::String(index) => {
+        let index: u32 =
+          u32::from_str(index).map_err(|_e| ValidationError::InvalidRevocationIndex(format!("value: {}", index)))?;
+        if revocation_list.is_revoked(index) {
+          Err(ValidationError::RevocationCheckError(
+            RevocationError::RevokedCredential(index),
+          ))
+        } else {
+          Ok(())
+        }
+      }
+      Value::Null | Value::Bool(_) | Value::Array(_) | Value::Object(_) | Value::Number(_) => Err(
+        ValidationError::InvalidRevocationIndex("invalid property type".to_owned()),
+      ),
+    }
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation

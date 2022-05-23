@@ -1,9 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::error::Error as RevocationError;
-use crate::error::Error;
-use crate::error::Result;
+use super::error::Error;
+use super::error::Result;
 
 /// All supported methods for revoking a credential
 pub enum RevocationMethods {
@@ -24,9 +23,7 @@ impl TryFrom<&str> for RevocationMethods {
   fn try_from(value: &str) -> Result<Self> {
     match value {
       "SimpleRevocationList2022" => Ok(Self::SimpleRevocationList2022),
-      _ => Err(Error::RevocationCheckError(
-        RevocationError::UnsupportedRevocationMethod(value.to_owned()),
-      )),
+      _ => Err(Error::UnsupportedRevocationMethod(value.to_owned())),
     }
   }
 }
