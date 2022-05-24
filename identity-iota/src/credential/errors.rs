@@ -54,11 +54,8 @@ pub enum ValidationError {
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
   /// Indicates that the issuer's DID is an invalid `IotaDID`.
-  #[error("invalid IotaDID: {0}")]
-  InvalidIssuerDID(String, #[source] identity_iota_core::error::Error),
-  /// Indicates that the issuer's DID  document could not be obtained from the given DID.
-  #[error("did resolotion error: {0}")]
-  DIDResolutionError(String),
+  #[error("invalid service id: {0}")]
+  InvalidServiceID(String, #[source] identity_iota_core::error::Error),
   /// Indicates that the revocation index is invalid.
   #[error("revocation index {0}")]
   InvalidRevocationIndex(String),

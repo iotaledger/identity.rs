@@ -25,7 +25,6 @@ use crate::credential::errors::CompoundCredentialValidationError;
 use crate::revocation::RevocationMethod;
 use crate::revocation::SimpleRevocationList2022;
 use crate::revocation::SIMPLE_REVOCATION_METHOD_NAME;
-use crate::tangle::Resolver;
 use crate::Result;
 
 /// A struct for validating [`Credential`]s.
@@ -180,38 +179,41 @@ impl CredentialValidator {
     }
   }
 
-  /// Checks if the credential has been revoked by fetching the issuer's DID Document from the tangle
-  pub async fn check_revoked<T>(credential: &Credential<T>) -> ValidationUnitResult {
+  /// Checks if the credential has been revoked.
+  pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
     match &credential.credential_status {
-      Some(status) => CredentialValidator::check_revocation(status).await,
+      Some(status) => {
+        let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
+        let issuer_did: IotaDID = issuer_did.map_err(|e| ValidationError::SignerUrl {
+          source: e.into(),
+          signer_ctx: SignerContext::Issuer,
+        })?;
+        issuers
+          .iter()
+          .find(|issuer| issuer.as_ref().id() == &issuer_did)
+          .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
+          .and_then(|issuer| CredentialValidator::check_revocation(status, issuer))
+      }
       None => Ok(()),
     }
   }
 
-  async fn check_revocation(credential_status: &Status) -> ValidationUnitResult {
-    // Fetches the issuer's DID document from the tangle
-    let issuer_did: IotaDID = IotaDID::parse(credential_status.id.clone().into_string())
-      .map_err(|e| ValidationError::InvalidIssuerDID(credential_status.id.clone().into_string(), e))?;
-    let resolver: Resolver = Resolver::new()
-      .await
-      .map_err(|e| ValidationError::DIDResolutionError(format!("{}", e)))?;
-    let issuer_document: IotaDocument = resolver
-      .resolve(&issuer_did)
-      .await
-      .map_err(|e| ValidationError::DIDResolutionError(format!("{}", e)))?
-      .document;
+  fn check_revocation<D: AsRef<IotaDocument>>(credential_status: &Status, issuer: D) -> ValidationUnitResult {
+    let issuer_service: IotaDID = IotaDID::parse(credential_status.id.clone().into_string())
+      .map_err(|e| ValidationError::InvalidServiceID(credential_status.id.clone().into_string(), e))?;
     // Looks for the appropriate service to check for revocation
-    match issuer_document
+    match issuer
+      .as_ref()
       .service()
       .iter()
-      .find(|service| &issuer_did.to_url() == service.id())
+      .find(|service| &issuer_service.to_url() == service.id())
     {
       Some(service) => match service.type_() {
         SIMPLE_REVOCATION_METHOD_NAME => match service.service_endpoint() {
           ServiceEndpoint::One(url) => CredentialValidator::check_simple_revocation_list(credential_status, url),
           ServiceEndpoint::Set(_) | ServiceEndpoint::Map(_) => Err(ValidationError::InvalidServiceEnpoint(format!(
             "{} should contain a single URL as value",
-            issuer_did.to_url()
+            issuer_service.to_url()
           ))),
         },
         _ => Err(ValidationError::UnsupportedRevocationMethod(service.type_().to_owned())),
@@ -220,7 +222,7 @@ impl CredentialValidator {
         // No revocation service endpoint was found
         Err(ValidationError::InvalidServiceEnpoint(format!(
           "{} not found",
-          issuer_did.to_url()
+          issuer_service.to_url()
         )))
       }
     }
@@ -281,11 +283,14 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
+    let revocation_validation = std::iter::once_with(|| Self::check_revoked(credential, issuers));
+
     let validation_units_error_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
       .chain(subject_holder_validation)
       .chain(signature_validation)
+      .chain(revocation_validation)
       .filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
       FailFast::FirstError => validation_units_error_iter.take(1).collect(),
