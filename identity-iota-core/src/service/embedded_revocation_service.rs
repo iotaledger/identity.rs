@@ -19,7 +19,6 @@ use serde::Serialize;
 
 use super::error::Result;
 use super::error::ServiceError;
-use super::EmbeddedServiceBuilder;
 use crate::revocation::EmbeddedRevocationList;
 
 /// A DID Document Service used to enable validators to check the status of a credential.
@@ -52,28 +51,6 @@ where
     })
   }
 
-  /// Creates a `EmbeddedServiceBuilder` to configure a new `EmbeddedRevocationService`.
-  pub fn builder() -> EmbeddedServiceBuilder<D> {
-    EmbeddedServiceBuilder::new()
-  }
-
-  /// Returns a new `Service` based on the `ServiceBuilder` configuration.
-  pub fn from_builder(builder: EmbeddedServiceBuilder<D>) -> Result<Self> {
-    let id: DIDUrl<D> = builder
-      .id
-      .ok_or_else(|| ServiceError::InvalidServiceId("missing id property".to_owned()))?;
-    let _ = id
-      .fragment()
-      .ok_or_else(|| ServiceError::InvalidServiceId("missing id fragment".to_owned()))?;
-    let service_endpoint: Url = builder
-      .service_endpoint
-      .ok_or_else(|| ServiceError::InvalidServiceEndpoint("missing url".to_owned()))?;
-    Ok(Self {
-      id,
-      type_: builder.type_,
-      service_endpoint,
-    })
-  }
   /// Returns a reference to the `EmbeddedRevocationService` id.
   pub fn id(&self) -> &DIDUrl<D> {
     &self.id
