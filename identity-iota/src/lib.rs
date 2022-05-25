@@ -28,5 +28,4 @@ pub mod chain;
 pub mod credential;
 pub mod document;
 pub mod error;
-pub mod revocation;
 pub mod tangle;

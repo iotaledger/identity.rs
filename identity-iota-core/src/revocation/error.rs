@@ -9,12 +9,10 @@ pub enum RevocationError {
   Base64DecodingError(String, #[source] identity_core::error::Error),
   #[error("unable to compress data")]
   CompressionError(#[source] std::io::Error),
-  #[error("unable to compress data")]
+  #[error("unable to decompress data")]
   DecompressionError(#[source] std::io::Error),
   #[error("revocation list could not be deserialized")]
   DeserializationError(#[source] std::io::Error),
   #[error("revocation list could not be serialized")]
   SerializationError(#[source] std::io::Error),
-  #[error("method {0} is not supported for revocation")]
-  UnsupportedRevocationMethod(String),
 }

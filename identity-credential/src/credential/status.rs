@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential].
@@ -14,7 +13,7 @@ pub struct Status {
   pub id: Url,
   /// The type(s) of the credential status.
   #[serde(rename = "type")]
-  pub types: OneOrMany<String>,
+  pub types: Option<String>,
   /// Additional properties of the credential status.
   #[serde(flatten)]
   pub properties: Object,
@@ -22,23 +21,13 @@ pub struct Status {
 
 impl Status {
   /// Creates a new `Status`.
-  pub fn new<T>(id: Url, types: T) -> Self
-  where
-    T: Into<OneOrMany<String>>,
-  {
+  pub fn new(id: Url, types: Option<String>) -> Self {
     Self::with_properties(id, types, Object::new())
   }
 
   /// Creates a new `Status` with the given `properties`.
-  pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
-  where
-    T: Into<OneOrMany<String>>,
-  {
-    Self {
-      id,
-      types: types.into(),
-      properties,
-    }
+  pub fn with_properties(id: Url, types: Option<String>, properties: Object) -> Self {
+    Self { id, types, properties }
   }
 }
 
@@ -54,6 +43,6 @@ mod tests {
   fn test_from_json() {
     let status: Status = Status::from_json(JSON).unwrap();
     assert_eq!(status.id, "https://example.edu/status/24");
-    assert_eq!(status.types.as_slice(), ["CredentialStatusList2017"]);
+    assert_eq!(status.types, Some("CredentialStatusList2017".to_owned()));
   }
 }

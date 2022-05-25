@@ -22,7 +22,6 @@ use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
 use crate::credential::errors::CompoundCredentialValidationError;
-use crate::revocation::RevocationMethod;
 use crate::revocation::SimpleRevocationList2022;
 use crate::revocation::SIMPLE_REVOCATION_METHOD_NAME;
 use crate::Result;

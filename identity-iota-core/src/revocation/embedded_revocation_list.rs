@@ -21,49 +21,44 @@ use serde::Serialize;
 
 use super::error::Result;
 use super::error::RevocationError;
-use super::traits::RevocationMethod;
 
-pub(crate) const SIMPLE_REVOCATION_METHOD_NAME: &str = "SimpleRevocationList2022";
+pub(crate) const EMBEDDED_REVOCATION_METHOD_NAME: &str = "EmbeddedRevocationList";
 const REVOCATION_LIST_INDEX: &str = "revocationListIndex";
 
-pub struct SimpleRevocationList2022(RoaringBitmap);
+pub struct EmbeddedRevocationList(RoaringBitmap);
 
-impl RevocationMethod<'_> for SimpleRevocationList2022 {
-  type Item = Self;
-
+impl EmbeddedRevocationList {
   /// Returns the name of the revocation method.
-  fn name() -> &'static str {
-    SIMPLE_REVOCATION_METHOD_NAME
+  pub fn name() -> &'static str {
+    EMBEDDED_REVOCATION_METHOD_NAME
   }
 
   // Returns the name of the property that contains the index of the credential to be checked.
-  fn credential_list_index_property() -> &'static str {
+  pub fn credential_list_index_property() -> &'static str {
     REVOCATION_LIST_INDEX
   }
 
-  /// Creates a new revocation method of type [`Self::Item`].
-  fn new() -> Self::Item {
+  /// Creates a new `EmbeddedRevocationList` revocation method.
+  pub fn new() -> Self {
     Self(RoaringBitmap::new())
   }
 
   /// Returns `true` if the credential at the given `index` is revoked.
-  fn is_revoked(&self, index: u32) -> bool {
+  pub fn is_revoked(&self, index: u32) -> bool {
     self.0.contains(index)
   }
 
   /// Revokes the credential at the given `index`.
-  fn revoke(&mut self, index: u32) -> bool {
+  pub fn revoke(&mut self, index: u32) -> bool {
     self.0.insert(index)
   }
 
   /// The credential at the given `index` will be set to valid.
-  fn undo_revocation(&mut self, index: u32) -> bool {
+  pub fn undo_revocation(&mut self, index: u32) -> bool {
     self.0.remove(index)
   }
-}
 
-impl SimpleRevocationList2022 {
-  /// Deserializes a compressed [`SimpleRevocationList2022`] base64-encoded `data`.
+  /// Deserializes a compressed [`EmbeddedRevocationList`] base64-encoded `data`.
   pub fn deserialize_compressed_b64(data: &str) -> Result<Self> {
     let decoded_data: Vec<u8> =
       decode_b64(data).map_err(|e| RevocationError::Base64DecodingError(data.to_owned(), e))?;
@@ -71,20 +66,20 @@ impl SimpleRevocationList2022 {
     Self::deserialize_slice(&decompressed_data)
   }
 
-  /// Serializes and compressess [`SimpleRevocationList2022`] as a base64-encoded `String`.
+  /// Serializes and compressess [`EmbeddedRevocationList`] as a base64-encoded `String`.
   pub fn serialize_compressed_b64(&self) -> Result<String> {
     let serialized_data: Vec<u8> = self.serialize_vec()?;
     Self::compress_zlib(&serialized_data).map(|data| encode_b64(&data))
   }
 
-  /// Deserializes [`SimpleRevocationList2022`] from a slice of bytes.
+  /// Deserializes [`EmbeddedRevocationList`] from a slice of bytes.
   pub fn deserialize_slice(data: &[u8]) -> Result<Self> {
     RoaringBitmap::deserialize_from(data)
       .map_err(RevocationError::DeserializationError)
       .map(Self)
   }
 
-  /// Serializes a [`SimpleRevocationList2022`] as a vector of bytes.
+  /// Serializes a [`EmbeddedRevocationList`] as a vector of bytes.
   pub fn serialize_vec(&self) -> Result<Vec<u8>> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
     self
@@ -113,7 +108,7 @@ impl SimpleRevocationList2022 {
   }
 }
 
-impl Serialize for SimpleRevocationList2022 {
+impl Serialize for EmbeddedRevocationList {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: Serializer,
@@ -125,7 +120,7 @@ impl Serialize for SimpleRevocationList2022 {
   }
 }
 
-impl<'de> Deserialize<'de> for SimpleRevocationList2022 {
+impl<'de> Deserialize<'de> for EmbeddedRevocationList {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
     D: Deserializer<'de>,
@@ -133,7 +128,7 @@ impl<'de> Deserialize<'de> for SimpleRevocationList2022 {
     struct __Visitor;
 
     impl<'de> Visitor<'de> for __Visitor {
-      type Value = SimpleRevocationList2022;
+      type Value = EmbeddedRevocationList;
 
       fn expecting(&self, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str("a base64-encoded string")
@@ -143,7 +138,7 @@ impl<'de> Deserialize<'de> for SimpleRevocationList2022 {
       where
         E: de::Error,
       {
-        SimpleRevocationList2022::deserialize_compressed_b64(value).map_err(E::custom)
+        EmbeddedRevocationList::deserialize_compressed_b64(value).map_err(E::custom)
       }
     }
 
