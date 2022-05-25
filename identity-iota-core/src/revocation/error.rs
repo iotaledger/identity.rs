@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) type Result<T, E = RevocationError> = std::result::Result<T, E>;
+pub(crate) type Result<T, E = RevocationMethodError> = std::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
-pub enum RevocationError {
+pub enum RevocationMethodError {
   #[error("unable to decode base64 `String`: {0}")]
   Base64DecodingError(String, #[source] identity_core::error::Error),
   #[error("unable to compress data")]

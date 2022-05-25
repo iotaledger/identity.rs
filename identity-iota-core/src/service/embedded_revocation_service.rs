@@ -41,6 +41,17 @@ impl<D> EmbeddedRevocationService<D>
 where
   D: DID,
 {
+  pub fn new(id: DIDUrl<D>, service_endpoint: Url) -> Result<Self> {
+    if id.fragment().unwrap_or_default().is_empty() {
+      return Err(ServiceError::InvalidServiceId("missing id fragment".to_owned()));
+    }
+    Ok(Self {
+      id,
+      type_: EmbeddedRevocationList::name().to_owned(),
+      service_endpoint,
+    })
+  }
+
   /// Creates a `EmbeddedServiceBuilder` to configure a new `EmbeddedRevocationService`.
   pub fn builder() -> EmbeddedServiceBuilder<D> {
     EmbeddedServiceBuilder::new()

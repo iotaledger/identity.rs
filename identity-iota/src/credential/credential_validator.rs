@@ -14,6 +14,8 @@ use identity_did::service::ServiceEndpoint;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
+use identity_iota_core::revocation::EmbeddedRevocationList;
+use identity_iota_core::revocation::EMBEDDED_REVOCATION_METHOD_NAME;
 use serde::Serialize;
 
 use super::errors::SignerContext;
@@ -22,8 +24,6 @@ use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
 use crate::credential::errors::CompoundCredentialValidationError;
-use crate::revocation::SimpleRevocationList2022;
-use crate::revocation::SIMPLE_REVOCATION_METHOD_NAME;
 use crate::Result;
 
 /// A struct for validating [`Credential`]s.
@@ -208,7 +208,7 @@ impl CredentialValidator {
       .find(|service| &issuer_service.to_url() == service.id())
     {
       Some(service) => match service.type_() {
-        SIMPLE_REVOCATION_METHOD_NAME => match service.service_endpoint() {
+        EMBEDDED_REVOCATION_METHOD_NAME => match service.service_endpoint() {
           ServiceEndpoint::One(url) => CredentialValidator::check_simple_revocation_list(credential_status, url),
           ServiceEndpoint::Set(_) | ServiceEndpoint::Map(_) => Err(ValidationError::InvalidServiceEnpoint(format!(
             "{} should contain a single URL as value",
@@ -227,14 +227,14 @@ impl CredentialValidator {
     }
   }
 
-  /// By deserializing the `Url` path into a `SimpleRevocationList2022`, checks if the index given in `Status` is
+  /// By deserializing the `Url` path into a `EmbeddedRevocationList`, checks if the index given in `Status` is
   /// revoked.
   fn check_simple_revocation_list(credential_status: &Status, url: &Url) -> ValidationUnitResult {
-    let revocation_list: SimpleRevocationList2022 = SimpleRevocationList2022::deserialize_compressed_b64(url.path())
-      .map_err(ValidationError::RevocationCheckError)?;
+    let revocation_list: EmbeddedRevocationList =
+      EmbeddedRevocationList::deserialize_compressed_b64(url.path()).map_err(ValidationError::RevocationCheckError)?;
     let credential_index: &Value = credential_status
       .properties
-      .get(SimpleRevocationList2022::credential_list_index_property())
+      .get(EmbeddedRevocationList::credential_list_index_property())
       .ok_or_else(|| ValidationError::InvalidRevocationIndex("property not found".to_owned()))?;
     match credential_index {
       Value::String(index) => {

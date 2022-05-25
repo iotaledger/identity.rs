@@ -20,9 +20,9 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use super::error::Result;
-use super::error::RevocationError;
+use super::error::RevocationMethodError;
 
-pub(crate) const EMBEDDED_REVOCATION_METHOD_NAME: &str = "EmbeddedRevocationList";
+pub const EMBEDDED_REVOCATION_METHOD_NAME: &str = "EmbeddedRevocationList";
 const REVOCATION_LIST_INDEX: &str = "revocationListIndex";
 
 pub struct EmbeddedRevocationList(RoaringBitmap);
@@ -61,7 +61,7 @@ impl EmbeddedRevocationList {
   /// Deserializes a compressed [`EmbeddedRevocationList`] base64-encoded `data`.
   pub fn deserialize_compressed_b64(data: &str) -> Result<Self> {
     let decoded_data: Vec<u8> =
-      decode_b64(data).map_err(|e| RevocationError::Base64DecodingError(data.to_owned(), e))?;
+      decode_b64(data).map_err(|e| RevocationMethodError::Base64DecodingError(data.to_owned(), e))?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
   }
@@ -75,7 +75,7 @@ impl EmbeddedRevocationList {
   /// Deserializes [`EmbeddedRevocationList`] from a slice of bytes.
   pub fn deserialize_slice(data: &[u8]) -> Result<Self> {
     RoaringBitmap::deserialize_from(data)
-      .map_err(RevocationError::DeserializationError)
+      .map_err(RevocationMethodError::DeserializationError)
       .map(Self)
   }
 
@@ -85,7 +85,7 @@ impl EmbeddedRevocationList {
     self
       .0
       .serialize_into(&mut output)
-      .map_err(RevocationError::SerializationError)?;
+      .map_err(RevocationMethodError::SerializationError)?;
     Ok(output)
   }
 
@@ -93,8 +93,8 @@ impl EmbeddedRevocationList {
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
     encoder
       .write_all(input.as_ref())
-      .map_err(RevocationError::CompressionError)?;
-    encoder.finish().map_err(RevocationError::CompressionError)
+      .map_err(RevocationMethodError::CompressionError)?;
+    encoder.finish().map_err(RevocationMethodError::CompressionError)
   }
 
   fn decompress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>> {
@@ -102,8 +102,8 @@ impl EmbeddedRevocationList {
     let mut decoder = ZlibDecoder::new(writer);
     decoder
       .write_all(input.as_ref())
-      .map_err(RevocationError::DecompressionError)?;
-    writer = decoder.finish().map_err(RevocationError::DecompressionError)?;
+      .map_err(RevocationMethodError::DecompressionError)?;
+    writer = decoder.finish().map_err(RevocationMethodError::DecompressionError)?;
     Ok(writer)
   }
 }

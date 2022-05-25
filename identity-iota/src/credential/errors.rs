@@ -64,7 +64,7 @@ pub enum ValidationError {
   InvalidServiceEnpoint(String),
   /// Indicates that revocation could not be checked.
   #[error("revocation check failed")]
-  RevocationCheckError(#[from] crate::revocation::RevocationError),
+  RevocationCheckError(#[from] identity_iota_core::revocation::RevocationMethodError),
   /// Indicates that the credential has been revoked.
   #[error("credential at index {0} has been revoked")]
   RevokedCredential(u32),

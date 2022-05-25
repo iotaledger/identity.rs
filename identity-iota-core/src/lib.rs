@@ -25,6 +25,7 @@ pub use self::error::Result;
 #[deprecated(since = "0.5.0", note = "diff chain features are slated for removal")]
 pub mod diff;
 
+pub mod credential;
 pub mod did;
 pub mod document;
 pub mod error;

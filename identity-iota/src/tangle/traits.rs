@@ -41,16 +41,16 @@ impl TangleRef for DiffMessage {
     self.message_id()
   }
 
-  fn set_message_id(&mut self, message_id: MessageId) {
-    self.set_message_id(message_id);
+  fn set_message_id(&mut self, _message_id: MessageId) {
+    self.set_message_id(_message_id);
   }
 
   fn previous_message_id(&self) -> &MessageId {
     self.previous_message_id()
   }
 
-  fn set_previous_message_id(&mut self, message_id: MessageId) {
-    self.set_previous_message_id(message_id);
+  fn set_previous_message_id(&mut self, _message_id: MessageId) {
+    self.set_previous_message_id(_message_id);
   }
 }
 
