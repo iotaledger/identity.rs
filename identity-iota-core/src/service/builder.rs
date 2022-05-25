@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(clippy::new_without_default)]
+
 use identity_core::common::Url;
 use identity_did::did::CoreDID;
 use identity_did::did::DIDUrl;

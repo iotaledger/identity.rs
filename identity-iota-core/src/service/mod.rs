@@ -7,4 +7,4 @@ mod error;
 
 pub use self::builder::EmbeddedServiceBuilder;
 pub use self::embedded_revocation_service::EmbeddedRevocationService;
-pub use self::ServiceError;
+pub use self::error::ServiceError;

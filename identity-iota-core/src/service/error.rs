@@ -5,6 +5,8 @@ pub(crate) type Result<T, E = ServiceError> = std::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum ServiceError {
+  #[error("invalid service")]
+  InvalidService(#[source] identity_did::error::Error),
   #[error("invalid service id: {0}")]
   InvalidServiceId(String),
   #[error("invalid service type: {0}")]

@@ -50,13 +50,13 @@ where
   pub fn from_builder(builder: EmbeddedServiceBuilder<D>) -> Result<Self> {
     let id: DIDUrl<D> = builder
       .id
-      .ok_or(ServiceError::InvalidServiceId("missing id property".to_owned()))?;
+      .ok_or_else(|| ServiceError::InvalidServiceId("missing id property".to_owned()))?;
     let _ = id
       .fragment()
-      .ok_or(ServiceError::InvalidServiceId("missing id fragment".to_owned()))?;
+      .ok_or_else(|| ServiceError::InvalidServiceId("missing id fragment".to_owned()))?;
     let service_endpoint: Url = builder
       .service_endpoint
-      .ok_or(ServiceError::InvalidServiceEndpoint("missing url".to_owned()))?;
+      .ok_or_else(|| ServiceError::InvalidServiceEndpoint("missing url".to_owned()))?;
     Ok(Self {
       id,
       type_: builder.type_,
@@ -96,7 +96,7 @@ where
   /// [`Error::`] if there is no fragment on the [`DIDUrl`].
   pub fn set_service_endpoint(&mut self, service_enpoint: impl AsRef<str>) -> Result<()> {
     let url: Url =
-      Url::parse(service_enpoint).map_err(|e| ServiceError::InvalidServiceEndpoint("invalid url".to_owned()))?;
+      Url::parse(service_enpoint).map_err(|_e| ServiceError::InvalidServiceEndpoint("invalid url".to_owned()))?;
     self.service_endpoint = url;
     Ok(())
   }
@@ -125,14 +125,16 @@ impl TryFrom<Service> for EmbeddedRevocationService {
   }
 }
 
-impl From<EmbeddedRevocationService> for Service {
-  fn from(service: EmbeddedRevocationService) -> Self {
-    Service {
-      id: service.id,
-      type_: service.type_,
-      service_endpoint: ServiceEndpoint::One(service.service_endpoint),
-      properties: Object::new(),
-    }
+impl TryFrom<EmbeddedRevocationService> for Service {
+  type Error = ServiceError;
+
+  fn try_from(service: EmbeddedRevocationService) -> Result<Self> {
+    Service::builder(Object::new())
+      .id(service.id)
+      .type_(service.type_)
+      .service_endpoint(ServiceEndpoint::One(service.service_endpoint))
+      .build()
+      .map_err(ServiceError::InvalidService)
   }
 }
 
@@ -163,5 +165,11 @@ where
   #[inline]
   fn key(&self) -> &Self::Key {
     self.as_ref()
+  }
+}
+
+impl Default for EmbeddedRevocationList {
+  fn default() -> Self {
+    Self::new()
   }
 }
