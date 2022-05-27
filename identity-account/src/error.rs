@@ -35,6 +35,9 @@ pub enum Error {
   UpdateError(#[from] crate::updates::UpdateError),
   #[error("method missing fragment")]
   MethodMissingFragment,
+  /// Caused by failing to revoke credentials.
+  #[error("revocation service error: {0}")]
+  CredentialRevocationError(String, #[source] identity_iota_core::service::ServiceError),
 }
 
 impl From<identity_did::did::DIDError> for Error {

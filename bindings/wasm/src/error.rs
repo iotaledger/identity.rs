@@ -97,6 +97,8 @@ impl_wasm_error_from!(
   identity::did::Error,
   identity::did::DIDError,
   identity::iota_core::Error,
+  identity::iota_core::ServiceError,
+  identity::iota_core::RevocationMethodError,
   identity::iota::ValidationError
 );
 

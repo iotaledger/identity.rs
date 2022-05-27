@@ -25,6 +25,8 @@ use super::error::RevocationMethodError;
 pub const EMBEDDED_REVOCATION_METHOD_NAME: &str = "EmbeddedRevocationList";
 const REVOCATION_LIST_INDEX: &str = "revocationListIndex";
 
+/// A compressed bitset for managing credential revocation.
+#[derive(Clone, Debug, PartialEq)]
 pub struct EmbeddedRevocationList(RoaringBitmap);
 
 impl EmbeddedRevocationList {
@@ -51,6 +53,13 @@ impl EmbeddedRevocationList {
   /// Revokes the credential at the given `index`.
   pub fn revoke(&mut self, index: u32) -> bool {
     self.0.insert(index)
+  }
+
+  /// Given the index of multiple credentials, revoke all.
+  pub fn revoke_multiple(&mut self, indexes: &[u32]) {
+    for i in indexes {
+      self.revoke(*i);
+    }
   }
 
   /// The credential at the given `index` will be set to valid.
@@ -143,5 +152,29 @@ impl<'de> Deserialize<'de> for EmbeddedRevocationList {
     }
 
     deserializer.deserialize_str(__Visitor)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::EmbeddedRevocationList;
+
+  #[test]
+  fn test_serialize_b64_round_trip() {
+    let mut embedded_revocation_list = EmbeddedRevocationList::new();
+    let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
+    assert_eq!(&b64_compressed_revocation_list, "eJyzMmAAAwADKABr");
+    assert_eq!(
+      EmbeddedRevocationList::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
+      embedded_revocation_list
+    );
+
+    embedded_revocation_list.revoke_multiple(&[0, 5, 6, 8]);
+    let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
+    assert_eq!(&b64_compressed_revocation_list, "eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI=");
+    assert_eq!(
+      EmbeddedRevocationList::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
+      embedded_revocation_list
+    );
   }
 }

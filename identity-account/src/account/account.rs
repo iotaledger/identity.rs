@@ -9,14 +9,15 @@ use std::sync::Arc;
 
 use identity_account_storage::crypto::RemoteEd25519;
 use identity_account_storage::crypto::RemoteKey;
-use serde::Serialize;
-
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::SetSignature;
+use identity_did::did::DIDUrl;
+use identity_did::did::DID;
+use identity_did::service::Service;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
@@ -27,8 +28,11 @@ use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core::service::EmbeddedRevocationService;
+use identity_iota_core::service::ServiceError;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::MessageIdExt;
+use serde::Serialize;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
@@ -304,6 +308,41 @@ where
 
     self.increment_actions();
     self.store_state().await?;
+    Ok(())
+  }
+
+  /// If the document has an `EmbeddedRevocationService` identified by `fragment`, revokes all given `credentials`.
+  pub async fn revoke_credentials(&mut self, fragment: &str, credentials: &[u32]) -> Result<()> {
+    // Finds the service to be updated
+    let mut service_id: DIDUrl<IotaDID> = self.did().clone().into_url();
+    service_id.set_fragment(Some(fragment))?;
+    let service: &mut Service<IotaDID> = self
+      .document
+      .core_document_mut()
+      .service_mut()
+      .iter_mut_unchecked()
+      .find(|service| service.id() == &service_id)
+      .ok_or_else(|| {
+        Error::CredentialRevocationError(
+          format!("service id {} not found", service_id),
+          ServiceError::InvalidServiceId(format!("id {} not found", service_id)),
+        )
+      })?;
+    // Updates the service with all revoked credential
+    let mut embedded_revocation_service: EmbeddedRevocationService =
+      EmbeddedRevocationService::try_from(service.clone())
+        .map_err(|e| Error::CredentialRevocationError("expected an EmbeddedRevocationService".to_owned(), e))?;
+    embedded_revocation_service
+      .revoke_credentials(credentials)
+      .map_err(|e| Error::CredentialRevocationError("unable to revoke credentials".to_owned(), e))?;
+    std::mem::swap(
+      service,
+      &mut embedded_revocation_service
+        .try_into()
+        .map_err(|e| Error::CredentialRevocationError("updated service is not valid".to_owned(), e))?,
+    );
+    self.increment_actions();
+    self.publish_internal(false, PublishOptions::default()).await?;
     Ok(())
   }
 

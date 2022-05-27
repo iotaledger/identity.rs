@@ -51,6 +51,9 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
+  // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
+  
+
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
     "id": "did:iota:B8DucnzULJ9E8cmaReYoePU2b7UKE9WKxyEVov8tQA7H",
@@ -73,6 +76,18 @@ async fn main() -> Result<()> {
   // ===========================================================================
   // Revoke the Verifiable Credential.
   // ===========================================================================
+
+  // Update the service for checking the credential status
+  // When verifiers look for the index corresponding to the credential, it will be set to invalid.
+  issuer.revoke_credentials("revocationService", &[5]).await?;
+
+  CredentialValidator::validate(
+    &credential,
+    &issuer.document(),
+    &CredentialValidationOptions::default(),
+    identity::iota::FailFast::FirstError,
+  )
+  .unwrap();
 
   // Remove the public key that signed the VC from the issuer's DID document
   // This effectively revokes the VC as it will no longer be able to be verified.

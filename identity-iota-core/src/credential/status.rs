@@ -91,3 +91,45 @@ impl From<EmbeddedRevocationStatus> for Status {
     Status::with_properties(embedded_status.id, Some(embedded_status.types), object)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use identity_core::common::Object;
+  use identity_core::common::Url;
+  use identity_core::common::Value;
+  use identity_credential::credential::Status;
+
+  use super::EmbeddedRevocationStatus;
+  use crate::revocation::EmbeddedRevocationList;
+
+  const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  const SERVICE: &str = "revocation";
+
+  #[test]
+  fn test_embedded_status_invariants() {
+    let iota_did_url: Url = Url::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
+    let revocation_list_index: u32 = 0;
+    let embedded_revocation_status = EmbeddedRevocationStatus::new(iota_did_url.clone(), revocation_list_index);
+
+    let object: Object = Object::from([(
+      EmbeddedRevocationList::credential_list_index_property().to_owned(),
+      Value::String(revocation_list_index.to_string()),
+    )]);
+    let status: Status = Status::with_properties(
+      iota_did_url.clone(),
+      Some(EmbeddedRevocationList::name().to_owned()),
+      object.clone(),
+    );
+    assert_eq!(embedded_revocation_status, status.try_into().unwrap());
+
+    let status_missing_property: Status = Status::with_properties(
+      iota_did_url.clone(),
+      Some(EmbeddedRevocationList::name().to_owned()),
+      Object::new(),
+    );
+    assert!(EmbeddedRevocationStatus::try_from(status_missing_property).is_err());
+
+    let status_wrong_type: Status = Status::with_properties(iota_did_url, Some("DifferentType".to_owned()), object);
+    assert!(EmbeddedRevocationStatus::try_from(status_wrong_type).is_err());
+  }
+}

@@ -8,9 +8,7 @@ use identity_core::common::KeyComparable;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
-use identity_did::did::CoreDID;
 use identity_did::did::DIDUrl;
-use identity_did::did::DID;
 use identity_did::service::deserialize_id_with_fragment;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
@@ -19,28 +17,23 @@ use serde::Serialize;
 
 use super::error::Result;
 use super::error::ServiceError;
+use crate::did::IotaDID;
+use crate::did::IotaDIDUrl;
 use crate::revocation::EmbeddedRevocationList;
 
 /// A DID Document Service used to enable validators to check the status of a credential.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(bound(deserialize = "D: DID + Deserialize<'de>"))]
-pub struct EmbeddedRevocationService<D = CoreDID>
-where
-  D: DID,
-{
+pub struct EmbeddedRevocationService {
   #[serde(deserialize_with = "deserialize_id_with_fragment")]
-  pub(crate) id: DIDUrl<D>,
+  pub(crate) id: IotaDIDUrl,
   #[serde(rename = "type")]
   pub(crate) type_: String,
   #[serde(rename = "serviceEndpoint")]
   pub(crate) service_endpoint: Url,
 }
 
-impl<D> EmbeddedRevocationService<D>
-where
-  D: DID,
-{
-  pub fn new(id: DIDUrl<D>, service_endpoint: Url) -> Result<Self> {
+impl EmbeddedRevocationService {
+  pub fn new(id: IotaDIDUrl, service_endpoint: Url) -> Result<Self> {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(ServiceError::InvalidServiceId("missing id fragment".to_owned()));
     }
@@ -52,7 +45,7 @@ where
   }
 
   /// Returns a reference to the `EmbeddedRevocationService` id.
-  pub fn id(&self) -> &DIDUrl<D> {
+  pub fn id(&self) -> &IotaDIDUrl {
     &self.id
   }
 
@@ -70,7 +63,7 @@ where
   ///
   /// # Errors
   /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
-  pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
+  pub fn set_id(&mut self, id: IotaDIDUrl) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(ServiceError::InvalidServiceId("missing id fragment".to_owned()));
     }
@@ -78,25 +71,36 @@ where
     Ok(())
   }
 
+  /// Updates the `EmbeddedRevocationList` contained in the `service_endpoint` by revoking all given credentials.
+  pub fn revoke_credentials(&mut self, credentials: &[u32]) -> Result<()> {
+    // Gets the current list and revokes all given credentials
+    let mut embedded_revocation_list: EmbeddedRevocationList =
+      EmbeddedRevocationList::deserialize_compressed_b64(&self.service_endpoint().clone().into_string())
+        .map_err(|e| ServiceError::RevocationMethodError("invalid revocation list".to_owned(), e))?;
+    embedded_revocation_list.revoke_multiple(credentials);
+    // Sets the service endpoint with the updated revocation list
+    let service_endpoint: String = embedded_revocation_list
+      .serialize_compressed_b64()
+      .map_err(|e| ServiceError::RevocationMethodError("invalid updated revocation list".to_owned(), e))?;
+    self.set_service_endpoint(service_endpoint)
+  }
+
   /// Sets the `EmbeddedRevocationService` service endpoint.
-  ///
-  /// # Errors
-  /// [`Error::`] if there is no fragment on the [`DIDUrl`].
-  pub fn set_service_endpoint(&mut self, service_enpoint: impl AsRef<str>) -> Result<()> {
+  fn set_service_endpoint(&mut self, service_enpoint: impl AsRef<str>) -> Result<()> {
     let url: Url =
-      Url::parse(service_enpoint).map_err(|_e| ServiceError::InvalidServiceEndpoint("invalid url".to_owned()))?;
+      Url::parse(service_enpoint).map_err(|_| ServiceError::InvalidServiceEndpoint("invalid url".to_owned()))?;
     self.service_endpoint = url;
     Ok(())
   }
 }
 
-impl TryFrom<Service> for EmbeddedRevocationService {
+impl TryFrom<Service<IotaDID>> for EmbeddedRevocationService {
   type Error = ServiceError;
 
-  fn try_from(service: Service) -> Result<Self> {
+  fn try_from(service: Service<IotaDID>) -> Result<Self> {
     if service.type_() != EmbeddedRevocationList::name() {
       return Err(ServiceError::InvalidServiceType(format!(
-        "expected {} type",
+        "expected {}",
         EmbeddedRevocationList::name()
       )));
     }
@@ -113,7 +117,7 @@ impl TryFrom<Service> for EmbeddedRevocationService {
   }
 }
 
-impl TryFrom<EmbeddedRevocationService> for Service {
+impl TryFrom<EmbeddedRevocationService> for Service<IotaDID> {
   type Error = ServiceError;
 
   fn try_from(service: EmbeddedRevocationService) -> Result<Self> {
@@ -126,29 +130,20 @@ impl TryFrom<EmbeddedRevocationService> for Service {
   }
 }
 
-impl<D> AsRef<DIDUrl<D>> for EmbeddedRevocationService<D>
-where
-  D: DID,
-{
-  fn as_ref(&self) -> &DIDUrl<D> {
+impl AsRef<DIDUrl<IotaDID>> for EmbeddedRevocationService {
+  fn as_ref(&self) -> &DIDUrl<IotaDID> {
     self.id()
   }
 }
 
-impl<D> Display for EmbeddedRevocationService<D>
-where
-  D: DID + Serialize,
-{
+impl Display for EmbeddedRevocationService {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }
 
-impl<D> KeyComparable for EmbeddedRevocationService<D>
-where
-  D: DID,
-{
-  type Key = DIDUrl<D>;
+impl KeyComparable for EmbeddedRevocationService {
+  type Key = IotaDIDUrl;
 
   #[inline]
   fn key(&self) -> &Self::Key {
@@ -159,5 +154,59 @@ where
 impl Default for EmbeddedRevocationList {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use identity_core::common::Object;
+  use identity_core::common::Url;
+  use identity_did::service::Service;
+  use identity_did::service::ServiceEndpoint;
+
+  use super::EmbeddedRevocationService;
+  use crate::did::IotaDID;
+  use crate::did::IotaDIDUrl;
+  use crate::revocation::EmbeddedRevocationList;
+
+  const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
+  const SERVICE: &str = "revocation";
+
+  #[test]
+  fn test_embedded_service_invariants() {
+    let iota_did_url: IotaDIDUrl = IotaDIDUrl::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
+    let service_endpoint: Url = Url::parse("data:,eJyzMmAAAwADKABr").unwrap();
+    let embedded_revocation_service =
+      EmbeddedRevocationService::new(iota_did_url.clone(), service_endpoint.clone()).unwrap();
+
+    let service: Service<IotaDID> = Service::builder(Object::new())
+      .id(iota_did_url.clone())
+      .type_(EmbeddedRevocationList::name())
+      .service_endpoint(ServiceEndpoint::One(service_endpoint.clone()))
+      .build()
+      .unwrap();
+    assert_eq!(embedded_revocation_service, service.try_into().unwrap());
+
+    let invalid_service_type: Service<IotaDID> = Service::builder(Object::new())
+      .id(iota_did_url.clone())
+      .type_("DifferentRevocationType")
+      .service_endpoint(ServiceEndpoint::One(service_endpoint.clone()))
+      .build()
+      .unwrap();
+    assert!(EmbeddedRevocationService::try_from(invalid_service_type).is_err());
+  }
+
+  #[test]
+  fn test_embedded_service_update() {
+    let iota_did_url: IotaDIDUrl = IotaDIDUrl::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
+    let service_endpoint: Url = Url::parse("data:,eJyzMmAAAwADKABr").unwrap();
+    let mut embedded_revocation_service =
+      EmbeddedRevocationService::new(iota_did_url.clone(), service_endpoint.clone()).unwrap();
+
+    embedded_revocation_service.revoke_credentials(&[0, 5, 6, 8]).unwrap();
+    assert_eq!(
+      embedded_revocation_service.service_endpoint(),
+      &Url::parse("data:,eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI").unwrap()
+    );
   }
 }

@@ -267,6 +267,22 @@ impl WasmAccount {
     })
     .unchecked_into::<PromiseVoid>()
   }
+
+  /// If the document has an `EmbeddedRevocationService` identified by `fragment`, revokes all given `credentials`.
+  #[wasm_bindgen(js_name = revokeCredentials)]
+  pub fn revoke_credentials(&mut self, fragment: String, credentials: Vec<u32>) -> PromiseVoid {
+    let account = self.0.clone();
+    future_to_promise(async move {
+      account
+        .as_ref()
+        .borrow_mut()
+        .revoke_credentials(&fragment, &credentials)
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
+    .unchecked_into::<PromiseVoid>()
+  }
 }
 
 impl From<AccountRc> for WasmAccount {

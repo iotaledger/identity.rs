@@ -49,6 +49,11 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
+<dt><a href="#EmbeddedRevocationList">EmbeddedRevocationList</a></dt>
+<dd></dd>
+<dt><a href="#EmbeddedRevocationService">EmbeddedRevocationService</a></dt>
+<dd><p>A DID Document Service used to enable validators to check the status of a credential.</p>
+</dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -193,10 +198,8 @@ publishing to the Tangle.
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -210,6 +213,9 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, credentials)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
@@ -248,17 +254,6 @@ Detaches the given relationship from the given method, if the method exists.
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
 
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
 <a name="Account+setAlsoKnownAs"></a>
 
 ### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -280,17 +275,6 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -314,6 +298,10 @@ Returns the auto-save configuration value.
 
 ### account.document() ⇒ [<code>Document</code>](#Document)
 Returns a copy of the document managed by the `Account`.
+
+Note: the returned document only has a valid signature after publishing an integration chain update.
+In general, for use cases where the signature is required, it is advisable to resolve the
+document from the Tangle.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+resolveIdentity"></a>
@@ -419,6 +407,40 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+revokeCredentials"></a>
+
+### account.revokeCredentials(fragment, credentials) ⇒ <code>Promise.&lt;void&gt;</code>
+If the document has an `EmbeddedRevocationService` identified by `fragment`, revokes all given `credentials`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentials | <code>Uint32Array</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -2347,6 +2369,175 @@ to canonicalize JSON messages.
 | message | <code>Uint8Array</code> | 
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
+
+<a name="EmbeddedRevocationList"></a>
+
+## EmbeddedRevocationList
+**Kind**: global class  
+
+* [EmbeddedRevocationList](#EmbeddedRevocationList)
+    * [new EmbeddedRevocationList()](#new_EmbeddedRevocationList_new)
+    * _instance_
+        * [.isRevoked(index)](#EmbeddedRevocationList+isRevoked) ⇒ <code>boolean</code>
+        * [.revoke(index)](#EmbeddedRevocationList+revoke) ⇒ <code>boolean</code>
+        * [.revokeMultiple(indexes)](#EmbeddedRevocationList+revokeMultiple)
+        * [.undoRevocation(index)](#EmbeddedRevocationList+undoRevocation) ⇒ <code>boolean</code>
+        * [.serializeCompressedB64()](#EmbeddedRevocationList+serializeCompressedB64) ⇒ <code>string</code>
+        * [.toJSON()](#EmbeddedRevocationList+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.name()](#EmbeddedRevocationList.name) ⇒ <code>string</code>
+        * [.credential_list_index_property()](#EmbeddedRevocationList.credential_list_index_property) ⇒ <code>string</code>
+        * [.deserializeCompressedB64(data)](#EmbeddedRevocationList.deserializeCompressedB64) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
+        * [.fromJSON(value)](#EmbeddedRevocationList.fromJSON) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
+
+<a name="new_EmbeddedRevocationList_new"></a>
+
+### new EmbeddedRevocationList()
+Creates a new `EmbeddedRevocationList` revocation method.
+
+<a name="EmbeddedRevocationList+isRevoked"></a>
+
+### embeddedRevocationList.isRevoked(index) ⇒ <code>boolean</code>
+Returns `true` if the credential at the given `index` is revoked.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="EmbeddedRevocationList+revoke"></a>
+
+### embeddedRevocationList.revoke(index) ⇒ <code>boolean</code>
+Revokes the credential at the given `index`.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="EmbeddedRevocationList+revokeMultiple"></a>
+
+### embeddedRevocationList.revokeMultiple(indexes)
+Given the index of multiple credentials, revoke all.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+
+| Param | Type |
+| --- | --- |
+| indexes | <code>Uint32Array</code> | 
+
+<a name="EmbeddedRevocationList+undoRevocation"></a>
+
+### embeddedRevocationList.undoRevocation(index) ⇒ <code>boolean</code>
+The credential at the given `index` will be set to valid.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="EmbeddedRevocationList+serializeCompressedB64"></a>
+
+### embeddedRevocationList.serializeCompressedB64() ⇒ <code>string</code>
+Serializes and compressess [`EmbeddedRevocationList`] as a base64-encoded `String`.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+<a name="EmbeddedRevocationList+toJSON"></a>
+
+### embeddedRevocationList.toJSON() ⇒ <code>any</code>
+Serializes a `EmbeddedRevocationList` object as a JSON object.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+<a name="EmbeddedRevocationList.name"></a>
+
+### EmbeddedRevocationList.name() ⇒ <code>string</code>
+Returns the name of the revocation method.
+
+**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+<a name="EmbeddedRevocationList.credential_list_index_property"></a>
+
+### EmbeddedRevocationList.credential\_list\_index\_property() ⇒ <code>string</code>
+**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+<a name="EmbeddedRevocationList.deserializeCompressedB64"></a>
+
+### EmbeddedRevocationList.deserializeCompressedB64(data) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
+Deserializes a compressed [`EmbeddedRevocationList`] base64-encoded `data`.
+
+**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>string</code> | 
+
+<a name="EmbeddedRevocationList.fromJSON"></a>
+
+### EmbeddedRevocationList.fromJSON(value) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
+Deserializes a `EmbeddedRevocationList` object from a JSON object.
+
+**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="EmbeddedRevocationService"></a>
+
+## EmbeddedRevocationService
+A DID Document Service used to enable validators to check the status of a credential.
+
+**Kind**: global class  
+
+* [EmbeddedRevocationService](#EmbeddedRevocationService)
+    * _instance_
+        * [.id()](#EmbeddedRevocationService+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.type()](#EmbeddedRevocationService+type) ⇒ <code>string</code>
+        * [.setId(id)](#EmbeddedRevocationService+setId)
+        * [.toJSON()](#EmbeddedRevocationService+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#EmbeddedRevocationService.fromJSON) ⇒ [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)
+
+<a name="EmbeddedRevocationService+id"></a>
+
+### embeddedRevocationService.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Returns a copy of the `EmbeddedRevocationService` id.
+
+**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+<a name="EmbeddedRevocationService+type"></a>
+
+### embeddedRevocationService.type() ⇒ <code>string</code>
+Returns a copy of the `Service` type.
+
+**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+<a name="EmbeddedRevocationService+setId"></a>
+
+### embeddedRevocationService.setId(id)
+Sets the `EmbeddedRevocationService` id.
+
+**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+
+| Param | Type |
+| --- | --- |
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+
+<a name="EmbeddedRevocationService+toJSON"></a>
+
+### embeddedRevocationService.toJSON() ⇒ <code>any</code>
+Serializes a `EmbeddedRevocationService` object as a JSON object.
+
+**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+<a name="EmbeddedRevocationService.fromJSON"></a>
+
+### EmbeddedRevocationService.fromJSON(value) ⇒ [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)
+Deserializes a `EmbeddedRevocationService` object from a JSON object.
+
+**Kind**: static method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
 
 <a name="ExplorerUrl"></a>
 

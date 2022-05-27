@@ -81,10 +81,13 @@ pub mod iota {
 pub mod iota_core {
   //! IOTA Core Traits and Types definitions
 
+  pub use identity_iota_core::credential::*;
   pub use identity_iota_core::did::*;
   pub use identity_iota_core::diff::*;
   pub use identity_iota_core::document::*;
   pub use identity_iota_core::error::*;
+  pub use identity_iota_core::revocation::*;
+  pub use identity_iota_core::service::*;
   pub use identity_iota_core::tangle::*;
 
   #[doc(inline)]
