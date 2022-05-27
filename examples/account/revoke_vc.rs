@@ -28,6 +28,8 @@ use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
+use identity::iota_core::EmbeddedRevocationList;
+use identity::iota_core::EmbeddedRevocationStatus;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -52,7 +54,16 @@ async fn main() -> Result<()> {
     .await?;
 
   // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
-  
+  let revocation_list: EmbeddedRevocationList = EmbeddedRevocationList::new();
+  let revocation_list_url: Url = revocation_list.to_url().unwrap();
+  issuer
+    .update_identity()
+    .create_service()
+    .fragment("my-revocation-service")
+    .type_("EmbeddedRevocationList")
+    .endpoint(revocation_list_url)
+    .apply()
+    .await?;
 
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
@@ -62,11 +73,17 @@ async fn main() -> Result<()> {
     "GPA": "4.0",
   }))?;
 
-  // Build credential using subject above and issuer.
+  // Create a credential status pointing verifiers to the endpoint that states if it has been revoked.
+  let service_url = Url::parse(format!("{}#my-revocation-service", issuer.did()))?;
+  let credential_index: u32 = 5; // choosen arbitrarily
+  let status: EmbeddedRevocationStatus = EmbeddedRevocationStatus::new(service_url, credential_index);
+
+  // Build credential using subject above, status, and issuer.
   let mut credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer.did().as_str())?)
     .type_("UniversityDegreeCredential")
+    .status(status.into())
     .subject(subject)
     .build()?;
 
@@ -78,8 +95,10 @@ async fn main() -> Result<()> {
   // ===========================================================================
 
   // Update the service for checking the credential status
-  // When verifiers look for the index corresponding to the credential, it will be set to invalid.
-  issuer.revoke_credentials("revocationService", &[5]).await?;
+  // When verifiers look for the index corresponding to the credential, it will be set to revoked.
+  issuer
+    .revoke_credentials("my-revocation-service", &[credential_index])
+    .await?;
 
   CredentialValidator::validate(
     &credential,

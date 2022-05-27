@@ -8,6 +8,7 @@ use std::io::Write;
 use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
+use identity_core::common::Url;
 use identity_core::utils::decode_b64;
 use identity_core::utils::encode_b64;
 use roaring::RoaringBitmap;
@@ -65,6 +66,12 @@ impl EmbeddedRevocationList {
   /// The credential at the given `index` will be set to valid.
   pub fn undo_revocation(&mut self, index: u32) -> bool {
     self.0.remove(index)
+  }
+
+  /// Serializes and compressess the [`EmbeddedRevocationList`] and returns its data url representation
+  pub fn to_url(&self) -> Result<Url> {
+    let data_url: String = format!("data:,{}", self.serialize_compressed_b64()?);
+    Url::parse(data_url.clone()).map_err(|e| RevocationMethodError::InvalidUrlRepresentation(data_url, e))
   }
 
   /// Deserializes a compressed [`EmbeddedRevocationList`] base64-encoded `data`.

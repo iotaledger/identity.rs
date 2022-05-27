@@ -15,4 +15,6 @@ pub enum RevocationMethodError {
   DeserializationError(#[source] std::io::Error),
   #[error("revocation list could not be serialized")]
   SerializationError(#[source] std::io::Error),
+  #[error("revocation list could not be represented as a valid URL: {0}")]
+  InvalidUrlRepresentation(String, #[source] identity_core::Error),
 }

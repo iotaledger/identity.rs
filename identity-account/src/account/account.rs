@@ -331,7 +331,7 @@ where
     // Updates the service with all revoked credential
     let mut embedded_revocation_service: EmbeddedRevocationService =
       EmbeddedRevocationService::try_from(service.clone())
-        .map_err(|e| Error::CredentialRevocationError("expected an EmbeddedRevocationService".to_owned(), e))?;
+        .map_err(|e| Error::CredentialRevocationError("invalid service".to_owned(), e))?;
     embedded_revocation_service
       .revoke_credentials(credentials)
       .map_err(|e| Error::CredentialRevocationError("unable to revoke credentials".to_owned(), e))?;
