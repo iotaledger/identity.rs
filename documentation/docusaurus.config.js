@@ -11,6 +11,12 @@ module.exports = {
                 sidebarPath: path.resolve(__dirname, 'sidebars.js'),
                 editUrl: 'https://github.com/iotaledger/identity.rs/edit/support/v0.5/documentation',
                 remarkPlugins: [require('remark-code-import'), require('remark-import-partial'), require('remark-remove-comments')],
+                versions: {
+                    current: {
+                        label: '0.5.0',
+                        badge: true
+                    },
+                },
             }
         ],
     ],
