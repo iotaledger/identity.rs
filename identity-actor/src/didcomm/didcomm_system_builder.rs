@@ -8,49 +8,47 @@ use std::time::Duration;
 
 use futures::AsyncRead;
 use futures::AsyncWrite;
-use futures::Future;
 use futures::FutureExt;
 use libp2p::core::Executor;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
-use crate::actor::actor_request::AsyncActorRequest;
-use crate::actor::Actor;
-use crate::actor::ActorBuilder;
-use crate::actor::ActorState;
+use crate::actor::AsyncActorRequest;
 use crate::actor::Error;
 use crate::actor::ObjectId;
-use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncActor;
 use crate::actor::SyncActorRequest;
-use crate::actor::SyncHandler;
-use crate::actor::SyncHandlerMap;
-use crate::actor::SyncHandlerObject;
+use crate::actor::System;
+use crate::actor::SystemBuilder;
+use crate::actor::SystemState;
+use crate::didcomm::AbstractAsyncActor;
+use crate::didcomm::ActorIdentity;
+use crate::didcomm::AsyncActor;
+use crate::didcomm::AsyncActorMap;
+use crate::didcomm::AsyncActorWrapper;
 use crate::didcomm::AsyncHandlerMap;
-use crate::didcomm::AsyncHandlerObject;
+use crate::didcomm::DidCommSystem;
+use crate::didcomm::DidCommSystemState;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-use super::didcomm_actor::ActorIdentity;
-use super::didcomm_actor::DidActorCommState;
-use super::didcomm_actor::DidCommActor;
-use super::handler::AsyncHandler;
-use super::DidCommPlaintextMessage;
-
-pub struct DidCommActorBuilder {
-  inner: ActorBuilder,
+pub struct AsyncSystemBuilder {
+  inner: SystemBuilder,
   async_handlers: AsyncHandlerMap,
   identity: Option<ActorIdentity>,
+  async_actors: AsyncActorMap,
 }
 
-impl DidCommActorBuilder {
-  pub fn new() -> DidCommActorBuilder {
+impl AsyncSystemBuilder {
+  pub fn new() -> AsyncSystemBuilder {
     Self {
-      inner: ActorBuilder::new(),
+      inner: SystemBuilder::new(),
       identity: None,
       async_handlers: HashMap::new(),
+      async_actors: HashMap::new(),
     }
   }
 
@@ -83,6 +81,26 @@ impl DidCommActorBuilder {
     self
   }
 
+  pub fn attach<REQ, ACT>(&mut self, actor: ACT)
+  where
+    ACT: AsyncActor<REQ> + Send + Sync,
+    REQ: AsyncActorRequest + Send + Sync,
+  {
+    self.async_actors.insert(
+      REQ::endpoint(),
+      Box::new(AsyncActorWrapper::new(actor)) as Box<dyn AbstractAsyncActor>,
+    );
+  }
+
+  pub fn attach_sync<REQ, ACT>(&mut self, actor: ACT)
+  where
+    ACT: SyncActor<REQ> + Send + Sync,
+    REQ: SyncActorRequest + Send + Sync,
+    REQ::Response: Send,
+  {
+    self.inner.attach(actor);
+  }
+
   /// See [`ActorBuilder::add_state`].
   pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> DidCommHandlerBuilder<OBJ>
   where
@@ -92,7 +110,6 @@ impl DidCommActorBuilder {
     self.inner.objects.insert(object_id, Box::new(state_object));
     DidCommHandlerBuilder {
       object_id,
-      sync_handlers: &mut self.inner.handlers,
       async_handlers: &mut self.async_handlers,
       _marker_obj: PhantomData,
     }
@@ -100,7 +117,7 @@ impl DidCommActorBuilder {
 
   /// See [`ActorBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
-  pub async fn build(self) -> ActorResult<DidCommActor> {
+  pub async fn build(self) -> ActorResult<DidCommSystem> {
     let dns_transport = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new())
       .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
 
@@ -112,7 +129,7 @@ impl DidCommActorBuilder {
   }
 
   /// See [`ActorBuilder::build_with_transport`].
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<DidCommActor>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<DidCommSystem>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -131,20 +148,23 @@ impl DidCommActorBuilder {
       }
     });
 
-    let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
+    let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
       self.inner.build_actor_constituents(transport, executor.clone()).await?;
 
-    let state: DidActorCommState =
-      DidActorCommState::new(self.async_handlers, self.identity.ok_or(Error::IdentityMissing)?);
+    let state: DidCommSystemState = DidCommSystemState::new(
+      self.async_handlers,
+      self.async_actors,
+      self.identity.ok_or(Error::IdentityMissing)?,
+    );
 
-    let actor = Actor::new(net_commander, Arc::new(actor_state));
+    let actor = System::new(net_commander, Arc::new(actor_state));
 
-    let didcomm_actor: DidCommActor = DidCommActor {
+    let didcomm_actor: DidCommSystem = DidCommSystem {
       actor,
       state: Arc::new(state),
     };
 
-    let didcomm_actor_clone: DidCommActor = didcomm_actor.clone();
+    let didcomm_actor_clone: DidCommSystem = didcomm_actor.clone();
 
     let event_handler = move |event: InboundRequest| {
       didcomm_actor_clone.clone().handle_request(event);
@@ -156,7 +176,7 @@ impl DidCommActorBuilder {
   }
 }
 
-impl Default for DidCommActorBuilder {
+impl Default for AsyncSystemBuilder {
   fn default() -> Self {
     Self::new()
   }
@@ -168,50 +188,6 @@ where
   OBJ: Clone + Send + Sync + 'static,
 {
   pub(crate) object_id: ObjectId,
-  pub(crate) sync_handlers: &'builder mut SyncHandlerMap,
   pub(crate) async_handlers: &'builder mut AsyncHandlerMap,
   pub(crate) _marker_obj: PhantomData<&'static OBJ>,
-}
-
-impl<'builder, OBJ> DidCommHandlerBuilder<'builder, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  /// Add a synchronous handler function that operates on a shared state object and a
-  /// [`AsyncActorRequest`]. The function will be called if the actor receives a request
-  /// on the given `endpoint` and can deserialize it into `DidCommPlaintextMessage<REQ>`.
-  /// The handler is not expected to return anything.
-  pub fn add_async_handler<REQ, FUT>(
-    self,
-    handler: fn(OBJ, DidCommActor, RequestContext<DidCommPlaintextMessage<REQ>>) -> FUT,
-  ) -> Self
-  where
-    REQ: AsyncActorRequest + Sync,
-    FUT: Future<Output = ()> + Send + 'static,
-  {
-    let handler: AsyncHandler<_, _, _> = AsyncHandler::new(handler);
-    self.async_handlers.insert(
-      REQ::endpoint(),
-      AsyncHandlerObject::new(self.object_id, Box::new(handler)),
-    );
-    self
-  }
-
-  /// Add a synchronous handler function that operates on a shared state object and a
-  /// [`SyncActorRequest`]. The function will be called if the actor receives a request
-  /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
-  /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self
-  where
-    REQ: SyncActorRequest + Sync,
-    REQ::Response: Send,
-    FUT: Future<Output = REQ::Response> + Send + 'static,
-  {
-    let handler = SyncHandler::new(handler);
-    self.sync_handlers.insert(
-      REQ::endpoint(),
-      SyncHandlerObject::new(self.object_id, Box::new(handler)),
-    );
-    self
-  }
 }

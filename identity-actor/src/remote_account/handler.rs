@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
-use crate::actor::Actor;
 use crate::actor::RequestContext;
+use crate::actor::SyncActor;
 use crate::remote_account::IdentityList;
 use dashmap::DashMap;
 use identity_account::account::Account;
@@ -25,6 +25,34 @@ pub struct RemoteAccount {
   accounts: Arc<DashMap<IotaDID, Account>>,
 }
 
+#[async_trait::async_trait]
+impl SyncActor<IdentityList> for RemoteAccount {
+  async fn handle(&self, _: RequestContext<IdentityList>) -> Vec<IotaDID> {
+    self.accounts.iter().map(|entry| entry.key().to_owned()).collect()
+  }
+}
+
+#[async_trait::async_trait]
+impl SyncActor<IdentityCreate> for RemoteAccount {
+  async fn handle(&self, request: RequestContext<IdentityCreate>) -> Result<IotaDocument, RemoteAccountError> {
+    let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
+    let doc = account.document().to_owned();
+    self.accounts.insert(account.did().to_owned(), account);
+    Ok(doc)
+  }
+}
+
+#[async_trait::async_trait]
+impl SyncActor<IdentityGet> for RemoteAccount {
+  async fn handle(&self, request: RequestContext<IdentityGet>) -> Result<IotaDocument, RemoteAccountError> {
+    self
+      .accounts
+      .get(&request.input.0)
+      .map(|account| account.document().to_owned())
+      .ok_or(RemoteAccountError::IdentityNotFound)
+  }
+}
+
 impl RemoteAccount {
   pub fn new() -> identity_account::Result<Self> {
     let builder: AccountBuilder = Account::builder().autopublish(false);
@@ -33,42 +61,5 @@ impl RemoteAccount {
       builder: Arc::new(Mutex::new(builder)),
       accounts: Arc::new(DashMap::new()),
     })
-  }
-
-  /// Creates a new identity using the `Account` API and returns the DID document.
-  pub async fn create(
-    self,
-    // The request handler interface takes an Actor, but we don't use it here.
-    _actor: Actor,
-    request: RequestContext<IdentityCreate>,
-  ) -> Result<IotaDocument, RemoteAccountError> {
-    let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
-    let doc = account.document().to_owned();
-    self.accounts.insert(account.did().to_owned(), account);
-    Ok(doc)
-  }
-
-  /// List all the stored identities.
-  pub async fn list(
-    self,
-    // The request handler interface takes an Actor, but we don't use it here.
-    _actor: Actor,
-    _request: RequestContext<IdentityList>,
-  ) -> Vec<IotaDID> {
-    self.accounts.iter().map(|entry| entry.key().to_owned()).collect()
-  }
-
-  /// Get the DID document of a given DID.
-  pub async fn get(
-    self,
-    // The request handler interface takes an Actor, but we don't use it here.
-    _actor: Actor,
-    request: RequestContext<IdentityGet>,
-  ) -> Result<IotaDocument, RemoteAccountError> {
-    self
-      .accounts
-      .get(&request.input.0)
-      .map(|account| account.document().to_owned())
-      .ok_or(RemoteAccountError::IdentityNotFound)
   }
 }

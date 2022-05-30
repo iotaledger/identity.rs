@@ -2,20 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
-use std::future::Future;
 use std::iter;
-use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::actor::Actor;
 use crate::actor::ActorConfig;
 use crate::actor::Error;
-use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::actor::SyncActorRequest;
-use crate::actor::SyncHandler;
-use crate::actor::SyncHandlerObject;
+use crate::actor::System;
 use crate::p2p::ActorProtocol;
 use crate::p2p::ActorRequestResponseCodec;
 use crate::p2p::EventLoop;
@@ -39,32 +34,32 @@ use libp2p::swarm::SwarmBuilder;
 use libp2p::yamux::YamuxConfig;
 use libp2p::Multiaddr;
 use libp2p::Swarm;
-use uuid::Uuid;
 
-use super::actor::ObjectId;
-use super::actor::ObjectMap;
-use super::actor::SyncHandlerMap;
-use super::ActorState;
+use super::sync_actor::SyncActor;
+use super::system::ObjectMap;
+use super::system::SyncActorMap;
+use super::AbstractSyncActor;
+use super::SyncActorWrapper;
+use super::SystemState;
 
 /// An [`Actor`] builder for easy configuration and building of handler and hook functions.
-pub struct ActorBuilder {
+pub struct SystemBuilder {
   pub(crate) listening_addresses: Vec<Multiaddr>,
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: ActorConfig,
-  pub(crate) handlers: SyncHandlerMap,
   pub(crate) objects: ObjectMap,
+  pub(crate) actors: SyncActorMap,
 }
 
-impl ActorBuilder {
+impl SystemBuilder {
   /// Creates a new `ActorBuilder`.
-  pub fn new() -> ActorBuilder {
+  pub fn new() -> SystemBuilder {
     Self {
       listening_addresses: vec![],
       keypair: None,
-
       config: ActorConfig::default(),
-      handlers: HashMap::new(),
       objects: HashMap::new(),
+      actors: HashMap::new(),
     }
   }
 
@@ -91,36 +86,27 @@ impl ActorBuilder {
     self
   }
 
-  /// Grants low-level access to the handler map for use in bindings.
-  #[cfg(feature = "primitives")]
-  pub fn handlers(&mut self) -> &mut SyncHandlerMap {
-    &mut self.handlers
-  }
-
   /// Grants low-level access to the object map for use in bindings.
   #[cfg(feature = "primitives")]
   pub fn objects(&mut self) -> &mut ObjectMap {
     &mut self.objects
   }
 
-  /// Add a new shared state object and returns an [`ActorHandlerBuilder`] which can be used to
-  /// attach handlers and hooks that operate on that object.
-  pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> ActorHandlerBuilder<OBJ>
+  pub fn attach<REQ, ACT>(&mut self, actor: ACT)
   where
-    OBJ: Clone + Send + Sync + 'static,
+    ACT: SyncActor<REQ> + Send + Sync,
+    REQ: SyncActorRequest + Send + Sync,
+    REQ::Response: Send,
   {
-    let object_id: ObjectId = Uuid::new_v4();
-    self.objects.insert(object_id, Box::new(state_object));
-    ActorHandlerBuilder {
-      object_id,
-      handler_map: &mut self.handlers,
-      _marker_obj: PhantomData,
-    }
+    self.actors.insert(
+      REQ::endpoint(),
+      Box::new(SyncActorWrapper::new(actor)) as Box<dyn AbstractSyncActor>,
+    );
   }
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
-  pub async fn build(self) -> ActorResult<Actor> {
+  pub async fn build(self) -> ActorResult<System> {
     let dns_transport = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new())
       .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
 
@@ -132,7 +118,7 @@ impl ActorBuilder {
   }
 
   /// Build the actor with a custom transport.
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<Actor>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<System>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -151,11 +137,11 @@ impl ActorBuilder {
       }
     });
 
-    let (event_loop, actor_state, net_commander): (EventLoop, ActorState, NetCommander) =
+    let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
       self.build_actor_constituents(transport, executor.clone()).await?;
 
-    let actor: Actor = Actor::new(net_commander, Arc::new(actor_state));
-    let actor_clone: Actor = actor.clone();
+    let actor: System = System::new(net_commander, Arc::new(actor_state));
+    let actor_clone: System = actor.clone();
 
     let event_handler = move |event: InboundRequest| {
       actor_clone.clone().handle_request(event);
@@ -171,7 +157,7 @@ impl ActorBuilder {
     self,
     transport: TRA,
     executor: Box<dyn Executor + Send>,
-  ) -> ActorResult<(EventLoop, ActorState, NetCommander)>
+  ) -> ActorResult<(EventLoop, SystemState, NetCommander)>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -182,7 +168,9 @@ impl ActorBuilder {
   {
     let (noise_keypair, peer_id) = {
       let keypair: Keypair = self.keypair.unwrap_or_else(Keypair::generate_ed25519);
-      let noise_keypair = NoiseKeypair::<X25519Spec>::new().into_authentic(&keypair).unwrap();
+      let noise_keypair = NoiseKeypair::<X25519Spec>::new()
+        .into_authentic(&keypair)
+        .expect("ed25519 keypair should be convertible into x25519");
       let peer_id = keypair.public().to_peer_id();
       (noise_keypair, peer_id)
     };
@@ -219,52 +207,19 @@ impl ActorBuilder {
     let event_loop = EventLoop::new(swarm, cmd_receiver);
     let net_commander = NetCommander::new(cmd_sender);
 
-    let actor_state: ActorState = ActorState {
-      handlers: self.handlers,
+    let actor_state: SystemState = SystemState {
       objects: self.objects,
       peer_id,
       config: self.config,
+      actors: self.actors,
     };
 
     Ok((event_loop, actor_state, net_commander))
   }
 }
 
-impl Default for ActorBuilder {
+impl Default for SystemBuilder {
   fn default() -> Self {
     Self::new()
-  }
-}
-
-/// Used to attach handlers and hooks to an [`ActorBuilder`].
-pub struct ActorHandlerBuilder<'builder, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  pub(crate) object_id: ObjectId,
-  pub(crate) handler_map: &'builder mut SyncHandlerMap,
-  pub(crate) _marker_obj: PhantomData<&'static OBJ>,
-}
-
-impl<'builder, OBJ> ActorHandlerBuilder<'builder, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  /// Add a synchronous handler function that operates on a shared state object and a
-  /// [`SyncActorRequest`]. The function will be called if the actor receives a request
-  /// on the given `endpoint` and can deserialize it into `REQ`. The handler is expected
-  /// to return an instance of `REQ::Response`.
-  pub fn add_sync_handler<REQ, FUT>(self, handler: fn(OBJ, Actor, RequestContext<REQ>) -> FUT) -> Self
-  where
-    REQ: SyncActorRequest + Sync,
-    REQ::Response: Send,
-    FUT: Future<Output = REQ::Response> + Send + 'static,
-  {
-    let handler = SyncHandler::new(handler);
-    self.handler_map.insert(
-      REQ::endpoint(),
-      SyncHandlerObject::new(self.object_id, Box::new(handler)),
-    );
-    self
   }
 }

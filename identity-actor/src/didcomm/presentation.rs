@@ -10,36 +10,40 @@ use crate::actor::Result as ActorResult;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
 
-#[derive(Clone)]
-pub struct DidCommState;
+use serde::Deserialize;
+use serde::Serialize;
 
-impl DidCommState {
+use super::didcomm_system::DidCommSystem;
+use super::AsyncActor;
+
+#[derive(Clone)]
+pub struct DidCommActor;
+
+impl DidCommActor {
   pub async fn new() -> Self {
     Self
   }
+}
 
-  pub async fn presentation_holder_actor_handler(
-    self,
-    actor: DidCommActor,
-    request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
-  ) {
+#[async_trait::async_trait]
+impl AsyncActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommActor {
+  async fn handle(&self, system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>) {
     log::debug!("holder: received presentation request");
 
-    let result = presentation_holder_handler(actor, request.peer, Some(request.input)).await;
+    let result = presentation_holder_handler(system, request.peer, Some(request.input)).await;
 
     if let Err(err) = result {
       log::error!("presentation_holder_actor_handler errored: {:?}", err);
     }
   }
+}
 
-  pub async fn presentation_verifier_actor_handler(
-    self,
-    actor: DidCommActor,
-    request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>,
-  ) {
+#[async_trait::async_trait]
+impl AsyncActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommActor {
+  async fn handle(&self, system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
     log::debug!("verifier: received offer from {}", request.peer);
 
-    let result = presentation_verifier_handler(actor, request.peer, Some(request.input)).await;
+    let result = presentation_verifier_handler(system, request.peer, Some(request.input)).await;
 
     if let Err(err) = result {
       log::error!("presentation_verifier_actor_handler errored: {:?}", err);
@@ -48,7 +52,7 @@ impl DidCommState {
 }
 
 pub async fn presentation_holder_handler(
-  mut actor: DidCommActor,
+  mut actor: DidCommSystem,
   peer: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
 ) -> ActorResult<()> {
@@ -80,7 +84,7 @@ pub async fn presentation_holder_handler(
 }
 
 pub async fn presentation_verifier_handler(
-  mut actor: DidCommActor,
+  mut actor: DidCommSystem,
   peer: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
 ) -> ActorResult<()> {
@@ -105,11 +109,6 @@ pub async fn presentation_verifier_handler(
     .await?;
   Ok(())
 }
-
-use serde::Deserialize;
-use serde::Serialize;
-
-use super::didcomm_actor::DidCommActor;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest([u8; 2]);

@@ -2,27 +2,114 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::atomic::AtomicBool;
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::task::Poll;
 
 use futures::pin_mut;
+use identity_iota_core::did::IotaDID;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
-use crate::actor::Actor;
-use crate::actor::ActorBuilder;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
+use crate::actor::SyncActor;
 use crate::actor::SyncActorRequest;
+use crate::actor::System;
+use crate::actor::SystemBuilder;
 use crate::remote_account::IdentityGet;
 use crate::remote_account::IdentityList;
 use crate::tests::try_init_logger;
 
 use super::default_listening_actor;
 use super::default_sending_actor;
+
+#[tokio::test]
+async fn test_new_approach() -> ActorResult<()> {
+  try_init_logger();
+
+  #[derive(Clone)]
+  struct MyActor {
+    counter: Arc<AtomicU32>,
+  }
+
+  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+  struct Increment(u32);
+
+  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+  struct Decrement(u32);
+
+  impl SyncActorRequest for Increment {
+    type Response = ();
+
+    fn endpoint() -> Endpoint {
+      "counter/increment".try_into().unwrap()
+    }
+  }
+
+  impl SyncActorRequest for Decrement {
+    type Response = ();
+
+    fn endpoint() -> Endpoint {
+      "counter/decrement".try_into().unwrap()
+    }
+  }
+
+  // States that MyActor can handle messages of type `Increment`.
+  #[async_trait::async_trait]
+  impl SyncActor<Increment> for MyActor {
+    async fn handle(&self, request: RequestContext<Increment>) {
+      self.counter.fetch_add(request.input.0, Ordering::SeqCst);
+    }
+  }
+
+  #[async_trait::async_trait]
+  impl SyncActor<Decrement> for MyActor {
+    async fn handle(&self, request: RequestContext<Decrement>) {
+      self.counter.fetch_sub(request.input.0, Ordering::SeqCst);
+    }
+  }
+
+  let actor = MyActor {
+    counter: Arc::new(AtomicU32::new(0)),
+  };
+
+  let mut builder = SystemBuilder::new();
+  // Let's this system "manage" this actor, by sending incoming requests to it when they match.
+  builder.attach::<Increment, _>(actor.clone());
+  builder.attach::<Decrement, _>(actor.clone());
+
+  let mut listening_system: System = builder.build().await.unwrap();
+
+  let _ = listening_system
+    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
+    .await
+    .unwrap();
+  let addrs = listening_system.addresses().await.unwrap();
+
+  let peer_id = listening_system.peer_id();
+
+  let mut sender_system: System = SystemBuilder::new().build().await.unwrap();
+
+  sender_system.add_addresses(peer_id, addrs).await.unwrap();
+
+  sender_system.send_request(peer_id, Increment(3)).await.unwrap();
+
+  assert_eq!(actor.counter.load(Ordering::SeqCst), 3);
+
+  sender_system.send_request(peer_id, Decrement(2)).await.unwrap();
+
+  assert_eq!(actor.counter.load(Ordering::SeqCst), 1);
+
+  listening_system.shutdown().await.unwrap();
+  sender_system.shutdown().await.unwrap();
+
+  Ok(())
+}
 
 #[tokio::test]
 async fn test_unknown_request_returns_error() -> ActorResult<()> {
@@ -68,47 +155,44 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   }
 
   #[derive(Clone)]
-  pub struct State(pub Arc<AtomicBool>);
+  pub struct Actor(pub Arc<AtomicBool>);
 
-  impl State {
-    async fn handler(self, _actor: Actor, _req: RequestContext<Dummy>) {
+  #[async_trait::async_trait]
+  impl SyncActor<Dummy> for Actor {
+    async fn handle(&self, _req: RequestContext<Dummy>) {
       self.0.store(true, std::sync::atomic::Ordering::SeqCst);
     }
   }
 
-  let actor1_state = State(Arc::new(AtomicBool::new(false)));
-  let actor2_state = State(Arc::new(AtomicBool::new(false)));
+  let actor1 = Actor(Arc::new(AtomicBool::new(false)));
+  let actor2 = Actor(Arc::new(AtomicBool::new(false)));
 
-  let mut actor1_builder = ActorBuilder::new();
-  actor1_builder
-    .add_state(actor1_state.clone())
-    .add_sync_handler(State::handler);
-  let mut actor1: Actor = actor1_builder.build().await.unwrap();
+  let mut system1_builder = SystemBuilder::new();
+  system1_builder.attach(actor1.clone());
+  let mut system1: System = system1_builder.build().await.unwrap();
 
-  let mut actor2_builder = ActorBuilder::new();
-  actor2_builder
-    .add_state(actor2_state.clone())
-    .add_sync_handler(State::handler);
-  let mut actor2: Actor = actor2_builder.build().await.unwrap();
+  let mut system2_builder = SystemBuilder::new();
+  system2_builder.attach(actor2.clone());
+  let mut system2: System = system2_builder.build().await.unwrap();
 
-  actor2
+  system2
     .start_listening("/ip4/0.0.0.0/tcp/0".try_into().unwrap())
     .await
     .unwrap();
 
-  let addr: Multiaddr = actor2.addresses().await.unwrap().into_iter().next().unwrap();
+  let addr: Multiaddr = system2.addresses().await.unwrap().into_iter().next().unwrap();
 
-  actor1.add_address(actor2.peer_id(), addr).await.unwrap();
+  system1.add_address(system2.peer_id(), addr).await.unwrap();
 
-  actor1.send_request(actor2.peer_id(), Dummy(42)).await.unwrap();
+  system1.send_request(system2.peer_id(), Dummy(42)).await.unwrap();
 
-  actor2.send_request(actor1.peer_id(), Dummy(43)).await.unwrap();
+  system2.send_request(system1.peer_id(), Dummy(43)).await.unwrap();
 
-  actor1.shutdown().await.unwrap();
-  actor2.shutdown().await.unwrap();
+  system1.shutdown().await.unwrap();
+  system2.shutdown().await.unwrap();
 
-  assert!(actor1_state.0.load(std::sync::atomic::Ordering::SeqCst));
-  assert!(actor2_state.0.load(std::sync::atomic::Ordering::SeqCst));
+  assert!(actor1.0.load(std::sync::atomic::Ordering::SeqCst));
+  assert!(actor2.0.load(std::sync::atomic::Ordering::SeqCst));
 
   Ok(())
 }
@@ -129,20 +213,22 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   }
 
   #[derive(Clone)]
-  pub struct State(pub Arc<AtomicBool>);
+  pub struct Actor(pub Arc<AtomicBool>);
 
-  impl State {
-    async fn handler(self, _actor: Actor, req: RequestContext<Dummy>) {
-      if let Dummy(42) = req.input {
+  #[async_trait::async_trait]
+  impl SyncActor<Dummy> for Actor {
+    async fn handle(&self, request: RequestContext<Dummy>) {
+      if let Dummy(42) = request.input {
         self.0.store(true, std::sync::atomic::Ordering::SeqCst);
       }
     }
   }
 
-  let state = State(Arc::new(AtomicBool::new(false)));
+  let actor = Actor(Arc::new(AtomicBool::new(false)));
 
   let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
-    builder.add_state(state.clone()).add_sync_handler(State::handler);
+    builder.attach(actor.clone());
+    // builder.add_state(state.clone()).add_sync_handler(Actor::handler);
     builder
   })
   .await;
@@ -155,7 +241,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   sender.shutdown().await.unwrap();
   receiver.shutdown().await.unwrap();
 
-  assert!(state.0.load(std::sync::atomic::Ordering::SeqCst));
+  assert!(actor.0.load(std::sync::atomic::Ordering::SeqCst));
 
   Ok(())
 }
@@ -178,12 +264,17 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
     }
   }
 
+  struct Actor;
+
+  #[async_trait::async_trait]
+  impl SyncActor<MessageRequest> for Actor {
+    async fn handle(&self, message: RequestContext<MessageRequest>) -> MessageResponse {
+      MessageResponse(message.input.0)
+    }
+  }
+
   let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
-    builder
-      .add_state(())
-      .add_sync_handler(|_: (), _: Actor, message: RequestContext<MessageRequest>| async move {
-        MessageResponse(message.input.0)
-      });
+    builder.attach(Actor);
     builder
   })
   .await;
@@ -220,19 +311,23 @@ async fn test_interacting_with_shutdown_actor_returns_error() {
 async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
-    builder
-      .add_state(())
-      .add_sync_handler(|_: (), _: Actor, _message: RequestContext<IdentityList>| async move {
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-        vec![]
-      });
+  struct Actor;
 
+  #[async_trait::async_trait]
+  impl SyncActor<IdentityList> for Actor {
+    async fn handle(&self, _: RequestContext<IdentityList>) -> Vec<IotaDID> {
+      tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+      vec![]
+    }
+  }
+
+  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
+    builder.attach(Actor);
     builder
   })
   .await;
 
-  let mut sending_actor: Actor = ActorBuilder::new().build().await.unwrap();
+  let mut sending_actor: System = SystemBuilder::new().build().await.unwrap();
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let mut sender1 = sending_actor.clone();
@@ -294,15 +389,22 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     }
   }
 
+  struct Actor;
+
+  #[async_trait::async_trait]
+  impl SyncActor<CustomRequest2> for Actor {
+    async fn handle(&self, _: RequestContext<CustomRequest2>) -> u32 {
+      42
+    }
+  }
+
   let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
-    builder
-      .add_state(())
-      .add_sync_handler(|_: (), _: Actor, _: RequestContext<CustomRequest2>| async move { 42 });
+    builder.attach(Actor);
     builder
   })
   .await;
 
-  let mut sending_actor: Actor = ActorBuilder::new().build().await.unwrap();
+  let mut sending_actor: System = SystemBuilder::new().build().await.unwrap();
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor.send_request(peer_id, CustomRequest(13)).await;

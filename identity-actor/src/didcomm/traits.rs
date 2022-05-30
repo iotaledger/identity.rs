@@ -3,11 +3,11 @@
 
 use std::any::Any;
 
-use super::DidCommActor;
-use crate::actor::traits::RequestHandlerCore;
+use super::DidCommSystem;
 use crate::actor::AnyFuture;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
+use crate::actor::RequestHandlerCore;
 
 pub trait AsyncRequestHandler: RequestHandlerCore + Send + Sync {
   /// Invokes the handler with the given `actor` and `context`, as well as the shared
@@ -15,7 +15,7 @@ pub trait AsyncRequestHandler: RequestHandlerCore + Send + Sync {
   /// type-erased `Any` object.
   fn invoke(
     &self,
-    actor: DidCommActor,
+    actor: DidCommSystem,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Box<dyn Any + Send>,

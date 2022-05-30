@@ -4,49 +4,44 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::actor::send_response;
-use crate::actor::Actor;
+use dashmap::DashMap;
+use futures::channel::oneshot;
+use identity_iota_core::document::IotaDocument;
+use libp2p::Multiaddr;
+use libp2p::PeerId;
+use serde::de::DeserializeOwned;
+
 use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
+use crate::actor::ErrorLocation;
 use crate::actor::ObjectId;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
 use crate::actor::SyncActorRequest;
+use crate::actor::System;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::traits::AsyncRequestHandler;
+use crate::didcomm::AbstractAsyncActor;
+use crate::didcomm::ThreadId;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
-use crate::p2p::ResponseMessage;
 use crate::p2p::ThreadRequest;
 
-use dashmap::DashMap;
-use futures::channel::oneshot;
-use identity_iota_core::document::IotaDocument;
-use libp2p::request_response::InboundFailure;
-use libp2p::request_response::RequestId;
-use libp2p::request_response::ResponseChannel;
-use libp2p::Multiaddr;
-use libp2p::PeerId;
-use serde::de::DeserializeOwned;
-
-use crate::actor::ErrorLocation;
-
-use super::thread_id::ThreadId;
-
+/// The identity of a
 pub struct ActorIdentity {
-  // TODO: This type is meant for illustrating the state extension mechanism
-  // and will be used in a future update.
+  // TODO: This type is meant to be used in a future update.
   #[allow(dead_code)]
   pub(crate) document: IotaDocument,
 }
 
-pub struct DidActorCommState {
+pub struct DidCommSystemState {
   pub(crate) async_handlers: AsyncHandlerMap,
+  pub(crate) actors: AsyncActorMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
@@ -54,10 +49,11 @@ pub struct DidActorCommState {
   pub(crate) identity: ActorIdentity,
 }
 
-impl DidActorCommState {
-  pub(crate) fn new(async_handlers: AsyncHandlerMap, identity: ActorIdentity) -> Self {
+impl DidCommSystemState {
+  pub(crate) fn new(async_handlers: AsyncHandlerMap, actors: AsyncActorMap, identity: ActorIdentity) -> Self {
     Self {
       async_handlers,
+      actors,
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
       identity,
@@ -66,14 +62,14 @@ impl DidActorCommState {
 }
 
 #[derive(Clone)]
-pub struct DidCommActor {
-  pub(crate) actor: Actor,
-  pub(crate) state: Arc<DidActorCommState>,
+pub struct DidCommSystem {
+  pub(crate) actor: System,
+  pub(crate) state: Arc<DidCommSystemState>,
 }
 
-impl DidCommActor {
-  fn commander(&mut self) -> &mut NetCommander {
-    self.actor.commander()
+impl DidCommSystem {
+  pub(crate) fn commander_mut(&mut self) -> &mut NetCommander {
+    self.actor.commander_mut()
   }
 
   /// Let this actor handle the given `request`, by invoking a handler function.
@@ -170,7 +166,7 @@ impl DidCommActor {
     log::debug!("Sending `{}` message", endpoint);
     let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
-    let response = self.commander().send_request(peer, message).await?;
+    let response = self.commander_mut().send_request(peer, message).await?;
 
     serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
@@ -234,6 +230,7 @@ impl DidCommActor {
 
   /// Creates the channels used to await a message on a thread.
   fn create_thread_channels(&mut self, thread_id: &ThreadId) {
+    log::debug!("creating thread channels for {thread_id}");
     let (sender, receiver) = oneshot::channel();
 
     // The logic is that for every received message on a thread,
@@ -255,59 +252,15 @@ impl DidCommActor {
     }
 
     let _ = spawn(async move {
-      if self.state.async_handlers.contains_key(&request.endpoint) {
-        let mut actor = self.clone();
+      match self.state.actors.get(&request.endpoint) {
+        Some(actor) => {
+          let handler: &dyn AbstractAsyncActor = actor.as_ref();
 
-        match self.get_async_handler(&request.endpoint).and_then(|handler_ref| {
-          let input = handler_ref.0.handler.deserialize_request(request.input)?;
-          Ok((handler_ref.0, handler_ref.1, input))
-        }) {
-          Ok((handler_ref, object, input)) => {
-            let handler: &dyn AsyncRequestHandler = handler_ref.handler.as_ref();
-
-            let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
-
-            AsynchronousInvocationStrategy::invoke_handler(
-              handler,
-              actor,
-              request_context,
-              object,
-              input,
-              request.response_channel,
-              request.request_id,
-            )
-            .await;
-          }
-          Err(error) => {
-            log::debug!("handler error: {error:?}");
-
-            let result = AsynchronousInvocationStrategy::handler_deserialization_failure(
-              &mut actor,
-              request.response_channel,
-              request.request_id,
-              error,
-            )
-            .await;
-
-            match result {
-              Ok(Err(err)) => {
-                log::error!(
-                  "could not send error for request on endpoint `{}` due to: {err:?}",
-                  request.endpoint
-                );
-              }
-              Err(err) => {
-                log::error!(
-                  "could not send error for request on endpoint `{}` due to: {err:?}",
-                  request.endpoint
-                );
-              }
-              Ok(_) => (),
-            }
-          }
+          handler.handle(self.clone(), request).await;
         }
-      } else {
-        AsynchronousInvocationStrategy::endpoint_not_found(&mut self, request).await;
+        None => {
+          AsynchronousInvocationStrategy::endpoint_not_found(&mut self, request).await;
+        }
       }
     });
   }
@@ -376,7 +329,7 @@ pub struct AsynchronousInvocationStrategy;
 
 impl AsynchronousInvocationStrategy {
   #[inline(always)]
-  async fn endpoint_not_found(actor: &mut DidCommActor, request: InboundRequest) {
+  async fn endpoint_not_found(actor: &mut DidCommSystem, request: InboundRequest) {
     let result: Result<(), RemoteSendError> =
       match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
         Err(error) => Err(RemoteSendError::DeserializationFailure {
@@ -417,59 +370,16 @@ impl AsynchronousInvocationStrategy {
         }
       };
 
-    let send_result = send_response(actor.commander(), result, request.response_channel, request.request_id).await;
+    let send_result = crate::actor::send_response(
+      actor.commander_mut(),
+      result,
+      request.response_channel,
+      request.request_id,
+    )
+    .await;
 
     if let Err(err) = send_result {
       log::error!("could not acknowledge request due to: {err:?}",);
-    }
-  }
-
-  #[inline(always)]
-  async fn handler_deserialization_failure(
-    actor: &mut DidCommActor,
-    channel: ResponseChannel<ResponseMessage>,
-    request_id: RequestId,
-    error: RemoteSendError,
-  ) -> ActorResult<Result<(), InboundFailure>> {
-    send_response(
-      actor.commander(),
-      Result::<(), RemoteSendError>::Err(error),
-      channel,
-      request_id,
-    )
-    .await
-  }
-
-  #[inline(always)]
-  async fn invoke_handler(
-    handler: &dyn AsyncRequestHandler,
-    mut actor: DidCommActor,
-    context: RequestContext<()>,
-    object: Box<dyn Any + Send + Sync>,
-    input: Box<dyn Any + Send>,
-    channel: ResponseChannel<ResponseMessage>,
-    request_id: RequestId,
-  ) {
-    let send_result = send_response(actor.commander(), Ok(()), channel, request_id).await;
-
-    if let Err(err) = send_result {
-      log::error!(
-        "could not acknowledge request on endpoint `{}` due to: {err:?}",
-        context.endpoint
-      );
-
-      // Peer seems to be unresponsive, do not continue handling this request.
-      return;
-    }
-
-    match handler.invoke(actor, context, object, input) {
-      Ok(invocation) => {
-        // Invocation result is () in async handlers.
-        let _ = invocation.await;
-      }
-      Err(err) => {
-        log::error!("{}", err);
-      }
     }
   }
 }
@@ -489,5 +399,6 @@ impl AsyncHandlerObject {
 /// A map from an endpoint to the identifier of the shared state object
 /// and the method that handles that particular request.
 pub(crate) type AsyncHandlerMap = HashMap<Endpoint, AsyncHandlerObject>;
+pub type AsyncActorMap = HashMap<Endpoint, Box<dyn AbstractAsyncActor>>;
 
 pub(crate) type AsyncHandlerObjectTuple<'a> = (&'a AsyncHandlerObject, Box<dyn Any + Send + Sync>);

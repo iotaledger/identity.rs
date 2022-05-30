@@ -17,11 +17,10 @@ async fn test_remote_account() -> ActorResult<()> {
   try_init_logger();
 
   let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
-    builder
-      .add_state(RemoteAccount::new().unwrap())
-      .add_sync_handler(RemoteAccount::create)
-      .add_sync_handler(RemoteAccount::list)
-      .add_sync_handler(RemoteAccount::get);
+    let remote_account = RemoteAccount::new().unwrap();
+    builder.attach::<IdentityCreate, _>(remote_account.clone());
+    builder.attach::<IdentityList, _>(remote_account.clone());
+    builder.attach::<IdentityGet, _>(remote_account);
     builder
   })
   .await;

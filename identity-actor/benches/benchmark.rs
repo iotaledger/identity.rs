@@ -5,29 +5,30 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use identity_actor::actor::Actor;
-use identity_actor::actor::ActorBuilder;
+use identity_actor::actor::System;
+use identity_actor::actor::SystemBuilder;
 use identity_actor::remote_account::IdentityCreate;
+use identity_actor::remote_account::IdentityGet;
+use identity_actor::remote_account::IdentityList;
 use identity_actor::remote_account::RemoteAccount;
 use identity_actor::Multiaddr;
 use identity_actor::PeerId;
 
-async fn setup() -> (Actor, PeerId, Actor) {
+async fn setup() -> (System, PeerId, System) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = ActorBuilder::new();
+  let mut builder = SystemBuilder::new();
 
-  builder
-    .add_state(RemoteAccount::new().unwrap())
-    .add_sync_handler(RemoteAccount::create)
-    .add_sync_handler(RemoteAccount::list)
-    .add_sync_handler(RemoteAccount::get);
+  let remote_account = RemoteAccount::new().unwrap();
+  builder.attach::<IdentityCreate, _>(remote_account.clone());
+  builder.attach::<IdentityList, _>(remote_account.clone());
+  builder.attach::<IdentityGet, _>(remote_account);
 
-  let mut receiver: Actor = builder.build().await.unwrap();
+  let mut receiver: System = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
   let receiver_peer_id = receiver.peer_id();
 
-  let mut sender: Actor = ActorBuilder::new().build().await.unwrap();
+  let mut sender: System = SystemBuilder::new().build().await.unwrap();
 
   sender.add_address(receiver_peer_id, addr).await.unwrap();
 
@@ -49,7 +50,7 @@ fn bench_create_remote_account(c: &mut Criterion) {
   for size in ITERATIONS.iter() {
     group.bench_function(BenchmarkId::from_parameter(size), |bencher| {
       bencher.to_async(&runtime).iter(|| {
-        let mut sender_clone: Actor = sender.clone();
+        let mut sender_clone: System = sender.clone();
 
         async move {
           sender_clone

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
+use crate::actor::AbstractSyncActor;
 use crate::actor::ActorConfig;
 use crate::actor::Endpoint;
 use crate::actor::Error;
@@ -14,23 +15,24 @@ use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
 use crate::actor::SyncActorRequest;
-use crate::actor::SyncRequestHandler;
-use crate::actor::SynchronousInvocationStrategy;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 
 use identity_core::common::OneOrMany;
+use libp2p::request_response::InboundFailure;
+use libp2p::request_response::RequestId;
+use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 use uuid::Uuid;
 
-pub struct ActorState {
-  pub(crate) handlers: SyncHandlerMap,
+pub struct SystemState {
   pub(crate) objects: ObjectMap,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
+  pub(crate) actors: SyncActorMap,
 }
 
 /// The [`Actor`] can be used to send and receive messages to and from other actors.
@@ -43,12 +45,12 @@ pub struct ActorState {
 /// After shutting down the event loop of an actor using [`Actor::shutdown`], other clones of the
 /// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 
-pub struct Actor {
+pub struct System {
   commander: NetCommander,
-  state: Arc<ActorState>,
+  state: Arc<SystemState>,
 }
 
-impl Clone for Actor {
+impl Clone for System {
   fn clone(&self) -> Self {
     Self {
       commander: self.commander.clone(),
@@ -57,12 +59,12 @@ impl Clone for Actor {
   }
 }
 
-impl Actor {
-  pub(crate) fn new(commander: NetCommander, state: Arc<ActorState>) -> Actor {
+impl System {
+  pub(crate) fn new(commander: NetCommander, state: Arc<SystemState>) -> System {
     Self { commander, state }
   }
 
-  pub fn state(&self) -> &ActorState {
+  pub fn state(&self) -> &SystemState {
     self.state.as_ref()
   }
 
@@ -71,27 +73,12 @@ impl Actor {
     self.state().peer_id
   }
 
-  pub(crate) fn get_sync_handler(&self, endpoint: &Endpoint) -> Result<SyncHandlerObjectTuple<'_>, RemoteSendError> {
-    match self.state().handlers.get(endpoint) {
-      Some(handler_object) => {
-        let object_id = handler_object.object_id;
-
-        if let Some(object) = self.state().objects.get(&object_id) {
-          let object_clone = handler_object.handler.clone_object(object)?;
-          Ok((handler_object, object_clone))
-        } else {
-          Err(RemoteSendError::HandlerInvocationError(format!(
-            "no state set for {}",
-            endpoint
-          )))
-        }
-      }
-      None => Err(RemoteSendError::UnexpectedRequest(endpoint.to_string())),
-    }
+  pub fn commander_mut(&mut self) -> &mut NetCommander {
+    &mut self.commander
   }
 
-  pub fn commander(&mut self) -> &mut NetCommander {
-    &mut self.commander
+  pub fn commander(&self) -> &NetCommander {
+    &self.commander
   }
 
   /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
@@ -100,12 +87,12 @@ impl Actor {
   /// [`Actor::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
   /// and should thus not be relied upon.
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
-    self.commander().start_listening(address).await
+    self.commander_mut().start_listening(address).await
   }
 
   /// Return all addresses that are currently being listened on.
   pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
-    self.commander().get_addresses().await
+    self.commander_mut().get_addresses().await
   }
 
   /// Shut this actor down. This will break the event loop in the background immediately,
@@ -121,20 +108,23 @@ impl Actor {
     // to wait for all handlers to finish gracefully. However, not all spawn functions return a JoinHandle,
     // such as wasm_bindgen_futures::spawn_local. The current alternative is to use a non-graceful exit,
     // which breaks the event loop immediately and returns an error through all open channels that require a result.
-    self.commander().shutdown().await
+    self.commander_mut().shutdown().await
   }
 
   /// Associate the given `peer_id` with an `address`. This needs to be done before sending a
   /// request to this [`PeerId`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
-    self.commander().add_addresses(peer_id, OneOrMany::One(address)).await
+    self
+      .commander_mut()
+      .add_addresses(peer_id, OneOrMany::One(address))
+      .await
   }
 
   /// Associate the given `peer_id` with multiple `addresses`. This needs to be done before sending a
   /// request to this [`PeerId`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
     self
-      .commander()
+      .commander_mut()
       .add_addresses(peer_id, OneOrMany::Many(addresses))
       .await
   }
@@ -158,13 +148,13 @@ impl Actor {
 
     let request: RequestMessage = RequestMessage::new(endpoint, request_mode, request_vec);
 
-    let response: ResponseMessage = self.commander().send_request(peer, request).await?;
+    let response: ResponseMessage = self.commander_mut().send_request(peer, request).await?;
 
     let response: Vec<u8> =
       serde_json::from_slice::<Result<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {
         Error::DeserializationFailure {
           location: ErrorLocation::Local,
-          context: "send request".to_owned(),
+          context: "send request (result)".to_owned(),
           error_message: err.to_string(),
         }
       })??;
@@ -198,59 +188,29 @@ impl Actor {
     }
 
     let _ = spawn(async move {
-      if self.state().handlers.contains_key(&request.endpoint) {
-        let mut actor = self.clone();
+      match self.state.actors.get(&request.endpoint) {
+        Some(actor) => {
+          let context: RequestContext<Vec<u8>> =
+            RequestContext::new(request.input, request.peer_id, request.endpoint.clone());
+          let result: Result<Vec<u8>, RemoteSendError> = actor.handle(context).await;
 
-        match self.get_sync_handler(&request.endpoint).and_then(|handler_ref| {
-          let input = handler_ref.0.handler.deserialize_request(request.input)?;
-          Ok((handler_ref.0, handler_ref.1, input))
-        }) {
-          Ok((handler_ref, object, input)) => {
-            let handler: &dyn SyncRequestHandler = handler_ref.handler.as_ref();
-
-            let request_context: RequestContext<()> = RequestContext::new((), request.peer_id, request.endpoint);
-
-            SynchronousInvocationStrategy::invoke_handler(
-              handler,
-              actor,
-              request_context,
-              object,
-              input,
-              request.response_channel,
-              request.request_id,
-            )
-            .await;
-          }
-          Err(error) => {
-            log::debug!("handler error: {error:?}");
-
-            let result = SynchronousInvocationStrategy::handler_deserialization_failure(
-              &mut actor,
-              request.response_channel,
-              request.request_id,
-              error,
-            )
-            .await;
-
-            match result {
-              Ok(Err(err)) => {
-                log::error!(
-                  "could not send error for request on endpoint `{}` due to: {err:?}",
-                  request.endpoint
-                );
-              }
-              Err(err) => {
-                log::error!(
-                  "could not send error for request on endpoint `{}` due to: {err:?}",
-                  request.endpoint
-                );
-              }
-              Ok(_) => (),
-            }
+          if let Err(error) = send_response(
+            self.commander_mut(),
+            result,
+            request.response_channel,
+            request.request_id,
+          )
+          .await
+          {
+            log::error!(
+              "unable to respond to synchronous request on endpoint `{}` due to: {error}",
+              request.endpoint
+            );
           }
         }
-      } else {
-        SynchronousInvocationStrategy::endpoint_not_found(&mut self, request).await;
+        None => {
+          endpoint_not_found(&mut self, request).await;
+        }
       }
     });
   }
@@ -263,20 +223,40 @@ pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
 /// An actor-internal identifier for the object representing the shared state of one or more handlers.
 pub(crate) type ObjectId = Uuid;
 
-/// A [`SyncRequestHandler`] and the id of its associated shared state object.
-pub struct SyncHandlerObject {
-  pub(crate) handler: Box<dyn SyncRequestHandler>,
-  pub(crate) object_id: ObjectId,
+/// A map from an endpoint to the actor that handles it.
+pub type SyncActorMap = HashMap<Endpoint, Box<dyn AbstractSyncActor>>;
+
+pub(crate) async fn send_response<T: serde::Serialize>(
+  commander: &mut NetCommander,
+  response: Result<T, RemoteSendError>,
+  channel: ResponseChannel<ResponseMessage>,
+  request_id: RequestId,
+) -> ActorResult<Result<(), InboundFailure>> {
+  let response: Vec<u8> = serde_json::to_vec(&response).map_err(|err| crate::actor::Error::SerializationFailure {
+    location: ErrorLocation::Local,
+    context: "send response".to_owned(),
+    error_message: err.to_string(),
+  })?;
+  commander.send_response(response, channel, request_id).await
 }
 
-impl SyncHandlerObject {
-  pub(crate) fn new(object_id: ObjectId, handler: Box<dyn SyncRequestHandler>) -> Self {
-    Self { object_id, handler }
+#[inline(always)]
+pub async fn endpoint_not_found(actor: &mut System, request: InboundRequest) {
+  let response: Result<Vec<u8>, RemoteSendError> =
+    Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
+
+  let send_result = send_response(
+    actor.commander_mut(),
+    response,
+    request.response_channel,
+    request.request_id,
+  )
+  .await;
+
+  if let Err(err) = send_result {
+    log::error!(
+      "could not return error for request on endpoint `{}` due to: {err:?}",
+      request.endpoint
+    );
   }
 }
-
-/// A map from an endpoint to the identifier of the shared state object
-/// and the method that handles that particular request.
-pub type SyncHandlerMap = HashMap<Endpoint, SyncHandlerObject>;
-
-pub(crate) type SyncHandlerObjectTuple<'a> = (&'a SyncHandlerObject, Box<dyn Any + Send + Sync>);
