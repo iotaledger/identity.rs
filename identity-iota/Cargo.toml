@@ -30,7 +30,6 @@ serde_repr = { version = "0.1", default-features = false }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
-
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
 rev = "994d4073452abcf311a56e929b0617645620bd92"
