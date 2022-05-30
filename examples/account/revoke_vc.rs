@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
     .update_identity()
     .create_service()
     .fragment("my-revocation-service")
-    .type_("EmbeddedRevocationList")
+    .type_(EmbeddedRevocationList::name())
     .endpoint(revocation_list_endpoint)
     .apply()
     .await?;

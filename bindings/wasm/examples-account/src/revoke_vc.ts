@@ -65,13 +65,12 @@ async function revokeVC(storage?: Storage) {
         type: "UniversityDegreeCredential",
         credentialStatus: {
             id: issuer.did()+"#my-revocation-service",
-            types: EmbeddedRevocationList.name(),
-            revocationListIndex: '5'
+            type: EmbeddedRevocationList.name(),
+            revocationListIndex: "5"
         },
         issuer: issuer.document().id(),
         credentialSubject: subject,
     });
-    console.log(unsignedVc);
 
     // Created a signed credential by the issuer.
     const signedVc = await issuer.createSignedCredential(
@@ -86,7 +85,7 @@ async function revokeVC(storage?: Storage) {
 
     // Update the service for checking the credential status
     // When verifiers look for the index corresponding to the credential, it will be set to revoked.
-    await issuer.revokeCredentials("my-revocation-service", new Uint32Array(5))
+    await issuer.revokeCredentials("my-revocation-service", new Uint32Array([5]))
     try {
         CredentialValidator.validate(
             signedVc,

@@ -14,6 +14,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 use identity::core::Url;
 use identity::iota::CredentialValidator;
+use identity::iota_core::IotaDocument;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::ValidationError;
 use wasm_bindgen::prelude::*;
@@ -110,5 +111,12 @@ impl WasmCredentialValidator {
   ) -> Result<()> {
     let holder: Url = Url::parse(holder_url).wasm_result()?;
     CredentialValidator::check_subject_holder_relationship(&credential.0, &holder, relationship.into()).wasm_result()
+  }
+
+  /// If the credential has a status of type `EmbeddedRevocationList`, checks if the credential has been revoked.
+  #[wasm_bindgen(js_name = checkRevoked)]
+  pub fn check_revoked(credential: &WasmCredential, trusted_issuers: &ArrayDocumentOrArrayResolvedDocument) -> Result<()> {
+    let trusted_issuers: Vec<IotaDocument> = trusted_issuers.into_serde().wasm_result()?;
+    CredentialValidator::check_revoked(&credential.0, trusted_issuers.as_slice()).wasm_result()
   }
 }
