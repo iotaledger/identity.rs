@@ -15,7 +15,7 @@ use serde::Serialize;
 use super::error::Result;
 use super::ServiceError;
 
-/// A parsed DataUrl.
+/// A parsed data url.
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]

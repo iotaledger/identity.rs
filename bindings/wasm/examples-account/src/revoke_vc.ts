@@ -10,7 +10,8 @@ import {
     Resolver,
     Storage,
     MethodContent,
-    ProofOptions
+    ProofOptions,
+    EmbeddedRevocationList,
 } from './../../node/identity_wasm.js';
 
 
@@ -42,6 +43,14 @@ async function revokeVC(storage?: Storage) {
         fragment: "key-1"
     })
 
+    // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
+    const revocationList = new EmbeddedRevocationList;
+    await issuer.createService({
+        fragment: "my-revocation-service",
+        type: EmbeddedRevocationList.name(),
+        endpoint: revocationList.toEmbeddedServiceEndpoint().into_string()
+    })
+
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
         id: "did:iota:B8DucnzULJ9E8cmaReYoePU2b7UKE9WKxyEVov8tQA7H",
@@ -50,13 +59,19 @@ async function revokeVC(storage?: Storage) {
         GPA: "4.0"
     };
 
-    // Create an unsigned `UniversityDegree` credential for Alice
+    // Create an unsigned `UniversityDegree` credential for Alice 
     const unsignedVc = new Credential({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
+        credentialStatus: {
+            id: issuer.did()+"#my-revocation-service",
+            types: EmbeddedRevocationList.name(),
+            revocationListIndex: '5'
+        },
         issuer: issuer.document().id(),
         credentialSubject: subject,
     });
+    console.log(unsignedVc);
 
     // Created a signed credential by the issuer.
     const signedVc = await issuer.createSignedCredential(
@@ -68,6 +83,20 @@ async function revokeVC(storage?: Storage) {
     // ===========================================================================
     // Revoke the Verifiable Credential.
     // ===========================================================================
+
+    // Update the service for checking the credential status
+    // When verifiers look for the index corresponding to the credential, it will be set to revoked.
+    await issuer.revokeCredentials("my-revocation-service", new Uint32Array(5))
+    try {
+        CredentialValidator.validate(
+            signedVc,
+            issuer.document(),
+            CredentialValidationOptions.default(),
+            FailFast.FirstError
+        );
+    } catch (e) {
+        console.log(`Error During validation: ${e}`)
+    }
 
     await issuer.deleteMethod({
         fragment: "key-1"

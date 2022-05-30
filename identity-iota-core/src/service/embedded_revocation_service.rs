@@ -33,6 +33,7 @@ pub struct EmbeddedRevocationService {
 }
 
 impl EmbeddedRevocationService {
+  /// Creates a new `EmbeddedRevocationService`.
   pub fn new(id: IotaDIDUrl, service_endpoint: EmbeddedRevocationEndpoint) -> Result<Self> {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(ServiceError::InvalidServiceId("missing id fragment".to_owned()));

@@ -4,10 +4,12 @@
 use identity::iota_core::EmbeddedRevocationList;
 use wasm_bindgen::prelude::*;
 
+use crate::did::WasmEmbeddedRevocationEndpoint;
 use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = EmbeddedRevocationList, inspectable)]
+#[derive(Clone, Debug)]
 pub struct WasmEmbeddedRevocationList(pub(crate) EmbeddedRevocationList);
 
 #[wasm_bindgen(js_class = EmbeddedRevocationList)]
@@ -68,6 +70,12 @@ impl WasmEmbeddedRevocationList {
     self.0.serialize_compressed_b64().wasm_result()
   }
 
+  /// Serializes and compressess the [`EmbeddedRevocationList`] and returns its data url representation.
+  #[wasm_bindgen(js_name = toEmbeddedServiceEndpoint)]
+  pub fn to_embedded_service_endpoint(&self) -> Result<WasmEmbeddedRevocationEndpoint> {
+    self.0.to_embedded_service_endpoint().wasm_result().map(Into::into)
+  }
+
   /// Serializes a `EmbeddedRevocationList` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
@@ -78,5 +86,17 @@ impl WasmEmbeddedRevocationList {
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<WasmEmbeddedRevocationList> {
     value.into_serde().map(Self).wasm_result()
+  }
+}
+
+impl From<EmbeddedRevocationList> for WasmEmbeddedRevocationList {
+  fn from(revocation_list: EmbeddedRevocationList) -> Self {
+    WasmEmbeddedRevocationList(revocation_list)
+  }
+}
+
+impl From<WasmEmbeddedRevocationList> for EmbeddedRevocationList {
+  fn from(revocation_list: WasmEmbeddedRevocationList) -> Self {
+    revocation_list.0
   }
 }

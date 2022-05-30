@@ -49,10 +49,16 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
+<dt><a href="#EmbeddedRevocationEndpoint">EmbeddedRevocationEndpoint</a></dt>
+<dd><p>A parsed data url.</p>
+</dd>
 <dt><a href="#EmbeddedRevocationList">EmbeddedRevocationList</a></dt>
 <dd></dd>
 <dt><a href="#EmbeddedRevocationService">EmbeddedRevocationService</a></dt>
 <dd><p>A DID Document Service used to enable validators to check the status of a credential.</p>
+</dd>
+<dt><a href="#EmbeddedRevocationStatus">EmbeddedRevocationStatus</a></dt>
+<dd><p>Information used to determine the current status of a <code>Credential</code>.</p>
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
@@ -170,9 +176,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -195,9 +201,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
@@ -217,42 +220,9 @@ publishing to the Tangle.
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+setAlsoKnownAs"></a>
 
@@ -451,6 +421,42 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -2370,6 +2376,62 @@ to canonicalize JSON messages.
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
 
+<a name="EmbeddedRevocationEndpoint"></a>
+
+## EmbeddedRevocationEndpoint
+A parsed data url.
+
+**Kind**: global class  
+
+* [EmbeddedRevocationEndpoint](#EmbeddedRevocationEndpoint)
+    * _instance_
+        * [.into_string()](#EmbeddedRevocationEndpoint+into_string) ⇒ <code>string</code>
+        * [.data()](#EmbeddedRevocationEndpoint+data) ⇒ <code>string</code>
+        * [.toJSON()](#EmbeddedRevocationEndpoint+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.parse(input)](#EmbeddedRevocationEndpoint.parse) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
+        * [.fromJSON(value)](#EmbeddedRevocationEndpoint.fromJSON) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
+
+<a name="EmbeddedRevocationEndpoint+into_string"></a>
+
+### embeddedRevocationEndpoint.into\_string() ⇒ <code>string</code>
+Returns the `EmbeddedRevocationEndpoint` as a String.
+
+**Kind**: instance method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
+<a name="EmbeddedRevocationEndpoint+data"></a>
+
+### embeddedRevocationEndpoint.data() ⇒ <code>string</code>
+Returns the data from the [`EmbeddedRevocationEndpoint`].
+
+**Kind**: instance method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
+<a name="EmbeddedRevocationEndpoint+toJSON"></a>
+
+### embeddedRevocationEndpoint.toJSON() ⇒ <code>any</code>
+Serializes a `EmbeddedRevocationEndpoint` object as a JSON object.
+
+**Kind**: instance method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
+<a name="EmbeddedRevocationEndpoint.parse"></a>
+
+### EmbeddedRevocationEndpoint.parse(input) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
+Parses an [`EmbeddedRevocationEndpoint`] from the given input String.
+
+**Kind**: static method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="EmbeddedRevocationEndpoint.fromJSON"></a>
+
+### EmbeddedRevocationEndpoint.fromJSON(value) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
+Deserializes a `EmbeddedRevocationEndpoint` object from a JSON object.
+
+**Kind**: static method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
 <a name="EmbeddedRevocationList"></a>
 
 ## EmbeddedRevocationList
@@ -2383,6 +2445,7 @@ to canonicalize JSON messages.
         * [.revokeMultiple(indexes)](#EmbeddedRevocationList+revokeMultiple)
         * [.undoRevocation(index)](#EmbeddedRevocationList+undoRevocation) ⇒ <code>boolean</code>
         * [.serializeCompressedB64()](#EmbeddedRevocationList+serializeCompressedB64) ⇒ <code>string</code>
+        * [.toEmbeddedServiceEndpoint()](#EmbeddedRevocationList+toEmbeddedServiceEndpoint) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
         * [.toJSON()](#EmbeddedRevocationList+toJSON) ⇒ <code>any</code>
     * _static_
         * [.name()](#EmbeddedRevocationList.name) ⇒ <code>string</code>
@@ -2445,6 +2508,12 @@ The credential at the given `index` will be set to valid.
 Serializes and compressess [`EmbeddedRevocationList`] as a base64-encoded `String`.
 
 **Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
+<a name="EmbeddedRevocationList+toEmbeddedServiceEndpoint"></a>
+
+### embeddedRevocationList.toEmbeddedServiceEndpoint() ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
+Serializes and compressess the [`EmbeddedRevocationList`] and returns its data url representation.
+
+**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
 <a name="EmbeddedRevocationList+toJSON"></a>
 
 ### embeddedRevocationList.toJSON() ⇒ <code>any</code>
@@ -2491,13 +2560,26 @@ A DID Document Service used to enable validators to check the status of a creden
 **Kind**: global class  
 
 * [EmbeddedRevocationService](#EmbeddedRevocationService)
+    * [new EmbeddedRevocationService(id, endpoint)](#new_EmbeddedRevocationService_new)
     * _instance_
         * [.id()](#EmbeddedRevocationService+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.type()](#EmbeddedRevocationService+type) ⇒ <code>string</code>
         * [.setId(id)](#EmbeddedRevocationService+setId)
+        * [.setServiceEndpoint(service_endpoint)](#EmbeddedRevocationService+setServiceEndpoint)
         * [.toJSON()](#EmbeddedRevocationService+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(value)](#EmbeddedRevocationService.fromJSON) ⇒ [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)
+
+<a name="new_EmbeddedRevocationService_new"></a>
+
+### new EmbeddedRevocationService(id, endpoint)
+Creates a new `EmbeddedRevocationService`.
+
+
+| Param | Type |
+| --- | --- |
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+| endpoint | [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint) | 
 
 <a name="EmbeddedRevocationService+id"></a>
 
@@ -2522,6 +2604,17 @@ Sets the `EmbeddedRevocationService` id.
 | --- | --- |
 | id | [<code>DIDUrl</code>](#DIDUrl) | 
 
+<a name="EmbeddedRevocationService+setServiceEndpoint"></a>
+
+### embeddedRevocationService.setServiceEndpoint(service_endpoint)
+Sets the `EmbeddedRevocationService` endpoint.
+
+**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+
+| Param | Type |
+| --- | --- |
+| service_endpoint | [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint) | 
+
 <a name="EmbeddedRevocationService+toJSON"></a>
 
 ### embeddedRevocationService.toJSON() ⇒ <code>any</code>
@@ -2534,6 +2627,48 @@ Serializes a `EmbeddedRevocationService` object as a JSON object.
 Deserializes a `EmbeddedRevocationService` object from a JSON object.
 
 **Kind**: static method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="EmbeddedRevocationStatus"></a>
+
+## EmbeddedRevocationStatus
+Information used to determine the current status of a `Credential`.
+
+**Kind**: global class  
+
+* [EmbeddedRevocationStatus](#EmbeddedRevocationStatus)
+    * [new EmbeddedRevocationStatus(id, revocation_list_index)](#new_EmbeddedRevocationStatus_new)
+    * _instance_
+        * [.toJSON()](#EmbeddedRevocationStatus+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#EmbeddedRevocationStatus.fromJSON) ⇒ [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)
+
+<a name="new_EmbeddedRevocationStatus_new"></a>
+
+### new EmbeddedRevocationStatus(id, revocation_list_index)
+Creates a new `EmbeddedRevocationStatus`.
+
+
+| Param | Type |
+| --- | --- |
+| id | [<code>DIDUrl</code>](#DIDUrl) | 
+| revocation_list_index | <code>number</code> | 
+
+<a name="EmbeddedRevocationStatus+toJSON"></a>
+
+### embeddedRevocationStatus.toJSON() ⇒ <code>any</code>
+Serializes a `EmbeddedRevocationStatus` object as a JSON object.
+
+**Kind**: instance method of [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)  
+<a name="EmbeddedRevocationStatus.fromJSON"></a>
+
+### EmbeddedRevocationStatus.fromJSON(value) ⇒ [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)
+Deserializes a `EmbeddedRevocationStatus` object from a JSON object.
+
+**Kind**: static method of [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)  
 
 | Param | Type |
 | --- | --- |
@@ -4623,13 +4758,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 
