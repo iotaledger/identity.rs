@@ -23,7 +23,7 @@ use crate::error::Result;
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
-pub struct Url(::url::Url);
+pub struct Url(pub(crate) ::url::Url);
 
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.

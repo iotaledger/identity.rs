@@ -28,6 +28,7 @@ use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
+use identity_iota_core::revocation::EmbeddedRevocationList;
 use identity_iota_core::service::EmbeddedRevocationService;
 use identity_iota_core::service::ServiceError;
 use identity_iota_core::tangle::MessageId;
@@ -323,23 +324,27 @@ where
       .iter_mut_unchecked()
       .find(|service| service.id() == &service_id)
       .ok_or_else(|| {
-        Error::CredentialRevocationError(
-          format!("service id {} not found", service_id),
-          ServiceError::InvalidServiceId(format!("id {} not found", service_id)),
-        )
+        Error::CredentialRevocationError(ServiceError::InvalidServiceId(format!("id {} not found", service_id)))
       })?;
     // Updates the service with all revoked credential
     let mut embedded_revocation_service: EmbeddedRevocationService =
-      EmbeddedRevocationService::try_from(service.clone())
-        .map_err(|e| Error::CredentialRevocationError("invalid service".to_owned(), e))?;
-    embedded_revocation_service
-      .revoke_credentials(credentials)
-      .map_err(|e| Error::CredentialRevocationError("unable to revoke credentials".to_owned(), e))?;
+      service.clone().try_into().map_err(Error::CredentialRevocationError)?;
+    let mut embedded_revocation_list: EmbeddedRevocationList = embedded_revocation_service
+      .service_endpoint()
+      .clone()
+      .try_into()
+      .map_err(|e| Error::CredentialRevocationError(ServiceError::RevocationMethodError(e)))?;
+    embedded_revocation_list.revoke_multiple(credentials);
+    embedded_revocation_service.set_service_endpoint(
+      embedded_revocation_list
+        .to_embedded_service_endpoint()
+        .map_err(|e| Error::CredentialRevocationError(ServiceError::RevocationMethodError(e)))?,
+    );
     std::mem::swap(
       service,
       &mut embedded_revocation_service
         .try_into()
-        .map_err(|e| Error::CredentialRevocationError("updated service is not valid".to_owned(), e))?,
+        .map_err(Error::CredentialRevocationError)?,
     );
     self.increment_actions();
     self.publish_internal(false, PublishOptions::default()).await?;

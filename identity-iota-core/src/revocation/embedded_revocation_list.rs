@@ -22,6 +22,7 @@ use serde::Serialize;
 
 use super::error::Result;
 use super::error::RevocationMethodError;
+use crate::service::EmbeddedRevocationEndpoint;
 
 pub const EMBEDDED_REVOCATION_METHOD_NAME: &str = "EmbeddedRevocationList";
 const REVOCATION_LIST_INDEX: &str = "revocationListIndex";
@@ -69,9 +70,15 @@ impl EmbeddedRevocationList {
   }
 
   /// Serializes and compressess the [`EmbeddedRevocationList`] and returns its data url representation
-  pub fn to_url(&self) -> Result<Url> {
+  pub fn to_embedded_service_endpoint(&self) -> Result<EmbeddedRevocationEndpoint> {
     let data_url: String = format!("data:,{}", self.serialize_compressed_b64()?);
-    Url::parse(data_url.clone()).map_err(|e| RevocationMethodError::InvalidUrlRepresentation(data_url, e))
+    EmbeddedRevocationEndpoint::parse(&data_url).map_err(|_| RevocationMethodError::InvalidUrlRepresentation(data_url))
+  }
+
+  /// Serializes and compressess the [`EmbeddedRevocationList`] and returns its url representation
+  pub fn to_url(&self) -> Result<Url> {
+    let url: String = format!("data:,{}", self.serialize_compressed_b64()?);
+    Url::parse(&url).map_err(|_| RevocationMethodError::InvalidUrlRepresentation(url))
   }
 
   /// Deserializes a compressed [`EmbeddedRevocationList`] base64-encoded `data`.
@@ -124,6 +131,15 @@ impl EmbeddedRevocationList {
   }
 }
 
+impl TryFrom<EmbeddedRevocationEndpoint> for EmbeddedRevocationList {
+  type Error = RevocationMethodError;
+
+  fn try_from(service_enpoint: EmbeddedRevocationEndpoint) -> Result<Self> {
+    let data: &str = service_enpoint.data();
+    Self::deserialize_compressed_b64(data)
+  }
+}
+
 impl Serialize for EmbeddedRevocationList {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -172,6 +188,10 @@ mod tests {
     let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
     assert_eq!(&b64_compressed_revocation_list, "eJyzMmAAAwADKABr");
     assert_eq!(
+      embedded_revocation_list.to_embedded_service_endpoint().unwrap(),
+      "data:,eJyzMmAAAwADKABr"
+    );
+    assert_eq!(
       EmbeddedRevocationList::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
       embedded_revocation_list
     );
@@ -179,6 +199,10 @@ mod tests {
     embedded_revocation_list.revoke_multiple(&[0, 5, 6, 8]);
     let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
     assert_eq!(&b64_compressed_revocation_list, "eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI=");
+    assert_eq!(
+      embedded_revocation_list.to_embedded_service_endpoint().unwrap(),
+      "data:,eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI="
+    );
     assert_eq!(
       EmbeddedRevocationList::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
       embedded_revocation_list

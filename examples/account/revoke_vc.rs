@@ -13,6 +13,7 @@
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
+use identity::account::Error;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
@@ -28,8 +29,11 @@ use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
+use identity::iota::ValidationError;
 use identity::iota_core::EmbeddedRevocationList;
 use identity::iota_core::EmbeddedRevocationStatus;
+use identity::iota_core::IotaDIDUrl;
+use identity::iota_core::ServiceError;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -55,13 +59,15 @@ async fn main() -> Result<()> {
 
   // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
   let revocation_list: EmbeddedRevocationList = EmbeddedRevocationList::new();
-  let revocation_list_url: Url = revocation_list.to_url().unwrap();
+  let revocation_list_endpoint: Url = revocation_list
+    .to_url()
+    .map_err(|e| Error::CredentialRevocationError(ServiceError::RevocationMethodError(e)))?;
   issuer
     .update_identity()
     .create_service()
     .fragment("my-revocation-service")
     .type_("EmbeddedRevocationList")
-    .endpoint(revocation_list_url)
+    .endpoint(revocation_list_endpoint)
     .apply()
     .await?;
 
@@ -74,7 +80,7 @@ async fn main() -> Result<()> {
   }))?;
 
   // Create a credential status pointing verifiers to the endpoint that states if it has been revoked.
-  let service_url = Url::parse(format!("{}#my-revocation-service", issuer.did()))?;
+  let service_url = IotaDIDUrl::parse(format!("{}#my-revocation-service", issuer.did()))?;
   let credential_index: u32 = 5; // choosen arbitrarily
   let status: EmbeddedRevocationStatus = EmbeddedRevocationStatus::new(service_url, credential_index);
 
@@ -83,7 +89,7 @@ async fn main() -> Result<()> {
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer.did().as_str())?)
     .type_("UniversityDegreeCredential")
-    .status(status.into())
+    .status(status.try_into().unwrap())
     .subject(subject)
     .build()?;
 
@@ -100,13 +106,16 @@ async fn main() -> Result<()> {
     .revoke_credentials("my-revocation-service", &[credential_index])
     .await?;
 
-  CredentialValidator::validate(
+  let validation_result = CredentialValidator::validate(
     &credential,
     &issuer.document(),
     &CredentialValidationOptions::default(),
     identity::iota::FailFast::FirstError,
-  )
-  .unwrap();
+  );
+  match validation_result.unwrap_err().validation_errors[0] {
+    ValidationError::RevokedCredential(index) => assert_eq!(index, credential_index),
+    _ => panic!("expected revoked credential error"),
+  }
 
   // Remove the public key that signed the VC from the issuer's DID document
   // This effectively revokes the VC as it will no longer be able to be verified.

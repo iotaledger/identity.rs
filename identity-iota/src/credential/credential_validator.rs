@@ -1,21 +1,18 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
-
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::common::Value;
 use identity_credential::credential::Credential;
-use identity_credential::credential::Status;
-use identity_did::did::DID;
-use identity_did::service::ServiceEndpoint;
 use identity_did::verifiable::VerifierOptions;
+use identity_iota_core::credential::EmbeddedRevocationStatus;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::revocation::EmbeddedRevocationList;
-use identity_iota_core::revocation::EMBEDDED_REVOCATION_METHOD_NAME;
+use identity_iota_core::service::EmbeddedRevocationEndpoint;
+use identity_iota_core::service::EmbeddedRevocationService;
+use identity_iota_core::service::ServiceError;
 use serde::Serialize;
 
 use super::errors::SignerContext;
@@ -178,10 +175,14 @@ impl CredentialValidator {
     }
   }
 
-  /// Checks if the credential has been revoked.
+  /// If the credential has a status of type `EmbeddedRevocationList`, checks if the credential has been revoked.
   pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
     match &credential.credential_status {
       Some(status) => {
+        if status.types != Some(EmbeddedRevocationList::name().to_owned()) {
+          return Ok(());
+        }
+        let status = EmbeddedRevocationStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
         let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
         let issuer_did: IotaDID = issuer_did.map_err(|e| ValidationError::SignerUrl {
           source: e.into(),
@@ -191,65 +192,53 @@ impl CredentialValidator {
           .iter()
           .find(|issuer| issuer.as_ref().id() == &issuer_did)
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-          .and_then(|issuer| CredentialValidator::check_revocation(status, issuer))
+          .and_then(|issuer| CredentialValidator::check_revocation(&status, issuer))
       }
       None => Ok(()),
     }
   }
 
-  fn check_revocation<D: AsRef<IotaDocument>>(credential_status: &Status, issuer: D) -> ValidationUnitResult {
-    let issuer_service: IotaDID = IotaDID::parse(credential_status.id.clone().into_string())
-      .map_err(|e| ValidationError::InvalidServiceID(credential_status.id.clone().into_string(), e))?;
+  fn check_revocation<D: AsRef<IotaDocument>>(
+    credential_status: &EmbeddedRevocationStatus,
+    issuer: D,
+  ) -> ValidationUnitResult {
     // Looks for the appropriate service to check for revocation
     match issuer
       .as_ref()
       .service()
       .iter()
-      .find(|service| &issuer_service.to_url() == service.id())
+      .find(|service| &credential_status.id == service.id())
     {
-      Some(service) => match service.type_() {
-        EMBEDDED_REVOCATION_METHOD_NAME => match service.service_endpoint() {
-          ServiceEndpoint::One(url) => CredentialValidator::check_simple_revocation_list(credential_status, url),
-          ServiceEndpoint::Set(_) | ServiceEndpoint::Map(_) => Err(ValidationError::InvalidServiceEnpoint(format!(
-            "{} should contain a single URL as value",
-            issuer_service.to_url()
-          ))),
-        },
-        _ => Err(ValidationError::UnsupportedRevocationMethod(service.type_().to_owned())),
-      },
+      Some(service) => {
+        let embedded_revocation_service: EmbeddedRevocationService =
+          service.clone().try_into().map_err(ValidationError::InvalidService)?;
+        Self::check_simple_revocation_list(credential_status, embedded_revocation_service.service_endpoint())
+      }
       None => {
         // No revocation service endpoint was found
-        Err(ValidationError::InvalidServiceEnpoint(format!(
-          "{} not found",
-          issuer_service.to_url()
+        Err(ValidationError::InvalidService(ServiceError::InvalidServiceId(
+          format!("{} not found", credential_status.id),
         )))
       }
     }
   }
 
-  /// By deserializing the `Url` path into a `EmbeddedRevocationList`, checks if the index given in `Status` is
-  /// revoked.
-  fn check_simple_revocation_list(credential_status: &Status, url: &Url) -> ValidationUnitResult {
-    let revocation_list: EmbeddedRevocationList =
-      EmbeddedRevocationList::deserialize_compressed_b64(url.path()).map_err(ValidationError::RevocationCheckError)?;
-    let credential_index: &Value = credential_status
-      .properties
-      .get(EmbeddedRevocationList::credential_list_index_property())
-      .ok_or_else(|| ValidationError::InvalidRevocationIndex("property not found".to_owned()))?;
-    match credential_index {
-      Value::String(index) => {
-        let index: u32 =
-          u32::from_str(index).map_err(|_e| ValidationError::InvalidRevocationIndex(format!("value: {}", index)))?;
-        if revocation_list.is_revoked(index) {
-          Err(ValidationError::RevokedCredential(index))
-        } else {
-          Ok(())
-        }
-      }
-      Value::Null | Value::Bool(_) | Value::Array(_) | Value::Object(_) | Value::Number(_) => Err(
-        ValidationError::InvalidRevocationIndex("invalid property type".to_owned()),
-      ),
+  /// By deserializing the `Url` path into a `EmbeddedRevocationList`, checks if the index given in
+  /// `EmbeddedRevocationStatus` is revoked.
+  fn check_simple_revocation_list(
+    credential_status: &EmbeddedRevocationStatus,
+    data_url: &EmbeddedRevocationEndpoint,
+  ) -> ValidationUnitResult {
+    let revocation_list: EmbeddedRevocationList = data_url
+      .clone()
+      .try_into()
+      .map_err(ValidationError::InvalidRevocationList)?;
+    if revocation_list.is_revoked(credential_status.revocation_list_index) {
+      return Err(ValidationError::RevokedCredential(
+        credential_status.revocation_list_index,
+      ));
     }
+    Ok(())
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation

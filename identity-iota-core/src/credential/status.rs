@@ -12,13 +12,14 @@ use serde::Serialize;
 
 use super::error::Result;
 use super::CredentialStatusError;
+use crate::did::IotaDIDUrl;
 use crate::revocation::EmbeddedRevocationList;
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct EmbeddedRevocationStatus {
   /// A DID URL that can be resolved to a service of the issuer which contains the revocation list.
-  pub id: Url,
+  pub id: IotaDIDUrl,
   /// The string indentifying the revocation method.
   #[serde(rename = "type")]
   pub types: String,
@@ -29,7 +30,7 @@ pub struct EmbeddedRevocationStatus {
 
 impl EmbeddedRevocationStatus {
   /// Creates a new `EmbeddedRevocationStatus`.
-  pub fn new(id: Url, revocation_list_index: u32) -> Self {
+  pub fn new(id: IotaDIDUrl, revocation_list_index: u32) -> Self {
     EmbeddedRevocationStatus {
       id,
       types: EmbeddedRevocationList::name().to_owned(),
@@ -44,6 +45,10 @@ impl TryFrom<Status> for EmbeddedRevocationStatus {
   fn try_from(status: Status) -> Result<Self> {
     let expected_type: &str = EmbeddedRevocationList::name();
     let index_property: &str = EmbeddedRevocationList::credential_list_index_property();
+
+    let url_string: String = status.id.into_string();
+    let id: IotaDIDUrl =
+      IotaDIDUrl::parse(&url_string).map_err(|_| CredentialStatusError::InvalidStatusId(url_string.to_owned()))?;
 
     let types: String = status
       .types
@@ -75,20 +80,24 @@ impl TryFrom<Status> for EmbeddedRevocationStatus {
     };
 
     Ok(Self {
-      id: status.id,
+      id,
       types,
       revocation_list_index,
     })
   }
 }
 
-impl From<EmbeddedRevocationStatus> for Status {
-  fn from(embedded_status: EmbeddedRevocationStatus) -> Self {
+impl TryFrom<EmbeddedRevocationStatus> for Status {
+  type Error = CredentialStatusError;
+
+  fn try_from(status: EmbeddedRevocationStatus) -> Result<Self> {
     let object: Object = Object::from([(
       EmbeddedRevocationList::credential_list_index_property().to_owned(),
-      Value::String(embedded_status.revocation_list_index.to_string()),
+      Value::String(status.revocation_list_index.to_string()),
     )]);
-    Status::with_properties(embedded_status.id, Some(embedded_status.types), object)
+    let url = Url::parse(status.id.to_string())
+      .map_err(|_| CredentialStatusError::InvalidStatusId(format!("{} cannot be parsed as a Url", status.id)))?;
+    Ok(Status::with_properties(url, Some(status.types), object))
   }
 }
 
@@ -100,6 +109,7 @@ mod tests {
   use identity_credential::credential::Status;
 
   use super::EmbeddedRevocationStatus;
+  use crate::did::IotaDIDUrl;
   use crate::revocation::EmbeddedRevocationList;
 
   const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
@@ -107,7 +117,8 @@ mod tests {
 
   #[test]
   fn test_embedded_status_invariants() {
-    let iota_did_url: Url = Url::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
+    let url: Url = Url::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
+    let iota_did_url: IotaDIDUrl = IotaDIDUrl::parse(url.clone().into_string()).unwrap();
     let revocation_list_index: u32 = 0;
     let embedded_revocation_status = EmbeddedRevocationStatus::new(iota_did_url.clone(), revocation_list_index);
 
@@ -116,20 +127,20 @@ mod tests {
       Value::String(revocation_list_index.to_string()),
     )]);
     let status: Status = Status::with_properties(
-      iota_did_url.clone(),
+      url.clone(),
       Some(EmbeddedRevocationList::name().to_owned()),
       object.clone(),
     );
     assert_eq!(embedded_revocation_status, status.try_into().unwrap());
 
     let status_missing_property: Status = Status::with_properties(
-      iota_did_url.clone(),
+      url.clone(),
       Some(EmbeddedRevocationList::name().to_owned()),
       Object::new(),
     );
     assert!(EmbeddedRevocationStatus::try_from(status_missing_property).is_err());
 
-    let status_wrong_type: Status = Status::with_properties(iota_did_url, Some("DifferentType".to_owned()), object);
+    let status_wrong_type: Status = Status::with_properties(url, Some("DifferentType".to_owned()), object);
     assert!(EmbeddedRevocationStatus::try_from(status_wrong_type).is_err());
   }
 }

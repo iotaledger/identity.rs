@@ -53,24 +53,18 @@ pub enum ValidationError {
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
-  /// Indicates that the issuer's DID is an invalid `IotaDID`.
-  #[error("invalid service id: {0}")]
-  InvalidServiceID(String, #[source] identity_iota_core::error::Error),
-  /// Indicates that the revocation index is invalid.
-  #[error("revocation index {0}")]
-  InvalidRevocationIndex(String),
-  /// Indicates that the service endpoint is invalid or not present.
-  #[error("revocation service {0}")]
-  InvalidServiceEnpoint(String),
-  /// Indicates that revocation could not be checked.
-  #[error("revocation check failed")]
-  RevocationCheckError(#[from] identity_iota_core::revocation::RevocationMethodError),
+  /// Indicates that status is invalid.
+  #[error("invalid service: {0}")]
+  InvalidStatus(#[source] identity_iota_core::credential::CredentialStatusError),
+  /// Indicates that revocation list is invalid.
+  #[error("invalid service: {0}")]
+  InvalidRevocationList(#[source] identity_iota_core::revocation::RevocationMethodError),
+  /// Indicates that the service is invalid.
+  #[error("invalid service: {0}")]
+  InvalidService(#[source] identity_iota_core::service::ServiceError),
   /// Indicates that the credential has been revoked.
   #[error("credential at index {0} has been revoked")]
   RevokedCredential(u32),
-  /// Indicates that the revocation method is not supported.
-  #[error("method {0} is not supported for revocation")]
-  UnsupportedRevocationMethod(String),
 }
 
 #[derive(Debug)]

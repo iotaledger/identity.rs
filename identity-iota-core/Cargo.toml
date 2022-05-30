@@ -12,6 +12,7 @@ description = ""
 
 [dependencies]
 bee-message = { version = "0.1.6", default-features = false, features = ["serde"] }
+data-url = { version = "0.1.1",  default-features = false }
 flate2 = { version = "1.0.23" }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }

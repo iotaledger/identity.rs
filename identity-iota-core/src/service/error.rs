@@ -13,6 +13,6 @@ pub enum ServiceError {
   InvalidServiceType(String),
   #[error("invalid service endpoint: {0}")]
   InvalidServiceEndpoint(String),
-  #[error("revocation method Error: {0}")]
-  RevocationMethodError(String, #[source] crate::revocation::RevocationMethodError),
+  #[error("revocation method Error")]
+  RevocationMethodError(#[source] crate::revocation::RevocationMethodError),
 }
