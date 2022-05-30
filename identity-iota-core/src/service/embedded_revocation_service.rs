@@ -173,7 +173,7 @@ mod tests {
     assert_eq!(embedded_revocation_service, service.try_into().unwrap());
 
     let invalid_service_type: Service<IotaDID> = Service::builder(Object::new())
-      .id(iota_did_url.clone())
+      .id(iota_did_url)
       .type_("DifferentRevocationType")
       .service_endpoint(ServiceEndpoint::One(service_endpoint.try_into().unwrap()))
       .build()

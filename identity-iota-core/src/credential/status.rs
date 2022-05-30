@@ -120,7 +120,7 @@ mod tests {
     let url: Url = Url::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
     let iota_did_url: IotaDIDUrl = IotaDIDUrl::parse(url.clone().into_string()).unwrap();
     let revocation_list_index: u32 = 0;
-    let embedded_revocation_status = EmbeddedRevocationStatus::new(iota_did_url.clone(), revocation_list_index);
+    let embedded_revocation_status = EmbeddedRevocationStatus::new(iota_did_url, revocation_list_index);
 
     let object: Object = Object::from([(
       EmbeddedRevocationList::credential_list_index_property().to_owned(),
