@@ -32,7 +32,7 @@ use super::default_sending_actor;
 async fn test_new_approach() -> ActorResult<()> {
   try_init_logger();
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   struct MyActor {
     counter: Arc<AtomicU32>,
   }
@@ -154,7 +154,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
     }
   }
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   pub struct TestActor(pub Arc<AtomicBool>);
 
   #[async_trait::async_trait]
@@ -212,7 +212,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
     }
   }
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   pub struct TestActor(pub Arc<AtomicBool>);
 
   #[async_trait::async_trait]
@@ -264,6 +264,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
     }
   }
 
+  #[derive(Debug)]
   struct TestActor;
 
   #[async_trait::async_trait]
@@ -311,6 +312,7 @@ async fn test_interacting_with_shutdown_actor_returns_error() {
 async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()> {
   try_init_logger();
 
+  #[derive(Debug)]
   struct TestActor;
 
   #[async_trait::async_trait]
@@ -389,6 +391,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     }
   }
 
+  #[derive(Debug)]
   struct TestActor;
 
   #[async_trait::async_trait]

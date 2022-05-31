@@ -146,6 +146,7 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
     }
   }
 
+  #[derive(Debug)]
   struct TestActor;
 
   #[async_trait::async_trait]

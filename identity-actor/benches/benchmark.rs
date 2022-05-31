@@ -88,7 +88,7 @@ mod actor {
   use std::sync::Arc;
   use tokio::sync::Mutex;
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   pub struct RemoteAccount {
     builder: Arc<Mutex<AccountBuilder>>,
     accounts: Arc<DashMap<IotaDID, Account>>,

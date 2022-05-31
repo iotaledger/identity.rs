@@ -6,7 +6,6 @@ use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
 use crate::actor::AbstractActor;
-use crate::actor::ActorConfig;
 use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
@@ -14,6 +13,7 @@ use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
+use crate::actor::SystemState;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
@@ -26,13 +26,6 @@ use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
-/// The internal state of a [`System`].
-pub(crate) struct SystemState {
-  pub(crate) peer_id: PeerId,
-  pub(crate) config: ActorConfig,
-  pub(crate) actors: ActorMap,
-}
-
 /// An actor system can be used to send requests to remote actors, and fowards incoming requests
 /// to attached actors.
 ///
@@ -43,6 +36,7 @@ pub(crate) struct SystemState {
 ///
 /// After shutting down the event loop of a system using [`System::shutdown`], other clones of the
 /// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
+#[derive(Debug)]
 pub struct System {
   commander: NetCommander,
   state: Arc<SystemState>,

@@ -4,6 +4,7 @@
 use std::time::Duration;
 
 /// Configuration options for an `Actor`.
+#[derive(Debug, Clone)]
 pub(crate) struct ActorConfig {
   pub(crate) timeout: Duration,
 }

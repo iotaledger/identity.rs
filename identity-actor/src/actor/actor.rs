@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Debug;
 use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -21,7 +22,7 @@ pub(crate) type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>
 /// The requests for an actor are handled synchronously, meaning that the caller waits for
 /// the actor to return its result before continuing.
 #[async_trait::async_trait]
-pub trait Actor<REQ: ActorRequest>: 'static {
+pub trait Actor<REQ: ActorRequest>: Debug + 'static {
   /// Called when the system receives a request of type `REQ`.
   /// The result will be returned to the calling peer.
   async fn handle(&self, request: RequestContext<REQ>) -> REQ::Response;
@@ -29,12 +30,13 @@ pub trait Actor<REQ: ActorRequest>: 'static {
 
 /// A trait that wraps a synchronous actor implementation and erases its type.
 /// This allows holding actors with different concrete types in the same collection.
-pub(crate) trait AbstractActor: Send + Sync + 'static {
+pub(crate) trait AbstractActor: Debug + Send + Sync + 'static {
   fn handle(&self, request: RequestContext<Vec<u8>>) -> BoxFuture<'_, Result<Vec<u8>, RemoteSendError>>;
 }
 
 /// A wrapper around synchronous actor implementations that is used for
 /// type erasure together with [`AbstractSyncActor`].
+#[derive(Debug)]
 pub(crate) struct ActorWrapper<ACT, REQ>
 where
   REQ: ActorRequest + Send + Sync,

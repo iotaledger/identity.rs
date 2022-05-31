@@ -21,7 +21,7 @@ use super::message::RequestMessage;
 use super::message::ResponseMessage;
 
 /// A thread-safe way to interact with an `EventLoop` running in the background.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct NetCommander {
   command_sender: mpsc::Sender<SwarmCommand>,
 }
@@ -120,6 +120,7 @@ impl NetCommander {
 /// A command to send to the `EventLoop` with (typically) a channel to return a response through.
 ///
 /// See the [`NetCommander`] methods for documentation.
+#[derive(Debug)]
 pub enum SwarmCommand {
   SendRequest {
     peer: PeerId,

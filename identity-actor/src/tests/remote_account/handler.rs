@@ -19,7 +19,7 @@ use super::RemoteAccountError;
 
 /// A proof-of-concept implementation of a remote `Account` with very basic operations
 /// and disabled tangle interaction.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct RemoteAccount {
   builder: Arc<Mutex<AccountBuilder>>,
   accounts: Arc<DashMap<IotaDID, Account>>,
