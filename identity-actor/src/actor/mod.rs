@@ -3,19 +3,19 @@
 
 #[allow(clippy::module_inception)]
 mod actor;
-mod actor_request;
 mod config;
 mod endpoint;
 mod errors;
+mod request;
 mod request_context;
 mod system;
 mod system_builder;
 
 pub use actor::*;
-pub use actor_request::*;
 pub(crate) use config::*;
 pub use endpoint::*;
 pub use errors::*;
+pub use request::*;
 pub use request_context::*;
 pub use system::*;
 pub use system_builder::*;

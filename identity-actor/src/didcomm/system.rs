@@ -19,7 +19,7 @@ use crate::actor::RemoteSendError;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
 use crate::actor::System;
-use crate::didcomm::message::DidCommPlaintextMessage;
+use crate::didcomm::dcpm::DidCommPlaintextMessage;
 use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::ThreadId;
