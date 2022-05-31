@@ -42,8 +42,4 @@ harness = false
 
 [features]
 account = ["identity-account/mem-client", "identity-account/async"]
-# A feature that exposes lower-level building blocks of the actor,
-# intended for bindings, but not for general use.
-# Changes to types exposed under this feature are **not** covered by semver.
-primitives = []
-default = ["account"]
+default = []

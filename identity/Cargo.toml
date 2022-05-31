@@ -44,7 +44,6 @@ stronghold = ["identity-account/stronghold", "identity-account-storage/stronghol
 
 # Enables support for the identity actor
 actor = ["identity-actor"]
-actor-primitives = ["identity-actor/primitives"]
 
 # Enables support for DID Communication
 # comm = ["identity-comm"]

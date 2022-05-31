@@ -10,10 +10,3 @@ pub mod didcomm;
 
 pub use libp2p::Multiaddr;
 pub use libp2p::PeerId;
-
-#[cfg(feature = "primitives")]
-pub mod primitives {
-  pub use crate::p2p::NetCommander;
-  pub use crate::p2p::RequestMessage;
-  pub use crate::p2p::ResponseMessage;
-}
