@@ -3,6 +3,7 @@
 
 mod actor;
 mod didcomm;
+mod presentation;
 #[cfg(feature = "account")]
 mod remote_account;
 

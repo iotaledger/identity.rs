@@ -6,15 +6,14 @@ use libp2p::PeerId;
 use crate::actor::Endpoint;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
-use crate::didcomm::message::DidCommPlaintextMessage;
-use crate::didcomm::thread_id::ThreadId;
+use crate::didcomm::DidCommActor;
+use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
+use crate::didcomm::DidCommSystem;
+use crate::didcomm::ThreadId;
 
 use serde::Deserialize;
 use serde::Serialize;
-
-use super::didcomm_system::DidCommSystem;
-use super::DidCommActor;
 
 #[derive(Clone)]
 pub struct DidCommState;

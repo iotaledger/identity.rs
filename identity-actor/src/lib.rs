@@ -7,8 +7,6 @@ mod tests;
 
 pub mod actor;
 pub mod didcomm;
-#[cfg(feature = "account")]
-pub mod remote_account;
 
 pub use libp2p::Multiaddr;
 pub use libp2p::PeerId;

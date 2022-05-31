@@ -3,6 +3,7 @@
 
 mod handler;
 mod requests;
+mod tests;
 
 pub use handler::RemoteAccount;
 pub use requests::IdentityCreate;

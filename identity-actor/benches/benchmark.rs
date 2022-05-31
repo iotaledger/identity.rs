@@ -7,21 +7,18 @@ use criterion::BenchmarkId;
 use criterion::Criterion;
 use identity_actor::actor::System;
 use identity_actor::actor::SystemBuilder;
-use identity_actor::remote_account::IdentityCreate;
-use identity_actor::remote_account::IdentityGet;
-use identity_actor::remote_account::IdentityList;
-use identity_actor::remote_account::RemoteAccount;
 use identity_actor::Multiaddr;
 use identity_actor::PeerId;
+
+use actor::IdentityCreate;
+use actor::RemoteAccount;
 
 async fn setup() -> (System, PeerId, System) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
   let mut builder = SystemBuilder::new();
 
   let remote_account = RemoteAccount::new().unwrap();
-  builder.attach::<IdentityCreate, _>(remote_account.clone());
-  builder.attach::<IdentityList, _>(remote_account.clone());
-  builder.attach::<IdentityGet, _>(remote_account);
+  builder.attach::<IdentityCreate, _>(remote_account);
 
   let mut receiver: System = builder.build().await.unwrap();
 
@@ -74,3 +71,81 @@ fn bench_create_remote_account(c: &mut Criterion) {
 criterion_group!(benches, bench_create_remote_account);
 
 criterion_main!(benches);
+
+mod actor {
+  use dashmap::DashMap;
+  use identity_account::account::Account;
+  use identity_account::account::AccountBuilder;
+  use identity_account::types::IdentitySetup;
+  use identity_actor::actor::Actor;
+  use identity_actor::actor::ActorRequest;
+  use identity_actor::actor::Endpoint;
+  use identity_actor::actor::RequestContext;
+  use identity_iota_core::did::IotaDID;
+  use identity_iota_core::document::IotaDocument;
+  use serde::Deserialize;
+  use serde::Serialize;
+  use std::sync::Arc;
+  use tokio::sync::Mutex;
+
+  #[derive(Clone)]
+  pub struct RemoteAccount {
+    builder: Arc<Mutex<AccountBuilder>>,
+    accounts: Arc<DashMap<IotaDID, Account>>,
+  }
+
+  impl RemoteAccount {
+    pub fn new() -> identity_account::Result<Self> {
+      let builder: AccountBuilder = Account::builder().autopublish(false);
+
+      Ok(Self {
+        builder: Arc::new(Mutex::new(builder)),
+        accounts: Arc::new(DashMap::new()),
+      })
+    }
+  }
+
+  /// Can be sent to a `RemoteAccount` to instruct it to create an identity.
+  #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+  pub struct IdentityCreate;
+
+  impl From<IdentityCreate> for IdentitySetup {
+    fn from(_: IdentityCreate) -> Self {
+      IdentitySetup::default()
+    }
+  }
+
+  impl ActorRequest for IdentityCreate {
+    type Response = Result<IotaDocument, RemoteAccountError>;
+
+    fn endpoint() -> Endpoint {
+      "remote_account/create".try_into().unwrap()
+    }
+  }
+
+  #[async_trait::async_trait]
+  impl Actor<IdentityCreate> for RemoteAccount {
+    async fn handle(&self, request: RequestContext<IdentityCreate>) -> Result<IotaDocument, RemoteAccountError> {
+      let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
+      let doc = account.document().to_owned();
+      self.accounts.insert(account.did().to_owned(), account);
+      Ok(doc)
+    }
+  }
+
+  /// The error type for the [`RemoteAccount`].
+  #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
+  #[non_exhaustive]
+  pub enum RemoteAccountError {
+    #[error("identity not found")]
+    IdentityNotFound,
+    #[error("{0}")]
+    AccountError(String),
+  }
+
+  impl From<identity_account::Error> for RemoteAccountError {
+    fn from(err: identity_account::Error) -> Self {
+      Self::AccountError(err.to_string())
+    }
+  }
+}
