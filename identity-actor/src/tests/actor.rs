@@ -29,7 +29,7 @@ use super::default_listening_actor;
 use super::default_sending_actor;
 
 #[tokio::test]
-async fn test_new_approach() -> ActorResult<()> {
+async fn test_end_to_end() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]

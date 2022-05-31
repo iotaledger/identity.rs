@@ -31,6 +31,7 @@ use crate::p2p::ThreadRequest;
 /// The identity of a [`DidCommSystem`].
 ///
 /// Note: Currently an incomplete implementation.
+#[derive(Debug, Clone)]
 pub struct ActorIdentity {
   // TODO: This type is meant to be used in a future update.
   #[allow(dead_code)]
@@ -38,6 +39,7 @@ pub struct ActorIdentity {
 }
 
 /// The internal state of a [`System`].
+#[derive(Debug)]
 pub struct DidCommSystemState {
   pub(crate) actors: DidCommActorMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
@@ -68,7 +70,7 @@ impl DidCommSystemState {
 ///
 /// After shutting down the event loop of a system using [`DidCommSystem::shutdown`], other clones of the
 /// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct DidCommSystem {
   pub(crate) actor: System,
   pub(crate) state: Arc<DidCommSystemState>,

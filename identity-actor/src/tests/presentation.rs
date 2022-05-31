@@ -15,7 +15,7 @@ use crate::didcomm::ThreadId;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct DidCommState;
 
 impl DidCommState {

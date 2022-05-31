@@ -33,7 +33,7 @@ use super::default_listening_didcomm_actor;
 use super::default_sending_didcomm_actor;
 
 #[tokio::test]
-async fn test_didcomm_approach() -> ActorResult<()> {
+async fn test_end_to_end() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -54,7 +54,7 @@ async fn test_didcomm_approach() -> ActorResult<()> {
     }
   }
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   struct MyActor {
     counter: Arc<AtomicU32>,
     notify: Arc<Notify>,
@@ -280,7 +280,7 @@ async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
 async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   try_init_logger();
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   struct MyActor;
 
   #[async_trait::async_trait]
@@ -319,7 +319,7 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
 async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   try_init_logger();
 
-  #[derive(Clone)]
+  #[derive(Debug, Clone)]
   struct TestActor {
     was_called: Arc<AtomicBool>,
   }

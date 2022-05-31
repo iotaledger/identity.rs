@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use libp2p::request_response::RequestId;
@@ -27,19 +28,20 @@ use crate::p2p::ResponseMessage;
 /// not wait for the actor to complete its invocation. If that is desired, the [`Actor`](crate::actor::Actor) trait
 /// should be implemented instead.
 #[async_trait::async_trait]
-pub trait DidCommActor<REQ: DidCommRequest>: 'static {
+pub trait DidCommActor<REQ: DidCommRequest>: Debug + 'static {
   /// Called when the system receives a request of type `REQ`.
   async fn handle(&self, actor: DidCommSystem, request: RequestContext<REQ>);
 }
 
 /// A trait that wraps a DIDComm actor implementation and erases its type.
 /// This allows holding actors with different concrete types in the same collection.
-pub(crate) trait AbstractDidCommActor: Send + Sync + 'static {
+pub(crate) trait AbstractDidCommActor: Debug + Send + Sync + 'static {
   fn handle(&self, actor: DidCommSystem, request: InboundRequest) -> BoxFuture<'_, ()>;
 }
 
 /// A wrapper around asynchronous actor implementations that is used for
 /// type erasure together with [`AbstractAsyncActor`].
+#[derive(Debug)]
 pub(crate) struct DidCommActorWrapper<ACT, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
