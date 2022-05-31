@@ -42,8 +42,9 @@ account = ["identity-account", "identity-account-storage"]
 # Enables support for stronghold storage.
 stronghold = ["identity-account/stronghold", "identity-account-storage/stronghold"]
 
-# Enables support for the identity actor
-actor = ["identity-actor"]
+# Enables support for the unstable identity actor.
+# Breaking changes to types behind this flag are not covered by semver.
+actor-unstable = ["identity-actor"]
 
 # Enables support for DID Communication
 # comm = ["identity-comm"]
