@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::HashMap;
-use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -17,14 +16,12 @@ use libp2p::Transport;
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Error;
-use crate::actor::ObjectId;
 use crate::actor::Result as ActorResult;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::actor::SystemState;
 use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::ActorIdentity;
-use crate::didcomm::AsyncHandlerMap;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommActorMap;
 use crate::didcomm::DidCommActorWrapper;
@@ -38,7 +35,6 @@ use crate::p2p::NetCommander;
 /// A builder for [`DidCommSystem`]s that allows for customizing its configuration and attaching actors.
 pub struct DidCommSystemBuilder {
   inner: SystemBuilder,
-  async_handlers: AsyncHandlerMap,
   identity: Option<ActorIdentity>,
   async_actors: DidCommActorMap,
 }
@@ -49,7 +45,6 @@ impl DidCommSystemBuilder {
     Self {
       inner: SystemBuilder::new(),
       identity: None,
-      async_handlers: HashMap::new(),
       async_actors: HashMap::new(),
     }
   }
@@ -115,20 +110,6 @@ impl DidCommSystemBuilder {
     self.inner.attach(actor);
   }
 
-  // TODO: Slated for removal.
-  pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> DidCommHandlerBuilder<OBJ>
-  where
-    OBJ: Clone + Send + Sync + 'static,
-  {
-    let object_id: ObjectId = ObjectId::new_v4();
-    self.inner.objects.insert(object_id, Box::new(state_object));
-    DidCommHandlerBuilder {
-      object_id,
-      async_handlers: &mut self.async_handlers,
-      _marker_obj: PhantomData,
-    }
-  }
-
   /// See [`SystemBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> ActorResult<DidCommSystem> {
@@ -165,11 +146,8 @@ impl DidCommSystemBuilder {
     let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
       self.inner.build_actor_constituents(transport, executor.clone()).await?;
 
-    let state: DidCommSystemState = DidCommSystemState::new(
-      self.async_handlers,
-      self.async_actors,
-      self.identity.ok_or(Error::IdentityMissing)?,
-    );
+    let state: DidCommSystemState =
+      DidCommSystemState::new(self.async_actors, self.identity.ok_or(Error::IdentityMissing)?);
 
     let actor = System::new(net_commander, Arc::new(actor_state));
 
@@ -194,14 +172,4 @@ impl Default for DidCommSystemBuilder {
   fn default() -> Self {
     Self::new()
   }
-}
-
-/// Used to attach handlers and hooks to a [`DidCommSystemBuilder`].
-pub struct DidCommHandlerBuilder<'builder, OBJ>
-where
-  OBJ: Clone + Send + Sync + 'static,
-{
-  pub(crate) object_id: ObjectId,
-  pub(crate) async_handlers: &'builder mut AsyncHandlerMap,
-  pub(crate) _marker_obj: PhantomData<&'static OBJ>,
 }

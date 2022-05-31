@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -26,11 +25,9 @@ use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use uuid::Uuid;
 
 /// The internal state of a [`System`].
 pub(crate) struct SystemState {
-  pub(crate) objects: ObjectMap,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
   pub(crate) actors: ActorMap,
@@ -212,13 +209,6 @@ impl System {
     });
   }
 }
-
-/// A map from an identifier to an object that contains the
-/// shared state of the associated handler functions.
-pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
-
-/// An actor-internal identifier for the object representing the shared state of one or more handlers.
-pub(crate) type ObjectId = Uuid;
 
 /// A map from an endpoint to the actor that handles its requests.
 pub(crate) type ActorMap = HashMap<Endpoint, Box<dyn AbstractActor>>;

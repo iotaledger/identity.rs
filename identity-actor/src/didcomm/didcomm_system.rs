@@ -1,6 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-use std::any::Any;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -15,15 +15,11 @@ use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
-use crate::actor::ObjectId;
 use crate::actor::RemoteSendError;
-use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
 use crate::actor::System;
 use crate::didcomm::message::DidCommPlaintextMessage;
-use crate::didcomm::termination::DidCommTermination;
-use crate::didcomm::traits::AsyncRequestHandler;
 use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::ThreadId;
@@ -43,7 +39,6 @@ pub struct ActorIdentity {
 
 /// The internal state of a [`System`].
 pub struct DidCommSystemState {
-  pub(crate) async_handlers: AsyncHandlerMap,
   pub(crate) actors: DidCommActorMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
@@ -53,9 +48,8 @@ pub struct DidCommSystemState {
 }
 
 impl DidCommSystemState {
-  pub(crate) fn new(async_handlers: AsyncHandlerMap, actors: DidCommActorMap, identity: ActorIdentity) -> Self {
+  pub(crate) fn new(actors: DidCommActorMap, identity: ActorIdentity) -> Self {
     Self {
-      async_handlers,
       actors,
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
@@ -125,25 +119,6 @@ impl DidCommSystem {
     self.actor.shutdown().await
   }
 
-  pub(crate) fn get_async_handler(&self, endpoint: &Endpoint) -> Result<AsyncHandlerObjectTuple<'_>, RemoteSendError> {
-    match self.state.async_handlers.get(endpoint) {
-      Some(handler_object) => {
-        let object_id = handler_object.object_id;
-
-        if let Some(object) = self.actor.state().objects.get(&object_id) {
-          let object_clone = handler_object.handler.clone_object(object)?;
-          Ok((handler_object, object_clone))
-        } else {
-          Err(RemoteSendError::HandlerInvocationError(format!(
-            "no state set for {}",
-            endpoint
-          )))
-        }
-      }
-      None => Err(RemoteSendError::UnexpectedRequest(endpoint.to_string())),
-    }
-  }
-
   /// See [`System::send_request`].
   pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
     self.actor.send_request(peer, request).await
@@ -161,8 +136,6 @@ impl DidCommSystem {
     let request_mode: RequestMode = REQ::request_mode();
 
     let dcpm = DidCommPlaintextMessage::new(thread_id.to_owned(), endpoint.to_string(), message);
-
-    let dcpm = self.call_send_message_hook(peer, dcpm).await?;
 
     self.create_thread_channels(thread_id);
 
@@ -212,25 +185,7 @@ impl DidCommSystem {
 
       log::debug!("awaited message {}", inbound_request.endpoint);
 
-      // Hooking
-      let hook_endpoint: Endpoint = inbound_request.endpoint.into_hook();
-
-      if self.state.async_handlers.contains_key(&hook_endpoint) {
-        log::debug!("Calling hook: {}", hook_endpoint);
-
-        let hook_result: Result<Result<DidCommPlaintextMessage<T>, DidCommTermination>, RemoteSendError> =
-          self.call_hook(hook_endpoint, inbound_request.peer_id, message).await;
-
-        match hook_result {
-          Ok(Ok(request)) => Ok(request),
-          Ok(Err(_)) => {
-            unimplemented!("didcomm termination");
-          }
-          Err(err) => Err(err.into()),
-        }
-      } else {
-        Ok(message)
-      }
+      Ok(message)
     } else {
       log::warn!("attempted to wait for a message on thread {thread_id:?}, which does not exist");
       Err(Error::ThreadNotFound(thread_id.to_owned()))
@@ -272,61 +227,6 @@ impl DidCommSystem {
         }
       }
     });
-  }
-
-  #[inline(always)]
-  pub(crate) async fn call_send_message_hook<REQ: DidCommRequest>(&self, peer: PeerId, input: REQ) -> ActorResult<REQ> {
-    let endpoint: Endpoint = REQ::endpoint().into_hook();
-
-    if self.state.async_handlers.contains_key(&endpoint) {
-      log::debug!("Calling send hook: {}", endpoint);
-
-      let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
-        self.call_hook(endpoint, peer, input).await;
-
-      match hook_result {
-        Ok(Ok(request)) => Ok(request),
-        Ok(Err(_)) => {
-          unimplemented!("didcomm termination");
-        }
-        Err(err) => Err(err.into()),
-      }
-    } else {
-      Ok(input)
-    }
-  }
-
-  /// Call the hook identified by the given `endpoint` with some `input`.
-  pub(crate) async fn call_hook<I, O>(&self, endpoint: Endpoint, peer: PeerId, input: I) -> Result<O, RemoteSendError>
-  where
-    I: Send + 'static,
-    O: 'static,
-  {
-    match self.get_async_handler(&endpoint) {
-      Ok(handler_object) => {
-        let handler: &dyn AsyncRequestHandler = handler_object.0.handler.as_ref();
-        let state: Box<dyn Any + Send + Sync> = handler_object.1;
-        let type_erased_input: Box<dyn Any + Send> = Box::new(input);
-        let request_context = RequestContext::new((), peer, endpoint);
-
-        let result = handler
-          .invoke(self.clone(), request_context, state, type_erased_input)?
-          .await;
-
-        match result.downcast::<O>() {
-          Ok(result) => Ok(*result),
-          Err(_) => {
-            let err = RemoteSendError::HookInvocationError(format!(
-              "hook did not return the expected type: {:?}",
-              std::any::type_name::<O>(),
-            ));
-
-            Err(err)
-          }
-        }
-      }
-      Err(error) => Err(error),
-    }
   }
 }
 
@@ -389,23 +289,5 @@ impl AsynchronousInvocationStrategy {
   }
 }
 
-/// An [`AsyncRequestHandler`] and the id of its associated shared state object.
-pub(crate) struct AsyncHandlerObject {
-  pub(crate) handler: Box<dyn AsyncRequestHandler>,
-  pub(crate) object_id: ObjectId,
-}
-
-impl AsyncHandlerObject {
-  pub(crate) fn new(object_id: ObjectId, handler: Box<dyn AsyncRequestHandler>) -> Self {
-    Self { object_id, handler }
-  }
-}
-
-/// A map from an endpoint to the identifier of the shared state object
-/// and the method that handles that particular request.
-pub(crate) type AsyncHandlerMap = HashMap<Endpoint, AsyncHandlerObject>;
-
 /// A map from an endpoint to the actor that handles its requests.
 pub(crate) type DidCommActorMap = HashMap<Endpoint, Box<dyn AbstractDidCommActor>>;
-
-pub(crate) type AsyncHandlerObjectTuple<'a> = (&'a AsyncHandlerObject, Box<dyn Any + Send + Sync>);

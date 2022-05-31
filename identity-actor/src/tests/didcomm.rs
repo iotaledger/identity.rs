@@ -8,7 +8,6 @@ use tokio::sync::Notify;
 use super::presentation::presentation_holder_handler;
 use super::presentation::presentation_verifier_handler;
 use super::presentation::DidCommState;
-use super::presentation::Presentation;
 use super::presentation::PresentationOffer;
 use super::presentation::PresentationRequest;
 use super::remote_account::IdentityList;
@@ -23,13 +22,11 @@ use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
 use crate::didcomm::DidCommSystemBuilder;
-use crate::didcomm::DidCommTermination;
 use crate::didcomm::ThreadId;
 use crate::tests::default_identity;
 use crate::tests::try_init_logger;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::AtomicU32;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use super::default_listening_didcomm_actor;
@@ -207,19 +204,6 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   Ok(())
 }
 
-#[derive(Clone)]
-struct TestFunctionState {
-  was_called: Arc<AtomicBool>,
-}
-
-impl TestFunctionState {
-  fn new() -> Self {
-    Self {
-      was_called: Arc::new(AtomicBool::new(false)),
-    }
-  }
-}
-
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   try_init_logger();
@@ -266,95 +250,6 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
 
   holder_system.shutdown().await.unwrap();
   verifier_system.shutdown().await.unwrap();
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> ActorResult<()> {
-  try_init_logger();
-
-  let actor = DidCommState::new().await;
-
-  let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
-    builder
-  })
-  .await;
-
-  let function_state = TestFunctionState::new();
-
-  async fn presentation_request_hook(
-    state: TestFunctionState,
-    _: DidCommSystem,
-    request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
-  ) -> Result<DidCommPlaintextMessage<PresentationRequest>, DidCommTermination> {
-    state.was_called.store(true, Ordering::SeqCst);
-    Ok(request.input)
-  }
-
-  let mut verifier_actor = default_sending_didcomm_actor(|mut builder| {
-    builder
-      .add_state(function_state.clone())
-      .add_hook(presentation_request_hook);
-    builder
-  })
-  .await;
-
-  verifier_actor.add_addresses(peer_id, addrs).await.unwrap();
-
-  presentation_verifier_handler(verifier_actor.clone(), peer_id, None)
-    .await
-    .unwrap();
-
-  verifier_actor.shutdown().await.unwrap();
-  holder_actor.shutdown().await.unwrap();
-
-  assert!(function_state.was_called.load(Ordering::SeqCst));
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> ActorResult<()> {
-  try_init_logger();
-
-  let actor = DidCommState::new().await;
-
-  let function_state = TestFunctionState::new();
-
-  async fn receive_presentation_hook(
-    state: TestFunctionState,
-    _: DidCommSystem,
-    req: RequestContext<DidCommPlaintextMessage<Presentation>>,
-  ) -> Result<DidCommPlaintextMessage<Presentation>, DidCommTermination> {
-    state.was_called.store(true, Ordering::SeqCst);
-    Ok(req.input)
-  }
-
-  let mut holder_actor = default_sending_didcomm_actor(|builder| builder).await;
-
-  let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
-
-    builder
-      .add_state(function_state.clone())
-      .add_hook(receive_presentation_hook);
-
-    builder
-  })
-  .await;
-
-  holder_actor.add_addresses(peer_id, addrs).await.unwrap();
-
-  presentation_holder_handler(holder_actor.clone(), peer_id, None)
-    .await
-    .unwrap();
-
-  verifier_actor.shutdown().await.unwrap();
-  holder_actor.shutdown().await.unwrap();
-
-  assert!(function_state.was_called.load(Ordering::SeqCst));
 
   Ok(())
 }

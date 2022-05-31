@@ -37,7 +37,6 @@ use libp2p::Swarm;
 
 use super::actor::Actor;
 use super::system::ActorMap;
-use super::system::ObjectMap;
 use super::AbstractActor;
 use super::ActorWrapper;
 use super::SystemState;
@@ -47,7 +46,6 @@ pub struct SystemBuilder {
   pub(crate) listening_addresses: Vec<Multiaddr>,
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: ActorConfig,
-  pub(crate) objects: ObjectMap,
   pub(crate) actors: ActorMap,
 }
 
@@ -58,7 +56,6 @@ impl SystemBuilder {
       listening_addresses: vec![],
       keypair: None,
       config: ActorConfig::default(),
-      objects: HashMap::new(),
       actors: HashMap::new(),
     }
   }
@@ -84,12 +81,6 @@ impl SystemBuilder {
   pub fn timeout(mut self, timeout: Duration) -> Self {
     self.config.timeout = timeout;
     self
-  }
-
-  /// Grants low-level access to the object map for use in bindings.
-  #[cfg(feature = "primitives")]
-  pub fn objects(&mut self) -> &mut ObjectMap {
-    &mut self.objects
   }
 
   /// Attaches an [`Actor`] to this system.
@@ -214,7 +205,6 @@ impl SystemBuilder {
     let net_commander = NetCommander::new(cmd_sender);
 
     let actor_state: SystemState = SystemState {
-      objects: self.objects,
       peer_id,
       config: self.config,
       actors: self.actors,
