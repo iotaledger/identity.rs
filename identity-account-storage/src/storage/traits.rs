@@ -120,27 +120,29 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Returns `true` if a key exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
 
-  /// Encrypts the given `data` with the specified `algorithm`
+  /// Encrypts the given `plaintext` with the specified `encryption_options`.
   ///
   /// Diffie-Hellman key exchange will be performed in case a [`KeyType::X25519`] is given.
+  #[cfg(feature = "encryption-decryption")]
   async fn encrypt_data(
     &self,
     did: &IotaDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
-    algorithm: &EncryptionOptions,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<EncryptedData>;
 
-  /// Decrypts the given `data` with the specified `algorithm`
+  /// Decrypts the given `data` with the specified `encryption_options`.
   ///
   /// Diffie-Hellman key exchange will be performed in case a [`KeyType::X25519`] is given.
+  #[cfg(feature = "encryption-decryption")]
   async fn decrypt_data(
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    algorithm: &EncryptionOptions,
+    encryption_options: &EncryptionOptions,
     private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>>;

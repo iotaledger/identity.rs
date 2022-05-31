@@ -255,6 +255,7 @@ impl Storage for MemStore {
     }
   }
 
+  #[cfg(feature = "encryption-decryption")]
   async fn encrypt_data(
     &self,
     did: &IotaDID,
@@ -277,7 +278,7 @@ impl Storage for MemStore {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
           .as_ref()
           .try_into()
-          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+          .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
           CekAlgorithm::EcdhEs(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
@@ -301,6 +302,7 @@ impl Storage for MemStore {
     }
   }
 
+  #[cfg(feature = "encryption-decryption")]
   async fn decrypt_data(
     &self,
     did: &IotaDID,
@@ -322,7 +324,7 @@ impl Storage for MemStore {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
           .as_ref()
           .try_into()
-          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+          .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
           CekAlgorithm::EcdhEs(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;

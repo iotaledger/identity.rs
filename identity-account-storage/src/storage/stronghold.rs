@@ -280,6 +280,7 @@ impl Storage for Stronghold {
       .map_err(Into::into)
   }
 
+  #[cfg(feature = "encryption-decryption")]
   async fn encrypt_data(
     &self,
     did: &IotaDID,
@@ -289,6 +290,7 @@ impl Storage for Stronghold {
     private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<EncryptedData> {
+    // Changes won't be written to the snapshot state since the created keys are temporary
     let client: Client = self.client(&ClientPath::from(did))?;
     match private_key.key_type {
       KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
@@ -324,6 +326,7 @@ impl Storage for Stronghold {
     }
   }
 
+  #[cfg(feature = "encryption-decryption")]
   async fn decrypt_data(
     &self,
     did: &IotaDID,
@@ -332,6 +335,7 @@ impl Storage for Stronghold {
     private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>> {
+    // Changes won't be written to the snapshot state since the created keys are temporary
     let client: Client = self.client(&ClientPath::from(did))?;
     match private_key.key_type {
       KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
@@ -341,7 +345,7 @@ impl Storage for Stronghold {
         let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
           .as_ref()
           .try_into()
-          .map_err(|_| Error::InvalidPublicKey(format!("expected type: [u8, {}]", X25519::PUBLIC_KEY_LENGTH)))?;
+          .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
         match encryption_options.cek_algorithm() {
           CekAlgorithm::EcdhEs(agreement) => {
             let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;

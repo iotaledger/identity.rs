@@ -13,15 +13,13 @@ use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
 use identity::account_storage::AgreementInfo;
-use identity::account_storage::CEKAlgorithm;
 use identity::account_storage::EncryptedData;
 use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::EncryptionOptions;
 use identity::account_storage::Stronghold;
 use identity::did::MethodScope;
-use identity::iota::Client;
 use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
+use identity::iota::Resolver;
 use identity::iota_core::IotaVerificationMethod;
 
 pub async fn run() -> Result<()> {
@@ -63,10 +61,10 @@ pub async fn run() -> Result<()> {
   // Alice and Bob tell each other their DIDs. They each resolve the DID Document of the other
   // to obtain their X25519 public key. Note that in practice, they would run this code completely
   // separately.
-  let client: Client = Client::new().await?;
+  let resolver: Resolver = Resolver::new().await?;
 
   // Alice: resolves Bob's DID Document and extracts their public key.
-  let bob_document: ResolvedIotaDocument = client.resolve(bob_account.did()).await?;
+  let bob_document: ResolvedIotaDocument = resolver.resolve(bob_account.did()).await?;
   let bob_method: &IotaVerificationMethod = bob_document
     .document
     .resolve_method("kex-0", Some(MethodScope::key_agreement()))
@@ -74,7 +72,7 @@ pub async fn run() -> Result<()> {
   let bob_public_key: Vec<u8> = bob_method.data().try_decode()?;
 
   // Bob: resolves Alice's DID Document and extracts their public key.
-  let alice_document: ResolvedIotaDocument = client.resolve(alice_account.did()).await?;
+  let alice_document: ResolvedIotaDocument = resolver.resolve(alice_account.did()).await?;
   let alice_method: &IotaVerificationMethod = alice_document
     .document
     .resolve_method("kex-0", Some(MethodScope::key_agreement()))

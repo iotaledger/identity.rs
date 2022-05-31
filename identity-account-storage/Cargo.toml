@@ -44,7 +44,7 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-default = ["stronghold", "send-sync-storage", "storage-test-suite"]
+default = ["stronghold", "send-sync-storage", "storage-test-suite", "encryption-decryption"]
 stronghold = [
   "iota_stronghold",
   "tokio",
@@ -56,3 +56,5 @@ stronghold = [
 send-sync-storage = []
 # Exposes Storage `test_suite` module.
 storage-test-suite = ["anyhow", "function_name", "rand"]
+# Adds encryption and decryption functionality in the Storage trait
+encryption-decryption = []
