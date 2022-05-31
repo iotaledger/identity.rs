@@ -5,6 +5,7 @@ use libp2p::request_response::OutboundFailure;
 
 use crate::didcomm::ThreadId;
 
+/// The `Result` type for the actor.
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Errors that can occur during actor execution.
@@ -99,9 +100,12 @@ impl From<RemoteSendError> for Error {
   }
 }
 
+/// A type indicating whether an error occured locally or remotely.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum ErrorLocation {
+  /// The error occured locally.
   Local,
+  /// The error occured remotely.
   Remote,
 }
 

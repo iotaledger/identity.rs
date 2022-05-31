@@ -5,20 +5,20 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use tokio::sync::Notify;
 
-use crate::actor::AsyncActorRequest;
+use crate::actor::Actor;
+use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
-use crate::actor::SyncActor;
-use crate::actor::SyncActorRequest;
 use crate::didcomm::presentation_holder_handler;
 use crate::didcomm::presentation_verifier_handler;
-use crate::didcomm::AsyncActor;
-use crate::didcomm::AsyncSystemBuilder;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommPlaintextMessage;
+use crate::didcomm::DidCommRequest;
+use crate::didcomm::DidCommState;
 use crate::didcomm::DidCommSystem;
+use crate::didcomm::DidCommSystemBuilder;
 use crate::didcomm::DidCommTermination;
 use crate::didcomm::Presentation;
 use crate::didcomm::PresentationOffer;
@@ -42,7 +42,7 @@ async fn test_didcomm_approach() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct AsyncDummy(u32);
 
-  impl AsyncActorRequest for AsyncDummy {
+  impl DidCommRequest for AsyncDummy {
     fn endpoint() -> Endpoint {
       "dummy/request".try_into().unwrap()
     }
@@ -51,7 +51,7 @@ async fn test_didcomm_approach() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct AsyncDummy2(u32);
 
-  impl AsyncActorRequest for AsyncDummy2 {
+  impl DidCommRequest for AsyncDummy2 {
     fn endpoint() -> Endpoint {
       "dummy/request_alt".try_into().unwrap()
     }
@@ -64,14 +64,14 @@ async fn test_didcomm_approach() -> ActorResult<()> {
   }
 
   #[async_trait::async_trait]
-  impl AsyncActor<DidCommPlaintextMessage<AsyncDummy>> for MyActor {
+  impl DidCommActor<DidCommPlaintextMessage<AsyncDummy>> for MyActor {
     async fn handle(&self, mut actor: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<AsyncDummy>>) {
       self
         .counter
         .fetch_add(request.input.body.0, std::sync::atomic::Ordering::SeqCst);
 
       actor
-        .send_message(request.peer, request.input.thread_id(), AsyncDummy2(21))
+        .send_message(request.peer_id, request.input.thread_id(), AsyncDummy2(21))
         .await
         .unwrap();
 
@@ -83,14 +83,14 @@ async fn test_didcomm_approach() -> ActorResult<()> {
     }
   }
 
-  let mut builder = AsyncSystemBuilder::new().identity(default_identity());
+  let mut builder = DidCommSystemBuilder::new().identity(default_identity());
 
   let notify = Arc::new(Notify::new());
   let actor = MyActor {
     counter: Arc::new(AtomicU32::new(0)),
     notify: notify.clone(),
   };
-  builder.attach(actor.clone());
+  builder.attach_didcomm(actor.clone());
 
   let mut listening_system: DidCommSystem = builder.build().await.unwrap();
 
@@ -100,7 +100,7 @@ async fn test_didcomm_approach() -> ActorResult<()> {
 
   let peer_id = listening_system.peer_id();
 
-  let mut sending_system = AsyncSystemBuilder::new()
+  let mut sending_system = DidCommSystemBuilder::new()
     .identity(default_identity())
     .build()
     .await
@@ -141,7 +141,7 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct SyncDummy(u16);
 
-  impl SyncActorRequest for SyncDummy {
+  impl ActorRequest for SyncDummy {
     type Response = u16;
 
     fn endpoint() -> Endpoint {
@@ -152,14 +152,14 @@ async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
   struct TestActor;
 
   #[async_trait::async_trait]
-  impl SyncActor<SyncDummy> for TestActor {
+  impl Actor<SyncDummy> for TestActor {
     async fn handle(&self, request: RequestContext<SyncDummy>) -> u16 {
       request.input.0
     }
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach_sync(TestActor);
+    builder.attach(TestActor);
     builder
   })
   .await;
@@ -189,7 +189,7 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct AsyncDummy(u16);
 
-  impl AsyncActorRequest for AsyncDummy {
+  impl DidCommRequest for AsyncDummy {
     fn endpoint() -> Endpoint {
       "unknown/thread".try_into().unwrap()
     }
@@ -223,12 +223,12 @@ impl TestFunctionState {
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   try_init_logger();
-  let actor: DidCommActor = DidCommActor::new().await;
+  let actor: DidCommState = DidCommState::new().await;
 
   let mut holder_system: DidCommSystem = default_sending_didcomm_actor(|builder| builder).await;
 
   let (verifier_system, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
+    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
     builder
   })
   .await;
@@ -249,10 +249,10 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
 async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
   try_init_logger();
 
-  let actor = DidCommActor::new().await;
+  let actor = DidCommState::new().await;
 
   let (holder_system, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
+    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
     builder
   })
   .await;
@@ -274,10 +274,10 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
 async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -> ActorResult<()> {
   try_init_logger();
 
-  let actor = DidCommActor::new().await;
+  let actor = DidCommState::new().await;
 
   let (holder_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
+    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
     builder
   })
   .await;
@@ -319,7 +319,7 @@ async fn test_didcomm_presentation_verifier_initiates_with_send_message_hook() -
 async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() -> ActorResult<()> {
   try_init_logger();
 
-  let actor = DidCommActor::new().await;
+  let actor = DidCommState::new().await;
 
   let function_state = TestFunctionState::new();
 
@@ -335,7 +335,7 @@ async fn test_didcomm_presentation_holder_initiates_with_await_message_hook() ->
   let mut holder_actor = default_sending_didcomm_actor(|builder| builder).await;
 
   let (verifier_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
+    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
 
     builder
       .add_state(function_state.clone())
@@ -388,12 +388,12 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   struct MyActor;
 
   #[async_trait::async_trait]
-  impl AsyncActor<DidCommPlaintextMessage<PresentationOffer>> for MyActor {
+  impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for MyActor {
     async fn handle(&self, _: DidCommSystem, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {}
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach(MyActor);
+    builder.attach_didcomm(MyActor);
     builder
   })
   .await;
@@ -437,7 +437,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   }
 
   #[async_trait::async_trait]
-  impl AsyncActor<DidCommPlaintextMessage<PresentationOffer>> for TestActor {
+  impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for TestActor {
     async fn handle(&self, _: DidCommSystem, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
       tokio::time::sleep(std::time::Duration::from_millis(25)).await;
       self.was_called.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -447,7 +447,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   let test_actor = TestActor::new();
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_actor(|mut builder| {
-    builder.attach(test_actor.clone());
+    builder.attach_didcomm(test_actor.clone());
     builder
   })
   .await;

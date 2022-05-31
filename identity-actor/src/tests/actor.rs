@@ -12,13 +12,13 @@ use identity_iota_core::did::IotaDID;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
+use crate::actor::Actor;
+use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
-use crate::actor::SyncActor;
-use crate::actor::SyncActorRequest;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::remote_account::IdentityGet;
@@ -43,7 +43,7 @@ async fn test_new_approach() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct Decrement(u32);
 
-  impl SyncActorRequest for Increment {
+  impl ActorRequest for Increment {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -51,7 +51,7 @@ async fn test_new_approach() -> ActorResult<()> {
     }
   }
 
-  impl SyncActorRequest for Decrement {
+  impl ActorRequest for Decrement {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -61,14 +61,14 @@ async fn test_new_approach() -> ActorResult<()> {
 
   // States that MyActor can handle messages of type `Increment`.
   #[async_trait::async_trait]
-  impl SyncActor<Increment> for MyActor {
+  impl Actor<Increment> for MyActor {
     async fn handle(&self, request: RequestContext<Increment>) {
       self.counter.fetch_add(request.input.0, Ordering::SeqCst);
     }
   }
 
   #[async_trait::async_trait]
-  impl SyncActor<Decrement> for MyActor {
+  impl Actor<Decrement> for MyActor {
     async fn handle(&self, request: RequestContext<Decrement>) {
       self.counter.fetch_sub(request.input.0, Ordering::SeqCst);
     }
@@ -146,7 +146,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
-  impl SyncActorRequest for Dummy {
+  impl ActorRequest for Dummy {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -155,17 +155,17 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   }
 
   #[derive(Clone)]
-  pub struct Actor(pub Arc<AtomicBool>);
+  pub struct TestActor(pub Arc<AtomicBool>);
 
   #[async_trait::async_trait]
-  impl SyncActor<Dummy> for Actor {
+  impl Actor<Dummy> for TestActor {
     async fn handle(&self, _req: RequestContext<Dummy>) {
       self.0.store(true, std::sync::atomic::Ordering::SeqCst);
     }
   }
 
-  let actor1 = Actor(Arc::new(AtomicBool::new(false)));
-  let actor2 = Actor(Arc::new(AtomicBool::new(false)));
+  let actor1 = TestActor(Arc::new(AtomicBool::new(false)));
+  let actor2 = TestActor(Arc::new(AtomicBool::new(false)));
 
   let mut system1_builder = SystemBuilder::new();
   system1_builder.attach(actor1.clone());
@@ -204,7 +204,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct Dummy(u8);
 
-  impl SyncActorRequest for Dummy {
+  impl ActorRequest for Dummy {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -213,10 +213,10 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
   }
 
   #[derive(Clone)]
-  pub struct Actor(pub Arc<AtomicBool>);
+  pub struct TestActor(pub Arc<AtomicBool>);
 
   #[async_trait::async_trait]
-  impl SyncActor<Dummy> for Actor {
+  impl Actor<Dummy> for TestActor {
     async fn handle(&self, request: RequestContext<Dummy>) {
       if let Dummy(42) = request.input {
         self.0.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -224,7 +224,7 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
     }
   }
 
-  let actor = Actor(Arc::new(AtomicBool::new(false)));
+  let actor = TestActor(Arc::new(AtomicBool::new(false)));
 
   let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
     builder.attach(actor.clone());
@@ -256,7 +256,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
   #[derive(Debug, serde::Serialize, serde::Deserialize)]
   pub struct MessageRequest(String);
 
-  impl SyncActorRequest for MessageRequest {
+  impl ActorRequest for MessageRequest {
     type Response = MessageResponse;
 
     fn endpoint() -> Endpoint {
@@ -264,17 +264,17 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
     }
   }
 
-  struct Actor;
+  struct TestActor;
 
   #[async_trait::async_trait]
-  impl SyncActor<MessageRequest> for Actor {
+  impl Actor<MessageRequest> for TestActor {
     async fn handle(&self, message: RequestContext<MessageRequest>) -> MessageResponse {
       MessageResponse(message.input.0)
     }
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
-    builder.attach(Actor);
+    builder.attach(TestActor);
     builder
   })
   .await;
@@ -311,10 +311,10 @@ async fn test_interacting_with_shutdown_actor_returns_error() {
 async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()> {
   try_init_logger();
 
-  struct Actor;
+  struct TestActor;
 
   #[async_trait::async_trait]
-  impl SyncActor<IdentityList> for Actor {
+  impl Actor<IdentityList> for TestActor {
     async fn handle(&self, _: RequestContext<IdentityList>) -> Vec<IotaDID> {
       tokio::time::sleep(std::time::Duration::from_millis(50)).await;
       vec![]
@@ -322,7 +322,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
-    builder.attach(Actor);
+    builder.attach(TestActor);
     builder
   })
   .await;
@@ -373,7 +373,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   pub struct CustomRequest2(u8);
 
-  impl SyncActorRequest for CustomRequest {
+  impl ActorRequest for CustomRequest {
     type Response = String;
 
     fn endpoint() -> Endpoint {
@@ -381,7 +381,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     }
   }
 
-  impl SyncActorRequest for CustomRequest2 {
+  impl ActorRequest for CustomRequest2 {
     type Response = u32;
 
     fn endpoint() -> Endpoint {
@@ -389,17 +389,17 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     }
   }
 
-  struct Actor;
+  struct TestActor;
 
   #[async_trait::async_trait]
-  impl SyncActor<CustomRequest2> for Actor {
+  impl Actor<CustomRequest2> for TestActor {
     async fn handle(&self, _: RequestContext<CustomRequest2>) -> u32 {
       42
     }
   }
 
   let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
-    builder.attach(Actor);
+    builder.attach(TestActor);
     builder
   })
   .await;
@@ -422,7 +422,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   pub struct CustomRequest3(String);
 
-  impl SyncActorRequest for CustomRequest3 {
+  impl ActorRequest for CustomRequest3 {
     type Response = String;
 
     fn endpoint() -> Endpoint {

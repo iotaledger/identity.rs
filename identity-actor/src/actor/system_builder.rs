@@ -7,9 +7,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::actor::ActorConfig;
+use crate::actor::ActorRequest;
 use crate::actor::Error;
 use crate::actor::Result as ActorResult;
-use crate::actor::SyncActorRequest;
 use crate::actor::System;
 use crate::p2p::ActorProtocol;
 use crate::p2p::ActorRequestResponseCodec;
@@ -35,24 +35,24 @@ use libp2p::yamux::YamuxConfig;
 use libp2p::Multiaddr;
 use libp2p::Swarm;
 
-use super::sync_actor::SyncActor;
+use super::actor::Actor;
+use super::system::ActorMap;
 use super::system::ObjectMap;
-use super::system::SyncActorMap;
-use super::AbstractSyncActor;
-use super::SyncActorWrapper;
+use super::AbstractActor;
+use super::ActorWrapper;
 use super::SystemState;
 
-/// An [`Actor`] builder for easy configuration and building of handler and hook functions.
+/// A builder for [`System`]s that allows for customizing its configuration and attaching actors.
 pub struct SystemBuilder {
   pub(crate) listening_addresses: Vec<Multiaddr>,
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: ActorConfig,
   pub(crate) objects: ObjectMap,
-  pub(crate) actors: SyncActorMap,
+  pub(crate) actors: ActorMap,
 }
 
 impl SystemBuilder {
-  /// Creates a new `ActorBuilder`.
+  /// Create a new builder in the default configuration.
   pub fn new() -> SystemBuilder {
     Self {
       listening_addresses: vec![],
@@ -92,15 +92,21 @@ impl SystemBuilder {
     &mut self.objects
   }
 
+  /// Attaches an [`Actor`] to this system.
+  ///
+  /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
+  ///
+  /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
+  /// will overwrite the previous attachment.
   pub fn attach<REQ, ACT>(&mut self, actor: ACT)
   where
-    ACT: SyncActor<REQ> + Send + Sync,
-    REQ: SyncActorRequest + Send + Sync,
+    ACT: Actor<REQ> + Send + Sync,
+    REQ: ActorRequest + Send + Sync,
     REQ::Response: Send,
   {
     self.actors.insert(
       REQ::endpoint(),
-      Box::new(SyncActorWrapper::new(actor)) as Box<dyn AbstractSyncActor>,
+      Box::new(ActorWrapper::new(actor)) as Box<dyn AbstractActor>,
     );
   }
 

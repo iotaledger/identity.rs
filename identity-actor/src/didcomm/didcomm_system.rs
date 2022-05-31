@@ -11,7 +11,7 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use serde::de::DeserializeOwned;
 
-use crate::actor::AsyncActorRequest;
+use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
@@ -20,28 +20,31 @@ use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
-use crate::actor::SyncActorRequest;
 use crate::actor::System;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::termination::DidCommTermination;
 use crate::didcomm::traits::AsyncRequestHandler;
-use crate::didcomm::AbstractAsyncActor;
+use crate::didcomm::AbstractDidCommActor;
+use crate::didcomm::DidCommRequest;
 use crate::didcomm::ThreadId;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ThreadRequest;
 
-/// The identity of a
+/// The identity of a [`DidCommSystem`].
+///
+/// Note: Currently an incomplete implementation.
 pub struct ActorIdentity {
   // TODO: This type is meant to be used in a future update.
   #[allow(dead_code)]
   pub(crate) document: IotaDocument,
 }
 
+/// The internal state of a [`System`].
 pub struct DidCommSystemState {
   pub(crate) async_handlers: AsyncHandlerMap,
-  pub(crate) actors: AsyncActorMap,
+  pub(crate) actors: DidCommActorMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
@@ -50,7 +53,7 @@ pub struct DidCommSystemState {
 }
 
 impl DidCommSystemState {
-  pub(crate) fn new(async_handlers: AsyncHandlerMap, actors: AsyncActorMap, identity: ActorIdentity) -> Self {
+  pub(crate) fn new(async_handlers: AsyncHandlerMap, actors: DidCommActorMap, identity: ActorIdentity) -> Self {
     Self {
       async_handlers,
       actors,
@@ -61,6 +64,16 @@ impl DidCommSystemState {
   }
 }
 
+/// An actor system can be used to send requests to remote actors, and fowards incoming requests
+/// to attached actors.
+///
+/// An actor system is a frontend for an event loop running in the background, which invokes
+/// user-attached actors. Systems can be cloned without cloning the event loop, and doing so
+/// is a cheap operation.
+/// Actors are attached at system build time, using the [`DidCommSystemBuilder`](crate::didcomm::DidCommSystemBuilder).
+///
+/// After shutting down the event loop of a system using [`DidCommSystem::shutdown`], other clones of the
+/// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Clone)]
 pub struct DidCommSystem {
   pub(crate) actor: System,
@@ -82,32 +95,32 @@ impl DidCommSystem {
     }
   }
 
-  /// See [`Actor::start_listening`].
+  /// See [`System::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     self.actor.start_listening(address).await
   }
 
-  /// See [`Actor::peer_id`].
+  /// See [`System::peer_id`].
   pub fn peer_id(&self) -> PeerId {
     self.actor.peer_id()
   }
 
-  /// See [`Actor::addresses`].
+  /// See [`System::addresses`].
   pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
     self.actor.addresses().await
   }
 
-  /// See [`Actor::add_address`].
+  /// See [`System::add_address`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
     self.actor.add_address(peer_id, address).await
   }
 
-  /// See [`Actor::add_addresses`].
+  /// See [`System::add_addresses`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
     self.actor.add_addresses(peer_id, addresses).await
   }
 
-  /// See [`Actor::shutdown`].
+  /// See [`System::shutdown`].
   pub async fn shutdown(self) -> ActorResult<()> {
     self.actor.shutdown().await
   }
@@ -131,18 +144,14 @@ impl DidCommSystem {
     }
   }
 
-  /// See [`Actor::send_request`].
-  pub async fn send_request<REQ: SyncActorRequest>(
-    &mut self,
-    peer: PeerId,
-    request: REQ,
-  ) -> ActorResult<REQ::Response> {
+  /// See [`System::send_request`].
+  pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
     self.actor.send_request(peer, request).await
   }
 
-  /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommActor::await_message`],
+  /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommSystem::await_message`],
   /// with the same `thread_id`.
-  pub async fn send_message<REQ: AsyncActorRequest>(
+  pub async fn send_message<REQ: DidCommRequest>(
     &mut self,
     peer: PeerId,
     thread_id: &ThreadId,
@@ -180,9 +189,9 @@ impl DidCommSystem {
   }
 
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
-  /// [`DidCommActor::send_message`] was called on the same `thread_id` previously.
+  /// [`DidCommSystem::send_message`] was called on the same `thread_id` previously.
   /// This will return a timeout error if no message is received within the duration passed
-  /// to [`DidCommActorBuilder::timeout`](crate::didcomm::DidCommActorBuilder::timeout).
+  /// to [`DidCommSystemBuilder::timeout`](crate::didcomm::DidCommSystemBuilder::timeout).
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
@@ -254,7 +263,7 @@ impl DidCommSystem {
     let _ = spawn(async move {
       match self.state.actors.get(&request.endpoint) {
         Some(actor) => {
-          let handler: &dyn AbstractAsyncActor = actor.as_ref();
+          let handler: &dyn AbstractDidCommActor = actor.as_ref();
 
           handler.handle(self.clone(), request).await;
         }
@@ -266,11 +275,7 @@ impl DidCommSystem {
   }
 
   #[inline(always)]
-  pub(crate) async fn call_send_message_hook<REQ: AsyncActorRequest>(
-    &self,
-    peer: PeerId,
-    input: REQ,
-  ) -> ActorResult<REQ> {
+  pub(crate) async fn call_send_message_hook<REQ: DidCommRequest>(&self, peer: PeerId, input: REQ) -> ActorResult<REQ> {
     let endpoint: Endpoint = REQ::endpoint().into_hook();
 
     if self.state.async_handlers.contains_key(&endpoint) {
@@ -325,7 +330,7 @@ impl DidCommSystem {
   }
 }
 
-pub struct AsynchronousInvocationStrategy;
+struct AsynchronousInvocationStrategy;
 
 impl AsynchronousInvocationStrategy {
   #[inline(always)]
@@ -379,7 +384,7 @@ impl AsynchronousInvocationStrategy {
     .await;
 
     if let Err(err) = send_result {
-      log::error!("could not acknowledge request due to: {err:?}",);
+      log::error!("could not acknowledge request due to: {err:?}");
     }
   }
 }
@@ -399,6 +404,8 @@ impl AsyncHandlerObject {
 /// A map from an endpoint to the identifier of the shared state object
 /// and the method that handles that particular request.
 pub(crate) type AsyncHandlerMap = HashMap<Endpoint, AsyncHandlerObject>;
-pub type AsyncActorMap = HashMap<Endpoint, Box<dyn AbstractAsyncActor>>;
+
+/// A map from an endpoint to the actor that handles its requests.
+pub(crate) type DidCommActorMap = HashMap<Endpoint, Box<dyn AbstractDidCommActor>>;
 
 pub(crate) type AsyncHandlerObjectTuple<'a> = (&'a AsyncHandlerObject, Box<dyn Any + Send + Sync>);

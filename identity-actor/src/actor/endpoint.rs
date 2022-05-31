@@ -28,7 +28,7 @@ impl Endpoint {
   /// Returns whether this endpoint is a hook.
   pub fn is_hook(&self) -> bool {
     let split: Split<char> = self.name.as_ref().split('/');
-    split.last().expect("split did not have at least one element") == HOOK
+    split.last().expect("split should have at least one element") == HOOK
   }
 
   /// Converts this endpoint into a hook.
@@ -45,7 +45,7 @@ impl Endpoint {
   fn validate(string: &str) -> ActorResult<()> {
     let mut split: Split<char> = string.split('/');
 
-    let name: &str = split.next().expect("split did not have at least one element");
+    let name: &str = split.next().expect("split should have at least one element");
     let handler: &str = split.next().ok_or(Error::InvalidEndpoint)?;
     let hook: Option<&str> = split.next();
 

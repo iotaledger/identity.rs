@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
+use crate::didcomm::DidCommRequest;
 
 use super::thread_id::ThreadId;
 
@@ -48,9 +48,9 @@ impl<T> DidCommPlaintextMessage<T> {
   }
 }
 
-impl<T> AsyncActorRequest for DidCommPlaintextMessage<T>
+impl<T> DidCommRequest for DidCommPlaintextMessage<T>
 where
-  T: AsyncActorRequest,
+  T: DidCommRequest,
 {
   fn endpoint() -> Endpoint {
     T::endpoint()

@@ -5,37 +5,51 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
+use super::ActorRequest;
 use super::RemoteSendError;
 use super::RequestContext;
-use super::SyncActorRequest;
 use crate::actor::ErrorLocation;
 
-pub type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>>;
+/// A boxed future that is `Send`.
+pub(crate) type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>>;
 
+/// Actors are objects that encapsulate state and behavior.
+///
+/// Actors handle one or more requests by implementing this trait one or more times
+/// for different `ActorRequest` types.
+///
+/// The requests for an actor are handled synchronously, meaning that the caller waits for
+/// the actor to return its result before continuing.
 #[async_trait::async_trait]
-pub trait SyncActor<REQ: SyncActorRequest>: 'static {
+pub trait Actor<REQ: ActorRequest>: 'static {
+  /// Called when the system receives a request of type `REQ`.
+  /// The result will be returned to the calling peer.
   async fn handle(&self, request: RequestContext<REQ>) -> REQ::Response;
 }
 
-pub trait AbstractSyncActor: Send + Sync + 'static {
+/// A trait that wraps a synchronous actor implementation and erases its type.
+/// This allows holding actors with different concrete types in the same collection.
+pub(crate) trait AbstractActor: Send + Sync + 'static {
   fn handle(&self, request: RequestContext<Vec<u8>>) -> BoxFuture<'_, Result<Vec<u8>, RemoteSendError>>;
 }
 
-pub struct SyncActorWrapper<ACT, REQ>
+/// A wrapper around synchronous actor implementations that is used for
+/// type erasure together with [`AbstractSyncActor`].
+pub(crate) struct ActorWrapper<ACT, REQ>
 where
-  REQ: SyncActorRequest + Send + Sync,
-  ACT: SyncActor<REQ> + Send + Sync,
+  REQ: ActorRequest + Send + Sync,
+  ACT: Actor<REQ> + Send + Sync,
 {
   actor: ACT,
   _phantom_req: PhantomData<REQ>,
 }
 
-impl<ACT, REQ> SyncActorWrapper<ACT, REQ>
+impl<ACT, REQ> ActorWrapper<ACT, REQ>
 where
-  REQ: SyncActorRequest + Send + Sync,
-  ACT: SyncActor<REQ> + Send + Sync,
+  REQ: ActorRequest + Send + Sync,
+  ACT: Actor<REQ> + Send + Sync,
 {
-  pub fn new(actor: ACT) -> Self {
+  pub(crate) fn new(actor: ACT) -> Self {
     Self {
       actor,
       _phantom_req: PhantomData,
@@ -43,11 +57,11 @@ where
   }
 }
 
-impl<ACT, REQ> AbstractSyncActor for SyncActorWrapper<ACT, REQ>
+impl<ACT, REQ> AbstractActor for ActorWrapper<ACT, REQ>
 where
-  REQ: SyncActorRequest + Send + Sync,
+  REQ: ActorRequest + Send + Sync,
   REQ::Response: Send,
-  ACT: SyncActor<REQ> + Send + Sync,
+  ACT: Actor<REQ> + Send + Sync,
 {
   fn handle(&self, request: RequestContext<Vec<u8>>) -> BoxFuture<'_, Result<Vec<u8>, RemoteSendError>> {
     let future = async move {
@@ -63,7 +77,7 @@ where
 
       let req: RequestContext<REQ> = request.convert(req);
       let result: REQ::Response = self.actor.handle(req).await;
-      request_handler_serialize_response::<REQ>(&result)
+      serialize_response::<REQ>(&result)
     };
 
     Box::pin(future)
@@ -71,9 +85,7 @@ where
 }
 
 #[inline(always)]
-fn request_handler_serialize_response<REQ: SyncActorRequest>(
-  input: &REQ::Response,
-) -> Result<Vec<u8>, RemoteSendError> {
+fn serialize_response<REQ: ActorRequest>(input: &REQ::Response) -> Result<Vec<u8>, RemoteSendError> {
   log::debug!(
     "Attempt serialization into {:?}",
     std::any::type_name::<REQ::Response>()

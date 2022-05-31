@@ -3,34 +3,34 @@
 
 use libp2p::PeerId;
 
-use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::didcomm::message::DidCommPlaintextMessage;
 use crate::didcomm::thread_id::ThreadId;
+use crate::didcomm::DidCommRequest;
 
 use serde::Deserialize;
 use serde::Serialize;
 
 use super::didcomm_system::DidCommSystem;
-use super::AsyncActor;
+use super::DidCommActor;
 
 #[derive(Clone)]
-pub struct DidCommActor;
+pub struct DidCommState;
 
-impl DidCommActor {
+impl DidCommState {
   pub async fn new() -> Self {
     Self
   }
 }
 
 #[async_trait::async_trait]
-impl AsyncActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommActor {
+impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommState {
   async fn handle(&self, system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>) {
     log::debug!("holder: received presentation request");
 
-    let result = presentation_holder_handler(system, request.peer, Some(request.input)).await;
+    let result = presentation_holder_handler(system, request.peer_id, Some(request.input)).await;
 
     if let Err(err) = result {
       log::error!("presentation_holder_actor_handler errored: {:?}", err);
@@ -39,11 +39,11 @@ impl AsyncActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommActor {
 }
 
 #[async_trait::async_trait]
-impl AsyncActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommActor {
+impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
   async fn handle(&self, system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
-    log::debug!("verifier: received offer from {}", request.peer);
+    log::debug!("verifier: received offer from {}", request.peer_id);
 
-    let result = presentation_verifier_handler(system, request.peer, Some(request.input)).await;
+    let result = presentation_verifier_handler(system, request.peer_id, Some(request.input)).await;
 
     if let Err(err) = result {
       log::error!("presentation_verifier_actor_handler errored: {:?}", err);
@@ -113,7 +113,7 @@ pub async fn presentation_verifier_handler(
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest([u8; 2]);
 
-impl AsyncActorRequest for PresentationRequest {
+impl DidCommRequest for PresentationRequest {
   fn endpoint() -> Endpoint {
     "didcomm/presentation_request".try_into().unwrap()
   }
@@ -122,7 +122,7 @@ impl AsyncActorRequest for PresentationRequest {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationOffer([u8; 3]);
 
-impl AsyncActorRequest for PresentationOffer {
+impl DidCommRequest for PresentationOffer {
   fn endpoint() -> Endpoint {
     "didcomm/presentation_offer".try_into().unwrap()
   }
@@ -131,7 +131,7 @@ impl AsyncActorRequest for PresentationOffer {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Presentation([u8; 4]);
 
-impl AsyncActorRequest for Presentation {
+impl DidCommRequest for Presentation {
   fn endpoint() -> Endpoint {
     "didcomm/presentation".try_into().unwrap()
   }
@@ -140,7 +140,7 @@ impl AsyncActorRequest for Presentation {
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationResult([u8; 5]);
 
-impl AsyncActorRequest for PresentationResult {
+impl DidCommRequest for PresentationResult {
   fn endpoint() -> Endpoint {
     "didcomm/presentation_result".try_into().unwrap()
   }

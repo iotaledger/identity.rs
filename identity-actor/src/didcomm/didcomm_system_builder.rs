@@ -14,36 +14,38 @@ use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
-use crate::actor::AsyncActorRequest;
+use crate::actor::Actor;
+use crate::actor::ActorRequest;
 use crate::actor::Error;
 use crate::actor::ObjectId;
 use crate::actor::Result as ActorResult;
-use crate::actor::SyncActor;
-use crate::actor::SyncActorRequest;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::actor::SystemState;
-use crate::didcomm::AbstractAsyncActor;
+use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::ActorIdentity;
-use crate::didcomm::AsyncActor;
-use crate::didcomm::AsyncActorMap;
-use crate::didcomm::AsyncActorWrapper;
 use crate::didcomm::AsyncHandlerMap;
+use crate::didcomm::DidCommActor;
+use crate::didcomm::DidCommActorMap;
+use crate::didcomm::DidCommActorWrapper;
+use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
 use crate::didcomm::DidCommSystemState;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-pub struct AsyncSystemBuilder {
+/// A builder for [`DidCommSystem`]s that allows for customizing its configuration and attaching actors.
+pub struct DidCommSystemBuilder {
   inner: SystemBuilder,
   async_handlers: AsyncHandlerMap,
   identity: Option<ActorIdentity>,
-  async_actors: AsyncActorMap,
+  async_actors: DidCommActorMap,
 }
 
-impl AsyncSystemBuilder {
-  pub fn new() -> AsyncSystemBuilder {
+impl DidCommSystemBuilder {
+  /// Create a new builder in the default configuration.
+  pub fn new() -> DidCommSystemBuilder {
     Self {
       inner: SystemBuilder::new(),
       identity: None,
@@ -52,21 +54,21 @@ impl AsyncSystemBuilder {
     }
   }
 
-  /// See [`ActorBuilder::keypair`].
+  /// See [`SystemBuilder::keypair`].
   #[must_use]
   pub fn keypair(mut self, keypair: Keypair) -> Self {
     self.inner.keypair = Some(keypair);
     self
   }
 
-  /// See [`ActorBuilder::listen_on`].
+  /// See [`SystemBuilder::listen_on`].
   #[must_use]
   pub fn listen_on(mut self, address: Multiaddr) -> Self {
     self.inner.listening_addresses.push(address);
     self
   }
 
-  /// Sets the timeout for [`DidCommActor::await_message`] and the underlying libp2p
+  /// Sets the timeout for [`DidCommSystem::await_message`] and the underlying libp2p
   /// [`RequestResponse`](libp2p::request_response::RequestResponse) protocol.
   #[must_use]
   pub fn timeout(mut self, timeout: Duration) -> Self {
@@ -81,27 +83,39 @@ impl AsyncSystemBuilder {
     self
   }
 
-  pub fn attach<REQ, ACT>(&mut self, actor: ACT)
+  /// Attaches a [`DidCommActor`] to this system.
+  ///
+  /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
+  ///
+  /// Calling this method multiple times with requests that have the same `Endpoint`
+  /// will detach the previous actor.
+  pub fn attach_didcomm<REQ, ACT>(&mut self, actor: ACT)
   where
-    ACT: AsyncActor<REQ> + Send + Sync,
-    REQ: AsyncActorRequest + Send + Sync,
+    ACT: DidCommActor<REQ> + Send + Sync,
+    REQ: DidCommRequest + Send + Sync,
   {
     self.async_actors.insert(
       REQ::endpoint(),
-      Box::new(AsyncActorWrapper::new(actor)) as Box<dyn AbstractAsyncActor>,
+      Box::new(DidCommActorWrapper::new(actor)) as Box<dyn AbstractDidCommActor>,
     );
   }
 
-  pub fn attach_sync<REQ, ACT>(&mut self, actor: ACT)
+  /// Attaches an [`Actor`] to this system.
+  ///
+  /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
+  ///
+  /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
+  /// will overwrite the previous attachment.
+  pub fn attach<REQ, ACT>(&mut self, actor: ACT)
   where
-    ACT: SyncActor<REQ> + Send + Sync,
-    REQ: SyncActorRequest + Send + Sync,
+    ACT: Actor<REQ> + Send + Sync,
+    REQ: ActorRequest + Send + Sync,
     REQ::Response: Send,
   {
     self.inner.attach(actor);
   }
 
-  /// See [`ActorBuilder::add_state`].
+  // TODO: Slated for removal.
   pub fn add_state<OBJ>(&mut self, state_object: OBJ) -> DidCommHandlerBuilder<OBJ>
   where
     OBJ: Clone + Send + Sync + 'static,
@@ -115,7 +129,7 @@ impl AsyncSystemBuilder {
     }
   }
 
-  /// See [`ActorBuilder::build`].
+  /// See [`SystemBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> ActorResult<DidCommSystem> {
     let dns_transport = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new())
@@ -128,7 +142,7 @@ impl AsyncSystemBuilder {
     self.build_with_transport(transport).await
   }
 
-  /// See [`ActorBuilder::build_with_transport`].
+  /// See [`SystemBuilder::build_with_transport`].
   pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<DidCommSystem>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
@@ -176,13 +190,13 @@ impl AsyncSystemBuilder {
   }
 }
 
-impl Default for AsyncSystemBuilder {
+impl Default for DidCommSystemBuilder {
   fn default() -> Self {
     Self::new()
   }
 }
 
-/// Used to attach handlers and hooks to an [`DidCommActorBuilder`].
+/// Used to attach handlers and hooks to a [`DidCommSystemBuilder`].
 pub struct DidCommHandlerBuilder<'builder, OBJ>
 where
   OBJ: Clone + Send + Sync + 'static,

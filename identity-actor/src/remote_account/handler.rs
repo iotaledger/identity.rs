@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
+use crate::actor::Actor;
 use crate::actor::RequestContext;
-use crate::actor::SyncActor;
 use crate::remote_account::IdentityList;
 use dashmap::DashMap;
 use identity_account::account::Account;
@@ -26,14 +26,14 @@ pub struct RemoteAccount {
 }
 
 #[async_trait::async_trait]
-impl SyncActor<IdentityList> for RemoteAccount {
+impl Actor<IdentityList> for RemoteAccount {
   async fn handle(&self, _: RequestContext<IdentityList>) -> Vec<IotaDID> {
     self.accounts.iter().map(|entry| entry.key().to_owned()).collect()
   }
 }
 
 #[async_trait::async_trait]
-impl SyncActor<IdentityCreate> for RemoteAccount {
+impl Actor<IdentityCreate> for RemoteAccount {
   async fn handle(&self, request: RequestContext<IdentityCreate>) -> Result<IotaDocument, RemoteAccountError> {
     let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
     let doc = account.document().to_owned();
@@ -43,7 +43,7 @@ impl SyncActor<IdentityCreate> for RemoteAccount {
 }
 
 #[async_trait::async_trait]
-impl SyncActor<IdentityGet> for RemoteAccount {
+impl Actor<IdentityGet> for RemoteAccount {
   async fn handle(&self, request: RequestContext<IdentityGet>) -> Result<IotaDocument, RemoteAccountError> {
     self
       .accounts

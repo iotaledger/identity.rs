@@ -5,20 +5,29 @@ use crate::actor::Endpoint;
 
 use libp2p::PeerId;
 
+/// A request paired with some context such as the sender's peer id.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct RequestContext<T> {
+  /// The request type.
   pub input: T,
-  pub peer: PeerId,
+  /// The peer id of the sender.
+  pub peer_id: PeerId,
+  /// The [`Endpoint`] of this request.
   pub endpoint: Endpoint,
 }
 
 impl<T> RequestContext<T> {
-  pub(crate) fn new(input: T, peer: PeerId, endpoint: Endpoint) -> Self {
-    Self { input, peer, endpoint }
+  pub(crate) fn new(input: T, peer_id: PeerId, endpoint: Endpoint) -> Self {
+    Self {
+      input,
+      peer_id,
+      endpoint,
+    }
   }
 
+  /// Convert this context's inner type to another one.
   pub(crate) fn convert<I>(self, input: I) -> RequestContext<I> {
-    RequestContext::new(input, self.peer, self.endpoint)
+    RequestContext::new(input, self.peer_id, self.endpoint)
   }
 }

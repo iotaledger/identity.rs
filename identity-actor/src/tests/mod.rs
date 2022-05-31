@@ -15,8 +15,8 @@ use libp2p::PeerId;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::didcomm::ActorIdentity;
-use crate::didcomm::AsyncSystemBuilder;
 use crate::didcomm::DidCommSystem;
+use crate::didcomm::DidCommSystemBuilder;
 
 fn try_init_logger() {
   let _ = pretty_env_logger::try_init();
@@ -48,8 +48,8 @@ async fn default_sending_actor(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -
   builder.build().await.unwrap()
 }
 
-async fn default_sending_didcomm_actor(f: impl FnOnce(AsyncSystemBuilder) -> AsyncSystemBuilder) -> DidCommSystem {
-  let mut builder = AsyncSystemBuilder::new().identity(default_identity());
+async fn default_sending_didcomm_actor(f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder) -> DidCommSystem {
+  let mut builder = DidCommSystemBuilder::new().identity(default_identity());
 
   builder = f(builder);
 
@@ -57,12 +57,14 @@ async fn default_sending_didcomm_actor(f: impl FnOnce(AsyncSystemBuilder) -> Asy
 }
 
 async fn default_listening_didcomm_actor(
-  f: impl FnOnce(AsyncSystemBuilder) -> AsyncSystemBuilder,
+  f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder,
 ) -> (DidCommSystem, Vec<Multiaddr>, PeerId) {
   let id_keys = Keypair::generate_ed25519();
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = AsyncSystemBuilder::new().keypair(id_keys).identity(default_identity());
+  let mut builder = DidCommSystemBuilder::new()
+    .keypair(id_keys)
+    .identity(default_identity());
 
   builder = f(builder);
 

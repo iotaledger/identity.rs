@@ -6,15 +6,15 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::actor::errors::ErrorLocation;
-use crate::actor::AbstractSyncActor;
+use crate::actor::AbstractActor;
 use crate::actor::ActorConfig;
+use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
 use crate::actor::Result as ActorResult;
-use crate::actor::SyncActorRequest;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
@@ -28,23 +28,24 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use uuid::Uuid;
 
-pub struct SystemState {
+/// The internal state of a [`System`].
+pub(crate) struct SystemState {
   pub(crate) objects: ObjectMap,
   pub(crate) peer_id: PeerId,
   pub(crate) config: ActorConfig,
-  pub(crate) actors: SyncActorMap,
+  pub(crate) actors: ActorMap,
 }
 
-/// The [`Actor`] can be used to send and receive messages to and from other actors.
+/// An actor system can be used to send requests to remote actors, and fowards incoming requests
+/// to attached actors.
 ///
-/// An actor is a frontend for an event loop running in the background, which invokes
-/// user-registered handlers and injects a copy of the actor into it. Actors can thus be cloned
-/// without cloning the event loop, and doing so is a relatively cheap operation.
-/// Handlers are registered at actor build time, using the [`ActorBuilder`](crate::actor::ActorBuilder).
+/// An actor system is a frontend for an event loop running in the background, which invokes
+/// user-attached actors. Systems can be cloned without cloning the event loop, and doing so
+/// is a cheap operation.
+/// Actors are attached at system build time, using the [`SystemBuilder`](crate::actor::SystemBuilder).
 ///
-/// After shutting down the event loop of an actor using [`Actor::shutdown`], other clones of the
-/// actor will receive [`Error::Shutdown`] when attempting to interact with the event loop.
-
+/// After shutting down the event loop of a system using [`System::shutdown`], other clones of the
+/// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 pub struct System {
   commander: NetCommander,
   state: Arc<SystemState>,
@@ -64,7 +65,7 @@ impl System {
     Self { commander, state }
   }
 
-  pub fn state(&self) -> &SystemState {
+  pub(crate) fn state(&self) -> &SystemState {
     self.state.as_ref()
   }
 
@@ -84,7 +85,7 @@ impl System {
   /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
   /// be different from `address` itself, e.g. when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when passing a
   /// single address, multiple addresses may end up being listened on. To obtain all those addresses, use
-  /// [`Actor::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
+  /// [`System::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
   /// and should thus not be relied upon.
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     self.commander_mut().start_listening(address).await
@@ -130,11 +131,7 @@ impl System {
   }
 
   /// Sends a synchronous request to a peer and returns its response.
-  pub async fn send_request<REQ: SyncActorRequest>(
-    &mut self,
-    peer: PeerId,
-    request: REQ,
-  ) -> ActorResult<REQ::Response> {
+  pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();
 
@@ -223,8 +220,8 @@ pub(crate) type ObjectMap = HashMap<ObjectId, Box<dyn Any + Send + Sync>>;
 /// An actor-internal identifier for the object representing the shared state of one or more handlers.
 pub(crate) type ObjectId = Uuid;
 
-/// A map from an endpoint to the actor that handles it.
-pub type SyncActorMap = HashMap<Endpoint, Box<dyn AbstractSyncActor>>;
+/// A map from an endpoint to the actor that handles its requests.
+pub(crate) type ActorMap = HashMap<Endpoint, Box<dyn AbstractActor>>;
 
 pub(crate) async fn send_response<T: serde::Serialize>(
   commander: &mut NetCommander,
@@ -241,7 +238,7 @@ pub(crate) async fn send_response<T: serde::Serialize>(
 }
 
 #[inline(always)]
-pub async fn endpoint_not_found(actor: &mut System, request: InboundRequest) {
+async fn endpoint_not_found(actor: &mut System, request: InboundRequest) {
   let response: Result<Vec<u8>, RemoteSendError> =
     Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
 

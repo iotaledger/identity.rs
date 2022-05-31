@@ -6,12 +6,12 @@ use std::marker::PhantomData;
 
 use futures::Future;
 
-use crate::actor::AnyFuture;
-use crate::actor::AsyncActorRequest;
 use crate::actor::Endpoint;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
-use crate::actor::RequestHandlerCore;
+use crate::didcomm::AnyFuture;
+use crate::didcomm::DidCommRequest;
+use crate::didcomm::RequestHandlerCore;
 
 use super::didcomm_system::DidCommSystem;
 use super::termination::DidCommTermination;
@@ -25,7 +25,7 @@ where
 {
   pub fn add_hook<REQ, FUT>(self, handler: fn(OBJ, DidCommSystem, RequestContext<REQ>) -> FUT) -> Self
   where
-    REQ: AsyncActorRequest + Sync,
+    REQ: DidCommRequest + Sync,
     FUT: Future<Output = Result<REQ, DidCommTermination>> + Send + 'static,
   {
     let handler: Hook<_, _, _> = Hook::new(handler);
@@ -44,7 +44,7 @@ where
 pub struct Hook<OBJ, REQ, FUT>
 where
   OBJ: 'static,
-  REQ: AsyncActorRequest,
+  REQ: DidCommRequest,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
 {
   func: fn(OBJ, DidCommSystem, RequestContext<REQ>) -> FUT,
@@ -59,7 +59,7 @@ where
 impl<OBJ, REQ, FUT> Hook<OBJ, REQ, FUT>
 where
   OBJ: 'static,
-  REQ: AsyncActorRequest,
+  REQ: DidCommRequest,
   FUT: Future<Output = Result<REQ, DidCommTermination>>,
 {
   pub fn new(func: fn(OBJ, DidCommSystem, RequestContext<REQ>) -> FUT) -> Self {
@@ -74,7 +74,7 @@ where
 impl<OBJ, REQ, FUT> AsyncRequestHandler for Hook<OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: AsyncActorRequest + Sync,
+  REQ: DidCommRequest + Sync,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
 {
   fn invoke(
@@ -115,14 +115,18 @@ where
 impl<OBJ, REQ, FUT> RequestHandlerCore for Hook<OBJ, REQ, FUT>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: AsyncActorRequest + Sync,
+  REQ: DidCommRequest + Sync,
   FUT: Future<Output = Result<REQ, DidCommTermination>> + Send,
 {
-  fn deserialize_request(&self, _input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
-    unreachable!("deserialize_request is never called on hooks");
-  }
-
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
-    crate::actor::request_handler_clone_object::<OBJ>(object)
+    // Double indirection is unfortunately required - the downcast fails otherwise.
+    let object: &OBJ = object.downcast_ref::<OBJ>().ok_or_else(|| {
+      crate::actor::RemoteSendError::HandlerInvocationError(format!(
+        "unable to downcast to type {} in order to clone the object",
+        std::any::type_name::<OBJ>()
+      ))
+    })?;
+
+    Ok(Box::new(object.clone()))
   }
 }

@@ -157,9 +157,12 @@ impl EventLoop {
           .send_response(response_channel, ResponseMessage(response))
           .is_err()
         {
+          // TODO: Shoudl we change this to `let _ = channel.send(...)` to make it best-effort?
+          // Panicking is not desirable, as this event loop might handle multiple systems.
+          // Alternatively, we can log a warning instead of ignoring it completely.
           cmd_response_channel
             .send(Err(InboundFailure::ConnectionClosed))
-            .expect("receiver was dropped")
+            .expect("receiver should not have been dropped")
         } else {
           self.await_response_sent.insert(request_id, cmd_response_channel);
         }
@@ -172,7 +175,9 @@ impl EventLoop {
           self.await_listen.insert(listener_id, response_channel);
         }
         Err(err) => {
-          response_channel.send(Err(err)).expect("receiver was dropped");
+          response_channel
+            .send(Err(err))
+            .expect("receiver should not have been dropped");
         }
       },
       SwarmCommand::AddAddresses { peer, addresses } => {
@@ -183,7 +188,7 @@ impl EventLoop {
       SwarmCommand::GetAddresses { response_channel } => {
         response_channel
           .send(self.swarm.listeners().map(ToOwned::to_owned).collect())
-          .expect("receiver was dropped");
+          .expect("receiver should not have been dropped");
       }
       SwarmCommand::Shutdown { response_channel } => {
         for (listener, channel) in std::mem::take(&mut self.await_listen).into_iter() {
@@ -205,7 +210,9 @@ impl EventLoop {
           let _ = channel.send(Err(InboundFailure::ConnectionClosed));
         }
 
-        response_channel.send(()).expect("receiver was dropped");
+        response_channel
+          .send(())
+          .expect("receiver should not have been dropped");
 
         return ControlFlow::Break(());
       }

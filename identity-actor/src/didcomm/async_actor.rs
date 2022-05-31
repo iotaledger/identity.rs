@@ -7,39 +7,52 @@ use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use serde::Serialize;
 
-use crate::actor::AsyncActorRequest;
 use crate::actor::BoxFuture;
 use crate::actor::Endpoint;
 use crate::actor::ErrorLocation;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
+use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::ResponseMessage;
 
+/// Actors are objects that encapsulate state and behavior.
+///
+/// A DidCommActor handles one or more requests by implementing this trait one or more times
+/// for different `DidCommRequest` types.
+///
+/// The requests for a DIDComm actor are handled asynchronously, meaning that the caller does
+/// not wait for the actor to complete its invocation. If that is desired, the [`Actor`](crate::actor::Actor) trait
+/// should be implemented instead.
 #[async_trait::async_trait]
-pub trait AsyncActor<REQ: AsyncActorRequest>: 'static {
+pub trait DidCommActor<REQ: DidCommRequest>: 'static {
+  /// Called when the system receives a request of type `REQ`.
   async fn handle(&self, actor: DidCommSystem, request: RequestContext<REQ>);
 }
 
-pub trait AbstractAsyncActor: Send + Sync + 'static {
+/// A trait that wraps a DIDComm actor implementation and erases its type.
+/// This allows holding actors with different concrete types in the same collection.
+pub(crate) trait AbstractDidCommActor: Send + Sync + 'static {
   fn handle(&self, actor: DidCommSystem, request: InboundRequest) -> BoxFuture<'_, ()>;
 }
 
-pub struct AsyncActorWrapper<ACT, REQ>
+/// A wrapper around asynchronous actor implementations that is used for
+/// type erasure together with [`AbstractAsyncActor`].
+pub(crate) struct DidCommActorWrapper<ACT, REQ>
 where
-  REQ: AsyncActorRequest + Send + Sync,
-  ACT: AsyncActor<REQ> + Send + Sync,
+  REQ: DidCommRequest + Send + Sync,
+  ACT: DidCommActor<REQ> + Send + Sync,
 {
   actor: ACT,
   _phantom_req: PhantomData<REQ>,
 }
 
-impl<ACT, REQ> AsyncActorWrapper<ACT, REQ>
+impl<ACT, REQ> DidCommActorWrapper<ACT, REQ>
 where
-  REQ: AsyncActorRequest + Send + Sync,
-  ACT: AsyncActor<REQ> + Send + Sync,
+  REQ: DidCommRequest + Send + Sync,
+  ACT: DidCommActor<REQ> + Send + Sync,
 {
   pub fn new(actor: ACT) -> Self {
     Self {
@@ -49,10 +62,10 @@ where
   }
 }
 
-impl<ACT, REQ> AbstractAsyncActor for AsyncActorWrapper<ACT, REQ>
+impl<ACT, REQ> AbstractDidCommActor for DidCommActorWrapper<ACT, REQ>
 where
-  REQ: AsyncActorRequest + Send + Sync,
-  ACT: AsyncActor<REQ> + Send + Sync,
+  REQ: DidCommRequest + Send + Sync,
+  ACT: DidCommActor<REQ> + Send + Sync,
 {
   fn handle(&self, mut system: DidCommSystem, request: InboundRequest) -> BoxFuture<'_, ()> {
     let future: _ = async move {
