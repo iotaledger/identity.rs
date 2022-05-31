@@ -22,8 +22,6 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
-mod resolver;
-
 pub mod chain;
 pub mod credential;
 pub mod document;
