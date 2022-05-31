@@ -287,41 +287,39 @@ impl Storage for Stronghold {
     data: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
-    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<EncryptedData> {
     // Changes won't be written to the snapshot state since the created keys are temporary
     let client: Client = self.client(&ClientPath::from(did))?;
-    match private_key.key_type {
-      KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
-        "Ed25519 keys are not supported for encryption".to_owned(),
-      )),
-      KeyType::X25519 => {
-        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key.as_ref().try_into().map_err(|_| {
-          Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
-        })?;
-        match encryption_options.cek_algorithm() {
-          CekAlgorithm::EcdhEs(agreement) => {
-            let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
-            let concat_kdf_output: Location = concat_kdf(
-              &client,
-              &encryption_options.encryption_algorithm(),
-              encryption_options.cek_algorithm().name().to_string(),
-              agreement,
-              shared_key.clone(),
-            )
-            .await?;
-            let encrypted_data: Result<EncryptedData> = aead_encrypt(
-              &client,
-              &encryption_options.encryption_algorithm(),
-              concat_kdf_output.clone(),
-              data,
-              associated_data,
-            )
-            .await;
-            encrypted_data
-          }
-        }
+    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+      .as_ref()
+      .try_into()
+      .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
+    match encryption_options.cek_algorithm() {
+      CekAlgorithm::EcdhEs(agreement) => {
+        // Generate ephemeral key
+        let tmp_location = random_location(KeyType::X25519);
+        generate_private_key(&client, &tmp_location)?;
+        // Obtain the shared secret by combining the ephemeral key and the static public key
+        let shared_key: Location = diffie_hellman(&client, &tmp_location, public_key).await?;
+        let concat_kdf_output: Location = concat_kdf(
+          &client,
+          &encryption_options.encryption_algorithm(),
+          encryption_options.cek_algorithm().name().to_string(),
+          agreement,
+          shared_key.clone(),
+        )
+        .await?;
+        let encrypted_data: Result<EncryptedData> = aead_encrypt(
+          &client,
+          &encryption_options.encryption_algorithm(),
+          concat_kdf_output.clone(),
+          data,
+          associated_data,
+          Vec::new(),
+        )
+        .await;
+        encrypted_data
       }
     }
   }
@@ -332,41 +330,37 @@ impl Storage for Stronghold {
     did: &IotaDID,
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
-    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>> {
     // Changes won't be written to the snapshot state since the created keys are temporary
     let client: Client = self.client(&ClientPath::from(did))?;
-    match private_key.key_type {
-      KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
-        "Ed25519 keys are not suported for decryption".to_owned(),
-      )),
-      KeyType::X25519 => {
-        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
-          .as_ref()
-          .try_into()
-          .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
-        match encryption_options.cek_algorithm() {
-          CekAlgorithm::EcdhEs(agreement) => {
-            let shared_key: Location = diffie_hellman(&client, private_key, public_key).await?;
-            let concat_kdf: Location = concat_kdf(
-              &client,
-              &encryption_options.encryption_algorithm(),
-              "ECDH-ES".to_owned(),
-              agreement,
-              shared_key.clone(),
-            )
-            .await?;
-            let decrypted_data: Result<Vec<u8>> = aead_decrypt(
-              &client,
-              &encryption_options.encryption_algorithm(),
-              concat_kdf.clone(),
-              data,
-            )
-            .await;
-            decrypted_data
-          }
-        }
+    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+      .as_ref()
+      .try_into()
+      .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
+    match encryption_options.cek_algorithm() {
+      CekAlgorithm::EcdhEs(agreement) => {
+        // Generate ephemeral key
+        let tmp_location = random_location(KeyType::X25519);
+        generate_private_key(&client, &tmp_location)?;
+        // Obtain the shared secret by combining the ephemeral key and the static public key
+        let shared_key: Location = diffie_hellman(&client, &tmp_location, public_key).await?;
+        let concat_kdf: Location = concat_kdf(
+          &client,
+          &encryption_options.encryption_algorithm(),
+          encryption_options.cek_algorithm().name().to_string(),
+          agreement,
+          shared_key.clone(),
+        )
+        .await?;
+        let decrypted_data: Result<Vec<u8>> = aead_decrypt(
+          &client,
+          &encryption_options.encryption_algorithm(),
+          concat_kdf.clone(),
+          data,
+        )
+        .await;
+        decrypted_data
       }
     }
   }
@@ -549,6 +543,7 @@ async fn aead_encrypt(
   key: Location,
   plaintext: Vec<u8>,
   associated_data: Vec<u8>,
+  encrypted_cek: Vec<u8>,
 ) -> Result<EncryptedData> {
   match algorithm {
     EncryptionAlgorithm::Aes256Gcm => {
@@ -568,6 +563,7 @@ async fn aead_encrypt(
         associated_data,
         data.drain(..Aes256Gcm::TAG_LENGTH).collect(),
         data,
+        encrypted_cek,
       ))
     }
   }

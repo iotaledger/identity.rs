@@ -507,4 +507,9 @@ impl StorageTestSuite {
 
     Ok(())
   }
+
+  #[named]
+  pub async fn encryption_decryption_test(storage: impl Storage) -> anyhow::Result<()> {
+    unimplemented!();
+  }
 }

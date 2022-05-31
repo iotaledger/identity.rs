@@ -310,54 +310,41 @@ where
     Ok(())
   }
 
-  /// Encrypts the given `data` with the specified `algorithm`
+  /// Encrypts the given `plaintext` with the specified `algorithm`
   ///
   /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   pub async fn encrypt_data(
     &self,
-    data: &[u8],
+    plaintext: &[u8],
     associated_data: &[u8],
-    algorithm: &EncryptionOptions,
-    fragment: &str,
+    encryption_options: &EncryptionOptions,
     public_key: PublicKey,
   ) -> Result<EncryptedData> {
-    let method: &IotaVerificationMethod = self
-      .document()
-      .resolve_method(fragment, None)
-      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
-    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
     self
       .storage()
       .encrypt_data(
         self.did(),
-        data.to_vec(),
+        plaintext.to_vec(),
         associated_data.to_vec(),
-        algorithm,
-        &private_key,
+        encryption_options,
         public_key,
       )
       .await
       .map_err(Into::into)
   }
 
-  /// Decrypts the given `data` with the specified `algorithm`
+  /// Decrypts the given `data` with the specified `encryption_options`
   ///
   /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
   pub async fn decrypt_data(
     &self,
     data: EncryptedData,
-    algorithm: &EncryptionOptions,
-    fragment: &str,
+    encryption_options: &EncryptionOptions,
     public_key: PublicKey,
   ) -> Result<Vec<u8>> {
-    let method: &IotaVerificationMethod = self
-      .document()
-      .resolve_method(fragment, None)
-      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
-    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
     self
       .storage()
-      .decrypt_data(self.did(), data, algorithm, &private_key, public_key)
+      .decrypt_data(self.did(), data, encryption_options, public_key)
       .await
       .map_err(Into::into)
   }

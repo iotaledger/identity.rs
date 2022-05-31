@@ -130,7 +130,6 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
-    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<EncryptedData>;
 
@@ -143,7 +142,6 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     did: &IotaDID,
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
-    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>>;
 
