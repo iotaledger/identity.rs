@@ -72,13 +72,13 @@ impl DidCommSystemState {
 /// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Debug, Clone)]
 pub struct DidCommSystem {
-  pub(crate) actor: System,
+  pub(crate) system: System,
   pub(crate) state: Arc<DidCommSystemState>,
 }
 
 impl DidCommSystem {
   pub(crate) fn commander_mut(&mut self) -> &mut NetCommander {
-    self.actor.commander_mut()
+    self.system.commander_mut()
   }
 
   /// Let this actor handle the given `request`, by invoking a handler function.
@@ -87,43 +87,43 @@ impl DidCommSystem {
   pub(crate) fn handle_request(self, request: InboundRequest) {
     match request.request_mode {
       RequestMode::Asynchronous => self.handle_async_request(request),
-      RequestMode::Synchronous => self.actor.handle_sync_request(request),
+      RequestMode::Synchronous => self.system.handle_sync_request(request),
     }
   }
 
   /// See [`System::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
-    self.actor.start_listening(address).await
+    self.system.start_listening(address).await
   }
 
   /// See [`System::peer_id`].
   pub fn peer_id(&self) -> PeerId {
-    self.actor.peer_id()
+    self.system.peer_id()
   }
 
   /// See [`System::addresses`].
   pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
-    self.actor.addresses().await
+    self.system.addresses().await
   }
 
   /// See [`System::add_address`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
-    self.actor.add_address(peer_id, address).await
+    self.system.add_address(peer_id, address).await
   }
 
   /// See [`System::add_addresses`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
-    self.actor.add_addresses(peer_id, addresses).await
+    self.system.add_addresses(peer_id, addresses).await
   }
 
   /// See [`System::shutdown`].
   pub async fn shutdown(self) -> ActorResult<()> {
-    self.actor.shutdown().await
+    self.system.shutdown().await
   }
 
   /// See [`System::send_request`].
   pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
-    self.actor.send_request(peer, request).await
+    self.system.send_request(peer, request).await
   }
 
   /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommSystem::await_message`],
@@ -173,7 +173,7 @@ impl DidCommSystem {
   ) -> ActorResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receival + Deserialization
-      let inbound_request = tokio::time::timeout(self.actor.state().config.timeout, receiver.1)
+      let inbound_request = tokio::time::timeout(self.system.state().config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
         .map_err(|_| Error::ThreadNotFound(receiver.0))?;

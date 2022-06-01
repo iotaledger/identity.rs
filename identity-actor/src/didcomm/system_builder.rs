@@ -36,7 +36,7 @@ use crate::p2p::NetCommander;
 pub struct DidCommSystemBuilder {
   inner: SystemBuilder,
   identity: Option<ActorIdentity>,
-  async_actors: DidCommActorMap,
+  didcomm_actors: DidCommActorMap,
 }
 
 impl DidCommSystemBuilder {
@@ -45,7 +45,7 @@ impl DidCommSystemBuilder {
     Self {
       inner: SystemBuilder::new(),
       identity: None,
-      async_actors: HashMap::new(),
+      didcomm_actors: HashMap::new(),
     }
   }
 
@@ -89,7 +89,7 @@ impl DidCommSystemBuilder {
     ACT: DidCommActor<REQ> + Send + Sync,
     REQ: DidCommRequest + Send + Sync,
   {
-    self.async_actors.insert(
+    self.didcomm_actors.insert(
       REQ::endpoint(),
       Box::new(DidCommActorWrapper::new(actor)) as Box<dyn AbstractDidCommActor>,
     );
@@ -144,27 +144,27 @@ impl DidCommSystemBuilder {
     });
 
     let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
-      self.inner.build_actor_constituents(transport, executor.clone()).await?;
+      self.inner.build_constituents(transport, executor.clone()).await?;
 
     let state: DidCommSystemState =
-      DidCommSystemState::new(self.async_actors, self.identity.ok_or(Error::IdentityMissing)?);
+      DidCommSystemState::new(self.didcomm_actors, self.identity.ok_or(Error::IdentityMissing)?);
 
-    let actor = System::new(net_commander, Arc::new(actor_state));
+    let system: System = System::new(net_commander, Arc::new(actor_state));
 
-    let didcomm_actor: DidCommSystem = DidCommSystem {
-      actor,
+    let didcomm_system: DidCommSystem = DidCommSystem {
+      system,
       state: Arc::new(state),
     };
 
-    let didcomm_actor_clone: DidCommSystem = didcomm_actor.clone();
+    let didcomm_system_clone: DidCommSystem = didcomm_system.clone();
 
     let event_handler = move |event: InboundRequest| {
-      didcomm_actor_clone.clone().handle_request(event);
+      didcomm_system_clone.clone().handle_request(event);
     };
 
     executor.exec(event_loop.run(event_handler).boxed());
 
-    Ok(didcomm_actor)
+    Ok(didcomm_system)
   }
 }
 

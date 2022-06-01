@@ -25,8 +25,8 @@ use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::tests::try_init_logger;
 
-use super::default_listening_actor;
-use super::default_sending_actor;
+use super::default_listening_system;
+use super::default_sending_system;
 
 #[tokio::test]
 async fn test_end_to_end() -> ActorResult<()> {
@@ -115,9 +115,9 @@ async fn test_end_to_end() -> ActorResult<()> {
 async fn test_unknown_request_returns_error() -> ActorResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|builder| builder).await;
+  let (listening_actor, addrs, peer_id) = default_listening_system(|builder| builder).await;
 
-  let mut sending_actor = default_sending_actor(|builder| builder).await;
+  let mut sending_actor = default_sending_system(|builder| builder).await;
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
@@ -226,13 +226,13 @@ async fn test_actor_handler_is_invoked() -> ActorResult<()> {
 
   let actor = TestActor(Arc::new(AtomicBool::new(false)));
 
-  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
+  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_system(|mut builder| {
     builder.attach(actor.clone());
     // builder.add_state(state.clone()).add_sync_handler(Actor::handler);
     builder
   })
   .await;
-  let mut sender = default_sending_actor(|builder| builder).await;
+  let mut sender = default_sending_system(|builder| builder).await;
 
   sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 
@@ -274,13 +274,13 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
-  let mut sending_actor = default_sending_actor(|builder| builder).await;
+  let mut sending_actor = default_sending_system(|builder| builder).await;
   sending_actor.add_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_actor
@@ -299,7 +299,7 @@ async fn test_synchronous_handler_invocation() -> ActorResult<()> {
 async fn test_interacting_with_shutdown_actor_returns_error() {
   try_init_logger();
 
-  let (listening_actor, _, _) = default_listening_actor(|builder| builder).await;
+  let (listening_actor, _, _) = default_listening_system(|builder| builder).await;
 
   let mut actor_clone = listening_actor.clone();
 
@@ -323,7 +323,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })
@@ -401,7 +401,7 @@ async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorRe
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_actor(|mut builder| {
+  let (listening_actor, addrs, peer_id) = default_listening_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })

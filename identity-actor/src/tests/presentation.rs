@@ -51,7 +51,7 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
 }
 
 pub async fn presentation_holder_handler(
-  mut actor: DidCommSystem,
+  mut system: DidCommSystem,
   peer: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
 ) -> ActorResult<()> {
@@ -60,11 +60,11 @@ pub async fn presentation_holder_handler(
     None => {
       log::debug!("holder: sending presentation offer");
       let thread_id = ThreadId::new();
-      actor
+      system
         .send_message(peer, &thread_id, PresentationOffer::default())
         .await?;
 
-      let req = actor.await_message(&thread_id).await;
+      let req = system.await_message(&thread_id).await;
       log::debug!("holder: received presentation request");
 
       req?
@@ -74,9 +74,9 @@ pub async fn presentation_holder_handler(
   let thread_id = request.thread_id();
 
   log::debug!("holder: sending presentation");
-  actor.send_message(peer, thread_id, Presentation::default()).await?;
+  system.send_message(peer, thread_id, Presentation::default()).await?;
 
-  let _result: DidCommPlaintextMessage<PresentationResult> = actor.await_message(thread_id).await?;
+  let _result: DidCommPlaintextMessage<PresentationResult> = system.await_message(thread_id).await?;
   log::debug!("holder: received presentation result");
 
   Ok(())

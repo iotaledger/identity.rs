@@ -23,7 +23,7 @@ fn try_init_logger() {
   let _ = pretty_env_logger::try_init();
 }
 
-async fn default_listening_actor(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -> (System, Vec<Multiaddr>, PeerId) {
+async fn default_listening_system(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -> (System, Vec<Multiaddr>, PeerId) {
   let id_keys = Keypair::generate_ed25519();
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
@@ -31,17 +31,17 @@ async fn default_listening_actor(f: impl FnOnce(SystemBuilder) -> SystemBuilder)
 
   builder = f(builder);
 
-  let mut listening_actor: System = builder.build().await.unwrap();
+  let mut listening_system: System = builder.build().await.unwrap();
 
-  let _ = listening_actor.start_listening(addr).await.unwrap();
-  let addrs = listening_actor.addresses().await.unwrap();
+  let _ = listening_system.start_listening(addr).await.unwrap();
+  let addrs = listening_system.addresses().await.unwrap();
 
-  let peer_id = listening_actor.peer_id();
+  let peer_id = listening_system.peer_id();
 
-  (listening_actor, addrs, peer_id)
+  (listening_system, addrs, peer_id)
 }
 
-async fn default_sending_actor(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -> System {
+async fn default_sending_system(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -> System {
   let mut builder = SystemBuilder::new();
 
   builder = f(builder);
@@ -49,7 +49,7 @@ async fn default_sending_actor(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -
   builder.build().await.unwrap()
 }
 
-async fn default_sending_didcomm_actor(f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder) -> DidCommSystem {
+async fn default_sending_didcomm_system(f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder) -> DidCommSystem {
   let mut builder = DidCommSystemBuilder::new().identity(default_identity());
 
   builder = f(builder);
@@ -57,7 +57,7 @@ async fn default_sending_didcomm_actor(f: impl FnOnce(DidCommSystemBuilder) -> D
   builder.build().await.unwrap()
 }
 
-async fn default_listening_didcomm_actor(
+async fn default_listening_didcomm_system(
   f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder,
 ) -> (DidCommSystem, Vec<Multiaddr>, PeerId) {
   let id_keys = Keypair::generate_ed25519();

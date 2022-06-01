@@ -8,15 +8,15 @@ use super::IdentityGet;
 use super::IdentityList;
 use super::RemoteAccount;
 use crate::actor::Result as ActorResult;
-use crate::tests::default_listening_actor;
-use crate::tests::default_sending_actor;
+use crate::tests::default_listening_system;
+use crate::tests::default_sending_system;
 use crate::tests::try_init_logger;
 
 #[tokio::test]
 async fn test_remote_account() -> ActorResult<()> {
   try_init_logger();
 
-  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_actor(|mut builder| {
+  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_system(|mut builder| {
     let remote_account = RemoteAccount::new().unwrap();
     builder.attach::<IdentityCreate, _>(remote_account.clone());
     builder.attach::<IdentityList, _>(remote_account.clone());
@@ -24,7 +24,7 @@ async fn test_remote_account() -> ActorResult<()> {
     builder
   })
   .await;
-  let mut sender = default_sending_actor(|builder| builder).await;
+  let mut sender = default_sending_system(|builder| builder).await;
 
   sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
 

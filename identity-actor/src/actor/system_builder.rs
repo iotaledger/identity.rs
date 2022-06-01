@@ -135,22 +135,22 @@ impl SystemBuilder {
     });
 
     let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
-      self.build_actor_constituents(transport, executor.clone()).await?;
+      self.build_constituents(transport, executor.clone()).await?;
 
-    let actor: System = System::new(net_commander, Arc::new(actor_state));
-    let actor_clone: System = actor.clone();
+    let system: System = System::new(net_commander, Arc::new(actor_state));
+    let system_clone: System = system.clone();
 
     let event_handler = move |event: InboundRequest| {
-      actor_clone.clone().handle_request(event);
+      system_clone.clone().handle_request(event);
     };
 
     executor.exec(event_loop.run(event_handler).boxed());
 
-    Ok(actor)
+    Ok(system)
   }
 
-  /// Build the actor constituents with a custom transport and custom executor.
-  pub(crate) async fn build_actor_constituents<TRA>(
+  /// Build the system constituents with a custom transport and custom executor.
+  pub(crate) async fn build_constituents<TRA>(
     self,
     transport: TRA,
     executor: Box<dyn Executor + Send>,
@@ -204,13 +204,13 @@ impl SystemBuilder {
     let event_loop = EventLoop::new(swarm, cmd_receiver);
     let net_commander = NetCommander::new(cmd_sender);
 
-    let actor_state: SystemState = SystemState {
+    let system_state: SystemState = SystemState {
       peer_id,
       config: self.config,
       actors: self.actors,
     };
 
-    Ok((event_loop, actor_state, net_commander))
+    Ok((event_loop, system_state, net_commander))
   }
 }
 
