@@ -37,32 +37,39 @@ module.exports = {
             ],
         },
         {
-            'Decentralized Identifiers (DID)': [
-                'decentralized_identifiers/overview',
-                'decentralized_identifiers/create',
-                'decentralized_identifiers/update',
-                'decentralized_identifiers/resolve',
-                'decentralized_identifiers/private_tangle',
-            ],
-            'Verifiable Credentials': [
-                'verifiable_credentials/overview',
-                'verifiable_credentials/create',
-                'verifiable_credentials/revoke',
-                'verifiable_credentials/verifiable_presentations',
-            ],
-            'DID Communication': [
-                'did_communications/overview',
-                'did_communications/did_comm_messages',
-                'did_communications/protocols',
-            ],
-            'Advanced Concepts': [
-                'advanced/overview',
-                'advanced/client',
-                'advanced/did_messages',
-                'advanced/storage_interface',
-                'advanced/signature_schemes',
-
-            ]
+          type: 'category',
+          label: 'Concepts',
+          collapsed: false,
+          items: [
+            {
+              'Decentralized Identifiers (DID)': [
+                  'concepts/decentralized_identifiers/overview',
+                  'concepts/decentralized_identifiers/create',
+                  'concepts/decentralized_identifiers/update',
+                  'concepts/decentralized_identifiers/resolve',
+                  'concepts/decentralized_identifiers/private_tangle',
+              ],
+              'Verifiable Credentials': [
+                  'concepts/verifiable_credentials/overview',
+                  'concepts/verifiable_credentials/create',
+                  'concepts/verifiable_credentials/revoke',
+                  'concepts/verifiable_credentials/verifiable_presentations',
+              ],
+              'DID Communication': [
+                  'concepts/did_communications/overview',
+                  'concepts/did_communications/did_comm_messages',
+                  'concepts/did_communications/protocols',
+              ],
+              'Advanced Concepts': [
+                  'concepts/advanced/overview',
+                  'concepts/advanced/client',
+                  'concepts/advanced/did_messages',
+                  'concepts/advanced/storage_interface',
+                  'concepts/advanced/signature_schemes',
+  
+              ]
+            },
+          ],
         },
         {
             type: 'category',
