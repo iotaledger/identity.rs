@@ -27,7 +27,7 @@ We currently do not supply dedicated bindings for Kotlin or Swift. There has bee
 ### Can I use IOTA Identity on embedded devices?
 We currently do not supply dedicated bindings catering to embedded devices with restricted capabilities. You can try to compile the Rust library for your target platform or use a gateway in front of the devices to handle IOTA Identity interactions.
 ### What should I do if my private key is compromised?
-If you still have control over your identity, rotate the key material ASAP! If an attacker has locked you out of your identity, there is not much you can do. Notify contacts that your identity has been compromised and start fresh with a new one.
+If you still have control over your identity, rotate the key material ASAP! If an attacker has locked you out of your identity, there is not much you can do. Notify contacts that your identity has been compromised and start fresh with a new one. It is for this reason that we suggest using different keys for day-to-day signing and authentication operations, and instead store private keys capable of performing updates to your DID Document securely and separately.
 
 ### Are credentials stored on the tangle?
 Credentials are supposed to be stored on user devices or systems. As a user you are in charge of storing your credentials and sharing them with other parties on a need-to-know basis.
