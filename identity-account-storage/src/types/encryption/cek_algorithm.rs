@@ -4,22 +4,26 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-/// Enum containing all content encryption key algorithms supported.
+/// Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).
+#[allow(non_camel_case_types)]
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum CekAlgorithm {
-  EcdhEs(AgreementInfo),
+  /// Uses the result of a Diffie-Hellman key exchange between a recipient's public key and an ephemeral secret as the
+  /// content encryption key.
+  ECDH_ES(AgreementInfo),
 }
 
 impl CekAlgorithm {
   /// Returns the JWE algorithm as a `str` slice.
   pub const fn name(&self) -> &'static str {
     match self {
-      CekAlgorithm::EcdhEs(_agreement) => "ECDH-ES",
+      CekAlgorithm::ECDH_ES(_agreement) => "ECDH-ES",
     }
   }
 }
 
+/// Agreement information used as the input for the concat KDF.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AgreementInfo {
   /// Agreement PartyUInfo.

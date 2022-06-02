@@ -14,8 +14,9 @@ use napi::Result;
 use napi_derive::napi;
 
 use crate::account::identity::NapiDidLocation;
+use crate::account::types::NapiCekAlgorithm;
 use crate::account::types::NapiEncryptedData;
-use crate::account::types::NapiEncryptionOptions;
+use crate::account::types::NapiEncryptionAlgorithm;
 use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
 use crate::account::NapiDocument;
@@ -178,17 +179,20 @@ impl NapiStronghold {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
   }
 
-  /// Encrypts the given `data` with the specified `algorithm`
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// secret.
+  ///
+  /// Returns an [`EncryptedData`] instance.
   #[napi]
-  pub async fn encrypt_data(
+  pub async fn data_encrypt(
     &self,
     did: &NapiDID,
     data: Vec<u32>,
     associated_data: Vec<u32>,
-    encryption_options: &NapiEncryptionOptions,
-    private_key: &NapiKeyLocation,
+    encryption_algorithm: &NapiEncryptionAlgorithm,
+    cek_algorithm: &NapiCekAlgorithm,
     public_key: Vec<u32>,
   ) -> Result<NapiEncryptedData> {
     let public_key: Vec<u8> = public_key.try_into_bytes()?;
@@ -196,12 +200,12 @@ impl NapiStronghold {
     let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
     let encrypted_data: EncryptedData = self
       .0
-      .encrypt_data(
+      .data_encrypt(
         &did.0,
         data,
         associated_data,
-        &encryption_options.0,
-        &private_key.0,
+        &encryption_algorithm.0,
+        &cek_algorithm.0,
         public_key.into(),
       )
       .await
@@ -209,27 +213,29 @@ impl NapiStronghold {
     Ok(NapiEncryptedData(encrypted_data))
   }
 
-  /// Decrypts the given `data` with the specified `algorithm`
+  /// Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// secret.
+  ///
+  /// Returns the decrypted text.
   #[napi]
-  pub async fn decrypt_data(
+  pub async fn data_decrypt(
     &self,
     did: &NapiDID,
     data: &NapiEncryptedData,
-    encryption_options: &NapiEncryptionOptions,
+    encryption_algorithm: &NapiEncryptionAlgorithm,
+    cek_algorithm: &NapiCekAlgorithm,
     private_key: &NapiKeyLocation,
-    public_key: Vec<u32>,
   ) -> Result<Vec<u32>> {
-    let public_key: Vec<u8> = public_key.try_into_bytes()?;
     let data: Vec<u8> = self
       .0
-      .decrypt_data(
+      .data_decrypt(
         &did.0,
         data.0.clone(),
-        &encryption_options.0,
+        &encryption_algorithm.0,
+        &cek_algorithm.0,
         &private_key.0,
-        public_key.into(),
       )
       .await
       .napi_result()?;

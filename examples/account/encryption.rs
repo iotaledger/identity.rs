@@ -16,15 +16,14 @@ use identity::account_storage::AgreementInfo;
 use identity::account_storage::CekAlgorithm;
 use identity::account_storage::EncryptedData;
 use identity::account_storage::EncryptionAlgorithm;
-use identity::account_storage::EncryptionOptions;
 use identity::account_storage::Stronghold;
-use identity::crypto::PublicKey;
 use identity::did::MethodScope;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
 use identity::iota_core::IotaVerificationMethod;
 
-pub async fn run() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
   // Alice and Bob want to communicate securely by encrypting their messages so only they
   // can read them. They both publish DID Documents with X25519 public keys and use them
   // to derive a shared secret key for encryption.
@@ -75,26 +74,28 @@ pub async fn run() -> Result<()> {
 
   // Alice encrypts the data using Diffie-Hellman key exchange
   let agreement: AgreementInfo = AgreementInfo::new(b"Alice".to_vec(), b"Bob".to_vec(), Vec::new(), Vec::new());
-  let encryption_options: EncryptionOptions =
-    EncryptionOptions::new(EncryptionAlgorithm::Aes256Gcm, CekAlgorithm::EcdhEs(agreement));
+  let encryption_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::AES256GCM;
+  let cek_algorithm: CekAlgorithm = CekAlgorithm::ECDH_ES(agreement);
+
   let message: &[u8] = b"This msg will be encrypted and decrypted";
-  let (encrypted_data, ephemeral_pub_key): (EncryptedData, PublicKey) = alice_account
-    .encrypt_data(message, b"associated_data", &encryption_options, bob_public_key.into())
+  let encrypted_data: EncryptedData = alice_account
+    .encrypt_data(
+      message,
+      b"associated_data",
+      &encryption_algorithm,
+      &cek_algorithm,
+      bob_public_key.into(),
+    )
     .await?;
+
   // Bob must be able to decrypt the message using the shared secret
   let decrypted_msg: Vec<u8> = bob_account
-    .decrypt_data(encrypted_data, &encryption_options, "kex-0", ephemeral_pub_key)
+    .decrypt_data(encrypted_data, &encryption_algorithm, &cek_algorithm, "kex-0")
     .await?;
   assert_eq!(message, &decrypted_msg);
 
-  // Both shared secret keys computed separately by Alice and Bob will match
-  // and can then be used to establish encrypted communications.
+  // Both shared secret keys computed separately by Alice and Bob matched
+  // and were used to exchange an encrypted message.
   println!("Diffie-Hellman key exchange successful!");
-  Ok(())
-}
-
-#[tokio::main]
-async fn main() -> Result<()> {
-  let _ = run().await?;
   Ok(())
 }

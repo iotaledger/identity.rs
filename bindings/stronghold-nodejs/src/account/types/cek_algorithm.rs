@@ -1,19 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account_storage::types::EncryptionOptions;
+use identity_account_storage::types::CekAlgorithm;
 use napi::Result;
 use napi_derive::napi;
 
 use crate::error::NapiResult;
 
 #[napi]
-pub struct NapiEncryptionOptions(pub(crate) EncryptionOptions);
+pub struct NapiCekAlgorithm(pub(crate) CekAlgorithm);
 
 #[napi]
-impl NapiEncryptionOptions {
+impl NapiCekAlgorithm {
   #[napi(js_name = fromJSON)]
-  pub fn from_json(json_value: serde_json::Value) -> Result<NapiEncryptionOptions> {
+  pub fn from_json(json_value: serde_json::Value) -> Result<NapiCekAlgorithm> {
     serde_json::from_value(json_value).map(Self).napi_result()
   }
 

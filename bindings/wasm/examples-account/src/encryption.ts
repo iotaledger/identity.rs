@@ -1,10 +1,10 @@
-import {AgreementInfo, AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, EncryptionOptions, CEKAlgorithm, Network} from './../../node/identity_wasm.js';
+import {AgreementInfo, AccountBuilder, Client, MethodContent, Storage, MethodScope, EncryptionAlgorithm, CekAlgorithm, Network} from './../../node/identity_wasm.js';
 
 /**
  * This example demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange
  * by encrypting and decrypting data with a shared key.
  */
-async function keyExchange(storage?: Storage) {
+async function encryption(storage?: Storage) {
     let builder = new AccountBuilder({
         storage,
     });
@@ -35,19 +35,19 @@ async function keyExchange(storage?: Storage) {
     const bobDocument = await client.resolve(bobAccount.did());
     const bobMethod = bobDocument.intoDocument().resolveMethod("kex-0", MethodScope.KeyAgreement())!;
     const bobPublicKey = bobMethod.data().tryDecode();
-    // Bob: resolves Alice's DID Document and extracts their public key.
-    const aliceDocument = await client.resolve(aliceAccount.did());
-    const aliceMethod = aliceDocument.intoDocument().resolveMethod("kex-0", MethodScope.KeyAgreement())!;
-    const alicePublicKey = aliceMethod.data().tryDecode();
 
     // Alice encrypts the data using Diffie-Hellman key exchange
-    const agreementInfo = AgreementInfo.new(Buffer.from("apu"), Buffer.from("apv"), Buffer.from("pub_info"), Buffer.from("priv_info"));
-    const encryptionOptions = EncryptionOptions.new(EncryptionAlgorithm.aes256gcm(), CEKAlgorithm.ecdhES(agreementInfo));
+    const agreementInfo = new AgreementInfo(Buffer.from("apu"), Buffer.from("apv"), Buffer.from("pub_info"), Buffer.from("priv_info"));
+    const encryptionAlgorithm = EncryptionAlgorithm.Aes256Gcm();
+    const cekAlgorithm = CekAlgorithm.EcdhEs(agreementInfo);
     const message = Buffer.from("This msg will be encrypted and decrypted");
     const associatedData = Buffer.from("associatedData");
-    const encryptedData = await aliceAccount.encryptData(message, associatedData, encryptionOptions, "kex-0", bobPublicKey);
+
+    const encryptedData = await aliceAccount.encryptData(message, associatedData, encryptionAlgorithm, cekAlgorithm, bobPublicKey);
+
     // Bob must be able to decrypt the message using the shared secret
-    const decryptedMessage = await bobAccount.decryptData(encryptedData, encryptionOptions, "kex-0", alicePublicKey);
+    const decryptedMessage = await bobAccount.decryptData(encryptedData, encryptionAlgorithm, cekAlgorithm, "kex-0");
+
     if(!isArrayEqual(message, decryptedMessage)) throw new Error("decrypted message does not match original message!");
     console.log(`Diffie-Hellman key exchange successful!`);
 }
@@ -60,4 +60,4 @@ function isArrayEqual(a: Buffer, b: Uint8Array) {
     return true;
 }
 
-export {keyExchange};
+export {encryption};

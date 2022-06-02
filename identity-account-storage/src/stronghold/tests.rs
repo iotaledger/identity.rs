@@ -139,8 +139,8 @@ async fn test_ecdhes_encryption() {
   let plaintext = b"HelloWorld!";
   let associated_data = b"AssociatedData";
   let agreement: AgreementInfo = AgreementInfo::new(b"Alice".to_vec(), b"Bob".to_vec(), Vec::new(), Vec::new());
-  let cek_algorithm: CekAlgorithm = CekAlgorithm::EcdhEs(agreement.clone());
-  let enc_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::Aes256Gcm;
+  let cek_algorithm: CekAlgorithm = CekAlgorithm::ECDH_ES(agreement.clone());
+  let enc_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::AES256GCM;
 
   // Sender
   let shared_secret_location: Location = diffie_hellman(&client, &ephemeral_secret_location, public_key)
@@ -162,6 +162,7 @@ async fn test_ecdhes_encryption() {
     plaintext.to_vec(),
     associated_data.to_vec(),
     Vec::new(),
+    ephemeral_public_key.to_vec(),
   )
   .await
   .unwrap();
@@ -245,4 +246,11 @@ async fn test_stronghold_key_value_store() {
 #[tokio::test]
 async fn test_stronghold_did_purge() {
   StorageTestSuite::did_purge_test(test_stronghold().await).await.unwrap()
+}
+
+#[tokio::test]
+async fn test_encryption() {
+  StorageTestSuite::encryption_test(test_stronghold().await)
+    .await
+    .unwrap()
 }

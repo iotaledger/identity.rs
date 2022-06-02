@@ -9,10 +9,12 @@ use std::sync::Arc;
 
 use serde::Serialize;
 
-#[cfg(feature = "encryption-decryption")]
+#[cfg(feature = "encryption")]
+use identity_account_storage::types::CekAlgorithm;
+#[cfg(feature = "encryption")]
 use identity_account_storage::types::EncryptedData;
-#[cfg(feature = "encryption-decryption")]
-use identity_account_storage::types::EncryptionOptions;
+#[cfg(feature = "encryption")]
+use identity_account_storage::types::EncryptionAlgorithm;
 
 use identity_account_storage::crypto::RemoteEd25519;
 use identity_account_storage::crypto::RemoteKey;
@@ -313,46 +315,49 @@ where
     Ok(())
   }
 
-  /// Encrypts the given `plaintext` with the specified `encryption_options`.
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
-  /// 
-  /// Returns the [`EncryptedData`] and the ephemeral `PublicKey` used when generating the shared secret.
-  #[cfg(feature = "encryption-decryption")]
+  ///
+  /// Returns an [`EncryptedData`] instance.
+  #[cfg(feature = "encryption")]
   pub async fn encrypt_data(
     &self,
     plaintext: &[u8],
     associated_data: &[u8],
-    encryption_options: &EncryptionOptions,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
     public_key: PublicKey,
-  ) -> Result<(EncryptedData, PublicKey)> {
+  ) -> Result<EncryptedData> {
     self
       .storage()
-      .encrypt_data(
+      .data_encrypt(
         self.did(),
         plaintext.to_vec(),
         associated_data.to_vec(),
-        encryption_options,
+        encryption_algorithm,
+        cek_algorithm,
         public_key,
       )
       .await
       .map_err(Into::into)
   }
 
-  /// Decrypts the given `data` with the specified `encryption_options`.
+  /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+  /// `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
-  /// 
+  ///
   /// Returns the decrypted text.
-  #[cfg(feature = "encryption-decryption")]
+  #[cfg(feature = "encryption")]
   pub async fn decrypt_data(
     &self,
     data: EncryptedData,
-    encryption_options: &EncryptionOptions,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
     fragment: &str,
-    public_key: PublicKey,
   ) -> Result<Vec<u8>> {
     let method: &IotaVerificationMethod = self
       .document()
@@ -361,7 +366,7 @@ where
     let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
     self
       .storage()
-      .decrypt_data(self.did(), data, encryption_options, &private_key, public_key)
+      .data_decrypt(self.did(), data, encryption_algorithm, cek_algorithm, &private_key)
       .await
       .map_err(Into::into)
   }

@@ -9,13 +9,14 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
+/// Agreement information used as the input for the concat KDF.
 #[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = AgreementInfo, inspectable)]
 pub struct WasmAgreementInfo(AgreementInfo);
 
 #[wasm_bindgen(js_class = AgreementInfo)]
 impl WasmAgreementInfo {
-  /// Creates an `AgreementInfo` Object
+  /// Creates an `AgreementInfo` Object.
   #[wasm_bindgen(constructor)]
   pub fn new(apu: Vec<u8>, apv: Vec<u8>, pub_info: Vec<u8>, priv_info: Vec<u8>) -> WasmAgreementInfo {
     WasmAgreementInfo(AgreementInfo::new(apu, apv, pub_info, priv_info))

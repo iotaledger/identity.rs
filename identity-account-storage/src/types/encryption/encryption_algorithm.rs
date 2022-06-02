@@ -4,9 +4,9 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-/// Enum containing all encryption algorithms supported.
+/// Supported content encryption algorithms.
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum EncryptionAlgorithm {
-  Aes256Gcm,
+  AES256GCM,
 }

@@ -1,5 +1,5 @@
-import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiDocument, NapiKeyType, NapiDidLocation, NapiEncryptedData, NapiEncryptionOptions } from '../napi-dist/napi';
-import { DID, KeyLocation, Signature, ChainState, Storage, KeyType, Document, EncryptedData, EncryptionAlgorithm, EncryptionOptions } from "@iota/identity-wasm/node";
+import { NapiStronghold, NapiDID, NapiKeyLocation, NapiChainState, NapiDocument, NapiKeyType, NapiDidLocation, NapiEncryptedData, NapiEncryptionAlgorithm, NapiCekAlgorithm } from '../napi-dist/napi';
+import { DID, KeyLocation, Signature, ChainState, Storage, KeyType, Document, EncryptedData, EncryptionAlgorithm, CekAlgorithm } from "@iota/identity-wasm/node";
 
 export class Stronghold implements Storage {
     private napiStronghold: NapiStronghold;
@@ -97,20 +97,21 @@ export class Stronghold implements Storage {
         return Signature.fromJSON(napiSignature.toJSON());
     }
 
-    public async encryptData(did: DID, data: Uint8Array, associatedData: Uint8Array, encryptionOptions: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array): Promise<EncryptedData> {
+    public async dataEncrypt(did: DID, data: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array): Promise<EncryptedData> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
-        const napiPrivateKeyLocation = NapiKeyLocation.fromJSON(privateKey.toJSON());
-        const napiEncryptionOptions = NapiEncryptionOptions.fromJSON(encryptionOptions.toJSON());
-        const napiEncryptedData = await this.napiStronghold.encryptData(napiDID, Array.from(data), Array.from(associatedData),  napiEncryptionOptions, napiPrivateKeyLocation, Array.from(publicKey));
+        const napiCekAlgorithm = NapiCekAlgorithm.fromJSON(cekAlgorithm.toJSON());
+        const napiEncryptionAlgorithm = NapiEncryptionAlgorithm.fromJSON(encryptionAlgorithm.toJSON());
+        const napiEncryptedData = await this.napiStronghold.dataEncrypt(napiDID, Array.from(data), Array.from(associatedData),  napiEncryptionAlgorithm, napiCekAlgorithm, Array.from(publicKey));
         return EncryptedData.fromJSON(napiEncryptedData.toJSON());
     }
 
-    public async decryptData(did: DID, data: EncryptedData, encryptionOptions: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array): Promise<Uint8Array> {
+    public async dataDecrypt(did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation): Promise<Uint8Array> {
         const napiDID: NapiDID = NapiDID.fromJSON(did.toJSON());
         const napiPrivateKeyLocation = NapiKeyLocation.fromJSON(privateKey.toJSON());
-        const napiEncryptionOptions = NapiEncryptionOptions.fromJSON(encryptionOptions.toJSON());
+        const napiCekAlgorithm = NapiCekAlgorithm.fromJSON(cekAlgorithm.toJSON());
+        const napiEncryptionAlgorithm = NapiEncryptionAlgorithm.fromJSON(encryptionAlgorithm.toJSON());
         const napiEncryptedData = NapiEncryptedData.fromJSON(data.toJSON());
-        const decryptedData = await this.napiStronghold.decryptData(napiDID, napiEncryptedData, napiEncryptionOptions, napiPrivateKeyLocation, Array.from(publicKey));
+        const decryptedData = await this.napiStronghold.dataDecrypt(napiDID, napiEncryptedData, napiEncryptionAlgorithm, napiCekAlgorithm, napiPrivateKeyLocation);
         return Uint8Array.from(decryptedData);
     }
 

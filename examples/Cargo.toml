@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-identity = { path = "../identity", features = ["account", "stronghold", "encryption-decryption"] }
+identity = { path = "../identity", features = ["account", "stronghold"] }
 pretty_env_logger = { version = "0.4" }
 rand = { version = "0.8" }
 tokio = { version = "1.17.0", features = ["full"] }

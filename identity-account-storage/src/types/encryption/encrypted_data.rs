@@ -4,14 +4,15 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-/// The structure returned after encrypting data.
+/// The ciphertext together with supplementary data.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct EncryptedData {
-  nonce: Vec<u8>,
   associated_data: Vec<u8>,
+  nonce: Vec<u8>,
   tag: Vec<u8>,
   ciphertext: Vec<u8>,
   encrypted_cek: Vec<u8>,
+  ephemeral_public_key: Vec<u8>,
 }
 
 impl EncryptedData {
@@ -22,13 +23,15 @@ impl EncryptedData {
     tag: Vec<u8>,
     ciphertext: Vec<u8>,
     encrypted_cek: Vec<u8>,
+    ephemeral_public_key: Vec<u8>,
   ) -> Self {
     Self {
-      nonce,
       associated_data,
+      nonce,
       tag,
       ciphertext,
       encrypted_cek,
+      ephemeral_public_key,
     }
   }
 
@@ -55,5 +58,10 @@ impl EncryptedData {
   /// Returns a reference to the encrypted content encryption key used in the encryption.
   pub fn encrypted_cek(&self) -> &[u8] {
     &self.encrypted_cek
+  }
+
+  /// Returns a reference to the ephemeral public key used for generating the shared secret.
+  pub fn ephemeral_public_key(&self) -> &[u8] {
+    &self.ephemeral_public_key
   }
 }

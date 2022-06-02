@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// Supported keys for encrypting data
+/// Supported content encryption algorithms.
 #[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(js_name = EncryptionAlgorithm, inspectable)]
 pub struct WasmEncryptionAlgorithm(EncryptionAlgorithm);
@@ -19,7 +19,7 @@ impl WasmEncryptionAlgorithm {
   /// Encrypts/Decrypts data using Aes256Gcm.
   #[wasm_bindgen(js_name = Aes256Gcm)]
   pub fn aes256gcm() -> WasmEncryptionAlgorithm {
-    Self(EncryptionAlgorithm::Aes256Gcm)
+    Self(EncryptionAlgorithm::AES256GCM)
   }
 
   /// Serializes `EncryptionAlgorithm` as a JSON object.

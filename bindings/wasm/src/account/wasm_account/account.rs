@@ -8,7 +8,9 @@ use std::sync::Arc;
 use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::PublishOptions;
+use identity::account_storage::CekAlgorithm;
 use identity::account_storage::EncryptedData;
+use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::Storage;
 use identity::credential::Credential;
 use identity::credential::Presentation;
@@ -24,8 +26,9 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::account::types::WasmAutoSave;
+use crate::account::types::WasmCekAlgorithm;
 use crate::account::types::WasmEncryptedData;
-use crate::account::types::WasmEncryptionOptions;
+use crate::account::types::WasmEncryptionAlgorithm;
 use crate::common::PromiseVoid;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -271,56 +274,69 @@ impl WasmAccount {
     .unchecked_into::<PromiseVoid>()
   }
 
-  /// Encrypts the given `plaintext` with the specified `encryption_options`
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
+  ///
+  /// Returns an [`EncryptedData`] instance.
   #[wasm_bindgen(js_name = encryptData)]
   pub fn encrypt_data(
     &self,
     data: Vec<u8>,
     associated_data: Vec<u8>,
-    encryption_options: &WasmEncryptionOptions,
+    encryption_algorithm: &WasmEncryptionAlgorithm,
+    cek_algorithm: &WasmCekAlgorithm,
     public_key: Vec<u8>,
-  ) -> PromiseEncryptedDataPublickey {
+  ) -> PromiseEncryptedData {
     let account = self.0.clone();
-    let encryption_options: WasmEncryptionOptions = encryption_options.clone();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
+    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
     let public_key: PublicKey = public_key.to_vec().into();
 
     future_to_promise(async move {
-      let (_encrypted_data, _ephemeral_pub_key): (EncryptedData, PublicKey) = account
+      let encrypted_data: EncryptedData = account
         .as_ref()
         .borrow()
-        .encrypt_data(&data, &associated_data, &encryption_options.into(), public_key)
+        .encrypt_data(
+          &data,
+          &associated_data,
+          &encryption_algorithm,
+          &cek_algorithm,
+          public_key,
+        )
         .await
         .wasm_result()?;
-      unimplemented!();
+      Ok(JsValue::from(WasmEncryptedData::from(encrypted_data)))
     })
-    .unchecked_into::<PromiseEncryptedDataPublickey>()
+    .unchecked_into::<PromiseEncryptedData>()
   }
 
-  /// Decrypts the given `data` with the specified `encryption_options`
+  //// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+  /// `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
+  ///
+  /// Returns the decrypted text.
   #[wasm_bindgen(js_name = decryptData)]
   pub fn decrypt_data(
     &self,
     data: &WasmEncryptedData,
-    encryption_options: &WasmEncryptionOptions,
+    encryption_algorithm: &WasmEncryptionAlgorithm,
+    cek_algorithm: &WasmCekAlgorithm,
     fragment: String,
-    public_key: Vec<u8>,
   ) -> PromiseData {
     let account = self.0.clone();
-    let encryption_options: WasmEncryptionOptions = encryption_options.clone();
-    let public_key: PublicKey = public_key.to_vec().into();
     let data: EncryptedData = data.0.clone();
+    let encryption_algorithm: EncryptionAlgorithm = encryption_algorithm.clone().into();
+    let cek_algorithm: CekAlgorithm = cek_algorithm.clone().into();
 
     future_to_promise(async move {
       let data: Vec<u8> = account
         .as_ref()
         .borrow()
-        .decrypt_data(data, &encryption_options.into(), &fragment, public_key)
+        .decrypt_data(data, &encryption_algorithm, &cek_algorithm, &fragment)
         .await
         .wasm_result()?;
       Ok(JsValue::from(js_sys::Uint8Array::from(data.as_ref())))
@@ -346,8 +362,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Document>")]
   pub type PromiseDocument;
 
-  #[wasm_bindgen(typescript_type = "Promise<[EncryptedData, Uint8Array]>")]
-  pub type PromiseEncryptedDataPublickey;
+  #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
+  pub type PromiseEncryptedData;
 
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromiseData;

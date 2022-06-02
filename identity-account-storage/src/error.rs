@@ -33,13 +33,10 @@ pub enum Error {
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("invalid public key: {0}")]
   InvalidPublicKey(String),
-  /// Caused by failing to generate a random nonce
-  #[error("nonce generation failed")]
-  NonceGenerationFailed(#[source] crypto::error::Error),
-  /// Caused by failing to decrypt data
+  /// Caused by failing to decrypt data.
   #[error("failed to decrypt data")]
   DecryptionFailure(#[source] crypto::error::Error),
-  /// Caused by failing to encrypt data
+  /// Caused by failing to encrypt data.
   #[error("failed to encrypt data")]
   EncryptionFailure(#[source] crypto::error::Error),
   /// Caused by attempting to find a key in storage that does not exist.

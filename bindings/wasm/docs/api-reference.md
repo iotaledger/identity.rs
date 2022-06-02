@@ -15,11 +15,12 @@ This means a builder can be reconfigured in-between account creations, without a
 the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#AgreementInfo">AgreementInfo</a></dt>
-<dd></dd>
+<dd><p>Agreement information used as the input for the concat KDF.</p>
+</dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
 <dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
-<dd><p>Supported CEK algorithms</p>
+<dd><p>Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).</p>
 </dd>
 <dt><a href="#ChainState">ChainState</a></dt>
 <dd></dd>
@@ -58,10 +59,7 @@ the configuration of previously built accounts.</p>
 <dd><p>The structure returned after encrypting data</p>
 </dd>
 <dt><a href="#EncryptionAlgorithm">EncryptionAlgorithm</a></dt>
-<dd><p>Supported keys for encrypting data</p>
-</dd>
-<dt><a href="#EncryptionOptions">EncryptionOptions</a></dt>
-<dd><p>Object used for defining the algorithms used for encrypting/decrypting data</p>
+<dd><p>Supported content encryption algorithms.</p>
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
@@ -154,6 +152,8 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -179,8 +179,6 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
@@ -204,7 +202,6 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -218,8 +215,8 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptData(data, associated_data, encryption_options, fragment, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-    * [.decryptData(data, encryption_options, fragment, public_key)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.encryptData(data, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -227,17 +224,7 @@ publishing to the Tangle.
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+did"></a>
 
@@ -372,10 +359,13 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+encryptData"></a>
 
-### account.encryptData(data, associated_data, encryption_options, fragment, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
-Encrypts the given `data` with the specified `algorithm`
+### account.encryptData(data, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
 
-Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+secret.
+
+Returns an [`EncryptedData`] instance.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
@@ -383,25 +373,28 @@ Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is g
 | --- | --- |
 | data | <code>Uint8Array</code> | 
 | associated_data | <code>Uint8Array</code> | 
-| encryption_options | [<code>EncryptionOptions</code>](#EncryptionOptions) | 
-| fragment | <code>string</code> | 
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | public_key | <code>Uint8Array</code> | 
 
 <a name="Account+decryptData"></a>
 
-### account.decryptData(data, encryption_options, fragment, public_key) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-Decrypts the given `data` with the specified `algorithm`
+### account.decryptData(data, encryption_algorithm, cek_algorithm, fragment) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+`cek_algorithm`.
 
-Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+secret.
+
+Returns the decrypted text.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | data | [<code>EncryptedData</code>](#EncryptedData) | 
-| encryption_options | [<code>EncryptionOptions</code>](#EncryptionOptions) | 
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
-| public_key | <code>Uint8Array</code> | 
 
 <a name="Account+deleteMethod"></a>
 
@@ -483,6 +476,17 @@ Adds a new verification method to the DID document.
 | --- | --- |
 | options | <code>CreateMethodOptions</code> | 
 
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
+
 <a name="AccountBuilder"></a>
 
 ## AccountBuilder
@@ -543,6 +547,8 @@ by the [Client](#Client) used to publish it.
 <a name="AgreementInfo"></a>
 
 ## AgreementInfo
+Agreement information used as the input for the concat KDF.
+
 **Kind**: global class  
 
 * [AgreementInfo](#AgreementInfo)
@@ -559,7 +565,7 @@ by the [Client](#Client) used to publish it.
 <a name="new_AgreementInfo_new"></a>
 
 ### new AgreementInfo(apu, apv, pub_info, priv_info)
-Creates an `AgreementInfo` Object
+Creates an `AgreementInfo` Object.
 
 
 | Param | Type |
@@ -667,7 +673,7 @@ Deserializes `AutoSave` from a JSON object.
 <a name="CekAlgorithm"></a>
 
 ## CekAlgorithm
-Supported CEK algorithms
+Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).
 
 **Kind**: global class  
 
@@ -681,13 +687,14 @@ Supported CEK algorithms
 <a name="CekAlgorithm+toJSON"></a>
 
 ### cekAlgorithm.toJSON() ⇒ <code>any</code>
-Serializes `CEKAlgorithm` as a JSON object.
+Serializes `CekAlgorithm` as a JSON object.
 
 **Kind**: instance method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 <a name="CekAlgorithm.EcdhEs"></a>
 
 ### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-ECDH-ES will be used as the content encryption key.
+Uses the result of a Diffie-Hellman key exchange between a recipient's public key and an ephemeral secret as the
+content encryption key.
 
 **Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
@@ -698,7 +705,7 @@ ECDH-ES will be used as the content encryption key.
 <a name="CekAlgorithm.fromJSON"></a>
 
 ### CekAlgorithm.fromJSON(json_value) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-Deserializes `CEKAlgorithm` from a JSON object.
+Deserializes `CekAlgorithm` from a JSON object.
 
 **Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
@@ -2574,7 +2581,7 @@ Deserializes `EncryptedData` from a JSON object.
 <a name="EncryptionAlgorithm"></a>
 
 ## EncryptionAlgorithm
-Supported keys for encrypting data
+Supported content encryption algorithms.
 
 **Kind**: global class  
 
@@ -2603,48 +2610,6 @@ Encrypts/Decrypts data using Aes256Gcm.
 Deserializes `EncryptionAlgorithm` from a JSON object.
 
 **Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
-
-| Param | Type |
-| --- | --- |
-| json_value | <code>any</code> | 
-
-<a name="EncryptionOptions"></a>
-
-## EncryptionOptions
-Object used for defining the algorithms used for encrypting/decrypting data
-
-**Kind**: global class  
-
-* [EncryptionOptions](#EncryptionOptions)
-    * [new EncryptionOptions(encryption_algorithm, cek_algorithm)](#new_EncryptionOptions_new)
-    * _instance_
-        * [.toJSON()](#EncryptionOptions+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json_value)](#EncryptionOptions.fromJSON) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
-
-<a name="new_EncryptionOptions_new"></a>
-
-### new EncryptionOptions(encryption_algorithm, cek_algorithm)
-Creates an `EncryptionOptions` object.
-
-
-| Param | Type |
-| --- | --- |
-| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
-| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
-
-<a name="EncryptionOptions+toJSON"></a>
-
-### encryptionOptions.toJSON() ⇒ <code>any</code>
-Serializes `EncryptionOptions` as a JSON object.
-
-**Kind**: instance method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
-<a name="EncryptionOptions.fromJSON"></a>
-
-### EncryptionOptions.fromJSON(json_value) ⇒ [<code>EncryptionOptions</code>](#EncryptionOptions)
-Deserializes `EncryptionOptions` from a JSON object.
-
-**Kind**: static method of [<code>EncryptionOptions</code>](#EncryptionOptions)  
 
 | Param | Type |
 | --- | --- |
@@ -4687,6 +4652,10 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4733,10 +4702,6 @@ Return all errors that occur during validation.
 ## FirstError
 Return after the first error occurs.
 
-**Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
 **Kind**: global variable  
 <a name="KeyType"></a>
 

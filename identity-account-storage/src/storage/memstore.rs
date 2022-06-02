@@ -29,10 +29,14 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
+#[cfg(feature = "encryption")]
+use crate::types::AgreementInfo;
+#[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
+#[cfg(feature = "encryption")]
 use crate::types::EncryptedData;
+#[cfg(feature = "encryption")]
 use crate::types::EncryptionAlgorithm;
-use crate::types::EncryptionOptions;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
@@ -255,51 +259,50 @@ impl Storage for MemStore {
     }
   }
 
-  async fn encrypt_data(
+  #[cfg(feature = "encryption")]
+  async fn data_encrypt(
     &self,
     _did: &IotaDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
-    encryption_options: &EncryptionOptions,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
     public_key: PublicKey,
-  ) -> Result<(EncryptedData, PublicKey)> {
+  ) -> Result<EncryptedData> {
     let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
       .as_ref()
       .try_into()
       .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
-    match encryption_options.cek_algorithm() {
-      CekAlgorithm::EcdhEs(agreement) => {
+    match cek_algorithm {
+      CekAlgorithm::ECDH_ES(agreement) => {
         // Generate ephemeral key
         let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
         // Obtain the shared secret by combining the ephemeral key and the static public key
         let shared_secret: [u8; 32] = X25519::key_exchange(keypair.private(), &public_key)?;
-        let concat_kdf: Vec<u8> = concat_kdf(
-          encryption_options.cek_algorithm().name(),
-          Aes256Gcm::KEY_LENGTH,
-          &shared_secret,
-          agreement.apu(),
-          agreement.apv(),
-        )
-        .map_err(Error::EncryptionFailure)?;
+        let derived_secret: Vec<u8> =
+          concat_kdf(cek_algorithm.name(), Aes256Gcm::KEY_LENGTH, &shared_secret, agreement)
+            .map_err(Error::EncryptionFailure)?;
         let encrypted_data = try_encrypt(
-          &concat_kdf,
-          &encryption_options.encryption_algorithm(),
+          &derived_secret,
+          encryption_algorithm,
           &plaintext,
           associated_data,
           Vec::new(),
+          Vec::new(),
         )?;
-        Ok((encrypted_data, keypair.public().clone()))
+        Ok(encrypted_data)
       }
     }
   }
 
-  async fn decrypt_data(
+  #[cfg(feature = "encryption")]
+  async fn data_decrypt(
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    encryption_options: &EncryptionOptions,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
     private_key: &KeyLocation,
-    public_key: PublicKey,
   ) -> Result<Vec<u8>> {
     // Retrieves the PrivateKey from the vault
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
@@ -311,21 +314,16 @@ impl Storage for MemStore {
         "Ed25519 keys are not supported for decryption".to_owned(),
       )),
       KeyType::X25519 => {
-        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key.as_ref().try_into().map_err(|_| {
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = data.ephemeral_public_key().try_into().map_err(|_| {
           Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
         })?;
-        match encryption_options.cek_algorithm() {
-          CekAlgorithm::EcdhEs(agreement) => {
+        match cek_algorithm {
+          CekAlgorithm::ECDH_ES(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
-            let concat_kdf: Vec<u8> = concat_kdf(
-              encryption_options.cek_algorithm().name(),
-              Aes256Gcm::KEY_LENGTH,
-              &shared_secret,
-              agreement.apu(),
-              agreement.apv(),
-            )
-            .map_err(Error::DecryptionFailure)?;
-            try_decrypt(&concat_kdf, &encryption_options.encryption_algorithm(), &data)
+            let derived_secret: Vec<u8> =
+              concat_kdf(cek_algorithm.name(), Aes256Gcm::KEY_LENGTH, &shared_secret, agreement)
+                .map_err(Error::DecryptionFailure)?;
+            try_decrypt(&derived_secret, encryption_algorithm, &data)
           }
         }
       }
@@ -369,10 +367,11 @@ fn try_encrypt(
   data: &[u8],
   associated_data: Vec<u8>,
   encrypted_cek: Vec<u8>,
+  ephemeral_public_key: Vec<u8>,
 ) -> Result<EncryptedData> {
   match algorithm {
-    EncryptionAlgorithm::Aes256Gcm => {
-      let nonce: &[u8] = &Aes256Gcm::random_nonce().map_err(Error::NonceGenerationFailed)?;
+    EncryptionAlgorithm::AES256GCM => {
+      let nonce: &[u8] = &Aes256Gcm::random_nonce().map_err(Error::EncryptionFailure)?;
       let mut ciphertext: Vec<u8> = vec![0; data.len()];
       let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
       Aes256Gcm::try_encrypt(key, nonce, associated_data.as_ref(), data, &mut ciphertext, &mut tag)
@@ -383,6 +382,7 @@ fn try_encrypt(
         tag,
         ciphertext,
         encrypted_cek,
+        ephemeral_public_key,
       ))
     }
   }
@@ -390,9 +390,9 @@ fn try_encrypt(
 
 fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData) -> Result<Vec<u8>> {
   match algorithm {
-    EncryptionAlgorithm::Aes256Gcm => {
+    EncryptionAlgorithm::AES256GCM => {
       let mut plaintext = vec![0; data.ciphertext().len()];
-      Aes256Gcm::try_decrypt(
+      let len: usize = Aes256Gcm::try_decrypt(
         key,
         data.nonce(),
         data.associated_data(),
@@ -401,6 +401,7 @@ fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData
         data.tag(),
       )
       .map_err(Error::DecryptionFailure)?;
+      plaintext.truncate(len);
       Ok(plaintext)
     }
   }
@@ -411,8 +412,7 @@ fn concat_kdf(
   alg: &'static str,
   len: usize,
   shared_secret: &[u8],
-  apu: &[u8],
-  apv: &[u8],
+  agreement: &AgreementInfo,
 ) -> crypto::error::Result<Vec<u8>> {
   let mut digest: Sha256 = Sha256::new();
   let mut output: Vec<u8> = Vec::new();
@@ -435,15 +435,18 @@ fn concat_kdf(
     digest.update(alg.as_bytes());
 
     // PartyUInfo
-    digest.update(&(apu.len() as u32).to_be_bytes());
-    digest.update(apu);
+    digest.update(&(agreement.apu().len() as u32).to_be_bytes());
+    digest.update(agreement.apu());
 
     // PartyVInfo
-    digest.update(&(apv.len() as u32).to_be_bytes());
-    digest.update(apv);
+    digest.update(&(agreement.apv().len() as u32).to_be_bytes());
+    digest.update(agreement.apv());
 
-    // Shared Key Length
-    digest.update(&((len * 8) as u32).to_be_bytes());
+    // SuppPubInfo
+    digest.update(agreement.pub_info());
+
+    // SuppPrivInfo
+    digest.update(agreement.priv_info());
 
     output.extend_from_slice(&digest.finalize_reset());
   }
@@ -531,5 +534,10 @@ mod tests {
   #[tokio::test]
   async fn test_memstore_did_purge() {
     StorageTestSuite::did_purge_test(test_memstore()).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_encryption() {
+    StorageTestSuite::encryption_test(test_memstore()).await.unwrap()
   }
 }

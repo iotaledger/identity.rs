@@ -14,8 +14,9 @@ use identity_iota_core::tangle::NetworkName;
 
 use crate::error::Result;
 use crate::identity::ChainState;
+use crate::types::CekAlgorithm;
 use crate::types::EncryptedData;
-use crate::types::EncryptionOptions;
+use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -120,34 +121,37 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   /// Returns `true` if a key exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
 
-  /// Encrypts the given `plaintext` with the specified `encryption_options`.
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
-  /// 
-  /// Returns the [`EncryptedData`] and the ephemeral `PublicKey` used when generating the shared secret.
-  async fn encrypt_data(
+  ///
+  /// Returns an [`EncryptedData`] instance.
+  #[cfg(feature = "encryption")]
+  async fn data_encrypt(
     &self,
     did: &IotaDID,
     plaintext: Vec<u8>,
     associated_data: Vec<u8>,
-    encryption_options: &EncryptionOptions,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
     public_key: PublicKey,
-  ) -> Result<(EncryptedData, PublicKey)>;
+  ) -> Result<EncryptedData>;
 
-  /// Decrypts the given `data` with the specified `encryption_options`.
+  /// Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
+  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
-  /// 
+  ///
   /// Returns the decrypted text.
-  async fn decrypt_data(
+  #[cfg(feature = "encryption")]
+  async fn data_decrypt(
     &self,
     did: &IotaDID,
     data: EncryptedData,
-    encryption_options: &EncryptionOptions,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
     private_key: &KeyLocation,
-    public_key: PublicKey,
   ) -> Result<Vec<u8>>;
 
   /// Returns the chain state of the identity specified by `did`.
