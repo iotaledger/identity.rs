@@ -42,7 +42,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 
 A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the DID specifications v1.0 Working.
 
-### [Create](../../decentralized_identifiers/create.mdx)
+### [Create](../../concepts/decentralized_identifiers/create.mdx)
 
 #### Account::builder().build()
 
@@ -220,7 +220,7 @@ let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default
 
 </details>
 
-### [Publish](../../decentralized_identifiers/create.mdx)
+### [Publish](../../concepts/decentralized_identifiers/create.mdx)
 
 #### Account.publish_updates(did)
 
@@ -244,7 +244,7 @@ Account.publish_updates(did).await?;
 
 </details>
 
-### [Update](../../decentralized_identifiers/update.mdx)
+### [Update](../../concepts/decentralized_identifiers/update.mdx)
 
 #### Account.update_identity(did).create_method()
 
@@ -303,7 +303,7 @@ Add a new service to the identity.
 </details>
 
 
-### [Resolve](../../decentralized_identifiers/resolve.mdx)
+### [Resolve](../../concepts/decentralized_identifiers/resolve.mdx)
 
 ####  Account.resolve_identity(did)
 
@@ -373,7 +373,7 @@ CoreDocument {
 
 A Verifiable Credential can be verified by anyone, allowing you to take control of it and share it with anyone.
 
-### [Sign](../../verifiable_credentials/create.mdx)
+### [Sign](../../concepts/verifiable_credentials/create.mdx)
 
 #### Account.sign(did, key, fragment)
 
@@ -400,4 +400,4 @@ account.sign(did, "key-1", &mut credential).await?;
 
 A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 
-### [Create](../../verifiable_credentials/verifiable_presentations.mdx)
+### [Create](../../concepts/verifiable_credentials/verifiable_presentations.mdx)
