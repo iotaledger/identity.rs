@@ -33,4 +33,4 @@ If you still have control over your identity, rotate the key material ASAP! If a
 Verifiable credentials, particularly those with personal identifiable information, are supposed to be stored securely off-Tangle on user devices or systems. As a user, you are in charge of storing your credentials securely and sharing them with other parties on a need-to-know basis.
 
 ### Do I need to hide my DID? Will people be able to identify me by my DID?
-A DID should not contain any information linking to you as a person, there is the chance of entities monitoring your movement using a DID though. To minimize this risk it is advisable to use different DIDs for different use case.
+A DID Document should not contain any information linking back to you as a person. However, there is the chance of entities correlating information about you from your DID if used across multiple issuers and verifiers. To minimize this risk, it is advisable to use different DIDs for different use-cases.
