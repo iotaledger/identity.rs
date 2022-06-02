@@ -9,4 +9,8 @@ keywords:
 - Maintainers
 ---
 
-TODO: Add ways to contact the maintainers
+If you found a security related issue, please follow the [responsible disclosure policy](https://github.com/iotaledger/identity.rs/security/policy).
+
+For everything else, you can get in contact with the project by:
+- Filing an issue on [GitHub](https://github.com/iotaledger/identity.rs).
+- Joining the `identity` channel on the [IOTA Discord](https://discord.iota.org/).
