@@ -86,7 +86,6 @@ module.exports = {
                     collapsed: true,
                     items: [
                         'libraries/wasm/getting_started',
-                        'libraries/wasm/cheat_sheet',
                         'libraries/wasm/api_reference',
                     ],
                 },
