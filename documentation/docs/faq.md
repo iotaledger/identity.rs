@@ -14,8 +14,8 @@ This page contains frequently asked questions regarding the Identity Library and
 
 ### What programming languages are supported by the IOTA Identity framework?
 We currently provide a Rust library and a JavaScript library for both the browser and Node.js via WebAssembly (Wasm) bindings. See the "Programming Languages" section for more information.
-### Do I need to have IOTA tokens to start building with identity?
-At the moment you don't need IOTA tokens to create and manage identities, although we are looking at opportunities to utilize the token in the future. 
+### Do I need to have IOTA tokens to start building with IOTA Identity?
+At the moment you don't need IOTA tokens to create and manage identities, although we are exploring opportunities to utilize the token in the future. 
 ### How do I prove control over my DID?
 Control over an identity is ultimately tied to the control over cryptographic key material (something you have).
 ### How can I store my private keys?
