@@ -9,12 +9,15 @@ use std::sync::Arc;
 
 use serde::Serialize;
 
+#[cfg(feature = "encryption-decryption")]
+use identity_account_storage::types::EncryptedData;
+#[cfg(feature = "encryption-decryption")]
+use identity_account_storage::types::EncryptionOptions;
+
 use identity_account_storage::crypto::RemoteEd25519;
 use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
-use identity_account_storage::types::EncryptedData;
-use identity_account_storage::types::EncryptionOptions;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
@@ -313,13 +316,14 @@ where
   /// Encrypts the given `plaintext` with the specified `algorithm`
   ///
   /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  #[cfg(feature = "encryption-decryption")]
   pub async fn encrypt_data(
     &self,
     plaintext: &[u8],
     associated_data: &[u8],
     encryption_options: &EncryptionOptions,
     public_key: PublicKey,
-  ) -> Result<EncryptedData> {
+  ) -> Result<(EncryptedData, PublicKey)> {
     self
       .storage()
       .encrypt_data(
@@ -336,15 +340,22 @@ where
   /// Decrypts the given `data` with the specified `encryption_options`
   ///
   /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  #[cfg(feature = "encryption-decryption")]
   pub async fn decrypt_data(
     &self,
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
+    fragment: &str,
     public_key: PublicKey,
   ) -> Result<Vec<u8>> {
+    let method: &IotaVerificationMethod = self
+      .document()
+      .resolve_method(fragment, None)
+      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
+    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
     self
       .storage()
-      .decrypt_data(self.did(), data, encryption_options, public_key)
+      .decrypt_data(self.did(), data, encryption_options, &private_key, public_key)
       .await
       .map_err(Into::into)
   }

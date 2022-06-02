@@ -271,43 +271,38 @@ impl WasmAccount {
     .unchecked_into::<PromiseVoid>()
   }
 
-  /// Encrypts the given `data` with the specified `algorithm`
+  /// Encrypts the given `plaintext` with the specified `encryption_options`
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// secret.
   #[wasm_bindgen(js_name = encryptData)]
   pub fn encrypt_data(
     &self,
     data: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_options: &WasmEncryptionOptions,
-    fragment: String,
     public_key: Vec<u8>,
-  ) -> PromiseEncryptedData {
+  ) -> PromiseEncryptedDataPublickey {
     let account = self.0.clone();
     let encryption_options: WasmEncryptionOptions = encryption_options.clone();
     let public_key: PublicKey = public_key.to_vec().into();
 
     future_to_promise(async move {
-      let encrypted_data: EncryptedData = account
+      let (_encrypted_data, _ephemeral_pub_key): (EncryptedData, PublicKey) = account
         .as_ref()
         .borrow()
-        .encrypt_data(
-          &data,
-          &associated_data,
-          &encryption_options.into(),
-          &fragment,
-          public_key,
-        )
+        .encrypt_data(&data, &associated_data, &encryption_options.into(), public_key)
         .await
         .wasm_result()?;
-      Ok(JsValue::from(WasmEncryptedData::from(encrypted_data)))
+      unimplemented!();
     })
-    .unchecked_into::<PromiseEncryptedData>()
+    .unchecked_into::<PromiseEncryptedDataPublickey>()
   }
 
-  /// Decrypts the given `data` with the specified `algorithm`
+  /// Decrypts the given `data` with the specified `encryption_options`
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
+  /// secret.
   #[wasm_bindgen(js_name = decryptData)]
   pub fn decrypt_data(
     &self,
@@ -351,8 +346,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Document>")]
   pub type PromiseDocument;
 
-  #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
-  pub type PromiseEncryptedData;
+  #[wasm_bindgen(typescript_type = "Promise<[EncryptedData, Uint8Array]>")]
+  pub type PromiseEncryptedDataPublickey;
 
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromiseData;

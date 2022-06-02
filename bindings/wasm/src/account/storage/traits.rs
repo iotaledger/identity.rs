@@ -52,8 +52,8 @@ extern "C" {
   pub type PromiseArrayDID;
   #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
   pub type PromiseDIDKeyLocation;
-  #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
-  pub type PromiseEncryptedData;
+  #[wasm_bindgen(typescript_type = "Promise<[EncryptedData, Uint8Array]>")]
+  pub type PromiseEncryptedDataPublickey;
   #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
   pub type PromiseData;
 }
@@ -97,9 +97,8 @@ extern "C" {
     data: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_options: WasmEncryptionOptions,
-    private_key: WasmKeyLocation,
     public_key: Vec<u8>,
-  ) -> PromiseEncryptedData;
+  ) -> PromiseEncryptedDataPublickey;
   #[wasm_bindgen(method, js_name = decryptData)]
   pub fn decrypt_data(
     this: &WasmStorage,
@@ -245,23 +244,21 @@ impl Storage for WasmStorage {
     data: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
-    private_key: &KeyLocation,
     public_key: PublicKey,
-  ) -> AccountStorageResult<EncryptedData> {
+  ) -> AccountStorageResult<(EncryptedData, PublicKey)> {
     let promise: Promise = Promise::resolve(&self.encrypt_data(
       did.clone().into(),
       data,
       associated_data,
       encryption_options.clone().into(),
-      private_key.clone().into(),
       public_key.as_ref().to_vec(),
     ));
     let result: JsValueResult = JsFuture::from(promise).await.into();
-    let encrypted_data: EncryptedData = result
+    let (encrypted_data, ephemeral_pub_key): (EncryptedData, Vec<u8>) = result
       .to_account_error()?
       .into_serde()
       .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
-    Ok(encrypted_data)
+    Ok((encrypted_data, ephemeral_pub_key.into()))
   }
 
   async fn decrypt_data(
@@ -402,15 +399,15 @@ interface Storage {
   /** Returns `true` if a key exists at the specified `location`. */
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
-  /** Encrypts the given `data` with the specified `algorithm`.
+  /** Encrypts the given `plaintext` with the specified `options`.
    * 
-   *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
+   *  Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption secret.
    */
-  encryptData: (did: DID, data: Uint8Array, associatedData: Uint8Array, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array) => Promise<EncryptedData>;
+  encryptData: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryption_options: EncryptionOptions, publicKey: Uint8Array) => Promise<[EncryptedData, Uint8Array]>;
 
-  /** Decrypts the given `data` with the specified `algorithm`.
+  /** Decrypts the given `data` with the specified `options`.
    * 
-   *  Diffie-Helman key exchange will be performed in case an X25519 key is given.
+   *  Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption secret.
    */
   decryptData: (did: DID, data: EncryptedData, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array) => Promise<Uint8Array>;
 

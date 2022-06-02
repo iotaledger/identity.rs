@@ -122,8 +122,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Encrypts the given `plaintext` with the specified `encryption_options`.
   ///
-  /// Diffie-Hellman key exchange will be performed in case a [`KeyType::X25519`] is given.
-  #[cfg(feature = "encryption-decryption")]
+  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// secret.
   async fn encrypt_data(
     &self,
     did: &IotaDID,
@@ -131,17 +131,18 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
     public_key: PublicKey,
-  ) -> Result<EncryptedData>;
+  ) -> Result<(EncryptedData, PublicKey)>;
 
   /// Decrypts the given `data` with the specified `encryption_options`.
   ///
-  /// Diffie-Hellman key exchange will be performed in case a [`KeyType::X25519`] is given.
-  #[cfg(feature = "encryption-decryption")]
+  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
+  /// secret.
   async fn decrypt_data(
     &self,
     did: &IotaDID,
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
+    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>>;
 

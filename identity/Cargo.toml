@@ -30,7 +30,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async", "account", "stronghold", "send-sync-storage"]
+default = ["async", "account", "stronghold", "send-sync-storage", "encryption-decryption"]
 
 # Enables async runtime support (Tokio).
 async = ["identity-iota/async"]
@@ -49,6 +49,9 @@ send-sync-storage = ["identity-account-storage/send-sync-storage"]
 
 # Exposes Storage `test_suite` module.
 storage-test-suite = ["identity-account-storage/storage-test-suite"]
+
+# Enables encryption and decryption functionality
+encryption-decryption = ["identity-account/encryption-decryption"]
 
 [package.metadata.docs.rs]
 # To build locally:

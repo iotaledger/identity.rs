@@ -255,15 +255,14 @@ impl Storage for MemStore {
     }
   }
 
-  #[cfg(feature = "encryption-decryption")]
   async fn encrypt_data(
     &self,
     _did: &IotaDID,
-    data: Vec<u8>,
+    plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
     public_key: PublicKey,
-  ) -> Result<EncryptedData> {
+  ) -> Result<(EncryptedData, PublicKey)> {
     let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
       .as_ref()
       .try_into()
@@ -282,44 +281,53 @@ impl Storage for MemStore {
           agreement.apv(),
         )
         .map_err(Error::EncryptionFailure)?;
-        try_encrypt(
+        let encrypted_data = try_encrypt(
           &concat_kdf,
           &encryption_options.encryption_algorithm(),
-          &data,
+          &plaintext,
           associated_data,
           Vec::new(),
-        )
+        )?;
+        Ok((encrypted_data, keypair.public().clone()))
       }
     }
   }
 
-  #[cfg(feature = "encryption-decryption")]
   async fn decrypt_data(
     &self,
-    _did: &IotaDID,
+    did: &IotaDID,
     data: EncryptedData,
     encryption_options: &EncryptionOptions,
+    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>> {
-    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
-      .as_ref()
-      .try_into()
-      .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
-    match encryption_options.cek_algorithm() {
-      CekAlgorithm::EcdhEs(agreement) => {
-        // Generate ephemeral key
-        let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
-        // Obtain the shared secret by combining the ephemeral key and the static public key
-        let shared_secret: [u8; 32] = X25519::key_exchange(keypair.private(), &public_key)?;
-        let concat_kdf: Vec<u8> = concat_kdf(
-          encryption_options.cek_algorithm().name(),
-          Aes256Gcm::KEY_LENGTH,
-          &shared_secret,
-          agreement.apu(),
-          agreement.apv(),
-        )
-        .map_err(Error::DecryptionFailure)?;
-        try_decrypt(&concat_kdf, &encryption_options.encryption_algorithm(), &data)
+    // Retrieves the PrivateKey from the vault
+    let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
+    let key_pair: &KeyPair = vault.get(private_key).ok_or(Error::KeyNotFound)?;
+    // Decrypts the data
+    match key_pair.type_() {
+      KeyType::Ed25519 => Err(Error::InvalidPrivateKey(
+        "Ed25519 keys are not supported for decryption".to_owned(),
+      )),
+      KeyType::X25519 => {
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key.as_ref().try_into().map_err(|_| {
+          Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
+        })?;
+        match encryption_options.cek_algorithm() {
+          CekAlgorithm::EcdhEs(agreement) => {
+            let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
+            let concat_kdf: Vec<u8> = concat_kdf(
+              encryption_options.cek_algorithm().name(),
+              Aes256Gcm::KEY_LENGTH,
+              &shared_secret,
+              agreement.apu(),
+              agreement.apv(),
+            )
+            .map_err(Error::DecryptionFailure)?;
+            try_decrypt(&concat_kdf, &encryption_options.encryption_algorithm(), &data)
+          }
+        }
       }
     }
   }

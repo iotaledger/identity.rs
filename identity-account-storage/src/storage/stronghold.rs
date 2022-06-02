@@ -280,7 +280,6 @@ impl Storage for Stronghold {
       .map_err(Into::into)
   }
 
-  #[cfg(feature = "encryption-decryption")]
   async fn encrypt_data(
     &self,
     did: &IotaDID,
@@ -288,7 +287,7 @@ impl Storage for Stronghold {
     associated_data: Vec<u8>,
     encryption_options: &EncryptionOptions,
     public_key: PublicKey,
-  ) -> Result<EncryptedData> {
+  ) -> Result<(EncryptedData, PublicKey)> {
     // Changes won't be written to the snapshot state since the created keys are temporary
     let client: Client = self.client(&ClientPath::from(did))?;
     let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
@@ -297,39 +296,34 @@ impl Storage for Stronghold {
       .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
     match encryption_options.cek_algorithm() {
       CekAlgorithm::EcdhEs(agreement) => {
-        // Generate ephemeral key
-        let tmp_location = random_location(KeyType::X25519);
-        generate_private_key(&client, &tmp_location)?;
-        // Obtain the shared secret by combining the ephemeral key and the static public key
-        let shared_key: Location = diffie_hellman(&client, &tmp_location, public_key).await?;
-        let concat_kdf_output: Location = concat_kdf(
+        let (concat_kdf, ephemeral_public_key): (Location, PublicKey) = diffie_hellman_with_concat_kdf(
           &client,
           &encryption_options.encryption_algorithm(),
-          encryption_options.cek_algorithm().name().to_string(),
+          encryption_options.cek_algorithm(),
           agreement,
-          shared_key.clone(),
+          public_key,
         )
         .await?;
-        let encrypted_data: Result<EncryptedData> = aead_encrypt(
+        let encrypted_data: EncryptedData = aead_encrypt(
           &client,
           &encryption_options.encryption_algorithm(),
-          concat_kdf_output.clone(),
+          concat_kdf,
           data,
           associated_data,
           Vec::new(),
         )
-        .await;
-        encrypted_data
+        .await?;
+        Ok((encrypted_data, ephemeral_public_key))
       }
     }
   }
 
-  #[cfg(feature = "encryption-decryption")]
   async fn decrypt_data(
     &self,
     did: &IotaDID,
-    data: EncryptedData,
+    plaintext: EncryptedData,
     encryption_options: &EncryptionOptions,
+    private_key: &KeyLocation,
     public_key: PublicKey,
   ) -> Result<Vec<u8>> {
     // Changes won't be written to the snapshot state since the created keys are temporary
@@ -340,24 +334,20 @@ impl Storage for Stronghold {
       .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
     match encryption_options.cek_algorithm() {
       CekAlgorithm::EcdhEs(agreement) => {
-        // Generate ephemeral key
-        let tmp_location = random_location(KeyType::X25519);
-        generate_private_key(&client, &tmp_location)?;
-        // Obtain the shared secret by combining the ephemeral key and the static public key
-        let shared_key: Location = diffie_hellman(&client, &tmp_location, public_key).await?;
+        let shared_secret: Location = diffie_hellman(&client, private_key, public_key).await?;
         let concat_kdf: Location = concat_kdf(
           &client,
           &encryption_options.encryption_algorithm(),
           encryption_options.cek_algorithm().name().to_string(),
           agreement,
-          shared_key.clone(),
+          shared_secret,
         )
         .await?;
         let decrypted_data: Result<Vec<u8>> = aead_decrypt(
           &client,
           &encryption_options.encryption_algorithm(),
-          concat_kdf.clone(),
-          data,
+          concat_kdf,
+          plaintext,
         )
         .await;
         decrypted_data
@@ -432,7 +422,7 @@ impl Drop for Stronghold {
   }
 }
 
-fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
+pub(crate) fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: location_key_type(location),
     output: location.into(),
@@ -445,7 +435,7 @@ fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
   Ok(())
 }
 
-fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
+pub(crate) fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
   let stronghold_location: Location = location.into();
 
   let vault: ClientVault = client.vault(stronghold_location.vault_path());
@@ -459,7 +449,7 @@ fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &K
     .map_err(Into::into)
 }
 
-fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
+pub(crate) fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
   match location.key_type {
     KeyType::Ed25519 | KeyType::X25519 => {
       let public_key: procedures::PublicKey = procedures::PublicKey {
@@ -489,7 +479,7 @@ fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation) -> Re
   Ok(Signature::new(signature.into()))
 }
 
-async fn diffie_hellman(
+pub(crate) async fn diffie_hellman(
   client: &Client,
   private_key: &KeyLocation,
   public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
@@ -507,7 +497,7 @@ async fn diffie_hellman(
   Ok(shared_key)
 }
 
-async fn concat_kdf(
+pub(crate) async fn concat_kdf(
   client: &Client,
   encryption_algorithm: &EncryptionAlgorithm,
   algorithm_id: String,
@@ -537,7 +527,7 @@ async fn concat_kdf(
   Ok(output)
 }
 
-async fn aead_encrypt(
+pub(crate) async fn aead_encrypt(
   client: &Client,
   algorithm: &EncryptionAlgorithm,
   key: Location,
@@ -569,7 +559,7 @@ async fn aead_encrypt(
   }
 }
 
-async fn aead_decrypt(
+pub(crate) async fn aead_decrypt(
   client: &Client,
   algorithm: &EncryptionAlgorithm,
   key: Location,
@@ -591,6 +581,34 @@ async fn aead_decrypt(
       Ok(data)
     }
   }
+}
+
+/// Creates an ephemeral pair of X25519 keys, obtains the shared secret by runnning the Diffie-Hellman algorithm and
+/// performs the Concatenation Key Derivation Function in the secret
+///
+/// Returns the location of the concatenated key and the ephemeral public key
+async fn diffie_hellman_with_concat_kdf(
+  client: &Client,
+  encryption_algorithm: &EncryptionAlgorithm,
+  cek_algorithm: &CekAlgorithm,
+  agreement: &AgreementInfo,
+  public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
+) -> Result<(Location, PublicKey)> {
+  //Generate ephemeral key
+  let ephemeral_location = random_location(KeyType::X25519);
+  generate_private_key(client, &ephemeral_location)?;
+  let ephemeral_public_key: PublicKey = retrieve_public_key(client, &ephemeral_location)?;
+  // Obtain the shared secret by combining the ephemeral key and the static public key
+  let shared_key: Location = diffie_hellman(client, &ephemeral_location, public_key).await?;
+  let concat_kdf: Location = concat_kdf(
+    client,
+    encryption_algorithm,
+    cek_algorithm.name().to_owned(),
+    agreement,
+    shared_key,
+  )
+  .await?;
+  Ok((concat_kdf, ephemeral_public_key))
 }
 
 // Moves a key from one location to another, deleting the old one.
@@ -660,7 +678,7 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
   }
 }
 
-fn random_location(key_type: KeyType) -> KeyLocation {
+pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
   let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
   let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
 

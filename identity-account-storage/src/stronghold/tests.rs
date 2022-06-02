@@ -3,12 +3,24 @@
 
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
+use identity_core::crypto::PublicKey;
+use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
 use iota_stronghold::procedures;
 use iota_stronghold::procedures::GenerateKey;
 use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
+use iota_stronghold::Location;
 
+use crate::storage::stronghold::aead_decrypt;
+use crate::storage::stronghold::aead_encrypt;
+use crate::storage::stronghold::concat_kdf;
+use crate::storage::stronghold::diffie_hellman;
+use crate::storage::stronghold::generate_private_key;
+use crate::storage::stronghold::insert_private_key;
+use crate::storage::stronghold::random_location;
+use crate::storage::stronghold::retrieve_public_key;
 use crate::storage::Storage;
 use crate::storage::StorageTestSuite;
 use crate::stronghold::test_util::random_did;
@@ -17,6 +29,10 @@ use crate::stronghold::test_util::random_string;
 use crate::stronghold::test_util::random_temporary_path;
 use crate::stronghold::ClientPath;
 use crate::stronghold::Stronghold;
+use crate::types::AgreementInfo;
+use crate::types::CekAlgorithm;
+use crate::types::EncryptedData;
+use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 
 #[tokio::test]
@@ -93,6 +109,77 @@ async fn test_incorrect_password_returns_error() {
       _
     ))
   ));
+}
+
+#[tokio::test]
+async fn test_ecdhes_encryption() {
+  // The following test vector is taken from RFC 8037
+  // https://datatracker.ietf.org/doc/html/rfc8037#appendix-A.6
+
+  let client: Client = Client::default();
+
+  // Sender keys
+  let location = random_location(KeyType::X25519);
+  generate_private_key(&client, &location).unwrap();
+  let public_key: PublicKey = retrieve_public_key(&client, &location).unwrap();
+  let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key.as_ref().try_into().unwrap();
+
+  let ephemeral_secret_location: KeyLocation = random_key_location();
+  let ephemeral_secret: PrivateKey = hex::decode("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a")
+    .unwrap()
+    .try_into()
+    .unwrap();
+  insert_private_key(&client, ephemeral_secret, &ephemeral_secret_location).unwrap();
+  let ephemeral_public_key: [u8; X25519::PUBLIC_KEY_LENGTH] =
+    hex::decode("8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a")
+      .unwrap()
+      .try_into()
+      .unwrap();
+
+  let plaintext = b"HelloWorld!";
+  let associated_data = b"AssociatedData";
+  let agreement: AgreementInfo = AgreementInfo::new(b"Alice".to_vec(), b"Bob".to_vec(), Vec::new(), Vec::new());
+  let cek_algorithm: CekAlgorithm = CekAlgorithm::EcdhEs(agreement.clone());
+  let enc_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::Aes256Gcm;
+
+  // Sender
+  let shared_secret_location: Location = diffie_hellman(&client, &ephemeral_secret_location, public_key)
+    .await
+    .unwrap();
+  let concat_secret: Location = concat_kdf(
+    &client,
+    &enc_algorithm,
+    cek_algorithm.name().to_owned(),
+    &agreement,
+    shared_secret_location,
+  )
+  .await
+  .unwrap();
+  let encrypted_data: EncryptedData = aead_encrypt(
+    &client,
+    &enc_algorithm,
+    concat_secret,
+    plaintext.to_vec(),
+    associated_data.to_vec(),
+    Vec::new(),
+  )
+  .await
+  .unwrap();
+  // Receiver
+  let shared_secret_location: Location = diffie_hellman(&client, &location, ephemeral_public_key).await.unwrap();
+  let concat_secret: Location = concat_kdf(
+    &client,
+    &enc_algorithm,
+    cek_algorithm.name().to_owned(),
+    &agreement,
+    shared_secret_location,
+  )
+  .await
+  .unwrap();
+  let data: Vec<u8> = aead_decrypt(&client, &enc_algorithm, concat_secret, encrypted_data)
+    .await
+    .unwrap();
+  assert_eq!(plaintext.to_vec(), data);
 }
 
 async fn test_stronghold() -> impl Storage {
