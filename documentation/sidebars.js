@@ -55,17 +55,10 @@ module.exports = {
                   'concepts/verifiable_credentials/revoke',
                   'concepts/verifiable_credentials/verifiable_presentations',
               ],
-              'DID Communication': [
-                  'concepts/did_communications/overview',
-                  'concepts/did_communications/did_comm_messages',
-                  'concepts/did_communications/protocols',
-              ],
               'Advanced Concepts': [
                   'concepts/advanced/overview',
-                  'concepts/advanced/client',
                   'concepts/advanced/did_messages',
                   'concepts/advanced/storage_interface',
-                  'concepts/advanced/signature_schemes',
   
               ]
             },
@@ -84,9 +77,7 @@ module.exports = {
                         'libraries/rust/getting_started',
                         'libraries/rust/cheat_sheet',
                         'libraries/rust/api_reference',
-                        'libraries/rust/troubleshooting',
                     ],
-
                 },
                 {
                     type: 'category',
@@ -96,7 +87,6 @@ module.exports = {
                         'libraries/wasm/getting_started',
                         'libraries/wasm/cheat_sheet',
                         'libraries/wasm/api_reference',
-                        'libraries/wasm/troubleshooting',
                     ],
                 },
             ],
