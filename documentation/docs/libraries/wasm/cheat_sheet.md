@@ -40,7 +40,7 @@ npm install @iota/identity-wasm@dev
 
 A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the DID specifications v1.0 Working.
 
-### [Create](../../decentralized_identifiers/create.mdx)
+### [Create](../../concepts/decentralized_identifiers/create.mdx)
 
 ####  [new KeyPair( _type)](api_reference#KeyPair)
 
@@ -151,7 +151,7 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
 ```
 </details>
 
-### [Publish](../../decentralized_identifiers/create.mdx)
+### [Publish](../../concepts/decentralized_identifiers/create.mdx)
 
 #### [Client.publishDocument(document)](api_reference#Client+publishDocument)
 
@@ -179,7 +179,7 @@ Promise
 ```
 </details>
 
-### [Update](../../decentralized_identifiers/update.mdx)
+### [Update](../../concepts/decentralized_identifiers/update.mdx)
 
 #### [Document.insertMethod(verificationMethod, scope)](api_reference#documentinsertmethodmethod-scope-⇒-boolean)
 
@@ -212,7 +212,7 @@ Document.insertService(service: Service);
  
 * Boolean
 
-### [Resolve](../../decentralized_identifiers/resolve.mdx) 
+### [Resolve](../../concepts/decentralized_identifiers/resolve.mdx) 
 
 #### [resolve(did)](api_reference#clientresolvedid-⇒-promiseany)
 
@@ -297,7 +297,7 @@ The message history of a given [Document](api_reference#Document).
 
 A [VerifiableCredential](api_reference#VerifiableCredential) can be verified by anyone, allowing you to take control of it and share it with anyone.
 
-### [Create](../../verifiable_credentials/create.mdx)
+### [Create](../../concepts/verifiable_credentials/create.mdx)
 
 #### [VerifiableCredential.extend(value)](api_reference#verifiablecredentialextendvalue-⇒-codeverifiablecredentialcode)
 
@@ -335,7 +335,7 @@ VerifiableCredential.extend(value:any);
 ```
 </details>
 
-### [Sign](../../verifiable_credentials/create.mdx)
+### [Sign](../../concepts/verifiable_credentials/create.mdx)
 
 #### [Document.sign(keyPair)](api_reference#Documentsignkey)
 
@@ -419,7 +419,7 @@ Document.signCredential(data: any, args: any);
 
 </details>
 
-### [Revoke](../../verifiable_credentials/revoke.mdx)
+### [Revoke](../../concepts/verifiable_credentials/revoke.mdx)
 
 #### [Document.removeMethod(DID)](api_reference#Document+removeMethod)
 
@@ -440,7 +440,7 @@ Document.removeMethod(did: DID);
 
 A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 
-### [Create](../../verifiable_credentials/verifiable_presentations.mdx)
+### [Create](../../concepts/verifiable_credentials/verifiable_presentations.mdx)
 
 #### [new VerifiablePresentation(holder_doc, credential_data, presentation_type, presentation_id)](api_reference#new-verifiablepresentationholder_doc-credential_data-presentation_type-presentation_id)
 
@@ -493,7 +493,7 @@ new VerifiablePresentation(holder_doc: Document, credential_data: any, presentat
 
 </details>
 
-### [Sign](../../verifiable_credentials/verifiable_presentations.mdx)
+### [Sign](../../concepts/verifiable_credentials/verifiable_presentations.mdx)
 
 #### [Document.signPresentation(data, args)](api_reference#documentsignpresentationdata-args-⇒-codeverifiablepresentationcode)
 
