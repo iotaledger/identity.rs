@@ -29,8 +29,8 @@ We currently do not supply dedicated bindings catering to embedded devices with 
 ### What should I do if my private key is compromised?
 If you still have control over your identity, rotate the key material ASAP! If an attacker has locked you out of your identity, there is not much you can do. Notify contacts that your identity has been compromised and start fresh with a new one. It is for this reason that we suggest using different keys for day-to-day signing and authentication operations, and instead store private keys capable of performing updates to your DID Document securely and separately.
 
-### Are credentials stored on the tangle?
-Credentials are supposed to be stored on user devices or systems. As a user you are in charge of storing your credentials and sharing them with other parties on a need-to-know basis.
+### Are verifiable credentials stored on the Tangle?
+Verifiable credentials, particularly those with personal identifiable information, are supposed to be stored securely off-Tangle on user devices or systems. As a user, you are in charge of storing your credentials securely and sharing them with other parties on a need-to-know basis.
 
 ### Do I need to hide my DID? Will people be able to identify me by my DID?
 A DID should not contain any information linking to you as a person, there is the chance of entities monitoring your movement using a DID though. To minimize this risk it is advisable to use different DIDs for different use case.
