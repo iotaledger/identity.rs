@@ -21,7 +21,7 @@ Control over an identity is ultimately tied to the control over cryptographic ke
 ### How do I store my private keys?
 Theoretically you can store the keys however you like. We provide a secure default using IOTA Stronghold where possible, which is a secure software implementation for isolating digital secrets with encrypted storage. For even better guarantees you could look into hardware based key storage.
 ### Do I need a Permanode to use IOTA Identity?
-Current you need to have access to a Permanode (a node with all the history of the tangle) to correctly resolve identities. The trustworthiness of this node is very important, since a malicious node could flat out respond with made up data, so ideally you run that node yourself or make sure the party supplying the node is trustworthy.
+You can get started without one but currently you do require access to a Permanode (a node which stores the entire history of the Tangle) to reliably resolve identities in production. The trustworthiness of this node is very important, since a malicious node could respond with outdated identities, so ideally you should run one yourself or ensure the party supplying the node is trustworthy.
 ### Can I use IOTA Identity on Android or iOS?
 We currently do not supply dedicated bindings for Kotlin or Swift. There has been some success running the Wasm bindings on mobile, however.
 ### Can I use IOTA Identity on embedded devices?
