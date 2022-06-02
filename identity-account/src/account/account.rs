@@ -313,9 +313,12 @@ where
     Ok(())
   }
 
-  /// Encrypts the given `plaintext` with the specified `algorithm`
+  /// Encrypts the given `plaintext` with the specified `encryption_options`.
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
+  /// secret.
+  /// 
+  /// Returns the [`EncryptedData`] and the ephemeral `PublicKey` used when generating the shared secret.
   #[cfg(feature = "encryption-decryption")]
   pub async fn encrypt_data(
     &self,
@@ -337,9 +340,12 @@ where
       .map_err(Into::into)
   }
 
-  /// Decrypts the given `data` with the specified `encryption_options`
+  /// Decrypts the given `data` with the specified `encryption_options`.
   ///
-  /// Diffie-Helman key exchange will be performed in case an [`KeyType::X25519`] is given.
+  /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
+  /// secret.
+  /// 
+  /// Returns the decrypted text.
   #[cfg(feature = "encryption-decryption")]
   pub async fn decrypt_data(
     &self,

@@ -402,12 +402,16 @@ interface Storage {
   /** Encrypts the given `plaintext` with the specified `options`.
    * 
    *  Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption secret.
+   * 
+   *  Returns the `EncryptedData` and the ephemeral `PublicKey` used when generating the shared secret.
    */
   encryptData: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryption_options: EncryptionOptions, publicKey: Uint8Array) => Promise<[EncryptedData, Uint8Array]>;
 
   /** Decrypts the given `data` with the specified `options`.
    * 
    *  Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption secret.
+   * 
+   *  Returns the decrypted text.
    */
   decryptData: (did: DID, data: EncryptedData, encryption_options: EncryptionOptions, privateKey: KeyLocation, publicKey: Uint8Array) => Promise<Uint8Array>;
 

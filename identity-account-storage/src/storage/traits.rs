@@ -124,6 +124,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   ///
   /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
   /// secret.
+  /// 
+  /// Returns the [`EncryptedData`] and the ephemeral `PublicKey` used when generating the shared secret.
   async fn encrypt_data(
     &self,
     did: &IotaDID,
@@ -137,6 +139,8 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   ///
   /// Diffie-Helman key exchange with Concatenation Key Derivation Function will be performed to obtain the decryption
   /// secret.
+  /// 
+  /// Returns the decrypted text.
   async fn decrypt_data(
     &self,
     did: &IotaDID,
