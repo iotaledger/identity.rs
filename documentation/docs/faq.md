@@ -18,8 +18,8 @@ We currently provide a Rust library and a JavaScript library for both the browse
 At the moment you don't need IOTA tokens to create and manage identities, although we are exploring opportunities to utilize the token in the future. 
 ### How do I prove control over my DID?
 Control over an identity is ultimately tied to the control over cryptographic key material (something you have).
-### How can I store my private keys?
-Theoretically you can store the keys however you like. We provide a secure default where possible using a best effort software key storage. For better guarantees you could look into hardware based key storage.
+### How do I store my private keys?
+Theoretically you can store the keys however you like. We provide a secure default using IOTA Stronghold where possible, which is a secure software implementation for isolating digital secrets with encrypted storage. For even better guarantees you could look into hardware based key storage.
 ### Do I need a Permanode to use IOTA Identity?
 Current you need to have access to a Permanode (a node with all the history of the tangle) to correctly resolve identities. The trustworthiness of this node is very important, since a malicious node could flat out respond with made up data, so ideally you run that node yourself or make sure the party supplying the node is trustworthy.
 ### Can I use IOTA Identity on Android and IOS?
