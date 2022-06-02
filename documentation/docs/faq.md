@@ -25,7 +25,7 @@ Current you need to have access to a Permanode (a node with all the history of t
 ### Can I use IOTA Identity on Android or iOS?
 We currently do not supply dedicated bindings for Kotlin or Swift. There has been some success running the Wasm bindings on mobile, however.
 ### Can I use IOTA Identity on embedded devices?
-We do not supply dedicated bindings catering to embedded devices with restricted capabilities. You ca try to compile the Rust library to your target platform or a gateway in front of the devices handling the identity interactions.
+We currently do not supply dedicated bindings catering to embedded devices with restricted capabilities. You can try to compile the Rust library for your target platform or use a gateway in front of the devices to handle IOTA Identity interactions.
 ### What should I do if my private key is compromised?
 If you still have control over your identity, rotate the key material ASAP! If an attacker has locked you out of your identity, there is not much you can do. Notify contacts that your identity has been compromised and start fresh with a new one.
 
