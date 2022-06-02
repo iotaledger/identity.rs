@@ -67,7 +67,7 @@ A list of all terminology used in this guide, the framework, and all materials s
 A simple guide on how to contribute to the framework.
 
 ### Chapter 10: Workflow
-A overview of the workflow to design, develop and release the library.
+An overview of the workflow to design, develop and release the framework.
 ### Chapter 11: Contact
 
 How to contact the maintainers.
