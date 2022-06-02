@@ -250,7 +250,7 @@ async fn test_stronghold_did_purge() {
 
 #[tokio::test]
 async fn test_encryption() {
-  StorageTestSuite::encryption_test(test_stronghold().await)
+  StorageTestSuite::encryption_test(test_stronghold().await, test_stronghold().await)
     .await
     .unwrap()
 }

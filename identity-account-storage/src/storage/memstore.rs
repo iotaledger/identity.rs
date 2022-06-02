@@ -288,7 +288,7 @@ impl Storage for MemStore {
           &plaintext,
           associated_data,
           Vec::new(),
-          Vec::new(),
+          keypair.public().as_ref().to_vec(),
         )?;
         Ok(encrypted_data)
       }
@@ -372,7 +372,8 @@ fn try_encrypt(
   match algorithm {
     EncryptionAlgorithm::AES256GCM => {
       let nonce: &[u8] = &Aes256Gcm::random_nonce().map_err(Error::EncryptionFailure)?;
-      let mut ciphertext: Vec<u8> = vec![0; data.len()];
+      let padding: usize = Aes256Gcm::padsize(data).map(|size| size.get()).unwrap_or_default();
+      let mut ciphertext: Vec<u8> = vec![0; data.len() + padding];
       let mut tag: Vec<u8> = [0; Aes256Gcm::TAG_LENGTH].to_vec();
       Aes256Gcm::try_encrypt(key, nonce, associated_data.as_ref(), data, &mut ciphertext, &mut tag)
         .map_err(Error::EncryptionFailure)?;
@@ -538,6 +539,8 @@ mod tests {
 
   #[tokio::test]
   async fn test_encryption() {
-    StorageTestSuite::encryption_test(test_memstore()).await.unwrap()
+    StorageTestSuite::encryption_test(test_memstore(), test_memstore())
+      .await
+      .unwrap()
   }
 }
