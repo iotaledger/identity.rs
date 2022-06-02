@@ -1,8 +1,8 @@
-import {keyExchange} from "../key_exchange";
+import {encryption} from "../encryption";
 
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
 describe("Test node examples", function () {
-    it("Key Exchange", async () => {
-        await keyExchange();
+    it("encryption", async () => {
+        await encryption();
     });
 })
