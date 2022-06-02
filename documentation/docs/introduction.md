@@ -19,59 +19,56 @@ In this guide, we will go through the most important concepts that developers wi
 
 ## Overview
 
-### Chapter 2: Decentralized Identity
+### Chapter 2: [Decentralized Identity](./decentralized_identity)
 
 Describes the concept of Decentralized or Self-Sovereign Identities (SSI), how it applies to People, Organizations and Things, and why IOTA is used.
 
-### Chapter 3: Getting Started
+### Chapter 3: [Getting Started](./getting_started/overview)
 
 Gives a quick overview of how to install the library and creating your first DID.
 
 ### Chapter 4: Concepts
 
 Describes relevant concepts of SSI and how to utilize them in the library.
-### Chapter 4.1: Decentralized Identifiers (DID)
+### Chapter 4.1: [Decentralized Identifiers (DID)](./concepts/decentralized_identifiers/overview)
 
 Explains the DID standard from W3C and how to manipulate DID Documents.
 
-### Chapter 4.2: Verifiable Credentials (VC)
+### Chapter 4.2: [Verifiable Credentials (VC)](http://localhost:3000/identity.rs/concepts/verifiable_credentials/overview)
 
 Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
 
-### Chapter 4.3: DID Communications (DID Comm)
-
-This chapter covers the DID Comm standard, which is being developed by the Decentralized Identity Foundation (DIF). It also describes the different messages agents may send each other and what the expected responses may look like.
-
-### Chapter 4.4: Advanced Concepts
+### Chapter 4.3: [Advanced Concepts](./concepts/advanced/overview)
 
 This chapter is meant for those that want to push the IOTA Identity framework to its limits, utilizing the more complex, yet more flexible lower-level libraries, allowing developers to optimize their implementation, take control over storage/security, and add features to the framework. 
 
-### Chapter 5: Programming Languages
+### Chapter 5: [Programming Languages](./libraries/overview)
+
 
 While the framework itself is developed in the Rust programming language, we also provide bindings, or "Foreign Function Interfaces" (FFI), to other languages. These will have separate getting started sections, making the rest of the guide language agnostic, focusing on the conceptual level. 
 
-### Chapter 6: Tutorials
+### Chapter 6: [Tutorials](./tutorials/overview)
 Contains end-to-end examples using the library to achieve common use-cases.
 
-### Chapter 7: Specification
+### Chapter 7: [Specification](./specs/overview)
 
 While IOTA Identity implements many existing standards, it also adds some additional features we would like to standardize ourselves. This chapter covers these features and how they work in great detail. These are not light reads and can be skipped. 
 
 
-### Chapter 8: Glossary
+### Chapter 8: [Glossary](./glossary)
 
 A list of all terminology used in this guide, the framework, and all materials surrounding it. 
 
-### Chapter 9: Contribute
+### Chapter 9: [Contribute](./contribute)
 
 A simple guide on how to contribute to the framework.
 
-### Chapter 10: Workflow
+### Chapter 10: [Workflow](./workflow)
 An overview of the workflow to design, develop and release the framework.
-### Chapter 11: Contact
+### Chapter 11: [Contact](./contact)
 
 How to contact the maintainers.
 
-### Chapter 12: FAQ
+### Chapter 12: [FAQ](./faq)
 
 Overview of the most Frequently Asked Questions and their answers.

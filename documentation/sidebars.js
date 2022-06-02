@@ -69,6 +69,7 @@ module.exports = {
             label: 'Programming Languages',
             collapsed: true,
             items: [
+                'libraries/overview',
                 {
                     type: 'category',
                     label: 'Rust',
@@ -94,13 +95,14 @@ module.exports = {
         {
           type: 'category',
           label: 'Tutorials',
-          items:['tutorials/validate_university_degree']
+          items:['tutorials/overview','tutorials/validate_university_degree']
         },
         {
           type: 'category',
           label: 'Specifications',
           collapsed: true,
           items: [
+            'specs/overview',
             {
               type: 'category',
               label: 'IOTA DID',
