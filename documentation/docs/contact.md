@@ -9,8 +9,8 @@ keywords:
 - Maintainers
 ---
 
-If you found a security related issue, please follow the [Responsible disclosure policy](https://github.com/iotaledger/identity.rs/security/policy).
+If you found a security related issue, please follow the [responsible disclosure policy](https://github.com/iotaledger/identity.rs/security/policy).
 
-Other then that you have a couple of options to get in contact with the project:
-- File an Issue on [GitHub](https://github.com/iotaledger/identity.rs) 
-- Join the [IOTA Discord](https://discord.iota.org/) and say hi in the `identity` channel
+For everything else, you can get in contact with the project by:
+- Filing an issue on [GitHub](https://github.com/iotaledger/identity.rs).
+- Joining the `identity` channel on the [IOTA Discord](https://discord.iota.org/).
