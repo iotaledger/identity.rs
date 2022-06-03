@@ -3,8 +3,6 @@
 
 //! Errors that may occur when working with Decentralized Identifiers.
 
-use crate::verification::MethodType;
-
 /// Alias for a [`Result`][::core::result::Result] with the error type [Error].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
@@ -42,10 +40,6 @@ pub enum Error {
   #[error("unable to modify relationships on embedded methods, use insert or remove instead")]
   InvalidMethodEmbedded,
 
-  /// Caused by attempting to revoke an unsupported method.
-  #[error("revocation is not supported for {0}")]
-  InvalidMethodRevocation(MethodType),
-
   #[error("Unknown Method Scope")]
   UnknownMethodScope,
   #[error("Unknown Method Type")]
@@ -60,19 +54,4 @@ pub enum Error {
 
   #[error("signature verification failed: {0}")]
   InvalidSignature(&'static str),
-
-  #[error("Missing Resolution DID")]
-  MissingResolutionDID,
-  #[error("Missing Resolution Metadata")]
-  MissingResolutionMetadata,
-  #[error("Missing Resolution Document")]
-  MissingResolutionDocument,
-  #[error("Missing Resolution Document/Metadata")]
-  MissingResolutionData,
-  #[error("Invalid DID Resolution Query")]
-  InvalidDIDQuery,
-  #[error("Invalid DID Resolution Fragment")]
-  InvalidDIDFragment,
-  #[error("Invalid DID Resolution Service")]
-  InvalidResolutionService,
 }

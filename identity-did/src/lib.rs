@@ -28,7 +28,6 @@ pub mod diff;
 pub mod did;
 pub mod document;
 pub mod error;
-pub mod resolution;
 pub mod service;
 pub mod utils;
 pub mod verifiable;
