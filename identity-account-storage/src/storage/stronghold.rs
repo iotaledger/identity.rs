@@ -640,11 +640,9 @@ async fn diffie_hellman_with_concat_kdf(
 
 /// Generate a random content encryption key with the required length for `encryption_algorithm`.
 fn generate_content_encryption_key(client: &Client, encryption_algorithm: &EncryptionAlgorithm) -> Result<Location> {
-  let _len: usize = match encryption_algorithm {
-    EncryptionAlgorithm::AES256GCM => Aes256Gcm::KEY_LENGTH,
-  };
+  let _len: usize = encryption_algorithm.key_length();
 
-  // TODO: X25519 happens to match Aes256Gcm::KEY_LENGTH, but a better solution is required.
+  // TODO: X25519 happens to match Aes256Gcm::KEY_LENGTH, but a proper solution is required.
   let location: KeyLocation = random_location(KeyType::X25519);
   generate_private_key(client, &location)?;
 
