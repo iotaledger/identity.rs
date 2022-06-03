@@ -292,6 +292,7 @@ impl Storage for MemStore {
         )?;
         Ok(encrypted_data)
       }
+      CekAlgorithm::ECDH_ES_A256KW(_) => unimplemented!(),
     }
   }
 
@@ -326,7 +327,9 @@ impl Storage for MemStore {
                 .map_err(Error::DecryptionFailure)?;
             try_decrypt(&derived_secret, encryption_algorithm, &data)
           }
+          CekAlgorithm::ECDH_ES_A256KW(_) => unimplemented!(),
         }
+
       }
     }
   }

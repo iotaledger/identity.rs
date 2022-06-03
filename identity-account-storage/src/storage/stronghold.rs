@@ -308,6 +308,25 @@ impl Storage for Stronghold {
         .await?;
         Ok(encrypted_data)
       }
+      CekAlgorithm::ECDH_ES_A256KW(agreement) => {
+        let (derived_secret, ephemeral_public_key): (Location, PublicKey) =
+          diffie_hellman_with_concat_kdf(&client, encryption_algorithm, cek_algorithm, agreement, public_key).await?;
+        let cek: Location = generate_content_encryption_key(&client, encryption_algorithm)?;
+
+        let encrypted_cek: Vec<u8> = aes_256_wrap_key(&client, derived_secret, cek.clone())?;
+
+        let encrypted_data: EncryptedData = aead_encrypt(
+          &client,
+          encryption_algorithm,
+          cek,
+          data,
+          associated_data,
+          encrypted_cek,
+          ephemeral_public_key.as_ref().to_vec(),
+        )
+        .await?;
+        Ok(encrypted_data)
+      }
     }
   }
 
@@ -339,6 +358,22 @@ impl Storage for Stronghold {
         )
         .await?;
         let decrypted_data: Result<Vec<u8>> = aead_decrypt(&client, encryption_algorithm, derived_secret, data).await;
+        decrypted_data
+      }
+      CekAlgorithm::ECDH_ES_A256KW(agreement) => {
+        let shared_secret: Location = diffie_hellman(&client, private_key, public_key).await?;
+        let derived_secret: Location = concat_kdf(
+          &client,
+          encryption_algorithm,
+          cek_algorithm.name().to_owned(),
+          agreement,
+          shared_secret,
+        )
+        .await?;
+
+        let cek: Location = aes_256_unwrap_key(&client, data.encrypted_cek(), derived_secret)?;
+
+        let decrypted_data: Result<Vec<u8>> = aead_decrypt(&client, encryption_algorithm, cek, data).await;
         decrypted_data
       }
     }
@@ -603,6 +638,46 @@ async fn diffie_hellman_with_concat_kdf(
   Ok((derived_secret, ephemeral_public_key))
 }
 
+/// Generate a random content encryption key with the required length for `encryption_algorithm`.
+fn generate_content_encryption_key(client: &Client, encryption_algorithm: &EncryptionAlgorithm) -> Result<Location> {
+  let _len: usize = match encryption_algorithm {
+    EncryptionAlgorithm::AES256GCM => Aes256Gcm::KEY_LENGTH,
+  };
+
+  // TODO: X25519 happens to match Aes256Gcm::KEY_LENGTH, but a better solution is required.
+  let location: KeyLocation = random_location(KeyType::X25519);
+  generate_private_key(client, &location)?;
+
+  Ok((&location).into())
+}
+
+/// Apply AES256 key wrap to the `cek` using `encryption_key` for encryption.
+fn aes_256_wrap_key(client: &Client, encryption_key: Location, cek: Location) -> Result<Vec<u8>> {
+  let encrypted_cek: Vec<u8> = client
+    .execute_procedure(procedures::AesKeyWrapEncrypt {
+      cipher: procedures::AesKeyWrapCipher::Aes256,
+      encryption_key,
+      wrap_key: cek,
+    })
+    .map_err(|err| procedure_error::<procedures::AesKeyWrapEncrypt>(vec![], err))?;
+  Ok(encrypted_cek)
+}
+
+fn aes_256_unwrap_key(client: &Client, encrypted_key: impl AsRef<[u8]>, decryption_key: Location) -> Result<Location> {
+  let output: Location = random_stronghold_location();
+
+  client
+    .execute_procedure(procedures::AesKeyWrapDecrypt {
+      cipher: procedures::AesKeyWrapCipher::Aes256,
+      decryption_key,
+      wrapped_key: encrypted_key.as_ref().to_vec(),
+      output: output.clone(),
+    })
+    .map_err(|err| procedure_error::<procedures::AesKeyWrapDecrypt>(vec![], err))?;
+
+  Ok(output)
+}
+
 // Moves a key from one location to another, deleting the old one.
 fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Result<()> {
   let source_location: Location = source.into();
@@ -672,6 +747,11 @@ pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
   let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
 
   KeyLocation::new(key_type, fragment, &public_key)
+}
+
+pub(crate) fn random_stronghold_location() -> Location {
+  let record_path: [u8; 32] = rand::thread_rng().gen();
+  Location::generic(VAULT_PATH.to_vec(), record_path.to_vec())
 }
 
 fn procedure_error<P>(locations: Vec<KeyLocation>, err: ProcedureError) -> StrongholdError {
