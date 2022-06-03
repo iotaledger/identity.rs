@@ -643,6 +643,7 @@ fn generate_content_encryption_key(client: &Client, encryption_algorithm: &Encry
   let _len: usize = encryption_algorithm.key_length();
 
   // TODO: X25519 happens to match Aes256Gcm::KEY_LENGTH, but a proper solution is required.
+  // See https://github.com/iotaledger/stronghold.rs/issues/374
   let location: KeyLocation = random_location(KeyType::X25519);
   generate_private_key(client, &location)?;
 
