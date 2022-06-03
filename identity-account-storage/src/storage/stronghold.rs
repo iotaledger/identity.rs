@@ -472,8 +472,7 @@ pub(crate) async fn diffie_hellman(
   private_key: &KeyLocation,
   public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
 ) -> Result<Location> {
-  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
-  let location: [u8; 32] = rand::Rng::gen(&mut thread_rng);
+  let location: [u8; 32] = rand::Rng::gen(&mut rand::thread_rng());
   let shared_key: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
   let diffie_hellman: procedures::X25519DiffieHellman = procedures::X25519DiffieHellman {
     public_key,
@@ -493,8 +492,7 @@ pub(crate) async fn concat_kdf(
   agreement: &AgreementInfo,
   shared_secret: Location,
 ) -> Result<Location> {
-  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
-  let location: [u8; 32] = rand::Rng::gen(&mut thread_rng);
+  let location: [u8; 32] = rand::Rng::gen(&mut rand::thread_rng());
   let output: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
   let derived_secret: procedures::ConcatKdf = {
     match encryption_algorithm {
