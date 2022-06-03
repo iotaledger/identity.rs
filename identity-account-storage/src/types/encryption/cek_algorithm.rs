@@ -11,6 +11,7 @@ use serde::Serialize;
 pub enum CekAlgorithm {
   /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
   ECDH_ES(AgreementInfo),
+  ECDH_ES_A256KW(AgreementInfo),
 }
 
 impl CekAlgorithm {
@@ -18,6 +19,7 @@ impl CekAlgorithm {
   pub const fn name(&self) -> &'static str {
     match self {
       CekAlgorithm::ECDH_ES(_agreement) => "ECDH-ES",
+      CekAlgorithm::ECDH_ES_A256KW(_) => "ECDH-ES+A256KW",
     }
   }
 }
