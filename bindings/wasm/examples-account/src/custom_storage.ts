@@ -190,11 +190,11 @@ export class MemStore implements Storage {
     }
 
     public async dataEncrypt(did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryption_algorithm: EncryptionAlgorithm, cek_algorithm: CekAlgorithm, publicKey: Uint8Array): Promise<EncryptedData> {
-        
+        throw new Error('not yet implemented')
     }
 
     public async dataDecrypt(did: DID, data: EncryptedData, encryption_algorithm: EncryptionAlgorithm, cek_algorithm: CekAlgorithm, privateKey: KeyLocation): Promise<Uint8Array> {
-
+        throw new Error('not yet implemented')
     }
 
     public async chainStateGet(did: DID): Promise<ChainState | undefined> {
