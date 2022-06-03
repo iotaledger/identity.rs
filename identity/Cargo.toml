@@ -30,7 +30,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async", "account", "stronghold", "send-sync-storage", "encryption"]
+default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encryption"]
 
 # Enables async runtime support (Tokio).
 async = ["identity-iota/async"]
@@ -51,7 +51,8 @@ send-sync-storage = ["identity-account-storage/send-sync-storage"]
 storage-test-suite = ["identity-account-storage/storage-test-suite"]
 
 # Enables encryption and decryption functionality.
-encryption = ["identity-account/encryption"]
+# Breaking changes to types and functions behind this flag are not covered by semver.
+unstable-encryption = ["identity-account/encryption"]
 
 [package.metadata.docs.rs]
 # To build locally:

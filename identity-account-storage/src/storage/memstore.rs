@@ -436,18 +436,18 @@ fn concat_kdf(
     digest.update(alg.as_bytes());
 
     // PartyUInfo
-    digest.update(&(agreement.apu().len() as u32).to_be_bytes());
-    digest.update(agreement.apu());
+    digest.update(&(agreement.apu.len() as u32).to_be_bytes());
+    digest.update(&agreement.apu);
 
     // PartyVInfo
-    digest.update(&(agreement.apv().len() as u32).to_be_bytes());
-    digest.update(agreement.apv());
+    digest.update(&(agreement.apv.len() as u32).to_be_bytes());
+    digest.update(&agreement.apv);
 
     // SuppPubInfo
-    digest.update(agreement.pub_info());
+    digest.update(&agreement.pub_info);
 
     // SuppPrivInfo
-    digest.update(agreement.priv_info());
+    digest.update(&agreement.priv_info);
 
     output.extend_from_slice(&digest.finalize_reset());
   }

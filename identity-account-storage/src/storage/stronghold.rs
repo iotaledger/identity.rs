@@ -16,9 +16,6 @@ use iota_stronghold::Client;
 use iota_stronghold::ClientVault;
 use iota_stronghold::Location;
 use iota_stronghold::Store;
-use rand::distributions::DistString;
-use rand::rngs::OsRng;
-use rand::Rng;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
@@ -475,7 +472,8 @@ pub(crate) async fn diffie_hellman(
   private_key: &KeyLocation,
   public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
 ) -> Result<Location> {
-  let location: [u8; 32] = OsRng.sample(rand::distributions::Standard);
+  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
+  let location: [u8; 32] = rand::Rng::gen(&mut thread_rng);
   let shared_key: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
   let diffie_hellman: procedures::X25519DiffieHellman = procedures::X25519DiffieHellman {
     public_key,
@@ -495,7 +493,8 @@ pub(crate) async fn concat_kdf(
   agreement: &AgreementInfo,
   shared_secret: Location,
 ) -> Result<Location> {
-  let location: [u8; 32] = OsRng.sample(rand::distributions::Standard);
+  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
+  let location: [u8; 32] = rand::Rng::gen(&mut thread_rng);
   let output: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
   let derived_secret: procedures::ConcatKdf = {
     match encryption_algorithm {
@@ -504,10 +503,10 @@ pub(crate) async fn concat_kdf(
         algorithm_id,
         shared_secret,
         key_len: Aes256Gcm::KEY_LENGTH,
-        apu: agreement.apu().to_vec(),
-        apv: agreement.apv().to_vec(),
-        pub_info: agreement.pub_info().to_vec(),
-        priv_info: agreement.priv_info().to_vec(),
+        apu: agreement.apu.clone(),
+        apv: agreement.apv.clone(),
+        pub_info: agreement.pub_info.clone(),
+        priv_info: agreement.priv_info.clone(),
         output: output.clone(),
       },
     }
@@ -669,8 +668,12 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
 }
 
 pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
-  let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
-  let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
+  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
+  let fragment: String = rand::Rng::sample_iter(&mut thread_rng, rand::distributions::Alphanumeric)
+    .take(32)
+    .map(char::from)
+    .collect();
+  let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
 
   KeyLocation::new(key_type, fragment, &public_key)
 }

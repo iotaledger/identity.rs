@@ -254,7 +254,7 @@ impl Storage for WasmStorage {
       did.clone().into(),
       data,
       associated_data,
-      encryption_algorithm.clone().into(),
+      (*encryption_algorithm).into(),
       cek_algorithm.clone().into(),
       public_key.as_ref().to_vec(),
     ));
@@ -277,7 +277,7 @@ impl Storage for WasmStorage {
     let promise: Promise = Promise::resolve(&self.data_decrypt(
       did.clone().into(),
       data.into(),
-      encryption_algorithm.clone().into(),
+      (*encryption_algorithm).into(),
       cek_algorithm.clone().into(),
       private_key.clone().into(),
     ));
@@ -404,23 +404,23 @@ interface Storage {
   /** Returns `true` if a key exists at the specified `location`. */
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
-  /** Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+  /** Encrypts the given `plaintext` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
    * 
    *  Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
    *  secret.
    * 
    *  Returns an `EncryptedData` instance.
    */
-  dataEncrypt: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryption_algorithm: EncryptionAlgorithm, cek_algorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
+  dataEncrypt: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
 
-  /** Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
+  /** Decrypts the given `data` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
    * 
    *  Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
    *  secret.
    * 
    *  Returns the decrypted text.
    */
-  dataDecrypt: (did: DID, data: EncryptedData, encryption_algorithm: EncryptionAlgorithm, cek_algorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
+  dataDecrypt: (did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined>;

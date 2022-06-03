@@ -27,13 +27,13 @@ impl CekAlgorithm {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AgreementInfo {
   /// Agreement PartyUInfo.
-  apu: Vec<u8>,
+  pub apu: Vec<u8>,
   /// Agreement PartyVInfo.
-  apv: Vec<u8>,
+  pub apv: Vec<u8>,
   /// SuppPubInfo.
-  pub_info: Vec<u8>,
+  pub pub_info: Vec<u8>,
   /// SuppPrivInfo.
-  priv_info: Vec<u8>,
+  pub priv_info: Vec<u8>,
 }
 
 impl AgreementInfo {
@@ -45,21 +45,5 @@ impl AgreementInfo {
       pub_info,
       priv_info,
     }
-  }
-
-  pub fn apu(&self) -> &[u8] {
-    &self.apu
-  }
-
-  pub fn apv(&self) -> &[u8] {
-    &self.apv
-  }
-
-  pub fn pub_info(&self) -> &[u8] {
-    &self.pub_info
-  }
-
-  pub fn priv_info(&self) -> &[u8] {
-    &self.priv_info
   }
 }
