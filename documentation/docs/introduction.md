@@ -15,60 +15,60 @@ keywords:
 
 The IOTA Identity framework implements the most common standards and patterns for Decentralized Identity in both a DLT agnostic and `iota` method specification manner. It is designed to work for Identity for People, Organizations, Things, and Objects acting as a unifying-layer of trust between everyone and everything.
 
-In this guide, we will go through the most important concepts that developers will need to know to utilize IOTA Identity to its full potential. The guide is programming language agnostic, with language-specific guides located in Chapter 4.
+In this guide, we will go through the most important concepts that developers will need to know to utilize IOTA Identity to its full potential.
 
 ## Overview
 
-### Chapter 2: [Decentralized Identity](./decentralized_identity)
+### [Chapter 1: Decentralized Identity](./decentralized_identity)
 
 Describes the concept of Decentralized or Self-Sovereign Identities (SSI), how it applies to People, Organizations and Things, and why IOTA is used.
 
-### Chapter 3: [Getting Started](./getting_started/overview)
+### [Chapter 2: Getting Started](./getting_started/overview)
 
 Gives a quick overview of how to install the library and creating your first DID.
 
-### Chapter 4: Concepts
+### Chapter 3: Concepts
 
 Describes relevant concepts of SSI and how to utilize them in the library.
-### Chapter 4.1: [Decentralized Identifiers (DID)](./concepts/decentralized_identifiers/overview)
+### [Chapter 3.1: Decentralized Identifiers (DID)](./concepts/decentralized_identifiers/overview)
 
 Explains the DID standard from W3C and how to manipulate DID Documents.
 
-### Chapter 4.2: [Verifiable Credentials (VC)](http://localhost:3000/identity.rs/concepts/verifiable_credentials/overview)
+### [Chapter 3.2: Verifiable Credentials (VC)](http://localhost:3000/identity.rs/concepts/verifiable_credentials/overview)
 
 Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
 
-### Chapter 4.3: [Advanced Concepts](./concepts/advanced/overview)
+### [Chapter 3.3: Advanced Concepts](./concepts/advanced/overview)
 
 This chapter is meant for those that want to push the IOTA Identity framework to its limits, utilizing the more complex, yet more flexible lower-level libraries, allowing developers to optimize their implementation, take control over storage/security, and add features to the framework. 
 
-### Chapter 5: [Programming Languages](./libraries/overview)
+### [Chapter 4: Programming Languages](./libraries/overview)
 
 
 While the framework itself is developed in the Rust programming language, we also provide bindings, or "Foreign Function Interfaces" (FFI), to other languages. These will have separate getting started sections, making the rest of the guide language agnostic, focusing on the conceptual level. 
 
-### Chapter 6: [Tutorials](./tutorials/overview)
+### [Chapter 5: Tutorials](./tutorials/overview)
 Contains end-to-end examples using the library to achieve common use-cases.
 
-### Chapter 7: [Specification](./specs/overview)
+### [Chapter 6: Specification](./specs/overview)
 
 While IOTA Identity implements many existing standards, it also adds some additional features we would like to standardize ourselves. This chapter covers these features and how they work in great detail. These are not light reads and can be skipped. 
 
 
-### Chapter 8: [Glossary](./glossary)
+### [Chapter 7: Glossary](./glossary)
 
 A list of all terminology used in this guide, the framework, and all materials surrounding it. 
 
-### Chapter 9: [Contribute](./contribute)
+### [Chapter 8: Contribute](./contribute)
 
 A simple guide on how to contribute to the framework.
 
-### Chapter 10: [Workflow](./workflow)
+### [Chapter 9: Workflow](./workflow)
 An overview of the workflow to design, develop and release the framework.
-### Chapter 11: [Contact](./contact)
+### [Chapter 10: Contact](./contact)
 
 How to contact the maintainers.
 
-### Chapter 12: [FAQ](./faq)
+### [Chapter 11: FAQ](./faq)
 
 Overview of the most Frequently Asked Questions and their answers.
