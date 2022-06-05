@@ -215,68 +215,66 @@ impl DidCommSystem {
           handler.handle(self.clone(), request).await;
         }
         None => {
-          AsynchronousInvocationStrategy::endpoint_not_found(&mut self, request).await;
+          actor_not_found(&mut self, request).await;
         }
       }
     });
   }
 }
 
-struct AsynchronousInvocationStrategy;
+/// Invoked when no actor was found that can handle the received request.
+/// Attempts to find a thread waiting for the received message,
+/// otherwise returns an error to the peer.
+async fn actor_not_found(actor: &mut DidCommSystem, request: InboundRequest) {
+  let result: Result<(), RemoteSendError> =
+    match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
+      Err(error) => Err(RemoteSendError::DeserializationFailure {
+        location: ErrorLocation::Remote,
+        context: "DIDComm plaintext message deserialization".to_owned(),
+        error_message: error.to_string(),
+      }),
+      Ok(plaintext_msg) => {
+        let thread_id = plaintext_msg.thread_id();
 
-impl AsynchronousInvocationStrategy {
-  #[inline(always)]
-  async fn endpoint_not_found(actor: &mut DidCommSystem, request: InboundRequest) {
-    let result: Result<(), RemoteSendError> =
-      match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
-        Err(error) => Err(RemoteSendError::DeserializationFailure {
-          location: ErrorLocation::Remote,
-          context: "DIDComm plaintext message deserialization".to_owned(),
-          error_message: error.to_string(),
-        }),
-        Ok(plaintext_msg) => {
-          let thread_id = plaintext_msg.thread_id();
+        match actor.state.threads_sender.remove(thread_id) {
+          Some(sender) => {
+            let thread_request = ThreadRequest {
+              endpoint: request.endpoint,
+              input: request.input,
+            };
 
-          match actor.state.threads_sender.remove(thread_id) {
-            Some(sender) => {
-              let thread_request = ThreadRequest {
-                endpoint: request.endpoint,
-                input: request.input,
-              };
-
-              if sender.1.send(thread_request).is_err() {
-                log::warn!("unable to send request for thread id `{thread_id}`");
-              }
-
-              Ok(())
+            if sender.1.send(thread_request).is_err() {
+              log::warn!("unable to send request for thread id `{thread_id}`");
             }
-            None => {
-              log::info!(
-                "no handler or thread found for the received message `{}`",
-                request.endpoint
-              );
-              // The assumption is that DID authentication is done before this point, so this is not
-              // considered an information leak, e.g. to enumerate thread ids.
-              Err(RemoteSendError::UnexpectedRequest(format!(
-                "thread id `{}` not found",
-                thread_id
-              )))
-            }
+
+            Ok(())
+          }
+          None => {
+            log::info!(
+              "no handler or thread found for the received message `{}`",
+              request.endpoint
+            );
+            // The assumption is that DID authentication is done before this point, so this is not
+            // considered an information leak, e.g. to enumerate thread ids.
+            Err(RemoteSendError::UnexpectedRequest(format!(
+              "thread id `{}` not found",
+              thread_id
+            )))
           }
         }
-      };
+      }
+    };
 
-    let send_result = crate::actor::send_response(
-      actor.commander_mut(),
-      result,
-      request.response_channel,
-      request.request_id,
-    )
-    .await;
+  let send_result = crate::actor::send_response(
+    actor.commander_mut(),
+    result,
+    request.response_channel,
+    request.request_id,
+  )
+  .await;
 
-    if let Err(err) = send_result {
-      log::error!("could not acknowledge request due to: {err:?}");
-    }
+  if let Err(err) = send_result {
+    log::error!("could not acknowledge request due to: {err:?}");
   }
 }
 
