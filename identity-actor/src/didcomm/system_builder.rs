@@ -13,7 +13,6 @@ use libp2p::dns::TokioDnsConfig;
 use libp2p::identity::Keypair;
 use libp2p::tcp::TokioTcpConfig;
 use libp2p::websocket::WsConfig;
-use libp2p::Multiaddr;
 use libp2p::Transport;
 
 use crate::actor::Actor;
@@ -56,13 +55,6 @@ impl DidCommSystemBuilder {
   #[must_use]
   pub fn keypair(mut self, keypair: Keypair) -> Self {
     self.inner.keypair = Some(keypair);
-    self
-  }
-
-  /// See [`SystemBuilder::listen_on`].
-  #[must_use]
-  pub fn listen_on(mut self, address: Multiaddr) -> Self {
-    self.inner.listening_addresses.push(address);
     self
   }
 

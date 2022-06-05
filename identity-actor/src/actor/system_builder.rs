@@ -35,7 +35,6 @@ use libp2p::swarm::SwarmBuilder;
 use libp2p::tcp::TokioTcpConfig;
 use libp2p::websocket::WsConfig;
 use libp2p::yamux::YamuxConfig;
-use libp2p::Multiaddr;
 use libp2p::Swarm;
 
 use super::actor::Actor;
@@ -46,7 +45,6 @@ use super::SystemState;
 
 /// A builder for [`System`]s that allows for customizing its configuration and attaching actors.
 pub struct SystemBuilder {
-  pub(crate) listening_addresses: Vec<Multiaddr>,
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: ActorConfig,
   pub(crate) actors: ActorMap,
@@ -56,7 +54,6 @@ impl SystemBuilder {
   /// Create a new builder in the default configuration.
   pub fn new() -> SystemBuilder {
     Self {
-      listening_addresses: vec![],
       keypair: None,
       config: ActorConfig::default(),
       actors: HashMap::new(),
@@ -69,13 +66,6 @@ impl SystemBuilder {
   #[must_use]
   pub fn keypair(mut self, keypair: Keypair) -> Self {
     self.keypair = Some(keypair);
-    self
-  }
-
-  /// Add a [`Multiaddr`] to listen on. This can be called multiple times.
-  #[must_use]
-  pub fn listen_on(mut self, address: Multiaddr) -> Self {
-    self.listening_addresses.push(address);
     self
   }
 
@@ -172,7 +162,7 @@ impl SystemBuilder {
       (noise_keypair, peer_id)
     };
 
-    let mut swarm: Swarm<RequestResponse<ActorRequestResponseCodec>> = {
+    let swarm: Swarm<RequestResponse<ActorRequestResponseCodec>> = {
       let mut config: RequestResponseConfig = RequestResponseConfig::default();
       config.set_request_timeout(self.config.timeout);
 
@@ -192,12 +182,6 @@ impl SystemBuilder {
         .executor(executor)
         .build()
     };
-
-    for addr in self.listening_addresses {
-      swarm
-        .listen_on(addr)
-        .map_err(|err| Error::TransportError("start listening", err))?;
-    }
 
     let (cmd_sender, cmd_receiver) = mpsc::channel(10);
 
