@@ -9,7 +9,10 @@ use futures::AsyncRead;
 use futures::AsyncWrite;
 use futures::FutureExt;
 use libp2p::core::Executor;
+use libp2p::dns::TokioDnsConfig;
 use libp2p::identity::Keypair;
+use libp2p::tcp::TokioTcpConfig;
+use libp2p::websocket::WsConfig;
 use libp2p::Multiaddr;
 use libp2p::Transport;
 
@@ -113,12 +116,15 @@ impl DidCommSystemBuilder {
   /// See [`SystemBuilder::build`].
   #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> ActorResult<DidCommSystem> {
-    let dns_transport = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::TokioTcpConfig::new())
-      .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
-
-    let transport = dns_transport
-      .clone()
-      .or_transport(libp2p::websocket::WsConfig::new(dns_transport));
+    let transport: _ = {
+      let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
+        .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
+      let ws_transport: WsConfig<_> = WsConfig::new(
+        TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
+          .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?,
+      );
+      dns_tcp_transport.or_transport(ws_transport)
+    };
 
     self.build_with_transport(transport).await
   }
@@ -126,7 +132,7 @@ impl DidCommSystemBuilder {
   /// See [`SystemBuilder::build_with_transport`].
   pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<DidCommSystem>
   where
-    TRA: Transport + Sized + Clone + Send + Sync + 'static,
+    TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     TRA::Dial: Send + 'static,
     TRA::Listener: Send + 'static,

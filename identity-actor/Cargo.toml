@@ -17,7 +17,7 @@ futures = { version = "0.3", default-features = false }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false, features = ["async"] }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
-libp2p = { version = "0.43", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
+libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
