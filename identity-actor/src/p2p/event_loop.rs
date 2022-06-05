@@ -53,7 +53,7 @@ impl EventLoop {
     }
   }
 
-  pub async fn run<F>(mut self, event_handler: F)
+  pub(crate) async fn run<F>(mut self, event_handler: F)
   where
     F: Fn(InboundRequest),
   {
@@ -157,12 +157,9 @@ impl EventLoop {
           .send_response(response_channel, ResponseMessage(response))
           .is_err()
         {
-          // TODO: Shoudl we change this to `let _ = channel.send(...)` to make it best-effort?
-          // Panicking is not desirable, as this event loop might handle multiple systems.
-          // Alternatively, we can log a warning instead of ignoring it completely.
-          cmd_response_channel
-            .send(Err(InboundFailure::ConnectionClosed))
-            .expect("receiver should not have been dropped")
+          if let Err(err) = cmd_response_channel.send(Err(InboundFailure::ConnectionClosed)) {
+            log::warn!("unable to send message `{err:?}` because receiver was dropped");
+          }
         } else {
           self.await_response_sent.insert(request_id, cmd_response_channel);
         }
@@ -175,9 +172,9 @@ impl EventLoop {
           self.await_listen.insert(listener_id, response_channel);
         }
         Err(err) => {
-          response_channel
-            .send(Err(err))
-            .expect("receiver should not have been dropped");
+          if let Err(err) = response_channel.send(Err(err)) {
+            log::warn!("unable to send message `{err:?}` because receiver was dropped");
+          }
         }
       },
       SwarmCommand::AddAddresses { peer, addresses } => {
@@ -186,11 +183,13 @@ impl EventLoop {
         }
       }
       SwarmCommand::GetAddresses { response_channel } => {
-        response_channel
-          .send(self.swarm.listeners().map(ToOwned::to_owned).collect())
-          .expect("receiver should not have been dropped");
+        if let Err(err) = response_channel.send(self.swarm.listeners().map(ToOwned::to_owned).collect()) {
+          log::warn!("unable to send message `{err:?}` because receiver was dropped");
+        }
       }
       SwarmCommand::Shutdown { response_channel } => {
+        // On shutdown, send error messages through all open channels
+        // to allow those tasks to terminate gracefully.
         for (listener, channel) in std::mem::take(&mut self.await_listen).into_iter() {
           let _ = self.swarm.remove_listener(listener);
           let err = TransportError::Other(std::io::Error::new(
@@ -202,7 +201,6 @@ impl EventLoop {
         }
 
         for (_, channel) in std::mem::take(&mut self.await_response) {
-          log::warn!("draining channel");
           let _ = channel.send(Err(OutboundFailure::ConnectionClosed));
         }
 
@@ -210,9 +208,9 @@ impl EventLoop {
           let _ = channel.send(Err(InboundFailure::ConnectionClosed));
         }
 
-        response_channel
-          .send(())
-          .expect("receiver should not have been dropped");
+        if let Err(err) = response_channel.send(()) {
+          log::warn!("unable to send message `{err:?}` because receiver was dropped");
+        }
 
         return ControlFlow::Break(());
       }
@@ -221,8 +219,9 @@ impl EventLoop {
   }
 }
 
+/// An inbound request as received by the p2p layer.
 #[derive(Debug)]
-pub struct InboundRequest {
+pub(crate) struct InboundRequest {
   pub peer_id: PeerId,
   pub endpoint: Endpoint,
   pub request_mode: RequestMode,
@@ -231,9 +230,9 @@ pub struct InboundRequest {
   pub request_id: RequestId,
 }
 
+/// A request in a DIDComm thread.
 #[derive(Debug)]
-pub struct ThreadRequest {
-  pub peer_id: PeerId,
+pub(crate) struct ThreadRequest {
   pub endpoint: Endpoint,
   pub input: Vec<u8>,
 }

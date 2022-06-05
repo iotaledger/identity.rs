@@ -60,8 +60,7 @@ impl DidCommSystemState {
   }
 }
 
-/// An actor system can be used to send requests to remote actors, and fowards incoming requests
-/// to attached actors.
+/// An actor system fowards incoming requests to attached actors and can be used to send requests to remote actors.
 ///
 /// An actor system is a frontend for an event loop running in the background, which invokes
 /// user-attached actors. Systems can be cloned without cloning the event loop, and doing so
@@ -172,7 +171,7 @@ impl DidCommSystem {
     thread_id: &ThreadId,
   ) -> ActorResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
-      // Receival + Deserialization
+      // Receiving + Deserialization
       let inbound_request = tokio::time::timeout(self.system.state().config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
@@ -196,7 +195,6 @@ impl DidCommSystem {
 
   /// Creates the channels used to await a message on a thread.
   fn create_thread_channels(&mut self, thread_id: &ThreadId) {
-    log::debug!("creating thread channels for {thread_id}");
     let (sender, receiver) = oneshot::channel();
 
     // The logic is that for every received message on a thread,
@@ -242,7 +240,6 @@ impl AsynchronousInvocationStrategy {
           match actor.state.threads_sender.remove(thread_id) {
             Some(sender) => {
               let thread_request = ThreadRequest {
-                peer_id: request.peer_id,
                 endpoint: request.endpoint,
                 input: request.input,
               };
