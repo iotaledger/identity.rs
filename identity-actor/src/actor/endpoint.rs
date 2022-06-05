@@ -10,12 +10,8 @@ use std::str::Split;
 use serde::Deserialize;
 use serde::Serialize;
 
-static HOOK: &str = "hook";
-
-/// A path-like identifier for a handler function. As an example, `identity/create`
-/// could be an endpoint of the "identity" namespace and the concrete action "create".
-///
-/// An endpoint can also represent a `hook` function, indicated by a `/hook` postfix.
+/// A path-like identifier for an actor request. As an example, `identity/create`
+/// could be an endpoint of the request "create" within the "identity" namespace.
 ///
 /// Endpoints are separated by slashes and only allow alphabetic ascii characters and `_`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -25,40 +21,18 @@ pub struct Endpoint {
 }
 
 impl Endpoint {
-  /// Returns whether this endpoint is a hook.
-  pub fn is_hook(&self) -> bool {
-    let split: Split<char> = self.name.as_ref().split('/');
-    split.last().expect("split should have at least one element") == HOOK
-  }
-
-  /// Converts this endpoint into a hook.
-  pub fn into_hook(mut self) -> Self {
-    if !self.is_hook() {
-      let mut name: String = self.name.into_owned();
-      name.reserve("/".len() + HOOK.len());
-      self.name = Cow::Owned(name + "/" + HOOK);
-    }
-    self
-  }
-
   /// Validates the endpoint.
   fn validate(string: &str) -> ActorResult<()> {
     let mut split: Split<char> = string.split('/');
 
-    let name: &str = split.next().expect("split should have at least one element");
-    let handler: &str = split.next().ok_or(Error::InvalidEndpoint)?;
-    let hook: Option<&str> = split.next();
+    let namespace: &str = split.next().expect("split always returns at least one element");
+    let request: &str = split.next().ok_or(Error::InvalidEndpoint)?;
 
     let is_valid_segment =
       |segment: &str| !segment.is_empty() && segment.chars().all(|c| c.is_ascii_alphabetic() || c == '_');
 
-    if !is_valid_segment(name) || !is_valid_segment(handler) {
+    if !is_valid_segment(namespace) || !is_valid_segment(request) {
       return Err(Error::InvalidEndpoint);
-    }
-
-    match hook {
-      Some("hook") | None => (),
-      Some(_) => return Err(Error::InvalidEndpoint),
     }
 
     if split.next().is_some() {
@@ -124,56 +98,35 @@ mod tests {
 
   #[test]
   fn test_endpoint_invalid() {
-    assert!(matches!(Endpoint::try_from("").unwrap_err(), Error::InvalidEndpoint));
-    assert!(matches!(Endpoint::try_from("/").unwrap_err(), Error::InvalidEndpoint));
-    assert!(matches!(Endpoint::try_from("//").unwrap_err(), Error::InvalidEndpoint));
-    assert!(matches!(Endpoint::try_from("a/").unwrap_err(), Error::InvalidEndpoint));
-    assert!(matches!(Endpoint::try_from("/b").unwrap_err(), Error::InvalidEndpoint));
-    assert!(matches!(
-      Endpoint::try_from("a/b/").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
-    assert!(matches!(
-      Endpoint::try_from("a/b/c").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
-    assert!(matches!(
-      Endpoint::try_from("a/b/c/d").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
-    assert!(matches!(
-      Endpoint::try_from("1a/b").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
-    assert!(matches!(
-      Endpoint::try_from("a/b2").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
-    assert!(matches!(
-      Endpoint::try_from("a/b/钩").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
-    assert!(matches!(
-      Endpoint::try_from("longer/hyphenated-word").unwrap_err(),
-      Error::InvalidEndpoint
-    ));
+    for invalid_endpoint in [
+      "",
+      "/",
+      "//",
+      "a/",
+      "/b",
+      "a/b/",
+      "a/b/c",
+      "a/b/c/d",
+      "1a/b",
+      "a/b2",
+      "námespace/endpoint",
+      "namespace/hyphenated-word",
+    ] {
+      assert!(matches!(
+        Endpoint::try_from(invalid_endpoint).unwrap_err(),
+        Error::InvalidEndpoint
+      ),);
+    }
   }
 
   #[test]
   fn test_endpoint_valid() {
-    assert!(Endpoint::try_from("a/b").is_ok());
-    assert!(Endpoint::try_from("longer/word").is_ok());
-    assert!(Endpoint::try_from("longer_endpoint/underscored_word").is_ok());
-  }
-
-  #[test]
-  fn test_endpoint_hook() {
-    assert!(!Endpoint::try_from("a/b").unwrap().is_hook());
-    assert!(Endpoint::try_from("a/b/hook").unwrap().is_hook());
-
-    let endpoint: Endpoint = Endpoint::try_from("a/b").unwrap().into_hook();
-    assert_eq!(endpoint.as_ref(), "a/b/hook");
-    assert_eq!(endpoint.into_hook().as_ref(), "a/b/hook");
+    for valid_endpoint in ["a/b", "longer/word", "longer_endpoint/underscored_word"] {
+      assert!(
+        Endpoint::try_from(valid_endpoint).is_ok(),
+        "expected `{valid_endpoint}` to be a valid endpoint"
+      );
+    }
   }
 
   #[test]
