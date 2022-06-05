@@ -15,10 +15,9 @@ async-trait = { version = "0.1", default-features = false }
 cfg-if = { version = "1.0", default-features = false }
 dashmap = { version = "5.1", default-features = false }
 futures = { version = "0.3", default-features = false }
-identity-account = { path = "../identity-account", default-features = false, features = ["send-sync-storage"], optional = true }
-identity-core = { path = "../identity-core", default-features = false }
-identity-iota = { path = "../identity-iota", default-features = false }
-identity-iota-core = { path = "../identity-iota-core", default-features = false }
+identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
+identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false, features = ["async"] }
+identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
 libp2p = { version = "0.43", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
@@ -34,6 +33,7 @@ wasm-bindgen-futures = { version = "0.4.29", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
+identity-account = { version = "=0.5.0", path = "../identity-account", default-features = false, features = ["send-sync-storage"] }
 pretty_env_logger = { version = "0.4", default-features = false }
 
 [[bench]]
@@ -41,5 +41,4 @@ name = "benchmark"
 harness = false
 
 [features]
-account = ["identity-account/mem-client", "identity-account/async"]
 default = []
