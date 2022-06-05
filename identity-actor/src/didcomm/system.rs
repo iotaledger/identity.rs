@@ -146,7 +146,7 @@ impl DidCommSystem {
       error_message: err.to_string(),
     })?;
 
-    log::debug!("Sending `{}` message", endpoint);
+    log::debug!("sending `{}` message", endpoint);
     let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
     let response = self.commander_mut().send_request(peer, message).await?;

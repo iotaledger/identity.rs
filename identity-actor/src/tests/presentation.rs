@@ -32,7 +32,7 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommState
     let result = presentation_holder_handler(system, request.peer_id, Some(request.input)).await;
 
     if let Err(err) = result {
-      log::error!("presentation_holder_actor_handler errored: {:?}", err);
+      log::error!("presentation holder actor errored: {err:?}");
     }
   }
 }
@@ -45,7 +45,7 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
     let result = presentation_verifier_handler(system, request.peer_id, Some(request.input)).await;
 
     if let Err(err) = result {
-      log::error!("presentation_verifier_actor_handler errored: {:?}", err);
+      log::error!("presentation verifier actor errored: {err:?}");
     }
   }
 }
