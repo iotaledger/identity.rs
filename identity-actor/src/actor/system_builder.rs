@@ -125,13 +125,7 @@ impl SystemBuilder {
     TRA::Error: Send + Sync,
   {
     let executor = Box::new(|fut| {
-      cfg_if::cfg_if! {
-        if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
-          tokio::spawn(fut);
-        } else {
-          wasm_bindgen_futures::spawn_local(fut);
-        }
-      }
+      tokio::spawn(fut);
     });
 
     let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =

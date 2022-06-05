@@ -209,15 +209,7 @@ impl DidCommSystem {
 
   #[inline(always)]
   pub(crate) fn handle_async_request(mut self, request: InboundRequest) {
-    cfg_if::cfg_if! {
-      if #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))] {
-        let spawn = tokio::spawn;
-      } else {
-        let spawn = wasm_bindgen_futures::spawn_local;
-      }
-    }
-
-    let _ = spawn(async move {
+    let _ = tokio::spawn(async move {
       match self.state.actors.get(&request.endpoint) {
         Some(actor) => {
           let handler: &dyn AbstractDidCommActor = actor.as_ref();
