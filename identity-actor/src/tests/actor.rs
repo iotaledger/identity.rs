@@ -37,6 +37,7 @@ async fn test_end_to_end() -> ActorResult<()> {
     counter: Arc<AtomicU32>,
   }
 
+  // Define our request types and implement ActorRequest for them.
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct Increment(u32);
 
@@ -44,7 +45,7 @@ async fn test_end_to_end() -> ActorResult<()> {
   struct Decrement(u32);
 
   impl ActorRequest for Increment {
-    type Response = ();
+    type Response = u32;
 
     fn endpoint() -> Endpoint {
       "counter/increment".try_into().unwrap()
@@ -52,7 +53,7 @@ async fn test_end_to_end() -> ActorResult<()> {
   }
 
   impl ActorRequest for Decrement {
-    type Response = ();
+    type Response = u32;
 
     fn endpoint() -> Endpoint {
       "counter/decrement".try_into().unwrap()
@@ -62,15 +63,18 @@ async fn test_end_to_end() -> ActorResult<()> {
   // States that MyActor can handle messages of type `Increment`.
   #[async_trait::async_trait]
   impl Actor<Increment> for MyActor {
-    async fn handle(&self, request: RequestContext<Increment>) {
+    async fn handle(&self, request: RequestContext<Increment>) -> u32 {
       self.counter.fetch_add(request.input.0, Ordering::SeqCst);
+      self.counter.load(Ordering::SeqCst)
     }
   }
 
+  // States that MyActor can handle messages of type `Decrement`.
   #[async_trait::async_trait]
   impl Actor<Decrement> for MyActor {
-    async fn handle(&self, request: RequestContext<Decrement>) {
+    async fn handle(&self, request: RequestContext<Decrement>) -> u32 {
       self.counter.fetch_sub(request.input.0, Ordering::SeqCst);
+      self.counter.load(Ordering::SeqCst)
     }
   }
 
@@ -78,32 +82,28 @@ async fn test_end_to_end() -> ActorResult<()> {
     counter: Arc::new(AtomicU32::new(0)),
   };
 
+  // Create a new system and attach the actor.
+  // Each attachment is for one request type, so we have to do it twice.
   let mut builder = SystemBuilder::new();
-  // Let's this system "manage" this actor, by sending incoming requests to it when they match.
   builder.attach::<Increment, _>(actor.clone());
   builder.attach::<Decrement, _>(actor.clone());
 
-  let mut listening_system: System = builder.build().await.unwrap();
-
-  let _ = listening_system
-    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
+  // Build the listening system and let it listen on a default address.
+  let mut listening_system: System = builder
+    .listen_on("/ip4/0.0.0.0/tcp/0".parse().unwrap())
+    .build()
     .await
     .unwrap();
-  let addrs = listening_system.addresses().await.unwrap();
 
+  let addresses = listening_system.addresses().await.unwrap();
   let peer_id = listening_system.peer_id();
 
   let mut sender_system: System = SystemBuilder::new().build().await.unwrap();
+  // Add on which which addresses sender_system can reach peer_id.
+  sender_system.add_addresses(peer_id, addresses).await.unwrap();
 
-  sender_system.add_addresses(peer_id, addrs).await.unwrap();
-
-  sender_system.send_request(peer_id, Increment(3)).await.unwrap();
-
-  assert_eq!(actor.counter.load(Ordering::SeqCst), 3);
-
-  sender_system.send_request(peer_id, Decrement(2)).await.unwrap();
-
-  assert_eq!(actor.counter.load(Ordering::SeqCst), 1);
+  assert_eq!(sender_system.send_request(peer_id, Increment(3)).await.unwrap(), 3);
+  assert_eq!(sender_system.send_request(peer_id, Decrement(2)).await.unwrap(), 1);
 
   listening_system.shutdown().await.unwrap();
   sender_system.shutdown().await.unwrap();
@@ -139,6 +139,7 @@ async fn test_unknown_request_returns_error() -> ActorResult<()> {
   Ok(())
 }
 
+/// Test that system2 can send a request to system1 if it was previously sent a request from system1.
 #[tokio::test]
 async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   try_init_logger();
@@ -198,104 +199,6 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_actor_handler_is_invoked() -> ActorResult<()> {
-  try_init_logger();
-
-  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct Dummy(u8);
-
-  impl ActorRequest for Dummy {
-    type Response = ();
-
-    fn endpoint() -> Endpoint {
-      "request/test".try_into().unwrap()
-    }
-  }
-
-  #[derive(Debug, Clone)]
-  pub struct TestActor(pub Arc<AtomicBool>);
-
-  #[async_trait::async_trait]
-  impl Actor<Dummy> for TestActor {
-    async fn handle(&self, request: RequestContext<Dummy>) {
-      if let Dummy(42) = request.input {
-        self.0.store(true, std::sync::atomic::Ordering::SeqCst);
-      }
-    }
-  }
-
-  let actor = TestActor(Arc::new(AtomicBool::new(false)));
-
-  let (receiver, receiver_addrs, receiver_peer_id) = default_listening_system(|mut builder| {
-    builder.attach(actor.clone());
-    // builder.add_state(state.clone()).add_sync_handler(Actor::handler);
-    builder
-  })
-  .await;
-  let mut sender = default_sending_system(|builder| builder).await;
-
-  sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
-
-  sender.send_request(receiver_peer_id, Dummy(42)).await.unwrap();
-
-  sender.shutdown().await.unwrap();
-  receiver.shutdown().await.unwrap();
-
-  assert!(actor.0.load(std::sync::atomic::Ordering::SeqCst));
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_synchronous_handler_invocation() -> ActorResult<()> {
-  try_init_logger();
-
-  #[derive(Debug, serde::Serialize, serde::Deserialize)]
-  pub struct MessageResponse(String);
-
-  #[derive(Debug, serde::Serialize, serde::Deserialize)]
-  pub struct MessageRequest(String);
-
-  impl ActorRequest for MessageRequest {
-    type Response = MessageResponse;
-
-    fn endpoint() -> Endpoint {
-      "test/message".try_into().unwrap()
-    }
-  }
-
-  #[derive(Debug)]
-  struct TestActor;
-
-  #[async_trait::async_trait]
-  impl Actor<MessageRequest> for TestActor {
-    async fn handle(&self, message: RequestContext<MessageRequest>) -> MessageResponse {
-      MessageResponse(message.input.0)
-    }
-  }
-
-  let (listening_actor, addrs, peer_id) = default_listening_system(|mut builder| {
-    builder.attach(TestActor);
-    builder
-  })
-  .await;
-
-  let mut sending_actor = default_sending_system(|builder| builder).await;
-  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
-
-  let result = sending_actor
-    .send_request(peer_id, MessageRequest("test".to_owned()))
-    .await;
-
-  assert_eq!(result.unwrap().0, "test".to_owned());
-
-  listening_actor.shutdown().await.unwrap();
-  sending_actor.shutdown().await.unwrap();
-
-  Ok(())
-}
-
-#[tokio::test]
 async fn test_interacting_with_shutdown_actor_returns_error() {
   try_init_logger();
 
@@ -323,16 +226,16 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_system(|mut builder| {
+  let (listening_system, addrs, peer_id) = default_listening_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
-  let mut sending_actor: System = SystemBuilder::new().build().await.unwrap();
-  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+  let mut sending_system: System = SystemBuilder::new().build().await.unwrap();
+  sending_system.add_addresses(peer_id, addrs).await.unwrap();
 
-  let mut sender1 = sending_actor.clone();
+  let mut sender1 = sending_system.clone();
 
   // Ensure that an actor shutdown returns errors through open channels,
   // such as `EventLoop::await_response`.
@@ -349,7 +252,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
   let result = futures::poll!(&mut send_request_future);
   assert!(matches!(result, Poll::Pending));
 
-  sending_actor.shutdown().await.unwrap();
+  sending_system.shutdown().await.unwrap();
 
   let result = send_request_future.await;
   assert!(matches!(
@@ -357,13 +260,13 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
     Error::OutboundFailure(OutboundFailure::ConnectionClosed)
   ));
 
-  listening_actor.shutdown().await.unwrap();
+  listening_system.shutdown().await.unwrap();
 
   Ok(())
 }
 
 #[tokio::test]
-async fn test_endpoint_type_mismatch_result_in_serialization_errors() -> ActorResult<()> {
+async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> ActorResult<()> {
   try_init_logger();
 
   // Define two types with identical serialization results, but different `Response` types.
