@@ -3,7 +3,6 @@
 
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use tokio::sync::Notify;
 
 use super::presentation::presentation_holder_handler;
 use super::presentation::presentation_verifier_handler;
@@ -27,65 +26,65 @@ use crate::tests::default_identity;
 use crate::tests::try_init_logger;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use super::default_listening_didcomm_system;
 use super::default_sending_didcomm_system;
 
 #[tokio::test]
-async fn test_end_to_end() -> ActorResult<()> {
+async fn test_didcomm_end_to_end() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct AsyncDummy(u32);
+  pub struct TestRequest(u32);
 
-  impl DidCommRequest for AsyncDummy {
+  impl DidCommRequest for TestRequest {
     fn endpoint() -> Endpoint {
-      "dummy/request".try_into().unwrap()
+      "test/request".try_into().unwrap()
     }
   }
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct AsyncDummy2(u32);
+  pub struct TestRequestAlt(u32);
 
-  impl DidCommRequest for AsyncDummy2 {
+  impl DidCommRequest for TestRequestAlt {
     fn endpoint() -> Endpoint {
-      "dummy/request_alt".try_into().unwrap()
+      "test/request_alt".try_into().unwrap()
     }
   }
 
   #[derive(Debug, Clone)]
   struct MyActor {
     counter: Arc<AtomicU32>,
-    notify: Arc<Notify>,
   }
 
   #[async_trait::async_trait]
-  impl DidCommActor<DidCommPlaintextMessage<AsyncDummy>> for MyActor {
-    async fn handle(&self, mut actor: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<AsyncDummy>>) {
-      self
-        .counter
-        .fetch_add(request.input.body.0, std::sync::atomic::Ordering::SeqCst);
+  impl DidCommActor<DidCommPlaintextMessage<TestRequest>> for MyActor {
+    async fn handle(&self, mut actor: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<TestRequest>>) {
+      self.counter.fetch_add(request.input.body.0, Ordering::SeqCst);
 
       actor
-        .send_message(request.peer_id, request.input.thread_id(), AsyncDummy2(21))
+        .send_message(request.peer_id, request.input.thread_id(), TestRequestAlt(21))
         .await
         .unwrap();
 
-      let message: DidCommPlaintextMessage<AsyncDummy2> = actor.await_message(request.input.thread_id()).await.unwrap();
+      let message: DidCommPlaintextMessage<TestRequestAlt> =
+        actor.await_message(request.input.thread_id()).await.unwrap();
 
       assert_eq!(message.body.0, 1337);
 
-      self.notify.notify_one();
+      actor
+        .send_message(request.peer_id, request.input.thread_id(), TestRequestAlt(7))
+        .await
+        .unwrap();
     }
   }
 
   let mut builder = DidCommSystemBuilder::new().identity(default_identity());
 
-  let notify = Arc::new(Notify::new());
   let actor = MyActor {
     counter: Arc::new(AtomicU32::new(0)),
-    notify: notify.clone(),
   };
   builder.attach_didcomm(actor.clone());
 
@@ -108,22 +107,27 @@ async fn test_end_to_end() -> ActorResult<()> {
   let thread_id = ThreadId::new();
 
   sending_system
-    .send_message(peer_id, &thread_id, AsyncDummy(42))
+    .send_message(peer_id, &thread_id, TestRequest(42))
     .await
     .unwrap();
 
-  let message: DidCommPlaintextMessage<AsyncDummy2> = sending_system.await_message(&thread_id).await.unwrap();
+  let message: DidCommPlaintextMessage<TestRequestAlt> = sending_system.await_message(&thread_id).await.unwrap();
 
   assert_eq!(message.body.0, 21);
 
   sending_system
-    .send_message(peer_id, &thread_id, AsyncDummy2(1337))
+    .send_message(peer_id, &thread_id, TestRequestAlt(1337))
     .await
     .unwrap();
 
-  notify.notified().await;
+  let message: DidCommPlaintextMessage<TestRequestAlt> = sending_system.await_message(&thread_id).await.unwrap();
 
+  assert_eq!(message.body.0, 7);
   assert_eq!(actor.counter.load(std::sync::atomic::Ordering::SeqCst), 42);
+
+  // Allow background tasks to finish.
+  // The test also succeeds without this, but might cause the background tasks to panic or log an error.
+  tokio::task::yield_now().await;
 
   listening_system.shutdown().await.unwrap();
   sending_system.shutdown().await.unwrap();
@@ -131,8 +135,9 @@ async fn test_end_to_end() -> ActorResult<()> {
   Ok(())
 }
 
+/// Ensure the DidCommSystem supports actors working with `ActorRequest`s.
 #[tokio::test]
-async fn test_didcomm_actor_supports_sync_requests() -> ActorResult<()> {
+async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -223,6 +228,10 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   presentation_holder_handler(holder_system.clone(), peer_id, None)
     .await
     .unwrap();
+
+  // Allow background tasks to finish.
+  // The test also succeeds without this, but might cause the background tasks to panic or log an error.
+  tokio::task::yield_now().await;
 
   verifier_system.shutdown().await.unwrap();
   holder_system.shutdown().await.unwrap();
@@ -336,7 +345,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for TestActor {
     async fn handle(&self, _: DidCommSystem, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
       tokio::time::sleep(std::time::Duration::from_millis(25)).await;
-      self.was_called.store(true, std::sync::atomic::Ordering::SeqCst);
+      self.was_called.store(true, Ordering::SeqCst);
     }
   }
 

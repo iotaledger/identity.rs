@@ -29,7 +29,7 @@ use super::default_listening_system;
 use super::default_sending_system;
 
 #[tokio::test]
-async fn test_end_to_end() -> ActorResult<()> {
+async fn test_actor_end_to_end() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
@@ -89,12 +89,12 @@ async fn test_end_to_end() -> ActorResult<()> {
   builder.attach::<Decrement, _>(actor.clone());
 
   // Build the listening system and let it listen on a default address.
-  let mut listening_system: System = builder
-    .listen_on("/ip4/0.0.0.0/tcp/0".parse().unwrap())
-    .build()
+  let mut listening_system: System = builder.build().await.unwrap();
+
+  let _ = listening_system
+    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
     .await
     .unwrap();
-
   let addresses = listening_system.addresses().await.unwrap();
   let peer_id = listening_system.peer_id();
 
