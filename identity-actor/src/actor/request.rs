@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Serialize;
 
-use super::Endpoint;
+use crate::actor::Endpoint;
 
 /// Expresses the synchronicity of a request at runtime, i.e. whether a request
 /// is handled synchronously or asynchronously.

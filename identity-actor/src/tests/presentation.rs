@@ -3,6 +3,9 @@
 
 use libp2p::PeerId;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::actor::Endpoint;
 use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
@@ -11,9 +14,6 @@ use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
 use crate::didcomm::ThreadId;
-
-use serde::Deserialize;
-use serde::Serialize;
 
 #[derive(Debug, Clone)]
 pub struct DidCommState;

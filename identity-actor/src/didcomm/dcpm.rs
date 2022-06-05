@@ -3,8 +3,7 @@
 
 use crate::actor::Endpoint;
 use crate::didcomm::DidCommRequest;
-
-use super::thread_id::ThreadId;
+use crate::didcomm::ThreadId;
 
 /// A DIDComm Plaintext Message. Implementation is currently rudimentary.
 ///

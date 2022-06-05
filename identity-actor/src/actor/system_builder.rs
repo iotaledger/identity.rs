@@ -6,16 +6,6 @@ use std::iter;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::actor::ActorConfig;
-use crate::actor::ActorRequest;
-use crate::actor::Error;
-use crate::actor::Result as ActorResult;
-use crate::actor::System;
-use crate::p2p::ActorProtocol;
-use crate::p2p::ActorRequestResponseCodec;
-use crate::p2p::EventLoop;
-use crate::p2p::InboundRequest;
-use crate::p2p::NetCommander;
 use futures::channel::mpsc;
 use futures::AsyncRead;
 use futures::AsyncWrite;
@@ -37,11 +27,21 @@ use libp2p::websocket::WsConfig;
 use libp2p::yamux::YamuxConfig;
 use libp2p::Swarm;
 
-use super::actor::Actor;
-use super::system::ActorMap;
-use super::AbstractActor;
-use super::ActorWrapper;
-use super::SystemState;
+use crate::actor::AbstractActor;
+use crate::actor::Actor;
+use crate::actor::ActorConfig;
+use crate::actor::ActorMap;
+use crate::actor::ActorRequest;
+use crate::actor::ActorWrapper;
+use crate::actor::Error;
+use crate::actor::Result as ActorResult;
+use crate::actor::System;
+use crate::actor::SystemState;
+use crate::p2p::ActorProtocol;
+use crate::p2p::ActorRequestResponseCodec;
+use crate::p2p::EventLoop;
+use crate::p2p::InboundRequest;
+use crate::p2p::NetCommander;
 
 /// A builder for [`System`]s that allows for customizing its configuration and attaching actors.
 pub struct SystemBuilder {

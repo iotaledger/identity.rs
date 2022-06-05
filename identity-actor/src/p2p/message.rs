@@ -1,12 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::actor::Endpoint;
-use crate::actor::RequestMode;
+use std::fmt::Debug;
 
 use serde::Deserialize;
 use serde::Serialize;
-use std::fmt::Debug;
+
+use crate::actor::Endpoint;
+use crate::actor::RequestMode;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RequestMessage {

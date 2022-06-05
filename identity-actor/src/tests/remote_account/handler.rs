@@ -3,9 +3,6 @@
 
 use std::sync::Arc;
 
-use super::requests::IdentityList;
-use crate::actor::Actor;
-use crate::actor::RequestContext;
 use dashmap::DashMap;
 use identity_account::account::Account;
 use identity_account::account::AccountBuilder;
@@ -13,9 +10,12 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use tokio::sync::Mutex;
 
-use super::requests::IdentityCreate;
-use super::requests::IdentityGet;
-use super::RemoteAccountError;
+use crate::actor::Actor;
+use crate::actor::RequestContext;
+use crate::tests::remote_account::IdentityCreate;
+use crate::tests::remote_account::IdentityGet;
+use crate::tests::remote_account::IdentityList;
+use crate::tests::remote_account::RemoteAccountError;
 
 /// A proof-of-concept implementation of a remote `Account` with very basic operations
 /// and disabled tangle interaction.

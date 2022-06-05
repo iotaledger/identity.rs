@@ -24,11 +24,10 @@ use libp2p::TransportError;
 
 use crate::actor::Endpoint;
 use crate::actor::RequestMode;
-
-use super::behaviour::ActorRequestResponseCodec;
-use super::message::RequestMessage;
-use super::message::ResponseMessage;
-use super::net_commander::SwarmCommand;
+use crate::p2p::ActorRequestResponseCodec;
+use crate::p2p::RequestMessage;
+use crate::p2p::ResponseMessage;
+use crate::p2p::SwarmCommand;
 
 /// The background loop that handles libp2p swarm events and `NetCommander` commands simultaneously.
 pub struct EventLoop {

@@ -1,9 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::actor::Endpoint;
-
 use libp2p::PeerId;
+
+use crate::actor::Endpoint;
 
 /// A request paired with some context such as the sender's peer id.
 #[non_exhaustive]

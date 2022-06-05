@@ -6,10 +6,10 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
-use super::ActorRequest;
-use super::RemoteSendError;
-use super::RequestContext;
+use crate::actor::ActorRequest;
 use crate::actor::ErrorLocation;
+use crate::actor::RemoteSendError;
+use crate::actor::RequestContext;
 
 /// A boxed future that is `Send`.
 pub(crate) type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>>;

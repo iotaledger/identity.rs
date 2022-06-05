@@ -4,6 +4,13 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use identity_core::common::OneOrMany;
+use libp2p::request_response::InboundFailure;
+use libp2p::request_response::RequestId;
+use libp2p::request_response::ResponseChannel;
+use libp2p::Multiaddr;
+use libp2p::PeerId;
+
 use crate::actor::errors::ErrorLocation;
 use crate::actor::AbstractActor;
 use crate::actor::ActorRequest;
@@ -18,13 +25,6 @@ use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
-
-use identity_core::common::OneOrMany;
-use libp2p::request_response::InboundFailure;
-use libp2p::request_response::RequestId;
-use libp2p::request_response::ResponseChannel;
-use libp2p::Multiaddr;
-use libp2p::PeerId;
 
 /// An actor system can be used to send requests to remote actors, and fowards incoming requests
 /// to attached actors.

@@ -10,8 +10,8 @@ use identity_actor::actor::SystemBuilder;
 use identity_actor::Multiaddr;
 use identity_actor::PeerId;
 
-use actor::IdentityCreate;
-use actor::RemoteAccount;
+use remote_account::IdentityCreate;
+use remote_account::RemoteAccount;
 
 async fn setup() -> (System, PeerId, System) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
@@ -72,7 +72,7 @@ criterion_group!(benches, bench_create_remote_account);
 
 criterion_main!(benches);
 
-mod actor {
+mod remote_account {
   use dashmap::DashMap;
   use identity_account::account::Account;
   use identity_account::account::AccountBuilder;

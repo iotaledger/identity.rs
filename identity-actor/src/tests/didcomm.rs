@@ -1,15 +1,14 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
-use super::presentation::presentation_holder_handler;
-use super::presentation::presentation_verifier_handler;
-use super::presentation::DidCommState;
-use super::presentation::PresentationOffer;
-use super::presentation::PresentationRequest;
-use super::remote_account::IdentityList;
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
@@ -23,14 +22,15 @@ use crate::didcomm::DidCommSystem;
 use crate::didcomm::DidCommSystemBuilder;
 use crate::didcomm::ThreadId;
 use crate::tests::default_identity;
+use crate::tests::default_listening_didcomm_system;
+use crate::tests::default_sending_didcomm_system;
+use crate::tests::presentation::presentation_holder_handler;
+use crate::tests::presentation::presentation_verifier_handler;
+use crate::tests::presentation::DidCommState;
+use crate::tests::presentation::PresentationOffer;
+use crate::tests::presentation::PresentationRequest;
+use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::AtomicU32;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
-
-use super::default_listening_didcomm_system;
-use super::default_sending_didcomm_system;
 
 #[tokio::test]
 async fn test_didcomm_end_to_end() -> ActorResult<()> {

@@ -1,14 +1,15 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::actor::Error;
-use crate::actor::Result as ActorResult;
 use std::borrow::Cow;
 use std::fmt::Display;
 use std::str::Split;
 
 use serde::Deserialize;
 use serde::Serialize;
+
+use crate::actor::Error;
+use crate::actor::Result as ActorResult;
 
 /// A path-like identifier for an actor request. As an example, `identity/create`
 /// could be an endpoint of the request "create" within the "identity" namespace.

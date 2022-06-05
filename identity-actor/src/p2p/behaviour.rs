@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::io::{self};
+
 use futures::AsyncRead;
 use futures::AsyncWrite;
 use futures::AsyncWriteExt;
@@ -8,10 +10,8 @@ use libp2p::core::upgrade;
 use libp2p::core::ProtocolName;
 use libp2p::request_response::RequestResponseCodec;
 
-use std::io::{self};
-
-use super::message::RequestMessage;
-use super::message::ResponseMessage;
+use crate::p2p::RequestMessage;
+use crate::p2p::ResponseMessage;
 
 #[derive(Debug, Clone)]
 pub struct ActorProtocol();

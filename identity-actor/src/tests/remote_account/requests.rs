@@ -9,8 +9,7 @@ use serde::Serialize;
 
 use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
-
-use super::RemoteAccountError;
+use crate::tests::remote_account::RemoteAccountError;
 
 /// Can be sent to a `RemoteAccount` to instruct it to create an identity.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

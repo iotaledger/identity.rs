@@ -68,14 +68,14 @@ async fn default_listening_didcomm_system(
 
   builder = f(builder);
 
-  let mut listening_actor: DidCommSystem = builder.build().await.unwrap();
+  let mut listening_system: DidCommSystem = builder.build().await.unwrap();
 
-  let _ = listening_actor.start_listening(addr).await.unwrap();
-  let addrs = listening_actor.addresses().await.unwrap();
+  let _ = listening_system.start_listening(addr).await.unwrap();
+  let addrs = listening_system.addresses().await.unwrap();
 
-  let peer_id = listening_actor.peer_id();
+  let peer_id = listening_system.peer_id();
 
-  (listening_actor, addrs, peer_id)
+  (listening_system, addrs, peer_id)
 }
 
 fn default_identity() -> ActorIdentity {

@@ -4,7 +4,6 @@
 use futures::channel::mpsc;
 use futures::channel::oneshot;
 use futures::future::poll_fn;
-
 use identity_core::common::OneOrMany;
 use libp2p::request_response::InboundFailure;
 use libp2p::request_response::OutboundFailure;
@@ -16,9 +15,8 @@ use libp2p::TransportError;
 
 use crate::actor::Error;
 use crate::actor::Result as ActorResult;
-
-use super::message::RequestMessage;
-use super::message::ResponseMessage;
+use crate::p2p::RequestMessage;
+use crate::p2p::ResponseMessage;
 
 /// A thread-safe way to interact with an `EventLoop` running in the background.
 #[derive(Debug, Clone)]

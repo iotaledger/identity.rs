@@ -12,8 +12,6 @@ use identity_iota_core::did::IotaDID;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
-use super::remote_account::IdentityGet;
-use super::remote_account::IdentityList;
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Endpoint;
@@ -23,10 +21,11 @@ use crate::actor::RequestContext;
 use crate::actor::Result as ActorResult;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
+use crate::tests::default_listening_system;
+use crate::tests::default_sending_system;
+use crate::tests::remote_account::IdentityGet;
+use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
-
-use super::default_listening_system;
-use super::default_sending_system;
 
 #[tokio::test]
 async fn test_actor_end_to_end() -> ActorResult<()> {
