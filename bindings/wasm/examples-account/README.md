@@ -48,7 +48,7 @@ npm run example:account -- create_did
 |9| [multiple_identities](src/multiple_identities.ts) | How to create multiple identities from a builder and how to load existing identities into an account. |
 |10| [unchecked](src/unchecked.ts) |  How to update the custom properties of a DID document directly by using the account's unchecked methods. |
 |11| [custom_storage](src/custom_storage.ts) | Example implementation of a custom storage and testing it with the storage test suite. |
-| 12 | [encryption](./account/encryption.rs) | Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange by encrypting and decrypting data with a shared key. |
+|12| [encryption](src/encryption.ts) |   Demonstrates Elliptic-curve Diffie-Hellman (ECDH) cryptographic key exchange by encrypting and decrypting data with a shared key. |
 
 ## Browser
 
