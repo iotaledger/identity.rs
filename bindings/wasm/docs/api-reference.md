@@ -14,8 +14,14 @@ used to store identities, and the same <a href="#Client">Client</a> used to publ
 This means a builder can be reconfigured in-between account creations, without affecting
 the configuration of previously built accounts.</p>
 </dd>
+<dt><a href="#AgreementInfo">AgreementInfo</a></dt>
+<dd><p>Agreement information used as the input for the concat KDF.</p>
+</dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
+<dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
+<dd><p>Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).</p>
+</dd>
 <dt><a href="#ChainState">ChainState</a></dt>
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
@@ -59,6 +65,12 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#EmbeddedRevocationStatus">EmbeddedRevocationStatus</a></dt>
 <dd><p>Information used to determine the current status of a <code>Credential</code>.</p>
+</dd>
+<dt><a href="#EncryptedData">EncryptedData</a></dt>
+<dd><p>The structure returned after encrypting data</p>
+</dd>
+<dt><a href="#EncryptionAlgorithm">EncryptionAlgorithm</a></dt>
+<dd><p>Supported content encryption algorithms.</p>
 </dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
@@ -201,6 +213,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -215,14 +230,49 @@ publishing to the Tangle.
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.revokeCredentials(fragment, credentials)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+attachMethodRelationships"></a>
+
+### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Attach one or more verification relationships to a method.
+
+Note: the method must exist and be in the set of verification methods;
+it cannot be an embedded method.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -367,6 +417,40 @@ If the document has an `EmbeddedRevocationService` identified by `fragment`, rev
 | fragment | <code>string</code> | 
 | credentials | <code>Uint32Array</code> | 
 
+<a name="Account+encryptData"></a>
+
+### account.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+
+Returns an [`EncryptedData`] instance.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| plaintext | <code>Uint8Array</code> | 
+| associated_data | <code>Uint8Array</code> | 
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
+| public_key | <code>Uint8Array</code> | 
+
+<a name="Account+decryptData"></a>
+
+### account.decryptData(data, encryption_algorithm, cek_algorithm, fragment) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+`cek_algorithm`.
+
+Returns the decrypted text.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| data | [<code>EncryptedData</code>](#EncryptedData) | 
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
+| fragment | <code>string</code> | 
+
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -421,42 +505,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+attachMethodRelationships"></a>
-
-### account.attachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Attach one or more verification relationships to a method.
-
-Note: the method must exist and be in the set of verification methods;
-it cannot be an embedded method.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -515,6 +563,78 @@ by the [Client](#Client) used to publish it.
 | --- | --- |
 | identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
 
+<a name="AgreementInfo"></a>
+
+## AgreementInfo
+Agreement information used as the input for the concat KDF.
+
+**Kind**: global class  
+
+* [AgreementInfo](#AgreementInfo)
+    * [new AgreementInfo(apu, apv, pub_info, priv_info)](#new_AgreementInfo_new)
+    * _instance_
+        * [.apu()](#AgreementInfo+apu) ⇒ <code>Uint8Array</code>
+        * [.apv()](#AgreementInfo+apv) ⇒ <code>Uint8Array</code>
+        * [.pubInfo()](#AgreementInfo+pubInfo) ⇒ <code>Uint8Array</code>
+        * [.privInfo()](#AgreementInfo+privInfo) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#AgreementInfo+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+
+<a name="new_AgreementInfo_new"></a>
+
+### new AgreementInfo(apu, apv, pub_info, priv_info)
+Creates an `AgreementInfo` Object.
+
+
+| Param | Type |
+| --- | --- |
+| apu | <code>Uint8Array</code> | 
+| apv | <code>Uint8Array</code> | 
+| pub_info | <code>Uint8Array</code> | 
+| priv_info | <code>Uint8Array</code> | 
+
+<a name="AgreementInfo+apu"></a>
+
+### agreementInfo.apu() ⇒ <code>Uint8Array</code>
+Returns a copy of `apu'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+apv"></a>
+
+### agreementInfo.apv() ⇒ <code>Uint8Array</code>
+Returns a copy of `apv'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+pubInfo"></a>
+
+### agreementInfo.pubInfo() ⇒ <code>Uint8Array</code>
+Returns a copy of `pubInfo'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+privInfo"></a>
+
+### agreementInfo.privInfo() ⇒ <code>Uint8Array</code>
+Returns a copy of `privInfo'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+toJSON"></a>
+
+### agreementInfo.toJSON() ⇒ <code>any</code>
+Serializes `AgreementInfo` as a JSON object.
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo.fromJSON"></a>
+
+### AgreementInfo.fromJSON(json_value) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+Deserializes `AgreementInfo` from a JSON object.
+
+**Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="AutoSave"></a>
 
 ## AutoSave
@@ -564,6 +684,48 @@ Save after every N actions.
 Deserializes `AutoSave` from a JSON object.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="CekAlgorithm"></a>
+
+## CekAlgorithm
+Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).
+
+**Kind**: global class  
+
+* [CekAlgorithm](#CekAlgorithm)
+    * _instance_
+        * [.toJSON()](#CekAlgorithm+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+
+<a name="CekAlgorithm+toJSON"></a>
+
+### cekAlgorithm.toJSON() ⇒ <code>any</code>
+Serializes `CekAlgorithm` as a JSON object.
+
+**Kind**: instance method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+<a name="CekAlgorithm.EcdhEs"></a>
+
+### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+
+<a name="CekAlgorithm.fromJSON"></a>
+
+### CekAlgorithm.fromJSON(json_value) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Deserializes `CekAlgorithm` from a JSON object.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
 | Param | Type |
 | --- | --- |
@@ -2687,6 +2849,101 @@ Deserializes a `EmbeddedRevocationStatus` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="EncryptedData"></a>
+
+## EncryptedData
+The structure returned after encrypting data
+
+**Kind**: global class  
+
+* [EncryptedData](#EncryptedData)
+    * _instance_
+        * [.nonce()](#EncryptedData+nonce) ⇒ <code>Uint8Array</code>
+        * [.associatedData()](#EncryptedData+associatedData) ⇒ <code>Uint8Array</code>
+        * [.ciphertext()](#EncryptedData+ciphertext) ⇒ <code>Uint8Array</code>
+        * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+
+<a name="EncryptedData+nonce"></a>
+
+### encryptedData.nonce() ⇒ <code>Uint8Array</code>
+Returns a copy of the nonce
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+associatedData"></a>
+
+### encryptedData.associatedData() ⇒ <code>Uint8Array</code>
+Returns a copy of the associated data
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+ciphertext"></a>
+
+### encryptedData.ciphertext() ⇒ <code>Uint8Array</code>
+Returns a copy of the ciphertext
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+tag"></a>
+
+### encryptedData.tag() ⇒ <code>Uint8Array</code>
+Returns a copy of the tag
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+toJSON"></a>
+
+### encryptedData.toJSON() ⇒ <code>any</code>
+Serializes `EncryptedData` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData.fromJSON"></a>
+
+### EncryptedData.fromJSON(json_value) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+Deserializes `EncryptedData` from a JSON object.
+
+**Kind**: static method of [<code>EncryptedData</code>](#EncryptedData)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="EncryptionAlgorithm"></a>
+
+## EncryptionAlgorithm
+Supported content encryption algorithms.
+
+**Kind**: global class  
+
+* [EncryptionAlgorithm](#EncryptionAlgorithm)
+    * _instance_
+        * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+
+<a name="EncryptionAlgorithm+toJSON"></a>
+
+### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
+Serializes `EncryptionAlgorithm` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm.A256GCM"></a>
+
+### EncryptionAlgorithm.A256GCM() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+AES GCM using 256-bit key.
+
+**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm.fromJSON"></a>
+
+### EncryptionAlgorithm.fromJSON(json_value) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+Deserializes `EncryptionAlgorithm` from a JSON object.
+
+**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="ExplorerUrl"></a>
 
 ## ExplorerUrl
@@ -4353,6 +4610,7 @@ interface method.
     * [.keyDeleteTest(storage)](#StorageTestSuite.keyDeleteTest) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.keyInsertTest(storage)](#StorageTestSuite.keyInsertTest) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.keySignEd25519Test(storage)](#StorageTestSuite.keySignEd25519Test) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.encryptionTest(alice_storage, bob_storage)](#StorageTestSuite.encryptionTest) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="StorageTestSuite.didCreateGenerateKeyTest"></a>
 
@@ -4425,6 +4683,16 @@ interface method.
 | Param | Type |
 | --- | --- |
 | storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.encryptionTest"></a>
+
+### StorageTestSuite.encryptionTest(alice_storage, bob_storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| alice_storage | <code>Storage</code> | 
+| bob_storage | <code>Storage</code> | 
 
 <a name="Timestamp"></a>
 

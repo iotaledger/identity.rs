@@ -14,6 +14,9 @@ use identity_iota_core::tangle::NetworkName;
 
 use crate::error::Result;
 use crate::identity::ChainState;
+use crate::types::CekAlgorithm;
+use crate::types::EncryptedData;
+use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -117,6 +120,33 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Returns `true` if a key exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
+
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+  ///
+  /// Returns an [`EncryptedData`] instance.
+  #[cfg(feature = "encryption")]
+  async fn data_encrypt(
+    &self,
+    did: &IotaDID,
+    plaintext: Vec<u8>,
+    associated_data: Vec<u8>,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    public_key: PublicKey,
+  ) -> Result<EncryptedData>;
+
+  /// Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
+  ///
+  /// Returns the decrypted text.
+  #[cfg(feature = "encryption")]
+  async fn data_decrypt(
+    &self,
+    did: &IotaDID,
+    data: EncryptedData,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    private_key: &KeyLocation,
+  ) -> Result<Vec<u8>>;
 
   /// Returns the chain state of the identity specified by `did`.
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>>;

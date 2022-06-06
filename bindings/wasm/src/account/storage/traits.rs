@@ -4,7 +4,10 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
+use identity::account_storage::CekAlgorithm;
 use identity::account_storage::ChainState;
+use identity::account_storage::EncryptedData;
+use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::Error as AccountStorageError;
 use identity::account_storage::KeyLocation;
 use identity::account_storage::Result as AccountStorageResult;
@@ -24,6 +27,9 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 
 use crate::account::identity::WasmChainState;
+use crate::account::types::WasmCekAlgorithm;
+use crate::account::types::WasmEncryptedData;
+use crate::account::types::WasmEncryptionAlgorithm;
 use crate::account::types::WasmKeyLocation;
 use crate::common::PromiseBool;
 use crate::common::PromiseVoid;
@@ -48,6 +54,10 @@ extern "C" {
   pub type PromiseArrayDID;
   #[wasm_bindgen(typescript_type = "Promise<[DID, KeyLocation]>")]
   pub type PromiseDIDKeyLocation;
+  #[wasm_bindgen(typescript_type = "Promise<EncryptedData>")]
+  pub type PromiseEncryptedData;
+  #[wasm_bindgen(typescript_type = "Promise<Uint8Array>")]
+  pub type PromiseData;
 }
 
 #[wasm_bindgen]
@@ -82,6 +92,25 @@ extern "C" {
   pub fn key_sign(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation, data: Vec<u8>) -> PromiseSignature;
   #[wasm_bindgen(method, js_name = keyExists)]
   pub fn key_exists(this: &WasmStorage, did: WasmDID, location: WasmKeyLocation) -> PromiseBool;
+  #[wasm_bindgen(method, js_name = dataEncrypt)]
+  pub fn data_encrypt(
+    this: &WasmStorage,
+    did: WasmDID,
+    plaintext: Vec<u8>,
+    associated_data: Vec<u8>,
+    encryption_algorithm: WasmEncryptionAlgorithm,
+    cek_algorithm: WasmCekAlgorithm,
+    public_key: Vec<u8>,
+  ) -> PromiseEncryptedData;
+  #[wasm_bindgen(method, js_name = dataDecrypt)]
+  pub fn data_decrypt(
+    this: &WasmStorage,
+    did: WasmDID,
+    data: WasmEncryptedData,
+    encryption_algorithm: WasmEncryptionAlgorithm,
+    cek_algorithm: WasmCekAlgorithm,
+    private_key: WasmKeyLocation,
+  ) -> Uint8Array;
   #[wasm_bindgen(method, js_name = chainStateGet)]
   pub fn chain_state_get(this: &WasmStorage, did: WasmDID) -> PromiseOptionChainState;
   #[wasm_bindgen(method, js_name = chainStateSet)]
@@ -212,6 +241,51 @@ impl Storage for WasmStorage {
     result.into()
   }
 
+  async fn data_encrypt(
+    &self,
+    did: &IotaDID,
+    plaintext: Vec<u8>,
+    associated_data: Vec<u8>,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    public_key: PublicKey,
+  ) -> AccountStorageResult<EncryptedData> {
+    let promise: Promise = Promise::resolve(&self.data_encrypt(
+      did.clone().into(),
+      plaintext,
+      associated_data,
+      (*encryption_algorithm).into(),
+      cek_algorithm.clone().into(),
+      public_key.as_ref().to_vec(),
+    ));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let encrypted_data: EncryptedData = result
+      .to_account_error()?
+      .into_serde()
+      .map_err(|err| AccountStorageError::SerializationError(err.to_string()))?;
+    Ok(encrypted_data)
+  }
+
+  async fn data_decrypt(
+    &self,
+    did: &IotaDID,
+    data: EncryptedData,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    private_key: &KeyLocation,
+  ) -> AccountStorageResult<Vec<u8>> {
+    let promise: Promise = Promise::resolve(&self.data_decrypt(
+      did.clone().into(),
+      data.into(),
+      (*encryption_algorithm).into(),
+      cek_algorithm.clone().into(),
+      private_key.clone().into(),
+    ));
+    let result: JsValueResult = JsFuture::from(promise).await.into();
+    let data: Vec<u8> = result.to_account_error().map(uint8array_to_bytes)??;
+    Ok(data)
+  }
+
   async fn chain_state_get(&self, did: &IotaDID) -> AccountStorageResult<Option<ChainState>> {
     let promise: Promise = Promise::resolve(&self.chain_state_get(did.clone().into()));
     let result: JsValueResult = JsFuture::from(promise).await.into();
@@ -329,6 +403,18 @@ interface Storage {
 
   /** Returns `true` if a key exists at the specified `location`. */
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
+
+  /** Encrypts the given `plaintext` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
+   * 
+   *  Returns an `EncryptedData` instance.
+   */
+  dataEncrypt: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
+
+  /** Decrypts the given `data` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
+   * 
+   *  Returns the decrypted text.
+   */
+  dataDecrypt: (did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;
 
   /** Returns the chain state of the identity specified by `did`. */
   chainStateGet: (did: DID) => Promise<ChainState | undefined>;

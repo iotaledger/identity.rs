@@ -870,11 +870,14 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c98a3248cde6b42cb479a52089fe4fc20d12de51b8edd923294cd5240ec89b0"
 dependencies = [
+ "aead",
+ "aes-gcm",
  "bee-ternary",
  "blake2",
  "curve25519-dalek",
  "digest",
  "ed25519-zebra",
+ "generic-array",
  "getrandom 0.2.6",
  "hmac",
  "lazy_static",

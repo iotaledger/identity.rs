@@ -64,7 +64,6 @@ pub mod did {
 
   pub use identity_did::did::*;
 
-  pub use identity_did::resolution;
   pub use identity_did::verifiable;
 }
 

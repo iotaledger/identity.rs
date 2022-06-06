@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainState, DID, Document, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite } from '../../node/identity_wasm.js';
+import { ChainState, DID, Document, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite, EncryptionAlgorithm, CekAlgorithm, EncryptedData } from '../../node/identity_wasm.js';
 
 /** An insecure, in-memory `Storage` implementation that serves as an example.
 This can be passed to the `AccountBuilder` to create accounts with this as the storage. */
@@ -187,6 +187,14 @@ export class MemStore implements Storage {
         } else {
             throw new Error('DID not found')
         }
+    }
+
+    public async dataEncrypt(did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array): Promise<EncryptedData> {
+        throw new Error('not yet implemented')
+    }
+
+    public async dataDecrypt(did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation): Promise<Uint8Array> {
+        throw new Error('not yet implemented')
     }
 
     public async chainStateGet(did: DID): Promise<ChainState | undefined> {

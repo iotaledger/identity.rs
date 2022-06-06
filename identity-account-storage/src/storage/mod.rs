@@ -3,7 +3,7 @@
 
 mod memstore;
 #[cfg(feature = "stronghold")]
-mod stronghold;
+pub(crate) mod stronghold;
 #[cfg(feature = "storage-test-suite")]
 mod test_suite;
 mod traits;

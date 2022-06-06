@@ -4,9 +4,21 @@
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::traits::Aead;
 use futures::executor;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
+use identity_core::crypto::PublicKey;
+use identity_core::crypto::X25519;
+use identity_iota_core::did::IotaDID;
+use identity_iota_core::document::IotaDocument;
+use identity_iota_core::tangle::NetworkName;
 use iota_stronghold::procedures;
 use iota_stronghold::procedures::ProcedureError;
+use iota_stronghold::procedures::Sha2Hash;
 use iota_stronghold::sync::MergePolicy;
 use iota_stronghold::sync::SyncClientsConfig;
 use iota_stronghold::Client;
@@ -14,21 +26,11 @@ use iota_stronghold::ClientVault;
 use iota_stronghold::Location;
 use iota_stronghold::Store;
 use rand::distributions::DistString;
-use rand::rngs::OsRng;
-use rand::Rng;
 use tokio::sync::RwLockReadGuard;
 use tokio::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
 
-use identity_core::convert::FromJson;
-use identity_core::convert::ToJson;
-use identity_core::crypto::KeyType;
-use identity_core::crypto::PrivateKey;
-use identity_core::crypto::PublicKey;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
-use identity_iota_core::tangle::NetworkName;
-
+use crate::error::Error;
 use crate::error::Result;
 use crate::identity::ChainState;
 use crate::storage::Storage;
@@ -38,6 +40,10 @@ use crate::stronghold::StoreOperation;
 use crate::stronghold::Stronghold;
 use crate::stronghold::StrongholdError;
 use crate::stronghold::VaultOperation;
+use crate::types::AgreementInfo;
+use crate::types::CekAlgorithm;
+use crate::types::EncryptedData;
+use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 
@@ -245,7 +251,7 @@ impl Storage for Stronghold {
           location: location.into(),
           should_gc: true,
         })
-        .map_err(|err| procedure_error::<procedures::RevokeData>(location, err))
+        .map_err(|err| procedure_error::<procedures::RevokeData>(vec![location.clone()], err))
         .map_err(crate::Error::from)?;
 
       Ok(exists)
@@ -268,6 +274,74 @@ impl Storage for Stronghold {
       .record_exists(&location.into())
       .map_err(|err| StrongholdError::Vault(VaultOperation::RecordExists, err))
       .map_err(Into::into)
+  }
+
+  #[cfg(feature = "encryption")]
+  async fn data_encrypt(
+    &self,
+    did: &IotaDID,
+    plaintext: Vec<u8>,
+    associated_data: Vec<u8>,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    public_key: PublicKey,
+  ) -> Result<EncryptedData> {
+    // Changes won't be written to the snapshot state since the created keys are temporary
+    let client: Client = self.client(&ClientPath::from(did))?;
+    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key
+      .as_ref()
+      .try_into()
+      .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
+    match cek_algorithm {
+      CekAlgorithm::ECDH_ES(agreement) => {
+        let (derived_secret, ephemeral_public_key): (Location, PublicKey) =
+          diffie_hellman_with_concat_kdf(&client, encryption_algorithm, cek_algorithm, agreement, public_key).await?;
+        let encrypted_data: EncryptedData = aead_encrypt(
+          &client,
+          encryption_algorithm,
+          derived_secret,
+          plaintext,
+          associated_data,
+          Vec::new(),
+          ephemeral_public_key.as_ref().to_vec(),
+        )
+        .await?;
+        Ok(encrypted_data)
+      }
+    }
+  }
+
+  #[cfg(feature = "encryption")]
+  async fn data_decrypt(
+    &self,
+    did: &IotaDID,
+    data: EncryptedData,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    private_key: &KeyLocation,
+  ) -> Result<Vec<u8>> {
+    // Changes won't be written to the snapshot state since the created keys are temporary
+    let client: Client = self.client(&ClientPath::from(did))?;
+    let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = data
+      .ephemeral_public_key
+      .clone()
+      .try_into()
+      .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
+    match cek_algorithm {
+      CekAlgorithm::ECDH_ES(agreement) => {
+        let shared_secret: Location = diffie_hellman(&client, private_key, public_key).await?;
+        let derived_secret: Location = concat_kdf(
+          &client,
+          encryption_algorithm,
+          cek_algorithm.name().to_owned(),
+          agreement,
+          shared_secret,
+        )
+        .await?;
+        let decrypted_data: Result<Vec<u8>> = aead_decrypt(&client, encryption_algorithm, derived_secret, data).await;
+        decrypted_data
+      }
+    }
   }
 
   async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
@@ -337,7 +411,7 @@ impl Drop for Stronghold {
   }
 }
 
-fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
+pub(crate) fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
   let generate_key: procedures::GenerateKey = procedures::GenerateKey {
     ty: location_key_type(location),
     output: location.into(),
@@ -345,12 +419,12 @@ fn generate_private_key(client: &Client, location: &KeyLocation) -> Result<()> {
 
   client
     .execute_procedure(generate_key)
-    .map_err(|err| procedure_error::<procedures::GenerateKey>(location, err))?;
+    .map_err(|err| procedure_error::<procedures::GenerateKey>(vec![location.clone()], err))?;
 
   Ok(())
 }
 
-fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
+pub(crate) fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &KeyLocation) -> Result<()> {
   let stronghold_location: Location = location.into();
 
   let vault: ClientVault = client.vault(stronghold_location.vault_path());
@@ -364,7 +438,7 @@ fn insert_private_key(client: &Client, mut private_key: PrivateKey, location: &K
     .map_err(Into::into)
 }
 
-fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
+pub(crate) fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<PublicKey> {
   match location.key_type {
     KeyType::Ed25519 | KeyType::X25519 => {
       let public_key: procedures::PublicKey = procedures::PublicKey {
@@ -374,7 +448,7 @@ fn retrieve_public_key(client: &Client, location: &KeyLocation) -> Result<Public
 
       let public = client
         .execute_procedure(public_key)
-        .map_err(|err| procedure_error::<procedures::PublicKey>(location, err))?;
+        .map_err(|err| procedure_error::<procedures::PublicKey>(vec![location.clone()], err))?;
 
       Ok(public.to_vec().into())
     }
@@ -389,9 +463,144 @@ fn sign_ed25519(client: &Client, payload: Vec<u8>, location: &KeyLocation) -> Re
 
   let signature: [u8; 64] = client
     .execute_procedure(procedure)
-    .map_err(|err| procedure_error::<procedures::Ed25519Sign>(location, err))?;
+    .map_err(|err| procedure_error::<procedures::Ed25519Sign>(vec![location.clone()], err))?;
 
   Ok(Signature::new(signature.into()))
+}
+
+pub(crate) async fn diffie_hellman(
+  client: &Client,
+  private_key: &KeyLocation,
+  public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
+) -> Result<Location> {
+  let location: [u8; 32] = rand::Rng::gen(&mut rand::thread_rng());
+  let shared_key: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
+  let diffie_hellman: procedures::X25519DiffieHellman = procedures::X25519DiffieHellman {
+    public_key,
+    private_key: private_key.into(),
+    shared_key: shared_key.clone(),
+  };
+  client
+    .execute_procedure(diffie_hellman)
+    .map_err(|err| procedure_error::<procedures::X25519DiffieHellman>(vec![private_key.clone()], err))?;
+  Ok(shared_key)
+}
+
+pub(crate) async fn concat_kdf(
+  client: &Client,
+  encryption_algorithm: &EncryptionAlgorithm,
+  algorithm_id: String,
+  agreement: &AgreementInfo,
+  shared_secret: Location,
+) -> Result<Location> {
+  let location: [u8; 32] = rand::Rng::gen(&mut rand::thread_rng());
+  let output: Location = Location::generic(VAULT_PATH.to_vec(), location.to_vec());
+  let derived_secret: procedures::ConcatKdf = {
+    match encryption_algorithm {
+      EncryptionAlgorithm::AES256GCM => procedures::ConcatKdf {
+        hash: Sha2Hash::Sha256,
+        algorithm_id,
+        shared_secret,
+        key_len: Aes256Gcm::KEY_LENGTH,
+        apu: agreement.apu.clone(),
+        apv: agreement.apv.clone(),
+        pub_info: agreement.pub_info.clone(),
+        priv_info: agreement.priv_info.clone(),
+        output: output.clone(),
+      },
+    }
+  };
+  client
+    .execute_procedure(derived_secret)
+    .map_err(|err| procedure_error::<procedures::ConcatKdf>(vec![], err))?;
+  Ok(output)
+}
+
+pub(crate) async fn aead_encrypt(
+  client: &Client,
+  algorithm: &EncryptionAlgorithm,
+  key: Location,
+  plaintext: Vec<u8>,
+  associated_data: Vec<u8>,
+  encrypted_cek: Vec<u8>,
+  ephemeral_public_key: Vec<u8>,
+) -> Result<EncryptedData> {
+  match algorithm {
+    EncryptionAlgorithm::AES256GCM => {
+      let nonce: &[u8] = &Aes256Gcm::random_nonce().map_err(Error::EncryptionFailure)?;
+      let aead_encrypt: procedures::AeadEncrypt = procedures::AeadEncrypt {
+        cipher: procedures::AeadCipher::Aes256Gcm,
+        associated_data: associated_data.clone(),
+        plaintext,
+        nonce: nonce.to_vec(),
+        key,
+      };
+      let mut data = client
+        .execute_procedure(aead_encrypt)
+        .map_err(|err| procedure_error::<procedures::AeadEncrypt>(vec![], err))?;
+      Ok(EncryptedData::new(
+        nonce.to_vec(),
+        associated_data,
+        data.drain(..Aes256Gcm::TAG_LENGTH).collect(),
+        data,
+        encrypted_cek,
+        ephemeral_public_key,
+      ))
+    }
+  }
+}
+
+pub(crate) async fn aead_decrypt(
+  client: &Client,
+  algorithm: &EncryptionAlgorithm,
+  key: Location,
+  encrypted_data: EncryptedData,
+) -> Result<Vec<u8>> {
+  match algorithm {
+    EncryptionAlgorithm::AES256GCM => {
+      let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
+        cipher: procedures::AeadCipher::Aes256Gcm,
+        key,
+        ciphertext: encrypted_data.ciphertext,
+        associated_data: encrypted_data.associated_data,
+        tag: encrypted_data.tag,
+        nonce: encrypted_data.nonce,
+      };
+      let data = client
+        .execute_procedure(aead_decrypt)
+        .map_err(|err| procedure_error::<procedures::AeadDecrypt>(vec![], err))?;
+      Ok(data)
+    }
+  }
+}
+
+/// Creates an ephemeral pair of X25519 keys, obtains the shared secret by runnning the Diffie-Hellman algorithm and
+/// derives key material for use in encryption/decryption through application of the Concatenation Key Derivation
+/// function.
+///
+/// Returns the location of the dervied key material and the ephemeral public key.
+async fn diffie_hellman_with_concat_kdf(
+  client: &Client,
+  encryption_algorithm: &EncryptionAlgorithm,
+  cek_algorithm: &CekAlgorithm,
+  agreement: &AgreementInfo,
+  public_key: [u8; X25519::PUBLIC_KEY_LENGTH],
+) -> Result<(Location, PublicKey)> {
+  //Generate ephemeral key
+  let ephemeral_location = random_location(KeyType::X25519);
+  generate_private_key(client, &ephemeral_location)?;
+  let ephemeral_public_key: PublicKey = retrieve_public_key(client, &ephemeral_location)?;
+  // Obtain the shared secret by combining the ephemeral key and the static public key
+  let shared_key: Location = diffie_hellman(client, &ephemeral_location, public_key).await?;
+  let derived_secret: Location = concat_kdf(
+    client,
+    encryption_algorithm,
+    cek_algorithm.name().to_owned(),
+    agreement,
+    shared_key,
+  )
+  .await?;
+  Ok((derived_secret, ephemeral_public_key))
 }
 
 // Moves a key from one location to another, deleting the old one.
@@ -404,13 +613,9 @@ fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Resu
     target: target_location,
   };
 
-  client.execute_procedure(copy_record).map_err(|err| {
-    StrongholdError::Procedure(
-      std::any::type_name::<procedures::CopyRecord>(),
-      vec![source.clone(), target.clone()],
-      err,
-    )
-  })?;
+  client
+    .execute_procedure(copy_record)
+    .map_err(|err| procedure_error::<procedures::CopyRecord>(vec![source.clone(), target.clone()], err))?;
 
   let revoke_data = procedures::RevokeData {
     location: source_location,
@@ -419,7 +624,7 @@ fn move_key(client: &Client, source: &KeyLocation, target: &KeyLocation) -> Resu
 
   client
     .execute_procedure(revoke_data)
-    .map_err(|err| procedure_error::<procedures::RevokeData>(source, err))?;
+    .map_err(|err| procedure_error::<procedures::RevokeData>(vec![source.clone()], err))?;
 
   Ok(())
 }
@@ -461,13 +666,14 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
   }
 }
 
-fn random_location(key_type: KeyType) -> KeyLocation {
-  let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut OsRng, 32);
-  let public_key: [u8; 32] = OsRng.sample(rand::distributions::Standard);
+pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
+  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
+  let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut thread_rng, 32);
+  let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
 
   KeyLocation::new(key_type, fragment, &public_key)
 }
 
-fn procedure_error<P>(location: &KeyLocation, err: ProcedureError) -> StrongholdError {
-  StrongholdError::Procedure(std::any::type_name::<P>(), vec![location.clone()], err)
+fn procedure_error<P>(locations: Vec<KeyLocation>, err: ProcedureError) -> StrongholdError {
+  StrongholdError::Procedure(std::any::type_name::<P>(), locations, err)
 }
