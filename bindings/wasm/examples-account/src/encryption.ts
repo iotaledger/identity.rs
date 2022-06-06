@@ -37,7 +37,7 @@ async function encryption(storage?: Storage) {
 
     // Alice encrypts the data using Diffie-Hellman key exchange
     const agreementInfo = new AgreementInfo(Buffer.from("Alice"), Buffer.from("Bob"), new Uint8Array(0), new Uint8Array(0));
-    const encryptionAlgorithm = EncryptionAlgorithm.Aes256Gcm();
+    const encryptionAlgorithm = EncryptionAlgorithm.A256GCM();
     const cekAlgorithm = CekAlgorithm.EcdhEs(agreementInfo);
     const message = Buffer.from("This msg will be encrypted and decrypted");
     const associatedData = Buffer.from("associatedData");
