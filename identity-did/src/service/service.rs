@@ -40,7 +40,7 @@ where
 }
 
 /// Deserializes an [`DIDUrl`] while enforcing that its fragment is non-empty.
-pub fn deserialize_id_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
+fn deserialize_id_with_fragment<'de, D, T>(deserializer: D) -> Result<DIDUrl<T>, D::Error>
 where
   D: de::Deserializer<'de>,
   T: DID + serde::Deserialize<'de>,

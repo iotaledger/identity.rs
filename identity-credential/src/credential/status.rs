@@ -13,7 +13,7 @@ pub struct Status {
   pub id: Url,
   /// The type(s) of the credential status.
   #[serde(rename = "type")]
-  pub types: Option<String>,
+  pub type_: String,
   /// Additional properties of the credential status.
   #[serde(flatten)]
   pub properties: Object,
@@ -21,13 +21,13 @@ pub struct Status {
 
 impl Status {
   /// Creates a new `Status`.
-  pub fn new(id: Url, types: Option<String>) -> Self {
-    Self::with_properties(id, types, Object::new())
+  pub fn new(id: Url, type_: String) -> Self {
+    Self::new_with_properties(id, type_, Object::new())
   }
 
   /// Creates a new `Status` with the given `properties`.
-  pub fn with_properties(id: Url, types: Option<String>, properties: Object) -> Self {
-    Self { id, types, properties }
+  pub fn new_with_properties(id: Url, type_: String, properties: Object) -> Self {
+    Self { id, type_, properties }
   }
 }
 
@@ -43,6 +43,6 @@ mod tests {
   fn test_from_json() {
     let status: Status = Status::from_json(JSON).unwrap();
     assert_eq!(status.id, "https://example.edu/status/24");
-    assert_eq!(status.types, Some("CredentialStatusList2017".to_owned()));
+    assert_eq!(status.type_, "CredentialStatusList2017".to_owned());
   }
 }

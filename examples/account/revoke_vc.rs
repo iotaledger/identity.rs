@@ -13,27 +13,27 @@
 
 use identity::account::Account;
 use identity::account::AccountBuilder;
-use identity::account::Error;
 use identity::account::IdentitySetup;
 use identity::account::MethodContent;
 use identity::account::Result;
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Url;
+use identity::credential::BitmapRevocationStatus;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::crypto::ProofOptions;
+use identity::did::RevocationBitmap;
+use identity::did::BITMAP_REVOCATION_METHOD;
 use identity::did::DID;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
 use identity::iota::ValidationError;
-use identity::iota_core::EmbeddedRevocationList;
-use identity::iota_core::EmbeddedRevocationStatus;
+use identity::iota_core::IotaDID;
 use identity::iota_core::IotaDIDUrl;
-use identity::iota_core::ServiceError;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -58,16 +58,16 @@ async fn main() -> Result<()> {
     .await?;
 
   // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
-  let revocation_list: EmbeddedRevocationList = EmbeddedRevocationList::new();
-  let revocation_list_endpoint: Url = revocation_list
-    .to_url()
-    .map_err(|e| Error::CredentialRevocationError(ServiceError::RevocationMethodError(e)))?;
+  let revocation_list: RevocationBitmap = RevocationBitmap::new();
   issuer
     .update_identity()
     .create_service()
     .fragment("my-revocation-service")
-    .type_(EmbeddedRevocationList::name())
-    .endpoint(revocation_list_endpoint)
+    .type_(BITMAP_REVOCATION_METHOD)
+    .endpoint(Url::parse(&format!(
+      "data:,{}",
+      revocation_list.serialize_compressed_b64()?
+    ))?)
     .apply()
     .await?;
 
@@ -79,10 +79,11 @@ async fn main() -> Result<()> {
     "GPA": "4.0",
   }))?;
 
-  // Create a credential status pointing verifiers to the endpoint that states if it has been revoked.
-  let service_url = IotaDIDUrl::parse(format!("{}#my-revocation-service", issuer.did()))?;
-  let credential_index: u32 = 5; // choosen arbitrarily
-  let status: EmbeddedRevocationStatus = EmbeddedRevocationStatus::new(service_url, credential_index);
+  // Create a credential status pointing verifiers to the endpoint that states if the credential has been revoked.
+  // The issuer determines the index of the credential in the revocation list, we chose one arbitrarily.
+  let service_url = IotaDIDUrl::join(issuer.did().clone().try_into().unwrap(), "#my-revocation-service")?;
+  let credential_index: u32 = 5;
+  let status: BitmapRevocationStatus<IotaDID> = BitmapRevocationStatus::new(service_url, credential_index);
 
   // Build credential using subject above, status, and issuer.
   let mut credential: Credential = CredentialBuilder::default()

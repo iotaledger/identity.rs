@@ -109,6 +109,6 @@ impl From<IotaDIDUrl> for WasmDIDUrl {
 
 impl From<WasmDIDUrl> for DIDUrl<IotaDID> {
   fn from(wasm_did_url: WasmDIDUrl) -> Self {
-    wasm_did_url.0.into()
+    wasm_did_url.0
   }
 }

@@ -53,15 +53,15 @@ pub enum ValidationError {
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
-  /// Indicates that status is invalid.
-  #[error("invalid service: {0}")]
-  InvalidStatus(#[source] identity_iota_core::credential::CredentialStatusError),
-  /// Indicates that revocation list is invalid.
-  #[error("invalid service: {0}")]
-  InvalidRevocationList(#[source] identity_iota_core::revocation::RevocationMethodError),
-  /// Indicates that the service is invalid.
-  #[error("invalid service: {0}")]
-  InvalidService(#[source] identity_iota_core::service::ServiceError),
+  /// Indicates that the credential's status is invalid.
+  #[error("invalid credential status")]
+  InvalidStatus(#[source] identity_credential::Error),
+  /// Indicates that the credential's enpoint is invalid.
+  #[error("invalid credential endpoint")]
+  InvalidEndpoint(#[source] identity_did::Error),
+  /// Indicates that the the credential's service is invalid.
+  #[error("invalid service")]
+  InvalidService(#[source] identity_did::Error),
   /// Indicates that the credential has been revoked.
   #[error("credential at index {0} has been revoked")]
   RevokedCredential(u32),

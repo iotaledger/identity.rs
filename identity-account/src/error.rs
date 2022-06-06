@@ -37,7 +37,7 @@ pub enum Error {
   MethodMissingFragment,
   /// Caused by failing to revoke credentials.
   #[error("credential revocation error")]
-  CredentialRevocationError(#[source] identity_iota_core::service::ServiceError),
+  CredentialRevocationError(#[source] identity_did::Error),
 }
 
 impl From<identity_did::did::DIDError> for Error {

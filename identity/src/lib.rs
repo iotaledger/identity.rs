@@ -58,6 +58,7 @@ pub mod did {
 
   pub use identity_did::document::*;
   pub use identity_did::error::*;
+  pub use identity_did::revocation::*;
   pub use identity_did::service::*;
   pub use identity_did::utils::*;
   pub use identity_did::verification::*;
@@ -80,13 +81,10 @@ pub mod iota {
 pub mod iota_core {
   //! IOTA Core Traits and Types definitions
 
-  pub use identity_iota_core::credential::*;
   pub use identity_iota_core::did::*;
   pub use identity_iota_core::diff::*;
   pub use identity_iota_core::document::*;
   pub use identity_iota_core::error::*;
-  pub use identity_iota_core::revocation::*;
-  pub use identity_iota_core::service::*;
   pub use identity_iota_core::tangle::*;
 
   #[doc(inline)]

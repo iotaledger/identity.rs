@@ -1,15 +1,13 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub use self::wasm_bitmap_revocation_endpoint::WasmBitmapRevocationEndpoint;
 pub use self::wasm_did::UWasmDID;
 pub use self::wasm_did::WasmDID;
 pub use self::wasm_did_url::WasmDIDUrl;
 pub use self::wasm_diff_message::WasmDiffMessage;
 pub use self::wasm_document::WasmDocument;
 pub use self::wasm_document_metadata::WasmDocumentMetadata;
-pub use self::wasm_embedded_revocation_endpoint::WasmEmbeddedRevocationEndpoint;
-pub use self::wasm_embedded_revocation_service::WasmEmbeddedRevocationService;
-pub use self::wasm_embedded_revocation_status::WasmEmbeddedRevocationStatus;
 pub use self::wasm_method_data::WasmMethodData;
 pub use self::wasm_method_relationship::WasmMethodRelationship;
 pub use self::wasm_method_scope::OptionMethodScope;
@@ -26,14 +24,12 @@ pub use self::wasm_service::WasmService;
 pub use self::wasm_verification_method::WasmVerificationMethod;
 pub use self::wasm_verifier_options::WasmVerifierOptions;
 
+mod wasm_bitmap_revocation_endpoint;
 mod wasm_did;
 mod wasm_did_url;
 mod wasm_diff_message;
 mod wasm_document;
 mod wasm_document_metadata;
-mod wasm_embedded_revocation_endpoint;
-mod wasm_embedded_revocation_service;
-mod wasm_embedded_revocation_status;
 mod wasm_method_data;
 mod wasm_method_relationship;
 mod wasm_method_scope;

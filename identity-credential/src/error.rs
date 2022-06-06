@@ -24,4 +24,7 @@ pub enum Error {
   /// Caused when validating a Credential with a malformed subject.
   #[error("Invalid Credential Subject")]
   InvalidSubject,
+  /// Caused when trying to construct an invalid status.
+  #[error("invalid status: {0}")]
+  InvalidStatus(&'static str),
 }

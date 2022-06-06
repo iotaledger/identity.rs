@@ -5,6 +5,7 @@
 
 #![allow(clippy::module_inception)]
 
+mod bitmap_revocation_status;
 mod builder;
 mod credential;
 mod evidence;
@@ -15,6 +16,7 @@ mod schema;
 mod status;
 mod subject;
 
+pub use self::bitmap_revocation_status::BitmapRevocationStatus;
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
 pub use self::evidence::Evidence;

@@ -4,15 +4,15 @@
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
+use identity_credential::credential::BitmapRevocationStatus;
 use identity_credential::credential::Credential;
+use identity_did::revocation::RevocationBitmap;
+use identity_did::service::BitmapRevocationEndpoint;
+use identity_did::service::BitmapRevocationService;
+use identity_did::service::BITMAP_REVOCATION_METHOD;
 use identity_did::verifiable::VerifierOptions;
-use identity_iota_core::credential::EmbeddedRevocationStatus;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
-use identity_iota_core::revocation::EmbeddedRevocationList;
-use identity_iota_core::service::EmbeddedRevocationEndpoint;
-use identity_iota_core::service::EmbeddedRevocationService;
-use identity_iota_core::service::ServiceError;
 use serde::Serialize;
 
 use super::errors::SignerContext;
@@ -175,32 +175,33 @@ impl CredentialValidator {
     }
   }
 
-  /// If the credential has a status of type `EmbeddedRevocationList`, checks if the credential has been revoked.
+  /// If the credential has a status of type [`BitmapRevocationStatus`], checks if the credential has been revoked.
   pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
     match &credential.credential_status {
       Some(status) => {
-        if status.types != Some(EmbeddedRevocationList::name().to_owned()) {
+        if status.type_ != BITMAP_REVOCATION_METHOD {
           return Ok(());
         }
-        let status = EmbeddedRevocationStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
         let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
         let issuer_did: IotaDID = issuer_did.map_err(|e| ValidationError::SignerUrl {
           source: e.into(),
           signer_ctx: SignerContext::Issuer,
         })?;
+        let status: BitmapRevocationStatus<IotaDID> =
+          BitmapRevocationStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
         issuers
           .iter()
           .find(|issuer| issuer.as_ref().id() == &issuer_did)
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-          .and_then(|issuer| CredentialValidator::check_revocation(&status, issuer))
+          .and_then(|issuer| CredentialValidator::check_revocation(issuer, status))
       }
       None => Ok(()),
     }
   }
 
   fn check_revocation<D: AsRef<IotaDocument>>(
-    credential_status: &EmbeddedRevocationStatus,
     issuer: D,
+    credential_status: BitmapRevocationStatus<IotaDID>,
   ) -> ValidationUnitResult {
     // Looks for the appropriate service to check for revocation
     match issuer
@@ -210,30 +211,27 @@ impl CredentialValidator {
       .find(|service| &credential_status.id == service.id())
     {
       Some(service) => {
-        let embedded_revocation_service: EmbeddedRevocationService =
+        let embedded_revocation_service: BitmapRevocationService<IotaDID> =
           service.clone().try_into().map_err(ValidationError::InvalidService)?;
-        Self::check_simple_revocation_list(credential_status, embedded_revocation_service.service_endpoint())
+        Self::check_bitmap_revocation_2022(credential_status, embedded_revocation_service.service_endpoint())
       }
       None => {
         // No revocation service endpoint was found
-        Err(ValidationError::InvalidService(ServiceError::InvalidServiceId(
-          format!("{} not found", credential_status.id),
+        Err(ValidationError::InvalidService(identity_did::Error::InvalidService(
+          "service not found",
         )))
       }
     }
   }
 
-  /// By deserializing the `Url` path into a `EmbeddedRevocationList`, checks if the index given in
-  /// `EmbeddedRevocationStatus` is revoked.
-  fn check_simple_revocation_list(
-    credential_status: &EmbeddedRevocationStatus,
-    data_url: &EmbeddedRevocationEndpoint,
+  /// By deserializing the `Url` into a [`RevocationBitmap`], checks if the index given in [`BitmapRevocationStatus`] is
+  /// revoked.
+  fn check_bitmap_revocation_2022(
+    credential_status: BitmapRevocationStatus<IotaDID>,
+    data_url: &BitmapRevocationEndpoint,
   ) -> ValidationUnitResult {
-    let revocation_list: EmbeddedRevocationList = data_url
-      .clone()
-      .try_into()
-      .map_err(ValidationError::InvalidRevocationList)?;
-    if revocation_list.is_revoked(credential_status.revocation_list_index) {
+    let revocation_bitmap: RevocationBitmap = data_url.try_into().map_err(ValidationError::InvalidEndpoint)?;
+    if revocation_bitmap.is_revoked(credential_status.revocation_list_index) {
       return Err(ValidationError::RevokedCredential(
         credential_status.revocation_list_index,
       ));

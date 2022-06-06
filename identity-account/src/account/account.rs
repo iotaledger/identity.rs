@@ -22,8 +22,9 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
-use identity_did::did::DIDUrl;
 use identity_did::did::DID;
+use identity_did::revocation::RevocationBitmap;
+use identity_did::service::BitmapRevocationService;
 use identity_did::service::Service;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
@@ -35,9 +36,6 @@ use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
-use identity_iota_core::revocation::EmbeddedRevocationList;
-use identity_iota_core::service::EmbeddedRevocationService;
-use identity_iota_core::service::ServiceError;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::MessageIdExt;
 use serde::Serialize;
@@ -319,10 +317,10 @@ where
     Ok(())
   }
 
-  /// If the document has an `EmbeddedRevocationService` identified by `fragment`, revokes all given `credentials`.
+  /// If the document has an [`BitmapRevocationService`] identified by `fragment`, revokes all given `credentials`.
   pub async fn revoke_credentials(&mut self, fragment: &str, credentials: &[u32]) -> Result<()> {
     // Finds the service to be updated
-    let mut service_id: DIDUrl<IotaDID> = self.did().clone().into_url();
+    let mut service_id: IotaDIDUrl = self.did().clone().into_url();
     service_id.set_fragment(Some(fragment))?;
     let service: &mut Service<IotaDID> = self
       .document
@@ -330,26 +328,26 @@ where
       .service_mut()
       .iter_mut_unchecked()
       .find(|service| service.id() == &service_id)
-      .ok_or_else(|| {
-        Error::CredentialRevocationError(ServiceError::InvalidServiceId(format!("id {} not found", service_id)))
-      })?;
-    // Updates the service with all revoked credential
-    let mut embedded_revocation_service: EmbeddedRevocationService =
+      .ok_or(Error::CredentialRevocationError(identity_did::Error::InvalidService(
+        "invalid id - service not found",
+      )))?;
+
+    // Checks the corresponding service
+    let mut bitmap_revocation_service: BitmapRevocationService<IotaDID> =
       service.clone().try_into().map_err(Error::CredentialRevocationError)?;
-    let mut embedded_revocation_list: EmbeddedRevocationList = embedded_revocation_service
+    let mut revocation_bitmap: RevocationBitmap = bitmap_revocation_service
       .service_endpoint()
-      .clone()
       .try_into()
-      .map_err(|e| Error::CredentialRevocationError(ServiceError::RevocationMethodError(e)))?;
-    embedded_revocation_list.revoke_multiple(credentials);
-    embedded_revocation_service.set_service_endpoint(
-      embedded_revocation_list
-        .to_embedded_service_endpoint()
-        .map_err(|e| Error::CredentialRevocationError(ServiceError::RevocationMethodError(e)))?,
-    );
+      .map_err(Error::CredentialRevocationError)?;
+
+    // Updates the service
+    for credential in credentials {
+      revocation_bitmap.revoke(*credential);
+    }
+    bitmap_revocation_service.set_service_endpoint(revocation_bitmap.try_into()?);
     std::mem::swap(
       service,
-      &mut embedded_revocation_service
+      &mut bitmap_revocation_service
         .try_into()
         .map_err(Error::CredentialRevocationError)?,
     );
@@ -357,6 +355,7 @@ where
     self.publish_internal(false, PublishOptions::default()).await?;
     Ok(())
   }
+
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
   /// Returns an [`EncryptedData`] instance.

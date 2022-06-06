@@ -28,6 +28,7 @@ pub mod diff;
 pub mod did;
 pub mod document;
 pub mod error;
+pub mod revocation;
 pub mod service;
 pub mod utils;
 pub mod verifiable;

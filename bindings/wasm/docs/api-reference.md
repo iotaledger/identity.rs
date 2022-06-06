@@ -19,6 +19,9 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
+<dt><a href="#BitmapRevocationEndpoint">BitmapRevocationEndpoint</a></dt>
+<dd><p>A parsed data url.</p>
+</dd>
 <dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
 <dd><p>Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).</p>
 </dd>
@@ -55,17 +58,6 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
-<dt><a href="#EmbeddedRevocationEndpoint">EmbeddedRevocationEndpoint</a></dt>
-<dd><p>A parsed data url.</p>
-</dd>
-<dt><a href="#EmbeddedRevocationList">EmbeddedRevocationList</a></dt>
-<dd></dd>
-<dt><a href="#EmbeddedRevocationService">EmbeddedRevocationService</a></dt>
-<dd><p>A DID Document Service used to enable validators to check the status of a credential.</p>
-</dd>
-<dt><a href="#EmbeddedRevocationStatus">EmbeddedRevocationStatus</a></dt>
-<dd><p>Information used to determine the current status of a <code>Credential</code>.</p>
-</dd>
 <dt><a href="#EncryptedData">EncryptedData</a></dt>
 <dd><p>The structure returned after encrypting data</p>
 </dd>
@@ -129,6 +121,9 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dd></dd>
 <dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
 <dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
+</dd>
+<dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
+<dd><p>A compressed bitmap for managing credential revocation.</p>
 </dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated
@@ -688,6 +683,43 @@ Deserializes `AutoSave` from a JSON object.
 | Param | Type |
 | --- | --- |
 | json_value | <code>any</code> | 
+
+<a name="BitmapRevocationEndpoint"></a>
+
+## BitmapRevocationEndpoint
+A parsed data url.
+
+**Kind**: global class  
+
+* [BitmapRevocationEndpoint](#BitmapRevocationEndpoint)
+    * _instance_
+        * [.into_string()](#BitmapRevocationEndpoint+into_string) ⇒ <code>string</code>
+        * [.data()](#BitmapRevocationEndpoint+data) ⇒ <code>string</code>
+    * _static_
+        * [.parse(input)](#BitmapRevocationEndpoint.parse) ⇒ [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)
+
+<a name="BitmapRevocationEndpoint+into_string"></a>
+
+### bitmapRevocationEndpoint.into\_string() ⇒ <code>string</code>
+Returns the `BitmapRevocationEndpoint` as a String.
+
+**Kind**: instance method of [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)  
+<a name="BitmapRevocationEndpoint+data"></a>
+
+### bitmapRevocationEndpoint.data() ⇒ <code>string</code>
+Returns the data from the [`BitmapRevocationEndpoint`].
+
+**Kind**: instance method of [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)  
+<a name="BitmapRevocationEndpoint.parse"></a>
+
+### BitmapRevocationEndpoint.parse(input) ⇒ [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)
+Parses an [`BitmapRevocationEndpoint`] from the given input String.
+
+**Kind**: static method of [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
 
 <a name="CekAlgorithm"></a>
 
@@ -2551,304 +2583,6 @@ to canonicalize JSON messages.
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
 
-<a name="EmbeddedRevocationEndpoint"></a>
-
-## EmbeddedRevocationEndpoint
-A parsed data url.
-
-**Kind**: global class  
-
-* [EmbeddedRevocationEndpoint](#EmbeddedRevocationEndpoint)
-    * _instance_
-        * [.into_string()](#EmbeddedRevocationEndpoint+into_string) ⇒ <code>string</code>
-        * [.data()](#EmbeddedRevocationEndpoint+data) ⇒ <code>string</code>
-        * [.toJSON()](#EmbeddedRevocationEndpoint+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.parse(input)](#EmbeddedRevocationEndpoint.parse) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
-        * [.fromJSON(value)](#EmbeddedRevocationEndpoint.fromJSON) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
-
-<a name="EmbeddedRevocationEndpoint+into_string"></a>
-
-### embeddedRevocationEndpoint.into\_string() ⇒ <code>string</code>
-Returns the `EmbeddedRevocationEndpoint` as a String.
-
-**Kind**: instance method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
-<a name="EmbeddedRevocationEndpoint+data"></a>
-
-### embeddedRevocationEndpoint.data() ⇒ <code>string</code>
-Returns the data from the [`EmbeddedRevocationEndpoint`].
-
-**Kind**: instance method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
-<a name="EmbeddedRevocationEndpoint+toJSON"></a>
-
-### embeddedRevocationEndpoint.toJSON() ⇒ <code>any</code>
-Serializes a `EmbeddedRevocationEndpoint` object as a JSON object.
-
-**Kind**: instance method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
-<a name="EmbeddedRevocationEndpoint.parse"></a>
-
-### EmbeddedRevocationEndpoint.parse(input) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
-Parses an [`EmbeddedRevocationEndpoint`] from the given input String.
-
-**Kind**: static method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="EmbeddedRevocationEndpoint.fromJSON"></a>
-
-### EmbeddedRevocationEndpoint.fromJSON(value) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
-Deserializes a `EmbeddedRevocationEndpoint` object from a JSON object.
-
-**Kind**: static method of [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="EmbeddedRevocationList"></a>
-
-## EmbeddedRevocationList
-**Kind**: global class  
-
-* [EmbeddedRevocationList](#EmbeddedRevocationList)
-    * [new EmbeddedRevocationList()](#new_EmbeddedRevocationList_new)
-    * _instance_
-        * [.isRevoked(index)](#EmbeddedRevocationList+isRevoked) ⇒ <code>boolean</code>
-        * [.revoke(index)](#EmbeddedRevocationList+revoke) ⇒ <code>boolean</code>
-        * [.revokeMultiple(indexes)](#EmbeddedRevocationList+revokeMultiple)
-        * [.undoRevocation(index)](#EmbeddedRevocationList+undoRevocation) ⇒ <code>boolean</code>
-        * [.serializeCompressedB64()](#EmbeddedRevocationList+serializeCompressedB64) ⇒ <code>string</code>
-        * [.toEmbeddedServiceEndpoint()](#EmbeddedRevocationList+toEmbeddedServiceEndpoint) ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
-        * [.toJSON()](#EmbeddedRevocationList+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.name()](#EmbeddedRevocationList.name) ⇒ <code>string</code>
-        * [.credential_list_index_property()](#EmbeddedRevocationList.credential_list_index_property) ⇒ <code>string</code>
-        * [.deserializeCompressedB64(data)](#EmbeddedRevocationList.deserializeCompressedB64) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
-        * [.fromJSON(value)](#EmbeddedRevocationList.fromJSON) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
-
-<a name="new_EmbeddedRevocationList_new"></a>
-
-### new EmbeddedRevocationList()
-Creates a new `EmbeddedRevocationList` revocation method.
-
-<a name="EmbeddedRevocationList+isRevoked"></a>
-
-### embeddedRevocationList.isRevoked(index) ⇒ <code>boolean</code>
-Returns `true` if the credential at the given `index` is revoked.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="EmbeddedRevocationList+revoke"></a>
-
-### embeddedRevocationList.revoke(index) ⇒ <code>boolean</code>
-Revokes the credential at the given `index`.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="EmbeddedRevocationList+revokeMultiple"></a>
-
-### embeddedRevocationList.revokeMultiple(indexes)
-Given the index of multiple credentials, revoke all.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-
-| Param | Type |
-| --- | --- |
-| indexes | <code>Uint32Array</code> | 
-
-<a name="EmbeddedRevocationList+undoRevocation"></a>
-
-### embeddedRevocationList.undoRevocation(index) ⇒ <code>boolean</code>
-The credential at the given `index` will be set to valid.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="EmbeddedRevocationList+serializeCompressedB64"></a>
-
-### embeddedRevocationList.serializeCompressedB64() ⇒ <code>string</code>
-Serializes and compressess [`EmbeddedRevocationList`] as a base64-encoded `String`.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-<a name="EmbeddedRevocationList+toEmbeddedServiceEndpoint"></a>
-
-### embeddedRevocationList.toEmbeddedServiceEndpoint() ⇒ [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint)
-Serializes and compressess the [`EmbeddedRevocationList`] and returns its data url representation.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-<a name="EmbeddedRevocationList+toJSON"></a>
-
-### embeddedRevocationList.toJSON() ⇒ <code>any</code>
-Serializes a `EmbeddedRevocationList` object as a JSON object.
-
-**Kind**: instance method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-<a name="EmbeddedRevocationList.name"></a>
-
-### EmbeddedRevocationList.name() ⇒ <code>string</code>
-Returns the name of the revocation method.
-
-**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-<a name="EmbeddedRevocationList.credential_list_index_property"></a>
-
-### EmbeddedRevocationList.credential\_list\_index\_property() ⇒ <code>string</code>
-**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-<a name="EmbeddedRevocationList.deserializeCompressedB64"></a>
-
-### EmbeddedRevocationList.deserializeCompressedB64(data) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
-Deserializes a compressed [`EmbeddedRevocationList`] base64-encoded `data`.
-
-**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-
-<a name="EmbeddedRevocationList.fromJSON"></a>
-
-### EmbeddedRevocationList.fromJSON(value) ⇒ [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)
-Deserializes a `EmbeddedRevocationList` object from a JSON object.
-
-**Kind**: static method of [<code>EmbeddedRevocationList</code>](#EmbeddedRevocationList)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="EmbeddedRevocationService"></a>
-
-## EmbeddedRevocationService
-A DID Document Service used to enable validators to check the status of a credential.
-
-**Kind**: global class  
-
-* [EmbeddedRevocationService](#EmbeddedRevocationService)
-    * [new EmbeddedRevocationService(id, endpoint)](#new_EmbeddedRevocationService_new)
-    * _instance_
-        * [.id()](#EmbeddedRevocationService+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-        * [.type()](#EmbeddedRevocationService+type) ⇒ <code>string</code>
-        * [.setId(id)](#EmbeddedRevocationService+setId)
-        * [.setServiceEndpoint(service_endpoint)](#EmbeddedRevocationService+setServiceEndpoint)
-        * [.toJSON()](#EmbeddedRevocationService+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#EmbeddedRevocationService.fromJSON) ⇒ [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)
-
-<a name="new_EmbeddedRevocationService_new"></a>
-
-### new EmbeddedRevocationService(id, endpoint)
-Creates a new `EmbeddedRevocationService`.
-
-
-| Param | Type |
-| --- | --- |
-| id | [<code>DIDUrl</code>](#DIDUrl) | 
-| endpoint | [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint) | 
-
-<a name="EmbeddedRevocationService+id"></a>
-
-### embeddedRevocationService.id() ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Returns a copy of the `EmbeddedRevocationService` id.
-
-**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
-<a name="EmbeddedRevocationService+type"></a>
-
-### embeddedRevocationService.type() ⇒ <code>string</code>
-Returns a copy of the `Service` type.
-
-**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
-<a name="EmbeddedRevocationService+setId"></a>
-
-### embeddedRevocationService.setId(id)
-Sets the `EmbeddedRevocationService` id.
-
-**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
-
-| Param | Type |
-| --- | --- |
-| id | [<code>DIDUrl</code>](#DIDUrl) | 
-
-<a name="EmbeddedRevocationService+setServiceEndpoint"></a>
-
-### embeddedRevocationService.setServiceEndpoint(service_endpoint)
-Sets the `EmbeddedRevocationService` endpoint.
-
-**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
-
-| Param | Type |
-| --- | --- |
-| service_endpoint | [<code>EmbeddedRevocationEndpoint</code>](#EmbeddedRevocationEndpoint) | 
-
-<a name="EmbeddedRevocationService+toJSON"></a>
-
-### embeddedRevocationService.toJSON() ⇒ <code>any</code>
-Serializes a `EmbeddedRevocationService` object as a JSON object.
-
-**Kind**: instance method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
-<a name="EmbeddedRevocationService.fromJSON"></a>
-
-### EmbeddedRevocationService.fromJSON(value) ⇒ [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)
-Deserializes a `EmbeddedRevocationService` object from a JSON object.
-
-**Kind**: static method of [<code>EmbeddedRevocationService</code>](#EmbeddedRevocationService)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="EmbeddedRevocationStatus"></a>
-
-## EmbeddedRevocationStatus
-Information used to determine the current status of a `Credential`.
-
-**Kind**: global class  
-
-* [EmbeddedRevocationStatus](#EmbeddedRevocationStatus)
-    * [new EmbeddedRevocationStatus(id, revocation_list_index)](#new_EmbeddedRevocationStatus_new)
-    * _instance_
-        * [.toJSON()](#EmbeddedRevocationStatus+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#EmbeddedRevocationStatus.fromJSON) ⇒ [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)
-
-<a name="new_EmbeddedRevocationStatus_new"></a>
-
-### new EmbeddedRevocationStatus(id, revocation_list_index)
-Creates a new `EmbeddedRevocationStatus`.
-
-
-| Param | Type |
-| --- | --- |
-| id | [<code>DIDUrl</code>](#DIDUrl) | 
-| revocation_list_index | <code>number</code> | 
-
-<a name="EmbeddedRevocationStatus+toJSON"></a>
-
-### embeddedRevocationStatus.toJSON() ⇒ <code>any</code>
-Serializes a `EmbeddedRevocationStatus` object as a JSON object.
-
-**Kind**: instance method of [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)  
-<a name="EmbeddedRevocationStatus.fromJSON"></a>
-
-### EmbeddedRevocationStatus.fromJSON(value) ⇒ [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)
-Deserializes a `EmbeddedRevocationStatus` object from a JSON object.
-
-**Kind**: static method of [<code>EmbeddedRevocationStatus</code>](#EmbeddedRevocationStatus)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
 <a name="EncryptedData"></a>
 
 ## EncryptedData
@@ -4464,6 +4198,101 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 Constructs a new [`Resolver`] based on the builder configuration.
 
 **Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+<a name="RevocationBitmap"></a>
+
+## RevocationBitmap
+A compressed bitmap for managing credential revocation.
+
+**Kind**: global class  
+
+* [RevocationBitmap](#RevocationBitmap)
+    * [new RevocationBitmap()](#new_RevocationBitmap_new)
+    * _instance_
+        * [.isRevoked(index)](#RevocationBitmap+isRevoked) ⇒ <code>boolean</code>
+        * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
+        * [.undoRevocation(index)](#RevocationBitmap+undoRevocation) ⇒ <code>boolean</code>
+        * [.serializeCompressedB64()](#RevocationBitmap+serializeCompressedB64) ⇒ <code>string</code>
+        * [.toJSON()](#RevocationBitmap+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.deserializeCompressedB64(data)](#RevocationBitmap.deserializeCompressedB64) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+        * [.fromJSON(value)](#RevocationBitmap.fromJSON) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+
+<a name="new_RevocationBitmap_new"></a>
+
+### new RevocationBitmap()
+Creates a new `RevocationBitmap` instance.
+
+<a name="RevocationBitmap+isRevoked"></a>
+
+### revocationBitmap.isRevoked(index) ⇒ <code>boolean</code>
+Returns `true` if the credential at the given `index` is revoked.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+revoke"></a>
+
+### revocationBitmap.revoke(index) ⇒ <code>boolean</code>
+Revokes the credential at the given `index`.
+
+Return whether the value was absent from the set.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+undoRevocation"></a>
+
+### revocationBitmap.undoRevocation(index) ⇒ <code>boolean</code>
+The credential at the given `index` will be set to valid.
+
+Returns ture is the value was present in the set.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+serializeCompressedB64"></a>
+
+### revocationBitmap.serializeCompressedB64() ⇒ <code>string</code>
+Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap+toJSON"></a>
+
+### revocationBitmap.toJSON() ⇒ <code>any</code>
+Serializes a `RevocationBitmap` object as a JSON object.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap.deserializeCompressedB64"></a>
+
+### RevocationBitmap.deserializeCompressedB64(data) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
+
+**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>string</code> | 
+
+<a name="RevocationBitmap.fromJSON"></a>
+
+### RevocationBitmap.fromJSON(value) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+Deserializes a `RevocationBitmap` object from a JSON object.
+
+**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
 <a name="Service"></a>
 
 ## Service

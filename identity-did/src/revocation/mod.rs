@@ -3,4 +3,4 @@
 
 mod bitmap;
 
-pub use self::bitmap::WasmRevocationBitmap;
+pub use self::bitmap::RevocationBitmap;

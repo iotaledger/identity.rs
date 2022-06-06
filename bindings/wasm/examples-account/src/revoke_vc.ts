@@ -11,7 +11,7 @@ import {
     Storage,
     MethodContent,
     ProofOptions,
-    EmbeddedRevocationList,
+    RevocationBitmap,
 } from './../../node/identity_wasm.js';
 
 
@@ -44,11 +44,11 @@ async function revokeVC(storage?: Storage) {
     })
 
     // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
-    const revocationList = new EmbeddedRevocationList;
+    const revocationBitmap = new RevocationBitmap;
     await issuer.createService({
         fragment: "my-revocation-service",
-        type: EmbeddedRevocationList.name(),
-        endpoint: revocationList.toEmbeddedServiceEndpoint().into_string()
+        type: "RevocationBitmap2022",
+        endpoint: "data:," + revocationBitmap.serializeCompressedB64()
     })
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
@@ -65,7 +65,7 @@ async function revokeVC(storage?: Storage) {
         type: "UniversityDegreeCredential",
         credentialStatus: {
             id: issuer.did()+"#my-revocation-service",
-            type: EmbeddedRevocationList.name(),
+            type_: "RevocationBitmap2022",
             revocationListIndex: "5"
         },
         issuer: issuer.document().id(),

@@ -107,7 +107,7 @@ interface Status {
   /** A URL identifying the credential status. */
   readonly id: string;
   /** The type(s) of the credential status. */
-  readonly type?: string;
+  readonly type_: string;
   /** Additional properties of the credential status. */
   readonly [properties: string]: unknown;
 }"#;
