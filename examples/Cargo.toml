@@ -44,6 +44,10 @@ name = "account_unchecked"
 path = "account/unchecked.rs"
 
 [[example]]
+name = "account_encryption"
+path = "account/encryption.rs"
+
+[[example]]
 name = "create_did"
 path = "low-level-api/create_did.rs"
 

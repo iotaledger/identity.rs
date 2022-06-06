@@ -27,4 +27,7 @@ describe("Test Stronghold Node.js", function () {
     it("didPurge", async () => {
         await StorageTestSuite.didPurgeTest(await stronghold());
     });
+    it("encryption", async () => {
+        await StorageTestSuite.encryptionTest(await stronghold(), await stronghold());
+    });
 });

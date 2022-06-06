@@ -3,6 +3,7 @@
 
 use identity_account_storage::storage::Storage;
 use identity_account_storage::storage::Stronghold;
+use identity_account_storage::types::EncryptedData;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
@@ -13,6 +14,9 @@ use napi::Result;
 use napi_derive::napi;
 
 use crate::account::identity::NapiDidLocation;
+use crate::account::types::NapiCekAlgorithm;
+use crate::account::types::NapiEncryptedData;
+use crate::account::types::NapiEncryptionAlgorithm;
 use crate::account::types::NapiKeyType;
 use crate::account::NapiChainState;
 use crate::account::NapiDocument;
@@ -173,6 +177,63 @@ impl NapiStronghold {
   #[napi]
   pub async fn key_exists(&self, did: &NapiDID, location: &NapiKeyLocation) -> Result<bool> {
     self.0.key_exists(&did.0, &location.0).await.napi_result()
+  }
+
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+  ///
+  /// Returns an [`EncryptedData`] instance.
+  #[napi]
+  pub async fn data_encrypt(
+    &self,
+    did: &NapiDID,
+    plaintext: Vec<u32>,
+    associated_data: Vec<u32>,
+    encryption_algorithm: &NapiEncryptionAlgorithm,
+    cek_algorithm: &NapiCekAlgorithm,
+    public_key: Vec<u32>,
+  ) -> Result<NapiEncryptedData> {
+    let public_key: Vec<u8> = public_key.try_into_bytes()?;
+    let plaintext: Vec<u8> = plaintext.try_into_bytes()?;
+    let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
+    let encrypted_data: EncryptedData = self
+      .0
+      .data_encrypt(
+        &did.0,
+        plaintext,
+        associated_data,
+        &encryption_algorithm.0,
+        &cek_algorithm.0,
+        public_key.into(),
+      )
+      .await
+      .napi_result()?;
+    Ok(NapiEncryptedData(encrypted_data))
+  }
+
+  /// Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
+  ///
+  /// Returns the decrypted text.
+  #[napi]
+  pub async fn data_decrypt(
+    &self,
+    did: &NapiDID,
+    data: &NapiEncryptedData,
+    encryption_algorithm: &NapiEncryptionAlgorithm,
+    cek_algorithm: &NapiCekAlgorithm,
+    private_key: &NapiKeyLocation,
+  ) -> Result<Vec<u32>> {
+    let data: Vec<u8> = self
+      .0
+      .data_decrypt(
+        &did.0,
+        data.0.clone(),
+        &encryption_algorithm.0,
+        &cek_algorithm.0,
+        &private_key.0,
+      )
+      .await
+      .napi_result()?;
+    Ok(data.into_iter().map(u32::from).collect())
   }
 
   /// Returns the chain state of the identity specified by `did`.

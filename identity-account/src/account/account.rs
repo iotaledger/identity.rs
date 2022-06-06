@@ -7,15 +7,23 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use identity_account_storage::crypto::RemoteEd25519;
-use identity_account_storage::crypto::RemoteKey;
 use serde::Serialize;
 
+#[cfg(feature = "encryption")]
+use identity_account_storage::types::CekAlgorithm;
+#[cfg(feature = "encryption")]
+use identity_account_storage::types::EncryptedData;
+#[cfg(feature = "encryption")]
+use identity_account_storage::types::EncryptionAlgorithm;
+
+use identity_account_storage::crypto::RemoteEd25519;
+use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
+use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
@@ -305,6 +313,56 @@ where
     self.increment_actions();
     self.store_state().await?;
     Ok(())
+  }
+
+  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+  ///
+  /// Returns an [`EncryptedData`] instance.
+  #[cfg(feature = "encryption")]
+  pub async fn encrypt_data(
+    &self,
+    plaintext: &[u8],
+    associated_data: &[u8],
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    public_key: PublicKey,
+  ) -> Result<EncryptedData> {
+    self
+      .storage()
+      .data_encrypt(
+        self.did(),
+        plaintext.to_vec(),
+        associated_data.to_vec(),
+        encryption_algorithm,
+        cek_algorithm,
+        public_key,
+      )
+      .await
+      .map_err(Into::into)
+  }
+
+  /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+  /// `cek_algorithm`.
+  ///
+  /// Returns the decrypted text.
+  #[cfg(feature = "encryption")]
+  pub async fn decrypt_data(
+    &self,
+    data: EncryptedData,
+    encryption_algorithm: &EncryptionAlgorithm,
+    cek_algorithm: &CekAlgorithm,
+    fragment: &str,
+  ) -> Result<Vec<u8>> {
+    let method: &IotaVerificationMethod = self
+      .document()
+      .resolve_method(fragment, None)
+      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
+    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
+    self
+      .storage()
+      .data_decrypt(self.did(), data, encryption_algorithm, cek_algorithm, &private_key)
+      .await
+      .map_err(Into::into)
   }
 
   // ===========================================================================
