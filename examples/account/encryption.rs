@@ -88,7 +88,7 @@ async fn main() -> Result<()> {
     )
     .await?;
 
-  // Bob must be able to decrypt the message using the shared secret
+  // Bob must be able to decrypt the message using the shared secret.
   let decrypted_msg: Vec<u8> = bob_account
     .decrypt_data(encrypted_data, &encryption_algorithm, &cek_algorithm, "kex-0")
     .await?;

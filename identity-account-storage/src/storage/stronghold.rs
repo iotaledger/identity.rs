@@ -7,19 +7,6 @@ use async_trait::async_trait;
 use crypto::ciphers::aes::Aes256Gcm;
 use crypto::ciphers::traits::Aead;
 use futures::executor;
-use iota_stronghold::procedures;
-use iota_stronghold::procedures::ProcedureError;
-use iota_stronghold::procedures::Sha2Hash;
-use iota_stronghold::sync::MergePolicy;
-use iota_stronghold::sync::SyncClientsConfig;
-use iota_stronghold::Client;
-use iota_stronghold::ClientVault;
-use iota_stronghold::Location;
-use iota_stronghold::Store;
-use tokio::sync::RwLockReadGuard;
-use tokio::sync::RwLockWriteGuard;
-use zeroize::Zeroize;
-
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyType;
@@ -29,6 +16,19 @@ use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
+use iota_stronghold::procedures;
+use iota_stronghold::procedures::ProcedureError;
+use iota_stronghold::procedures::Sha2Hash;
+use iota_stronghold::sync::MergePolicy;
+use iota_stronghold::sync::SyncClientsConfig;
+use iota_stronghold::Client;
+use iota_stronghold::ClientVault;
+use iota_stronghold::Location;
+use iota_stronghold::Store;
+use rand::distributions::DistString;
+use tokio::sync::RwLockReadGuard;
+use tokio::sync::RwLockWriteGuard;
+use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -280,7 +280,7 @@ impl Storage for Stronghold {
   async fn data_encrypt(
     &self,
     did: &IotaDID,
-    data: Vec<u8>,
+    plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: &EncryptionAlgorithm,
     cek_algorithm: &CekAlgorithm,
@@ -300,7 +300,7 @@ impl Storage for Stronghold {
           &client,
           encryption_algorithm,
           derived_secret,
-          data,
+          plaintext,
           associated_data,
           Vec::new(),
           ephemeral_public_key.as_ref().to_vec(),
@@ -323,7 +323,8 @@ impl Storage for Stronghold {
     // Changes won't be written to the snapshot state since the created keys are temporary
     let client: Client = self.client(&ClientPath::from(did))?;
     let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = data
-      .ephemeral_public_key()
+      .ephemeral_public_key
+      .clone()
       .try_into()
       .map_err(|_| Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH)))?;
     match cek_algorithm {
@@ -560,10 +561,10 @@ pub(crate) async fn aead_decrypt(
       let aead_decrypt: procedures::AeadDecrypt = procedures::AeadDecrypt {
         cipher: procedures::AeadCipher::Aes256Gcm,
         key,
-        ciphertext: encrypted_data.ciphertext().to_vec(),
-        associated_data: encrypted_data.associated_data().to_vec(),
-        tag: encrypted_data.tag().to_vec(),
-        nonce: encrypted_data.nonce().to_vec(),
+        ciphertext: encrypted_data.ciphertext,
+        associated_data: encrypted_data.associated_data,
+        tag: encrypted_data.tag,
+        nonce: encrypted_data.nonce,
       };
       let data = client
         .execute_procedure(aead_decrypt)
@@ -667,10 +668,7 @@ fn location_key_type(location: &KeyLocation) -> procedures::KeyType {
 
 pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
   let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
-  let fragment: String = rand::Rng::sample_iter(&mut thread_rng, rand::distributions::Alphanumeric)
-    .take(32)
-    .map(char::from)
-    .collect();
+  let fragment: String = rand::distributions::Alphanumeric.sample_string(&mut thread_rng, 32);
   let public_key: [u8; 32] = rand::Rng::gen(&mut thread_rng);
 
   KeyLocation::new(key_type, fragment, &public_key)

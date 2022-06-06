@@ -314,9 +314,10 @@ impl Storage for MemStore {
         "Ed25519 keys are not supported for decryption".to_owned(),
       )),
       KeyType::X25519 => {
-        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = data.ephemeral_public_key().try_into().map_err(|_| {
-          Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
-        })?;
+        let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] =
+          data.ephemeral_public_key.clone().try_into().map_err(|_| {
+            Error::InvalidPublicKey(format!("expected public key of length {}", X25519::PUBLIC_KEY_LENGTH))
+          })?;
         match cek_algorithm {
           CekAlgorithm::ECDH_ES(agreement) => {
             let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
@@ -392,14 +393,14 @@ fn try_encrypt(
 fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData) -> Result<Vec<u8>> {
   match algorithm {
     EncryptionAlgorithm::AES256GCM => {
-      let mut plaintext = vec![0; data.ciphertext().len()];
+      let mut plaintext = vec![0; data.ciphertext.len()];
       let len: usize = Aes256Gcm::try_decrypt(
         key,
-        data.nonce(),
-        data.associated_data(),
+        &data.nonce,
+        &data.associated_data,
         &mut plaintext,
-        data.ciphertext(),
-        data.tag(),
+        &data.ciphertext,
+        &data.tag,
       )
       .map_err(Error::DecryptionFailure)?;
       plaintext.truncate(len);

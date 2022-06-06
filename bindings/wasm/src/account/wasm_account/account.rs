@@ -276,14 +276,11 @@ impl WasmAccount {
 
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
-  ///
   /// Returns an [`EncryptedData`] instance.
   #[wasm_bindgen(js_name = encryptData)]
   pub fn encrypt_data(
     &self,
-    data: Vec<u8>,
+    plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: &WasmEncryptionAlgorithm,
     cek_algorithm: &WasmCekAlgorithm,
@@ -299,7 +296,7 @@ impl WasmAccount {
         .as_ref()
         .borrow()
         .encrypt_data(
-          &data,
+          &plaintext,
           &associated_data,
           &encryption_algorithm,
           &cek_algorithm,
@@ -312,11 +309,8 @@ impl WasmAccount {
     .unchecked_into::<PromiseEncryptedData>()
   }
 
-  //// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+  /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
   /// `cek_algorithm`.
-  ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
   ///
   /// Returns the decrypted text.
   #[wasm_bindgen(js_name = decryptData)]

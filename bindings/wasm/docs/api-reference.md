@@ -215,7 +215,7 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.encryptData(data, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -359,11 +359,8 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+encryptData"></a>
 
-### account.encryptData(data, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+### account.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
 Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
-
-Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-secret.
 
 Returns an [`EncryptedData`] instance.
 
@@ -371,7 +368,7 @@ Returns an [`EncryptedData`] instance.
 
 | Param | Type |
 | --- | --- |
-| data | <code>Uint8Array</code> | 
+| plaintext | <code>Uint8Array</code> | 
 | associated_data | <code>Uint8Array</code> | 
 | encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
@@ -380,10 +377,8 @@ Returns an [`EncryptedData`] instance.
 <a name="Account+decryptData"></a>
 
 ### account.decryptData(data, encryption_algorithm, cek_algorithm, fragment) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
 `cek_algorithm`.
-
-Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-secret.
 
 Returns the decrypted text.
 
@@ -693,8 +688,7 @@ Serializes `CekAlgorithm` as a JSON object.
 <a name="CekAlgorithm.EcdhEs"></a>
 
 ### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
-Uses the result of a Diffie-Hellman key exchange between a recipient's public key and an ephemeral secret as the
-content encryption key.
+Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
 
 **Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
@@ -2589,7 +2583,7 @@ Supported content encryption algorithms.
     * _instance_
         * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.Aes256Gcm()](#EncryptionAlgorithm.Aes256Gcm) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
         * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 
 <a name="EncryptionAlgorithm+toJSON"></a>
@@ -2598,10 +2592,10 @@ Supported content encryption algorithms.
 Serializes `EncryptionAlgorithm` as a JSON object.
 
 **Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
-<a name="EncryptionAlgorithm.Aes256Gcm"></a>
+<a name="EncryptionAlgorithm.A256GCM"></a>
 
-### EncryptionAlgorithm.Aes256Gcm() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
-Encrypts/Decrypts data using Aes256Gcm.
+### EncryptionAlgorithm.A256GCM() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+AES GCM using 256-bit key.
 
 **Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 <a name="EncryptionAlgorithm.fromJSON"></a>
@@ -4281,6 +4275,7 @@ interface method.
     * [.keyDeleteTest(storage)](#StorageTestSuite.keyDeleteTest) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.keyInsertTest(storage)](#StorageTestSuite.keyInsertTest) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.keySignEd25519Test(storage)](#StorageTestSuite.keySignEd25519Test) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.encryptionTest(alice_storage, bob_storage)](#StorageTestSuite.encryptionTest) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="StorageTestSuite.didCreateGenerateKeyTest"></a>
 
@@ -4353,6 +4348,16 @@ interface method.
 | Param | Type |
 | --- | --- |
 | storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.encryptionTest"></a>
+
+### StorageTestSuite.encryptionTest(alice_storage, bob_storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| alice_storage | <code>Storage</code> | 
+| bob_storage | <code>Storage</code> | 
 
 <a name="Timestamp"></a>
 

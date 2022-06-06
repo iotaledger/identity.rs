@@ -317,9 +317,6 @@ where
 
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
-  ///
   /// Returns an [`EncryptedData`] instance.
   #[cfg(feature = "encryption")]
   pub async fn encrypt_data(
@@ -346,9 +343,6 @@ where
 
   /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
   /// `cek_algorithm`.
-  ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
   ///
   /// Returns the decrypted text.
   #[cfg(feature = "encryption")]

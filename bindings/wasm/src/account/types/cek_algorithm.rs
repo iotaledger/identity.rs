@@ -17,8 +17,7 @@ pub struct WasmCekAlgorithm(CekAlgorithm);
 
 #[wasm_bindgen(js_class = CekAlgorithm)]
 impl WasmCekAlgorithm {
-  /// Uses the result of a Diffie-Hellman key exchange between a recipient's public key and an ephemeral secret as the
-  /// content encryption key.
+  /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
   #[wasm_bindgen(js_name = EcdhEs)]
   pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
     Self(CekAlgorithm::ECDH_ES(agreement.clone().into()))

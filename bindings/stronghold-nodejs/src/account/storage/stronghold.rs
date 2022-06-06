@@ -181,28 +181,25 @@ impl NapiStronghold {
 
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
-  ///
   /// Returns an [`EncryptedData`] instance.
   #[napi]
   pub async fn data_encrypt(
     &self,
     did: &NapiDID,
-    data: Vec<u32>,
+    plaintext: Vec<u32>,
     associated_data: Vec<u32>,
     encryption_algorithm: &NapiEncryptionAlgorithm,
     cek_algorithm: &NapiCekAlgorithm,
     public_key: Vec<u32>,
   ) -> Result<NapiEncryptedData> {
     let public_key: Vec<u8> = public_key.try_into_bytes()?;
-    let data: Vec<u8> = data.try_into_bytes()?;
+    let plaintext: Vec<u8> = plaintext.try_into_bytes()?;
     let associated_data: Vec<u8> = associated_data.try_into_bytes()?;
     let encrypted_data: EncryptedData = self
       .0
       .data_encrypt(
         &did.0,
-        data,
+        plaintext,
         associated_data,
         &encryption_algorithm.0,
         &cek_algorithm.0,
@@ -214,9 +211,6 @@ impl NapiStronghold {
   }
 
   /// Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
-  ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
   ///
   /// Returns the decrypted text.
   #[napi]

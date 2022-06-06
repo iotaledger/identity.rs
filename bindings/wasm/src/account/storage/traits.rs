@@ -96,7 +96,7 @@ extern "C" {
   pub fn data_encrypt(
     this: &WasmStorage,
     did: WasmDID,
-    data: Vec<u8>,
+    plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: WasmEncryptionAlgorithm,
     cek_algorithm: WasmCekAlgorithm,
@@ -244,7 +244,7 @@ impl Storage for WasmStorage {
   async fn data_encrypt(
     &self,
     did: &IotaDID,
-    data: Vec<u8>,
+    plaintext: Vec<u8>,
     associated_data: Vec<u8>,
     encryption_algorithm: &EncryptionAlgorithm,
     cek_algorithm: &CekAlgorithm,
@@ -252,7 +252,7 @@ impl Storage for WasmStorage {
   ) -> AccountStorageResult<EncryptedData> {
     let promise: Promise = Promise::resolve(&self.data_encrypt(
       did.clone().into(),
-      data,
+      plaintext,
       associated_data,
       (*encryption_algorithm).into(),
       cek_algorithm.clone().into(),
@@ -406,17 +406,11 @@ interface Storage {
 
   /** Encrypts the given `plaintext` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
    * 
-   *  Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-   *  secret.
-   * 
    *  Returns an `EncryptedData` instance.
    */
   dataEncrypt: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
 
   /** Decrypts the given `data` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
-   * 
-   *  Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-   *  secret.
    * 
    *  Returns the decrypted text.
    */

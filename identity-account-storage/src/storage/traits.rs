@@ -123,9 +123,6 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
 
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
-  ///
   /// Returns an [`EncryptedData`] instance.
   #[cfg(feature = "encryption")]
   async fn data_encrypt(
@@ -139,9 +136,6 @@ pub trait Storage: storage_sub_trait::StorageSendSyncMaybe + Debug {
   ) -> Result<EncryptedData>;
 
   /// Decrypts the given `data` with the specified `encryption_algorithm` and `cek_algorithm`.
-  ///
-  /// Diffie-Hellman key exchange with Concatenation Key Derivation Function will be performed to obtain the encryption
-  /// secret.
   ///
   /// Returns the decrypted text.
   #[cfg(feature = "encryption")]

@@ -16,8 +16,8 @@ pub struct WasmEncryptionAlgorithm(EncryptionAlgorithm);
 
 #[wasm_bindgen(js_class = EncryptionAlgorithm)]
 impl WasmEncryptionAlgorithm {
-  /// Encrypts/Decrypts data using Aes256Gcm.
-  #[wasm_bindgen(js_name = Aes256Gcm)]
+  /// AES GCM using 256-bit key.
+  #[wasm_bindgen(js_name = A256GCM)]
   pub fn aes256gcm() -> WasmEncryptionAlgorithm {
     Self(EncryptionAlgorithm::AES256GCM)
   }
