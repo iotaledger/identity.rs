@@ -65,7 +65,7 @@ async function revokeVC(storage?: Storage) {
         type: "UniversityDegreeCredential",
         credentialStatus: {
             id: issuer.did()+"#my-revocation-service",
-            type_: "RevocationBitmap2022",
+            type: "RevocationBitmap2022",
             revocationListIndex: "5"
         },
         issuer: issuer.document().id(),
