@@ -747,7 +747,7 @@ pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
   KeyLocation::new(key_type, fragment, &public_key)
 }
 
-pub(crate) fn random_stronghold_location() -> Location {
+fn random_stronghold_location() -> Location {
   let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
   let record_path: [u8; 32] = rand::Rng::gen(&mut thread_rng);
   Location::generic(VAULT_PATH.to_vec(), record_path.to_vec())

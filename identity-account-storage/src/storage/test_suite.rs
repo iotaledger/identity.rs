@@ -522,7 +522,7 @@ impl StorageTestSuite {
     ] {
       let network: NetworkName = Network::Mainnet.name();
 
-      // Both Bob and Alice must have a DID
+      // Both Alice (Sender) and Bob (Receiver) must have a DID.
       let (alice_did, _): (IotaDID, KeyLocation) = alice_storage
         .did_create(network.clone(), &random_string(), None)
         .await
@@ -533,7 +533,7 @@ impl StorageTestSuite {
         .await
         .context("did_create returned an error")?;
 
-      // The target of the message must share an X25519 public key
+      // The target of the message must share an X25519 public key.
       let bob_fragment: String = random_string();
       let bob_location: KeyLocation = bob_storage
         .key_generate(&bob_did, KeyType::X25519, &bob_fragment)
@@ -544,10 +544,8 @@ impl StorageTestSuite {
         .await
         .context("key_public returned an error")?;
 
-      // Alice encrypts the message to be sent to bob
-      // let agreement: AgreementInfo = AgreementInfo::new(b"Alice".to_vec(), b"Bob".to_vec(), Vec::new(), Vec::new());
+      // Alice encrypts the message to be sent to Bob.
       let encryption_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::AES256GCM;
-      // let cek_algorithm: CekAlgorithm = CekAlgorithm::ECDH_ES(agreement);
       let plaintext: &[u8] = b"This msg will be encrypted and decrypted";
 
       let encrypted_data: EncryptedData = alice_storage
@@ -562,7 +560,7 @@ impl StorageTestSuite {
         .await
         .context("data_encrypt returned an error")?;
 
-      // Bob must be able to decrypt the message using the shared secret
+      // Bob must be able to decrypt the message using the shared secret.
       let decrypted_msg: Vec<u8> = bob_storage
         .data_decrypt(
           &bob_did,

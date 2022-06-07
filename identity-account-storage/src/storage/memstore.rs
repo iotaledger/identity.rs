@@ -526,15 +526,10 @@ impl Default for MemStore {
   }
 }
 
+/// Generate a random content encryption key of suitable length for `encryption_algorithm`.
 fn generate_content_encryption_key(encryption_algorithm: EncryptionAlgorithm) -> Result<Vec<u8>> {
-  random_bytes(encryption_algorithm.key_length())
-}
-
-fn random_bytes(size: usize) -> Result<Vec<u8>> {
-  let mut bytes: Vec<u8> = vec![0; size];
-
+  let mut bytes: Vec<u8> = vec![0; encryption_algorithm.key_length()];
   crypto::utils::rand::fill(bytes.as_mut()).map_err(Error::EncryptionFailure)?;
-
   Ok(bytes)
 }
 
