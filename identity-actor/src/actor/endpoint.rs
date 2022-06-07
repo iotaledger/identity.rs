@@ -14,7 +14,7 @@ use crate::actor::Result as ActorResult;
 /// A path-like identifier for an actor request. As an example, `identity/create`
 /// could be an endpoint of the request "create" within the "identity" namespace.
 ///
-/// Endpoints are separated by slashes and only allow alphabetic ascii characters and `_`.
+/// The namespace and request are separated by a slash and only allow alphabetic ascii characters and `_`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub struct Endpoint {
