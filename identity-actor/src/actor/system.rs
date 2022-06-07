@@ -157,12 +157,28 @@ impl System {
   /// Let this actor handle the given `request`, by invoking a handler function.
   /// This consumes the actor because it passes the actor to the handler.
   /// The actor will thus typically be cloned before calling this method.
-  pub(crate) fn handle_request(self, request: InboundRequest) {
-    if request.request_mode == RequestMode::Asynchronous {
-      todo!("return `NotSupported` error or similar");
+  pub(crate) fn handle_request(mut self, request: InboundRequest) {
+    if request.request_mode == RequestMode::Synchronous {
+      self.handle_sync_request(request)
+    } else {
+      let _ = tokio::spawn(async move {
+        if let Err(error) = send_response(
+          self.commander_mut(),
+          Result::<(), RemoteSendError>::Err(RemoteSendError::UnexpectedRequest(
+            "asynchronous requests are not supported".to_owned(),
+          )),
+          request.response_channel,
+          request.request_id,
+        )
+        .await
+        {
+          log::error!(
+            "unable to respond to synchronous request on endpoint `{}` due to: {error}",
+            request.endpoint
+          );
+        }
+      });
     }
-
-    self.handle_sync_request(request)
   }
 
   #[inline(always)]
