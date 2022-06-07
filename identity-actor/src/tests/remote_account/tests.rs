@@ -26,7 +26,10 @@ async fn test_remote_account() -> ActorResult<()> {
   .await;
   let mut sender = default_sending_system(|builder| builder).await;
 
-  sender.add_addresses(receiver_peer_id, receiver_addrs).await.unwrap();
+  sender
+    .add_peer_addresses(receiver_peer_id, receiver_addrs)
+    .await
+    .unwrap();
 
   let doc: IotaDocument = sender.send_request(receiver_peer_id, IdentityCreate).await?.unwrap();
 

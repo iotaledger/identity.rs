@@ -27,7 +27,7 @@ async fn setup() -> (System, PeerId, System) {
 
   let mut sender: System = SystemBuilder::new().build().await.unwrap();
 
-  sender.add_address(receiver_peer_id, addr).await.unwrap();
+  sender.add_peer_address(receiver_peer_id, addr).await.unwrap();
 
   (receiver, receiver_peer_id, sender)
 }

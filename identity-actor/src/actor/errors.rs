@@ -48,6 +48,7 @@ pub enum Error {
 }
 
 /// Errors that can occur on the remote actor.
+#[non_exhaustive]
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
   #[error("unexpected request: {0}")]

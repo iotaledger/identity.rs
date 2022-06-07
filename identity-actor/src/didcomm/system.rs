@@ -107,12 +107,12 @@ impl DidCommSystem {
 
   /// See [`System::add_address`].
   pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
-    self.system.add_address(peer_id, address).await
+    self.system.add_peer_address(peer_id, address).await
   }
 
   /// See [`System::add_addresses`].
   pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
-    self.system.add_addresses(peer_id, addresses).await
+    self.system.add_peer_addresses(peer_id, addresses).await
   }
 
   /// See [`System::shutdown`].

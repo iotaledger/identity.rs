@@ -43,6 +43,8 @@ pub struct System {
 }
 
 impl Clone for System {
+  /// Produce a shallow copy of the system, which uses the same event loop as the
+  /// system that it was cloned from.
   fn clone(&self) -> Self {
     Self {
       commander: self.commander.clone(),
@@ -60,7 +62,7 @@ impl System {
     self.state.as_ref()
   }
 
-  /// Returns the [`PeerId`] that other peers can securely identify this actor with.
+  /// Returns the [`PeerId`] that other peers can securely identify this system with.
   pub fn peer_id(&self) -> PeerId {
     self.state().peer_id
   }
@@ -73,7 +75,7 @@ impl System {
     &self.commander
   }
 
-  /// Start listening on the given `address`. Returns the first address that the actor started listening on, which may
+  /// Start listening on the given `address`. Returns the first address that the system started listening on, which may
   /// be different from `address` itself, e.g. when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when passing a
   /// single address, multiple addresses may end up being listened on. To obtain all those addresses, use
   /// [`System::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
@@ -87,11 +89,11 @@ impl System {
     self.commander_mut().get_addresses().await
   }
 
-  /// Shut this actor down. This will break the event loop in the background immediately,
-  /// returning an error for all current handlers that interact with their copy of the
-  /// actor or those waiting on messages. The actor will thus stop listening on all addresses.
+  /// Shut this system down. This will break the event loop in the background immediately,
+  /// returning an error for all current actors that interact with their copy of the
+  /// system or those waiting on messages. The system will thus stop listening on all addresses.
   ///
-  /// Calling this and other methods, which interact with the event loop, on an actor that was shutdown
+  /// Calling this and other methods, which interact with the event loop, on a system that was shutdown
   /// will return [`Error::Shutdown`].
   pub async fn shutdown(mut self) -> ActorResult<()> {
     // Consuming self drops the internal commander. If this is the last copy of the commander,
@@ -103,18 +105,18 @@ impl System {
     self.commander_mut().shutdown().await
   }
 
-  /// Associate the given `peer_id` with an `address`. This needs to be done before sending a
-  /// request to this [`PeerId`].
-  pub async fn add_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
+  /// Associate the given `peer_id` with an `address`. This `address`, or another one that was added,
+  /// will be use to send requests to this [`PeerId`].
+  pub async fn add_peer_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
     self
       .commander_mut()
       .add_addresses(peer_id, OneOrMany::One(address))
       .await
   }
 
-  /// Associate the given `peer_id` with multiple `addresses`. This needs to be done before sending a
-  /// request to this [`PeerId`].
-  pub async fn add_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
+  /// Associate the given `peer_id` with multiple `addresses`. One of the `addresses`, or another one that was added,
+  /// will be use to send requests to this [`PeerId`].
+  pub async fn add_peer_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
     self
       .commander_mut()
       .add_addresses(peer_id, OneOrMany::Many(addresses))
@@ -122,6 +124,9 @@ impl System {
   }
 
   /// Sends a synchronous request to a peer and returns its response.
+  ///
+  /// An address needs to be available for the given `peer`, which can be added
+  /// with [`System::add_address`] or [`System::add_addresses`].
   pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();
@@ -154,9 +159,9 @@ impl System {
     })
   }
 
-  /// Let this actor handle the given `request`, by invoking a handler function.
-  /// This consumes the actor because it passes the actor to the handler.
-  /// The actor will thus typically be cloned before calling this method.
+  /// Let this system handle the given `request`, by invoking a handler function.
+  /// This consumes the system because it passes itself to the handler.
+  /// The system will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(mut self, request: InboundRequest) {
     if request.request_mode == RequestMode::Synchronous {
       self.handle_sync_request(request)
