@@ -319,7 +319,7 @@ impl Storage for Stronghold {
           &client,
           encryption_algorithm,
           cek,
-          data,
+          plaintext,
           associated_data,
           encrypted_cek,
           ephemeral_public_key.as_ref().to_vec(),
@@ -371,7 +371,7 @@ impl Storage for Stronghold {
         )
         .await?;
 
-        let cek: Location = aes_256_unwrap_key(&client, data.encrypted_cek(), derived_secret)?;
+        let cek: Location = aes_256_unwrap_key(&client, data.encrypted_cek.as_slice(), derived_secret)?;
 
         let decrypted_data: Result<Vec<u8>> = aead_decrypt(&client, encryption_algorithm, cek, data).await;
         decrypted_data
@@ -749,7 +749,8 @@ pub(crate) fn random_location(key_type: KeyType) -> KeyLocation {
 }
 
 pub(crate) fn random_stronghold_location() -> Location {
-  let record_path: [u8; 32] = rand::thread_rng().gen();
+  let mut thread_rng: rand::rngs::ThreadRng = rand::thread_rng();
+  let record_path: [u8; 32] = rand::Rng::gen(&mut thread_rng);
   Location::generic(VAULT_PATH.to_vec(), record_path.to_vec())
 }
 

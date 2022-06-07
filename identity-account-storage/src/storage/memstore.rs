@@ -358,10 +358,10 @@ impl Storage for MemStore {
               concat_kdf(cek_algorithm.name(), Aes256Kw::KEY_LENGTH, &shared_secret, agreement)
                 .map_err(Error::DecryptionFailure)?;
 
-            let mut cek: Vec<u8> = vec![0; data.encrypted_cek().len() - Aes256Kw::BLOCK];
+            let mut cek: Vec<u8> = vec![0; data.encrypted_cek.len() - Aes256Kw::BLOCK];
             let aes_kw: Aes256Kw<'_> = Aes256Kw::new(derived_secret.as_ref());
             aes_kw
-              .unwrap_key(data.encrypted_cek(), &mut cek)
+              .unwrap_key(data.encrypted_cek.as_ref(), &mut cek)
               .map_err(Error::DecryptionFailure)?;
 
             try_decrypt(&cek, encryption_algorithm, &data)
