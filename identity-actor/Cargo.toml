@@ -28,7 +28,6 @@ uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 libp2p = { version = "*", features = ["wasm-bindgen", "wasm-ext", "wasm-ext-websocket"] }
 uuid = { version = "*", features = ["wasm-bindgen"] }
-wasm-bindgen-futures = { version = "0.4.29", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
@@ -38,6 +37,3 @@ pretty_env_logger = { version = "0.4", default-features = false }
 [[bench]]
 name = "benchmark"
 harness = false
-
-[features]
-default = []
