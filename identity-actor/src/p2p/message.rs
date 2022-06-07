@@ -12,9 +12,9 @@ use crate::actor::RequestMode;
 /// A request message containing some opaque data together with the endpoint it is inteded for and its request mode.
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RequestMessage {
-  pub endpoint: Endpoint,
-  pub request_mode: RequestMode,
-  pub data: Vec<u8>,
+  pub(crate) endpoint: Endpoint,
+  pub(crate) request_mode: RequestMode,
+  pub(crate) data: Vec<u8>,
 }
 
 impl RequestMessage {
@@ -41,4 +41,4 @@ impl RequestMessage {
 
 /// A response message containing some opaque data.
 #[derive(Debug)]
-pub(crate) struct ResponseMessage(pub Vec<u8>);
+pub(crate) struct ResponseMessage(pub(crate) Vec<u8>);

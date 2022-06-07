@@ -122,7 +122,7 @@ impl System {
   /// Sends a synchronous request to a peer and returns its response.
   ///
   /// An address needs to be available for the given `peer`, which can be added
-  /// with [`System::add_address`] or [`System::add_addresses`].
+  /// with [`System::add_peer_address`] or [`System::add_peer_addresses`].
   pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();

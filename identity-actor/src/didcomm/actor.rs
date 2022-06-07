@@ -56,7 +56,7 @@ where
   REQ: DidCommRequest + Send + Sync,
   ACT: DidCommActor<REQ> + Send + Sync,
 {
-  pub fn new(actor: ACT) -> Self {
+  pub(crate) fn new(actor: ACT) -> Self {
     Self {
       actor,
       _phantom_req: PhantomData,

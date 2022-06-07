@@ -24,7 +24,7 @@ pub struct Endpoint {
 impl Endpoint {
   /// Validates the endpoint.
   fn validate(string: &str) -> ActorResult<()> {
-    let mut split: Split<char> = string.split('/');
+    let mut split: Split<'_, char> = string.split('/');
 
     let namespace: &str = split.next().expect("split always returns at least one element");
     let request: &str = split.next().ok_or(Error::InvalidEndpoint)?;

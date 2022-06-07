@@ -13,7 +13,7 @@ use crate::tests::remote_account::RemoteAccountError;
 
 /// Can be sent to a `RemoteAccount` to instruct it to create an identity.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct IdentityCreate;
+pub(crate) struct IdentityCreate;
 
 impl From<IdentityCreate> for IdentitySetup {
   fn from(_: IdentityCreate) -> Self {
@@ -31,7 +31,7 @@ impl ActorRequest for IdentityCreate {
 
 /// Can be sent to a `RemoteAccount` to instruct it to return the identities it contains.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IdentityList;
+pub(crate) struct IdentityList;
 
 impl ActorRequest for IdentityList {
   type Response = Vec<IotaDID>;
@@ -43,7 +43,7 @@ impl ActorRequest for IdentityList {
 
 /// Can be sent to a `RemoteAccount` to instruct it to return the given identities' DID document.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IdentityGet(pub IotaDID);
+pub(crate) struct IdentityGet(pub(crate) IotaDID);
 
 impl ActorRequest for IdentityGet {
   type Response = Result<IotaDocument, RemoteAccountError>;

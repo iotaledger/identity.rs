@@ -20,7 +20,7 @@ use crate::tests::remote_account::RemoteAccountError;
 /// A proof-of-concept implementation of a remote `Account` with very basic operations
 /// and disabled tangle interaction.
 #[derive(Debug, Clone)]
-pub struct RemoteAccount {
+pub(crate) struct RemoteAccount {
   builder: Arc<Mutex<AccountBuilder>>,
   accounts: Arc<DashMap<IotaDID, Account>>,
 }
@@ -54,7 +54,7 @@ impl Actor<IdentityGet> for RemoteAccount {
 }
 
 impl RemoteAccount {
-  pub fn new() -> identity_account::Result<Self> {
+  pub(crate) fn new() -> identity_account::Result<Self> {
     let builder: AccountBuilder = Account::builder().autopublish(false);
 
     Ok(Self {

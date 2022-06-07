@@ -144,7 +144,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct Dummy(u8);
+  struct Dummy(u8);
 
   impl ActorRequest for Dummy {
     type Response = ();
@@ -155,7 +155,7 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
   }
 
   #[derive(Debug, Clone)]
-  pub struct TestActor(pub Arc<AtomicBool>);
+  struct TestActor(Arc<AtomicBool>);
 
   #[async_trait::async_trait]
   impl Actor<Dummy> for TestActor {
@@ -272,10 +272,10 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> ActorR
   // Sending `CustomRequest2` to an endpoint expecting `CustomRequest`, we expect a local deserialization error.
 
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-  pub struct CustomRequest(u8);
+  struct CustomRequest(u8);
 
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-  pub struct CustomRequest2(u8);
+  struct CustomRequest2(u8);
 
   impl ActorRequest for CustomRequest {
     type Response = String;
@@ -325,7 +325,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> ActorR
   // Define a third type that has a different serialization result.
   // We expect a deserialization error on the peer.
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-  pub struct CustomRequest3(String);
+  struct CustomRequest3(String);
 
   impl ActorRequest for CustomRequest3 {
     type Response = String;

@@ -221,17 +221,17 @@ impl EventLoop {
 /// An inbound request as received by the p2p layer.
 #[derive(Debug)]
 pub(crate) struct InboundRequest {
-  pub peer_id: PeerId,
-  pub endpoint: Endpoint,
-  pub request_mode: RequestMode,
-  pub input: Vec<u8>,
-  pub response_channel: ResponseChannel<ResponseMessage>,
-  pub request_id: RequestId,
+  pub(crate) peer_id: PeerId,
+  pub(crate) endpoint: Endpoint,
+  pub(crate) request_mode: RequestMode,
+  pub(crate) input: Vec<u8>,
+  pub(crate) response_channel: ResponseChannel<ResponseMessage>,
+  pub(crate) request_id: RequestId,
 }
 
 /// A request in a DIDComm thread.
 #[derive(Debug)]
 pub(crate) struct ThreadRequest {
-  pub endpoint: Endpoint,
-  pub input: Vec<u8>,
+  pub(crate) endpoint: Endpoint,
+  pub(crate) input: Vec<u8>,
 }

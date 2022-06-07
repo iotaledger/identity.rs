@@ -16,10 +16,10 @@ use crate::didcomm::DidCommSystem;
 use crate::didcomm::ThreadId;
 
 #[derive(Debug, Clone)]
-pub struct DidCommState;
+pub(crate) struct DidCommState;
 
 impl DidCommState {
-  pub async fn new() -> Self {
+  pub(crate) async fn new() -> Self {
     Self
   }
 }
@@ -50,7 +50,7 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
   }
 }
 
-pub async fn presentation_holder_handler(
+pub(crate) async fn presentation_holder_handler(
   mut system: DidCommSystem,
   peer: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
@@ -82,7 +82,7 @@ pub async fn presentation_holder_handler(
   Ok(())
 }
 
-pub async fn presentation_verifier_handler(
+pub(crate) async fn presentation_verifier_handler(
   mut system: DidCommSystem,
   peer: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
@@ -110,7 +110,7 @@ pub async fn presentation_verifier_handler(
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct PresentationRequest([u8; 2]);
+pub(crate) struct PresentationRequest([u8; 2]);
 
 impl DidCommRequest for PresentationRequest {
   fn endpoint() -> Endpoint {
@@ -119,7 +119,7 @@ impl DidCommRequest for PresentationRequest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct PresentationOffer([u8; 3]);
+pub(crate) struct PresentationOffer([u8; 3]);
 
 impl DidCommRequest for PresentationOffer {
   fn endpoint() -> Endpoint {
@@ -128,7 +128,7 @@ impl DidCommRequest for PresentationOffer {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct Presentation([u8; 4]);
+pub(crate) struct Presentation([u8; 4]);
 
 impl DidCommRequest for Presentation {
   fn endpoint() -> Endpoint {
@@ -137,7 +137,7 @@ impl DidCommRequest for Presentation {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
-pub struct PresentationResult([u8; 5]);
+pub(crate) struct PresentationResult([u8; 5]);
 
 impl DidCommRequest for PresentationResult {
   fn endpoint() -> Endpoint {

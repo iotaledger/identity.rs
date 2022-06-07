@@ -4,7 +4,7 @@
 /// The error type for the [`RemoteAccount`].
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]
-pub enum RemoteAccountError {
+pub(crate) enum RemoteAccountError {
   #[error("identity not found")]
   IdentityNotFound,
   #[error("{0}")]

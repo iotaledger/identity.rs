@@ -37,7 +37,7 @@ async fn test_didcomm_end_to_end() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct TestRequest(u32);
+  struct TestRequest(u32);
 
   impl DidCommRequest for TestRequest {
     fn endpoint() -> Endpoint {
@@ -46,7 +46,7 @@ async fn test_didcomm_end_to_end() -> ActorResult<()> {
   }
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct TestRequestAlt(u32);
+  struct TestRequestAlt(u32);
 
   impl DidCommRequest for TestRequestAlt {
     fn endpoint() -> Endpoint {
@@ -102,7 +102,7 @@ async fn test_didcomm_end_to_end() -> ActorResult<()> {
     .await
     .unwrap();
 
-  sending_system.add_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   let thread_id = ThreadId::new();
 
@@ -141,7 +141,7 @@ async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct SyncDummy(u16);
+  struct SyncDummy(u16);
 
   impl ActorRequest for SyncDummy {
     type Response = u16;
@@ -168,7 +168,7 @@ async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
   .await;
 
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
-  sending_system.add_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   let result = sending_system.send_request(peer_id, SyncDummy(42)).await;
 
@@ -187,10 +187,10 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_system(|builder| builder).await;
 
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
-  sending_system.add_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  pub struct AsyncDummy(u16);
+  struct AsyncDummy(u16);
 
   impl DidCommRequest for AsyncDummy {
     fn endpoint() -> Endpoint {
@@ -223,7 +223,7 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   })
   .await;
 
-  holder_system.add_addresses(peer_id, addrs).await.unwrap();
+  holder_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   presentation_holder_handler(holder_system.clone(), peer_id, None)
     .await
@@ -252,7 +252,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
   .await;
   let mut verifier_system = default_sending_didcomm_system(|builder| builder).await;
 
-  verifier_system.add_addresses(peer_id, addrs).await.unwrap();
+  verifier_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   presentation_verifier_handler(verifier_system.clone(), peer_id, None)
     .await
@@ -306,7 +306,7 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   let mut sending_system: DidCommSystem =
     default_sending_didcomm_system(|builder| builder.timeout(std::time::Duration::from_millis(50))).await;
 
-  sending_system.add_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   let thread_id = ThreadId::new();
   sending_system
@@ -358,7 +358,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   .await;
 
   let mut sending_system: DidCommSystem = default_sending_didcomm_system(|builder| builder).await;
-  sending_system.add_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   sending_system
     .send_message(peer_id, &ThreadId::new(), PresentationOffer::default())
