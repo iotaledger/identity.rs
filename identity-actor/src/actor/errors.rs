@@ -24,8 +24,6 @@ pub enum Error {
   UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
-  #[error("hook invocation error: {0}")]
-  HookInvocationError(String),
   #[non_exhaustive]
   #[error("{location} serialization failed during {context} due to: {error_message}")]
   SerializationFailure {
@@ -56,8 +54,6 @@ pub enum RemoteSendError {
   UnexpectedRequest(String),
   #[error("handler invocation error: {0}")]
   HandlerInvocationError(String),
-  #[error("hook invocation error: {0}")]
-  HookInvocationError(String),
   #[error("{location} serialization failed during {context} due to: {error_message}")]
   SerializationFailure {
     location: ErrorLocation,
@@ -77,7 +73,6 @@ impl From<RemoteSendError> for Error {
     match err {
       RemoteSendError::UnexpectedRequest(req) => Error::UnexpectedRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
-      RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
       RemoteSendError::DeserializationFailure {
         location,
         context,
