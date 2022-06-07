@@ -357,8 +357,7 @@ impl Storage for Stronghold {
           shared_secret,
         )
         .await?;
-        let decrypted_data: Result<Vec<u8>> = aead_decrypt(&client, encryption_algorithm, derived_secret, data).await;
-        decrypted_data
+        aead_decrypt(&client, encryption_algorithm, derived_secret, data).await
       }
       CekAlgorithm::ECDH_ES_A256KW(agreement) => {
         let shared_secret: Location = diffie_hellman(&client, private_key, public_key).await?;
@@ -373,8 +372,7 @@ impl Storage for Stronghold {
 
         let cek: Location = aes_256_unwrap_key(&client, data.encrypted_cek.as_slice(), derived_secret)?;
 
-        let decrypted_data: Result<Vec<u8>> = aead_decrypt(&client, encryption_algorithm, cek, data).await;
-        decrypted_data
+        aead_decrypt(&client, encryption_algorithm, cek, data).await
       }
     }
   }
@@ -662,6 +660,7 @@ fn aes_256_wrap_key(client: &Client, encryption_key: Location, cek: Location) ->
   Ok(encrypted_cek)
 }
 
+/// Unwrap the given `encrypted_key` using `decryption_key`.
 fn aes_256_unwrap_key(client: &Client, encrypted_key: impl AsRef<[u8]>, decryption_key: Location) -> Result<Location> {
   let output: Location = random_stronghold_location();
 
