@@ -61,20 +61,20 @@ async fn test_didcomm_end_to_end() -> ActorResult<()> {
 
   #[async_trait::async_trait]
   impl DidCommActor<DidCommPlaintextMessage<TestRequest>> for MyActor {
-    async fn handle(&self, mut actor: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<TestRequest>>) {
+    async fn handle(&self, mut system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<TestRequest>>) {
       self.counter.fetch_add(request.input.body.0, Ordering::SeqCst);
 
-      actor
+      system
         .send_message(request.peer_id, request.input.thread_id(), TestRequestAlt(21))
         .await
         .unwrap();
 
       let message: DidCommPlaintextMessage<TestRequestAlt> =
-        actor.await_message(request.input.thread_id()).await.unwrap();
+        system.await_message(request.input.thread_id()).await.unwrap();
 
       assert_eq!(message.body.0, 1337);
 
-      actor
+      system
         .send_message(request.peer_id, request.input.thread_id(), TestRequestAlt(7))
         .await
         .unwrap();
@@ -167,15 +167,15 @@ async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
   })
   .await;
 
-  let mut sending_actor = default_sending_didcomm_system(|builder| builder).await;
-  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+  let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
+  sending_system.add_addresses(peer_id, addrs).await.unwrap();
 
-  let result = sending_actor.send_request(peer_id, SyncDummy(42)).await;
+  let result = sending_system.send_request(peer_id, SyncDummy(42)).await;
 
   assert_eq!(result.unwrap(), 42);
 
   listening_actor.shutdown().await.unwrap();
-  sending_actor.shutdown().await.unwrap();
+  sending_system.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -186,8 +186,8 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
 
   let (listening_actor, addrs, peer_id) = default_listening_didcomm_system(|builder| builder).await;
 
-  let mut sending_actor = default_sending_didcomm_system(|builder| builder).await;
-  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+  let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
+  sending_system.add_addresses(peer_id, addrs).await.unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   pub struct AsyncDummy(u16);
@@ -198,14 +198,14 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
     }
   }
 
-  let result = sending_actor
+  let result = sending_system
     .send_message(peer_id, &ThreadId::new(), AsyncDummy(42))
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
 
   listening_actor.shutdown().await.unwrap();
-  sending_actor.shutdown().await.unwrap();
+  sending_system.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -268,19 +268,19 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
 async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
   try_init_logger();
 
-  let mut sending_actor = default_sending_didcomm_system(|builder| builder).await;
+  let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
 
-  let result = sending_actor.send_request(PeerId::random(), IdentityList).await;
+  let result = sending_system.send_request(PeerId::random(), IdentityList).await;
 
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
 
-  let result = sending_actor
+  let result = sending_system
     .send_message(PeerId::random(), &ThreadId::new(), PresentationOffer::default())
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
 
-  sending_actor.shutdown().await.unwrap();
+  sending_system.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -303,23 +303,23 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   })
   .await;
 
-  let mut sending_actor: DidCommSystem =
+  let mut sending_system: DidCommSystem =
     default_sending_didcomm_system(|builder| builder.timeout(std::time::Duration::from_millis(50))).await;
 
-  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_addresses(peer_id, addrs).await.unwrap();
 
   let thread_id = ThreadId::new();
-  sending_actor
+  sending_system
     .send_message(peer_id, &thread_id, PresentationOffer::default())
     .await
     .unwrap();
 
-  let result = sending_actor.await_message::<()>(&thread_id).await;
+  let result = sending_system.await_message::<()>(&thread_id).await;
 
   assert!(matches!(result.unwrap_err(), Error::AwaitTimeout(_)));
 
   listening_actor.shutdown().await.unwrap();
-  sending_actor.shutdown().await.unwrap();
+  sending_system.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -357,10 +357,10 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   })
   .await;
 
-  let mut sending_actor: DidCommSystem = default_sending_didcomm_system(|builder| builder).await;
-  sending_actor.add_addresses(peer_id, addrs).await.unwrap();
+  let mut sending_system: DidCommSystem = default_sending_didcomm_system(|builder| builder).await;
+  sending_system.add_addresses(peer_id, addrs).await.unwrap();
 
-  sending_actor
+  sending_system
     .send_message(peer_id, &ThreadId::new(), PresentationOffer::default())
     .await
     .unwrap();
@@ -369,7 +369,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
 
   tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 
-  sending_actor.shutdown().await.unwrap();
+  sending_system.shutdown().await.unwrap();
 
   assert!(test_actor.was_called.load(std::sync::atomic::Ordering::SeqCst));
 

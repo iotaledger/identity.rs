@@ -83,7 +83,7 @@ pub async fn presentation_holder_handler(
 }
 
 pub async fn presentation_verifier_handler(
-  mut actor: DidCommSystem,
+  mut system: DidCommSystem,
   peer: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
 ) -> ActorResult<()> {
@@ -94,16 +94,16 @@ pub async fn presentation_verifier_handler(
   };
 
   log::debug!("verifier: sending request");
-  actor
+  system
     .send_message(peer, &thread_id, PresentationRequest::default())
     .await?;
 
   log::debug!("verifier: awaiting presentation");
-  let presentation: DidCommPlaintextMessage<Presentation> = actor.await_message(&thread_id).await?;
+  let presentation: DidCommPlaintextMessage<Presentation> = system.await_message(&thread_id).await?;
   log::debug!("verifier: received presentation: {:?}", presentation);
 
   log::debug!("verifier: sending presentation result");
-  actor
+  system
     .send_message(peer, &thread_id, PresentationResult::default())
     .await?;
   Ok(())
