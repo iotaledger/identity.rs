@@ -20,19 +20,19 @@ use crate::p2p::ResponseMessage;
 
 /// A thread-safe way to interact with an `EventLoop` running in the background.
 #[derive(Debug, Clone)]
-pub struct NetCommander {
+pub(crate) struct NetCommander {
   command_sender: mpsc::Sender<SwarmCommand>,
 }
 
 impl NetCommander {
   /// Create a new [`NetCommander`] from the sender half of a channel.
   /// The receiver half needs to be passed to the `EventLoop`.
-  pub fn new(command_sender: mpsc::Sender<SwarmCommand>) -> Self {
+  pub(crate) fn new(command_sender: mpsc::Sender<SwarmCommand>) -> Self {
     NetCommander { command_sender }
   }
 
   /// Send the `request` to `peer` and returns the response.
-  pub async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> ActorResult<ResponseMessage> {
+  pub(crate) async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> ActorResult<ResponseMessage> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
       peer,
@@ -48,7 +48,7 @@ impl NetCommander {
 
   /// Send `data` as a response for the `request_id` using the provided `channel`.
   /// The inner result signals whether sending the response was successful.
-  pub async fn send_response(
+  pub(crate) async fn send_response(
     &mut self,
     data: Vec<u8>,
     channel: ResponseChannel<ResponseMessage>,
@@ -66,7 +66,7 @@ impl NetCommander {
   }
 
   /// Start listening on the given address.
-  pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
+  pub(crate) async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::StartListening {
       address,
@@ -80,12 +80,12 @@ impl NetCommander {
   }
 
   /// Add additional `addresses` to listen on.
-  pub async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
+  pub(crate) async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
     self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await
   }
 
   /// Returns all addresses the event loop is listening on.
-  pub async fn get_addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
+  pub(crate) async fn get_addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::GetAddresses {
@@ -96,7 +96,7 @@ impl NetCommander {
   }
 
   /// Shut down the event loop. This will return `Error::Shutdown` from all outstanding requests.
-  pub async fn shutdown(&mut self) -> ActorResult<()> {
+  pub(crate) async fn shutdown(&mut self) -> ActorResult<()> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::Shutdown {
@@ -119,7 +119,7 @@ impl NetCommander {
 ///
 /// See the [`NetCommander`] methods for documentation.
 #[derive(Debug)]
-pub enum SwarmCommand {
+pub(crate) enum SwarmCommand {
   SendRequest {
     peer: PeerId,
     request: RequestMessage,

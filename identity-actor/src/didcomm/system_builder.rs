@@ -106,7 +106,6 @@ impl DidCommSystemBuilder {
   }
 
   /// See [`SystemBuilder::build`].
-  #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> ActorResult<DidCommSystem> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))

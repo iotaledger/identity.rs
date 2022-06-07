@@ -95,7 +95,6 @@ impl SystemBuilder {
   }
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
-  #[cfg(any(not(target_arch = "wasm32"), target_os = "wasi"))]
   pub async fn build(self) -> ActorResult<System> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))

@@ -6,7 +6,7 @@ mod event_loop;
 mod message;
 mod net_commander;
 
-pub use behaviour::*;
-pub use event_loop::*;
-pub use message::*;
-pub use net_commander::*;
+pub(crate) use behaviour::*;
+pub(crate) use event_loop::*;
+pub(crate) use message::*;
+pub(crate) use net_commander::*;

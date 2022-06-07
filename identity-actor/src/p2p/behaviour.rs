@@ -13,14 +13,17 @@ use libp2p::request_response::RequestResponseCodec;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 
+/// The protocol of the identity actor.
 #[derive(Debug, Clone)]
-pub struct ActorProtocol();
+pub(crate) struct ActorProtocol();
+
+/// Defines the request and response types for the libp2p RequestResponse layer.
 #[derive(Clone)]
-pub struct ActorRequestResponseCodec();
+pub(crate) struct ActorRequestResponseCodec();
 
 impl ProtocolName for ActorProtocol {
   fn protocol_name(&self) -> &[u8] {
-    "/actor/0.5.0".as_bytes()
+    "/actor/0.1.0".as_bytes()
   }
 }
 

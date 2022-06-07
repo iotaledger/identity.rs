@@ -30,7 +30,7 @@ use crate::p2p::ResponseMessage;
 use crate::p2p::SwarmCommand;
 
 /// The background loop that handles libp2p swarm events and `NetCommander` commands simultaneously.
-pub struct EventLoop {
+pub(crate) struct EventLoop {
   swarm: Swarm<RequestResponse<ActorRequestResponseCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<ResponseMessage, OutboundFailure>>>,
@@ -39,7 +39,7 @@ pub struct EventLoop {
 }
 
 impl EventLoop {
-  pub fn new(
+  pub(crate) fn new(
     swarm: Swarm<RequestResponse<ActorRequestResponseCodec>>,
     command_channel: mpsc::Receiver<SwarmCommand>,
   ) -> Self {

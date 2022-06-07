@@ -67,12 +67,8 @@ impl System {
     self.state().peer_id
   }
 
-  pub fn commander_mut(&mut self) -> &mut NetCommander {
+  pub(crate) fn commander_mut(&mut self) -> &mut NetCommander {
     &mut self.commander
-  }
-
-  pub fn commander(&self) -> &NetCommander {
-    &self.commander
   }
 
   /// Start listening on the given `address`. Returns the first address that the system started listening on, which may
