@@ -5,24 +5,24 @@
 
 #![allow(clippy::module_inception)]
 
-mod bitmap_revocation_status;
 mod builder;
 mod credential;
 mod evidence;
 mod issuer;
 mod policy;
 mod refresh;
+mod revocation_bitmap_status;
 mod schema;
 mod status;
 mod subject;
 
-pub use self::bitmap_revocation_status::BitmapRevocationStatus;
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
 pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
 pub use self::policy::Policy;
 pub use self::refresh::RefreshService;
+pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;

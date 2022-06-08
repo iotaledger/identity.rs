@@ -5,9 +5,11 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use std::io::Write;
 
+use dataurl::DataUrl;
 use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
+use identity_core::common::Url;
 use identity_core::utils::decode_b64;
 use identity_core::utils::encode_b64;
 use roaring::RoaringBitmap;
@@ -21,6 +23,7 @@ use serde::Serialize;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::service::ServiceEndpoint;
 
 /// A compressed bitmap for managing credential revocation.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -51,9 +54,25 @@ impl RevocationBitmap {
     self.0.remove(index)
   }
 
+  pub fn to_endpoint(&self) -> Result<ServiceEndpoint> {
+    let mut data_url: DataUrl = DataUrl::new();
+
+    let endpoint_data: String = self.serialize_compressed_b64()?;
+
+    // TODO: Set mime type, validate in other TryFrom impl.
+    // data_url.set_media_type(new_media_type);
+
+    data_url.set_data(endpoint_data.as_bytes());
+
+    Ok(ServiceEndpoint::One(Url::parse(data_url.to_string())?))
+  }
+
   /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
-  pub fn deserialize_compressed_b64(data: &str) -> Result<Self> {
-    let decoded_data: Vec<u8> = decode_b64(data).map_err(|e| Error::Base64DecodingError(data.to_owned(), e))?;
+  pub fn deserialize_compressed_b64<T>(data: &T) -> Result<Self>
+  where
+    T: AsRef<[u8]> + ?Sized,
+  {
+    let decoded_data: Vec<u8> = decode_b64(data).map_err(Error::Base64DecodingError)?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
   }
@@ -123,7 +142,7 @@ impl<'de> Deserialize<'de> for RevocationBitmap {
       where
         E: de::Error,
       {
-        RevocationBitmap::deserialize_compressed_b64(value).map_err(E::custom)
+        RevocationBitmap::deserialize_compressed_b64(value.as_bytes()).map_err(E::custom)
       }
     }
 

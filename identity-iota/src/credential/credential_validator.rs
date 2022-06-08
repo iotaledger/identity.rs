@@ -4,12 +4,12 @@
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_credential::credential::BitmapRevocationStatus;
 use identity_credential::credential::Credential;
+use identity_credential::credential::RevocationBitmapStatus;
+use identity_did::did::CoreDID;
+use identity_did::did::CoreDIDUrl;
 use identity_did::revocation::RevocationBitmap;
-use identity_did::service::BitmapRevocationEndpoint;
-use identity_did::service::BitmapRevocationService;
-use identity_did::service::BITMAP_REVOCATION_METHOD;
+use identity_did::service::RevocationBitmapService;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
@@ -179,7 +179,7 @@ impl CredentialValidator {
   pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
     match &credential.credential_status {
       Some(status) => {
-        if status.type_ != BITMAP_REVOCATION_METHOD {
+        if status.type_ != RevocationBitmapService::<CoreDID>::TYPE {
           return Ok(());
         }
         let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
@@ -187,8 +187,8 @@ impl CredentialValidator {
           source: e.into(),
           signer_ctx: SignerContext::Issuer,
         })?;
-        let status: BitmapRevocationStatus<IotaDID> =
-          BitmapRevocationStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
+        let status: RevocationBitmapStatus =
+          RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
         issuers
           .iter()
           .find(|issuer| issuer.as_ref().id() == &issuer_did)
@@ -201,19 +201,25 @@ impl CredentialValidator {
 
   fn check_revocation<D: AsRef<IotaDocument>>(
     issuer: D,
-    credential_status: BitmapRevocationStatus<IotaDID>,
+    credential_status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
+    let issuer_service_url: &CoreDIDUrl = credential_status.id();
     // Looks for the appropriate service to check for revocation
     match issuer
       .as_ref()
       .service()
       .iter()
-      .find(|service| &credential_status.id == service.id())
+      .find(|service| issuer_service_url.eq(&CoreDIDUrl::from(service.id().clone())))
     {
       Some(service) => {
-        let embedded_revocation_service: BitmapRevocationService<IotaDID> =
+        let embedded_revocation_service: RevocationBitmapService<IotaDID> =
           service.clone().try_into().map_err(ValidationError::InvalidService)?;
-        Self::check_bitmap_revocation_2022(credential_status, embedded_revocation_service.service_endpoint())
+        Self::check_bitmap_revocation_2022(
+          credential_status,
+          &embedded_revocation_service
+            .try_into()
+            .map_err(ValidationError::InvalidService)?,
+        )
       }
       None => {
         // No revocation service endpoint was found
@@ -227,14 +233,13 @@ impl CredentialValidator {
   /// By deserializing the `Url` into a [`RevocationBitmap`], checks if the index given in [`BitmapRevocationStatus`] is
   /// revoked.
   fn check_bitmap_revocation_2022(
-    credential_status: BitmapRevocationStatus<IotaDID>,
-    data_url: &BitmapRevocationEndpoint,
+    credential_status: RevocationBitmapStatus,
+    revocation_bitmap: &RevocationBitmap,
   ) -> ValidationUnitResult {
-    let revocation_bitmap: RevocationBitmap = data_url.try_into().map_err(ValidationError::InvalidEndpoint)?;
-    if revocation_bitmap.is_revoked(credential_status.revocation_list_index) {
-      return Err(ValidationError::RevokedCredential(
-        credential_status.revocation_list_index,
-      ));
+    let revocation_bitmap_index: u32 = credential_status.index().map_err(ValidationError::InvalidStatus)?;
+
+    if revocation_bitmap.is_revoked(revocation_bitmap_index) {
+      return Err(ValidationError::RevokedCredential(revocation_bitmap_index));
     }
     Ok(())
   }
