@@ -275,17 +275,14 @@ impl WasmAccount {
     .unchecked_into::<PromiseVoid>()
   }
 
-  /// If the document has a RevocationBitmapService identified by `fragment`,
-  /// revokes all credentials identified by the given `credential_indices`.
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
-  pub fn revoke_credentials(
-    &mut self,
-    fragment: String,
-    credential_indices: UOneOrManyCredentialIndices,
-  ) -> PromiseVoid {
+  #[allow(non_snake_case)]
+  pub fn revoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
-      let credentials_indices: OneOrMany<u32> = credential_indices.into_serde().wasm_result()?;
+      let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
 
       account
         .as_ref()
@@ -454,5 +451,5 @@ extern "C" {
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "number | number[]")]
-  pub type UOneOrManyCredentialIndices;
+  pub type UOneOrManyNumber;
 }

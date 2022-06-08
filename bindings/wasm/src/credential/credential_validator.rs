@@ -116,11 +116,12 @@ impl WasmCredentialValidator {
   /// Checks whether the credential status has been revoked.
   /// Only supports `BitmapRevocation2022`, any other type will return an error.
   #[wasm_bindgen(js_name = checkRevoked)]
+  #[allow(non_snake_case)]
   pub fn check_revoked(
     credential: &WasmCredential,
-    trusted_issuers: &ArrayDocumentOrArrayResolvedDocument,
+    trustedIssuers: &ArrayDocumentOrArrayResolvedDocument,
   ) -> Result<()> {
-    let trusted_issuers: Vec<IotaDocument> = trusted_issuers.into_serde().wasm_result()?;
+    let trusted_issuers: Vec<IotaDocument> = trustedIssuers.into_serde().wasm_result()?;
     CredentialValidator::check_revoked(&credential.0, trusted_issuers.as_slice()).wasm_result()
   }
 }

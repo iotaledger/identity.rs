@@ -65,6 +65,27 @@ impl RevocationBitmap {
     Ok(ServiceEndpoint::One(Url::parse(data_url.to_string())?))
   }
 
+  /// Construct a `RevocationBitmap` from a data url embedded in `service_endpoint`.
+  pub fn from_endpoint(service_endpoint: &ServiceEndpoint) -> Result<Self> {
+    if let ServiceEndpoint::One(url) = service_endpoint {
+      let data_url: DataUrl =
+        DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
+
+      if !data_url.get_is_base64_encoded() || data_url.get_media_type() != DATA_URL_MEDIA_TYPE {
+        return Err(Error::InvalidService(
+          "invalid url - expected an `application/octet-stream;base64` data url",
+        ));
+      }
+
+      RevocationBitmap::deserialize_compressed_b64(
+        std::str::from_utf8(data_url.get_data())
+          .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
+      )
+    } else {
+      Err(Error::InvalidService("invalid endpoint - expected a single data url"))
+    }
+  }
+
   /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
   pub(crate) fn deserialize_compressed_b64<T>(data: &T) -> Result<Self>
   where
@@ -116,32 +137,12 @@ impl<D: DID + Sized> TryFrom<&Service<D>> for RevocationBitmap {
 
   fn try_from(service: &Service<D>) -> Result<Self> {
     if service.type_() != Self::TYPE {
-      return Err(Error::InvalidService("invalid type - unexpected revocation method"));
+      return Err(Error::InvalidService(
+        "invalid service - expected a `RevocationBitmap2022`",
+      ));
     }
 
-    if let ServiceEndpoint::One(url) = service.service_endpoint() {
-      if service.type_() != Self::TYPE {
-        return Err(Error::InvalidService(
-          "invalid service - expected a `RevocationBitmap2022`",
-        ));
-      }
-
-      let data_url: DataUrl =
-        DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
-
-      if !data_url.get_is_base64_encoded() || data_url.get_media_type() != DATA_URL_MEDIA_TYPE {
-        return Err(Error::InvalidService(
-          "invalid url - expected an `application/octet-stream;base64` data url",
-        ));
-      }
-
-      RevocationBitmap::deserialize_compressed_b64(
-        std::str::from_utf8(data_url.get_data())
-          .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
-      )
-    } else {
-      Err(Error::InvalidService("invalid endpoint - expected a single data url"))
-    }
+    Self::from_endpoint(service.service_endpoint())
   }
 }
 

@@ -175,7 +175,10 @@ impl CredentialValidator {
 
   /// Checks whether the credential status has been revoked.
   /// Only supports `BitmapRevocation2022`, any other type will return an error.
-  pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
+  pub fn check_revoked<T, D: AsRef<IotaDocument>>(
+    credential: &Credential<T>,
+    trusted_issuers: &[D],
+  ) -> ValidationUnitResult {
     match &credential.credential_status {
       Some(status) => {
         if status.type_ != RevocationBitmap::TYPE {
@@ -190,7 +193,7 @@ impl CredentialValidator {
         })?;
         let status: RevocationBitmapStatus =
           RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
-        issuers
+        trusted_issuers
           .iter()
           .find(|issuer| issuer.as_ref().id() == &issuer_did)
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
