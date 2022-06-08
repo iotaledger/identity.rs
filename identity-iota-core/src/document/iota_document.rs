@@ -1642,4 +1642,65 @@ mod tests {
     assert!(insertion_result.is_err());
     assert_eq!(doc1, doc2);
   }
+
+  #[test]
+  fn test_revocation() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    let indices_1 = [3, 9, 254, 65536];
+    let indices_2 = [2, 15, 1337, 1000];
+
+    let service_id: IotaDIDUrl = document.id().to_url().join("#revocation-service").unwrap();
+
+    // The method errors if the service doesn't exist.
+    assert!(document.revoke_credentials(&service_id, &indices_2).is_err());
+
+    let mut bitmap: RevocationBitmap = RevocationBitmap::new();
+    for index in indices_1.iter() {
+      bitmap.revoke(*index);
+    }
+
+    document.insert_service(
+      IotaService::builder(Object::new())
+        .id(service_id.clone())
+        .type_(RevocationBitmap::TYPE)
+        .service_endpoint(bitmap.to_endpoint().unwrap())
+        .build()
+        .unwrap(),
+    );
+
+    document.revoke_credentials(&service_id, &indices_2).unwrap();
+
+    let service: &IotaService = document
+      .service()
+      .iter()
+      .find(|service| service.id() == &service_id)
+      .unwrap();
+
+    let decoded_bitmap: RevocationBitmap = service.try_into().unwrap();
+
+    // We expect all indices to be revoked now.
+    for index in indices_1.iter().chain(indices_2.iter()) {
+      assert!(decoded_bitmap.is_revoked(*index));
+    }
+
+    document.unrevoke_credentials(&service_id, &indices_1).unwrap();
+
+    let service: &IotaService = document
+      .service()
+      .iter()
+      .find(|service| service.id() == &service_id)
+      .unwrap();
+
+    let decoded_bitmap: RevocationBitmap = service.try_into().unwrap();
+
+    // We expect indices_2 to be revoked, but not indices_1.
+    for index in indices_2 {
+      assert!(decoded_bitmap.is_revoked(index));
+    }
+
+    for index in indices_1 {
+      assert!(!decoded_bitmap.is_revoked(index));
+    }
+  }
 }

@@ -31,5 +31,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
+default = ["revocation-bitmap"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity-did/revocation-bitmap"]
