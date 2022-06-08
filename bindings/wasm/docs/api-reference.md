@@ -19,9 +19,6 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
-<dt><a href="#BitmapRevocationEndpoint">BitmapRevocationEndpoint</a></dt>
-<dd><p>A parsed data url.</p>
-</dd>
 <dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
 <dd><p>Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).</p>
 </dd>
@@ -183,9 +180,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -224,7 +221,7 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.revokeCredentials(fragment, credentials)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, credential_indices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -402,15 +399,16 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+revokeCredentials"></a>
 
-### account.revokeCredentials(fragment, credentials) ⇒ <code>Promise.&lt;void&gt;</code>
-If the document has an `EmbeddedRevocationService` identified by `fragment`, revokes all given `credentials`.
+### account.revokeCredentials(fragment, credential_indices) ⇒ <code>Promise.&lt;void&gt;</code>
+If the document has a RevocationBitmapService identified by `fragment`,
+revokes all credentials identified by the given `credential_indices`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | fragment | <code>string</code> | 
-| credentials | <code>Uint32Array</code> | 
+| credential_indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Account+encryptData"></a>
 
@@ -683,43 +681,6 @@ Deserializes `AutoSave` from a JSON object.
 | Param | Type |
 | --- | --- |
 | json_value | <code>any</code> | 
-
-<a name="BitmapRevocationEndpoint"></a>
-
-## BitmapRevocationEndpoint
-A parsed data url.
-
-**Kind**: global class  
-
-* [BitmapRevocationEndpoint](#BitmapRevocationEndpoint)
-    * _instance_
-        * [.into_string()](#BitmapRevocationEndpoint+into_string) ⇒ <code>string</code>
-        * [.data()](#BitmapRevocationEndpoint+data) ⇒ <code>string</code>
-    * _static_
-        * [.parse(input)](#BitmapRevocationEndpoint.parse) ⇒ [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)
-
-<a name="BitmapRevocationEndpoint+into_string"></a>
-
-### bitmapRevocationEndpoint.into\_string() ⇒ <code>string</code>
-Returns the `BitmapRevocationEndpoint` as a String.
-
-**Kind**: instance method of [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)  
-<a name="BitmapRevocationEndpoint+data"></a>
-
-### bitmapRevocationEndpoint.data() ⇒ <code>string</code>
-Returns the data from the [`BitmapRevocationEndpoint`].
-
-**Kind**: instance method of [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)  
-<a name="BitmapRevocationEndpoint.parse"></a>
-
-### BitmapRevocationEndpoint.parse(input) ⇒ [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)
-Parses an [`BitmapRevocationEndpoint`] from the given input String.
-
-**Kind**: static method of [<code>BitmapRevocationEndpoint</code>](#BitmapRevocationEndpoint)  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
 
 <a name="CekAlgorithm"></a>
 
@@ -4210,12 +4171,10 @@ A compressed bitmap for managing credential revocation.
     * _instance_
         * [.isRevoked(index)](#RevocationBitmap+isRevoked) ⇒ <code>boolean</code>
         * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
-        * [.undoRevocation(index)](#RevocationBitmap+undoRevocation) ⇒ <code>boolean</code>
-        * [.serializeCompressedB64()](#RevocationBitmap+serializeCompressedB64) ⇒ <code>string</code>
-        * [.toJSON()](#RevocationBitmap+toJSON) ⇒ <code>any</code>
+        * [.unrevoke(index)](#RevocationBitmap+unrevoke) ⇒ <code>boolean</code>
+        * [.toEndpoint()](#RevocationBitmap+toEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
     * _static_
-        * [.deserializeCompressedB64(data)](#RevocationBitmap.deserializeCompressedB64) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
-        * [.fromJSON(value)](#RevocationBitmap.fromJSON) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+        * [.type()](#RevocationBitmap.type) ⇒ <code>string</code>
 
 <a name="new_RevocationBitmap_new"></a>
 
@@ -4236,22 +4195,9 @@ Returns `true` if the credential at the given `index` is revoked.
 <a name="RevocationBitmap+revoke"></a>
 
 ### revocationBitmap.revoke(index) ⇒ <code>boolean</code>
-Revokes the credential at the given `index`.
+Mark the given index as revoked.
 
-Return whether the value was absent from the set.
-
-**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="RevocationBitmap+undoRevocation"></a>
-
-### revocationBitmap.undoRevocation(index) ⇒ <code>boolean</code>
-The credential at the given `index` will be set to valid.
-
-Returns ture is the value was present in the set.
+Returns true if the index was absent from the set.
 
 **Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
 
@@ -4259,40 +4205,31 @@ Returns ture is the value was present in the set.
 | --- | --- |
 | index | <code>number</code> | 
 
-<a name="RevocationBitmap+serializeCompressedB64"></a>
+<a name="RevocationBitmap+unrevoke"></a>
 
-### revocationBitmap.serializeCompressedB64() ⇒ <code>string</code>
-Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
+### revocationBitmap.unrevoke(index) ⇒ <code>boolean</code>
+Mark the index as not revoked.
 
-**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-<a name="RevocationBitmap+toJSON"></a>
-
-### revocationBitmap.toJSON() ⇒ <code>any</code>
-Serializes a `RevocationBitmap` object as a JSON object.
+Returns true if the index was present in the set.
 
 **Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-<a name="RevocationBitmap.deserializeCompressedB64"></a>
-
-### RevocationBitmap.deserializeCompressedB64(data) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
-Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
-
-**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
 
 | Param | Type |
 | --- | --- |
-| data | <code>string</code> | 
+| index | <code>number</code> | 
 
-<a name="RevocationBitmap.fromJSON"></a>
+<a name="RevocationBitmap+toEndpoint"></a>
 
-### RevocationBitmap.fromJSON(value) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
-Deserializes a `RevocationBitmap` object from a JSON object.
+### revocationBitmap.toEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Return the bitmap as a data url embedded in a service endpoint.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap.type"></a>
+
+### RevocationBitmap.type() ⇒ <code>string</code>
+The name of the service type.
 
 **Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
 <a name="Service"></a>
 
 ## Service
@@ -4868,13 +4805,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 
