@@ -6,10 +6,10 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::credential::RevocationBitmapStatus;
-use identity_did::did::CoreDIDUrl;
 use identity_did::revocation::RevocationBitmap;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
 use serde::Serialize;
 
@@ -204,14 +204,14 @@ impl CredentialValidator {
     issuer: D,
     credential_status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: &CoreDIDUrl = credential_status.id();
+    let issuer_service_url: IotaDIDUrl = credential_status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Look for the appropriate service to check for revocation.
     match issuer
       .as_ref()
       .service()
       .iter()
-      .find(|service| issuer_service_url.eq(&CoreDIDUrl::from(service.id().clone())))
+      .find(|service| &issuer_service_url == service.id())
     {
       Some(service) => {
         let revocation_bitmap: RevocationBitmap = service.try_into().map_err(ValidationError::InvalidService)?;

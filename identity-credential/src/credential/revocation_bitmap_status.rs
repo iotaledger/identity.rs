@@ -4,9 +4,8 @@
 use std::str::FromStr;
 
 use identity_core::common::Object;
+use identity_core::common::Url;
 use identity_core::common::Value;
-use identity_did::did::CoreDID;
-use identity_did::did::CoreDIDUrl;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 
@@ -16,7 +15,7 @@ use crate::error::Result;
 
 /// Information used to determine the current status of a [`Credential`][crate::credential::Credential].
 #[derive(Clone, Debug, PartialEq)]
-pub struct RevocationBitmapStatus(Status<CoreDID>);
+pub struct RevocationBitmapStatus(Status);
 
 impl RevocationBitmapStatus {
   const INDEX_PROPERTY_NAME: &'static str = "revocationBitmapIndex";
@@ -24,22 +23,22 @@ impl RevocationBitmapStatus {
   pub const TYPE: &'static str = "RevocationBitmap2022";
 
   /// Creates a new `RevocationBitmapStatus`.
-  pub fn new<D: DID + Into<CoreDID>>(id: DIDUrl<D>, revocation_bitmap_index: u32) -> Self {
+  pub fn new<D: DID>(id: DIDUrl<D>, revocation_bitmap_index: u32) -> Result<Self> {
     let mut object = Object::new();
     object.insert(
       Self::INDEX_PROPERTY_NAME.to_owned(),
       Value::String(revocation_bitmap_index.to_string()),
     );
-    RevocationBitmapStatus(Status::new_with_properties(
-      CoreDIDUrl::from(id),
+    Ok(RevocationBitmapStatus(Status::new_with_properties(
+      Url::parse(id.to_string()).map_err(|_| Error::InvalidStatus("invalid url"))?,
       Self::TYPE.to_owned(),
       object,
-    ))
+    )))
   }
 
   /// Returns the [`DIDUrl`] of the bitmap status.
-  pub fn id(&self) -> &DIDUrl<CoreDID> {
-    &self.0.id
+  pub fn id<D: DID>(&self) -> Result<DIDUrl<D>> {
+    DIDUrl::parse(self.0.id.as_str()).map_err(|_| Error::InvalidStatus("invalid did url"))
   }
 
   /// Returns the index of the credential in the issuer's revocation bitmap if it can be decoded.
@@ -55,10 +54,10 @@ impl RevocationBitmapStatus {
   }
 }
 
-impl TryFrom<Status<CoreDID>> for RevocationBitmapStatus {
+impl TryFrom<Status> for RevocationBitmapStatus {
   type Error = Error;
 
-  fn try_from(status: Status<CoreDID>) -> Result<Self> {
+  fn try_from(status: Status) -> Result<Self> {
     if status.type_ != Self::TYPE {
       Err(Error::InvalidStatus("expected `RevocationBitmap2022`"))
     } else if !status.properties.contains_key(Self::INDEX_PROPERTY_NAME) {
@@ -71,7 +70,7 @@ impl TryFrom<Status<CoreDID>> for RevocationBitmapStatus {
   }
 }
 
-impl From<RevocationBitmapStatus> for Status<CoreDID> {
+impl From<RevocationBitmapStatus> for Status {
   fn from(status: RevocationBitmapStatus) -> Self {
     status.0
   }
@@ -94,23 +93,24 @@ mod tests {
   #[test]
   fn test_embedded_status_invariants() {
     let url: Url = Url::parse(format!("did:iota:{}#{}", TAG, SERVICE)).unwrap();
-    let did_url: DIDUrl<CoreDID> = DIDUrl::parse(url.into_string()).unwrap();
+    let did_url: DIDUrl<CoreDID> = DIDUrl::parse(url.clone().into_string()).unwrap();
     let revocation_list_index: u32 = 0;
-    let embedded_revocation_status = RevocationBitmapStatus::new(did_url.clone(), revocation_list_index);
+    let embedded_revocation_status: RevocationBitmapStatus =
+      RevocationBitmapStatus::new(did_url, revocation_list_index).unwrap();
 
     let object: Object = Object::from([(
       RevocationBitmapStatus::INDEX_PROPERTY_NAME.to_owned(),
       Value::String(revocation_list_index.to_string()),
     )]);
     let status: Status =
-      Status::new_with_properties(did_url.clone(), RevocationBitmapStatus::TYPE.to_owned(), object.clone());
+      Status::new_with_properties(url.clone(), RevocationBitmapStatus::TYPE.to_owned(), object.clone());
     assert_eq!(embedded_revocation_status, status.try_into().unwrap());
 
     let status_missing_property: Status =
-      Status::new_with_properties(did_url.clone(), RevocationBitmapStatus::TYPE.to_owned(), Object::new());
+      Status::new_with_properties(url.clone(), RevocationBitmapStatus::TYPE.to_owned(), Object::new());
     assert!(RevocationBitmapStatus::try_from(status_missing_property).is_err());
 
-    let status_wrong_type: Status = Status::new_with_properties(did_url, "DifferentType".to_owned(), object);
+    let status_wrong_type: Status = Status::new_with_properties(url, "DifferentType".to_owned(), object);
     assert!(RevocationBitmapStatus::try_from(status_wrong_type).is_err());
   }
 }

@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
   // The issuer determines the index of the credential in the revocation list, we chose one arbitrarily.
   let service_url = IotaDIDUrl::join(issuer.did().clone().try_into().unwrap(), "#my-revocation-service")?;
   let credential_index: u32 = 5;
-  let status: RevocationBitmapStatus = RevocationBitmapStatus::new(service_url, credential_index);
+  let status: RevocationBitmapStatus = RevocationBitmapStatus::new(service_url, credential_index)?;
 
   // Build credential using subject above, status, and issuer.
   let mut credential: Credential = CredentialBuilder::default()
