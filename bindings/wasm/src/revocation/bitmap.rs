@@ -13,9 +13,9 @@ use crate::error::WasmResult;
 
 /// A compressed bitmap for managing credential revocation.
 #[wasm_bindgen(js_name = RevocationBitmap, inspectable)]
-#[derive(Clone, Debug, Default)]
 pub struct WasmRevocationBitmap(pub(crate) RevocationBitmap);
 
+#[allow(clippy::new_without_default)]
 #[wasm_bindgen(js_class = RevocationBitmap)]
 impl WasmRevocationBitmap {
   /// Creates a new `RevocationBitmap` instance.

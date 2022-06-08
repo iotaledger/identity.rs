@@ -31,7 +31,6 @@ use identity::iota::CredentialValidator;
 use identity::iota::ResolvedIotaDocument;
 use identity::iota::Resolver;
 use identity::iota::ValidationError;
-use identity::iota_core::IotaDIDUrl;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -76,11 +75,11 @@ async fn main() -> Result<()> {
     "GPA": "4.0",
   }))?;
 
-  // Create a credential status pointing verifiers to the endpoint that states if the credential has been revoked.
-  // The issuer determines the index of the credential in the revocation list, we chose one arbitrarily.
-  let service_url = IotaDIDUrl::join(issuer.did().clone().try_into().unwrap(), "#my-revocation-service")?;
+  // Create an unsigned `UniversityDegree` credential for Alice.
+  // The issuer also chooses a unique `RevocationBitmap` index to be able to revoke it later.
+  let service_url = issuer.did().to_url().join("#my-revocation-service")?;
   let credential_index: u32 = 5;
-  let status: RevocationBitmapStatus = RevocationBitmapStatus::new(service_url, credential_index)?;
+  let status: RevocationBitmapStatus = RevocationBitmapStatus::new(service_url, credential_index);
 
   // Build credential using subject above, status, and issuer.
   let mut credential: Credential = CredentialBuilder::default()

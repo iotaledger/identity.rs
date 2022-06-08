@@ -23,14 +23,14 @@ impl RevocationBitmapStatus {
   pub const TYPE: &'static str = "RevocationBitmap2022";
 
   /// Creates a new `RevocationBitmapStatus`.
-  pub fn new<D: DID>(id: DIDUrl<D>, index: u32) -> Result<Self> {
+  pub fn new<D: DID>(id: DIDUrl<D>, index: u32) -> Self {
     let mut object = Object::new();
     object.insert(Self::INDEX_PROPERTY_NAME.to_owned(), Value::String(index.to_string()));
-    Ok(RevocationBitmapStatus(Status::new_with_properties(
-      Url::parse(id.to_string()).map_err(|_| Error::InvalidStatus("invalid url"))?,
+    RevocationBitmapStatus(Status::new_with_properties(
+      Url::from(id),
       Self::TYPE.to_owned(),
       object,
-    )))
+    ))
   }
 
   /// Returns the [`DIDUrl`] of the bitmap status.
@@ -93,7 +93,7 @@ mod tests {
     let did_url: DIDUrl<CoreDID> = DIDUrl::parse(url.clone().into_string()).unwrap();
     let revocation_list_index: u32 = 0;
     let embedded_revocation_status: RevocationBitmapStatus =
-      RevocationBitmapStatus::new(did_url, revocation_list_index).unwrap();
+      RevocationBitmapStatus::new(did_url, revocation_list_index);
 
     let object: Object = Object::from([(
       RevocationBitmapStatus::INDEX_PROPERTY_NAME.to_owned(),

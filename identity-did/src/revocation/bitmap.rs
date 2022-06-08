@@ -54,10 +54,9 @@ impl RevocationBitmap {
 
   /// Return the bitmap as a data url embedded in a service endpoint.
   pub fn to_endpoint(&self) -> Result<ServiceEndpoint> {
-    let mut data_url: DataUrl = DataUrl::new();
-
     let endpoint_data: String = self.serialize_compressed_b64()?;
 
+    let mut data_url: DataUrl = DataUrl::new();
     data_url.set_media_type(Some(DATA_URL_MEDIA_TYPE.to_owned()));
     data_url.set_is_base64_encoded(true);
     data_url.set_data(endpoint_data.as_bytes());

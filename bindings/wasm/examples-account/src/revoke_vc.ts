@@ -61,7 +61,7 @@ async function revokeVC(storage?: Storage) {
     };
 
     // Create an unsigned `UniversityDegree` credential for Alice.
-    // The issuer also chooses a unique `revocationListIndex` to be able to revoke it later.
+    // The issuer also chooses a unique `RevocationBitmap` index to be able to revoke it later.
     const unsignedVc = new Credential({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
