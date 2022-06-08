@@ -16,7 +16,7 @@ identity-account = { version = "=0.5.0", path = "../identity-account", default-f
 identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false, optional = true }
 # identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
-identity-credential = { version = "=0.5.0", path = "../identity-credential" }
+identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
 identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
@@ -51,7 +51,11 @@ send-sync-storage = ["identity-account-storage/send-sync-storage"]
 storage-test-suite = ["identity-account-storage/storage-test-suite"]
 
 # Enables revocation with `RevocationBitmap2022`.
-revocation-bitmap = ["identity-account?/revocation-bitmap", "identity-iota/revocation-bitmap"]
+revocation-bitmap = [
+  "identity-account?/revocation-bitmap",
+  "identity-iota/revocation-bitmap",
+  "identity-credential/revocation-bitmap",
+]
 
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.
