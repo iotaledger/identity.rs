@@ -36,9 +36,6 @@ pub enum Error {
   /// Caused by verification methods without fragments.
   #[error("method missing fragment")]
   MethodMissingFragment,
-  /// Caused by failing to revoke credentials.
-  #[error("credential revocation error")]
-  RevocationError(#[source] identity_did::Error),
 }
 
 impl From<identity_did::did::DIDError> for Error {

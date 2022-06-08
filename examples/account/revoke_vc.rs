@@ -22,6 +22,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::RevocationBitmapStatus;
+use identity::credential::Status;
 use identity::credential::Subject;
 use identity::crypto::ProofOptions;
 use identity::did::RevocationBitmap;
@@ -79,14 +80,14 @@ async fn main() -> Result<()> {
   // The issuer also chooses a unique `RevocationBitmap` index to be able to revoke it later.
   let service_url = issuer.did().to_url().join("#my-revocation-service")?;
   let credential_index: u32 = 5;
-  let status: RevocationBitmapStatus = RevocationBitmapStatus::new(service_url, credential_index);
+  let status: Status = RevocationBitmapStatus::new(service_url, credential_index).into();
 
   // Build credential using subject above, status, and issuer.
   let mut credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer.did().as_str())?)
     .type_("UniversityDegreeCredential")
-    .status(status.try_into().unwrap())
+    .status(status)
     .subject(subject)
     .build()?;
 
