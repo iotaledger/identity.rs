@@ -158,6 +158,11 @@ mod tests {
   }
 
   #[quickcheck]
+  fn test_multibase_base64_random(data: Vec<u8>) {
+    assert_eq!(decode_b64(&encode_b64(&data)).unwrap(), data);
+  }
+
+  #[quickcheck]
   fn test_multibase_bases_random(data: Vec<u8>) {
     let bases = [
       Base::Base2,
