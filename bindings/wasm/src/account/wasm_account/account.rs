@@ -297,7 +297,7 @@ impl WasmAccount {
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
   /// unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
-  #[wasm_bindgen(js_name = revokeCredentials)]
+  #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
   pub fn unrevoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
