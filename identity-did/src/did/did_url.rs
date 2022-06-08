@@ -393,7 +393,7 @@ where
   /// - joining a path will overwrite the path and clear the query and fragment.
   /// - joining a query will overwrite the query and clear the fragment.
   /// - joining a fragment will only overwrite the fragment.
-  pub fn join(self, segment: impl AsRef<str>) -> Result<Self, DIDError> {
+  pub fn join(&self, segment: impl AsRef<str>) -> Result<Self, DIDError> {
     let segment: &str = segment.as_ref();
 
     // Accept only a relative path, query, or fragment to reject altering the method id segment.
@@ -662,13 +662,13 @@ mod tests {
   #[test]
   fn test_join_valid() {
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-    assert_eq!(did_url.clone().join("/path").unwrap().to_string(), "did:example:1234567890/path");
-    assert_eq!(did_url.clone().join("?query").unwrap().to_string(), "did:example:1234567890?query");
-    assert_eq!(did_url.clone().join("#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
+    assert_eq!(did_url.join("/path").unwrap().to_string(), "did:example:1234567890/path");
+    assert_eq!(did_url.join("?query").unwrap().to_string(), "did:example:1234567890?query");
+    assert_eq!(did_url.join("#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
 
-    assert_eq!(did_url.clone().join("/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
-    assert_eq!(did_url.clone().join("/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
-    assert_eq!(did_url.clone().join("?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
+    assert_eq!(did_url.join("/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
+    assert_eq!(did_url.join("/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
+    assert_eq!(did_url.join("?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
 
     let did_url = did_url.join("/path?query#fragment").unwrap();
     assert_eq!(did_url.to_string(), "did:example:1234567890/path?query#fragment");
@@ -684,9 +684,9 @@ mod tests {
     assert!(CoreDIDUrl::parse("did:example:1234567890#invalid{fragment}").is_err());
 
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-    assert!(did_url.clone().join("noleadingdelimiter").is_err());
-    assert!(did_url.clone().join("/invalid{path}").is_err());
-    assert!(did_url.clone().join("?invalid{query}").is_err());
+    assert!(did_url.join("noleadingdelimiter").is_err());
+    assert!(did_url.join("/invalid{path}").is_err());
+    assert!(did_url.join("?invalid{query}").is_err());
     assert!(did_url.join("#invalid{fragment}").is_err());
   }
 

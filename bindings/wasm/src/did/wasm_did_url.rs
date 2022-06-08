@@ -79,7 +79,7 @@ impl WasmDIDUrl {
   /// - joining a query will clear the fragment.
   /// - joining a fragment will only overwrite the fragment.
   #[wasm_bindgen]
-  pub fn join(self, segment: &str) -> Result<WasmDIDUrl> {
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
     self.0.join(segment).map(WasmDIDUrl::from).wasm_result()
   }
 
