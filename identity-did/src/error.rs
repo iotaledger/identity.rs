@@ -55,8 +55,8 @@ pub enum Error {
   #[error("signature verification failed: {0}")]
   InvalidSignature(&'static str),
 
-  #[error("unable to decode base64 `String`")]
-  Base64DecodingError(#[source] identity_core::error::Error),
+  #[error("unable to decode base64 string: `{0}`")]
+  Base64DecodingError(String, #[source] identity_core::error::Error),
 
   #[error("unable to compress data")]
   CompressionError(#[source] std::io::Error),

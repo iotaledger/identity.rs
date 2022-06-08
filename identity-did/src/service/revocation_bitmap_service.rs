@@ -90,7 +90,10 @@ impl<D: DID + Sized> TryFrom<RevocationBitmapService<D>> for RevocationBitmap {
           let data_url: DataUrl =
             DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
 
-          RevocationBitmap::deserialize_compressed_b64(data_url.get_data())
+          RevocationBitmap::deserialize_compressed_b64(
+            std::str::from_utf8(data_url.get_data())
+              .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
+          )
         } else {
           Err(Error::InvalidService("invalid url - expected a data url"))
         }

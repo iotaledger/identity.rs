@@ -328,19 +328,18 @@ where
       .service_mut()
       .iter_mut_unchecked()
       .find(|service| service.id() == &service_id)
-      .ok_or(Error::CredentialRevocationError(identity_did::Error::InvalidService(
+      .ok_or(Error::RevocationError(identity_did::Error::InvalidService(
         "invalid id - service not found",
       )))?;
 
     // Checks the corresponding service
     let bitmap_revocation_service: RevocationBitmapService<IotaDID> =
-      service.clone().try_into().map_err(Error::CredentialRevocationError)?;
+      service.clone().try_into().map_err(Error::RevocationError)?;
 
     let service_id: IotaDIDUrl = bitmap_revocation_service.id().clone();
 
-    let mut revocation_bitmap: RevocationBitmap = bitmap_revocation_service
-      .try_into()
-      .map_err(Error::CredentialRevocationError)?;
+    let mut revocation_bitmap: RevocationBitmap =
+      bitmap_revocation_service.try_into().map_err(Error::RevocationError)?;
 
     // Revoke all given credential indices.
     for credential in credentials {
@@ -348,8 +347,7 @@ where
     }
 
     let updated_bitmap_revocation_service: RevocationBitmapService<IotaDID> =
-      RevocationBitmapService::<IotaDID>::new(service_id, &revocation_bitmap)
-        .map_err(Error::CredentialRevocationError)?;
+      RevocationBitmapService::<IotaDID>::new(service_id, &revocation_bitmap).map_err(Error::RevocationError)?;
 
     std::mem::swap(service, &mut updated_bitmap_revocation_service.into());
     self.increment_actions();

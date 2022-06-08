@@ -33,11 +33,12 @@ pub enum Error {
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::updates::UpdateError),
+  /// Caused by verification methods without fragments.
   #[error("method missing fragment")]
   MethodMissingFragment,
   /// Caused by failing to revoke credentials.
   #[error("credential revocation error")]
-  CredentialRevocationError(#[source] identity_did::Error),
+  RevocationError(#[source] identity_did::Error),
 }
 
 impl From<identity_did::did::DIDError> for Error {

@@ -70,9 +70,10 @@ impl RevocationBitmap {
   /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
   pub fn deserialize_compressed_b64<T>(data: &T) -> Result<Self>
   where
-    T: AsRef<[u8]> + ?Sized,
+    T: AsRef<str> + ?Sized,
   {
-    let decoded_data: Vec<u8> = decode_b64(data).map_err(Error::Base64DecodingError)?;
+    let decoded_data: Vec<u8> =
+      decode_b64(data).map_err(|e| Error::Base64DecodingError(data.as_ref().to_owned(), e))?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
   }
@@ -138,11 +139,11 @@ impl<'de> Deserialize<'de> for RevocationBitmap {
         f.write_str("a base64-encoded string")
       }
 
-      fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+      fn visit_str<E>(self, string: &str) -> Result<Self::Value, E>
       where
         E: de::Error,
       {
-        RevocationBitmap::deserialize_compressed_b64(value.as_bytes()).map_err(E::custom)
+        RevocationBitmap::deserialize_compressed_b64(string).map_err(E::custom)
       }
     }
 

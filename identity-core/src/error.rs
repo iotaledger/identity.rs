@@ -21,9 +21,6 @@ pub enum Error {
   /// Caused by a failure to decode base58-encoded data.
   #[error("Failed to decode base58 data: {0}")]
   DecodeBase58(#[from] bs58::decode::Error),
-  /// Caused by a failure to decode base64-encoded data.
-  #[error("Failed to decode base64 data: {0}")]
-  DecodeBase64(#[from] base64::DecodeError),
   /// Caused by a failure to decode multibase-encoded data.
   #[error("Failed to decode multibase data: {0}")]
   DecodeMultibase(#[from] multibase::Error),
@@ -37,7 +34,6 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] time::error::Error),
-
   /// Caused by attempting to create an empty `OneOrSet` instance or remove all its elements.
   #[error("OneOrSet cannot be empty")]
   OneOrSetEmpty,
