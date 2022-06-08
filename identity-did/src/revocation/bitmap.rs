@@ -59,6 +59,7 @@ impl RevocationBitmap {
     self.0.remove(index)
   }
 
+  /// Return the bitmap as a data url embedded in a service endpoint.
   pub fn to_endpoint(&self) -> Result<ServiceEndpoint> {
     let mut data_url: DataUrl = DataUrl::new();
 

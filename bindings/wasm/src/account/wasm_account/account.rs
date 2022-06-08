@@ -289,6 +289,7 @@ impl WasmAccount {
     })
     .unchecked_into::<PromiseVoid>()
   }
+
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
   /// Returns an [`EncryptedData`] instance.

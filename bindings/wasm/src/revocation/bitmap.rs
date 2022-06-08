@@ -4,6 +4,8 @@
 use identity::did::RevocationBitmap;
 use wasm_bindgen::prelude::*;
 
+use crate::did::service_endpoint_to_js_value;
+use crate::did::UServiceEndpoint;
 use crate::error::Result;
 use crate::error::WasmResult;
 
@@ -20,52 +22,38 @@ impl WasmRevocationBitmap {
     WasmRevocationBitmap(RevocationBitmap::new())
   }
 
+  /// The name of the service type.
+  #[wasm_bindgen(js_name = type)]
+  pub fn type_() -> String {
+    RevocationBitmap::TYPE.to_owned()
+  }
+
   /// Returns `true` if the credential at the given `index` is revoked.
   #[wasm_bindgen(js_name = isRevoked)]
   pub fn is_revoked(&self, index: u32) -> bool {
     self.0.is_revoked(index)
   }
 
-  /// Revokes the credential at the given `index`.
+  /// Mark the given index as revoked.
   ///
-  /// Return whether the value was absent from the set.
+  /// Returns true if the index was absent from the set.
   #[wasm_bindgen]
   pub fn revoke(&mut self, index: u32) -> bool {
     self.0.revoke(index)
   }
 
-  /// The credential at the given `index` will be set to valid.
+  /// Mark the index as not revoked.
   ///
-  /// Returns ture is the value was present in the set.
-  #[wasm_bindgen(js_name = undoRevocation)]
-  pub fn undo_revocation(&mut self, index: u32) -> bool {
-    self.0.undo_revocation(index)
+  /// Returns true if the index was present in the set.
+  #[wasm_bindgen]
+  pub fn unrevoke(&mut self, index: u32) -> bool {
+    self.0.unrevoke(index)
   }
 
-  /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
-  #[wasm_bindgen(js_name = deserializeCompressedB64)]
-  pub fn deserialize_compressed_b64(data: &str) -> Result<WasmRevocationBitmap> {
-    let embedded_revocation_list: RevocationBitmap =
-      RevocationBitmap::deserialize_compressed_b64(data).wasm_result()?;
-    Ok(WasmRevocationBitmap(embedded_revocation_list))
-  }
-
-  /// Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
-  #[wasm_bindgen(js_name = serializeCompressedB64)]
-  pub fn serialize_compressed_b64(&self) -> Result<String> {
-    self.0.serialize_compressed_b64().wasm_result()
-  }
-
-  /// Serializes a `RevocationBitmap` object as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `RevocationBitmap` object from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(value: &JsValue) -> Result<WasmRevocationBitmap> {
-    value.into_serde().map(Self).wasm_result()
+  /// Return the bitmap as a data url embedded in a service endpoint.
+  #[wasm_bindgen(js_name = toEndpoint)]
+  pub fn to_enpdoint(&self) -> Result<UServiceEndpoint> {
+    Ok(service_endpoint_to_js_value(&self.0.to_endpoint().wasm_result()?))
   }
 }
 

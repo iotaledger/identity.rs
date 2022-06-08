@@ -47,8 +47,8 @@ async function revokeVC(storage?: Storage) {
     const revocationBitmap = new RevocationBitmap;
     await issuer.createService({
         fragment: "my-revocation-service",
-        type: "RevocationBitmap2022",
-        endpoint: "data:," + revocationBitmap.serializeCompressedB64()
+        type: RevocationBitmap.type(),
+        endpoint: revocationBitmap.toEndpoint(),
     })
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
@@ -64,9 +64,9 @@ async function revokeVC(storage?: Storage) {
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         credentialStatus: {
-            id: issuer.did()+"#my-revocation-service",
-            type: "RevocationBitmap2022",
-            revocationListIndex: "5"
+            id: issuer.did() + "#my-revocation-service",
+            type: RevocationBitmap.type(),
+            revocationBitmapIndex: "5"
         },
         issuer: issuer.document().id(),
         credentialSubject: subject,
@@ -83,9 +83,11 @@ async function revokeVC(storage?: Storage) {
     // Revoke the Verifiable Credential.
     // ===========================================================================
 
-    // Update the service for checking the credential status
-    // When verifiers look for the index corresponding to the credential, it will be set to revoked.
+    // Update the EmbeddedRevocationService on the issuer's DID Document.
+    // This revokes the credential's unique index.
     await issuer.revokeCredentials("my-revocation-service", new Uint32Array([5]))
+
+    // Credential verification now fails.
     try {
         CredentialValidator.validate(
             signedVc,
@@ -94,7 +96,7 @@ async function revokeVC(storage?: Storage) {
             FailFast.FirstError
         );
     } catch (e) {
-        console.log(`Error During validation: ${e}`)
+        console.log(`Error during validation: ${e}`)
     }
 
     await issuer.deleteMethod({
