@@ -15,8 +15,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::KeyComparable;
-use identity_core::utils::decode_b58;
-use identity_core::utils::encode_b58;
+use identity_core::utils::BaseEncoding;
 use identity_did::did::BaseDIDUrl;
 use identity_did::did::CoreDID;
 use identity_did::did::DIDError;
@@ -124,7 +123,7 @@ impl IotaDID {
 
     // We checked if `id_segments` was empty so this should not panic
     let mid: &str = segments.last().unwrap();
-    let len: usize = decode_b58(mid)
+    let len: usize = BaseEncoding::decode_base58(mid)
       .map_err(|_| Error::InvalidDID(DIDError::InvalidMethodId))?
       .len();
 
@@ -206,7 +205,7 @@ impl IotaDID {
   // Note: Must be `pub` for the `did` macro.
   #[doc(hidden)]
   pub fn encode_key(key: &[u8]) -> String {
-    encode_b58(&Blake2b256::digest(key))
+    BaseEncoding::encode_base58(&Blake2b256::digest(key))
   }
 }
 

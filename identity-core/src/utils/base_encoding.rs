@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::Error;
@@ -11,7 +11,7 @@ use crate::error::Result;
 ///
 /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
 #[allow(missing_docs)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Base {
   Base2,
   Base8,
@@ -67,52 +67,73 @@ impl From<Base> for multibase::Base {
   }
 }
 
-/// Decodes the given `data` as [Multibase] with an inferred [`base`](Base).
-///
-/// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
-pub fn decode_multibase<T>(data: &T) -> Result<Vec<u8>>
-where
-  T: AsRef<str> + ?Sized,
-{
-  if data.as_ref().is_empty() {
-    return Ok(Vec::new());
+/// Provides utility functions for encoding and decoding between various bases.
+pub struct BaseEncoding;
+
+impl BaseEncoding {
+  /// Encodes the given `data` to the specified [`base`](Base).
+  pub fn encode<T>(data: &T, base: Base) -> String
+  where
+    T: AsRef<[u8]> + ?Sized,
+  {
+    multibase::Base::from(base).encode(data)
   }
-  multibase::decode(&data)
-    .map(|(_base, output)| output)
-    .map_err(Error::DecodeMultibase)
-}
 
-/// Encodes the given `data` as [Multibase] with the given [`base`](Base), defaults to
-/// [`Base::Base58Btc`] if omitted.
-///
-/// NOTE: [`encode_multibase`] with [`Base::Base58Btc`] is different from [`encode_b58`] as
-/// the [Multibase] format prepends a base-encoding-character to the output.
-///
-/// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
-pub fn encode_multibase<T>(data: &T, base: Option<Base>) -> String
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  multibase::encode(multibase::Base::from(base.unwrap_or(Base::Base58Btc)), data)
-}
+  /// Decodes the given `data` encoded as the specified [`base`](Base).
+  pub fn decode<T>(data: &T, base: Base) -> Result<Vec<u8>>
+  where
+    T: AsRef<str> + ?Sized,
+  {
+    multibase::Base::from(base)
+      .decode(data)
+      .map_err(|err| Error::DecodeBase(base, err))
+  }
 
-/// Decodes the given `data` as base58-btc.
-pub fn decode_b58<T>(data: &T) -> Result<Vec<u8>>
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  bs58::decode(data)
-    .with_alphabet(bs58::Alphabet::BITCOIN)
-    .into_vec()
-    .map_err(Error::DecodeBase58)
-}
+  /// Encodes the given `data` to [`Base::Base58Btc`].
+  pub fn encode_base58<T>(data: &T) -> String
+  where
+    T: AsRef<[u8]> + ?Sized,
+  {
+    Self::encode(data, Base::Base58Btc)
+  }
 
-/// Encodes the given `data` as base58-btc.
-pub fn encode_b58<T>(data: &T) -> String
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  bs58::encode(data).with_alphabet(bs58::Alphabet::BITCOIN).into_string()
+  /// Decodes the given `data` encoded as [`Base::Base58Btc`].
+  pub fn decode_base58<T>(data: &T) -> Result<Vec<u8>>
+  where
+    T: AsRef<str> + ?Sized,
+  {
+    Self::decode(data, Base::Base58Btc)
+  }
+
+  /// Encodes the given `data` as [Multibase] with the given [`base`](Base), defaults to
+  /// [`Base::Base58Btc`] if omitted.
+  ///
+  /// NOTE: [`encode_multibase`] is different from [`encode`] because the [Multibase] format
+  /// prepends a character representing the base-encoding to the output.
+  ///
+  /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
+  pub fn encode_multibase<T>(data: &T, base: Option<Base>) -> String
+  where
+    T: AsRef<[u8]> + ?Sized,
+  {
+    multibase::encode(multibase::Base::from(base.unwrap_or(Base::Base58Btc)), data)
+  }
+
+  /// Decodes the given `data` encoded as [Multibase], with the [`base`](Base) inferred from the
+  /// leading character.
+  ///
+  /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
+  pub fn decode_multibase<T>(data: &T) -> Result<Vec<u8>>
+  where
+    T: AsRef<str> + ?Sized,
+  {
+    if data.as_ref().is_empty() {
+      return Ok(Vec::new());
+    }
+    multibase::decode(&data)
+      .map(|(_base, output)| output)
+      .map_err(Error::DecodeMultibase)
+  }
 }
 
 #[cfg(test)]
@@ -123,22 +144,49 @@ mod tests {
 
   #[test]
   fn test_decode_b58_empty() {
-    assert_eq!(decode_b58("").unwrap(), Vec::<u8>::new());
-  }
-
-  #[test]
-  fn test_decode_multibase_empty() {
-    assert_eq!(decode_multibase("").unwrap(), Vec::<u8>::new());
+    assert_eq!(BaseEncoding::decode_base58("").unwrap(), Vec::<u8>::new());
   }
 
   #[quickcheck]
   fn test_b58_random(data: Vec<u8>) {
-    assert_eq!(decode_b58(&encode_b58(&data)).unwrap(), data);
+    assert_eq!(
+      BaseEncoding::decode_base58(&BaseEncoding::encode_base58(&data)).unwrap(),
+      data
+    );
+  }
+
+  /// Base58 test vectors from Internet Engineering Task Force (IETF) Draft.
+  /// https://datatracker.ietf.org/doc/html/draft-msporny-base58-02#section-5
+  #[test]
+  fn test_b58() {
+    let test_vectors: [(&[u8], &str); 3] = [
+      (b"Hello World!", "2NEpo7TZRRrLZSi2U"),
+      (
+        b"The quick brown fox jumps over the lazy dog.",
+        "USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z",
+      ),
+      (&[0, 0, 0, 40, 127, 180, 205], "111233QC4"),
+    ];
+    for (test_decoded, test_encoded) in test_vectors {
+      let encoded: String = BaseEncoding::encode_base58(test_decoded);
+      assert_eq!(encoded, test_encoded, "encode failed on {test_decoded:?}");
+
+      let decoded: Vec<u8> = BaseEncoding::decode_base58(test_encoded).unwrap();
+      assert_eq!(decoded, test_decoded, "decode failed on {test_encoded}");
+    }
+  }
+
+  #[test]
+  fn test_decode_multibase_empty() {
+    assert_eq!(BaseEncoding::decode_multibase("").unwrap(), Vec::<u8>::new());
   }
 
   #[quickcheck]
   fn test_multibase_random(data: Vec<u8>) {
-    assert_eq!(decode_multibase(&encode_multibase(&data, None)).unwrap(), data);
+    assert_eq!(
+      BaseEncoding::decode_multibase(&BaseEncoding::encode_multibase(&data, None)).unwrap(),
+      data
+    );
   }
 
   #[quickcheck]
@@ -168,48 +216,39 @@ mod tests {
       Base::Base64UrlPad,
     ];
     for base in bases {
-      assert_eq!(decode_multibase(&encode_multibase(&data, Some(base))).unwrap(), data);
+      assert_eq!(
+        BaseEncoding::decode_multibase(&BaseEncoding::encode_multibase(&data, Some(base))).unwrap(),
+        data
+      );
     }
   }
 
-  /// Multibase test values from Internet Engineering Task Force (IETF) draft.
+  /// Multibase test vectors from Internet Engineering Task Force (IETF) draft.
   /// https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03#appendix-B
   #[test]
   fn test_multibase() {
-    let data = r#"Multibase is awesome! \o/"#;
-    assert_eq!(
-      encode_multibase(data, Some(Base::Base16Upper)).as_str(),
-      "F4D756C74696261736520697320617765736F6D6521205C6F2F"
-    );
-    assert_eq!(
-      encode_multibase(data, Some(Base::Base32Upper)).as_str(),
-      "BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP"
-    );
-    assert_eq!(
-      encode_multibase(data, Some(Base::Base58Btc)).as_str(),
-      "zYAjKoNbau5KiqmHPmSxYCvn66dA1vLmwbt"
-    );
-    assert_eq!(
-      encode_multibase(data, Some(Base::Base64Pad)).as_str(),
-      "MTXVsdGliYXNlIGlzIGF3ZXNvbWUhIFxvLw=="
-    );
+    // Encode.
+    let data: &str = r#"Multibase is awesome! \o/"#;
+    for (base, expected) in [
+      (Base::Base16Upper, "F4D756C74696261736520697320617765736F6D6521205C6F2F"),
+      (Base::Base32Upper, "BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP"),
+      (Base::Base58Btc, "zYAjKoNbau5KiqmHPmSxYCvn66dA1vLmwbt"),
+      (Base::Base64Pad, "MTXVsdGliYXNlIGlzIGF3ZXNvbWUhIFxvLw=="),
+    ] {
+      let encoded: String = BaseEncoding::encode_multibase(data, Some(base));
+      assert_eq!(encoded, expected);
+    }
 
-    let expected = data.as_bytes().to_vec();
-    assert_eq!(
-      decode_multibase("F4D756C74696261736520697320617765736F6D6521205C6F2F").unwrap(),
-      expected
-    );
-    assert_eq!(
-      decode_multibase("BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP").unwrap(),
-      expected
-    );
-    assert_eq!(
-      decode_multibase("zYAjKoNbau5KiqmHPmSxYCvn66dA1vLmwbt").unwrap(),
-      expected
-    );
-    assert_eq!(
-      decode_multibase("MTXVsdGliYXNlIGlzIGF3ZXNvbWUhIFxvLw==").unwrap(),
-      expected
-    );
+    // Decode.
+    let expected: Vec<u8> = data.as_bytes().to_vec();
+    for encoded in [
+      "F4D756C74696261736520697320617765736F6D6521205C6F2F",
+      "BJV2WY5DJMJQXGZJANFZSAYLXMVZW63LFEEQFY3ZP",
+      "zYAjKoNbau5KiqmHPmSxYCvn66dA1vLmwbt",
+      "MTXVsdGliYXNlIGlzIGF3ZXNvbWUhIFxvLw==",
+    ] {
+      let decoded: Vec<u8> = BaseEncoding::decode_multibase(encoded).unwrap();
+      assert_eq!(decoded, expected, "failed on {encoded}");
+    }
   }
 }

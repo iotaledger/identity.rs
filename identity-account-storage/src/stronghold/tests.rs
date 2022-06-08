@@ -6,6 +6,8 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::X25519;
+use identity_core::utils::Base::Base16Lower;
+use identity_core::utils::BaseEncoding;
 use identity_iota_core::did::IotaDID;
 use iota_stronghold::procedures;
 use iota_stronghold::procedures::GenerateKey;
@@ -125,16 +127,21 @@ async fn test_ecdhes_encryption() {
   let public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = public_key.as_ref().try_into().unwrap();
 
   let ephemeral_secret_location: KeyLocation = random_key_location();
-  let ephemeral_secret: PrivateKey = hex::decode("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a")
-    .unwrap()
-    .try_into()
-    .unwrap();
+  let ephemeral_secret: PrivateKey = BaseEncoding::decode(
+    "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a",
+    Base16Lower,
+  )
+  .unwrap()
+  .try_into()
+  .unwrap();
   insert_private_key(&client, ephemeral_secret, &ephemeral_secret_location).unwrap();
-  let ephemeral_public_key: [u8; X25519::PUBLIC_KEY_LENGTH] =
-    hex::decode("8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a")
-      .unwrap()
-      .try_into()
-      .unwrap();
+  let ephemeral_public_key: [u8; X25519::PUBLIC_KEY_LENGTH] = BaseEncoding::decode(
+    "8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a",
+    Base16Lower,
+  )
+  .unwrap()
+  .try_into()
+  .unwrap();
 
   let plaintext = b"HelloWorld!";
   let associated_data = b"AssociatedData";

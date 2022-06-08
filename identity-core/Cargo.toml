@@ -11,7 +11,6 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "The core traits and types for the identity-rs library."
 
 [dependencies]
-bs58 = { version = "0.4", default-features = false, features = ["std"] }
 identity-diff = { version = "=0.5.0", path = "../identity-diff", default-features = false }
 multibase = { version = "0.9", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
@@ -32,7 +31,6 @@ features = ["ed25519", "random", "sha", "x25519"]
 js-sys = { version = "0.3.55", default-features = false }
 
 [dev-dependencies]
-hex = { version = "0.4", default-features = false }
 proptest = { version = "1.0.0" }
 quickcheck = { version = "1.0" }
 quickcheck_macros = { version = "1.0" }
