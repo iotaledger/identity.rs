@@ -60,7 +60,7 @@ impl TryFrom<Status<CoreDID>> for RevocationBitmapStatus {
 
   fn try_from(status: Status<CoreDID>) -> Result<Self> {
     if status.type_ != Self::TYPE {
-      Err(Error::InvalidStatus("invalid status type"))
+      Err(Error::InvalidStatus("expected `RevocationBitmap2022`"))
     } else if !status.properties.contains_key(Self::INDEX_PROPERTY_NAME) {
       Err(Error::InvalidStatus(
         "status is missing required property `revocationBitmapIndex`",

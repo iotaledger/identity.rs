@@ -175,12 +175,15 @@ impl CredentialValidator {
     }
   }
 
-  /// If the credential has a status of type [`BitmapRevocationStatus`], checks if the credential has been revoked.
+  /// Checks whether the credential status has been revoked.
+  /// Only supports `BitmapRevocation2022`, any other type will return an error.
   pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
     match &credential.credential_status {
       Some(status) => {
         if status.type_ != RevocationBitmapService::<CoreDID>::TYPE {
-          return Ok(());
+          return Err(ValidationError::InvalidStatus(
+            identity_credential::Error::InvalidStatus("expected a `BitmapRevocation2022` credential status"),
+          ));
         }
         let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
         let issuer_did: IotaDID = issuer_did.map_err(|e| ValidationError::SignerUrl {
@@ -212,11 +215,11 @@ impl CredentialValidator {
       .find(|service| issuer_service_url.eq(&CoreDIDUrl::from(service.id().clone())))
     {
       Some(service) => {
-        let embedded_revocation_service: RevocationBitmapService<IotaDID> =
+        let revocation_bitmap_service: RevocationBitmapService<IotaDID> =
           service.clone().try_into().map_err(ValidationError::InvalidService)?;
         Self::check_bitmap_revocation_2022(
           credential_status,
-          &embedded_revocation_service
+          &revocation_bitmap_service
             .try_into()
             .map_err(ValidationError::InvalidService)?,
         )

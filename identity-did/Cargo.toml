@@ -14,7 +14,7 @@ description = "An implementation of the Decentralized Identifiers standard."
 async-trait = { version = "0.1", default-features = false }
 dataurl = { version = "0.1.2", default-features = false }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-flate2 = { version = "1.0.23" }
+flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"] }
 form_urlencoded = { version = "1.0.1", default-features = false }
 identity-core = { version = "=0.5.0", path = "../identity-core" }
 indexmap = { version = "1.7", default-features = false, features = ["std", "serde-1"] }

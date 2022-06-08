@@ -57,15 +57,8 @@ pub enum Error {
 
   #[error("unable to decode base64 string: `{0}`")]
   Base64DecodingError(String, #[source] identity_core::error::Error),
-
-  #[error("unable to compress data")]
-  CompressionError(#[source] std::io::Error),
-  #[error("unable to decompress data")]
-  DecompressionError(#[source] std::io::Error),
-  #[error("revocation list could not be deserialized")]
-  DeserializationError(#[source] std::io::Error),
-  #[error("invalid bitmap revocation endpoint: {0}")]
-  InvalidBitmapEndpoint(&'static str),
-  #[error("revocation list could not be serialized")]
-  SerializationError(#[source] std::io::Error),
+  #[error("revocation list could not be deserialized or decompressed")]
+  BitmapDecodingError(#[source] std::io::Error),
+  #[error("revocation list could not be serialized or compressed")]
+  BitmapEncodingError(#[source] std::io::Error),
 }

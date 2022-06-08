@@ -317,8 +317,9 @@ where
     Ok(())
   }
 
-  /// If the document has an [`BitmapRevocationService`] identified by `fragment`, revokes all given `credentials`.
-  pub async fn revoke_credentials(&mut self, fragment: &str, credentials: &[u32]) -> Result<()> {
+  /// If the document has a [`RevocationBitmapService`] identified by `fragment`,
+  /// revokes all credentials identified by the given `credential_indices`.
+  pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
     // Finds the service to be updated
     let mut service_id: IotaDIDUrl = self.did().clone().into_url();
     service_id.set_fragment(Some(fragment))?;
@@ -342,7 +343,7 @@ where
       bitmap_revocation_service.try_into().map_err(Error::RevocationError)?;
 
     // Revoke all given credential indices.
-    for credential in credentials {
+    for credential in credential_indices {
       revocation_bitmap.revoke(*credential);
     }
 

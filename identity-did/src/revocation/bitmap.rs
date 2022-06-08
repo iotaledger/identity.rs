@@ -30,7 +30,7 @@ use crate::service::ServiceEndpoint;
 pub struct RevocationBitmap(RoaringBitmap);
 
 impl RevocationBitmap {
-  /// Creates a new [`RevocationBitmap`].
+  /// Constructs a new empty [`RevocationBitmap`].
   pub fn new() -> Self {
     Self(RoaringBitmap::new())
   }
@@ -40,17 +40,17 @@ impl RevocationBitmap {
     self.0.contains(index)
   }
 
-  /// Revokes the credential at the given `index`.
+  /// Mark the given `index` as revoked.
   ///
-  /// Return whether the value was absent from the set.
+  /// Returns true if the `index` was absent from the set.
   pub fn revoke(&mut self, index: u32) -> bool {
     self.0.insert(index)
   }
 
-  /// The credential at the given `index` will be set to valid.
+  /// Mark the `index` as not revoked.
   ///
-  /// Returns ture is the value was present in the set.
-  pub fn undo_revocation(&mut self, index: u32) -> bool {
+  /// Returns true if the `index` was present in the set.
+  pub fn unrevoke(&mut self, index: u32) -> bool {
     self.0.remove(index)
   }
 
@@ -68,7 +68,7 @@ impl RevocationBitmap {
   }
 
   /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
-  pub fn deserialize_compressed_b64<T>(data: &T) -> Result<Self>
+  pub(crate) fn deserialize_compressed_b64<T>(data: &T) -> Result<Self>
   where
     T: AsRef<str> + ?Sized,
   {
@@ -79,36 +79,36 @@ impl RevocationBitmap {
   }
 
   /// Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
-  pub fn serialize_compressed_b64(&self) -> Result<String> {
+  pub(crate) fn serialize_compressed_b64(&self) -> Result<String> {
     let serialized_data: Vec<u8> = self.serialize_vec()?;
     Self::compress_zlib(&serialized_data).map(|data| encode_b64(&data))
   }
 
   /// Deserializes [`RevocationBitmap`] from a slice of bytes.
-  pub fn deserialize_slice(data: &[u8]) -> Result<Self> {
+  fn deserialize_slice(data: &[u8]) -> Result<Self> {
     RoaringBitmap::deserialize_from(data)
-      .map_err(Error::DeserializationError)
+      .map_err(Error::BitmapDecodingError)
       .map(Self)
   }
 
   /// Serializes a [`RevocationBitmap`] as a vector of bytes.
-  pub fn serialize_vec(&self) -> Result<Vec<u8>> {
+  fn serialize_vec(&self) -> Result<Vec<u8>> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
-    self.0.serialize_into(&mut output).map_err(Error::SerializationError)?;
+    self.0.serialize_into(&mut output).map_err(Error::BitmapEncodingError)?;
     Ok(output)
   }
 
   fn compress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>> {
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-    encoder.write_all(input.as_ref()).map_err(Error::CompressionError)?;
-    encoder.finish().map_err(Error::CompressionError)
+    encoder.write_all(input.as_ref()).map_err(Error::BitmapEncodingError)?;
+    encoder.finish().map_err(Error::BitmapEncodingError)
   }
 
   fn decompress_zlib<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>> {
     let mut writer = Vec::new();
     let mut decoder = ZlibDecoder::new(writer);
-    decoder.write_all(input.as_ref()).map_err(Error::DecompressionError)?;
-    writer = decoder.finish().map_err(Error::DecompressionError)?;
+    decoder.write_all(input.as_ref()).map_err(Error::BitmapDecodingError)?;
+    writer = decoder.finish().map_err(Error::BitmapDecodingError)?;
     Ok(writer)
   }
 }
