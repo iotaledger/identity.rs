@@ -1,8 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use std::io::Write;
 
 use dataurl::DataUrl;
@@ -13,13 +11,6 @@ use identity_core::common::Url;
 use identity_core::utils::decode_b64;
 use identity_core::utils::encode_b64;
 use roaring::RoaringBitmap;
-use serde::de;
-use serde::de::Deserializer;
-use serde::de::Visitor;
-use serde::ser::Error as _;
-use serde::ser::Serializer;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::did::DID;
 use crate::error::Error;
@@ -120,44 +111,6 @@ impl RevocationBitmap {
   }
 }
 
-impl Serialize for RevocationBitmap {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    self
-      .serialize_compressed_b64()
-      .map_err(S::Error::custom)
-      .and_then(|data| serializer.serialize_str(&data))
-  }
-}
-
-impl<'de> Deserialize<'de> for RevocationBitmap {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    struct __Visitor;
-
-    impl<'de> Visitor<'de> for __Visitor {
-      type Value = RevocationBitmap;
-
-      fn expecting(&self, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str("a base64-encoded string")
-      }
-
-      fn visit_str<E>(self, string: &str) -> Result<Self::Value, E>
-      where
-        E: de::Error,
-      {
-        RevocationBitmap::deserialize_compressed_b64(string).map_err(E::custom)
-      }
-    }
-
-    deserializer.deserialize_str(__Visitor)
-  }
-}
-
 impl<D: DID + Sized> TryFrom<&Service<D>> for RevocationBitmap {
   type Error = Error;
 
@@ -200,6 +153,7 @@ mod tests {
   fn test_serialize_b64_round_trip() {
     let mut embedded_revocation_list = RevocationBitmap::new();
     let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
+
     assert_eq!(&b64_compressed_revocation_list, "eJyzMmAAAwADKABr");
     assert_eq!(
       RevocationBitmap::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
@@ -210,7 +164,8 @@ mod tests {
       embedded_revocation_list.revoke(credential);
     }
     let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
-    assert_eq!(&b64_compressed_revocation_list, "eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI=");
+
+    assert_eq!(&b64_compressed_revocation_list, "eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI");
     assert_eq!(
       RevocationBitmap::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
       embedded_revocation_list
