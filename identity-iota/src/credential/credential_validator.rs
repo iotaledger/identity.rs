@@ -6,10 +6,8 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::credential::RevocationBitmapStatus;
-use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::revocation::RevocationBitmap;
-use identity_did::service::RevocationBitmapService;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
@@ -180,7 +178,7 @@ impl CredentialValidator {
   pub fn check_revoked<T, D: AsRef<IotaDocument>>(credential: &Credential<T>, issuers: &[D]) -> ValidationUnitResult {
     match &credential.credential_status {
       Some(status) => {
-        if status.type_ != RevocationBitmapService::<CoreDID>::TYPE {
+        if status.type_ != RevocationBitmap::TYPE {
           return Err(ValidationError::InvalidStatus(
             identity_credential::Error::InvalidStatus("expected a `BitmapRevocation2022` credential status"),
           ));
@@ -215,14 +213,9 @@ impl CredentialValidator {
       .find(|service| issuer_service_url.eq(&CoreDIDUrl::from(service.id().clone())))
     {
       Some(service) => {
-        let revocation_bitmap_service: RevocationBitmapService<IotaDID> =
-          service.clone().try_into().map_err(ValidationError::InvalidService)?;
-        Self::check_bitmap_revocation_2022(
-          credential_status,
-          &revocation_bitmap_service
-            .try_into()
-            .map_err(ValidationError::InvalidService)?,
-        )
+        let revocation_bitmap: RevocationBitmap = service.try_into().map_err(ValidationError::InvalidService)?;
+
+        Self::check_revocation_bitmap_2022(credential_status, &revocation_bitmap)
       }
       None => {
         // No revocation service endpoint was found
@@ -235,7 +228,7 @@ impl CredentialValidator {
 
   /// By deserializing the `Url` into a [`RevocationBitmap`], checks if the index given in [`BitmapRevocationStatus`] is
   /// revoked.
-  fn check_bitmap_revocation_2022(
+  fn check_revocation_bitmap_2022(
     credential_status: RevocationBitmapStatus,
     revocation_bitmap: &RevocationBitmap,
   ) -> ValidationUnitResult {

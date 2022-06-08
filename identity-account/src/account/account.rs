@@ -24,7 +24,6 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_did::did::DID;
 use identity_did::revocation::RevocationBitmap;
-use identity_did::service::RevocationBitmapService;
 use identity_did::service::Service;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
@@ -333,24 +332,15 @@ where
         "invalid id - service not found",
       )))?;
 
-    // Checks the corresponding service
-    let bitmap_revocation_service: RevocationBitmapService<IotaDID> =
-      service.clone().try_into().map_err(Error::RevocationError)?;
-
-    let service_id: IotaDIDUrl = bitmap_revocation_service.id().clone();
-
-    let mut revocation_bitmap: RevocationBitmap =
-      bitmap_revocation_service.try_into().map_err(Error::RevocationError)?;
+    let mut revocation_bitmap: RevocationBitmap = (&*service).try_into().map_err(Error::RevocationError)?;
 
     // Revoke all given credential indices.
     for credential in credential_indices {
       revocation_bitmap.revoke(*credential);
     }
 
-    let updated_bitmap_revocation_service: RevocationBitmapService<IotaDID> =
-      RevocationBitmapService::<IotaDID>::new(service_id, &revocation_bitmap).map_err(Error::RevocationError)?;
+    std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
 
-    std::mem::swap(service, &mut updated_bitmap_revocation_service.into());
     self.increment_actions();
     self.publish_internal(false, PublishOptions::default()).await?;
     Ok(())

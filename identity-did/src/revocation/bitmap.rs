@@ -21,8 +21,10 @@ use serde::ser::Serializer;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::service::Service;
 use crate::service::ServiceEndpoint;
 
 /// A compressed bitmap for managing credential revocation.
@@ -30,6 +32,9 @@ use crate::service::ServiceEndpoint;
 pub struct RevocationBitmap(RoaringBitmap);
 
 impl RevocationBitmap {
+  /// The name of the service type.
+  pub const TYPE: &'static str = "RevocationBitmap2022";
+
   /// Constructs a new empty [`RevocationBitmap`].
   pub fn new() -> Self {
     Self(RoaringBitmap::new())
@@ -148,6 +153,36 @@ impl<'de> Deserialize<'de> for RevocationBitmap {
     }
 
     deserializer.deserialize_str(__Visitor)
+  }
+}
+
+impl<D: DID + Sized> TryFrom<&Service<D>> for RevocationBitmap {
+  type Error = Error;
+
+  fn try_from(service: &Service<D>) -> Result<Self> {
+    if service.type_() != Self::TYPE {
+      return Err(Error::InvalidService("invalid type - unexpected revocation method"));
+    }
+    match service.service_endpoint() {
+      ServiceEndpoint::One(url) => {
+        if service.type_() != Self::TYPE {
+          Err(Error::InvalidService(
+            "invalid service - expected a `RevocationBitmap2022`",
+          ))
+        } else {
+          let data_url: DataUrl =
+            DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
+
+          RevocationBitmap::deserialize_compressed_b64(
+            std::str::from_utf8(data_url.get_data())
+              .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
+          )
+        }
+      }
+      ServiceEndpoint::Map(_) | ServiceEndpoint::Set(_) => {
+        Err(Error::InvalidService("invalid endpoint - expected a single data url"))
+      }
+    }
   }
 }
 

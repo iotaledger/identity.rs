@@ -24,9 +24,7 @@ use identity::credential::CredentialBuilder;
 use identity::credential::RevocationBitmapStatus;
 use identity::credential::Subject;
 use identity::crypto::ProofOptions;
-use identity::did::CoreDID;
 use identity::did::RevocationBitmap;
-use identity::did::RevocationBitmapService;
 use identity::did::DID;
 use identity::iota::CredentialValidationOptions;
 use identity::iota::CredentialValidator;
@@ -65,7 +63,7 @@ async fn main() -> Result<()> {
     .update_identity()
     .create_service()
     .fragment("my-revocation-service")
-    .type_(RevocationBitmapService::<CoreDID>::TYPE)
+    .type_(RevocationBitmap::TYPE)
     .endpoint(revocation_bitmap.to_endpoint()?)
     .apply()
     .await?;
