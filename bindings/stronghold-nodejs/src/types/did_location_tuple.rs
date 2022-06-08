@@ -6,9 +6,9 @@ use identity_iota_core::did::IotaDID;
 use napi::Result;
 use napi_derive::napi;
 
-use crate::account::NapiKeyLocation;
-use crate::did::NapiDID;
 use crate::error::NapiResult;
+use crate::types::NapiDid;
+use crate::types::NapiKeyLocation;
 
 /// Workaround for lack of tuple support in Napi.
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -23,8 +23,8 @@ pub struct NapiDidLocation(DIDLocation);
 #[napi]
 impl NapiDidLocation {
   #[napi]
-  pub fn did(&self) -> NapiDID {
-    NapiDID(self.0.did.clone())
+  pub fn did(&self) -> NapiDid {
+    NapiDid(self.0.did.clone())
   }
 
   #[napi(js_name = keyLocation)]
