@@ -60,8 +60,8 @@ pub enum ValidationError {
   #[error("invalid service")]
   InvalidService(#[source] identity_did::Error),
   /// Indicates that the credential has been revoked.
-  #[error("credential at index {0} has been revoked")]
-  RevokedCredential(u32),
+  #[error("credential has been revoked")]
+  Revoked,
 }
 
 #[derive(Debug)]

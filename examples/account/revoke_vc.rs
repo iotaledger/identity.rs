@@ -122,10 +122,10 @@ async fn main() -> Result<()> {
   );
 
   // We expect validation to no longer succeed because the credential was revoked.
-  match validation_result.unwrap_err().validation_errors[0] {
-    ValidationError::RevokedCredential(index) => assert_eq!(index, credential_index),
-    _ => panic!("expected revoked credential error"),
-  }
+  assert!(matches!(
+    validation_result.unwrap_err().validation_errors[0],
+    ValidationError::Revoked
+  ));
 
   // ===========================================================================
   // Alternative revocation of the Verifiable Credential.

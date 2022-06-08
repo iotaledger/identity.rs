@@ -235,7 +235,7 @@ impl CredentialValidator {
     let revocation_bitmap_index: u32 = credential_status.index().map_err(ValidationError::InvalidStatus)?;
 
     if revocation_bitmap.is_revoked(revocation_bitmap_index) {
-      Err(ValidationError::RevokedCredential(revocation_bitmap_index))
+      Err(ValidationError::Revoked)
     } else {
       Ok(())
     }
