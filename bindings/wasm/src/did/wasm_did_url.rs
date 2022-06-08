@@ -69,7 +69,7 @@ impl WasmDIDUrl {
     self.0.set_query(value.as_deref()).wasm_result()
   }
 
-  /// Append a string representing a path, query, and/or fragment to this `DIDUrl`.
+  /// Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
   ///
   /// Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
   /// segment and any following segments in order of path, query, then fragment.
