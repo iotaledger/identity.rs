@@ -27,6 +27,8 @@ use crate::error::Result;
 use crate::service::Service;
 use crate::service::ServiceEndpoint;
 
+const DATA_URL_MEDIA_TYPE: &str = "application/octet-stream";
+
 /// A compressed bitmap for managing credential revocation.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct RevocationBitmap(RoaringBitmap);
@@ -65,9 +67,8 @@ impl RevocationBitmap {
 
     let endpoint_data: String = self.serialize_compressed_b64()?;
 
-    // TODO: Set mime type, validate in other TryFrom impl.
-    // data_url.set_media_type(new_media_type);
-
+    data_url.set_media_type(Some(DATA_URL_MEDIA_TYPE.to_owned()));
+    data_url.set_is_base64_encoded(true);
     data_url.set_data(endpoint_data.as_bytes());
 
     Ok(ServiceEndpoint::One(Url::parse(data_url.to_string())?))
@@ -164,25 +165,29 @@ impl<D: DID + Sized> TryFrom<&Service<D>> for RevocationBitmap {
     if service.type_() != Self::TYPE {
       return Err(Error::InvalidService("invalid type - unexpected revocation method"));
     }
-    match service.service_endpoint() {
-      ServiceEndpoint::One(url) => {
-        if service.type_() != Self::TYPE {
-          Err(Error::InvalidService(
-            "invalid service - expected a `RevocationBitmap2022`",
-          ))
-        } else {
-          let data_url: DataUrl =
-            DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
 
-          RevocationBitmap::deserialize_compressed_b64(
-            std::str::from_utf8(data_url.get_data())
-              .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
-          )
-        }
+    if let ServiceEndpoint::One(url) = service.service_endpoint() {
+      if service.type_() != Self::TYPE {
+        return Err(Error::InvalidService(
+          "invalid service - expected a `RevocationBitmap2022`",
+        ));
       }
-      ServiceEndpoint::Map(_) | ServiceEndpoint::Set(_) => {
-        Err(Error::InvalidService("invalid endpoint - expected a single data url"))
+
+      let data_url: DataUrl =
+        DataUrl::parse(url.as_str()).map_err(|_| Error::InvalidService("invalid url - expected a data url"))?;
+
+      if !data_url.get_is_base64_encoded() || data_url.get_media_type() != DATA_URL_MEDIA_TYPE {
+        return Err(Error::InvalidService(
+          "invalid url - expected an `application/octet-stream;base64` data url",
+        ));
       }
+
+      RevocationBitmap::deserialize_compressed_b64(
+        std::str::from_utf8(data_url.get_data())
+          .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
+      )
+    } else {
+      Err(Error::InvalidService("invalid endpoint - expected a single data url"))
     }
   }
 }
