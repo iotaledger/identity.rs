@@ -113,7 +113,8 @@ impl WasmCredentialValidator {
     CredentialValidator::check_subject_holder_relationship(&credential.0, &holder, relationship.into()).wasm_result()
   }
 
-  /// If the credential has a status of type `EmbeddedRevocationList`, checks if the credential has been revoked.
+  /// Checks whether the credential status has been revoked.
+  /// Only supports `BitmapRevocation2022`, any other type will return an error.
   #[wasm_bindgen(js_name = checkRevoked)]
   pub fn check_revoked(
     credential: &WasmCredential,

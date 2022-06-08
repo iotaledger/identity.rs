@@ -85,7 +85,7 @@ async function revokeVC(storage?: Storage) {
     // Revoke the Verifiable Credential.
     // ===========================================================================
 
-    // Update the EmbeddedRevocationService on the issuer's DID Document.
+    // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
     await issuer.revokeCredentials("my-revocation-service", 5)
 
