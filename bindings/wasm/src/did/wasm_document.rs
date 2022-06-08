@@ -14,13 +14,16 @@ use identity::crypto::PrivateKey;
 use identity::crypto::ProofOptions;
 use identity::did::verifiable::VerifiableProperties;
 use identity::did::MethodScope;
+use identity::did::DID;
 use identity::iota_core::IotaDID;
+use identity::iota_core::IotaDIDUrl;
 use identity::iota_core::IotaDocument;
 use identity::iota_core::IotaVerificationMethod;
 use identity::iota_core::MessageId;
 use identity::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
+use crate::account::wasm_account::UOneOrManyNumber;
 use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
@@ -622,6 +625,36 @@ impl WasmDocument {
   #[wasm_bindgen]
   pub fn proof(&self) -> Option<WasmProof> {
     self.0.proof.clone().map(WasmProof::from)
+  }
+
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  #[wasm_bindgen(js_name = revokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn revoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let mut service_id: IotaDIDUrl = self.0.id().to_url();
+    service_id.set_fragment(Some(fragment)).wasm_result()?;
+
+    self
+      .0
+      .revoke_credentials(&service_id, credentials_indices.as_slice())
+      .wasm_result()
+  }
+
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  #[wasm_bindgen(js_name = unrevokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn unrevoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let mut service_id: IotaDIDUrl = self.0.id().to_url();
+    service_id.set_fragment(Some(fragment)).wasm_result()?;
+
+    self
+      .0
+      .unrevoke_credentials(&service_id, credentials_indices.as_slice())
+      .wasm_result()
   }
 
   // ===========================================================================

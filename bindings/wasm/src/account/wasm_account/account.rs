@@ -295,6 +295,26 @@ impl WasmAccount {
     .unchecked_into::<PromiseVoid>()
   }
 
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+  #[wasm_bindgen(js_name = revokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn unrevoke_credentials(&mut self, fragment: String, credentialIndices: UOneOrManyNumber) -> PromiseVoid {
+    let account = self.0.clone();
+    future_to_promise(async move {
+      let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+
+      account
+        .as_ref()
+        .borrow_mut()
+        .unrevoke_credentials(&fragment, credentials_indices.as_slice())
+        .await
+        .map(|_| JsValue::undefined())
+        .wasm_result()
+    })
+    .unchecked_into::<PromiseVoid>()
+  }
+
   /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
   ///
   /// Returns an [`EncryptedData`] instance.
