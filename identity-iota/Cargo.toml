@@ -52,10 +52,13 @@ proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
 [features]
-default = ["async"]
+default = ["async", "revocation-bitmap"]
 
 # Enables async runtime support (Tokio)
 async = ["iota-client/async"]
+
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity-iota-core/revocation-bitmap"]
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -37,3 +37,6 @@ async = ["identity-iota/async"]
 send-sync-storage = ["identity-account-storage/send-sync-storage"]
 # Enables encryption and decryption functionality.
 encryption = ["identity-account-storage/encryption"]
+
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity-iota/revocation-bitmap"]

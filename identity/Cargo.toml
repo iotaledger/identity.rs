@@ -50,6 +50,9 @@ send-sync-storage = ["identity-account-storage/send-sync-storage"]
 # Exposes Storage `test_suite` module.
 storage-test-suite = ["identity-account-storage/storage-test-suite"]
 
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity-account?/revocation-bitmap", "identity-iota/revocation-bitmap"]
+
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.
 unstable-encryption = ["identity-account/encryption"]

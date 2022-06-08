@@ -610,6 +610,7 @@ impl IotaDocument {
 
   /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
   /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  #[cfg(feature = "revocation-bitmap")]
   pub fn revoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
     self.update_revocation_bitmap(service_id, |revocation_bitmap| {
       // Revoke all given credential indices.
@@ -621,6 +622,7 @@ impl IotaDocument {
 
   /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
   /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  #[cfg(feature = "revocation-bitmap")]
   pub fn unrevoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
     self.update_revocation_bitmap(service_id, |revocation_bitmap| {
       // Unrevoke all given credential indices.
@@ -630,6 +632,7 @@ impl IotaDocument {
     })
   }
 
+  #[cfg(feature = "revocation-bitmap")]
   fn update_revocation_bitmap<F>(&mut self, service_id: &IotaDIDUrl, f: F) -> Result<()>
   where
     F: FnOnce(&mut RevocationBitmap),

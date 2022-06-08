@@ -31,7 +31,7 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 version = "=0.5.0"
 path = "../../identity"
 default-features = false
-features = ["account", "storage-test-suite", "unstable-encryption"]
+features = ["account", "storage-test-suite", "unstable-encryption", "revocation-bitmap"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }
