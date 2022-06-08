@@ -12,6 +12,7 @@ use identity::account_storage::CekAlgorithm;
 use identity::account_storage::EncryptedData;
 use identity::account_storage::EncryptionAlgorithm;
 use identity::account_storage::Storage;
+use identity::core::OneOrMany;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::crypto::ProofOptions;
@@ -274,15 +275,22 @@ impl WasmAccount {
     .unchecked_into::<PromiseVoid>()
   }
 
-  /// If the document has an `EmbeddedRevocationService` identified by `fragment`, revokes all given `credentials`.
+  /// If the document has a RevocationBitmapService identified by `fragment`,
+  /// revokes all credentials identified by the given `credential_indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
-  pub fn revoke_credentials(&mut self, fragment: String, credentials: Vec<u32>) -> PromiseVoid {
+  pub fn revoke_credentials(
+    &mut self,
+    fragment: String,
+    credential_indices: UOneOrManyCredentialIndices,
+  ) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
+      let credentials_indices: OneOrMany<u32> = credential_indices.into_serde().wasm_result()?;
+
       account
         .as_ref()
         .borrow_mut()
-        .revoke_credentials(&fragment, &credentials)
+        .revoke_credentials(&fragment, credentials_indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -441,4 +449,10 @@ impl From<WasmPublishOptions> for PublishOptions {
 extern "C" {
   #[wasm_bindgen(typescript_type = "Promise<Account>")]
   pub type PromiseAccount;
+}
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "number | number[]")]
+  pub type UOneOrManyCredentialIndices;
 }

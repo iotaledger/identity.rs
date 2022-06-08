@@ -43,7 +43,8 @@ async function revokeVC(storage?: Storage) {
         fragment: "key-1"
     })
 
-    // Add the EmbeddedRevocationService for allowing verfiers to check the credential status.
+    // Add a RevocationBitmap service to the issuer's DID Document.
+    // This allows verifiers to check whether a credential has been revoked.
     const revocationBitmap = new RevocationBitmap;
     await issuer.createService({
         fragment: "my-revocation-service",
@@ -59,7 +60,8 @@ async function revokeVC(storage?: Storage) {
         GPA: "4.0"
     };
 
-    // Create an unsigned `UniversityDegree` credential for Alice 
+    // Create an unsigned `UniversityDegree` credential for Alice.
+    // The issuer also chooses a unique `revocationListIndex` to be able to revoke it later.
     const unsignedVc = new Credential({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
@@ -85,7 +87,7 @@ async function revokeVC(storage?: Storage) {
 
     // Update the EmbeddedRevocationService on the issuer's DID Document.
     // This revokes the credential's unique index.
-    await issuer.revokeCredentials("my-revocation-service", new Uint32Array([5]))
+    await issuer.revokeCredentials("my-revocation-service", 5)
 
     // Credential verification now fails.
     try {
