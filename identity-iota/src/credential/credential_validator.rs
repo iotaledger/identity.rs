@@ -205,7 +205,8 @@ impl CredentialValidator {
     credential_status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
     let issuer_service_url: &CoreDIDUrl = credential_status.id();
-    // Looks for the appropriate service to check for revocation
+
+    // Look for the appropriate service to check for revocation.
     match issuer
       .as_ref()
       .service()
@@ -218,7 +219,7 @@ impl CredentialValidator {
         Self::check_revocation_bitmap_2022(credential_status, &revocation_bitmap)
       }
       None => {
-        // No revocation service endpoint was found
+        // No revocation service endpoint was found.
         Err(ValidationError::InvalidService(identity_did::Error::InvalidService(
           "service not found",
         )))
@@ -226,8 +227,7 @@ impl CredentialValidator {
     }
   }
 
-  /// By deserializing the `Url` into a [`RevocationBitmap`], checks if the index given in [`BitmapRevocationStatus`] is
-  /// revoked.
+  /// Checks the given `credential_status` against the given `revocation_bitmap`.
   fn check_revocation_bitmap_2022(
     credential_status: RevocationBitmapStatus,
     revocation_bitmap: &RevocationBitmap,
@@ -235,9 +235,10 @@ impl CredentialValidator {
     let revocation_bitmap_index: u32 = credential_status.index().map_err(ValidationError::InvalidStatus)?;
 
     if revocation_bitmap.is_revoked(revocation_bitmap_index) {
-      return Err(ValidationError::RevokedCredential(revocation_bitmap_index));
+      Err(ValidationError::RevokedCredential(revocation_bitmap_index))
+    } else {
+      Ok(())
     }
-    Ok(())
   }
 
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation

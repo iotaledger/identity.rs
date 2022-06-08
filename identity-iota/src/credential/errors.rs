@@ -56,9 +56,6 @@ pub enum ValidationError {
   /// Indicates that the credential's status is invalid.
   #[error("invalid credential status")]
   InvalidStatus(#[source] identity_credential::Error),
-  /// Indicates that the credential's enpoint is invalid.
-  #[error("invalid credential endpoint")]
-  InvalidEndpoint(#[source] identity_did::Error),
   /// Indicates that the the credential's service is invalid.
   #[error("invalid service")]
   InvalidService(#[source] identity_did::Error),
