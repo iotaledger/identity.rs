@@ -589,6 +589,7 @@ impl IotaDocument {
     Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
   }
 
+  /// Returns a vector of all verification methods capable of signing a document update.
   pub fn extract_signing_keys(&self) -> Vec<Option<&IotaVerificationMethod>> {
     self
       .core_document()
