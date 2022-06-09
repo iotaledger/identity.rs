@@ -140,22 +140,6 @@ impl BaseEncoding {
   }
 }
 
-/// Decodes the given `data` as base64.
-pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>>
-where
-  T: AsRef<str> + ?Sized,
-{
-  multibase::Base::Base64Url.decode(&data).map_err(Error::DecodeMultibase)
-}
-
-/// Encodes the given `data` as base64.
-pub fn encode_b64<T>(data: &T) -> String
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  multibase::Base::Base64Url.encode(&data)
-}
-
 #[cfg(test)]
 mod tests {
   use quickcheck_macros::quickcheck;
@@ -163,14 +147,22 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_decode_b58_empty() {
+  fn test_decode_base58_empty() {
     assert_eq!(BaseEncoding::decode_base58("").unwrap(), Vec::<u8>::new());
   }
 
   #[quickcheck]
-  fn test_b58_random(data: Vec<u8>) {
+  fn test_base58_random(data: Vec<u8>) {
     assert_eq!(
       BaseEncoding::decode_base58(&BaseEncoding::encode_base58(&data)).unwrap(),
+      data
+    );
+  }
+
+  #[quickcheck]
+  fn test_base64_random(data: Vec<u8>) {
+    assert_eq!(
+      BaseEncoding::decode(&BaseEncoding::encode(&data, Base::Base64Url), Base::Base64Url).unwrap(),
       data
     );
   }
@@ -207,11 +199,6 @@ mod tests {
       BaseEncoding::decode_multibase(&BaseEncoding::encode_multibase(&data, None)).unwrap(),
       data
     );
-  }
-
-  #[quickcheck]
-  fn test_multibase_base64_random(data: Vec<u8>) {
-    assert_eq!(decode_b64(&encode_b64(&data)).unwrap(), data);
   }
 
   #[quickcheck]

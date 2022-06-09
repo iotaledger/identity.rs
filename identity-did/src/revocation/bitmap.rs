@@ -8,8 +8,8 @@ use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use identity_core::common::Url;
-use identity_core::utils::decode_b64;
-use identity_core::utils::encode_b64;
+use identity_core::utils::Base;
+use identity_core::utils::BaseEncoding;
 use roaring::RoaringBitmap;
 
 use crate::did::DID;
@@ -54,7 +54,7 @@ impl RevocationBitmap {
 
   /// Return the bitmap as a data url embedded in a service endpoint.
   pub fn to_endpoint(&self) -> Result<ServiceEndpoint> {
-    let endpoint_data: String = self.serialize_compressed_b64()?;
+    let endpoint_data: String = self.serialize_compressed_base64()?;
 
     let mut data_url: DataUrl = DataUrl::new();
     data_url.set_media_type(Some(DATA_URL_MEDIA_TYPE.to_owned()));
@@ -76,7 +76,7 @@ impl RevocationBitmap {
         ));
       }
 
-      RevocationBitmap::deserialize_compressed_b64(
+      RevocationBitmap::deserialize_compressed_base64(
         std::str::from_utf8(data_url.get_data())
           .map_err(|_| Error::InvalidService("invalid data url - expected valid utf-8"))?,
       )
@@ -86,20 +86,20 @@ impl RevocationBitmap {
   }
 
   /// Deserializes a compressed [`RevocationBitmap`] base64-encoded `data`.
-  pub(crate) fn deserialize_compressed_b64<T>(data: &T) -> Result<Self>
+  pub(crate) fn deserialize_compressed_base64<T>(data: &T) -> Result<Self>
   where
     T: AsRef<str> + ?Sized,
   {
-    let decoded_data: Vec<u8> =
-      decode_b64(data).map_err(|e| Error::Base64DecodingError(data.as_ref().to_owned(), e))?;
+    let decoded_data: Vec<u8> = BaseEncoding::decode(data, Base::Base64Url)
+      .map_err(|e| Error::Base64DecodingError(data.as_ref().to_owned(), e))?;
     let decompressed_data: Vec<u8> = Self::decompress_zlib(decoded_data)?;
     Self::deserialize_slice(&decompressed_data)
   }
 
   /// Serializes and compressess [`RevocationBitmap`] as a base64-encoded `String`.
-  pub(crate) fn serialize_compressed_b64(&self) -> Result<String> {
+  pub(crate) fn serialize_compressed_base64(&self) -> Result<String> {
     let serialized_data: Vec<u8> = self.serialize_vec()?;
-    Self::compress_zlib(&serialized_data).map(|data| encode_b64(&data))
+    Self::compress_zlib(&serialized_data).map(|data| BaseEncoding::encode(&data, Base::Base64Url))
   }
 
   /// Deserializes [`RevocationBitmap`] from a slice of bytes.
@@ -150,24 +150,27 @@ mod tests {
   use super::RevocationBitmap;
 
   #[test]
-  fn test_serialize_b64_round_trip() {
+  fn test_serialize_base64_round_trip() {
     let mut embedded_revocation_list = RevocationBitmap::new();
-    let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
+    let base64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_base64().unwrap();
 
-    assert_eq!(&b64_compressed_revocation_list, "eJyzMmAAAwADKABr");
+    assert_eq!(&base64_compressed_revocation_list, "eJyzMmAAAwADKABr");
     assert_eq!(
-      RevocationBitmap::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
+      RevocationBitmap::deserialize_compressed_base64(&base64_compressed_revocation_list).unwrap(),
       embedded_revocation_list
     );
 
     for credential in [0, 5, 6, 8] {
       embedded_revocation_list.revoke(credential);
     }
-    let b64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_b64().unwrap();
+    let base64_compressed_revocation_list: String = embedded_revocation_list.serialize_compressed_base64().unwrap();
 
-    assert_eq!(&b64_compressed_revocation_list, "eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI");
     assert_eq!(
-      RevocationBitmap::deserialize_compressed_b64(&b64_compressed_revocation_list).unwrap(),
+      &base64_compressed_revocation_list,
+      "eJyzMmBgYGQAAWYGATDNysDGwMEAAAscAJI"
+    );
+    assert_eq!(
+      RevocationBitmap::deserialize_compressed_base64(&base64_compressed_revocation_list).unwrap(),
       embedded_revocation_list
     );
   }
