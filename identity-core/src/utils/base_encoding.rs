@@ -90,6 +90,8 @@ impl BaseEncoding {
   }
 
   /// Encodes the given `data` to [`Base::Base58Btc`].
+  ///
+  /// Equivalent to `encode(data, Base58Btc)`.
   pub fn encode_base58<T>(data: &T) -> String
   where
     T: AsRef<[u8]> + ?Sized,
@@ -98,6 +100,8 @@ impl BaseEncoding {
   }
 
   /// Decodes the given `data` encoded as [`Base::Base58Btc`].
+  ///
+  /// Equivalent to `decode(data, Base58Btc)`.
   pub fn decode_base58<T>(data: &T) -> Result<Vec<u8>>
   where
     T: AsRef<str> + ?Sized,
