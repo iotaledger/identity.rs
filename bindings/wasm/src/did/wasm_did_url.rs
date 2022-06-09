@@ -69,7 +69,7 @@ impl WasmDIDUrl {
     self.0.set_query(value.as_deref()).wasm_result()
   }
 
-  /// Append a string representing a path, query, and/or fragment to this `DIDUrl`.
+  /// Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
   ///
   /// Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
   /// segment and any following segments in order of path, query, then fragment.
@@ -79,7 +79,7 @@ impl WasmDIDUrl {
   /// - joining a query will clear the fragment.
   /// - joining a fragment will only overwrite the fragment.
   #[wasm_bindgen]
-  pub fn join(self, segment: &str) -> Result<WasmDIDUrl> {
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
     self.0.join(segment).map(WasmDIDUrl::from).wasm_result()
   }
 

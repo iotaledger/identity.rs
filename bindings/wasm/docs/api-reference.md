@@ -1426,7 +1426,7 @@ Sets the `query` component of the `DIDUrl`.
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment to this `DIDUrl`.
+Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
