@@ -4,6 +4,6 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
 
-pub mod account;
-pub mod did;
 pub mod error;
+pub mod stronghold;
+pub mod types;

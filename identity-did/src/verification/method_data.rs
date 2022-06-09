@@ -3,11 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-
-use identity_core::utils::decode_b58;
-use identity_core::utils::decode_multibase;
-use identity_core::utils::encode_b58;
-use identity_core::utils::encode_multibase;
+use identity_core::utils::BaseEncoding;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -24,14 +20,14 @@ pub enum MethodData {
 impl MethodData {
   /// Creates a new `MethodData` variant with base58-encoded content.
   pub fn new_base58(data: impl AsRef<[u8]>) -> Self {
-    Self::PublicKeyBase58(encode_b58(&data))
+    Self::PublicKeyBase58(BaseEncoding::encode_base58(&data))
   }
 
   /// Creates a new `MethodData` variant with [Multibase]-encoded content.
   ///
   /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
   pub fn new_multibase(data: impl AsRef<[u8]>) -> Self {
-    Self::PublicKeyMultibase(encode_multibase(&data, None))
+    Self::PublicKeyMultibase(BaseEncoding::encode_multibase(&data, None))
   }
 
   /// Returns a `Vec<u8>` containing the decoded bytes of the `MethodData`.
@@ -44,8 +40,10 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyMultibase(input) => decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase),
-      Self::PublicKeyBase58(input) => decode_b58(input).map_err(|_| Error::InvalidKeyDataBase58),
+      Self::PublicKeyMultibase(input) => {
+        BaseEncoding::decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase)
+      }
+      Self::PublicKeyBase58(input) => BaseEncoding::decode_base58(input).map_err(|_| Error::InvalidKeyDataBase58),
     }
   }
 }

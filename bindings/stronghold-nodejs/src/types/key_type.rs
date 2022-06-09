@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::KeyType;
-use napi_derive::napi;
-
 use napi::bindgen_prelude::ToNapiValue;
+use napi_derive::napi;
 
 #[napi]
 pub enum NapiKeyType {

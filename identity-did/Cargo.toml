@@ -11,7 +11,6 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "An implementation of the Decentralized Identifiers standard."
 
 [dependencies]
-async-trait = { version = "0.1", default-features = false }
 dataurl = { version = "0.1.2", default-features = false, optional = true }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 flate2 = { version = "1.0.23", default-features = false, features = ["rust_backend"], optional = true }

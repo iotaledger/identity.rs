@@ -40,7 +40,6 @@ rev = "629466da83a677925904b2e733ef7bfad5a42864"
 optional = true
 
 [dev-dependencies]
-hex = { version = "0.4.3" }
 rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 

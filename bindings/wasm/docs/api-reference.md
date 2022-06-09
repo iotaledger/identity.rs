@@ -119,9 +119,6 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
 <dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
 </dd>
-<dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
-<dd><p>A compressed bitmap for managing credential revocation.</p>
-</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated
 with a DID subject.</p>
@@ -180,9 +177,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -206,8 +203,6 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -221,7 +216,6 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.revokeCredentials(fragment, credential_indices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -229,6 +223,8 @@ publishing to the Tangle.
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -243,28 +239,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -397,19 +371,6 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+revokeCredentials"></a>
-
-### account.revokeCredentials(fragment, credential_indices) ⇒ <code>Promise.&lt;void&gt;</code>
-If the document has a RevocationBitmapService identified by `fragment`,
-revokes all credentials identified by the given `credential_indices`.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| fragment | <code>string</code> | 
-| credential_indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
-
 <a name="Account+encryptData"></a>
 
 ### account.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
@@ -498,6 +459,28 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -1132,7 +1115,6 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
     * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
-    * [.checkRevoked(credential, trusted_issuers)](#CredentialValidator.checkRevoked)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1242,18 +1224,6 @@ Validate that the relationship between the `holder` and the credential subjects 
 | credential | [<code>Credential</code>](#Credential) | 
 | holder_url | <code>string</code> | 
 | relationship | <code>number</code> | 
-
-<a name="CredentialValidator.checkRevoked"></a>
-
-### CredentialValidator.checkRevoked(credential, trusted_issuers)
-If the credential has a status of type `EmbeddedRevocationList`, checks if the credential has been revoked.
-
-**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
-
-| Param | Type |
-| --- | --- |
-| credential | [<code>Credential</code>](#Credential) | 
-| trusted_issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
 
 <a name="DID"></a>
 
@@ -1456,7 +1426,7 @@ Sets the `query` component of the `DIDUrl`.
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment to this `DIDUrl`.
+Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
@@ -4159,77 +4129,6 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 Constructs a new [`Resolver`] based on the builder configuration.
 
 **Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
-<a name="RevocationBitmap"></a>
-
-## RevocationBitmap
-A compressed bitmap for managing credential revocation.
-
-**Kind**: global class  
-
-* [RevocationBitmap](#RevocationBitmap)
-    * [new RevocationBitmap()](#new_RevocationBitmap_new)
-    * _instance_
-        * [.isRevoked(index)](#RevocationBitmap+isRevoked) ⇒ <code>boolean</code>
-        * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
-        * [.unrevoke(index)](#RevocationBitmap+unrevoke) ⇒ <code>boolean</code>
-        * [.toEndpoint()](#RevocationBitmap+toEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-    * _static_
-        * [.type()](#RevocationBitmap.type) ⇒ <code>string</code>
-
-<a name="new_RevocationBitmap_new"></a>
-
-### new RevocationBitmap()
-Creates a new `RevocationBitmap` instance.
-
-<a name="RevocationBitmap+isRevoked"></a>
-
-### revocationBitmap.isRevoked(index) ⇒ <code>boolean</code>
-Returns `true` if the credential at the given `index` is revoked.
-
-**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="RevocationBitmap+revoke"></a>
-
-### revocationBitmap.revoke(index) ⇒ <code>boolean</code>
-Mark the given index as revoked.
-
-Returns true if the index was absent from the set.
-
-**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="RevocationBitmap+unrevoke"></a>
-
-### revocationBitmap.unrevoke(index) ⇒ <code>boolean</code>
-Mark the index as not revoked.
-
-Returns true if the index was present in the set.
-
-**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-
-| Param | Type |
-| --- | --- |
-| index | <code>number</code> | 
-
-<a name="RevocationBitmap+toEndpoint"></a>
-
-### revocationBitmap.toEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
-Return the bitmap as a data url embedded in a service endpoint.
-
-**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
-<a name="RevocationBitmap.type"></a>
-
-### RevocationBitmap.type() ⇒ <code>string</code>
-The name of the service type.
-
-**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
 <a name="Service"></a>
 
 ## Service
@@ -4805,13 +4704,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 
