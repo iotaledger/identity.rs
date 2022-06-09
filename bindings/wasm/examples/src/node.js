@@ -35,7 +35,7 @@ async function main() {
 
             await createIdentity(CLIENT_CONFIG);
             await manipulateIdentity(CLIENT_CONFIG);
-            await resolution(CLIENT_CONFIG);
+            await resolveIdentity(CLIENT_CONFIG);
             await keyExchange(CLIENT_CONFIG);
             await resolveHistory(CLIENT_CONFIG);
 
