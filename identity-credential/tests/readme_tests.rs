@@ -1,16 +1,17 @@
-# Iota Identity: Credentials 
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
-This crate contains types representing [Verifiable credentials](https://www.w3.org/TR/vc-data-model/#dfn-credential) and [Verifiable presentations](https://www.w3.org/TR/vc-data-model/#dfn-verifiable-presentations). An overview of Verifiable Credentials and how they can be used with the Iota Identity Framework can be found in [the Iota Identity Framework Wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview). 
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_credential::credential::Credential;
+use identity_credential::credential::CredentialBuilder;
+use identity_credential::credential::Issuer;
+use identity_credential::credential::Subject;
+use serde_json::json;
+use serde_json::Value;
 
-
-# Example
-Constructing a `Credential` using the `CredentialBuilder`. 
-
-```rust 
-  use identity_credential::credential::{Credential, CredentialBuilder, Subject, Issuer};
-  use serde_json::json;
-  use serde_json::Value;
-
+#[test]
+fn doc_test() {
   // Construct a `Subject` from json
   let json_subject: Value = json!({
     "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
@@ -38,5 +39,4 @@ Constructing a `Credential` using the `CredentialBuilder`.
     .issuance_date(Timestamp::parse("2010-01-01T00:00:00Z").unwrap())
     .build()
     .unwrap();
-
-```
+}

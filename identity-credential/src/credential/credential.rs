@@ -40,7 +40,7 @@ pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,
-  /// A unique `URI` referencing the subject of the `Credential`.
+  /// A unique `URI` that may be used to identify the credential.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub id: Option<Url>,
   /// One or more URIs defining the type of the `Credential`.
