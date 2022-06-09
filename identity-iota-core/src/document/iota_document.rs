@@ -22,6 +22,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::document::CoreDocument;
+#[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
