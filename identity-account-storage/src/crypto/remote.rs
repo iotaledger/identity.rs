@@ -14,7 +14,7 @@ use identity_core::crypto::ProofValue;
 use identity_core::crypto::SetSignature;
 use identity_core::error::Error;
 use identity_core::error::Result;
-use identity_core::utils::encode_b58;
+use identity_core::utils::BaseEncoding;
 
 use crate::storage::Storage;
 use crate::types::KeyLocation;
@@ -53,8 +53,8 @@ impl RemoteEd25519 {
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?.into();
-    let signature: String = encode_b58(&signature);
-    Ok(ProofValue::Signature(signature))
+    let encoded: String = BaseEncoding::encode_base58(&signature);
+    Ok(ProofValue::Signature(encoded))
   }
 }
 

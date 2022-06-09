@@ -670,7 +670,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyType;
-  use identity_core::utils::encode_b58;
+  use identity_core::utils::BaseEncoding;
   use identity_did::did::DID;
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
@@ -1346,8 +1346,8 @@ mod tests {
       let (document, keypair) = generate_root_document();
       // Replace the base58 encoded public key with that of a different key.
       let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-      let b58_old = encode_b58(keypair.public());
-      let b58_new = encode_b58(new_keypair.public());
+      let b58_old = BaseEncoding::encode_base58(keypair.public());
+      let b58_new = BaseEncoding::encode_base58(new_keypair.public());
       let doc_json_modified = document.to_string().replace(&b58_old, &b58_new);
       // Sign the document using the new key.
       let mut new_document: IotaDocument = IotaDocument::from_json(&doc_json_modified).unwrap();
