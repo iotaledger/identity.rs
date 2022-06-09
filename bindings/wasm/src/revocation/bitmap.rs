@@ -1,7 +1,6 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::Url;
 use identity::did::RevocationBitmap;
 use identity::did::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
@@ -60,10 +59,9 @@ impl WasmRevocationBitmap {
 
   /// Construct a `RevocationBitmap` from a data `url`.
   #[wasm_bindgen(js_name = fromEndpoint)]
-  pub fn from_endpoint(url: &str) -> Result<WasmRevocationBitmap> {
-    RevocationBitmap::from_endpoint(&ServiceEndpoint::One(Url::parse(url).wasm_result()?))
-      .map(Self)
-      .wasm_result()
+  pub fn from_endpoint(endpoint: UServiceEndpoint) -> Result<WasmRevocationBitmap> {
+    let endpoint: ServiceEndpoint = endpoint.into_serde().wasm_result()?;
+    RevocationBitmap::from_endpoint(&endpoint).map(Self).wasm_result()
   }
 }
 
