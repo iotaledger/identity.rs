@@ -31,7 +31,7 @@ pub struct Presentation<T = Object, U = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,
-  /// A unique `URI` referencing the subject of the `Presentation`.
+  /// A unique `URI` that may be used to identify the `Presentation`.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub id: Option<Url>,
   /// One or more URIs defining the type of the `Presentation`.

@@ -8,6 +8,7 @@ use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Issuer;
 use identity_credential::credential::Subject;
 use identity_credential::presentation::Presentation;
+use identity_credential::presentation::PresentationBuilder;
 use serde_json::json;
 use serde_json::Value;
 
@@ -40,4 +41,16 @@ fn doc_test_build_credential() {
     .issuance_date(Timestamp::parse("2010-01-01T00:00:00Z").unwrap())
     .build()
     .unwrap();
+}
+
+fn build_presentation(credentials: impl Iterator<Item = Credential>, holder: Url) -> Presentation {
+  let presentation_builder: PresentationBuilder = PresentationBuilder::default();
+  credentials
+    .fold(
+      presentation_builder,
+      |builder: PresentationBuilder, credential: Credential| builder.credential(credential),
+    )
+    .holder(holder)
+    .build()
+    .unwrap()
 }
