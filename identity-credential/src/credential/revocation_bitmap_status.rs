@@ -9,7 +9,7 @@ use identity_core::common::Value;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 
-use super::Status;
+use crate::credential::Status;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -35,18 +35,25 @@ impl RevocationBitmapStatus {
 
   /// Returns the [`DIDUrl`] of the bitmap status.
   pub fn id<D: DID>(&self) -> Result<DIDUrl<D>> {
-    DIDUrl::parse(self.0.id.as_str()).map_err(|_| Error::InvalidStatus("invalid did url"))
+    DIDUrl::parse(self.0.id.as_str())
+      .map_err(|err| Error::InvalidStatus(format!("invalid DID Url '{}': {:?}", self.0.id, err)))
   }
 
   /// Returns the index of the credential in the issuer's revocation bitmap if it can be decoded.
   pub fn index(&self) -> Result<u32> {
     if let Some(Value::String(index)) = self.0.properties.get(Self::INDEX_PROPERTY_NAME) {
-      u32::from_str(index)
-        .map_err(|_| Error::InvalidStatus("expected the revocation bitmap index to be an unsigned 32-bit integer"))
+      u32::from_str(index).map_err(|err| {
+        Error::InvalidStatus(format!(
+          "expected {} to be an unsigned 32-bit integer: {}",
+          Self::INDEX_PROPERTY_NAME,
+          err
+        ))
+      })
     } else {
-      Err(Error::InvalidStatus(
-        "credential index property must be an integer expressed as a string",
-      ))
+      Err(Error::InvalidStatus(format!(
+        "expected {} to be an unsigned 32-bit integer expressed as a string",
+        Self::INDEX_PROPERTY_NAME
+      )))
     }
   }
 }
@@ -56,11 +63,16 @@ impl TryFrom<Status> for RevocationBitmapStatus {
 
   fn try_from(status: Status) -> Result<Self> {
     if status.type_ != Self::TYPE {
-      Err(Error::InvalidStatus("expected `RevocationBitmap2022`"))
+      Err(Error::InvalidStatus(format!(
+        "expected type '{}', got '{}'",
+        Self::TYPE,
+        status.type_
+      )))
     } else if !status.properties.contains_key(Self::INDEX_PROPERTY_NAME) {
-      Err(Error::InvalidStatus(
-        "status is missing required property `revocationBitmapIndex`",
-      ))
+      Err(Error::InvalidStatus(format!(
+        "missing required property '{}'",
+        Self::INDEX_PROPERTY_NAME
+      )))
     } else {
       Ok(Self(status))
     }

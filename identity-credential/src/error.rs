@@ -25,6 +25,6 @@ pub enum Error {
   #[error("Invalid Credential Subject")]
   InvalidSubject,
   /// Caused when trying to construct an invalid status.
-  #[error("invalid status: {0}")]
-  InvalidStatus(&'static str),
+  #[error("invalid credential status: {0}")]
+  InvalidStatus(String),
 }

@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Serialize;
+
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -11,15 +13,16 @@ use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
-use serde::Serialize;
 
+use crate::Result;
+
+use super::errors::CompoundCredentialValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
-use crate::credential::errors::CompoundCredentialValidationError;
-use crate::Result;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -174,70 +177,69 @@ impl CredentialValidator {
   }
 
   /// Checks whether the credential status has been revoked.
-  /// Only supports `BitmapRevocation2022`, any other type will return an error.
+  ///
+  /// Only supports `BitmapRevocation2022`.
   pub fn check_revoked<T, D: AsRef<IotaDocument>>(
     credential: &Credential<T>,
     trusted_issuers: &[D],
+    status_check: StatusCheck,
   ) -> ValidationUnitResult {
+    if status_check == StatusCheck::SkipAll {
+      return Ok(());
+    }
+
     match &credential.credential_status {
+      None => Ok(()),
       Some(status) => {
+        // Check status is supported.
         if status.type_ != RevocationBitmap::TYPE {
+          if status_check == StatusCheck::SkipUnsupported {
+            return Ok(());
+          }
           return Err(ValidationError::InvalidStatus(
-            identity_credential::Error::InvalidStatus("expected a `BitmapRevocation2022` credential status"),
+            identity_credential::Error::InvalidStatus(format!("unsupported type '{}'", status.type_)),
           ));
         }
-        let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
-        let issuer_did: IotaDID = issuer_did.map_err(|e| ValidationError::SignerUrl {
-          source: e.into(),
-          signer_ctx: SignerContext::Issuer,
-        })?;
         let status: RevocationBitmapStatus =
           RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
+
+        // Check the credential index against the issuer's DID Document.
+        let issuer_did: IotaDID =
+          IotaDID::parse(credential.issuer.url().as_str()).map_err(|e| ValidationError::SignerUrl {
+            source: e.into(),
+            signer_ctx: SignerContext::Issuer,
+          })?;
         trusted_issuers
           .iter()
           .find(|issuer| issuer.as_ref().id() == &issuer_did)
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-          .and_then(|issuer| CredentialValidator::check_revocation(issuer, status))
+          .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(issuer, status))
       }
-      None => Ok(()),
     }
   }
 
-  fn check_revocation<D: AsRef<IotaDocument>>(
+  /// Check the given `status` against the matching [`RevocationBitmap`] service in the
+  /// issuer's DID Document.
+  fn check_revocation_bitmap_status<D: AsRef<IotaDocument>>(
     issuer: D,
-    credential_status: RevocationBitmapStatus,
+    status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: IotaDIDUrl = credential_status.id().map_err(ValidationError::InvalidStatus)?;
+    let issuer_service_url: IotaDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
-    // Look for the appropriate service to check for revocation.
-    match issuer
+    // Lookup service.
+    let service = issuer
       .as_ref()
       .service()
       .iter()
       .find(|service| &issuer_service_url == service.id())
-    {
-      Some(service) => {
-        let revocation_bitmap: RevocationBitmap = service.try_into().map_err(ValidationError::InvalidService)?;
+      .ok_or(ValidationError::InvalidService(identity_did::Error::InvalidService(
+        "revocation bitmap service not found",
+      )))?;
 
-        Self::check_revocation_bitmap_2022(credential_status, &revocation_bitmap)
-      }
-      None => {
-        // No revocation service endpoint was found.
-        Err(ValidationError::InvalidService(identity_did::Error::InvalidService(
-          "service not found",
-        )))
-      }
-    }
-  }
-
-  /// Checks the given `credential_status` against the given `revocation_bitmap`.
-  fn check_revocation_bitmap_2022(
-    credential_status: RevocationBitmapStatus,
-    revocation_bitmap: &RevocationBitmap,
-  ) -> ValidationUnitResult {
-    let revocation_bitmap_index: u32 = credential_status.index().map_err(ValidationError::InvalidStatus)?;
-
-    if revocation_bitmap.is_revoked(revocation_bitmap_index) {
+    // Check whether index is revoked.
+    let revocation_bitmap: RevocationBitmap = service.try_into().map_err(ValidationError::InvalidService)?;
+    let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
+    if revocation_bitmap.is_revoked(index) {
       Err(ValidationError::Revoked)
     } else {
       Ok(())
@@ -274,7 +276,7 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
-    let revocation_validation = std::iter::once_with(|| Self::check_revoked(credential, issuers));
+    let revocation_validation = std::iter::once_with(|| Self::check_revoked(credential, issuers, options.status));
 
     let validation_units_error_iter = issuance_date_validation
       .chain(expiry_date_validation)
@@ -298,7 +300,8 @@ impl CredentialValidator {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use proptest::proptest;
+
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
@@ -309,10 +312,11 @@ mod tests {
   use identity_credential::credential::Subject;
   use identity_did::did::DID;
   use identity_iota_core::document::IotaDocument;
-  use proptest::proptest;
 
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;
+
+  use super::*;
 
   const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
   const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
