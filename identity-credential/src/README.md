@@ -1,16 +1,23 @@
-# Iota Identity: Credentials 
+Iota Identity Credentials 
+=== 
 
-This crate contains types representing *credentials* and *presentations* defined in the [W3C VC-Data model]((https://www.w3.org/TR/vc-data-model/). An overview of these concepts and how to create *verifiable* credentials and presentations from the building blocks in this crate is explained in [the project's wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview). 
+This crate contains types representing *credentials* and *presentations* defined in the [W3C VC-Data model](https://www.w3.org/TR/vc-data-model/). The [Iota Identity Framework Wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview) gives a conceptual explanation of *verifiable credentials* and *verifiable presentations* and demonstrates how they may be constructed from the building blocks provided by this crate. 
 
 ## Using the builders 
-This crate enables creation of [`Credential`s](crate::credential::Credential) and [`Presentation`s](crate::presentation::Presentation) using the [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html). 
+This crate enables creation of [`Credentials`](crate::credential::Credential) and [`Presentations`](crate::presentation::Presentation) using the [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html). 
 ### Example
 Constructing a [`Credential`](crate::credential::Credential) using the [`CredentialBuilder`](crate::credential::CredentialBuilder). 
 
 ```rust 
-use identity_credential::credential::{Credential, CredentialBuilder, Subject, Issuer};
+use identity_credential::credential::Credential;
+use identity_credential::credential::CredentialBuilder;
+use identity_credential::credential::Subject;
+use identity_credential::credential::Issuer;
+use identity_core::common::Url;
+use identity_core::common::Timestamp;
 use serde_json::json;
 use serde_json::Value;
+
 
 // Construct a `Subject` from json
 let json_subject: Value = json!({
@@ -70,11 +77,89 @@ fn build_presentation(credentials: impl Iterator<Item = Credential>, holder: Url
 A `Presentation` constructed from a `PresentationBuilder` is not automatically a *verifiable presentation*. In order to obtain a verifiable presentation the holder must sign the presentation. All `Credential`s contained in the presentation must also be signed by their respective issuers. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vp.rs) for a full example explaining how to create a verifiable presentation. 
 
 ## Credentials and Presentations from JSON 
-The `Credential` and `Presentation` types both implement the [`Serialize`](https://docs.serde.rs/serde/trait.Serialize.html) and [`Deserialize`](https://docs.serde.rs/serde/trait.Deserialize.html) traits from the [`serde` crate](https://crates.io/crates/serde) hence one can use (for instance) the [`serde_json` crate](https://crates.io/crates/serde_json) to obtain `Credential`s and `Presentation`s from JSON. 
+The `Credential` and `Presentation` types both implement the [`Serialize`](https://docs.serde.rs/serde/trait.Serialize.html) and [`Deserialize`](https://docs.serde.rs/serde/trait.Deserialize.html) traits from the [`serde` crate](https://crates.io/crates/serde). Hence one can use the [`serde_json` crate](https://crates.io/crates/serde_json) to obtain `Credential`s and `Presentation`s from JSON. 
 
 ### Example 
-Deserializing a `Credential` from JSON. 
+Deserializing a (verifiable) `Credential` from JSON. 
+```rust
+use identity_credential::credential::Credential;
+use serde_json::json;
 
+let credential_json: &'static str = r#"{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://www.w3.org/2018/credentials/examples/v1"
+  ],
+  "id": "http://example.gov/credentials/3732",
+  "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+  "issuer": "https://example.edu",
+  "issuanceDate": "2017-06-18T21:19:00Z",
+  "credentialSubject": {
+    "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science in Mechanical Engineering"
+    }
+  },
+  "proof": {
+    "type": "RsaSignature2018",
+    "created": "2017-06-18T21:19:10Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "https://example.com/jdoe/keys/1",
+    "jws": "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5XsITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUcX16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtjPAYuNzVBAh4vGHSrQyHUdBBPM"
+  }
+}"#;
+
+let credential: Credential = serde_json::from_str(credential_json).unwrap();
+
+```
 
 ### Example 
-Deserializing a `Presentation` from JSON. 
+Deserializing a (verifiable) `Presentation` from JSON. 
+
+```rust
+use identity_credential::presentation::Presentation;
+use serde_json; 
+
+let presentation_json: &'static str = r#"{
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5",
+    "type": ["VerifiablePresentation", "CredentialManagerPresentation"],
+    "verifiableCredential": [{
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "id": "http://example.edu/credentials/3732",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "issuer": "https://example.edu/issuers/14",
+      "issuanceDate": "2010-01-01T19:23:24Z",
+      "credentialSubject": {
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "degree": {
+          "type": "BachelorDegree",
+          "name": "Bachelor of Science in Mechanical Engineering"
+        }
+      },
+      "proof": {
+        "type": "RsaSignature2018",
+        "created": "2017-06-18T21:19:10Z",
+        "proofPurpose": "assertionMethod",
+        "verificationMethod": "https://example.com/jdoe/keys/1",
+        "jws": "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5XsITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUcX16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtjPAYuNzVBAh4vGHSrQyHUdBBPM"
+      }
+    }],
+    "proof": {
+      "type": "RsaSignature2018",
+      "created": "2017-06-18T21:19:10Z",
+      "proofPurpose": "assertionMethod",
+      "verificationMethod": "https://example.com/jdoe/keys/1",
+      "jws": "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5XsITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUcX16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtjPAYuNzVBAh4vGHSrQyHUdBBPM"
+    }
+  }"#;
+
+let presentation: Presentation = serde_json::from_str(presentation_json).unwrap();
+  ```
