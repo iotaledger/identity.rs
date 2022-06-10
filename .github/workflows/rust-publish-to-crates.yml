@@ -1,13 +1,13 @@
-name: Rust release to crates.io
+name: Rust publish to crates.io
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release Rust under (e.g. `1.2.3`)'
+        description: 'Version to publish Rust under (e.g. `1.2.3-dev.1`)'
         required: true
       branch:
-        description: 'Branch to run release from'
+        description: 'Branch to run publish from'
         required: true
       dry-run:
         description: 'Run in dry-run mode'
