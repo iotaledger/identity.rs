@@ -7,11 +7,12 @@ use identity_credential::credential::Credential;
 use identity_credential::credential::CredentialBuilder;
 use identity_credential::credential::Issuer;
 use identity_credential::credential::Subject;
+use identity_credential::presentation::Presentation;
 use serde_json::json;
 use serde_json::Value;
 
 #[test]
-fn doc_test() {
+fn doc_test_build_credential() {
   // Construct a `Subject` from json
   let json_subject: Value = json!({
     "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",

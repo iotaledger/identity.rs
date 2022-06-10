@@ -1,6 +1,6 @@
 # Iota Identity: Credentials 
 
-This crate contains types representing [Verifiable credentials](https://www.w3.org/TR/vc-data-model/#dfn-credential) and [Verifiable presentations](https://www.w3.org/TR/vc-data-model/#dfn-verifiable-presentations). An overview of Verifiable Credentials and how they can be used with the Iota Identity Framework can be found in [the Iota Identity Framework Wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview). 
+This crate contains types representing *credentials* and *presentations* defined in the [W3C VC-Data model]((https://www.w3.org/TR/vc-data-model/). An overview of these concepts and how to work with them in the context of the Iota Identity Framework can be found [in the wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview). 
 
 
 # Example
@@ -40,3 +40,7 @@ Constructing a `Credential` using the `CredentialBuilder`.
     .unwrap();
 
 ```
+# Important 
+Although the `CredentialBuilder` generates a `Credential` it cannot be considered a *verifiable credential* until it has been signed by the issuer. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vc.rs) for a full example explaining how to create a credential with the corresponding issuer's signature. 
+
+
