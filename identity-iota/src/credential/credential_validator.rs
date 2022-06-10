@@ -179,7 +179,7 @@ impl CredentialValidator {
   /// Checks whether the credential status has been revoked.
   ///
   /// Only supports `BitmapRevocation2022`.
-  pub fn check_revoked<T, D: AsRef<IotaDocument>>(
+  pub fn check_status<T, D: AsRef<IotaDocument>>(
     credential: &Credential<T>,
     trusted_issuers: &[D],
     status_check: StatusCheck,
@@ -276,7 +276,7 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
-    let revocation_validation = std::iter::once_with(|| Self::check_revoked(credential, issuers, options.status));
+    let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
 
     let validation_units_error_iter = issuance_date_validation
       .chain(expiry_date_validation)
@@ -767,7 +767,7 @@ mod tests {
     } = Setup::new();
     // 0: missing status always succeeds.
     for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
-      assert!(CredentialValidator::check_revoked(&credential, &[&issuer_doc], status_check).is_ok());
+      assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
     }
 
     // 1: unsupported status type.
@@ -781,7 +781,7 @@ mod tests {
       (StatusCheck::SkipAll, true),
     ] {
       assert_eq!(
-        CredentialValidator::check_revoked(&credential, &[&issuer_doc], status_check).is_ok(),
+        CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
         expected
       );
     }
@@ -798,7 +798,7 @@ mod tests {
       (StatusCheck::SkipAll, true),
     ] {
       assert_eq!(
-        CredentialValidator::check_revoked(&credential, &[&issuer_doc], status_check).is_ok(),
+        CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
         expected
       );
     }
@@ -816,7 +816,7 @@ mod tests {
 
     // 3: un-revoked index always succeeds.
     for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
-      assert!(CredentialValidator::check_revoked(&credential, &[&issuer_doc], status_check).is_ok());
+      assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
     }
 
     // 4: revoked index.
@@ -827,7 +827,7 @@ mod tests {
       (StatusCheck::SkipAll, true),
     ] {
       assert_eq!(
-        CredentialValidator::check_revoked(&credential, &[&issuer_doc], status_check).is_ok(),
+        CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
         expected
       );
     }
