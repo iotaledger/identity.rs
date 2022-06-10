@@ -194,7 +194,6 @@ interface ICredentialValidationOptions {
     /** Validation behaviour for `credentialStatus`.
      *
      * Default: `StatusCheck.Strict`. */
-    #[serde(default)]
     readonly status?: StatusCheck;
 
     /** Options which affect the verification of the signature on the credential. */
