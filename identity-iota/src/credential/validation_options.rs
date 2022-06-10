@@ -22,7 +22,7 @@ pub struct CredentialValidationOptions {
   #[serde(default)]
   pub latest_issuance_date: Option<Timestamp>,
 
-  /// The validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+  /// Validation behaviour for [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
   ///
   /// Default: [`StatusCheck::Strict`].
   #[serde(default)]
@@ -66,6 +66,31 @@ impl CredentialValidationOptions {
   }
 }
 
+/// Controls validation behaviour when checking whether or not a credential has been revoked by its
+/// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde_repr::Serialize_repr, serde_repr::Deserialize_repr)]
+#[repr(u8)]
+pub enum StatusCheck {
+  /// Validate the status if supported, reject any unsupported
+  /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+  ///
+  /// Only `RevocationBitmap2022` is currently supported.
+  ///
+  /// This is the default.
+  Strict = 0,
+  /// Validate the status if supported, skip any unsupported
+  /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+  SkipUnsupported = 1,
+  /// Skip all status checks.
+  SkipAll = 2,
+}
+
+impl Default for StatusCheck {
+  fn default() -> Self {
+    Self::Strict
+  }
+}
+
 /// Declares how credential subjects must relate to the presentation holder during validation.
 /// See [`PresentationValidationOptions::subject_holder_relationship()`].
 ///
@@ -87,31 +112,6 @@ pub enum SubjectHolderRelationship {
 impl Default for SubjectHolderRelationship {
   fn default() -> Self {
     Self::AlwaysSubject
-  }
-}
-
-/// Controls validation behaviour when checking whether or not a credential has been revoked by its
-/// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde_repr::Serialize_repr, serde_repr::Deserialize_repr)]
-#[repr(u8)]
-pub enum StatusCheck {
-  /// Validate the status if supported, reject any unsupported
-  /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) type.
-  ///
-  /// Only `RevocationBitmap2022` is currently supported.
-  ///
-  /// This is the default.
-  Strict = 0,
-  /// Validate the status if supported, skip any unsupported
-  /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) type.
-  SkipUnsupported = 1,
-  /// Skip all status checks.
-  SkipAll = 2,
-}
-
-impl Default for StatusCheck {
-  fn default() -> Self {
-    Self::Strict
   }
 }
 
