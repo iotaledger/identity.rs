@@ -29,4 +29,4 @@ runs:
     - name: Publish library to crates.io
       shell: sh
       # add to non-dry run `--no-confirm`
-      run: cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ ${{ inputs.dry-run }} != '' ]; then echo --execute; fi) ${{ inputs.version }}
+      run: cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ ${{ inputs.dry-run }} == '' ]; then echo --execute; fi) ${{ inputs.version }}
