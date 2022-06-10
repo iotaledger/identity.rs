@@ -5,10 +5,10 @@ inputs:
     description: 'used for authenticating towards crates.io'
     required: true
   version:
-    description: 'the version to release under'
+    description: 'the version to release under (e.g. `1.2.3-dev.1`)'
     required: true
   dry-run:
-    description: 'will not publish of set, but only log the potential result'
+    description: 'will not publish if set, but only log the potential result'
     required: false
 runs:
   using: "composite"
@@ -20,7 +20,7 @@ runs:
         profile: minimal
         override: true
 
-    - name: Install cargo-workspaces
+    - name: Install cargo-release
       uses: actions-rs/cargo@v1
       with:
         command: install
