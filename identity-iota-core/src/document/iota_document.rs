@@ -1491,11 +1491,9 @@ mod tests {
 
     assert_eq!(1, document.service().len());
 
-    document
-      .remove_service(
-        &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap(),
-      )
-      .ok();
+    assert!(document.remove_service(
+      &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap(),
+    ));
     assert_eq!(0, document.service().len());
   }
 
