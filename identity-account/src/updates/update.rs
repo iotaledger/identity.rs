@@ -229,7 +229,7 @@ impl Update {
           UpdateError::ServiceNotFound
         );
 
-        document.remove_service(&service_url)?;
+        document.remove_service(&service_url);
       }
       Self::SetController { controllers } => {
         *document.controller_mut() = controllers;
