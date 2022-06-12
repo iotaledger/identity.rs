@@ -240,7 +240,9 @@ impl IotaDocument {
     self.document.service()
   }
 
-  /// Add a new [`Service`] to the document.
+  /// Add a new [`IotaService`] to the document.
+  ///
+  /// Returns `true` if the service was added.
   pub fn insert_service(&mut self, service: IotaService) -> bool {
     if service.id().fragment().is_none() {
       false
@@ -249,11 +251,11 @@ impl IotaDocument {
     }
   }
 
-  /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
-  // TODO: return an error or bool if no service was removed?
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    self.document.service_mut().remove(did_url);
-    Ok(())
+  /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
+  ///
+  /// Returns `true` if a service was removed.
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
+    self.document.service_mut().remove(did_url)
   }
 
   // ===========================================================================

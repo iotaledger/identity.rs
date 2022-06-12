@@ -5,15 +5,16 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::slice::Iter;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::FmtJson;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::tangle::Message;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::MessageIdExt;
-use serde;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::chain::milestone::sort_by_milestone;
 use crate::chain::IntegrationChain;
@@ -327,9 +328,7 @@ mod tests {
 
     // Remove the same service in a diff update.
     let mut updated2: IotaDocument = updated1.clone();
-    assert!(updated2
-      .remove_service(&updated1.id().to_url().join("#linked-domain").unwrap())
-      .is_ok());
+    assert!(updated2.remove_service(&updated1.id().to_url().join("#linked-domain").unwrap()));
     let mut diff_delete: DiffMessage = updated1
       .diff(
         &updated2,
