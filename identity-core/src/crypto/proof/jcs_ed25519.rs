@@ -15,8 +15,7 @@ use crate::crypto::Verifier;
 use crate::crypto::Verify;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::decode_b58;
-use crate::utils::encode_b58;
+use crate::utils::BaseEncoding;
 
 // TODO: Marker trait for Ed25519 implementations (?)
 
@@ -45,7 +44,7 @@ where
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: T::Output = T::sign(&message, private)?;
-    let signature: String = encode_b58(signature.as_ref());
+    let signature: String = BaseEncoding::encode_base58(signature.as_ref());
 
     Ok(ProofValue::Signature(signature))
   }
@@ -63,7 +62,7 @@ where
       .as_signature()
       .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
 
-    let signature: Vec<u8> = decode_b58(signature)?;
+    let signature: Vec<u8> = BaseEncoding::decode_base58(signature)?;
     let message: Vec<u8> = data.to_jcs()?;
 
     T::verify(&message, &signature, public)?;
@@ -87,7 +86,7 @@ mod tests {
   use crate::crypto::Signer as _;
   use crate::crypto::Verifier as _;
   use crate::json;
-  use crate::utils;
+  use crate::utils::BaseEncoding;
 
   type Signer = JcsEd25519<Ed25519<PrivateKey>>;
 
@@ -108,8 +107,8 @@ mod tests {
       // The test vectors are from [JcsEd25519Signature2020](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors),
       // and use [Go crypto/ed25519](https://pkg.go.dev/crypto/ed25519#pkg-types)'s convention of representing an Ed25519 private key as: 32-byte seed concatenated with the 32-byte public key (computed from the seed).
       // We follow the convention from [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2) and extract the 32-byte seed as the private key.
-      let public: PublicKey = utils::decode_b58(tv.public).unwrap().into();
-      let private: PrivateKey = (utils::decode_b58(tv.private).unwrap()[..32]).to_vec().into();
+      let public: PublicKey = BaseEncoding::decode_base58(tv.public).unwrap().into();
+      let private: PrivateKey = (BaseEncoding::decode_base58(tv.private).unwrap()[..32]).to_vec().into();
       let badkey: PublicKey = b"IOTA".to_vec().into();
 
       let input: Object = Object::from_json(tv.input).unwrap();
@@ -132,14 +131,14 @@ mod tests {
 
   #[test]
   fn test_sign_hello() {
-    const PUBLIC: &[u8] = b"8CpYU3CXo1NEXVi5ZJcGgfmYjMoQ4xpewofpcPnWS5kt";
-    const SECRET: &[u8] = b"8gFfcuUTmX7P4DYfpEV7iVWzfSSV6QHQZFZamT6oNjVV";
+    const PUBLIC: &str = "8CpYU3CXo1NEXVi5ZJcGgfmYjMoQ4xpewofpcPnWS5kt";
+    const SECRET: &str = "8gFfcuUTmX7P4DYfpEV7iVWzfSSV6QHQZFZamT6oNjVV";
 
     const SIG: &[u8] = b"4VjbV3672WRhKqUVn4Cdp6e7AaXYYv2f71dM8ZDHqWexfku4oLUeDVFuxGRXxpkVUwZ924zFHu527Z2ZNiPKZVeF";
     const MSG: &[u8] = b"hello";
 
-    let public: PublicKey = utils::decode_b58(PUBLIC).unwrap().into();
-    let private: PrivateKey = utils::decode_b58(SECRET).unwrap().into();
+    let public: PublicKey = BaseEncoding::decode_base58(PUBLIC).unwrap().into();
+    let private: PrivateKey = BaseEncoding::decode_base58(SECRET).unwrap().into();
 
     let signature: ProofValue = Signer::sign(&MSG, &private).unwrap();
 

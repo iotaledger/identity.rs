@@ -1,10 +1,13 @@
-import { defaultClientConfig, initIdentity, setupDOMLog } from "./utils_web.js";
-import { createIdentity } from "./create_did.js";
-import { manipulateIdentity } from "./manipulate_did.js";
-import { keyExchange } from "./key_exchange.js";
-import { resolveDID } from "./resolve_did";
-import { privateTangle } from "./private_tangle.js";
-import { resolveHistory } from "./resolve_history.js";
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+import {defaultClientConfig, initIdentity, setupDOMLog} from "./utils_web.js";
+import {createIdentity} from "./create_did.js";
+import {manipulateIdentity} from "./manipulate_did.js";
+import {keyExchange} from "./key_exchange.js";
+import {resolveIdentity} from "./resolve_did";
+import {privateTangle} from "./private_tangle.js";
+import {resolveHistory} from "./resolve_history.js";
 
 export {
     initIdentity,
@@ -12,12 +15,12 @@ export {
     createIdentity,
     manipulateIdentity,
     keyExchange,
-    resolveDID,
+    resolveIdentity,
     privateTangle,
     resolveHistory,
 };
 
-window.onload = async() => {
+window.onload = async () => {
 
     setupDOMLog();
 
@@ -32,9 +35,9 @@ window.onload = async() => {
     //handle resolve DID on click event
     document
         .querySelector("#resolve-did-btn")
-        .addEventListener("click", async() => {
+        .addEventListener("click", async () => {
             const inputDid = document.querySelector("#resolve-did-input").value;
-            const result = await resolveDID(CLIENT_CONFIG, inputDid);
+            const result = await resolveIdentity(CLIENT_CONFIG, inputDid);
             console.log(result);
         });
 

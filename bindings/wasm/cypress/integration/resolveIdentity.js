@@ -1,11 +1,11 @@
 import {
     defaultClientConfig,
     initIdentity,
-    resolution,
+    resolveIdentity,
 } from '../../examples/dist/web'
 
 describe(
-    "resolution",
+    "resolveIdentity",
     {
         defaultCommandTimeout: 1000*60*3, // 3 minutes to account for spurious network delays
     },
@@ -19,7 +19,7 @@ describe(
             // So call `defaultClientConfig()` manually for now.
         });
         it("Resolution", async () => {
-            await resolution(defaultClientConfig());
+            await resolveIdentity(defaultClientConfig());
         });
     }
 );
