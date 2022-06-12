@@ -5,8 +5,8 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use std::str::FromStr;
 use identity_core::common::Object;
+use std::str::FromStr;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -15,11 +15,10 @@ use identity_core::convert::{FmtJson, FromJson};
 use identity_core::utils::{Base, BaseEncoding};
 use identity_did::did::{CoreDID, DID};
 use identity_did::document::CoreDocument;
-use iota_client::bee_block::Block;
 use iota_client::bee_block::output::{AliasId, Output, OutputId};
-use iota_client::bee_block::output::feature::MetadataFeature;
-use iota_client::bee_block::payload::Payload;
 use iota_client::bee_block::payload::transaction::TransactionEssence;
+use iota_client::bee_block::payload::Payload;
+use iota_client::bee_block::Block;
 use lazy_static::lazy_static;
 
 use crate::error::Result;
@@ -29,11 +28,10 @@ use crate::error::Result;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct StardustDocument(CoreDocument<CoreDID>);
 
-// Tag is 64-bytes long now, matching the hex-encoding of the Alias ID (without 0x prefix).
+// Tag is 64-bytes long, matching the hex-encoding of the Alias ID (without 0x prefix).
 lazy_static! {
-  static ref PLACEHOLDER_DID: CoreDID = {
-    CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap()
-  };
+  static ref PLACEHOLDER_DID: CoreDID =
+    { CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap() };
 }
 
 impl StardustDocument {
@@ -44,7 +42,7 @@ impl StardustDocument {
       CoreDocument::builder(Object::default())
         .id(Self::placeholder_did().clone())
         .build()
-        .expect("empty StardustDocument constructor failed")
+        .expect("empty StardustDocument constructor failed"),
     )
   }
 
@@ -59,8 +57,9 @@ impl StardustDocument {
   ///
   /// Uses the hex-encoding of the Alias ID as the DID tag.
   pub fn alias_id_to_did(id: &AliasId) -> Result<CoreDID> {
-    // TODO: encode manually to avoid "0x" hex prefix?
-    CoreDID::parse(format!("did:stardust:{id}")).map_err(Into::into)
+    // Manually encode to hex to avoid 0x prefix.
+    let hex: String = BaseEncoding::encode(id.as_slice(), Base::Base16Lower);
+    CoreDID::parse(format!("did:stardust:{hex}")).map_err(Into::into)
   }
 
   pub fn did_to_alias_id(did: &CoreDID) -> Result<AliasId> {
@@ -72,26 +71,26 @@ impl StardustDocument {
   // TODO: can hopefully remove if the publishing logic is wrapped.
   pub fn did_from_block(block: &Block) -> Result<CoreDID> {
     let id: AliasId = AliasId::from(get_alias_output_id(block.payload().unwrap()));
-
-    // Manually encode to hex to avoid 0x prefix.
-    let hex: String = BaseEncoding::encode(id.as_slice(), Base::Base16Lower);
-    CoreDID::parse(format!("did:stardust:{hex}")).map_err(Into::into)
+    Self::alias_id_to_did(&id)
   }
 
-  fn parse_block(block: &Block) -> (AliasId, &MetadataFeature, bool) {
+  fn parse_block(block: &Block) -> (AliasId, &[u8], bool) {
     match block.payload().unwrap() {
       Payload::Transaction(tx_payload) => {
         let TransactionEssence::Regular(regular) = tx_payload.essence();
         for (index, output) in regular.outputs().iter().enumerate() {
           if let Output::Alias(alias_output) = output {
-            let metadata = alias_output.features().metadata().expect("no metadata");
+            let document = alias_output.state_metadata();
             let (alias_id, first) = if alias_output.alias_id().is_null() {
               // First Alias Output, compute ID.
-              (AliasId::from(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap()), true)
+              (
+                AliasId::from(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap()),
+                true,
+              )
             } else {
               (alias_output.alias_id().clone(), false)
             };
-            return (alias_id, metadata, first);
+            return (alias_id, document, first);
           }
         }
         panic!("No alias output in transaction essence")
@@ -101,23 +100,40 @@ impl StardustDocument {
   }
 
   /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
-  pub fn deserialize_from_block(block: &Block) -> Result<StardustDocument> {
-    let (alias_id, metadata, first) = Self::parse_block(&block);
+  ///
+  /// NOTE: [`AliasId`] is required since it cannot be inferred from the [`Output`] alone
+  /// for the first time an Alias Output is published, the transaction payload is required.
+  pub fn deserialize_from_output(alias_id: &AliasId, output: &Output) -> Result<StardustDocument> {
+    let (document, first): (&[u8], bool) = match output {
+      Output::Alias(alias_output) => (alias_output.state_metadata(), alias_output.alias_id().is_null()),
+      _ => panic!("not an alias output"),
+    };
+    Self::deserialize_inner(alias_id, document, first)
+  }
 
+  /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
+  pub fn deserialize_from_block(block: &Block) -> Result<StardustDocument> {
+    let (alias_id, document, first) = Self::parse_block(&block);
+    Self::deserialize_inner(&alias_id, document, first)
+  }
+
+  pub fn deserialize_inner(alias_id: &AliasId, document: &[u8], first: bool) -> Result<StardustDocument> {
     let did: CoreDID = Self::alias_id_to_did(&alias_id)?;
-    let json_slice: &[u8] = metadata.data();
 
     // Replace the placeholder DID in the Document content for the first Alias Output block.
+    // TODO: maybe _always_ do this replacement in case developers forget to replace it?
+    //       One can also update the governor/controller and Alias ID without updating the
+    //       contained DID Document... Could use state_index == 0 as a sentinel value for
+    //       `first` instead of the Alias ID being null?
     if first {
-      let json = String::from_utf8(json_slice.to_vec()).unwrap();
+      let json = String::from_utf8(document.to_vec()).unwrap();
       let replaced = json.replace(Self::placeholder_did().as_str(), did.as_str());
       StardustDocument::from_json(&replaced).map_err(Into::into)
     } else {
-      StardustDocument::from_json_slice(json_slice).map_err(Into::into)
+      StardustDocument::from_json_slice(document).map_err(Into::into)
     }
   }
 }
-
 
 impl Display for StardustDocument {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
@@ -143,8 +159,8 @@ fn get_alias_output_id(payload: &Payload) -> OutputId {
 
 #[cfg(test)]
 mod tests {
-  use identity_core::crypto::KeyType;
   use super::*;
+  use identity_core::crypto::KeyType;
 
   #[test]
   fn test_new() {

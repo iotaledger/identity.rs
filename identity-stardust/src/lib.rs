@@ -9,5 +9,5 @@ pub use self::error::Result;
 
 pub use stardust_document::StardustDocument;
 
-mod stardust_document;
 mod error;
+mod stardust_document;
