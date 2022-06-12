@@ -3,6 +3,7 @@
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
+// TODO: replace all variants with specific errors?
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error("{0}")]
@@ -15,4 +16,6 @@ pub enum Error {
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
   ClientError(#[from] iota_client::error::Error),
+  #[error("{0}")]
+  BeeError(#[from] iota_client::bee_block::Error),
 }

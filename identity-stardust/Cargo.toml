@@ -18,8 +18,8 @@ brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
-identity-credential = { version = "=0.5.0", path = "../identity-credential" }
-identity-did = { version = "=0.5.0", path = "../identity-did" }
+identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
+identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -40,6 +40,7 @@ default-features = false
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
+anyhow = { version = "1.0.57" }
 
 [package.metadata.docs.rs]
 # To build locally:
