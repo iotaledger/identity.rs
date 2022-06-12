@@ -1678,7 +1678,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.properties()](#Document+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
-        * [.removeService(did)](#Document+removeService)
+        * [.removeService(did)](#Document+removeService) ⇒ <code>boolean</code>
         * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
@@ -1817,6 +1817,8 @@ Return a set of all [Services](#Service) in the document.
 ### document.insertService(service) ⇒ <code>boolean</code>
 Add a new [Service](#Service) to the document.
 
+Returns `true` if the service was added.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1825,8 +1827,10 @@ Add a new [Service](#Service) to the document.
 
 <a name="Document+removeService"></a>
 
-### document.removeService(did)
+### document.removeService(did) ⇒ <code>boolean</code>
 Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+
+Returns `true` if a service was removed.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 

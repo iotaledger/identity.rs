@@ -211,15 +211,19 @@ impl WasmDocument {
   }
 
   /// Add a new {@link Service} to the document.
+  ///
+  /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
-    Ok(self.0.insert_service(service.0.clone()))
+  pub fn insert_service(&mut self, service: &WasmService) -> bool {
+    self.0.insert_service(service.0.clone())
   }
 
   /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
+  ///
+  /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
-    self.0.remove_service(&did.0).wasm_result()
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> bool {
+    self.0.remove_service(&did.0)
   }
 
   // ===========================================================================
