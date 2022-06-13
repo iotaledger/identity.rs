@@ -78,7 +78,7 @@ fn build_presentation(credentials: impl Iterator<Item = Credential>, holder: Url
 }
 ```
 #### Important 
-A `Presentation` constructed from a `PresentationBuilder` is not automatically a *verifiable presentation*. In order to obtain a verifiable presentation the holder must sign the presentation. All `Credential`s contained in the presentation must also be signed by their respective issuers. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vp.rs) for a full example explaining how to create a verifiable presentation. 
+A `Presentation` is not verifiable until signed by the holder's DID Document. All `Credentials` contained in the presentation must also be signed by their respective issuers. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vp.rs) for a full demonstration of constructing and validating a verifiable presentation. 
 
 ## Credentials and Presentations from JSON 
 The `Credential` and `Presentation` types both implement the [`Serialize`](https://docs.serde.rs/serde/trait.Serialize.html) and [`Deserialize`](https://docs.serde.rs/serde/trait.Deserialize.html) traits from the [`serde` crate](https://crates.io/crates/serde). Hence one can use the [`serde_json` crate](https://crates.io/crates/serde_json) to obtain `Credential`s and `Presentation`s from JSON. 
