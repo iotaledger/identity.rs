@@ -56,6 +56,7 @@ impl WasmRevocationBitmap {
 
   /// Returns the number of revoked credentials.
   #[wasm_bindgen]
+  #[allow(clippy::len_without_is_empty)]
   pub fn len(&self) -> Result<u32> {
     u32::try_from(self.0.len())
       .map_err(|err| WasmError::new(Cow::Borrowed("TryFromIntError"), Cow::Owned(err.to_string())).into())
