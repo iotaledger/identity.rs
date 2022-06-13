@@ -1,7 +1,9 @@
 Iota Identity Credentials 
 === 
 
-This crate contains types representing *credentials* and *presentations* defined in the [W3C VC-Data model](https://www.w3.org/TR/vc-data-model/). The [Iota Identity Framework Wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview) gives a conceptual explanation of *verifiable credentials* and *verifiable presentations* and demonstrates how they may be constructed from the building blocks provided by this crate. 
+This crate contains types representing verifiable credentials and verifiable presentations as defined in the [W3C Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/). 
+
+The [IOTA Identity Framework Wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview) provides an overview of verifiable credentials and demonstrates how they may be constructed using the building blocks from this crate. 
 
 ## Using the builders 
 This crate enables creation of [`Credentials`](crate::credential::Credential) and [`Presentations`](crate::presentation::Presentation) using the [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html). 
