@@ -5,9 +5,10 @@ This crate contains types representing verifiable credentials and verifiable pre
 
 The [IOTA Identity Framework Wiki](https://wiki.iota.org/identity.rs/concepts/verifiable_credentials/overview) provides an overview of verifiable credentials and demonstrates how they may be constructed using the building blocks from this crate. 
 
-## Using the builders 
-This crate enables creation of [`Credentials`](crate::credential::Credential) and [`Presentations`](crate::presentation::Presentation) using the [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html). 
-### Example
+## Construction
+This crate follows the [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html) for the creation of [`Credentials`](crate::credential::Credential) and [`Presentations`](crate::presentation::Presentation). 
+
+### Example - Credential
 Constructing a [`Credential`](crate::credential::Credential) using the [`CredentialBuilder`](crate::credential::CredentialBuilder). 
 
 ```rust 
