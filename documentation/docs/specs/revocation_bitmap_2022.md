@@ -1,6 +1,6 @@
 ---
 title: RevocationBitmap2022 Specification
-sidebar_label: Revocation Bitmap Specification
+sidebar_label: RevocationBitmap2022 Specification
 description: The specification for the embedded revocation bitmap.
 image: /img/Identity_icon.png
 keywords:
@@ -15,7 +15,7 @@ keywords:
 
 ## Abstract
 
-This specification describes an on-tangle mechanism for publishing the revocation status of Verifiable Credentials embedded in an issuer's DID document.
+This specification describes an on-tangle mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview) embedded in an issuer's DID document.
 
 ## Introduction
 
