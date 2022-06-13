@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
-#![doc = include_str!("README.md")]
+#![doc = include_str!("./../README.md")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
