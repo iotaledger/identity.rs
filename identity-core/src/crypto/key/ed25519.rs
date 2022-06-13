@@ -84,6 +84,8 @@ pub(crate) fn ed25519_public_try_from_bytes(bytes: &[u8]) -> Result<ed25519::Pub
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::utils::Base;
+  use crate::utils::BaseEncoding;
 
   // The following test vector is taken from [Test 3 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
   const PUBLIC_KEY_HEX: &str = "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
@@ -93,12 +95,16 @@ mod tests {
 
   #[test]
   fn test_ed25519_can_sign_and_verify() {
-    let public_key = hex::decode(PUBLIC_KEY_HEX).unwrap();
-    let private_key = hex::decode(SECRET_KEY_HEX).unwrap();
-    let message = hex::decode(MESSAGE_HEX).unwrap();
+    let public_key = BaseEncoding::decode(PUBLIC_KEY_HEX, Base::Base16Lower).unwrap();
+    let private_key = BaseEncoding::decode(SECRET_KEY_HEX, Base::Base16Lower).unwrap();
+    let message = BaseEncoding::decode(MESSAGE_HEX, Base::Base16Lower).unwrap();
     let signature = Ed25519::sign(&message, &private_key).unwrap();
-    assert_eq!(&hex::encode(signature), SIGNATURE_HEX);
-    let verified: _ = Ed25519::verify(&hex::decode(MESSAGE_HEX).unwrap()[..], &signature, &public_key);
+    assert_eq!(&BaseEncoding::encode(&signature, Base::Base16Lower), SIGNATURE_HEX);
+    let verified: _ = Ed25519::verify(
+      &BaseEncoding::decode(MESSAGE_HEX, Base::Base16Lower).unwrap()[..],
+      &signature,
+      &public_key,
+    );
     assert!(verified.is_ok());
   }
 }

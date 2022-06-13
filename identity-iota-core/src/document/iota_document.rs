@@ -240,7 +240,9 @@ impl IotaDocument {
     self.document.service()
   }
 
-  /// Add a new [`Service`] to the document.
+  /// Add a new [`IotaService`] to the document.
+  ///
+  /// Returns `true` if the service was added.
   pub fn insert_service(&mut self, service: IotaService) -> bool {
     if service.id().fragment().is_none() {
       false
@@ -249,11 +251,11 @@ impl IotaDocument {
     }
   }
 
-  /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
-  // TODO: return an error or bool if no service was removed?
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    self.document.service_mut().remove(did_url);
-    Ok(())
+  /// Remove a [`IotaService`] identified by the given [`IotaDIDUrl`] from the document.
+  ///
+  /// Returns `true` if a service was removed.
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> bool {
+    self.document.service_mut().remove(did_url)
   }
 
   // ===========================================================================
@@ -670,7 +672,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyType;
-  use identity_core::utils::encode_b58;
+  use identity_core::utils::BaseEncoding;
   use identity_did::did::DID;
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
@@ -1346,8 +1348,8 @@ mod tests {
       let (document, keypair) = generate_root_document();
       // Replace the base58 encoded public key with that of a different key.
       let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-      let b58_old = encode_b58(keypair.public());
-      let b58_new = encode_b58(new_keypair.public());
+      let b58_old = BaseEncoding::encode_base58(keypair.public());
+      let b58_new = BaseEncoding::encode_base58(new_keypair.public());
       let doc_json_modified = document.to_string().replace(&b58_old, &b58_new);
       // Sign the document using the new key.
       let mut new_document: IotaDocument = IotaDocument::from_json(&doc_json_modified).unwrap();
@@ -1489,11 +1491,9 @@ mod tests {
 
     assert_eq!(1, document.service().len());
 
-    document
-      .remove_service(
-        &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap(),
-      )
-      .ok();
+    assert!(document.remove_service(
+      &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap(),
+    ));
     assert_eq!(0, document.service().len());
   }
 

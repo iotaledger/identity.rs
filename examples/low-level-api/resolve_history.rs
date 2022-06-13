@@ -120,7 +120,7 @@ async fn main() -> Result<()> {
     int_doc_2.remove_method(&int_doc_2.id().to_url().join("#keys-1")?)?;
 
     // Remove the #linked-domain-1 Service
-    int_doc_2.remove_service(&int_doc_2.id().to_url().join("#linked-domain-1")?)?;
+    int_doc_2.remove_service(&int_doc_2.id().to_url().join("#linked-domain-1")?);
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     let keys_2: KeyPair = KeyPair::new(KeyType::Ed25519)?;
