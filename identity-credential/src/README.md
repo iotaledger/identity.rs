@@ -55,7 +55,7 @@ let credential: Credential = CredentialBuilder::default()
 
 The generated `Credential` is not verifiable until it has been signed by the issuer's DID Document. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vc.rs) for a full demonstration of issuing and signing a verifiable credential. 
 
-### Example 
+### Example - Presentation
 Constructing a [`Presentation`](crate::presentation::Presentation) using the [`PresentationBuilder`](crate::presentation::PresentationBuilder). 
 
 ```rust
