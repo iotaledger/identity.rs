@@ -52,7 +52,7 @@ module.exports = {
               'Verifiable Credentials': [
                   'concepts/verifiable_credentials/overview',
                   'concepts/verifiable_credentials/create',
-                  'concepts/verifiable_credentials/revoke',
+                  'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
               ],
               'Advanced Concepts': [
