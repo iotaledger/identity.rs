@@ -139,16 +139,16 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 
 | Feature                   | Not started | In Research | In Development | Done | Notes                                                                |
 | :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
-| Implement IOTA DID Method | | | | :heavy_check_mark: | Finished implementation. |
+| IOTA DID Method | | | | :heavy_check_mark: | Finished implementation. |
 | [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) | | | | :heavy_check_mark: | Finished implementation. |
-| Account | | | :large_orange_diamond: | | Base implementation done, more features to be added. |
-| [DID Comms](https://identity.foundation/didcomm-messaging/spec/) | | | :large_orange_diamond: | | Initial version done, but more to come |
-| Identity Actor | | :large_orange_diamond: | | | |
-| Selective Disclosure | :large_orange_diamond: | | | | |
+| Account | | | |:heavy_check_mark: | Finished implementation. |
+| Identity Actor | | | :large_orange_diamond: | | |
+| [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview) | | | :large_orange_diamond: | | In-progress with Actor |
+| Selective Disclosure | | :large_orange_diamond: | | | |
 | Zero Knowledge Proofs | | :large_orange_diamond: | | | |
 | Support Embedded Rust | | :large_orange_diamond: | | | |
-| [WASM Bindings](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm) | | | :large_orange_diamond: | | implemented for low-level APIs |
-| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples) | | | | :large_orange_diamond: | |
+| [WASM Bindings](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm) | | | | :heavy_check_mark:  | Finished implementation. |
+| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples) | | | | :heavy_check_mark: | |
 | [API Reference](https://wiki.iota.org/identity.rs/libraries/rust/api_reference) | | | :large_orange_diamond: | | |
 | [Documentation Portal](https://wiki.iota.org/identity.rs/introduction) | | | :large_orange_diamond: | | |
 
