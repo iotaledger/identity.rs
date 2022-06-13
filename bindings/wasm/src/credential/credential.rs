@@ -65,7 +65,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayContext>())
   }
 
-  /// Returns a copy of the unique `URI` referencing the subject of the `Credential`.
+  /// Returns a copy of the unique `URI` identifying the `Credential` .
   #[wasm_bindgen]
   pub fn id(&self) -> Option<String> {
     self.0.id.as_ref().map(|url| url.to_string())

@@ -81,7 +81,7 @@ struct IPresentationHelper {
   /// The JSON-LD context(s) applicable to the `Presentation`.
   #[typescript(type = "string | Record<string, any> | Array<string | Record<string, any>>")]
   context: Option<OneOrMany<Context>>,
-  /// A unique URI of the `Presentation`.
+  /// A unique URI that may be used to identify the `Presentation`.
   #[typescript(type = "string")]
   id: Option<String>,
   /// One or more URIs defining the type of the `Presentation`. Contains the base context by default.
