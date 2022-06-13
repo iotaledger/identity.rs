@@ -112,8 +112,8 @@ impl BaseEncoding {
   /// Encodes the given `data` as [Multibase] with the given [`base`](Base), defaults to
   /// [`Base::Base58Btc`] if omitted.
   ///
-  /// NOTE: [`encode_multibase`](Self::encode_multibase) is different from [`encode`](Self::encode) because the [Multibase] format
-  /// prepends a character representing the base-encoding to the output.
+  /// NOTE: [`encode_multibase`](Self::encode_multibase) is different from [`encode`](Self::encode) because the
+  /// [Multibase] format prepends a character representing the base-encoding to the output.
   ///
   /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
   pub fn encode_multibase<T>(data: &T, base: Option<Base>) -> String
