@@ -1,4 +1,4 @@
-Iota Identity Credentials 
+IOTA Identity - Credentials 
 === 
 
 This crate contains types representing verifiable credentials and verifiable presentations as defined in the [W3C Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/). 
