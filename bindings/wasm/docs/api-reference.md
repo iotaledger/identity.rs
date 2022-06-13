@@ -222,12 +222,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-<<<<<<< HEAD
-=======
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
->>>>>>> origin/dev
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -245,17 +242,11 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-<<<<<<< HEAD
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-
-=======
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -293,7 +284,6 @@ Detaches the given relationship from the given method, if the method exists.
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
 
->>>>>>> origin/dev
 <a name="Account+did"></a>
 
 ### account.did() ⇒ [<code>DID</code>](#DID)
@@ -485,6 +475,17 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -506,17 +507,6 @@ Deletes a Service if it exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
 
 <a name="Account+setController"></a>
 
@@ -735,6 +725,7 @@ Supported algorithms used to determine and potentially encrypt the content encry
         * [.toJSON()](#CekAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
         * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.EcdhEsA256Kw(agreement)](#CekAlgorithm.EcdhEsA256Kw) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
         * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 
 <a name="CekAlgorithm+toJSON"></a>
@@ -746,6 +737,17 @@ Serializes `CekAlgorithm` as a JSON object.
 <a name="CekAlgorithm.EcdhEs"></a>
 
 ### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+
+<a name="CekAlgorithm.EcdhEsA256Kw"></a>
+
+### CekAlgorithm.EcdhEsA256Kw(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
 
 **Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
@@ -2687,11 +2689,18 @@ Supported content encryption algorithms.
 
 * [EncryptionAlgorithm](#EncryptionAlgorithm)
     * _instance_
+        * [.keyLength()](#EncryptionAlgorithm+keyLength) ⇒ <code>number</code>
         * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
         * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
         * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 
+<a name="EncryptionAlgorithm+keyLength"></a>
+
+### encryptionAlgorithm.keyLength() ⇒ <code>number</code>
+Returns the length of the cipher's key.
+
+**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 <a name="EncryptionAlgorithm+toJSON"></a>
 
 ### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
@@ -4248,6 +4257,7 @@ A compressed bitmap for managing credential revocation.
         * [.isRevoked(index)](#RevocationBitmap+isRevoked) ⇒ <code>boolean</code>
         * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
         * [.unrevoke(index)](#RevocationBitmap+unrevoke) ⇒ <code>boolean</code>
+        * [.len()](#RevocationBitmap+len) ⇒ <code>number</code>
         * [.toEndpoint()](#RevocationBitmap+toEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
     * _static_
         * [.type()](#RevocationBitmap.type) ⇒ <code>string</code>
@@ -4295,6 +4305,12 @@ Returns true if the index was present in the set.
 | --- | --- |
 | index | <code>number</code> | 
 
+<a name="RevocationBitmap+len"></a>
+
+### revocationBitmap.len() ⇒ <code>number</code>
+Returns the number of revoked credentials.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
 <a name="RevocationBitmap+toEndpoint"></a>
 
 ### revocationBitmap.toEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
