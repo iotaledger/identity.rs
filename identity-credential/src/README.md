@@ -118,7 +118,7 @@ let credential: Credential = serde_json::from_str(credential_json).unwrap();
 ```
 
 ### Example 
-Deserializing a (verifiable) `Presentation` from JSON. 
+Deserializing a `Presentation` from JSON. 
 
 ```rust
 use identity_credential::presentation::Presentation;
