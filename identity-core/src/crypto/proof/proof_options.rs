@@ -83,7 +83,7 @@ impl ProofOptions {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ProofPurpose {
   /// Purpose is to assert a claim.
-  /// See [The WC3 security vocabulary description](https://www.w3.org/TR/did-core/#assertion).
+  /// See the [W3C Security Vocabulary description](https://www.w3.org/TR/did-core/#assertion).
   #[serde(rename = "assertionMethod")]
   AssertionMethod,
   /// Purpose is to authenticate the signer.
