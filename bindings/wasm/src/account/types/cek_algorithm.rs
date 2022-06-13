@@ -23,6 +23,12 @@ impl WasmCekAlgorithm {
     Self(CekAlgorithm::ECDH_ES(agreement.clone().into()))
   }
 
+  /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+  #[wasm_bindgen(js_name = EcdhEsA256Kw)]
+  pub fn ecdh_es_a256kw(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
+    Self(CekAlgorithm::ECDH_ES_A256KW(agreement.clone().into()))
+  }
+
   /// Serializes `CekAlgorithm` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {

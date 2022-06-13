@@ -10,6 +10,8 @@ const {
     KeyType,
     Presentation,
     ProofOptions,
+    RevocationBitmap,
+    Service,
     KeyPair,
     VerifierOptions,
     PresentationValidator,
@@ -159,6 +161,14 @@ describe('CredentialValidator, PresentationValidator', function () {
             const issuerKeys = new KeyPair(KeyType.Ed25519);
             const issuerDoc = new Document(issuerKeys);
 
+            // Add RevocationBitmap service.
+            const revocationBitmap = new RevocationBitmap();
+            issuerDoc.insertService(new Service({
+                id: issuerDoc.id().join("#my-revocation-service"),
+                type: RevocationBitmap.type(),
+                serviceEndpoint: revocationBitmap.toEndpoint()
+            }))
+
             const subjectKeys = new KeyPair(KeyType.Ed25519);
             const subjectDoc = new Document(subjectKeys);
 
@@ -176,6 +186,11 @@ describe('CredentialValidator, PresentationValidator', function () {
                 id: "https://example.edu/credentials/3732",
                 type: "UniversityDegreeCredential",
                 issuer: issuerDID.toString(),
+                credentialStatus: {
+                    id: issuerDoc.id() + "#my-revocation-service",
+                    type: RevocationBitmap.type(),
+                    revocationBitmapIndex: "5"
+                },
                 credentialSubject: subject
             });
 

@@ -19,6 +19,8 @@ hashbrown = { version = "0.11", features = ["serde"] }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
+iota-crypto = { version = ">=0.7, <0.10", default-features = false, features = ["hmac", "pbkdf", "sha", "std", "aes", "aes-kw"] }
+iota_stronghold = { version = "0.5.1", default-features = false, features = ["std"], optional = true }
 once_cell = { version = "1.7", default-features = false, features = ["std"], optional = true }
 parking_lot = { version = "0.12" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"], optional = true }
@@ -28,16 +30,6 @@ strum = { version = "0.24.0", default-features = false, features = ["std", "deri
 thiserror = { version = "1.0" }
 tokio = { version = "1.17.0", default-features = false, features = ["sync", "fs"], optional = true }
 zeroize = { version = "1.4" }
-
-[dependencies.iota-crypto]
-version = ">=0.7, <0.10"
-default-features = false
-features = ["hmac", "pbkdf", "sha", "std", "aes"]
-
-[dependencies.iota_stronghold]
-git = "https://github.com/iotaledger/stronghold.rs"
-rev = "629466da83a677925904b2e733ef7bfad5a42864"
-optional = true
 
 [dev-dependencies]
 rusty-fork = { version = "0.3" }

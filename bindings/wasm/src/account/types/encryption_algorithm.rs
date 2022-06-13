@@ -22,6 +22,12 @@ impl WasmEncryptionAlgorithm {
     Self(EncryptionAlgorithm::AES256GCM)
   }
 
+  /// Returns the length of the cipher's key.
+  #[wasm_bindgen(js_name = keyLength)]
+  pub fn key_length(&self) -> usize {
+    self.0.key_length()
+  }
+
   /// Serializes `EncryptionAlgorithm` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {

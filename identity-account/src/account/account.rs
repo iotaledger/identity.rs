@@ -7,24 +7,22 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use serde::Serialize;
-
+use identity_account_storage::crypto::RemoteEd25519;
+use identity_account_storage::crypto::RemoteKey;
+use identity_account_storage::identity::ChainState;
+use identity_account_storage::storage::Storage;
 #[cfg(feature = "encryption")]
 use identity_account_storage::types::CekAlgorithm;
 #[cfg(feature = "encryption")]
 use identity_account_storage::types::EncryptedData;
 #[cfg(feature = "encryption")]
 use identity_account_storage::types::EncryptionAlgorithm;
-
-use identity_account_storage::crypto::RemoteEd25519;
-use identity_account_storage::crypto::RemoteKey;
-use identity_account_storage::identity::ChainState;
-use identity_account_storage::storage::Storage;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
+use identity_did::did::DID;
 use identity_iota::chain::DocumentChain;
 use identity_iota::document::ResolvedIotaDocument;
 use identity_iota::tangle::Client;
@@ -37,6 +35,7 @@ use identity_iota_core::document::IotaDocument;
 use identity_iota_core::document::IotaVerificationMethod;
 use identity_iota_core::tangle::MessageId;
 use identity_iota_core::tangle::MessageIdExt;
+use serde::Serialize;
 
 use crate::account::AccountBuilder;
 use crate::account::PublishOptions;
@@ -312,6 +311,34 @@ where
 
     self.increment_actions();
     self.store_state().await?;
+    Ok(())
+  }
+
+  /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+  /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+    // Find the service to be updated.
+    let mut service_id: IotaDIDUrl = self.did().to_url();
+    service_id.set_fragment(Some(fragment))?;
+
+    self.document.revoke_credentials(&service_id, credential_indices)?;
+
+    self.increment_actions();
+    self.publish_internal(false, PublishOptions::default()).await?;
+    Ok(())
+  }
+
+  /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+  /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+    // Find the service to be updated.
+    let mut service_id: IotaDIDUrl = self.did().to_url();
+    service_id.set_fragment(Some(fragment))?;
+
+    self.document.unrevoke_credentials(&service_id, credential_indices)?;
+
+    self.increment_actions();
+    self.publish_internal(false, PublishOptions::default()).await?;
     Ok(())
   }
 

@@ -71,9 +71,7 @@ impl TryFrom<ICredential> for CredentialBuilder {
       builder = builder.expiration_date(expiration_date);
     }
     if let Some(credential_status) = credential_status {
-      for status in credential_status.into_vec() {
-        builder = builder.status(status);
-      }
+      builder = builder.status(credential_status);
     }
     if let Some(credential_schema) = credential_schema {
       for schema in credential_schema.into_vec() {
@@ -136,8 +134,8 @@ struct ICredentialHelper {
   #[typescript(name = "expirationDate", type = "Timestamp")]
   expiration_date: Option<Timestamp>,
   /// Information used to determine the current status of the `Credential`.
-  #[typescript(name = "credentialStatus", type = "Status | Array<Status>")]
-  credential_status: Option<OneOrMany<Status>>,
+  #[typescript(name = "credentialStatus", type = "Status")]
+  credential_status: Option<Status>,
   /// Information used to assist in the enforcement of a specific `Credential` structure.
   #[typescript(name = "credentialSchema", type = "Schema | Array<Schema>")]
   credential_schema: Option<OneOrMany<Schema>>,

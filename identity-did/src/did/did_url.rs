@@ -14,6 +14,7 @@ use std::hash::Hasher;
 use did_url::DID as BaseDIDUrl;
 
 use identity_core::common::KeyComparable;
+use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
@@ -488,6 +489,15 @@ where
 {
   fn from(did_url: DIDUrl<D>) -> Self {
     did_url.to_string()
+  }
+}
+
+impl<D> From<DIDUrl<D>> for Url
+where
+  D: DID,
+{
+  fn from(did_url: DIDUrl<D>) -> Self {
+    Url::parse(did_url.to_string()).expect("a DIDUrl should be a valid Url")
   }
 }
 
