@@ -87,7 +87,7 @@ pub enum ProofPurpose {
   #[serde(rename = "assertionMethod")]
   AssertionMethod,
   /// Purpose is to authenticate the signer.
-  /// See [The WC3 security vocabulary description](https://www.w3.org/TR/did-core/#authentication).
+  /// See the [W3C Security Vocabulary description](https://www.w3.org/TR/did-core/#authentication).
   #[serde(rename = "authentication")]
   Authentication,
 }
