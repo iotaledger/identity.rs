@@ -18,9 +18,9 @@ All of these data types are located in the [`common` module](crate::common).
 ## Cryptographic primitives and traits 
 Cryptographic primitives necessary for DID related operations such as signing and verifying data can be found in the [`crypto` module](crate::crypto). 
 
-The Iota Identity Framework strives for high level apis that alleviates users from worrying about cryptography, but lower level apis involving more direct interaction with this module are also offered. For the latter one will typically use the [`KeyPair`](crate::crypto::KeyPair) type representing a pair of cryptographic keys. 
+Although the IOTA Identity Framework strives towards keeping cryptographic primitives and operations as internal implementation details, it does also expose some lower level apis requiring more interaction with this module. The latter setting will typically involve the [`KeyPar`](crate::crypto::KeyPair) type representing a cryptographic key pair. 
 
 ## Convenient JSON serialization
-By bringing the [`ToJson`](crate::convert::ToJson) and [`FromJson`](crate::convert::FromJson) traits from this crate into scope, one can conveniently convert most types used in the IOTA Identity Framework to and from a few common JSON representations.  
+By bringing the [`ToJson`](crate::convert::ToJson) and [`FromJson`](crate::convert::FromJson) traits from this crate into scope, one can conveniently convert most types from the IOTA Identity Framework to and from a few common JSON representations.  
 ## Encoding utilities 
-One may encode and decode between various base-encoded binary text using the associated methods of [`BaseEncoding` ](crate::utils::BaseEncoding). 
+One may encode and decode binary text with respect to several bases using the associated methods of [`BaseEncoding` ](crate::utils::BaseEncoding). 
