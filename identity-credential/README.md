@@ -53,7 +53,7 @@ let credential: Credential = CredentialBuilder::default()
 ```
 #### Important 
 
-The generated `Credential` is not verifiable until it has been signed by the issuer's DID Document. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vc.rs) for a full demonstration of issuing and signing a verifiable credential. 
+The generated `Credential` is not verifiable until it has been signed by the issuer's DID Document. See [this example](./../examples/account/create_vc.rs) for a full demonstration of issuing and signing a verifiable credential. 
 
 ### Example - Presentation
 Constructing a [`Presentation`](crate::presentation::Presentation) using the [`PresentationBuilder`](crate::presentation::PresentationBuilder). 
@@ -78,7 +78,7 @@ fn build_presentation(credentials: impl Iterator<Item = Credential>, holder: Url
 }
 ```
 #### Important 
-A `Presentation` is not verifiable until signed by the holder's DID Document. All `Credentials` contained in the presentation must also be signed by their respective issuers. See [this example](https://github.com/iotaledger/identity.rs/blob/support/v0.5/examples/account/create_vp.rs) for a full demonstration of constructing and validating a verifiable presentation. 
+A `Presentation` is not verifiable until signed by the holder's DID Document. All `Credentials` contained in the presentation must also be signed by their respective issuers. See [this example](./../examples/account/create_vp.rs) for a full demonstration of constructing and validating a verifiable presentation. 
 
 ## JSON Serialization
 The `Credential` and `Presentation` types both implement the [`Serialize`](https://docs.serde.rs/serde/trait.Serialize.html) and [`Deserialize`](https://docs.serde.rs/serde/trait.Deserialize.html) traits from the [`serde` crate](https://crates.io/crates/serde). Hence one can use the [`serde_json` crate](https://crates.io/crates/serde_json) to obtain `Credential`s and `Presentation`s from JSON. 
