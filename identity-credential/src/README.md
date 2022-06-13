@@ -84,7 +84,7 @@ A `Presentation` is not verifiable until signed by the holder's DID Document. Al
 The `Credential` and `Presentation` types both implement the [`Serialize`](https://docs.serde.rs/serde/trait.Serialize.html) and [`Deserialize`](https://docs.serde.rs/serde/trait.Deserialize.html) traits from the [`serde` crate](https://crates.io/crates/serde). Hence one can use the [`serde_json` crate](https://crates.io/crates/serde_json) to obtain `Credential`s and `Presentation`s from JSON. 
 
 ### Example 
-Deserializing a (verifiable) `Credential` from JSON. 
+Deserializing a `Credential` from JSON. 
 ```rust
 use identity_credential::credential::Credential;
 use serde_json::json;
