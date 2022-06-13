@@ -11,6 +11,8 @@ mod evidence;
 mod issuer;
 mod policy;
 mod refresh;
+#[cfg(feature = "revocation-bitmap")]
+mod revocation_bitmap_status;
 mod schema;
 mod status;
 mod subject;
@@ -21,6 +23,8 @@ pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;
 pub use self::policy::Policy;
 pub use self::refresh::RefreshService;
+#[cfg(feature = "revocation-bitmap")]
+pub use self::revocation_bitmap_status::RevocationBitmapStatus;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;

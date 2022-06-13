@@ -18,7 +18,7 @@ form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential" }
-identity-did = { version = "=0.5.0", path = "../identity-did" }
+identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
@@ -31,14 +31,12 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "994d4073452abcf311a56e929b0617645620bd92"
+version = "1.2.0"
 features = ["tls"]
 default-features = false
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "994d4073452abcf311a56e929b0617645620bd92"
+version = "1.2.0"
 default-features = false
 features = ["wasm"]
 
@@ -52,10 +50,13 @@ proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
 [features]
-default = ["async"]
+default = ["async", "revocation-bitmap"]
 
 # Enables async runtime support (Tokio)
 async = ["iota-client/async"]
+
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity-iota-core/revocation-bitmap"]
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -40,6 +40,8 @@ use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
+#[cfg(feature = "encryption")]
+use crypto::ciphers::aes_kw::Aes256Kw;
 
 // The map from DIDs to chain states.
 type ChainStates = HashMap<IotaDID, ChainState>;
@@ -292,6 +294,30 @@ impl Storage for MemStore {
         )?;
         Ok(encrypted_data)
       }
+      CekAlgorithm::ECDH_ES_A256KW(agreement) => {
+        let keypair: KeyPair = KeyPair::new(KeyType::X25519)?;
+        let shared_secret: [u8; 32] = X25519::key_exchange(keypair.private(), &public_key)?;
+        let derived_secret: Vec<u8> = concat_kdf(cek_algorithm.name(), Aes256Kw::KEY_LENGTH, &shared_secret, agreement)
+          .map_err(Error::EncryptionFailure)?;
+
+        let cek: Vec<u8> = generate_content_encryption_key(*encryption_algorithm)?;
+
+        let mut encrypted_cek: Vec<u8> = vec![0; cek.len() + Aes256Kw::BLOCK];
+        let aes_kw: Aes256Kw<'_> = Aes256Kw::new(derived_secret.as_ref());
+        aes_kw
+          .wrap_key(cek.as_ref(), &mut encrypted_cek)
+          .map_err(Error::EncryptionFailure)?;
+
+        let encrypted_data = try_encrypt(
+          &cek,
+          encryption_algorithm,
+          &plaintext,
+          associated_data,
+          encrypted_cek,
+          keypair.public().as_ref().to_vec(),
+        )?;
+        Ok(encrypted_data)
+      }
     }
   }
 
@@ -325,6 +351,31 @@ impl Storage for MemStore {
               concat_kdf(cek_algorithm.name(), Aes256Gcm::KEY_LENGTH, &shared_secret, agreement)
                 .map_err(Error::DecryptionFailure)?;
             try_decrypt(&derived_secret, encryption_algorithm, &data)
+          }
+          CekAlgorithm::ECDH_ES_A256KW(agreement) => {
+            let shared_secret: [u8; 32] = X25519::key_exchange(key_pair.private(), &public_key)?;
+            let derived_secret: Vec<u8> =
+              concat_kdf(cek_algorithm.name(), Aes256Kw::KEY_LENGTH, &shared_secret, agreement)
+                .map_err(Error::DecryptionFailure)?;
+
+            let cek_len: usize =
+              data
+                .encrypted_cek
+                .len()
+                .checked_sub(Aes256Kw::BLOCK)
+                .ok_or(Error::DecryptionFailure(crypto::Error::BufferSize {
+                  name: "plaintext cek",
+                  needs: Aes256Kw::BLOCK,
+                  has: data.encrypted_cek.len(),
+                }))?;
+
+            let mut cek: Vec<u8> = vec![0; cek_len];
+            let aes_kw: Aes256Kw<'_> = Aes256Kw::new(derived_secret.as_ref());
+            aes_kw
+              .unwrap_key(data.encrypted_cek.as_ref(), &mut cek)
+              .map_err(Error::DecryptionFailure)?;
+
+            try_decrypt(&cek, encryption_algorithm, &data)
           }
         }
       }
@@ -478,6 +529,13 @@ impl Default for MemStore {
   }
 }
 
+/// Generate a random content encryption key of suitable length for `encryption_algorithm`.
+fn generate_content_encryption_key(encryption_algorithm: EncryptionAlgorithm) -> Result<Vec<u8>> {
+  let mut bytes: Vec<u8> = vec![0; encryption_algorithm.key_length()];
+  crypto::utils::rand::fill(bytes.as_mut()).map_err(Error::EncryptionFailure)?;
+  Ok(bytes)
+}
+
 #[cfg(test)]
 mod tests {
   use crate::storage::Storage;
@@ -539,7 +597,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn test_encryption() {
+  async fn test_memstore_encryption() {
     StorageTestSuite::encryption_test(test_memstore(), test_memstore())
       .await
       .unwrap()

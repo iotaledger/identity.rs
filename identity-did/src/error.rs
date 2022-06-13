@@ -54,4 +54,11 @@ pub enum Error {
 
   #[error("signature verification failed: {0}")]
   InvalidSignature(&'static str),
+
+  #[error("unable to decode base64 string: `{0}`")]
+  Base64DecodingError(String, #[source] identity_core::error::Error),
+  #[error("revocation bitmap could not be deserialized or decompressed")]
+  BitmapDecodingError(#[source] std::io::Error),
+  #[error("revocation bitmap could not be serialized or compressed")]
+  BitmapEncodingError(#[source] std::io::Error),
 }

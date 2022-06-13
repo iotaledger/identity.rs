@@ -514,65 +514,71 @@ impl StorageTestSuite {
 
   #[named]
   pub async fn encryption_test(alice_storage: impl Storage, bob_storage: impl Storage) -> anyhow::Result<()> {
-    let network: NetworkName = Network::Mainnet.name();
-
-    // Both Bob and Alice must have a DID
-    let (alice_did, _): (IotaDID, KeyLocation) = alice_storage
-      .did_create(network.clone(), &random_string(), None)
-      .await
-      .context("did_create returned an error")?;
-
-    let (bob_did, _): (IotaDID, KeyLocation) = bob_storage
-      .did_create(network.clone(), &random_string(), None)
-      .await
-      .context("did_create returned an error")?;
-
-    // The target of the message must share an X25519 public key
-    let bob_fragment: String = random_string();
-    let bob_location: KeyLocation = bob_storage
-      .key_generate(&bob_did, KeyType::X25519, &bob_fragment)
-      .await
-      .context("key_generate returned an error")?;
-    let bob_public_key: PublicKey = bob_storage
-      .key_public(&bob_did, &bob_location)
-      .await
-      .context("key_public returned an error")?;
-
-    // Alice encrypts the message to be sent to bob
     let agreement: AgreementInfo = AgreementInfo::new(b"Alice".to_vec(), b"Bob".to_vec(), Vec::new(), Vec::new());
-    let encryption_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::AES256GCM;
-    let cek_algorithm: CekAlgorithm = CekAlgorithm::ECDH_ES(agreement);
-    let plaintext: &[u8] = b"This msg will be encrypted and decrypted";
 
-    let encrypted_data: EncryptedData = alice_storage
-      .data_encrypt(
-        &alice_did,
-        plaintext.to_vec(),
-        b"associated_data".to_vec(),
-        &encryption_algorithm,
-        &cek_algorithm,
-        bob_public_key,
-      )
-      .await
-      .context("data_encrypt returned an error")?;
+    for cek_algorithm in [
+      CekAlgorithm::ECDH_ES(agreement.clone()),
+      CekAlgorithm::ECDH_ES_A256KW(agreement),
+    ] {
+      let network: NetworkName = Network::Mainnet.name();
 
-    // Bob must be able to decrypt the message using the shared secret
-    let decrypted_msg: Vec<u8> = bob_storage
-      .data_decrypt(
-        &bob_did,
-        encrypted_data,
-        &encryption_algorithm,
-        &cek_algorithm,
-        &bob_location,
-      )
-      .await
-      .context("data_decrypt returned an error")?;
+      // Both Alice (Sender) and Bob (Receiver) must have a DID.
+      let (alice_did, _): (IotaDID, KeyLocation) = alice_storage
+        .did_create(network.clone(), &random_string(), None)
+        .await
+        .context("did_create returned an error")?;
 
-    ensure_eq!(
-      plaintext,
-      &decrypted_msg,
-      "decrypted message does not match the original message"
-    );
+      let (bob_did, _): (IotaDID, KeyLocation) = bob_storage
+        .did_create(network.clone(), &random_string(), None)
+        .await
+        .context("did_create returned an error")?;
+
+      // The target of the message must share an X25519 public key.
+      let bob_fragment: String = random_string();
+      let bob_location: KeyLocation = bob_storage
+        .key_generate(&bob_did, KeyType::X25519, &bob_fragment)
+        .await
+        .context("key_generate returned an error")?;
+      let bob_public_key: PublicKey = bob_storage
+        .key_public(&bob_did, &bob_location)
+        .await
+        .context("key_public returned an error")?;
+
+      // Alice encrypts the message to be sent to Bob.
+      let encryption_algorithm: EncryptionAlgorithm = EncryptionAlgorithm::AES256GCM;
+      let plaintext: &[u8] = b"This msg will be encrypted and decrypted";
+
+      let encrypted_data: EncryptedData = alice_storage
+        .data_encrypt(
+          &alice_did,
+          plaintext.to_vec(),
+          b"associated_data".to_vec(),
+          &encryption_algorithm,
+          &cek_algorithm,
+          bob_public_key,
+        )
+        .await
+        .context("data_encrypt returned an error")?;
+
+      // Bob must be able to decrypt the message using the shared secret.
+      let decrypted_msg: Vec<u8> = bob_storage
+        .data_decrypt(
+          &bob_did,
+          encrypted_data,
+          &encryption_algorithm,
+          &cek_algorithm,
+          &bob_location,
+        )
+        .await
+        .context("data_decrypt returned an error")?;
+
+      ensure_eq!(
+        plaintext,
+        &decrypted_msg,
+        "decrypted message does not match the original message"
+      );
+    }
+
     Ok(())
   }
 }

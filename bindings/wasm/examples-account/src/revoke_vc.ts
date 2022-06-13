@@ -10,9 +10,9 @@ import {
     Resolver,
     Storage,
     MethodContent,
-    ProofOptions
-} from './../../node/identity_wasm.js';
-
+    ProofOptions,
+    RevocationBitmap
+} from "./../../node/identity_wasm.js";
 
 /**
  This example shows how to revoke a verifiable credential.
@@ -30,7 +30,7 @@ async function revokeVC(storage?: Storage) {
     // ===========================================================================
 
     const builder = new AccountBuilder({
-        storage,
+        storage
     });
 
     // Create an identity for the issuer.
@@ -40,7 +40,16 @@ async function revokeVC(storage?: Storage) {
     await issuer.createMethod({
         content: MethodContent.GenerateEd25519(),
         fragment: "key-1"
-    })
+    });
+
+    // Add a RevocationBitmap service to the issuer's DID Document.
+    // This allows verifiers to check whether a credential has been revoked.
+    const revocationBitmap = new RevocationBitmap();
+    await issuer.createService({
+        fragment: "my-revocation-service",
+        type: RevocationBitmap.type(),
+        endpoint: revocationBitmap.toEndpoint()
+    });
 
     // Create a credential subject indicating the degree earned by Alice, linked to their DID.
     const subject = {
@@ -50,34 +59,64 @@ async function revokeVC(storage?: Storage) {
         GPA: "4.0"
     };
 
-    // Create an unsigned `UniversityDegree` credential for Alice
+    // Create an unsigned `UniversityDegree` credential for Alice.
+    // The issuer also chooses a unique `RevocationBitmap` index to be able to revoke it later.
     const unsignedVc = new Credential({
         id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
+        credentialStatus: {
+            id: issuer.did() + "#my-revocation-service",
+            type: RevocationBitmap.type(),
+            revocationBitmapIndex: "5"
+        },
         issuer: issuer.document().id(),
-        credentialSubject: subject,
+        credentialSubject: subject
     });
 
     // Created a signed credential by the issuer.
     const signedVc = await issuer.createSignedCredential(
         "#key-1",
         unsignedVc,
-        ProofOptions.default(),
+        ProofOptions.default()
     );
 
     // ===========================================================================
     // Revoke the Verifiable Credential.
     // ===========================================================================
 
+    // Update the RevocationBitmap service in the issuer's DID Document.
+    // This revokes the credential's unique index.
+    await issuer.revokeCredentials("my-revocation-service", 5);
+
+    // Credential verification now fails.
+    try {
+        CredentialValidator.validate(
+            signedVc,
+            issuer.document(),
+            CredentialValidationOptions.default(),
+            FailFast.FirstError
+        );
+    } catch (e) {
+        console.log(`Error during validation: ${e}`);
+    }
+
+    // ===========================================================================
+    // Alternative revocation of the Verifiable Credential.
+    // ===========================================================================
+
+    // By removing the verification method, that signed the credential, from the issuer's DID document,
+    // we effectively revoke the credential, as it will no longer be possible to validate the signature.
     await issuer.deleteMethod({
         fragment: "key-1"
-    })
+    });
 
-    // Check the verifiable credential.
+    // We expect the verifiable credential to be revoked.
     const resolver = new Resolver();
     try {
         // Resolve the issuer's updated DID Document to ensure the key was revoked successfully.
-        const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(signedVc);
+        const resolvedIssuerDoc = await resolver.resolveCredentialIssuer(
+            signedVc
+        );
         CredentialValidator.validate(
             signedVc,
             resolvedIssuerDoc,
@@ -88,7 +127,7 @@ async function revokeVC(storage?: Storage) {
         // `CredentialValidator.validate` will throw an error, hence this will not be reached.
         console.log("Revocation failed!");
     } catch (e) {
-        console.log(`Error During validation: ${e}`)
+        console.log(`Error during validation: ${e}`);
         console.log(`Credential successfully revoked!`);
     }
 }

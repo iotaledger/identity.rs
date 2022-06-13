@@ -11,13 +11,16 @@ use serde::Serialize;
 pub enum CekAlgorithm {
   /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
   ECDH_ES(AgreementInfo),
+  /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF with AES256 key wrapping.
+  ECDH_ES_A256KW(AgreementInfo),
 }
 
 impl CekAlgorithm {
   /// Returns the JWE algorithm as a `str` slice.
   pub const fn name(&self) -> &'static str {
     match self {
-      CekAlgorithm::ECDH_ES(_agreement) => "ECDH-ES",
+      CekAlgorithm::ECDH_ES(_) => "ECDH-ES",
+      CekAlgorithm::ECDH_ES_A256KW(_) => "ECDH-ES+A256KW",
     }
   }
 }
