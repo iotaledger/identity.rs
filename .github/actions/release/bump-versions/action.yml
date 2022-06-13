@@ -58,7 +58,7 @@ runs:
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/wasm
       run: |
-        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
 
     - name: Bump stronghold nodejs bindings crate version
       shell: bash
