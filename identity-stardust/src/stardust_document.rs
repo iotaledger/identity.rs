@@ -70,7 +70,7 @@ impl StardustDocument {
 
   // TODO: can hopefully remove if the publishing logic is wrapped.
   pub fn did_from_block(block: &Block) -> Result<CoreDID> {
-    let id: AliasId = AliasId::from(get_alias_output_id(block.payload().unwrap()));
+    let id: AliasId = AliasId::from(get_alias_output_id_from_payload(block.payload().unwrap()));
     Self::alias_id_to_did(&id)
   }
 
@@ -142,7 +142,7 @@ impl Display for StardustDocument {
 }
 
 // helper function to get the output id for the first alias output
-fn get_alias_output_id(payload: &Payload) -> OutputId {
+fn get_alias_output_id_from_payload(payload: &Payload) -> OutputId {
   match payload {
     Payload::Transaction(tx_payload) => {
       let TransactionEssence::Regular(regular) = tx_payload.essence();

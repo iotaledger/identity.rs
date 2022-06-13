@@ -27,8 +27,7 @@ use identity_stardust::StardustDocument;
 //    The OutputDto conversion is annoying too.
 // 4) The pieces needed to publish an update are fragmented (Output ID for input, amount, document), bit annoying to reconstruct.
 //    Use a holder struct like Holder { AliasOutput, StardustDocument } with convenience functions?
-// 5) How to conveniently update/republish an AliasOutput? Seems like we have to go through all builder functions each time?
-// 6) Inferred fields such as the controller and governor need to reflect in the (JSON) Document but excluded from the StardustDocument serialization when published.
+// 5) Inferred fields such as the controller and governor need to reflect in the (JSON) Document but excluded from the StardustDocument serialization when published.
 //    Handle with a separate `pack` function like before?
 
 /// Demonstrate how to embed a DID Document in an Alias Output.
@@ -78,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
 
   // Create an empty DID Document.
-  // All new Stardust DID Documents have a placeholder DID,
+  // All new Stardust DID Documents initially use a placeholder DID,
   // "did:stardust:00000000000000000000000000000000".
   let document: StardustDocument = StardustDocument::new();
   println!("DID Document {:#}", document);
@@ -135,6 +134,7 @@ async fn main() -> anyhow::Result<()> {
   let output = Output::try_from(&response.output)?;
   println!("Output: {output:?}");
 
+  // The resolved DID Document replaces the placeholder DID with the correct one.
   let resolved_document = StardustDocument::deserialize_from_output(&alias_id, &output)?;
   println!("Resolved Document: {resolved_document:#}");
 
@@ -150,26 +150,13 @@ async fn main() -> anyhow::Result<()> {
   //       or just infer the DID during resolution (safer).
 
   // Update the Alias Output to contain an explicit ID and DID.
-  let updated_alias_output = AliasOutputBuilder::new_with_amount(alias_output.amount(), alias_id)? // Not adding any content, previous amount will cover the deposit.
-    .with_state_index(alias_output.state_index() + 1) // NOTE: controller updates increment the state index.
-    .with_foundry_counter(alias_output.foundry_counter())
-    .with_state_metadata(resolved_document.to_json_vec()?) // NOTE: update the DID Document content.
-    .add_feature(Feature::Sender(SenderFeature::new(address))) // sender should always be updated to the wallet address unlocking the output?
-    // Rest of content should just be copied over for a basic DID Document update.
-    .add_feature(Feature::Metadata(alias_output.features().metadata().unwrap().clone()))
-    .add_immutable_feature(Feature::Issuer(
-      alias_output.immutable_features().issuer().unwrap().clone(),
-    ))
-    .add_unlock_condition(UnlockCondition::StateControllerAddress(
-      alias_output
-        .unlock_conditions()
-        .state_controller_address()
-        .unwrap()
-        .clone(),
-    ))
-    .add_unlock_condition(UnlockCondition::GovernorAddress(
-      alias_output.unlock_conditions().governor_address().unwrap().clone(),
-    ))
+  let updated_alias_output = AliasOutputBuilder::from(&alias_output) // Not adding any content, previous amount will cover the deposit.
+    // Set the explicit Alias ID.
+    .with_alias_id(alias_id)
+    // Update the DID Document content to replace the placeholder DID.
+    .with_state_metadata(resolved_document.to_json_vec()?)
+    // State controller updates increment the state index.
+    .with_state_index(alias_output.state_index() + 1)
     .finish_output()?;
 
   println!("Updated output: {updated_alias_output:?}");
