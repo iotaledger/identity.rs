@@ -79,7 +79,7 @@ impl ProofOptions {
 
 /// Associates a purpose with a [`Proof`](crate::crypto::Proof).
 ///
-/// See [The WC3 security vocabulary description](https://w3c-ccg.github.io/security-vocab/#proofPurpose).
+/// See the [W3C Security Vocabulary description](https://w3c-ccg.github.io/security-vocab/#proofPurpose).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ProofPurpose {
   /// Purpose is to assert a claim.
