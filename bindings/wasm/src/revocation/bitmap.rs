@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
 use identity::did::RevocationBitmap;
 use identity::did::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
@@ -8,6 +10,7 @@ use wasm_bindgen::prelude::*;
 use crate::did::service_endpoint_to_js_value;
 use crate::did::UServiceEndpoint;
 use crate::error::Result;
+use crate::error::WasmError;
 use crate::error::WasmResult;
 
 /// A compressed bitmap for managing credential revocation.
@@ -49,6 +52,13 @@ impl WasmRevocationBitmap {
   #[wasm_bindgen]
   pub fn unrevoke(&mut self, index: u32) -> bool {
     self.0.unrevoke(index)
+  }
+
+  /// Returns the number of revoked credentials.
+  #[wasm_bindgen]
+  pub fn length(&self) -> Result<u32> {
+    u32::try_from(self.0.len())
+      .map_err(|err| WasmError::new(Cow::Borrowed("TryFromIntError"), Cow::Owned(err.to_string())).into())
   }
 
   /// Return the bitmap as a data url embedded in a service endpoint.

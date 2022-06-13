@@ -52,6 +52,16 @@ impl RevocationBitmap {
     self.0.remove(index)
   }
 
+  /// Returns the number of revoked credentials.
+  pub fn len(&self) -> u64 {
+    self.0.len()
+  }
+
+  /// Returns `true` if no credentials are revoked, `false` otherwise.
+  pub fn is_empty(&self) -> bool {
+    self.0.is_empty()
+  }
+
   /// Return the bitmap as a data url embedded in a service endpoint.
   pub fn to_endpoint(&self) -> Result<ServiceEndpoint> {
     let endpoint_data: String = self.serialize_compressed_base64()?;
@@ -147,6 +157,8 @@ impl<D: DID + Sized> TryFrom<&Service<D>> for RevocationBitmap {
 
 #[cfg(test)]
 mod tests {
+  use identity_core::common::Url;
+
   use super::RevocationBitmap;
 
   #[test]
@@ -173,5 +185,44 @@ mod tests {
       RevocationBitmap::deserialize_compressed_base64(&base64_compressed_revocation_list).unwrap(),
       embedded_revocation_list
     );
+  }
+
+  #[test]
+  fn test_revocation_bitmap_test_vector_1() {
+    const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQUFBd0FES0FCcg==";
+
+    let bitmap: RevocationBitmap =
+      RevocationBitmap::from_endpoint(&crate::service::ServiceEndpoint::One(Url::parse(URL).unwrap())).unwrap();
+
+    assert!(bitmap.is_empty());
+  }
+
+  #[test]
+  fn test_revocation_bitmap_test_vector_2() {
+    const URL: &str = "data:application/octet-stream;base64,ZUp5ek1tQmdZR0lBQVVZZ1pHQ1FBR0laSUdabDZHUGN3UW9BRXVvQjlB";
+    const EXPECTED: &[u32] = &[5, 398, 67000];
+
+    let bitmap: RevocationBitmap =
+      RevocationBitmap::from_endpoint(&crate::service::ServiceEndpoint::One(Url::parse(URL).unwrap())).unwrap();
+
+    for revoked in EXPECTED {
+      assert!(bitmap.is_revoked(*revoked));
+    }
+
+    assert_eq!(bitmap.len(), 3);
+  }
+
+  #[test]
+  fn test_revocation_bitmap_test_vector_3() {
+    const URL: &str = "data:application/octet-stream;base64,ZUp6dHhERVJBQ0FNQkxESEFWS1lXZkN2Q3E0MmFESmtyMlNrM0ROckFLQ2RBQUFBQUFBQTMzbGhHZm9q";
+
+    let bitmap: RevocationBitmap =
+      RevocationBitmap::from_endpoint(&crate::service::ServiceEndpoint::One(Url::parse(URL).unwrap())).unwrap();
+
+    for index in 0..2u32.pow(14) {
+      assert!(bitmap.is_revoked(index));
+    }
+
+    assert_eq!(bitmap.len(), 2u64.pow(14));
   }
 }
