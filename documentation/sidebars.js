@@ -101,6 +101,7 @@ module.exports = {
           collapsed: true,
           items: [
             'specs/overview',
+            'specs/revocation_bitmap_2022',
             {
               type: 'category',
               label: 'IOTA DID',
