@@ -17,9 +17,6 @@ node_modules
 .docusaurus
 .cache-loader
 
-# Lock Files
-yarn.lock
-
 # Misc
 .DS_Store
 .env.local
