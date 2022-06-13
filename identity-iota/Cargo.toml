@@ -31,14 +31,12 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "994d4073452abcf311a56e929b0617645620bd92"
+version = "1.2.0"
 features = ["tls"]
 default-features = false
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "994d4073452abcf311a56e929b0617645620bd92"
+version = "1.2.0"
 default-features = false
 features = ["wasm"]
 
