@@ -15,8 +15,8 @@ This crate introduces data types necessary for many concepts within the IOTA Ide
 
 All of these data types are located in the [`common` module](crate::common).  
 
-## Cryptographic primitives and traits 
-Cryptographic primitives necessary for DID related operations such as signing and verifying data can be found in the [`crypto` module](crate::crypto). 
+## Cryptographic Primitives 
+Cryptographic primitives and traits necessary for DID related operations such as signing and verifying data can be found in the [`crypto` module](crate::crypto). 
 
 While the IOTA Identity Framework strives to keep cryptographic operations as internal implementation details, certain lower-level interfaces require constructs from this module, often through the cryptographic [`KeyPair`](crate::crypto::KeyPair) type. 
 
