@@ -1,34 +1,39 @@
 use identity_core::convert::ToJson;
-use iota_client::bee_block::output::{AliasOutput, ByteCostConfig};
+use iota_client::bee_block::output::feature::IssuerFeature;
+use iota_client::bee_block::output::feature::MetadataFeature;
+use iota_client::bee_block::output::feature::SenderFeature;
+use iota_client::bee_block::output::unlock_condition::GovernorAddressUnlockCondition;
+use iota_client::bee_block::output::unlock_condition::StateControllerAddressUnlockCondition;
+use iota_client::bee_block::output::unlock_condition::UnlockCondition;
+use iota_client::bee_block::output::AliasId;
+use iota_client::bee_block::output::AliasOutput;
+use iota_client::bee_block::output::AliasOutputBuilder;
+use iota_client::bee_block::output::ByteCostConfig;
+use iota_client::bee_block::output::Feature;
+use iota_client::bee_block::output::Output;
+use iota_client::bee_block::output::OutputId;
+use iota_client::bee_block::payload::transaction::TransactionEssence;
+use iota_client::bee_block::payload::Payload;
 use iota_client::bee_block::Block;
+use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::crypto::keys::bip39;
-use iota_client::{
-  bee_block::{
-    output::{
-      feature::{IssuerFeature, MetadataFeature, SenderFeature},
-      unlock_condition::{GovernorAddressUnlockCondition, StateControllerAddressUnlockCondition, UnlockCondition},
-      AliasId, AliasOutputBuilder, Feature, Output, OutputId,
-    },
-    payload::{transaction::TransactionEssence, Payload},
-  },
-  constants::SHIMMER_TESTNET_BECH32_HRP,
-  node_api::indexer::query_parameters::QueryParameter,
-  request_funds_from_faucet,
-  secret::{mnemonic::MnemonicSecretManager, SecretManager},
-  Client,
-};
+use iota_client::node_api::indexer::query_parameters::QueryParameter;
+use iota_client::request_funds_from_faucet;
+use iota_client::secret::mnemonic::MnemonicSecretManager;
+use iota_client::secret::SecretManager;
+use iota_client::Client;
 
 use identity_stardust::StardustDocument;
 
 // PROBLEMS SO FAR:
 // 1) Alias Id is inferred from the block, so we have to use a placeholder DID for creation.
 // 2) Cannot get an Output Id back from an Alias Id (hash of Output Id), need to use Indexer API.
-// 3) The Output response from the Indexer is an Output, not a Block, so cannot infer Alias ID from it (fine since we use the ID to retrieve the Output in the first place).
-//    The OutputDto conversion is annoying too.
-// 4) The pieces needed to publish an update are fragmented (Output ID for input, amount, document), bit annoying to reconstruct.
-//    Use a holder struct like Holder { AliasOutput, StardustDocument } with convenience functions?
-// 5) Inferred fields such as the controller and governor need to reflect in the (JSON) Document but excluded from the StardustDocument serialization when published.
-//    Handle with a separate `pack` function like before?
+// 3) The Output response from the Indexer is an Output, not a Block, so cannot infer Alias ID from it (fine since we
+// use the ID to retrieve the Output in the first place).    The OutputDto conversion is annoying too.
+// 4) The pieces needed to publish an update are fragmented (Output ID for input, amount, document), bit annoying to
+// reconstruct.    Use a holder struct like Holder { AliasOutput, StardustDocument } with convenience functions?
+// 5) Inferred fields such as the controller and governor need to reflect in the (JSON) Document but excluded from the
+// StardustDocument serialization when published.    Handle with a separate `pack` function like before?
 
 /// Demonstrate how to embed a DID Document in an Alias Output.
 ///

@@ -5,21 +5,25 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use identity_core::common::Object;
 use std::str::FromStr;
 
-use serde::Deserialize;
-use serde::Serialize;
-
-use identity_core::convert::{FmtJson, FromJson};
-use identity_core::utils::{Base, BaseEncoding};
-use identity_did::did::{CoreDID, DID};
+use identity_core::common::Object;
+use identity_core::convert::FmtJson;
+use identity_core::convert::FromJson;
+use identity_core::utils::Base;
+use identity_core::utils::BaseEncoding;
+use identity_did::did::CoreDID;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
-use iota_client::bee_block::output::{AliasId, Output, OutputId};
+use iota_client::bee_block::output::AliasId;
+use iota_client::bee_block::output::Output;
+use iota_client::bee_block::output::OutputId;
 use iota_client::bee_block::payload::transaction::TransactionEssence;
 use iota_client::bee_block::payload::Payload;
 use iota_client::bee_block::Block;
 use lazy_static::lazy_static;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::error::Result;
 
@@ -80,16 +84,12 @@ impl StardustDocument {
         let TransactionEssence::Regular(regular) = tx_payload.essence();
         for (index, output) in regular.outputs().iter().enumerate() {
           if let Output::Alias(alias_output) = output {
+            let alias_id = alias_output
+              .alias_id()
+              .clone()
+              .or_from_output_id(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap());
             let document = alias_output.state_metadata();
-            let (alias_id, first) = if alias_output.alias_id().is_null() {
-              // First Alias Output, compute ID.
-              (
-                AliasId::from(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap()),
-                true,
-              )
-            } else {
-              (alias_output.alias_id().clone(), false)
-            };
+            let first = alias_output.state_index() == 0;
             return (alias_id, document, first);
           }
         }
@@ -122,9 +122,6 @@ impl StardustDocument {
 
     // Replace the placeholder DID in the Document content for the first Alias Output block.
     // TODO: maybe _always_ do this replacement in case developers forget to replace it?
-    //       One can also update the governor/controller and Alias ID without updating the
-    //       contained DID Document... Could use state_index == 0 as a sentinel value for
-    //       `first` instead of the Alias ID being null?
     if first {
       let json = String::from_utf8(document.to_vec()).unwrap();
       let replaced = json.replace(Self::placeholder_did().as_str(), did.as_str());
@@ -159,8 +156,9 @@ fn get_alias_output_id_from_payload(payload: &Payload) -> OutputId {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use identity_core::crypto::KeyType;
+
+  use super::*;
 
   #[test]
   fn test_new() {
