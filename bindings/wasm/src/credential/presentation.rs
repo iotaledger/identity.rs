@@ -67,7 +67,7 @@ impl WasmPresentation {
       .map(|value| value.unchecked_into::<ArrayContext>())
   }
 
-  /// Returns a copy of the unique `URI` of the `Presentation`.
+  /// Returns a copy of the unique `URI` identifying the `Presentation`.
   #[wasm_bindgen]
   pub fn id(&self) -> Option<String> {
     self.0.id.as_ref().map(|url| url.to_string())

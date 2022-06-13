@@ -115,7 +115,7 @@ struct ICredentialHelper {
   /// The JSON-LD context(s) applicable to the `Credential`.
   #[typescript(type = "string | Record<string, any> | Array<string | Record<string, any>>")]
   context: Option<OneOrMany<Context>>,
-  /// A unique URI referencing the subject of the `Credential`.
+  /// A unique URI that may be used to identify the `Credential`.
   #[typescript(type = "string")]
   id: Option<String>,
   /// One or more URIs defining the type of the `Credential`. Contains the base context by default.
