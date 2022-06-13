@@ -148,7 +148,7 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 | Zero Knowledge Proofs | | :large_orange_diamond: | | | |
 | Support Embedded Rust | | :large_orange_diamond: | | | |
 | [WASM Bindings](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm) | | | | :heavy_check_mark:  | Finished implementation. |
-| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples) | | | | | :heavy_check_mark: |
+| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples) | | | | :heavy_check_mark: | |
 | [API Reference](https://wiki.iota.org/identity.rs/libraries/rust/api_reference) | | | :large_orange_diamond: | | |
 | [Documentation Portal](https://wiki.iota.org/identity.rs/introduction) | | | :large_orange_diamond: | | |
 
