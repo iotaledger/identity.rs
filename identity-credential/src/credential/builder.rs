@@ -27,7 +27,7 @@ pub struct CredentialBuilder<T = Object> {
   pub(crate) issuer: Option<Issuer>,
   pub(crate) issuance_date: Option<Timestamp>,
   pub(crate) expiration_date: Option<Timestamp>,
-  pub(crate) status: Vec<Status>,
+  pub(crate) status: Option<Status>,
   pub(crate) schema: Vec<Schema>,
   pub(crate) refresh_service: Vec<RefreshService>,
   pub(crate) terms_of_use: Vec<Policy>,
@@ -47,7 +47,7 @@ impl<T> CredentialBuilder<T> {
       issuer: None,
       issuance_date: None,
       expiration_date: None,
-      status: Vec::new(),
+      status: None,
       schema: Vec::new(),
       refresh_service: Vec::new(),
       terms_of_use: Vec::new(),
@@ -118,7 +118,7 @@ impl<T> CredentialBuilder<T> {
   /// Adds a value to the `credentialStatus` set.
   #[must_use]
   pub fn status(mut self, value: Status) -> Self {
-    self.status.push(value);
+    self.status = Some(value);
     self
   }
 

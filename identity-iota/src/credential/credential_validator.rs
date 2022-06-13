@@ -1,22 +1,28 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Serialize;
+
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
+use identity_credential::credential::RevocationBitmapStatus;
+use identity_did::revocation::RevocationBitmap;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
-use serde::Serialize;
 
+use crate::Result;
+
+use super::errors::CompoundCredentialValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
-use crate::credential::errors::CompoundCredentialValidationError;
-use crate::Result;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -170,6 +176,76 @@ impl CredentialValidator {
     }
   }
 
+  /// Checks whether the credential status has been revoked.
+  ///
+  /// Only supports `BitmapRevocation2022`.
+  pub fn check_status<T, D: AsRef<IotaDocument>>(
+    credential: &Credential<T>,
+    trusted_issuers: &[D],
+    status_check: StatusCheck,
+  ) -> ValidationUnitResult {
+    if status_check == StatusCheck::SkipAll {
+      return Ok(());
+    }
+
+    match &credential.credential_status {
+      None => Ok(()),
+      Some(status) => {
+        // Check status is supported.
+        if status.type_ != RevocationBitmap::TYPE {
+          if status_check == StatusCheck::SkipUnsupported {
+            return Ok(());
+          }
+          return Err(ValidationError::InvalidStatus(
+            identity_credential::Error::InvalidStatus(format!("unsupported type '{}'", status.type_)),
+          ));
+        }
+        let status: RevocationBitmapStatus =
+          RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
+
+        // Check the credential index against the issuer's DID Document.
+        let issuer_did: IotaDID =
+          IotaDID::parse(credential.issuer.url().as_str()).map_err(|e| ValidationError::SignerUrl {
+            source: e.into(),
+            signer_ctx: SignerContext::Issuer,
+          })?;
+        trusted_issuers
+          .iter()
+          .find(|issuer| issuer.as_ref().id() == &issuer_did)
+          .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
+          .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(issuer, status))
+      }
+    }
+  }
+
+  /// Check the given `status` against the matching [`RevocationBitmap`] service in the
+  /// issuer's DID Document.
+  fn check_revocation_bitmap_status<D: AsRef<IotaDocument>>(
+    issuer: D,
+    status: RevocationBitmapStatus,
+  ) -> ValidationUnitResult {
+    let issuer_service_url: IotaDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+
+    // Lookup service.
+    let service = issuer
+      .as_ref()
+      .service()
+      .iter()
+      .find(|service| &issuer_service_url == service.id())
+      .ok_or(ValidationError::InvalidService(identity_did::Error::InvalidService(
+        "revocation bitmap service not found",
+      )))?;
+
+    // Check whether index is revoked.
+    let revocation_bitmap: RevocationBitmap = service.try_into().map_err(ValidationError::InvalidService)?;
+    let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
+    if revocation_bitmap.is_revoked(index) {
+      Err(ValidationError::Revoked)
+    } else {
+      Ok(())
+    }
+  }
+
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
@@ -200,11 +276,14 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
+    let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
+
     let validation_units_error_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
       .chain(subject_holder_validation)
       .chain(signature_validation)
+      .chain(revocation_validation)
       .filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
       FailFast::FirstError => validation_units_error_iter.take(1).collect(),
@@ -221,7 +300,8 @@ impl CredentialValidator {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use proptest::proptest;
+
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
@@ -229,13 +309,16 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
+  use identity_credential::credential::Status;
   use identity_credential::credential::Subject;
   use identity_did::did::DID;
   use identity_iota_core::document::IotaDocument;
-  use proptest::proptest;
+  use identity_iota_core::document::IotaService;
 
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;
+
+  use super::*;
 
   const LAST_RFC3339_COMPATIBLE_UNIX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
   const FIRST_RFC3999_COMPATIBLE_UNIX_TIMESTAMP: i64 = -62167219200; // 0000-01-01T00:00:00Z
@@ -673,6 +756,81 @@ mod tests {
       SubjectHolderRelationship::Any
     )
     .is_ok());
+  }
+
+  #[test]
+  fn test_check_status() {
+    let Setup {
+      mut issuer_doc,
+      unsigned_credential: mut credential,
+      ..
+    } = Setup::new();
+    // 0: missing status always succeeds.
+    for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
+      assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+    }
+
+    // 1: unsupported status type.
+    credential.credential_status = Some(Status::new(
+      Url::parse("https://example.com/").unwrap(),
+      "UnsupportedStatus2022".to_owned(),
+    ));
+    for (status_check, expected) in [
+      (StatusCheck::Strict, false),
+      (StatusCheck::SkipUnsupported, true),
+      (StatusCheck::SkipAll, true),
+    ] {
+      assert_eq!(
+        CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+        expected
+      );
+    }
+
+    // Add a RevocationBitmap status to the credential.
+    let service_url: IotaDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let index: u32 = 42;
+    credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
+
+    // 2: missing service in DID Document.
+    for (status_check, expected) in [
+      (StatusCheck::Strict, false),
+      (StatusCheck::SkipUnsupported, false),
+      (StatusCheck::SkipAll, true),
+    ] {
+      assert_eq!(
+        CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+        expected
+      );
+    }
+
+    // Add a RevocationBitmap service to the issuer.
+    let bitmap: RevocationBitmap = RevocationBitmap::new();
+    assert!(issuer_doc.insert_service(
+      IotaService::builder(Object::new())
+        .id(service_url.clone())
+        .type_(RevocationBitmap::TYPE)
+        .service_endpoint(bitmap.to_endpoint().unwrap())
+        .build()
+        .unwrap(),
+    ));
+
+    // 3: un-revoked index always succeeds.
+    for status_check in [StatusCheck::Strict, StatusCheck::SkipUnsupported, StatusCheck::SkipAll] {
+      assert!(CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok());
+    }
+
+    // 4: revoked index.
+    issuer_doc.revoke_credentials(&service_url, &[index]).unwrap();
+    for (status_check, expected) in [
+      (StatusCheck::Strict, false),
+      (StatusCheck::SkipUnsupported, false),
+      (StatusCheck::SkipAll, true),
+    ] {
+      assert_eq!(
+        CredentialValidator::check_status(&credential, &[&issuer_doc], status_check).is_ok(),
+        expected
+      );
+    }
   }
 
   #[test]

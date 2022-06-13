@@ -147,14 +147,22 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_decode_b58_empty() {
+  fn test_decode_base58_empty() {
     assert_eq!(BaseEncoding::decode_base58("").unwrap(), Vec::<u8>::new());
   }
 
   #[quickcheck]
-  fn test_b58_random(data: Vec<u8>) {
+  fn test_base58_random(data: Vec<u8>) {
     assert_eq!(
       BaseEncoding::decode_base58(&BaseEncoding::encode_base58(&data)).unwrap(),
+      data
+    );
+  }
+
+  #[quickcheck]
+  fn test_base64_random(data: Vec<u8>) {
+    assert_eq!(
+      BaseEncoding::decode(&BaseEncoding::encode(&data, Base::Base64Url), Base::Base64Url).unwrap(),
       data
     );
   }
