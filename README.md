@@ -139,11 +139,11 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 
 | Feature                   | Not started | In Research | In Development | Done | Notes                                                                |
 | :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
-| Implement IOTA DID Method | | | | :heavy_check_mark: | Finished implementation. |
+| IOTA DID Method | | | | :heavy_check_mark: | Finished implementation. |
 | [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) | | | | :heavy_check_mark: | Finished implementation. |
 | Account | | | |:heavy_check_mark: | Finished implementation. |
-| [DID Comms](https://identity.foundation/didcomm-messaging/spec/) | | | :large_orange_diamond: | | Initial version done, but more to come |
 | Identity Actor | | | :large_orange_diamond: | | |
+| [DIDComm](https://wiki.iota.org/identity.rs/specs/didcomm/overview) | | | :large_orange_diamond: | | In-progress with Actor |
 | Selective Disclosure | | :large_orange_diamond: | | | |
 | Zero Knowledge Proofs | | :large_orange_diamond: | | | |
 | Support Embedded Rust | | :large_orange_diamond: | | | |
