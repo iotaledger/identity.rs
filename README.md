@@ -83,13 +83,13 @@ tokio = { version = "1", features = ["full"] }
 ```
 *main.*<span></span>*rs*
 ```rust,no_run
-use identity::account::Account;
-use identity::account::IdentitySetup;
-use identity::account::Result;
-use identity::account_storage::Stronghold;
-use identity::core::ToJson;
-use identity::iota::ExplorerUrl;
-use identity::iota::ResolvedIotaDocument;
+use identity_iota::account::Account;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::Result;
+use identity_iota::account_storage::Stronghold;
+use identity_iota::core::ToJson;
+use identity_iota::iota::ExplorerUrl;
+use identity_iota::iota::ResolvedIotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -5,24 +5,24 @@
 
 use std::path::PathBuf;
 
-use identity::account::Account;
-use identity::account::IdentitySetup;
-use identity::account::MethodContent;
-use identity::account::Result;
-use identity::account_storage::Stronghold;
-use identity::core::json;
-use identity::core::FromJson;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::Subject;
-use identity::crypto::KeyPair;
-use identity::crypto::ProofOptions;
-use identity::did::verifiable::VerifierOptions;
-use identity::did::DID;
-use identity::iota::ExplorerUrl;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota_core::IotaDID;
-use identity::prelude::*;
+use identity_iota::account::Account;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::MethodContent;
+use identity_iota::account::Result;
+use identity_iota::account_storage::Stronghold;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::Subject;
+use identity_iota::crypto::KeyPair;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::verifiable::VerifierOptions;
+use identity_iota::did::DID;
+use identity_iota::iota::ExplorerUrl;
+use identity_iota::iota::ResolvedIotaDocument;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

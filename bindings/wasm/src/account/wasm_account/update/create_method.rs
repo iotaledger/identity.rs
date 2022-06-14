@@ -5,12 +5,12 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use identity::account::CreateMethodBuilder;
-use identity::account::IdentityUpdater;
-use identity::account::MethodContent;
-use identity::account::UpdateError::MissingRequiredField;
-use identity::did::MethodScope;
-use identity::iota::Client;
+use identity_iota::account::CreateMethodBuilder;
+use identity_iota::account::IdentityUpdater;
+use identity_iota::account::MethodContent;
+use identity_iota::account::UpdateError::MissingRequiredField;
+use identity_iota::did::MethodScope;
+use identity_iota::iota::Client;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

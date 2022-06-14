@@ -3,9 +3,9 @@
 
 use crate::common::deserialize_map_or_any;
 use crate::common::MapStringAny;
-use identity::did::ServiceEndpoint;
-use identity::iota_core::IotaDIDUrl;
-use identity::iota_core::IotaService;
+use identity_iota::did::ServiceEndpoint;
+use identity_iota::iota_core::IotaDIDUrl;
+use identity_iota::iota_core::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -27,7 +27,7 @@ impl WasmService {
     let id: IotaDIDUrl = service.id().into_serde().wasm_result()?;
     let type_: String = service.type_();
     let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&service.service_endpoint())?;
-    let properties: Option<identity::core::Object> = deserialize_map_or_any(&service.properties())?;
+    let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&service.properties())?;
 
     IotaService::builder(properties.unwrap_or_default())
       .id(id)

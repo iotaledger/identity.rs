@@ -1,5 +1,5 @@
 [package]
-name = "identity"
+name = "identity_iota"
 version = "0.5.0"
 authors = ["IOTA Stiftung"]
 documentation = "https://wiki.iota.org/identity.rs/introduction"

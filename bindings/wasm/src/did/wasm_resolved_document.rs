@@ -3,8 +3,8 @@
 
 use std::str::FromStr;
 
-use identity::iota::ResolvedIotaDocument;
-use identity::iota_core::MessageId;
+use identity_iota::iota::ResolvedIotaDocument;
+use identity_iota::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDiffMessage;
@@ -95,7 +95,7 @@ impl WasmResolvedDocument {
   #[wasm_bindgen(js_name = setDiffMessageId)]
   pub fn set_diff_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.diff_message_id = message_id;
     Ok(())
@@ -111,7 +111,7 @@ impl WasmResolvedDocument {
   #[wasm_bindgen(js_name = setIntegrationMessageId)]
   pub fn set_integration_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.integration_message_id = message_id;
     Ok(())

@@ -11,27 +11,27 @@
 //!
 //! cargo run --example account_revoke_vc
 
-use identity::account::Account;
-use identity::account::AccountBuilder;
-use identity::account::IdentitySetup;
-use identity::account::MethodContent;
-use identity::account::Result;
-use identity::core::json;
-use identity::core::FromJson;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
-use identity::credential::RevocationBitmapStatus;
-use identity::credential::Status;
-use identity::credential::Subject;
-use identity::crypto::ProofOptions;
-use identity::did::RevocationBitmap;
-use identity::did::DID;
-use identity::iota::CredentialValidationOptions;
-use identity::iota::CredentialValidator;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::Resolver;
-use identity::iota::ValidationError;
+use identity_iota::account::Account;
+use identity_iota::account::AccountBuilder;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::MethodContent;
+use identity_iota::account::Result;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::RevocationBitmapStatus;
+use identity_iota::credential::Status;
+use identity_iota::credential::Subject;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::RevocationBitmap;
+use identity_iota::did::DID;
+use identity_iota::iota::CredentialValidationOptions;
+use identity_iota::iota::CredentialValidator;
+use identity_iota::iota::ResolvedIotaDocument;
+use identity_iota::iota::Resolver;
+use identity_iota::iota::ValidationError;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
     &credential,
     &issuer.document(),
     &CredentialValidationOptions::default(),
-    identity::iota::FailFast::FirstError,
+    identity_iota::iota::FailFast::FirstError,
   );
 
   // The credential wasn't revoked, so we expect the validation to succeed.
@@ -118,7 +118,7 @@ async fn main() -> Result<()> {
     &credential,
     &issuer.document(),
     &CredentialValidationOptions::default(),
-    identity::iota::FailFast::FirstError,
+    identity_iota::iota::FailFast::FirstError,
   );
 
   // We expect validation to no longer succeed because the credential was revoked.
@@ -147,7 +147,7 @@ async fn main() -> Result<()> {
     &credential,
     &resolved_issuer_doc,
     &CredentialValidationOptions::default(),
-    identity::iota::FailFast::FirstError,
+    identity_iota::iota::FailFast::FirstError,
   );
 
   println!("VC validation result: {:?}", validation_result);

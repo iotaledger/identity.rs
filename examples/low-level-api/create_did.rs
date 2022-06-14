@@ -6,9 +6,9 @@
 //!
 //! cargo run --example create_did
 
-use identity::iota::ExplorerUrl;
-use identity::iota::Receipt;
-use identity::prelude::*;
+use identity_iota::iota::ExplorerUrl;
+use identity_iota::iota::Receipt;
+use identity_iota::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   // Create a client instance to send messages to the Tangle.

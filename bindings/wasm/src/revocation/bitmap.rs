@@ -3,8 +3,8 @@
 
 use std::borrow::Cow;
 
-use identity::did::RevocationBitmap;
-use identity::did::ServiceEndpoint;
+use identity_iota::did::RevocationBitmap;
+use identity_iota::did::ServiceEndpoint;
 use wasm_bindgen::prelude::*;
 
 use crate::did::service_endpoint_to_js_value;

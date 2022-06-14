@@ -4,21 +4,21 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
-use identity::account_storage::CekAlgorithm;
-use identity::account_storage::ChainState;
-use identity::account_storage::EncryptedData;
-use identity::account_storage::EncryptionAlgorithm;
-use identity::account_storage::Error as AccountStorageError;
-use identity::account_storage::KeyLocation;
-use identity::account_storage::Result as AccountStorageResult;
-use identity::account_storage::Signature;
-use identity::account_storage::Storage;
-use identity::crypto::PrivateKey;
-use identity::crypto::PublicKey;
-use identity::iota_core::IotaDID;
-use identity::iota_core::NetworkName;
-use identity::prelude::IotaDocument;
-use identity::prelude::KeyType;
+use identity_iota::account_storage::CekAlgorithm;
+use identity_iota::account_storage::ChainState;
+use identity_iota::account_storage::EncryptedData;
+use identity_iota::account_storage::EncryptionAlgorithm;
+use identity_iota::account_storage::Error as AccountStorageError;
+use identity_iota::account_storage::KeyLocation;
+use identity_iota::account_storage::Result as AccountStorageResult;
+use identity_iota::account_storage::Signature;
+use identity_iota::account_storage::Storage;
+use identity_iota::crypto::PrivateKey;
+use identity_iota::crypto::PublicKey;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::NetworkName;
+use identity_iota::prelude::IotaDocument;
+use identity_iota::prelude::KeyType;
 use js_sys::Array;
 use js_sys::Promise;
 use js_sys::Uint8Array;
@@ -367,9 +367,9 @@ interface Storage {
   didCreate: (network: string, fragment: string, privateKey?: Uint8Array) => Promise<[DID, KeyLocation]>;
 
   /** Removes the keys and any other state for the given `did`.
-  
+
    This operation is idempotent: it does not fail if the given `did` does not (or no longer) exist.
-  
+
    Returns `true` if the did and its associated data was removed, `false` if nothing was done. */
   didPurge: (did: DID) => Promise<boolean>;
 
@@ -384,7 +384,7 @@ interface Storage {
   keyGenerate: (did: DID, keyType: KeyType, fragment: string) => Promise<KeyLocation>;
 
   /** Inserts a private key at the specified `location`.
-  
+
    If a key at `location` exists, it is overwritten. */
   keyInsert: (did: DID, keyLocation: KeyLocation, privateKey: Uint8Array) => Promise<void>;
 
@@ -392,9 +392,9 @@ interface Storage {
   keyPublic: (did: DID, keyLocation: KeyLocation) => Promise<Uint8Array>;
 
   /** Deletes the key at `location`.
-  
+
    This operation is idempotent: it does not fail if the key does not exist.
-  
+
    Returns `true` if it removed the key, `false` if nothing was done. */
   keyDelete: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
@@ -405,13 +405,13 @@ interface Storage {
   keyExists: (did: DID, keyLocation: KeyLocation) => Promise<boolean>;
 
   /** Encrypts the given `plaintext` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
-   * 
+   *
    *  Returns an `EncryptedData` instance.
    */
   dataEncrypt: (did: DID, plaintext: Uint8Array, associatedData: Uint8Array, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, publicKey: Uint8Array) => Promise<EncryptedData>;
 
   /** Decrypts the given `data` with the specified `encryptionAlgorithm` and `cekAlgorithm`.
-   * 
+   *
    *  Returns the decrypted text.
    */
   dataDecrypt: (did: DID, data: EncryptedData, encryptionAlgorithm: EncryptionAlgorithm, cekAlgorithm: CekAlgorithm, privateKey: KeyLocation) => Promise<Uint8Array>;

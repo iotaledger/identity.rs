@@ -3,21 +3,21 @@
 
 #![allow(deprecated)]
 
-use identity::core::Timestamp;
-use identity::crypto::KeyPair;
-use identity::did::MethodBuilder;
-use identity::did::MethodData;
-use identity::did::MethodRef;
-use identity::did::MethodType;
-use identity::did::DID;
-use identity::iota::DocumentChain;
-use identity::iota::TangleRef;
-use identity::iota_core::DiffMessage;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaDocument;
-use identity::iota_core::MessageId;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
+use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
+use identity_iota::did::MethodBuilder;
+use identity_iota::did::MethodData;
+use identity_iota::did::MethodRef;
+use identity_iota::did::MethodType;
+use identity_iota::did::DID;
+use identity_iota::iota::DocumentChain;
+use identity_iota::iota::TangleRef;
+use identity_iota::iota_core::DiffMessage;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::MessageId;
 use identity_iota_client::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {

@@ -6,31 +6,31 @@
 //!
 //! cargo run --example account_create_vp
 
-use identity::account::Account;
-use identity::account::AccountBuilder;
-use identity::account::IdentitySetup;
-use identity::account::MethodContent;
-use identity::core::json;
-use identity::core::Duration;
-use identity::core::FromJson;
-use identity::core::Timestamp;
-use identity::core::ToJson;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
-use identity::credential::Presentation;
-use identity::credential::PresentationBuilder;
-use identity::credential::Subject;
-use identity::crypto::ProofOptions;
-use identity::did::verifiable::VerifierOptions;
+use identity_iota::account::Account;
+use identity_iota::account::AccountBuilder;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::MethodContent;
+use identity_iota::core::json;
+use identity_iota::core::Duration;
+use identity_iota::core::FromJson;
+use identity_iota::core::Timestamp;
+use identity_iota::core::ToJson;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::Presentation;
+use identity_iota::credential::PresentationBuilder;
+use identity_iota::credential::Subject;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::verifiable::VerifierOptions;
 
-use identity::account::Result;
-use identity::iota::CredentialValidationOptions;
-use identity::iota::FailFast;
-use identity::iota::PresentationValidationOptions;
+use identity_iota::account::Result;
+use identity_iota::iota::CredentialValidationOptions;
+use identity_iota::iota::FailFast;
+use identity_iota::iota::PresentationValidationOptions;
 
-use identity::iota::Resolver;
-use identity::iota::SubjectHolderRelationship;
+use identity_iota::iota::Resolver;
+use identity_iota::iota::SubjectHolderRelationship;
 
 #[tokio::main]
 async fn main() -> Result<()> {

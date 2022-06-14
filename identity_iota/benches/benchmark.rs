@@ -8,12 +8,12 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 
-use identity::crypto::KeyPair;
-use identity::iota::DocumentChain;
-use identity::iota::IntegrationChain;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaDocument;
 use identity_core::crypto::KeyType;
+use identity_iota::crypto::KeyPair;
+use identity_iota::iota::DocumentChain;
+use identity_iota::iota::IntegrationChain;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
 
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;

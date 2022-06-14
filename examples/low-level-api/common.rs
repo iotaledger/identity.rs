@@ -5,18 +5,18 @@
 
 #![allow(dead_code)]
 
-use identity::core::json;
-use identity::core::FromJson;
-use identity::core::Timestamp;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
-use identity::credential::Subject;
-use identity::did::MethodScope;
-use identity::did::DID;
-use identity::iota::Receipt;
-use identity::iota_core::IotaVerificationMethod;
-use identity::prelude::*;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::Subject;
+use identity_iota::did::MethodScope;
+use identity_iota::did::DID;
+use identity_iota::iota::Receipt;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
 /// creates an unsigned credential with claims about subject by issuer.

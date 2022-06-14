@@ -5,9 +5,9 @@ use std::borrow::Cow;
 use std::fmt::Display;
 use std::result::Result as StdResult;
 
-use identity::account::UpdateError;
-use identity::account_storage::Error as AccountStorageError;
-use identity::account_storage::Result as AccountStorageResult;
+use identity_iota::account::UpdateError;
+use identity_iota::account_storage::Error as AccountStorageError;
+use identity_iota::account_storage::Result as AccountStorageResult;
 use wasm_bindgen::JsValue;
 
 /// Convenience wrapper for `Result<T, JsValue>`.
@@ -90,14 +90,14 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  identity::account::Error,
-  identity::account_storage::Error,
-  identity::core::Error,
-  identity::credential::Error,
-  identity::did::Error,
-  identity::did::DIDError,
-  identity::iota_core::Error,
-  identity::iota::ValidationError
+  identity_iota::account::Error,
+  identity_iota::account_storage::Error,
+  identity_iota::core::Error,
+  identity_iota::credential::Error,
+  identity_iota::did::Error,
+  identity_iota::did::DIDError,
+  identity_iota::iota_core::Error,
+  identity_iota::iota::ValidationError
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -115,7 +115,7 @@ macro_rules! impl_wasm_error_from_with_struct_name {
   }
 }
 
-// identity::iota now has some errors where the error message does not include the source error's error message.
+// identity_iota::iota now has some errors where the error message does not include the source error's error message.
 // This is in compliance with the Rust error handling project group's recommendation:
 // * An error type with a source error should either return that error via source or include that source's error message
 //   in its own Display output, but never both. *
@@ -138,18 +138,18 @@ fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) 
 
 struct ErrorMessage<'a, E: std::error::Error>(&'a E);
 
-impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
+impl<'a> Display for ErrorMessage<'a, identity_iota::iota::Error> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match &self.0 {
-      identity::iota::Error::CredentialValidationError(e) => {
+      identity_iota::iota::Error::CredentialValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
-      identity::iota::Error::PresentationValidationError(e) => {
+      identity_iota::iota::Error::PresentationValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
-      identity::iota::Error::IsolatedValidationError(e) => {
+      identity_iota::iota::Error::IsolatedValidationError(e) => {
         write!(f, "{}. ", self.0)?;
         error_chain_fmt(&e, f)
       }
@@ -159,8 +159,8 @@ impl<'a> Display for ErrorMessage<'a, identity::iota::Error> {
   }
 }
 
-impl From<identity::iota::Error> for WasmError<'_> {
-  fn from(error: identity::iota::Error) -> Self {
+impl From<identity_iota::iota::Error> for WasmError<'_> {
+  fn from(error: identity_iota::iota::Error) -> Self {
     Self {
       message: Cow::Owned(ErrorMessage(&error).to_string()),
       name: Cow::Borrowed(error.into()),
@@ -177,8 +177,8 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
-impl From<identity::iota::CompoundCredentialValidationError> for WasmError<'_> {
-  fn from(error: identity::iota::CompoundCredentialValidationError) -> Self {
+impl From<identity_iota::iota::CompoundCredentialValidationError> for WasmError<'_> {
+  fn from(error: identity_iota::iota::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
       message: Cow::Owned(error.to_string()),
@@ -186,8 +186,8 @@ impl From<identity::iota::CompoundCredentialValidationError> for WasmError<'_> {
   }
 }
 
-impl From<identity::iota::CompoundPresentationValidationError> for WasmError<'_> {
-  fn from(error: identity::iota::CompoundPresentationValidationError) -> Self {
+impl From<identity_iota::iota::CompoundPresentationValidationError> for WasmError<'_> {
+  fn from(error: identity_iota::iota::CompoundPresentationValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundPresentationValidationError"),
       message: Cow::Owned(error.to_string()),

@@ -9,8 +9,8 @@ use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::iota::PresentationValidator;
-use identity::iota::ResolvedIotaDocument;
+use identity_iota::iota::PresentationValidator;
+use identity_iota::iota::ResolvedIotaDocument;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
@@ -32,7 +32,7 @@ impl WasmPresentationValidator {
   /// trusted. This section contains more information on additional checks that should be carried out before and after
   /// calling this method.
   ///
-  /// #### The state of the supplied DID Documents.  
+  /// #### The state of the supplied DID Documents.
   /// The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
   /// `Resolver::resolve_presentation_holder` and `Resolver::resolve_presentation_issuers`
   /// can help extract the latest available states of these DID Documents.
