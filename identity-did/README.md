@@ -16,7 +16,7 @@ The [IOTA Identity Framework](https://wiki.iota.org/identity.rs/introduction) le
 ## Central functionality 
 When working with the IOTA Identity Framework one will frequently interact with functionality from this crate listed here. 
 
-- [The `DID` trait](crate::did::DID)
+- [`DID` trait](crate::did::DID)
 - [`DIDUrl`](crate::did::DIDUrl)
 - [`Service`](crate::service::Service)
 - [`VerificationMethod`](crate::verification::VerificationMethod)
