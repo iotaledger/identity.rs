@@ -57,7 +57,7 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 If you want to include IOTA Identity in your project, simply add it as a dependency in your `Cargo.toml`:
 ```toml
 [dependencies]
-identity = { version = "0.6" }
+identity_iota = { version = "0.6" }
 ```
 
 To try out the [examples](https://github.com/iotaledger/identity.rs/blob/HEAD/examples), you can also do this:
@@ -78,7 +78,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-identity = { version = "0.6" }
+identity_iota = { version = "0.6" }
 tokio = { version = "1", features = ["full"] }
 ```
 *main.*<span></span>*rs*
