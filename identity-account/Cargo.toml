@@ -4,11 +4,11 @@ version = "0.5.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
-keywords = ["iota", "tangle", "identity"]
+keywords = ["iota", "tangle", "identity", "did"]
 license = "Apache-2.0"
-readme = "../README.md"
+readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
+description = "High-level interface for managing IOTA DID Documents."
 
 [dependencies]
 identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false }
