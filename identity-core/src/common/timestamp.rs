@@ -62,9 +62,7 @@ impl Timestamp {
     Self::from_unix(seconds).expect("Timestamp failed to convert system datetime")
   }
 
-  /// Returns the `Timestamp` as an RFC 3339 `String`.
-  ///
-  /// See: https://tools.ietf.org/html/rfc3339
+  /// Returns the `Timestamp` as an [RFC 3339](https://tools.ietf.org/html/rfc3339) `String`.
   pub fn to_rfc3339(&self) -> String {
     // expect is okay, constructors ensure RFC 3339 compatible timestamps.
     // Making this fallible would break our interface such as From<Timestamp> for String.
