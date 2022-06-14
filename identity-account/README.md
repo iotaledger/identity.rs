@@ -15,10 +15,10 @@ The [`Account`](crate::account::Account) is an interface for creating and managi
 
 Creating an [`Account`](crate::account::Account) is done through the [`AccountBuilder`](crate::account::AccountBuilder).
 
-```{.ignore .rust}
-  let account: Account = Account::builder()
-    .create_identity(IdentitySetup::default())
-    .await?;
+```rust,ignore
+let account: Account = Account::builder()
+  .create_identity(IdentitySetup::default())
+  .await?;
 ```
 
 
