@@ -19,7 +19,7 @@ futures = { version = "0.3" }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential" }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
-identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
+identity_iota_core = { version = "=0.5.0", path = "../identity_iota_core", default-features = false }
 itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -56,7 +56,7 @@ default = ["async", "revocation-bitmap"]
 async = ["iota-client/async"]
 
 # Enables revocation with `RevocationBitmap2022`.
-revocation-bitmap = ["identity-iota-core/revocation-bitmap"]
+revocation-bitmap = ["identity_iota_core/revocation-bitmap"]
 
 [package.metadata.docs.rs]
 # To build locally:

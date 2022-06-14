@@ -15,8 +15,8 @@ identity-account-storage = { version = "=0.5.0", path = "../identity-account-sto
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
-identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
 identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }
+identity_iota_core = { version = "=0.5.0", path = "../identity_iota_core", default-features = false }
 log = { version = "0.4", default-features = false }
 paste = { version = "1.0" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }

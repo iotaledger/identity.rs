@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 identity-account-storage = { version = "=0.5.0", path = "../../identity-account-storage", default-features = false, features = ["stronghold", "send-sync-storage", "encryption"] }
 identity-core = { version = "=0.5.0", path = "../../identity-core", default-features = false }
-identity-iota-core = { version = "=0.5.0", path = "../../identity-iota-core", default-features = false }
+identity_iota_core = { version = "=0.5.0", path = "../../identity_iota_core", default-features = false }
 napi = { version = "2.4.3", default-features = false, features = ["napi4", "tokio_rt", "serde-json"] }
 napi-derive = { version = "2.4.1", default-features = false, features = ["compat-mode", "full"] }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
