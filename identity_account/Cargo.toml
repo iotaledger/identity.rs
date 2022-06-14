@@ -1,5 +1,5 @@
 [package]
-name = "identity-account"
+name = "identity_account"
 version = "0.5.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"

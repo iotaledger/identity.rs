@@ -13,11 +13,11 @@ rust-version = "1.60"
 description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
-identity-account = { version = "=0.5.0", path = "../identity-account", default-features = false, optional = true }
 # identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
+identity_account = { version = "=0.5.0", path = "../identity_account", default-features = false, optional = true }
 identity_account_storage = { version = "=0.5.0", path = "../identity_account_storage", default-features = false, optional = true }
 identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }
 identity_iota_core = { version = "=0.5.0", path = "../identity_iota_core", default-features = false }
@@ -37,10 +37,10 @@ default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encr
 async = ["identity_iota_client/async"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account", "identity_account_storage"]
+account = ["identity_account", "identity_account_storage"]
 
 # Enables support for stronghold storage.
-stronghold = ["identity-account/stronghold", "identity_account_storage/stronghold"]
+stronghold = ["identity_account/stronghold", "identity_account_storage/stronghold"]
 
 # Enables support for DID Communication
 # comm = ["identity-comm"]
@@ -53,14 +53,14 @@ storage-test-suite = ["identity_account_storage/storage-test-suite"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
-  "identity-account?/revocation-bitmap",
+  "identity_account?/revocation-bitmap",
   "identity_iota_client/revocation-bitmap",
   "identity-credential/revocation-bitmap",
 ]
 
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.
-unstable-encryption = ["identity-account/encryption"]
+unstable-encryption = ["identity_account/encryption"]
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -3,7 +3,7 @@ resolver = "2"
 members = [
   "identity",
   # "identity-comm",
-  "identity-account",
+  "identity_account",
   "identity_account_storage",
   "identity-core",
   "identity-credential",
