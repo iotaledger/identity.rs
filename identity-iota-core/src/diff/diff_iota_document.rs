@@ -16,6 +16,10 @@ use crate::document::IotaCoreDocument;
 use crate::document::IotaDocument;
 use crate::document::IotaDocumentMetadata;
 
+/// Defines the difference between two [`IotaDocument`] JSON representations.
+///
+/// NOTE: excludes the [`proof`](crate::document::IotaDocument::proof) from the diff
+/// to save space on the Tangle and because a merged signature will be invalid in general.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffIotaDocument {
   #[serde(rename = "doc", skip_serializing_if = "Option::is_none")]

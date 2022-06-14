@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! IOTA DID Document types and wrappers.
+
 pub use self::iota_document::IotaCoreDocument;
 pub use self::iota_document::IotaDocument;
 pub use self::iota_document::IotaService;
