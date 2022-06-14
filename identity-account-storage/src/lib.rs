@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
 #![allow(clippy::upper_case_acronyms)]
+#![doc = include_str!("./../README.md")]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
