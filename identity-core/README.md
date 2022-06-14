@@ -23,5 +23,5 @@ While the IOTA Identity Framework strives to keep cryptographic operations as in
 ## Convenient JSON Serialization
 The [`ToJson`](crate::convert::ToJson) and [`FromJson`](crate::convert::FromJson) traits from this crate provide convenience functions to convert most types from the IOTA Identity Framework to and from a few common JSON representations.
 
-## Encoding utilities 
+## Base Encoding Utilities
 [`BaseEncoding`](crate::utils::BaseEncoding) provides methods to encode and decode binary text with respect to several bases.
