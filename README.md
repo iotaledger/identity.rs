@@ -126,7 +126,7 @@ async fn main() -> Result<()> {
 ```
 *Example output*
 ```json
-[Example] Tangle Document = {
+{
   "doc": {
     "id": "did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD",
     "capabilityInvocation": [
@@ -149,7 +149,8 @@ async fn main() -> Result<()> {
   },
   "integrationMessageId": "446c1416eda4b40ec793f902fe4ba18e88d8f164637426d9239fc7c1b921c8c3"
 }
-
+```
+```text
 [Example] Explore the DID Document = https://explorer.iota.org/mainnet/identity-resolver/did:iota:8nG4d85jnqTYGMWt5DL63FobHF5Ersuw4foQnEo66nbD
 ```
 The output link points to the [Identity Resolver on the IOTA Tangle Explorer](https://explorer.iota.org/mainnet/identity-resolver/did:iota:8jYcEGiNYUWcSdEtjCAcS97G58qq1VrWzW7M57BsHymz).
