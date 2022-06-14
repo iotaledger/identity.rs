@@ -74,6 +74,7 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize, serde::Serialize)]
 #[repr(transparent)]
 #[serde(into = "BaseDIDUrl", try_from = "BaseDIDUrl")]
+/// A method agnostic representation of a [DID](https://www.w3.org/TR/did-core/). 
 pub struct CoreDID(BaseDIDUrl);
 
 impl CoreDID {
