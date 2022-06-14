@@ -3,8 +3,8 @@
 
 //! The `verification` module contains code for verifying the correctness of core DID-related types.
 //!
-//! This crate DOES NOT verify IOTA-specific invariants, those are exposed by the `identity-iota`
-//! crate.
+//! This crate DOES NOT verify IOTA-specific invariants, those are exposed by the
+//! `identity_iota_core` crate.
 
 mod builder;
 mod method_data;

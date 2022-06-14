@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::tangle::Client;
-use identity_iota::tangle::SharedPtr;
+use identity_iota_client::tangle::Client;
+use identity_iota_client::tangle::SharedPtr;
 
 use crate::account::Account;
 

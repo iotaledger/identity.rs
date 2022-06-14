@@ -23,11 +23,11 @@ use identity_core::crypto::ProofOptions;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_did::did::DID;
-use identity_iota::chain::DocumentChain;
-use identity_iota::document::ResolvedIotaDocument;
-use identity_iota::tangle::Client;
-use identity_iota::tangle::PublishType;
-use identity_iota::tangle::SharedPtr;
+use identity_iota_client::chain::DocumentChain;
+use identity_iota_client::document::ResolvedIotaDocument;
+use identity_iota_client::tangle::Client;
+use identity_iota_client::tangle::PublishType;
+use identity_iota_client::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::diff::DiffMessage;
@@ -124,11 +124,13 @@ where
   pub(crate) async fn load_identity(setup: AccountSetup<C>, did: IotaDID) -> Result<Self> {
     // Ensure the DID matches the client network.
     if did.network_str() != setup.client.network().name_str() {
-      return Err(Error::IotaError(identity_iota::Error::IncompatibleNetwork(format!(
-        "DID network {} does not match account network {}",
-        did.network_str(),
-        setup.client.network().name_str()
-      ))));
+      return Err(Error::IotaClientError(
+        identity_iota_client::Error::IncompatibleNetwork(format!(
+          "DID network {} does not match account network {}",
+          did.network_str(),
+          setup.client.network().name_str()
+        )),
+      ));
     }
 
     // Ensure the identity exists in storage

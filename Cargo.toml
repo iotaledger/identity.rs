@@ -9,7 +9,7 @@ members = [
   "identity-credential",
   "identity-did",
   "identity-diff",
-  "identity-iota",
+  "identity_iota_client",
   "identity-iota-core",
 
   "examples",

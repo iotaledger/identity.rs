@@ -69,13 +69,13 @@ pub mod did {
 pub mod iota {
   //! IOTA DID Tangle client and validators.
 
-  pub use identity_iota::chain::*;
-  pub use identity_iota::credential::*;
-  pub use identity_iota::document::*;
-  pub use identity_iota::tangle::*;
+  pub use identity_iota_client::chain::*;
+  pub use identity_iota_client::credential::*;
+  pub use identity_iota_client::document::*;
+  pub use identity_iota_client::tangle::*;
 
-  pub use identity_iota::Error;
-  pub use identity_iota::Result;
+  pub use identity_iota_client::Error;
+  pub use identity_iota_client::Result;
 }
 
 pub mod iota_core {
@@ -134,7 +134,7 @@ pub mod prelude {
 
   pub use identity_core::crypto::KeyPair;
   pub use identity_core::crypto::KeyType;
-  pub use identity_iota::tangle::Client;
-  pub use identity_iota::Result;
+  pub use identity_iota_client::tangle::Client;
+  pub use identity_iota_client::Result;
   pub use identity_iota_core::document::IotaDocument;
 }

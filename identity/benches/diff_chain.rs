@@ -18,7 +18,7 @@ use identity::iota_core::IotaDocument;
 use identity::iota_core::MessageId;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
-use identity_iota::document::ResolvedIotaDocument;
+use identity_iota_client::document::ResolvedIotaDocument;
 
 pub fn setup_diff_chain_bench() -> (ResolvedIotaDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();

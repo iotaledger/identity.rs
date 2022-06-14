@@ -21,9 +21,9 @@ pub enum Error {
   /// Caused by errors from the [identity_account_storage] crate.
   #[error(transparent)]
   AccountCoreError(#[from] identity_account_storage::Error),
-  /// Caused by errors from the [identity_iota] crate.
+  /// Caused by errors from the [identity_iota_client] crate.
   #[error(transparent)]
-  IotaError(#[from] identity_iota::Error),
+  IotaClientError(#[from] identity_iota_client::Error),
   /// Caused by errors from the [identity_iota_core] crate.
   #[error(transparent)]
   IotaCoreError(#[from] identity_iota_core::Error),

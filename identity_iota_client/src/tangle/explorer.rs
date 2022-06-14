@@ -30,14 +30,14 @@ lazy_static::lazy_static! {
 ///
 /// ```
 /// # use identity_iota_core::did::IotaDID;
-/// # use identity_iota::tangle::ExplorerUrl;
+/// # use identity_iota_client::tangle::ExplorerUrl;
 /// let explorer = ExplorerUrl::mainnet();
 /// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")?;
 /// assert_eq!(
 ///   explorer.resolver_url(&did)?,
 ///   "https://explorer.iota.org/mainnet/identity-resolver/did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
 /// );
-/// # Ok::<(), identity_iota::Error>(())
+/// # Ok::<(), identity_iota_client::Error>(())
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[repr(transparent)]
@@ -66,9 +66,9 @@ impl ExplorerUrl {
   ///
   /// Point to a Tangle explorer deployed locally.
   /// ```
-  /// # use identity_iota::tangle::ExplorerUrl;
+  /// # use identity_iota_client::tangle::ExplorerUrl;
   /// let explorer = ExplorerUrl::parse("http://127.0.0.1:8082/")?;
-  /// # Ok::<(), identity_iota::Error>(())
+  /// # Ok::<(), identity_iota_client::Error>(())
   /// ```
   pub fn parse(url: &str) -> Result<Self> {
     let url: Url = Url::parse(url).map_err(|_| Error::InvalidExplorerURL)?;

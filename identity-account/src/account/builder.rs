@@ -5,9 +5,9 @@ use std::sync::Arc;
 
 use identity_account_storage::storage::MemStore;
 use identity_account_storage::storage::Storage;
-use identity_iota::tangle::Client;
-use identity_iota::tangle::ClientBuilder;
-use identity_iota::tangle::SharedPtr;
+use identity_iota_client::tangle::Client;
+use identity_iota_client::tangle::ClientBuilder;
+use identity_iota_client::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
 
 use crate::account::Account;

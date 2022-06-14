@@ -19,8 +19,8 @@ identity-account-storage = { version = "=0.5.0", path = "../identity-account-sto
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
-identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
+identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
@@ -34,7 +34,7 @@ harness = false
 default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
 
 # Enables async runtime support (Tokio).
-async = ["identity-iota/async"]
+async = ["identity_iota_client/async"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity-account", "identity-account-storage"]
@@ -54,7 +54,7 @@ storage-test-suite = ["identity-account-storage/storage-test-suite"]
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [
   "identity-account?/revocation-bitmap",
-  "identity-iota/revocation-bitmap",
+  "identity_iota_client/revocation-bitmap",
   "identity-credential/revocation-bitmap",
 ]
 

@@ -14,9 +14,9 @@ use identity_core::common::Url;
 use identity_core::crypto::ProofOptions;
 use identity_did::utils::Queryable;
 use identity_did::verification::MethodScope;
-use identity_iota::chain::DocumentChain;
-use identity_iota::tangle::Client;
-use identity_iota::tangle::ClientBuilder;
+use identity_iota_client::chain::DocumentChain;
+use identity_iota_client::tangle::Client;
+use identity_iota_client::tangle::ClientBuilder;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::document::IotaDocument;
@@ -588,7 +588,7 @@ async fn network_resilient_test(
     let test_attempt = f(test_run).await;
 
     match test_attempt {
-      error @ Err(Error::IotaError(identity_iota::Error::ClientError(_))) => {
+      error @ Err(Error::IotaClientError(identity_iota_client::Error::ClientError(_))) => {
         eprintln!("test run {} errored with {:?}", test_run, error);
 
         if test_run == test_runs - 1 {
