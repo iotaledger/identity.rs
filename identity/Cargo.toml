@@ -14,11 +14,11 @@ description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
 identity-account = { version = "=0.5.0", path = "../identity-account", default-features = false, optional = true }
-identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false, optional = true }
 # identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
+identity_account_storage = { version = "=0.5.0", path = "../identity_account_storage", default-features = false, optional = true }
 identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }
 identity_iota_core = { version = "=0.5.0", path = "../identity_iota_core", default-features = false }
 
@@ -37,19 +37,19 @@ default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encr
 async = ["identity_iota_client/async"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account", "identity-account-storage"]
+account = ["identity-account", "identity_account_storage"]
 
 # Enables support for stronghold storage.
-stronghold = ["identity-account/stronghold", "identity-account-storage/stronghold"]
+stronghold = ["identity-account/stronghold", "identity_account_storage/stronghold"]
 
 # Enables support for DID Communication
 # comm = ["identity-comm"]
 
 # Enables `Send` + `Sync` bounds for the Storage trait.
-send-sync-storage = ["identity-account-storage/send-sync-storage"]
+send-sync-storage = ["identity_account_storage/send-sync-storage"]
 
 # Exposes Storage `test_suite` module.
-storage-test-suite = ["identity-account-storage/storage-test-suite"]
+storage-test-suite = ["identity_account_storage/storage-test-suite"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = [

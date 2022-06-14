@@ -4,7 +4,7 @@ members = [
   "identity",
   # "identity-comm",
   "identity-account",
-  "identity-account-storage",
+  "identity_account_storage",
   "identity-core",
   "identity-credential",
   "identity-did",

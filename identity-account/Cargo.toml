@@ -11,10 +11,10 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "High-level interface for managing IOTA DID Documents."
 
 [dependencies]
-identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
 identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
+identity_account_storage = { version = "=0.5.0", path = "../identity_account_storage", default-features = false }
 identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }
 identity_iota_core = { version = "=0.5.0", path = "../identity_iota_core", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -32,11 +32,11 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros", "r
 [features]
 default = ["stronghold", "async", "send-sync-storage", "encryption", "revocation-bitmap"]
 mem-client = []
-stronghold = ["identity-account-storage/stronghold"]
+stronghold = ["identity_account_storage/stronghold"]
 async = ["identity_iota_client/async"]
-send-sync-storage = ["identity-account-storage/send-sync-storage"]
+send-sync-storage = ["identity_account_storage/send-sync-storage"]
 # Enables encryption and decryption functionality.
-encryption = ["identity-account-storage/encryption"]
+encryption = ["identity_account_storage/encryption"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_iota_client/revocation-bitmap"]
