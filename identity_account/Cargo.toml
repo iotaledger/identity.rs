@@ -12,7 +12,7 @@ description = "High-level interface for managing IOTA DID Documents."
 
 [dependencies]
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
-identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
+identity_credential = { version = "=0.5.0", path = "../identity_credential", default-features = false }
 identity_account_storage = { version = "=0.5.0", path = "../identity_account_storage", default-features = false }
 identity_did = { version = "=0.5.0", path = "../identity_did", default-features = false }
 identity_iota_client = { version = "=0.5.0", path = "../identity_iota_client", default-features = false }

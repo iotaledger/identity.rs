@@ -15,7 +15,7 @@ description = "Framework for Self-Sovereign Identity with IOTA DID."
 [dependencies]
 # identity_comm = { version = "=0.5.0-dev.4", path = "../identity_comm", optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
-identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
+identity_credential = { version = "=0.5.0", path = "../identity_credential", default-features = false }
 identity_account = { version = "=0.5.0", path = "../identity_account", default-features = false, optional = true }
 identity_account_storage = { version = "=0.5.0", path = "../identity_account_storage", default-features = false, optional = true }
 identity_did = { version = "=0.5.0", path = "../identity_did", default-features = false }
@@ -55,7 +55,7 @@ storage-test-suite = ["identity_account_storage/storage-test-suite"]
 revocation-bitmap = [
   "identity_account?/revocation-bitmap",
   "identity_iota_client/revocation-bitmap",
-  "identity-credential/revocation-bitmap",
+  "identity_credential/revocation-bitmap",
 ]
 
 # Enables encryption and decryption functionality.

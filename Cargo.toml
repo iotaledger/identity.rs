@@ -6,7 +6,7 @@ members = [
   "identity_account",
   "identity_account_storage",
   "identity-core",
-  "identity-credential",
+  "identity_credential",
   "identity_did",
   "identity_diff",
   "identity_iota_client",
