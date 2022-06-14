@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::iota::CredentialValidationOptions;
-use identity_iota::iota::FailFast;
-use identity_iota::iota::PresentationValidationOptions;
-use identity_iota::iota::StatusCheck;
-use identity_iota::iota::SubjectHolderRelationship;
+use identity_iota::client::CredentialValidationOptions;
+use identity_iota::client::FailFast;
+use identity_iota::client::PresentationValidationOptions;
+use identity_iota::client::StatusCheck;
+use identity_iota::client::SubjectHolderRelationship;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;

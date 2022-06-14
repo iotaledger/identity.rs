@@ -10,6 +10,8 @@ use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
 use identity_iota::account_storage::Stronghold;
+use identity_iota::client::ExplorerUrl;
+use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
@@ -19,8 +21,6 @@ use identity_iota::crypto::KeyPair;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
 use identity_iota::did::DID;
-use identity_iota::iota::ExplorerUrl;
-use identity_iota::iota::ResolvedIotaDocument;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::prelude::*;
 

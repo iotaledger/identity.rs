@@ -66,7 +66,7 @@ pub mod did {
   pub use identity_did::verifiable;
 }
 
-pub mod iota {
+pub mod client {
   //! IOTA DID Tangle client and validators.
 
   pub use identity_iota_client::chain::*;

@@ -9,8 +9,8 @@ use identity_iota::account::Account;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::Result;
 use identity_iota::account_storage::Stronghold;
+use identity_iota::client::ExplorerUrl;
 use identity_iota::core::Timestamp;
-use identity_iota::iota::ExplorerUrl;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::prelude::IotaDocument;
 

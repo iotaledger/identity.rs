@@ -9,8 +9,8 @@ use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity_iota::iota::PresentationValidator;
-use identity_iota::iota::ResolvedIotaDocument;
+use identity_iota::client::PresentationValidator;
+use identity_iota::client::ResolvedIotaDocument;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]

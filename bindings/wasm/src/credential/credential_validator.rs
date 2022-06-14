@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::client::CredentialValidator;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::StatusCheck;
+use identity_iota::client::ValidationError;
 use identity_iota::core::Url;
-use identity_iota::iota::CredentialValidator;
-use identity_iota::iota::ResolvedIotaDocument;
-use identity_iota::iota::StatusCheck;
-use identity_iota::iota::ValidationError;
 use identity_iota::iota_core::IotaDocument;
 use wasm_bindgen::prelude::*;
 

@@ -5,12 +5,12 @@
 //!
 //! cargo run --example key_exchange
 
+use identity_iota::client::Receipt;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::TangleResolve;
 use identity_iota::crypto::KeyType;
 use identity_iota::crypto::X25519;
 use identity_iota::did::MethodScope;
-use identity_iota::iota::Receipt;
-use identity_iota::iota::ResolvedIotaDocument;
-use identity_iota::iota::TangleResolve;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::IotaVerificationMethod;
 use identity_iota::prelude::*;

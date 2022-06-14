@@ -11,7 +11,7 @@ use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
 use identity_iota::account_storage::Stronghold;
-use identity_iota::iota::ExplorerUrl;
+use identity_iota::client::ExplorerUrl;
 use identity_iota::iota_core::IotaDID;
 
 #[tokio::main]

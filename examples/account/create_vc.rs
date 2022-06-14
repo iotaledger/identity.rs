@@ -13,6 +13,9 @@ use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
 
+use identity_iota::client::CredentialValidationOptions;
+use identity_iota::client::CredentialValidator;
+use identity_iota::client::FailFast;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::ToJson;
@@ -22,9 +25,6 @@ use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::Subject;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DID;
-use identity_iota::iota::CredentialValidationOptions;
-use identity_iota::iota::CredentialValidator;
-use identity_iota::iota::FailFast;
 
 pub async fn create_vc() -> Result<String> {
   // Create an account builder with in-memory storage for simplicity.

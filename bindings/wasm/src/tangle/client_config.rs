@@ -3,8 +3,8 @@
 
 use std::time::Duration;
 
-use identity_iota::iota::ClientBuilder;
-use identity_iota::iota::DIDMessageEncoding;
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::DIDMessageEncoding;
 use identity_iota::iota_core::Network;
 use proc_typescript::typescript;
 use wasm_bindgen::prelude::*;

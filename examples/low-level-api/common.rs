@@ -14,7 +14,7 @@ use identity_iota::credential::CredentialBuilder;
 use identity_iota::credential::Subject;
 use identity_iota::did::MethodScope;
 use identity_iota::did::DID;
-use identity_iota::iota::Receipt;
+use identity_iota::client::Receipt;
 use identity_iota::iota_core::IotaVerificationMethod;
 use identity_iota::prelude::*;
 

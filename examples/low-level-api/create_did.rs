@@ -6,8 +6,8 @@
 //!
 //! cargo run --example create_did
 
-use identity_iota::iota::ExplorerUrl;
-use identity_iota::iota::Receipt;
+use identity_iota::client::ExplorerUrl;
+use identity_iota::client::Receipt;
 use identity_iota::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {

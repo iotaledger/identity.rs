@@ -3,7 +3,7 @@
 
 use std::str::FromStr;
 
-use identity_iota::iota::ResolvedIotaDocument;
+use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 

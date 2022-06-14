@@ -9,11 +9,11 @@
 //!
 //! cargo run --example private_tangle
 
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::DIDMessageEncoding;
+use identity_iota::client::ExplorerUrl;
+use identity_iota::client::Receipt;
 use identity_iota::crypto::KeyType;
-use identity_iota::iota::ClientBuilder;
-use identity_iota::iota::DIDMessageEncoding;
-use identity_iota::iota::ExplorerUrl;
-use identity_iota::iota::Receipt;
 use identity_iota::iota_core::Network;
 use identity_iota::prelude::*;
 

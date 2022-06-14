@@ -3,7 +3,7 @@
 
 use std::str::FromStr;
 
-use identity_iota::iota::ExplorerUrl;
+use identity_iota::client::ExplorerUrl;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::MessageId;
 use wasm_bindgen::prelude::*;

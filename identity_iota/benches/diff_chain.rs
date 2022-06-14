@@ -5,6 +5,8 @@
 
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
+use identity_iota::client::DocumentChain;
+use identity_iota::client::TangleRef;
 use identity_iota::core::Timestamp;
 use identity_iota::crypto::KeyPair;
 use identity_iota::did::MethodBuilder;
@@ -12,8 +14,6 @@ use identity_iota::did::MethodData;
 use identity_iota::did::MethodRef;
 use identity_iota::did::MethodType;
 use identity_iota::did::DID;
-use identity_iota::iota::DocumentChain;
-use identity_iota::iota::TangleRef;
 use identity_iota::iota_core::DiffMessage;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::IotaDocument;

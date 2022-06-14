@@ -25,12 +25,12 @@ use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
 
 use identity_iota::account::Result;
-use identity_iota::iota::CredentialValidationOptions;
-use identity_iota::iota::FailFast;
-use identity_iota::iota::PresentationValidationOptions;
+use identity_iota::client::CredentialValidationOptions;
+use identity_iota::client::FailFast;
+use identity_iota::client::PresentationValidationOptions;
 
-use identity_iota::iota::Resolver;
-use identity_iota::iota::SubjectHolderRelationship;
+use identity_iota::client::Resolver;
+use identity_iota::client::SubjectHolderRelationship;
 
 #[tokio::main]
 async fn main() -> Result<()> {

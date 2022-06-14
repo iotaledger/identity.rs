@@ -9,9 +9,9 @@ use criterion::BenchmarkId;
 use criterion::Criterion;
 
 use identity_core::crypto::KeyType;
+use identity_iota::client::DocumentChain;
+use identity_iota::client::IntegrationChain;
 use identity_iota::crypto::KeyPair;
-use identity_iota::iota::DocumentChain;
-use identity_iota::iota::IntegrationChain;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::IotaDocument;
 

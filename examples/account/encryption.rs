@@ -17,9 +17,9 @@ use identity_iota::account_storage::CekAlgorithm;
 use identity_iota::account_storage::EncryptedData;
 use identity_iota::account_storage::EncryptionAlgorithm;
 use identity_iota::account_storage::Stronghold;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::Resolver;
 use identity_iota::did::MethodScope;
-use identity_iota::iota::ResolvedIotaDocument;
-use identity_iota::iota::Resolver;
 use identity_iota::iota_core::IotaVerificationMethod;
 
 #[tokio::main]

@@ -5,12 +5,12 @@ use std::collections::HashSet;
 use std::rc::Rc;
 
 use futures::executor;
+use identity_iota::client::Client;
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::Resolver;
+use identity_iota::client::ResolverBuilder;
 use identity_iota::core::Url;
-use identity_iota::iota::Client;
-use identity_iota::iota::ClientBuilder;
-use identity_iota::iota::ResolvedIotaDocument;
-use identity_iota::iota::Resolver;
-use identity_iota::iota::ResolverBuilder;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::NetworkName;
 use js_sys::Promise;
@@ -219,8 +219,8 @@ impl WasmResolver {
       .0
       .holder
       .as_ref()
-      .ok_or(identity_iota::iota::ValidationError::MissingPresentationHolder)
-      .map_err(identity_iota::iota::Error::from)
+      .ok_or(identity_iota::client::ValidationError::MissingPresentationHolder)
+      .map_err(identity_iota::client::Error::from)
       .wasm_result()?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str()).wasm_result()?;
 

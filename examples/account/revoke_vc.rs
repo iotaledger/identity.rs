@@ -16,6 +16,11 @@ use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
+use identity_iota::client::CredentialValidationOptions;
+use identity_iota::client::CredentialValidator;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::Resolver;
+use identity_iota::client::ValidationError;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
@@ -27,11 +32,6 @@ use identity_iota::credential::Subject;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::RevocationBitmap;
 use identity_iota::did::DID;
-use identity_iota::iota::CredentialValidationOptions;
-use identity_iota::iota::CredentialValidator;
-use identity_iota::iota::ResolvedIotaDocument;
-use identity_iota::iota::Resolver;
-use identity_iota::iota::ValidationError;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
     &credential,
     &issuer.document(),
     &CredentialValidationOptions::default(),
-    identity_iota::iota::FailFast::FirstError,
+    identity_iota::client::FailFast::FirstError,
   );
 
   // The credential wasn't revoked, so we expect the validation to succeed.
@@ -118,7 +118,7 @@ async fn main() -> Result<()> {
     &credential,
     &issuer.document(),
     &CredentialValidationOptions::default(),
-    identity_iota::iota::FailFast::FirstError,
+    identity_iota::client::FailFast::FirstError,
   );
 
   // We expect validation to no longer succeed because the credential was revoked.
@@ -147,7 +147,7 @@ async fn main() -> Result<()> {
     &credential,
     &resolved_issuer_doc,
     &CredentialValidationOptions::default(),
-    identity_iota::iota::FailFast::FirstError,
+    identity_iota::client::FailFast::FirstError,
   );
 
   println!("VC validation result: {:?}", validation_result);

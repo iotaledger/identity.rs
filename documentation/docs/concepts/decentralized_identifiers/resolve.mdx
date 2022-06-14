@@ -29,9 +29,9 @@ The following example demonstrates how to resolve the DID: "did:iota:H3C2AVvLMv6
 <TabItem value="Rust" label="Rust">
 
 ```rust
-use identity_iota::iota::Resolver;
+use identity_iota::client::Resolver;
 use identity_iota::iota_core::IotaDID;
-use identity_iota::iota::ResolvedIotaDocument;
+use identity_iota::client::ResolvedIotaDocument;
 
 let resolver: Resolver = Resolver::new().await?;
 let did: IotaDID = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")?;
@@ -68,11 +68,11 @@ The following example demonstrates how one can setup a `Resolver` with a given `
 <TabItem value="Rust" label="Rust">
 
 ```rust
-use identity_iota::iota::Resolver;
-use identity_iota::iota::ResolverBuilder;
+use identity_iota::client::Resolver;
+use identity_iota::client::ResolverBuilder;
 use identity_iota::iota_core::IotaDID;
-use identity_iota::iota::Client;
-use identity_iota::iota::Result;
+use identity_iota::client::Client;
+use identity_iota::client::Result;
 
 
 async fn build_and_resolve(client: Client, did: IotaDID) -> Result<ResolvedIotaDocument> {
@@ -127,10 +127,10 @@ also depends on when this operation was carried out. The `Resolver` provides a w
 <TabItem value="Rust" label="Rust">
 
 ```rust
-use identity_iota::iota::Resolver;
+use identity_iota::client::Resolver;
 use identity_iota::iota_core::IotaDID;
-use identity_iota::iota::DocumentHistory;
-use identity_iota::iota::Result;
+use identity_iota::client::DocumentHistory;
+use identity_iota::client::Result;
 
 
 async fn call_resolve_history(did: IotaDID) -> Result<DocumentHistory> {

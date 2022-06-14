@@ -5,10 +5,10 @@ use core::str::FromStr;
 use std::rc::Rc;
 
 use futures::executor;
-use identity_iota::iota::Client;
-use identity_iota::iota::ClientBuilder;
-use identity_iota::iota::ResolvedIotaDocument;
-use identity_iota::iota::TangleResolve;
+use identity_iota::client::Client;
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::TangleResolve;
 use identity_iota::iota_core::DiffMessage;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::IotaDocument;
