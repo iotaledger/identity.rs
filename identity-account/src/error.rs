@@ -18,7 +18,7 @@ pub enum Error {
   /// Caused by errors from the [identity_credential] crate.
   #[error(transparent)]
   CredentialError(#[from] identity_credential::Error),
-  /// Caused by errors from the [crypto] crate.
+  /// Caused by errors from the `crypto` crate.
   #[error(transparent)]
   AccountCoreError(#[from] identity_account_storage::Error),
   /// Caused by errors from the [identity_iota] crate.

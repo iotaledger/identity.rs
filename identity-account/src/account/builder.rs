@@ -9,6 +9,7 @@ use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::SharedPtr;
 use identity_iota_core::did::IotaDID;
+use identity_iota_core::tangle::Network;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -52,8 +53,6 @@ where
   }
 
   /// Sets the account auto-save behaviour.
-  ///
-  /// See the config's [`autosave`][AccountConfig::autosave] documentation for details.
   #[must_use]
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.config = self.config.autosave(value);
@@ -61,8 +60,6 @@ where
   }
 
   /// Sets the account auto-publish behaviour.
-  ///
-  /// See the config's [`autopublish`][AccountConfig::autopublish] documentation for details.
   #[must_use]
   pub fn autopublish(mut self, value: bool) -> Self {
     self.config = self.config.autopublish(value);
@@ -104,7 +101,7 @@ where
     }
   }
 
-  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  /// Sets the IOTA Tangle [`Client`], this determines the [Network] used by the identity.
   /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
   /// NOTE: this overwrites any [`ClientBuilder`] previously set by
@@ -116,7 +113,7 @@ where
     self
   }
 
-  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`] used by the identity.
+  /// Sets the IOTA Tangle [`Client`], this determines the [Network] used by the identity.
   /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
   /// NOTE: this overwrites any [`Client`] previously set by [`AccountBuilder::client`].
