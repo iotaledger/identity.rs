@@ -6,9 +6,9 @@ edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
-readme = "../README.md"
+readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "The `Diff` trait for the identity-rs library."
+description = "`Diff` trait to compute and merge data structure differences."
 
 [dependencies]
 identity-diff-derive = { version = "=0.5.0", path = "derive", optional = true }

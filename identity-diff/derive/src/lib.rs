@@ -1,5 +1,7 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+#![doc = include_str!("./../README.md")]
 
 use crate::model::InputModel;
 use crate::utils::extract_option_segment;
