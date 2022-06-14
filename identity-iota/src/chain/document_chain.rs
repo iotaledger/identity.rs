@@ -98,7 +98,7 @@ impl DocumentChain {
     &mut self.chain_d
   }
 
-  /// Merges the changes from the [`DiffChain`] into the current [`IotaDocument`] from
+  /// Merges the changes from the [`DiffChain`] into the current [`ResolvedIotaDocument`] from
   /// the [`IntegrationChain`].
   pub fn fold(self) -> Result<ResolvedIotaDocument> {
     Self::__fold(&self.chain_i, &self.chain_d)

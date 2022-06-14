@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Verifiable Credential and Presentation validators.
+
 pub use self::credential_validator::CredentialValidator;
 pub use self::errors::CompoundCredentialValidationError;
 pub use self::errors::CompoundPresentationValidationError;
