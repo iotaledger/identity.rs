@@ -27,4 +27,6 @@ pub enum Error {
   InvalidRootDocument(&'static str),
   #[error("Missing Signing Key")]
   MissingSigningKey,
+  #[error("credential revocation error")]
+  RevocationError(#[source] identity_did::Error),
 }

@@ -1,22 +1,26 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::WasmCredential;
-use super::WasmCredentialValidationOptions;
-use super::WasmSubjectHolderRelationship;
+use identity::core::Url;
+use identity::iota::CredentialValidator;
+use identity::iota::ResolvedIotaDocument;
+use identity::iota::StatusCheck;
+use identity::iota::ValidationError;
+use identity::iota_core::IotaDocument;
+use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
+use crate::credential::validation_options::WasmStatusCheck;
 use crate::did::ArrayDocumentOrArrayResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity::core::Url;
-use identity::iota::CredentialValidator;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::ValidationError;
-use wasm_bindgen::prelude::*;
+
+use super::WasmCredential;
+use super::WasmCredentialValidationOptions;
+use super::WasmSubjectHolderRelationship;
 
 #[wasm_bindgen(js_name = CredentialValidator, inspectable)]
 pub struct WasmCredentialValidator;
@@ -110,5 +114,20 @@ impl WasmCredentialValidator {
   ) -> Result<()> {
     let holder: Url = Url::parse(holder_url).wasm_result()?;
     CredentialValidator::check_subject_holder_relationship(&credential.0, &holder, relationship.into()).wasm_result()
+  }
+
+  /// Checks whether the credential status has been revoked.
+  ///
+  /// Only supports `BitmapRevocation2022`.
+  #[wasm_bindgen(js_name = checkStatus)]
+  #[allow(non_snake_case)]
+  pub fn check_status(
+    credential: &WasmCredential,
+    trustedIssuers: &ArrayDocumentOrArrayResolvedDocument,
+    statusCheck: WasmStatusCheck,
+  ) -> Result<()> {
+    let trusted_issuers: Vec<IotaDocument> = trustedIssuers.into_serde().wasm_result()?;
+    let status_check: StatusCheck = StatusCheck::from(statusCheck);
+    CredentialValidator::check_status(&credential.0, trusted_issuers.as_slice(), status_check).wasm_result()
   }
 }

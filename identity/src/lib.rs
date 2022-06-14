@@ -3,9 +3,7 @@
 
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
-#![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
-#![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
-#![cfg_attr(not(docsrs), doc = "")]
+#![doc = include_str!("./../../README.md")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
@@ -58,6 +56,7 @@ pub mod did {
 
   pub use identity_did::document::*;
   pub use identity_did::error::*;
+  pub use identity_did::revocation::*;
   pub use identity_did::service::*;
   pub use identity_did::utils::*;
   pub use identity_did::verification::*;
@@ -68,13 +67,15 @@ pub mod did {
 }
 
 pub mod iota {
-  //! IOTA Tangle DID Method
+  //! IOTA DID Tangle client and validators.
 
   pub use identity_iota::chain::*;
   pub use identity_iota::credential::*;
   pub use identity_iota::document::*;
-  pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;
+
+  pub use identity_iota::Error;
+  pub use identity_iota::Result;
 }
 
 pub mod iota_core {
@@ -83,8 +84,10 @@ pub mod iota_core {
   pub use identity_iota_core::did::*;
   pub use identity_iota_core::diff::*;
   pub use identity_iota_core::document::*;
-  pub use identity_iota_core::error::*;
   pub use identity_iota_core::tangle::*;
+
+  pub use identity_iota_core::Error;
+  pub use identity_iota_core::Result;
 
   #[doc(inline)]
   pub use identity_iota_core::try_construct_did;

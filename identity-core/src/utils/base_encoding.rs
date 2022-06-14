@@ -112,8 +112,8 @@ impl BaseEncoding {
   /// Encodes the given `data` as [Multibase] with the given [`base`](Base), defaults to
   /// [`Base::Base58Btc`] if omitted.
   ///
-  /// NOTE: [`encode_multibase`] is different from [`encode`] because the [Multibase] format
-  /// prepends a character representing the base-encoding to the output.
+  /// NOTE: [`encode_multibase`](Self::encode_multibase) is different from [`encode`](Self::encode) because the
+  /// [Multibase] format prepends a character representing the base-encoding to the output.
   ///
   /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
   pub fn encode_multibase<T>(data: &T, base: Option<Base>) -> String
@@ -147,14 +147,22 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_decode_b58_empty() {
+  fn test_decode_base58_empty() {
     assert_eq!(BaseEncoding::decode_base58("").unwrap(), Vec::<u8>::new());
   }
 
   #[quickcheck]
-  fn test_b58_random(data: Vec<u8>) {
+  fn test_base58_random(data: Vec<u8>) {
     assert_eq!(
       BaseEncoding::decode_base58(&BaseEncoding::encode_base58(&data)).unwrap(),
+      data
+    );
+  }
+
+  #[quickcheck]
+  fn test_base64_random(data: Vec<u8>) {
+    assert_eq!(
+      BaseEncoding::decode(&BaseEncoding::encode(&data, Base::Base64Url), Base::Base64Url).unwrap(),
       data
     );
   }

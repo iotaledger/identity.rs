@@ -33,6 +33,7 @@ pub enum Error {
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::updates::UpdateError),
+  /// Caused by verification methods without fragments.
   #[error("method missing fragment")]
   MethodMissingFragment,
 }

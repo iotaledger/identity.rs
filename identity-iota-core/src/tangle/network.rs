@@ -111,8 +111,7 @@ impl Default for Network {
   }
 }
 
-/// Network name compliant with the IOTA DID method specification:
-/// https://github.com/iotaledger/identity.rs/blob/dev/documentation/docs/specs/iota_did_method_spec.md
+/// Network name compliant with the [IOTA DID method specification](https://wiki.iota.org/identity.rs/specs/did/iota_did_method_spec).
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct NetworkName(Cow<'static, str>);

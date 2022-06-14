@@ -21,7 +21,7 @@ use crate::error::Result;
 
 /// A digital signature.
 ///
-/// For field definitions see: https://w3c-ccg.github.io/security-vocab/
+/// For field definitions see: [the W3C Security Vocabulary specification](https://w3c-ccg.github.io/security-vocab/).
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
 pub struct Proof {
   #[serde(rename = "type")]

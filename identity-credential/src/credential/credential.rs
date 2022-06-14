@@ -40,7 +40,7 @@ pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
   #[serde(rename = "@context")]
   pub context: OneOrMany<Context>,
-  /// A unique `URI` referencing the subject of the `Credential`.
+  /// A unique `URI` that may be used to identify the `Credential`.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub id: Option<Url>,
   /// One or more URIs defining the type of the `Credential`.
@@ -58,8 +58,8 @@ pub struct Credential<T = Object> {
   #[serde(rename = "expirationDate", skip_serializing_if = "Option::is_none")]
   pub expiration_date: Option<Timestamp>,
   /// Information used to determine the current status of the `Credential`.
-  #[serde(default, rename = "credentialStatus", skip_serializing_if = "OneOrMany::is_empty")]
-  pub credential_status: OneOrMany<Status>,
+  #[serde(default, rename = "credentialStatus", skip_serializing_if = "Option::is_none")]
+  pub credential_status: Option<Status>,
   /// Information used to assist in the enforcement of a specific `Credential` structure.
   #[serde(default, rename = "credentialSchema", skip_serializing_if = "OneOrMany::is_empty")]
   pub credential_schema: OneOrMany<Schema>,
@@ -112,7 +112,7 @@ impl<T> Credential<T> {
       issuer: builder.issuer.ok_or(Error::MissingIssuer)?,
       issuance_date: builder.issuance_date.unwrap_or_default(),
       expiration_date: builder.expiration_date,
-      credential_status: builder.status.into(),
+      credential_status: builder.status,
       credential_schema: builder.schema.into(),
       refresh_service: builder.refresh_service.into(),
       terms_of_use: builder.terms_of_use.into(),

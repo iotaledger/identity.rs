@@ -53,30 +53,7 @@ impl WasmService {
   /// Returns a copy of the `Service` endpoint.
   #[wasm_bindgen(js_name = serviceEndpoint)]
   pub fn service_endpoint(&self) -> UServiceEndpoint {
-    match self.0.service_endpoint() {
-      // string
-      ServiceEndpoint::One(url) => JsValue::from_str(url.as_str()).unchecked_into::<UServiceEndpoint>(),
-      // [string]
-      ServiceEndpoint::Set(set) => set
-        .iter()
-        .map(|url| JsValue::from_str(url.as_str()))
-        .collect::<js_sys::Array>()
-        .unchecked_into::<UServiceEndpoint>(),
-      // Map<string, [string]>
-      ServiceEndpoint::Map(map) => {
-        let js_map: js_sys::Map = js_sys::Map::new();
-        for (key, urls) in map.into_iter() {
-          js_map.set(
-            &JsValue::from_str(key.as_str()),
-            &urls
-              .iter()
-              .map(|url| JsValue::from_str(url.as_str()))
-              .collect::<js_sys::Array>(),
-          );
-        }
-        js_map.unchecked_into::<UServiceEndpoint>()
-      }
-    }
+    service_endpoint_to_js_value(self.0.service_endpoint())
   }
 
   /// Returns a copy of the custom properties on the `Service`.
@@ -103,6 +80,33 @@ impl_wasm_clone!(WasmService, Service);
 impl From<IotaService> for WasmService {
   fn from(service: IotaService) -> Self {
     Self(service)
+  }
+}
+
+pub(crate) fn service_endpoint_to_js_value(endpoint: &ServiceEndpoint) -> UServiceEndpoint {
+  match endpoint {
+    // string
+    ServiceEndpoint::One(url) => JsValue::from_str(url.as_str()).unchecked_into::<UServiceEndpoint>(),
+    // [string]
+    ServiceEndpoint::Set(set) => set
+      .iter()
+      .map(|url| JsValue::from_str(url.as_str()))
+      .collect::<js_sys::Array>()
+      .unchecked_into::<UServiceEndpoint>(),
+    // Map<string, [string]>
+    ServiceEndpoint::Map(map) => {
+      let js_map: js_sys::Map = js_sys::Map::new();
+      for (key, urls) in map.into_iter() {
+        js_map.set(
+          &JsValue::from_str(key.as_str()),
+          &urls
+            .iter()
+            .map(|url| JsValue::from_str(url.as_str()))
+            .collect::<js_sys::Array>(),
+        );
+      }
+      js_map.unchecked_into::<UServiceEndpoint>()
+    }
   }
 }
 

@@ -53,6 +53,15 @@ pub enum ValidationError {
   /// Indicates that the presentation does not have a holder.
   #[error("the presentation has an empty holder property")]
   MissingPresentationHolder,
+  /// Indicates that the credential's status is invalid.
+  #[error("invalid credential status")]
+  InvalidStatus(#[source] identity_credential::Error),
+  /// Indicates that the the credential's service is invalid.
+  #[error("invalid service")]
+  InvalidService(#[source] identity_did::Error),
+  /// Indicates that the credential has been revoked.
+  #[error("credential has been revoked")]
+  Revoked,
 }
 
 #[derive(Debug)]

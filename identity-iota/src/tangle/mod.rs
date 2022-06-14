@@ -1,6 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Types and traits for IOTA DID Method operations on the Tangle.
+
 pub use self::client::Client;
 pub use self::client_builder::ClientBuilder;
 pub use self::explorer::ExplorerUrl;

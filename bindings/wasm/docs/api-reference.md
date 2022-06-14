@@ -119,6 +119,9 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
 <dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
 </dd>
+<dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
+<dd><p>A compressed bitmap for managing credential revocation.</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated
 with a DID subject.</p>
@@ -152,6 +155,23 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#StatusCheck">StatusCheck</a></dt>
+<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
+</dd>
+<dt><a href="#Strict">Strict</a></dt>
+<dd><p>Validate the status if supported, reject any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
+<p>This is the default.</p>
+</dd>
+<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
+<dd><p>Validate the status if supported, skip any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+</dd>
+<dt><a href="#SkipAll">SkipAll</a></dt>
+<dd><p>Skip all status checks.</p>
+</dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -203,6 +223,8 @@ publishing to the Tangle.
 
 * [Account](#Account)
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -216,15 +238,15 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, credentialIndices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -239,6 +261,28 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -371,6 +415,32 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+revokeCredentials"></a>
+
+### account.revokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+If the document has a `RevocationBitmap` service identified by `fragment`,
+revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="Account+unrevokeCredentials"></a>
+
+### account.unrevokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+If the document has a `RevocationBitmap` service identified by `fragment`,
+unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
 <a name="Account+encryptData"></a>
 
 ### account.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
@@ -405,6 +475,17 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
 <a name="Account+deleteMethod"></a>
 
 ### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -427,17 +508,6 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
 <a name="Account+setController"></a>
 
 ### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -459,28 +529,6 @@ Adds a new Service to the DID Document.
 | Param | Type |
 | --- | --- |
 | options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -677,6 +725,7 @@ Supported algorithms used to determine and potentially encrypt the content encry
         * [.toJSON()](#CekAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
         * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.EcdhEsA256Kw(agreement)](#CekAlgorithm.EcdhEsA256Kw) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
         * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 
 <a name="CekAlgorithm+toJSON"></a>
@@ -688,6 +737,17 @@ Serializes `CekAlgorithm` as a JSON object.
 <a name="CekAlgorithm.EcdhEs"></a>
 
 ### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+
+<a name="CekAlgorithm.EcdhEsA256Kw"></a>
+
+### CekAlgorithm.EcdhEsA256Kw(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
 Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
 
 **Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
@@ -929,7 +989,7 @@ Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
 <a name="Credential+id"></a>
 
 ### credential.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` referencing the subject of the `Credential`.
+Returns a copy of the unique `URI` identifying the `Credential` .
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+type"></a>
@@ -1115,6 +1175,7 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
     * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
+    * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1224,6 +1285,21 @@ Validate that the relationship between the `holder` and the credential subjects 
 | credential | [<code>Credential</code>](#Credential) | 
 | holder_url | <code>string</code> | 
 | relationship | <code>number</code> | 
+
+<a name="CredentialValidator.checkStatus"></a>
+
+### CredentialValidator.checkStatus(credential, trustedIssuers, statusCheck)
+Checks whether the credential status has been revoked.
+
+Only supports `BitmapRevocation2022`.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| trustedIssuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| statusCheck | <code>number</code> | 
 
 <a name="DID"></a>
 
@@ -1706,6 +1782,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.revokeCredentials(fragment, credentialIndices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(fragment, credentialIndices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -2172,6 +2250,32 @@ Sets the previous integration chain message id.
 Returns a copy of the proof.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+revokeCredentials"></a>
+
+### document.revokeCredentials(fragment, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `fragment`,
+revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="Document+unrevokeCredentials"></a>
+
+### document.unrevokeCredentials(fragment, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `fragment`,
+unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
 <a name="Document+toJSON"></a>
 
 ### document.toJSON() ⇒ <code>any</code>
@@ -2585,11 +2689,18 @@ Supported content encryption algorithms.
 
 * [EncryptionAlgorithm](#EncryptionAlgorithm)
     * _instance_
+        * [.keyLength()](#EncryptionAlgorithm+keyLength) ⇒ <code>number</code>
         * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
     * _static_
         * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
         * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
 
+<a name="EncryptionAlgorithm+keyLength"></a>
+
+### encryptionAlgorithm.keyLength() ⇒ <code>number</code>
+Returns the length of the cipher's key.
+
+**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
 <a name="EncryptionAlgorithm+toJSON"></a>
 
 ### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
@@ -3334,7 +3445,7 @@ Returns a copy of the JSON-LD context(s) applicable to the `Presentation`.
 <a name="Presentation+id"></a>
 
 ### presentation.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` of the `Presentation`.
+Returns a copy of the unique `URI` identifying the `Presentation`.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+type"></a>
@@ -4133,6 +4244,96 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 Constructs a new [`Resolver`] based on the builder configuration.
 
 **Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+<a name="RevocationBitmap"></a>
+
+## RevocationBitmap
+A compressed bitmap for managing credential revocation.
+
+**Kind**: global class  
+
+* [RevocationBitmap](#RevocationBitmap)
+    * [new RevocationBitmap()](#new_RevocationBitmap_new)
+    * _instance_
+        * [.isRevoked(index)](#RevocationBitmap+isRevoked) ⇒ <code>boolean</code>
+        * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
+        * [.unrevoke(index)](#RevocationBitmap+unrevoke) ⇒ <code>boolean</code>
+        * [.len()](#RevocationBitmap+len) ⇒ <code>number</code>
+        * [.toEndpoint()](#RevocationBitmap+toEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+    * _static_
+        * [.type()](#RevocationBitmap.type) ⇒ <code>string</code>
+        * [.fromEndpoint(endpoint)](#RevocationBitmap.fromEndpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+
+<a name="new_RevocationBitmap_new"></a>
+
+### new RevocationBitmap()
+Creates a new `RevocationBitmap` instance.
+
+<a name="RevocationBitmap+isRevoked"></a>
+
+### revocationBitmap.isRevoked(index) ⇒ <code>boolean</code>
+Returns `true` if the credential at the given `index` is revoked.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+revoke"></a>
+
+### revocationBitmap.revoke(index) ⇒ <code>boolean</code>
+Mark the given index as revoked.
+
+Returns true if the index was absent from the set.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+unrevoke"></a>
+
+### revocationBitmap.unrevoke(index) ⇒ <code>boolean</code>
+Mark the index as not revoked.
+
+Returns true if the index was present in the set.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+len"></a>
+
+### revocationBitmap.len() ⇒ <code>number</code>
+Returns the number of revoked credentials.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap+toEndpoint"></a>
+
+### revocationBitmap.toEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Return the bitmap as a data url embedded in a service endpoint.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap.type"></a>
+
+### RevocationBitmap.type() ⇒ <code>string</code>
+The name of the service type.
+
+**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap.fromEndpoint"></a>
+
+### RevocationBitmap.fromEndpoint(endpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+Construct a `RevocationBitmap` from a data `url`.
+
+**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| endpoint | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -4660,6 +4861,37 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
+**Kind**: global variable  
+<a name="StatusCheck"></a>
+
+## StatusCheck
+Controls validation behaviour when checking whether or not a credential has been revoked by its
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+
+**Kind**: global variable  
+<a name="Strict"></a>
+
+## Strict
+Validate the status if supported, reject any unsupported
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+
+Only `RevocationBitmap2022` is currently supported.
+
+This is the default.
+
+**Kind**: global variable  
+<a name="SkipUnsupported"></a>
+
+## SkipUnsupported
+Validate the status if supported, skip any unsupported
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+
+**Kind**: global variable  
+<a name="SkipAll"></a>
+
+## SkipAll
+Skip all status checks.
+
 **Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 

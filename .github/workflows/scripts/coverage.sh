@@ -5,7 +5,7 @@ set -e
 rm -rf coverage
 mkdir coverage
 
-NIGHTLY="+nightly-2022-01-08"
+NIGHTLY="+nightly-2022-04-08"
 
 # Run tests with profiling instrumentation
 echo "Running instrumented unit tests..."

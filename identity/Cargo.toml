@@ -5,19 +5,20 @@ authors = ["IOTA Stiftung"]
 documentation = "https://wiki.iota.org/identity.rs/introduction"
 edition = "2021"
 homepage = "https://www.iota.org"
-keywords = ["iota", "tangle", "identity", "did"]
+keywords = ["iota", "tangle", "identity", "did", "ssi"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "Tools for working with Self-sovereign Identity."
+rust-version = "1.60"
+description = "Framework for Self-Sovereign Identity with IOTA DID."
 
 [dependencies]
 identity-account = { version = "=0.5.0", path = "../identity-account", default-features = false, optional = true }
 identity-account-storage = { version = "=0.5.0", path = "../identity-account-storage", default-features = false, optional = true }
 # identity-comm = { version = "=0.5.0-dev.4", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
-identity-credential = { version = "=0.5.0", path = "../identity-credential" }
-identity-did = { version = "=0.5.0", path = "../identity-did" }
+identity-credential = { version = "=0.5.0", path = "../identity-credential", default-features = false }
+identity-did = { version = "=0.5.0", path = "../identity-did", default-features = false }
 identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false }
 identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
 
@@ -30,7 +31,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encryption"]
+default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
 
 # Enables async runtime support (Tokio).
 async = ["identity-iota/async"]
@@ -49,6 +50,13 @@ send-sync-storage = ["identity-account-storage/send-sync-storage"]
 
 # Exposes Storage `test_suite` module.
 storage-test-suite = ["identity-account-storage/storage-test-suite"]
+
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = [
+  "identity-account?/revocation-bitmap",
+  "identity-iota/revocation-bitmap",
+  "identity-credential/revocation-bitmap",
+]
 
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.

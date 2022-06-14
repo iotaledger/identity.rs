@@ -235,7 +235,7 @@ impl DiffChain {
   /// Checks if the [`DiffMessage`] can be added to the [`DiffChain`]. Returns the merged
   /// document if valid.
   ///
-  /// Equivalent to calling [`DiffChain::verify_diff`] then [`DiffChain::verify_merge`].
+  /// Equivalent to calling [`DiffChain::verify_diff`] then [`DiffChain::try_merge`].
   ///
   /// # Errors
   ///

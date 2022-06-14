@@ -4,11 +4,11 @@ version = "0.5.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
-keywords = ["iota", "tangle", "identity"]
+keywords = ["iota", "tangle", "identity", "did"]
 license = "Apache-2.0"
-readme = "../README.md"
+readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = ""
+description = "Core data structures for the IOTA DID Method."
 
 [dependencies]
 bee-message = { version = "0.1.6", default-features = false, features = ["serde"] }
@@ -29,3 +29,8 @@ features = ["blake2b"]
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["revocation-bitmap"]
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity-did/revocation-bitmap"]

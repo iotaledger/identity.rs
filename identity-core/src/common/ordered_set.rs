@@ -25,7 +25,7 @@ use crate::error::Result;
 ///
 /// Note: Ordering is based on insert order and **not** [`Ord`].
 ///
-/// See: https://infra.spec.whatwg.org/#ordered-set
+/// See the [Infra standard definition](https://infra.spec.whatwg.org/#ordered-set).
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(bound(deserialize = "T: KeyComparable + Deserialize<'de>"), try_from = "Vec<T>")]
