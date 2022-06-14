@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Provides generic types and traits for working with Decentralized Identifiers.
+
 #[allow(clippy::module_inception)]
 mod did;
 mod did_url;

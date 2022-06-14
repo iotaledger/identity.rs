@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Implements the DID Document Service specification.
 #![allow(clippy::module_inception)]
 
 mod builder;

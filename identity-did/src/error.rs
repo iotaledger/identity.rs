@@ -18,13 +18,14 @@ pub enum Error {
   #[error("Verification Method Not Found")]
   MethodNotFound,
 
-  /// Caused by invalid or missing properties when constructing a [`CoreDocument`].
+  /// Caused by invalid or missing properties when constructing a [`CoreDocument`](crate::document::CoreDocument).
   #[error("invalid document property: {0}")]
   InvalidDocument(&'static str, #[source] Option<::identity_core::Error>),
-  /// Caused by invalid or missing properties when constructing a [`Service`].
+  /// Caused by invalid or missing properties when constructing a [`Service`](crate::service::Service).
   #[error("invalid service property: {0}")]
   InvalidService(&'static str),
-  /// Caused by invalid or missing properties when constructing a [`VerificationMethod`].
+  /// Caused by invalid or missing properties when constructing a
+  /// [`VerificationMethod`](crate::verification::VerificationMethod).
   #[error("invalid verification method property: {0}")]
   InvalidMethod(&'static str),
 

@@ -13,7 +13,7 @@ use crate::service::Service;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
 
-/// A `DocumentBuilder` is used to generate a customized [Document].
+/// A `DocumentBuilder` is used to generate a customized [`Document`](crate::document::CoreDocument).
 #[derive(Clone, Debug)]
 pub struct DocumentBuilder<D = CoreDID, T = Object, U = Object, V = Object>
 where
