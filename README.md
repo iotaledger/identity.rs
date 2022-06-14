@@ -157,7 +157,7 @@ The output link points to the [Identity Resolver on the IOTA Tangle Explorer](ht
 
 ## Roadmap and Milestones
 
-For detailed development progress, see the IOTA Identity development [kanban board](https://github.com/iotaledger/identity.rs/projects/3).
+For detailed development progress, see the IOTA Identity development [kanban board](https://github.com/orgs/iotaledger/projects/8/views/5).
 
 IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps to give an idea for some of the areas of development and their relative completion:
 
