@@ -37,7 +37,7 @@ impl PublishOptions {
   /// verification relationship.
   ///
   /// If this is not set, the method used is determined by
-  /// [`IotaDocument::default_signing_method`].
+  /// [`IotaDocument`][identity_iota_core::document::IotaDocument::default_signing_method]
   #[must_use]
   pub fn sign_with(mut self, fragment: impl Into<String>) -> Self {
     self.sign_with = Some(fragment.into());
