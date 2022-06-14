@@ -21,15 +21,15 @@ Creating an account is done through the `AccountBuilder`.
     .await?;
 ```
 
-Some options can be set for the `AccountBuilder` including:
+Various options can be set for the `AccountBuilder` including:
 
 - `autosave`: sets the account auto-save behaviour.
-  - `AutoSave::Every` => save to storage on every update
-  - `AutoSave::Never` => never save to storage when updating
+  - `AutoSave::Every` => save to storage on every update.
+  - `AutoSave::Never` => never save to storage when updating.
   - `AutoSave::Batch` => save to storage after every `n` updates.
 - `autopublish`: sets the account auto-publish behaviour.
-  - `true` => publish to the Tangle on every DID document change
-  - `false` => never publish automatically
+  - `true` => publish to the Tangle on every DID document change.
+  - `false` => never publish automatically.
 - `storage`: sets the account storage adapter.
 - `client`: sets the IOTA Tangle `Client`, this determines the `Network` used by the identity.
 - `create_identity`: creates a new identity based on the builder configuration and returns an `Account` instance to manage it.
@@ -37,7 +37,7 @@ Some options can be set for the `AccountBuilder` including:
 
 ## Operations
 
-Operations can be done by calling their specific funciton on the account, for instance:
+Operations can be done by calling their specific function on the account, for instance:
 
   ```rust
   account
