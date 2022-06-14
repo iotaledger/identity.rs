@@ -69,13 +69,15 @@ pub mod did {
 }
 
 pub mod iota {
-  //! IOTA Tangle DID Method
+  //! IOTA DID Tangle client and validators.
 
   pub use identity_iota::chain::*;
   pub use identity_iota::credential::*;
   pub use identity_iota::document::*;
-  pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;
+
+  pub use identity_iota::Error;
+  pub use identity_iota::Result;
 }
 
 pub mod iota_core {

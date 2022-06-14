@@ -44,7 +44,7 @@ where
   C: SharedPtr<Client>,
 {
   /// Constructs a new [`Resolver`] with a default [`Client`] for
-  /// the [`Mainnet`](crate::tangle::Network::Mainnet).
+  /// the [`Mainnet`](identity_iota_core::tangle::Network::Mainnet).
   ///
   /// See also [`Resolver::builder`].
   pub async fn new() -> Result<Self> {
@@ -75,7 +75,7 @@ where
     })
   }
 
-  /// Fetches the [`IotaDocument`] of the given [`IotaDID`].
+  /// Fetches the [`ResolvedIotaDocument`] of the given [`IotaDID`].
   pub async fn resolve(&self, did: &IotaDID) -> Result<ResolvedIotaDocument> {
     let client: &Client = self.get_client_for_did(did)?.deref();
     client.read_document(did).await
@@ -87,7 +87,7 @@ where
     client.resolve_history(did).await
   }
 
-  /// Fetches the [`ChainHistory`] of a diff chain starting from an [`IotaDocument`] on the
+  /// Fetches the [`ChainHistory`] of a diff chain starting from a [`ResolvedIotaDocument`] on the
   /// integration chain.
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id.

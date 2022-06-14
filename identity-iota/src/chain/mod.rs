@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! IOTA DID Integration and Differentiation chains.
+
 pub use self::diff_chain::DiffChain;
 pub use self::document_chain::DocumentChain;
 pub use self::document_history::ChainHistory;

@@ -125,7 +125,7 @@ pub enum FailFast {
 }
 
 /// Options to declare validation criteria for validation methods such as
-/// [`PresentationValidator::full_validation`](super::PresentationValidator::full_validation()) and
+/// [`PresentationValidator::validate`](super::PresentationValidator::validate()) and
 /// [`Resolver::verify_presentation`](crate::tangle::Resolver::verify_presentation()).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[non_exhaustive]

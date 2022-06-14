@@ -89,7 +89,7 @@ impl ExplorerUrl {
 
   /// Returns the web explorer URL of the given `message_id`.
   ///
-  /// E.g. https://explorer.iota.org/mainnet/message/<message_id>
+  /// E.g. `https://explorer.iota.org/mainnet/message/<message_id>`
   pub fn message_url(&self, message_id: &MessageId) -> Result<Url> {
     let mut url: Url = self.0.clone();
     url
@@ -102,7 +102,7 @@ impl ExplorerUrl {
 
   /// Returns the web identity resolver URL for the given DID.
   ///
-  /// E.g. https://explorer.iota.org/mainnet/identity-resolver/<did>
+  /// E.g. `https://explorer.iota.org/mainnet/identity-resolver/<did>`
   pub fn resolver_url(&self, did: &impl DID) -> Result<Url> {
     let mut url: Url = self.0.clone();
     url
