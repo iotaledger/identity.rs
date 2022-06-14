@@ -20,7 +20,8 @@ Cryptographic primitives and traits necessary for DID related operations such as
 
 While the IOTA Identity Framework strives to keep cryptographic operations as internal implementation details, certain lower-level interfaces require constructs from this module, often through the cryptographic [`KeyPair`](crate::crypto::KeyPair) type. 
 
-## Convenient JSON serialization
-By bringing the [`ToJson`](crate::convert::ToJson) and [`FromJson`](crate::convert::FromJson) traits from this crate into scope, one can conveniently convert most types from the IOTA Identity Framework to and from a few common JSON representations.  
+## Convenient JSON Serialization
+The [`ToJson`](crate::convert::ToJson) and [`FromJson`](crate::convert::FromJson) traits from this crate provide convenience functions to convert most types from the IOTA Identity Framework to and from a few common JSON representations.
+
 ## Encoding utilities 
-One may encode and decode binary text with respect to several bases using the associated methods of [`BaseEncoding` ](crate::utils::BaseEncoding). 
+[`BaseEncoding`](crate::utils::BaseEncoding) provides methods to encode and decode binary text with respect to several bases.
