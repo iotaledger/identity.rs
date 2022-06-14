@@ -100,7 +100,8 @@ where
     }
   }
 
-  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core::tangle::Network] used by the identity.
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core::tangle::Network]
+  /// used by the identity.
   /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
   /// NOTE: this overwrites any [`ClientBuilder`] previously set by
@@ -112,7 +113,8 @@ where
     self
   }
 
-  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core::tangle::Network] used by the identity.
+  /// Sets the IOTA Tangle [`Client`], this determines the [`Network`][identity_iota_core::tangle::Network]
+  /// used by the identity.
   /// [`Accounts`](Account) created by the same [`AccountBuilder`] will share the same [`Client`].
   ///
   /// NOTE: this overwrites any [`Client`] previously set by [`AccountBuilder::client`].

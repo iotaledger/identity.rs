@@ -314,8 +314,8 @@ where
     Ok(())
   }
 
-  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by `fragment`,
-  /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
+  /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
   pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
     // Find the service to be updated.
     let mut service_id: IotaDIDUrl = self.did().to_url();
@@ -328,8 +328,8 @@ where
     Ok(())
   }
 
-  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by `fragment`,
-  /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
+  /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
   pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
     // Find the service to be updated.
     let mut service_id: IotaDIDUrl = self.did().to_url();
