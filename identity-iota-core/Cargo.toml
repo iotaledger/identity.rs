@@ -8,7 +8,7 @@ keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = ""
+description = "Core data structures for the IOTA DID Method."
 
 [dependencies]
 bee-message = { version = "0.1.6", default-features = false, features = ["serde"] }

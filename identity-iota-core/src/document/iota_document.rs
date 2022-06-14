@@ -112,7 +112,7 @@ impl IotaDocument {
   ///
   /// * keypair: the initial verification method is derived from the public key of this [`KeyPair`].
   /// * network: Tangle network to use for the DID; default [`Network::Mainnet`](crate::tangle::Network::Mainnet).
-  /// * fragment: name of the initial verification method; default [`DEFAULT_METHOD_FRAGMENT`].
+  /// * fragment: name of the initial verification method; default [`DEFAULT_METHOD_FRAGMENT`](Self::DEFAULT_METHOD_FRAGMENT).
   ///
   /// Example:
   ///

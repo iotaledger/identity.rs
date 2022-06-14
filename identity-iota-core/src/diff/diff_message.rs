@@ -20,7 +20,8 @@ use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 
-/// Defines the difference between two DID [`Document`]s' JSON representations.
+/// Defines the difference between two [`IotaDocument`] JSON representations, published to
+/// the Tangle on a differentiation chain index.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffMessage {
   pub(crate) id: IotaDID,
