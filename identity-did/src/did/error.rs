@@ -7,6 +7,7 @@ use did_url::Error;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 #[non_exhaustive]
+/// Error type caused by invalid DID handling.
 pub enum DIDError {
   #[error("Invalid Authority")]
   InvalidAuthority,

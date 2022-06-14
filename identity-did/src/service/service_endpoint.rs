@@ -11,7 +11,7 @@ use identity_core::common::OrderedSet;
 use identity_core::common::Url;
 use identity_core::convert::FmtJson;
 
-/// A single URL, set, or map of endpoints specified in a [`Service`].
+/// A single URL, set, or map of endpoints specified in a [`Service`](crate::service::Service).
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#dfn-serviceendpoint)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]

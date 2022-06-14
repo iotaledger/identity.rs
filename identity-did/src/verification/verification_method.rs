@@ -99,7 +99,7 @@ where
   /// Sets the `VerificationMethod` id.
   ///
   /// # Errors
-  /// [`Error::InvalidMethodFragment`] if there is no fragment on the [`DIDUrl`].
+  /// [`Error::MissingIdFragment`] if there is no fragment on the [`DIDUrl`].
   pub fn set_id(&mut self, id: DIDUrl<D>) -> Result<()> {
     if id.fragment().unwrap_or_default().is_empty() {
       return Err(Error::MissingIdFragment);

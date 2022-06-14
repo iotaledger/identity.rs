@@ -23,6 +23,7 @@ use crate::did::CoreDID;
 use crate::did::DIDError;
 use crate::did::DID;
 
+/// A method agnostic [`DID Url`](DIDUrl).
 pub type CoreDIDUrl = DIDUrl<CoreDID>;
 
 /// A [DID Url]: a [DID] with [RelativeDIDUrl] components.
