@@ -1,5 +1,5 @@
 [package]
-name = "identity-core"
+name = "identity_core"
 version = "0.5.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"

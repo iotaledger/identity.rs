@@ -16,7 +16,7 @@ bee-rest-api = { version = "0.1.7", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
-identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
+identity_core = { version = "=0.5.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.5.0", path = "../identity_credential" }
 identity_did = { version = "=0.5.0", path = "../identity_did", default-features = false }
 identity_iota_core = { version = "=0.5.0", path = "../identity_iota_core", default-features = false }
