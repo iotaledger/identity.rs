@@ -3,9 +3,10 @@ name = "examples"
 version = "0.1.0"
 edition = "2021"
 publish = false
+release = false
 
 [dependencies]
-identity = { path = "../identity", features = ["account", "stronghold"] }
+identity_iota = { path = "../identity_iota" }
 pretty_env_logger = { version = "0.4" }
 rand = { version = "0.8" }
 tokio = { version = "1.17.0", features = ["full"] }

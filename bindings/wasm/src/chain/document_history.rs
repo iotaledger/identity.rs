@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common::ArrayString;
-use identity::iota::ChainHistory;
-use identity::iota::DocumentHistory;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota_core::DiffMessage;
+use identity_iota::client::ChainHistory;
+use identity_iota::client::DocumentHistory;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::iota_core::DiffMessage;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 

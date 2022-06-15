@@ -5,14 +5,14 @@ use core::str::FromStr;
 use std::rc::Rc;
 
 use futures::executor;
-use identity::iota::Client;
-use identity::iota::ClientBuilder;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
-use identity::iota_core::DiffMessage;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaDocument;
-use identity::iota_core::MessageId;
+use identity_iota::client::Client;
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::TangleResolve;
+use identity_iota::iota_core::DiffMessage;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::MessageId;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -92,7 +92,7 @@ impl WasmClient {
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, diff: &WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     let diff: DiffMessage = diff.0.clone();
     let client: Rc<Client> = self.client.clone();
@@ -164,7 +164,7 @@ impl WasmClient {
   #[allow(non_snake_case)]
   pub fn is_message_included(&self, messageId: &str) -> Result<PromiseBool> {
     let message: MessageId = MessageId::from_str(messageId)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
 
     let client: Rc<Client> = self.client.clone();

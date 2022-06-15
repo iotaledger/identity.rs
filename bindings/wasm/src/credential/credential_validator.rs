@@ -1,12 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::Url;
-use identity::iota::CredentialValidator;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::StatusCheck;
-use identity::iota::ValidationError;
-use identity::iota_core::IotaDocument;
+use identity_iota::client::CredentialValidator;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::StatusCheck;
+use identity_iota::client::ValidationError;
+use identity_iota::core::Url;
+use identity_iota::iota_core::IotaDocument;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;

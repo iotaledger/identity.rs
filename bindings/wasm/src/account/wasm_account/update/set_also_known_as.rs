@@ -4,9 +4,9 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use identity::core::OneOrMany;
-use identity::core::OrderedSet;
-use identity::core::Url;
+use identity_iota::core::OneOrMany;
+use identity_iota::core::OrderedSet;
+use identity_iota::core::Url;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

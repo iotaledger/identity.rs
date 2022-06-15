@@ -28,7 +28,6 @@ runs:
 
     - name: Publish library to crates.io
       shell: sh
-      # add to non-dry run `--no-confirm`
       run: |
         echo "dry-run: '${{ inputs.dry-run }}'"
         echo "version: '${{ inputs.version }}'"
@@ -36,4 +35,4 @@ runs:
           echo "Invalid dry-run input"
           exit 1
         fi
-        cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ ${{ inputs.dry-run }} == 'false' ]; then echo --execute; fi) ${{ inputs.version }}
+        cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ ${{ inputs.dry-run }} == 'false' ]; then echo --execute --no-confirm; fi) ${{ inputs.version }}
