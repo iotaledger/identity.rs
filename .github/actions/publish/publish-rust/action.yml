@@ -31,8 +31,12 @@ runs:
       run: |
         echo "dry-run: '${{ inputs.dry-run }}'"
         echo "version: '${{ inputs.version }}'"
-        if [[ "${{ inputs.dry-run }}" != 'true' && "${{ inputs.dry-run }}" != 'false' ]]; then 
+        if [[ "${{ inputs.dry-run }}" != "true" && "${{ inputs.dry-run }}" != "false" ]]; then 
           echo "Invalid dry-run input"
           exit 1
         fi
-        cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ "${{ inputs.dry-run }}" == 'false' ]; then echo --execute --no-confirm; fi) ${{ inputs.version }}
+        if [[ "${{ inputs.dry-run }}" != "true" ]]; then 
+          echo "Publishing!"
+        fi
+        #cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ "${{ inputs.dry-run }}" != "true" ]; then echo --execute --no-confirm; fi) ${{ inputs.version }}
+        cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose --execute --no-confirm ${{ inputs.version }}
