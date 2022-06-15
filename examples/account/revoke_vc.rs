@@ -58,7 +58,7 @@ async fn main() -> Result<()> {
   // Create a new empty revocation bitmap. No credential is revoked yet.
   let revocation_bitmap: RevocationBitmap = RevocationBitmap::new();
 
-  // Add the RevocationBitmap as a service endpoint to allow verfiers to check the credential status.
+  // Add the RevocationBitmap as a service endpoint to allow verifiers to check the credential status.
   issuer
     .update_identity()
     .create_service()
