@@ -3,16 +3,16 @@
 
 //! cargo run --example account_config
 
-use identity::account::Account;
-use identity::account::AccountBuilder;
-use identity::account::AutoSave;
-use identity::account::IdentitySetup;
-use identity::account::Result;
-use identity::account_storage::MemStore;
-use identity::iota::ClientBuilder;
-use identity::iota::ExplorerUrl;
-use identity::iota_core::IotaDID;
-use identity::iota_core::Network;
+use identity_iota::account::Account;
+use identity_iota::account::AccountBuilder;
+use identity_iota::account::AutoSave;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::Result;
+use identity_iota::account_storage::MemStore;
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::ExplorerUrl;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::Network;
 
 #[tokio::main]
 async fn main() -> Result<()> {

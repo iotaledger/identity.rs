@@ -3,9 +3,9 @@
 
 use std::str::FromStr;
 
-use identity::core::ToJson;
-use identity::iota_core::DiffMessage;
-use identity::iota_core::MessageId;
+use identity_iota::core::ToJson;
+use identity_iota::iota_core::DiffMessage;
+use identity_iota::iota_core::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::WasmProof;
@@ -62,7 +62,7 @@ impl WasmDiffMessage {
   #[wasm_bindgen(js_name = setMessageId)]
   pub fn set_message_id(&mut self, message_id: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(message_id)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.set_message_id(message_id);
     Ok(())
@@ -82,7 +82,7 @@ impl WasmDiffMessage {
   #[wasm_bindgen(js_name = setPreviousMessageId)]
   pub fn set_previous_message_id(&mut self, message_id: &str) -> Result<()> {
     let previous_message_id: MessageId = MessageId::from_str(message_id)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.set_previous_message_id(previous_message_id);
     Ok(())

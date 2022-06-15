@@ -3,24 +3,24 @@
 
 use std::str::FromStr;
 
-use identity::core::OneOrMany;
-use identity::core::OneOrSet;
-use identity::core::OrderedSet;
-use identity::core::Timestamp;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::Presentation;
-use identity::crypto::PrivateKey;
-use identity::crypto::ProofOptions;
-use identity::did::verifiable::VerifiableProperties;
-use identity::did::MethodScope;
-use identity::did::DID;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaDIDUrl;
-use identity::iota_core::IotaDocument;
-use identity::iota_core::IotaVerificationMethod;
-use identity::iota_core::MessageId;
-use identity::iota_core::NetworkName;
+use identity_iota::core::OneOrMany;
+use identity_iota::core::OneOrSet;
+use identity_iota::core::OrderedSet;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::Presentation;
+use identity_iota::crypto::PrivateKey;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::verifiable::VerifiableProperties;
+use identity_iota::did::MethodScope;
+use identity_iota::did::DID;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDIDUrl;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota_core::MessageId;
+use identity_iota::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
 use crate::account::wasm_account::UOneOrManyNumber;
@@ -509,7 +509,7 @@ impl WasmDocument {
       .diff(
         &other.0,
         MessageId::from_str(message_id)
-          .map_err(identity::iota_core::Error::InvalidMessage)
+          .map_err(identity_iota::iota_core::Error::InvalidMessage)
           .wasm_result()?,
         key.0.private(),
         &method_query,
@@ -563,7 +563,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
     let message_id = MessageId::from_str(message_id)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     IotaDocument::diff_index(&message_id).wasm_result()
   }
@@ -619,7 +619,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = setMetadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.metadata.previous_message_id = message_id;
     Ok(())

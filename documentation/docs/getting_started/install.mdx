@@ -25,20 +25,20 @@ You can include the IOTA Identity Library in your project by adding it as a depe
 
 #### Latest Stable Release
 
-This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
+This version is published to crates.io and is **stable**, following semantic versioning.
 
-```rust
+```toml
 [dependencies]
-identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+identity_iota = { version = "0.6" }
 ```
 
 #### Development Release
 
 This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
 
-```rust
+```toml
 [dependencies]
-identity = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+identity_iota = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 ```
 You can find detailed installation instructions in the [Getting Started With Rust](../libraries/rust/getting_started) section.
 
@@ -57,7 +57,7 @@ You can install the WASM binding of the IOTA Identity Library using [npm](https:
 
 #### Latest Stable Release
 
-This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
+This version published to npm is **stable**, following semantic versioning.
 
 ```bash
 npm install @iota/identity-wasm

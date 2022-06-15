@@ -8,11 +8,11 @@
 //!
 //! cargo run --example resolve_did
 
-use identity::iota::Receipt;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::Resolver;
-use identity::iota_core::IotaDID;
-use identity::prelude::*;
+use identity_iota::client::Receipt;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::Resolver;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::prelude::*;
 
 mod create_did;
 

@@ -1,19 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::Context;
-use identity::core::Object;
-use identity::core::OneOrMany;
-use identity::core::Timestamp;
-use identity::core::Url;
-use identity::credential::CredentialBuilder;
-use identity::credential::Evidence;
-use identity::credential::Issuer;
-use identity::credential::Policy;
-use identity::credential::RefreshService;
-use identity::credential::Schema;
-use identity::credential::Status;
-use identity::credential::Subject;
+use identity_iota::core::Context;
+use identity_iota::core::Object;
+use identity_iota::core::OneOrMany;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::Evidence;
+use identity_iota::credential::Issuer;
+use identity_iota::credential::Policy;
+use identity_iota::credential::RefreshService;
+use identity_iota::credential::Schema;
+use identity_iota::credential::Status;
+use identity_iota::credential::Subject;
 use wasm_bindgen::prelude::*;
 
 use proc_typescript::typescript;
