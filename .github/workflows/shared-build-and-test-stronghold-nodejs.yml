@@ -25,12 +25,11 @@ on:
         description: "Name used for the output build artifact. Must be set if `upload-binaries-as-artifacts` is true"
         required: false
         type: string
-jobs:  
+jobs:
   build-stronghold-nodejs:
       defaults:
         run:
           working-directory: bindings/stronghold-nodejs
-          shell: bash
       env:
         DEBUG: napi:*
         APP_NAME: identity-stronghold-nodejs
@@ -41,6 +40,7 @@ jobs:
         matrix:
           settings:
             - host: macos-latest
+              container: null
               target: x86_64-apple-darwin
               architecture: x64
               build: |
@@ -49,6 +49,7 @@ jobs:
               test: |
                 npm run test
             - host: windows-latest
+              container: null
               target: x86_64-pc-windows-msvc
               architecture: x64
               build: |
@@ -56,6 +57,7 @@ jobs:
               test: |
                 npm run test:examples
             - host: ubuntu-latest
+              container: null
               generate-dist: true
               target: x86_64-unknown-linux-gnu
               architecture: x64
@@ -63,19 +65,24 @@ jobs:
                 npm run build && strip dist/*.node
               test: |
                 npm run test
-            # Remove musl target since we can't get a stable build ATM, also re-add triple in package.json if we re-enable it
-            # - host: ubuntu-latest
-            #   target: x86_64-unknown-linux-musl
-            #   architecture: x64
-            #   setup: |
-            #     sudo apt-get install -y musl-tools
-            #   build: |
-            #     export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
-            #     npm run build && strip dist/*.node
-            #   test-docker: |
-            #     docker build -f .github/Dockerfile.alpine -t tester .
-            #     docker run --rm -v $(pwd):/build -w /build/bindings/stronghold-nodejs tester sh -c "readelf -d dist/identity-stronghold-nodejs.linux-x64-musl.node && npm run test"
+            - host: ubuntu-latest
+              # Use container to build musl as `rand::thread_rng()` or `rand::random()` (in our code or dependencies)
+              # causes the '__register_atfork' symbol to not be found at runtime when cross-compiled.
+              container: rust:1-alpine
+              target: x86_64-unknown-linux-musl
+              architecture: x64
+              setup: |
+                # actions/setup-node@v2 does not work for musl, install manually.
+                # build-base required for libsodium compilation.
+                apk add --no-cache nodejs npm build-base
+              build: |
+                export NPM_BUILD_NAPI_ARGS=--target=x86_64-unknown-linux-musl
+                npm run build && strip dist/*.node
+              test: |
+                ldd dist/identity-stronghold-nodejs.linux-x64-musl.node || true 
+                npm run test:examples
             - host: macos-latest
+              container: null
               target: aarch64-apple-darwin
               build: |
                 export NPM_BUILD_NAPI_ARGS=--target=aarch64-apple-darwin
@@ -85,6 +92,7 @@ jobs:
                 echo "let's hope for the best"
       name: stable - ${{ matrix.settings.target }} - node@16
       runs-on: ${{ matrix.settings.host }}
+      container: ${{ matrix.settings.container }}
       steps:
         - uses: actions/checkout@v2
 
@@ -92,7 +100,6 @@ jobs:
           uses: actions/setup-node@v2
           with:
             node-version: 16
-            check-latest: true
             architecture: ${{ matrix.settings.architecture }}
 
         - name: Setup Rust and cache
@@ -101,6 +108,10 @@ jobs:
             os: ${{ matrix.settings.host }}
             job: ${{ github.job }}
             target: ${{ matrix.settings.target }}
+
+        - name: Setup
+          if: ${{ matrix.settings.setup }}
+          run: ${{ matrix.settings.setup }}
 
         - name: Download bindings/wasm artifacts
           uses: actions/download-artifact@v2
@@ -113,10 +124,6 @@ jobs:
             npm ci
             npm link
           working-directory: ./bindings/wasm
-
-        - name: Setup
-          if: ${{ matrix.settings.setup }}
-          run: ${{ matrix.settings.setup }}
 
         - name: Install dependencies
           # ignore peer dependencies, because in the case of publishing the identity-wasm peer dependency is not released yet
@@ -131,11 +138,6 @@ jobs:
         - name: Test bindings
           if: ${{ inputs.run-tests && matrix.settings.test }}
           run: ${{ matrix.settings.test }}
-
-        - name: Test bindings in docker
-          if: ${{ inputs.run-tests && matrix.settings.test-docker }}
-          run: ${{ matrix.settings.test-docker }}
-          working-directory: ./
 
         # Optionally uploads binary artifact for current matrix target for later release.
         - name: Upload binary artifact

@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota_core::IotaDIDUrl;
+use identity_iota::did::DIDUrl;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDIDUrl;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
@@ -69,7 +71,7 @@ impl WasmDIDUrl {
     self.0.set_query(value.as_deref()).wasm_result()
   }
 
-  /// Append a string representing a path, query, and/or fragment to this `DIDUrl`.
+  /// Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
   ///
   /// Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
   /// segment and any following segments in order of path, query, then fragment.
@@ -79,7 +81,7 @@ impl WasmDIDUrl {
   /// - joining a query will clear the fragment.
   /// - joining a fragment will only overwrite the fragment.
   #[wasm_bindgen]
-  pub fn join(self, segment: &str) -> Result<WasmDIDUrl> {
+  pub fn join(&self, segment: &str) -> Result<WasmDIDUrl> {
     self.0.join(segment).map(WasmDIDUrl::from).wasm_result()
   }
 
@@ -102,5 +104,11 @@ impl_wasm_clone!(WasmDIDUrl, DIDUrl);
 impl From<IotaDIDUrl> for WasmDIDUrl {
   fn from(did_url: IotaDIDUrl) -> Self {
     Self(did_url)
+  }
+}
+
+impl From<WasmDIDUrl> for DIDUrl<IotaDID> {
+  fn from(wasm_did_url: WasmDIDUrl) -> Self {
+    wasm_did_url.0
   }
 }

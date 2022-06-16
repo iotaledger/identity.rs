@@ -3,11 +3,16 @@
 
 import { config } from "./config";
 import { createIdentity } from "./create_did";
+import { createVC } from "./create_vc";
+import { createVP } from "./create_vp";
 import { lazy } from "./lazy";
 import { manipulateIdentity } from "./manipulate_did";
 import { multipleIdentities } from "./multiple_identities";
+import { revokeVC } from "./revoke_vc";
 import { signing } from "./signing";
+import { storageTestSuite } from "./custom_storage";
 import { unchecked } from "./unchecked";
+import { encryption } from "./encryption";
 
 async function main() {
     //Check if an example is mentioned
@@ -32,6 +37,16 @@ async function main() {
             return await unchecked();
         case "multiple_identities":
             return await multipleIdentities();
+        case "encryption":
+            return await encryption();
+        case "create_vc":
+            return await createVC();
+        case "create_vp":
+            return await createVP();
+        case "revoke_vc":
+            return await revokeVC();
+        case "custom_storage":
+            return await storageTestSuite()
         default:
             throw "Unknown example name";
     }

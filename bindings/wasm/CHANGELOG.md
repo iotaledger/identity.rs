@@ -1,5 +1,38 @@
 # Changelog
 
+## [wasm-v0.6.0](https://github.com/iotaledger/identity.rs/tree/wasm-v0.6.0) (2022-06-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.5.0...wasm-v0.6.0)
+ 
+The main feature of this release is the addition of the `RevocationBitmap2022` specification, offering efficient credential revocation on-Tangle. This is the replacement for the `MerkleKeyCollection` removed in v0.5.0, which offered similar functionality but fundamentally failed to scale beyond a few thousand revocations. 
+
+ Other changes include encryption support using Elliptic Curve Diffie-Hellman (ECDH) and quality of life improvements for verifiable credential and presentation types in the Wasm bindings. 
+
+ DID Documents created with v0.5.0 remain compatible with v0.6.0. This will be the last major release prior to changes for the Stardust update. 
+
+
+
+### Changed
+
+- Change `remove_service` to return boolean [\#877](https://github.com/iotaledger/identity.rs/pull/877)
+- Change `DIDUrl::join` to borrow self [\#871](https://github.com/iotaledger/identity.rs/pull/871)
+- Add `RevocationBitmap2022`, bump MSRV to 1.60 [\#861](https://github.com/iotaledger/identity.rs/pull/861)
+- Add Wasm `Credential` and `Presentation` field getters and constructors [\#815](https://github.com/iotaledger/identity.rs/pull/815)
+- Add Diffie-Hellman key exchange for encryption to `Account` [\#809](https://github.com/iotaledger/identity.rs/pull/809)
+
+### Added
+
+- Implement `ECDH-ES+A256KW` for `Storage` encryption [\#867](https://github.com/iotaledger/identity.rs/pull/867)
+- Add Client option for retry publishing behaviour [\#820](https://github.com/iotaledger/identity.rs/pull/820)
+- Implement `Storage` test suite [\#791](https://github.com/iotaledger/identity.rs/pull/791)
+
+### Patch
+
+- Fix Wasm `Account.createService` endpoint type [\#819](https://github.com/iotaledger/identity.rs/pull/819)
+- Fix omitting `Resolver.verifyPresentation`, `Document.resolveMethod` optional parameters [\#807](https://github.com/iotaledger/identity.rs/pull/807)
+- Fix Account `create_signed_*` function return types [\#794](https://github.com/iotaledger/identity.rs/pull/794)
+- Fix musl-libc target for Stronghold Node.js bindings [\#789](https://github.com/iotaledger/identity.rs/pull/789)
+
 ## [wasm-v0.5.0](https://github.com/iotaledger/identity.rs/tree/wasm-v0.5.0) (2022-03-31)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/wasm-v0.4.0...wasm-v0.5.0)

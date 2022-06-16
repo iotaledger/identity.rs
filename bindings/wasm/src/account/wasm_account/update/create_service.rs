@@ -5,12 +5,12 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use identity::account::CreateServiceBuilder;
-use identity::account::IdentityUpdater;
-use identity::account::UpdateError::MissingRequiredField;
-use identity::core::Object;
-use identity::core::Url;
-use identity::iota::Client;
+use identity_iota::account::CreateServiceBuilder;
+use identity_iota::account::IdentityUpdater;
+use identity_iota::account::UpdateError::MissingRequiredField;
+use identity_iota::client::Client;
+use identity_iota::core::Object;
+use identity_iota::did::ServiceEndpoint;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -34,11 +34,7 @@ impl WasmAccount {
       .fragment()
       .ok_or(MissingRequiredField("fragment"))
       .wasm_result()?;
-    let endpoint: String = options
-      .endpoint()
-      .ok_or(MissingRequiredField("endpoint"))
-      .wasm_result()?;
-    let endpoint: Url = Url::parse(endpoint.as_str()).wasm_result()?;
+    let endpoint: ServiceEndpoint = deserialize_map_or_any(&options.endpoint())?;
     let properties: Option<Object> = deserialize_map_or_any(&options.properties())?;
 
     let account: Rc<RefCell<AccountRc>> = Rc::clone(&self.0);
@@ -74,7 +70,7 @@ extern "C" {
   pub fn type_(this: &CreateServiceOptions) -> Option<String>;
 
   #[wasm_bindgen(getter, method)]
-  pub fn endpoint(this: &CreateServiceOptions) -> Option<String>;
+  pub fn endpoint(this: &CreateServiceOptions) -> JsValue;
 
   #[wasm_bindgen(getter, method)]
   pub fn properties(this: &CreateServiceOptions) -> JsValue;
@@ -99,7 +95,7 @@ export type CreateServiceOptions = {
   /**
    * The `ServiceEndpoint` of the service.
    */
-  endpoint: string;
+  endpoint: string | string[] | Map<string, string[]> | Record<string, string[]>;
 
   /**
    * Additional properties of the service.

@@ -7,13 +7,14 @@ keywords:
 - credentials
 - Rust
 - WASM
+- reference
 ---
 
 # Overview
 
-Using the [standards proposed by W3C](https://www.w3.org/TR/did-core/), this section will explain the IOTA Identity implementation. You can use this implementation to create a new digital identity for anyone or anything at any time. To do so, you must first generate a [Decentralized Identifier (DID)](../decentralized_identifiers/overview) that will serve as a reference to the [DID Document](../decentralized_identifiers/overview#did-documents). The DID Document contains public keys, and other mechanisms, to enable the subject to prove their association with the DID.
+Using the [standards proposed by W3C](https://www.w3.org/TR/did-core/), this section explains the IOTA Identity implementation. You can use this implementation to create a new digital identity for anyone or anything at any time. To do so, you must first generate a [Decentralized Identifier (DID)](../decentralized_identifiers/overview) that will serve as a reference to the [DID Document](../decentralized_identifiers/overview#did-documents). The DID Document contains public keys and other mechanisms to enable the subject to prove their association with the DID.
 
-However, you can't tell much about the subject from a DID. You need to combine the DID with [Verifiable Credentials](../verifiable_credentials/overview). Verifiable Credentials are statements about the creator of the DID. They can be shared and verified online in a "Bring Your Own Identity" (BYOI) manner, and the DID creator remains in complete control of the process.
+However, you cannot tell much about the subject from a DID. You need to combine the DID with [Verifiable Credentials](../verifiable_credentials/overview). Verifiable Credentials are statements about the creator of the DID. They can be shared and verified online in a "Bring Your Own Identity" (BYOI) manner, and the DID creator remains in complete control of the process.
 
 You can use this framework in processes such as:
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use self::account::PromiseAccount;
+pub use self::account::UOneOrManyNumber;
 pub use self::account::WasmAccount;
 pub use self::account_builder::WasmAccountBuilder;
 

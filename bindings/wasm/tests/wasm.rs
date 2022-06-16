@@ -3,34 +3,21 @@
 
 use std::borrow::Cow;
 
-use identity::core::FromJson;
-use identity::core::Object;
-use identity::core::Timestamp;
-use identity::core::ToJson;
-use identity::iota_core::IotaDID;
+use identity_iota::core::Timestamp;
+use identity_iota::iota_core::IotaDID;
 use identity_wasm::account::types::WasmKeyLocation;
-use js_sys::Array;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
 
 use identity_wasm::common::WasmTimestamp;
-use identity_wasm::credential::WasmCredential;
-use identity_wasm::credential::WasmCredentialValidationOptions;
-use identity_wasm::credential::WasmCredentialValidator;
-use identity_wasm::credential::WasmFailFast;
-use identity_wasm::credential::WasmPresentation;
-use identity_wasm::credential::WasmPresentationValidationOptions;
-use identity_wasm::credential::WasmPresentationValidator;
 use identity_wasm::crypto::WasmKeyPair;
 use identity_wasm::crypto::WasmKeyType;
-use identity_wasm::crypto::WasmProofOptions;
 use identity_wasm::did::WasmDID;
 use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
 use identity_wasm::did::WasmMethodScope;
 use identity_wasm::did::WasmVerificationMethod;
-use identity_wasm::did::WasmVerifierOptions;
 use identity_wasm::error::WasmError;
 
 #[wasm_bindgen_test]
@@ -160,10 +147,7 @@ fn test_document_resolve_method() {
   // Resolve with DIDUrl method query.
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from(default_method.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
-      )
+      .resolve_method(&JsValue::from(default_method.id()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
@@ -172,10 +156,7 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from(method_new.id()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
-      )
+      .resolve_method(&JsValue::from(method_new.id()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
@@ -188,7 +169,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -198,10 +179,7 @@ fn test_document_resolve_method() {
   );
   assert_eq!(
     document
-      .resolve_method(
-        &JsValue::from_str(&method_new.id().to_string()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
-      )
+      .resolve_method(&JsValue::from_str(&method_new.id().to_string()).unchecked_into(), None)
       .unwrap()
       .unwrap()
       .id()
@@ -214,7 +192,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&default_method.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -226,7 +204,7 @@ fn test_document_resolve_method() {
     document
       .resolve_method(
         &JsValue::from_str(&method_new.id().fragment().unwrap()).unchecked_into(),
-        JsValue::undefined().unchecked_into(),
+        None,
       )
       .unwrap()
       .unwrap()
@@ -234,6 +212,48 @@ fn test_document_resolve_method() {
       .to_string(),
     method_new.id().to_string()
   );
+
+  // Resolve with correct verification method relationship.
+  assert_eq!(
+    document
+      .resolve_method(
+        &JsValue::from(default_method.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::capability_invocation()).unchecked_into()),
+      )
+      .unwrap()
+      .unwrap()
+      .id()
+      .to_string(),
+    default_method.id().to_string()
+  );
+  assert_eq!(
+    document
+      .resolve_method(
+        &JsValue::from(method_new.id()).unchecked_into(),
+        Some(JsValue::from(WasmMethodScope::authentication()).unchecked_into()),
+      )
+      .unwrap()
+      .unwrap()
+      .id()
+      .to_string(),
+    method_new.id().to_string()
+  );
+
+  // Resolve with wrong verification method relationship.
+  assert!(document
+    .resolve_method(
+      &JsValue::from(default_method.id()).unchecked_into(),
+      Some(JsValue::from(WasmMethodScope::key_agreement()).unchecked_into()),
+    )
+    .unwrap()
+    .is_none());
+  assert!(document
+    .resolve_method(
+      &JsValue::from(method_new.id()).unchecked_into(),
+      Some(JsValue::from(WasmMethodScope::assertion_method()).unchecked_into()),
+    )
+    .unwrap()
+    .is_none());
 }
 
 #[wasm_bindgen_test]
@@ -311,140 +331,6 @@ fn test_sign_document() {
     )
     .unwrap();
   document1.verify_document(&document2).unwrap();
-}
-
-// Test the duck typed interfaces for WasmPresentationValidator::validate, CredentialValidator::validate,
-// CredentialValidator::validate_signature and PresentationValidator::validate_presentation_signature
-#[wasm_bindgen_test]
-fn test_validations() {
-  // Set up issuer & subject DID documents
-  let issuer_keys: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let mut issuer_doc: WasmDocument = WasmDocument::new(&issuer_keys, None, None).unwrap();
-  issuer_doc
-    .sign_self(
-      &issuer_keys,
-      &issuer_doc
-        .default_signing_method()
-        .unwrap()
-        .id()
-        .to_json()
-        .unwrap()
-        .unchecked_into(),
-    )
-    .unwrap();
-
-  let subject_keys: WasmKeyPair = WasmKeyPair::new(WasmKeyType::Ed25519).unwrap();
-  let mut subject_doc: WasmDocument = WasmDocument::new(&subject_keys, None, None).unwrap();
-  subject_doc
-    .sign_self(
-      &subject_keys,
-      &subject_doc
-        .default_signing_method()
-        .unwrap()
-        .id()
-        .to_json()
-        .unwrap()
-        .unchecked_into(),
-    )
-    .unwrap();
-
-  let subject_did = subject_doc.id();
-  let issuer_did = issuer_doc.id();
-  let subject: Object = Object::from_json(
-    format!(
-      r#"{{
-        "id": "{}",
-        "name": "Alice",
-        "degreeName": "Bachelor of Science and Arts",
-        "degreeType": "BachelorDegree",
-        "GPA": "4.0"
-    }}"#,
-      &subject_did.to_string().as_str()
-    )
-    .as_str(),
-  )
-  .unwrap();
-
-  let credential_obj: Object = Object::from_json(
-    format!(
-      r#"{{
-      "id": "https://example.edu/credentials/3732",
-      "type": "UniversityDegreeCredential",
-      "issuer": "{}",
-      "credentialSubject": {}
-    }}"#,
-      issuer_did.to_string(),
-      subject.to_json().unwrap()
-    )
-    .as_str(),
-  )
-  .unwrap();
-
-  let credential: WasmCredential = WasmCredential::extend(&JsValue::from_serde(&credential_obj).unwrap()).unwrap();
-
-  // Sign the credential with the issuer's DID Document.
-  let signed_credential: WasmCredential = issuer_doc
-    .sign_credential(
-      &JsValue::from(&credential.to_json().unwrap()),
-      issuer_keys.private(),
-      &JsValue::from_str("#sign-0").unchecked_into(),
-      &WasmProofOptions::default(),
-    )
-    .unwrap();
-
-  // validate the credential
-  assert!(WasmCredentialValidator::validate(
-    &signed_credential,
-    &issuer_doc.to_json().unwrap().unchecked_into(),
-    &WasmCredentialValidationOptions::default(),
-    WasmFailFast::FirstError,
-  )
-  .is_ok());
-
-  // check that passing an array to CredentialValidator::verify_signature also works
-  let issuers: Array = vec![issuer_doc].into_iter().map(JsValue::from).collect();
-  assert!(WasmCredentialValidator::verify_signature(
-    &signed_credential,
-    issuers.unchecked_ref(),
-    &WasmVerifierOptions::default(),
-  )
-  .is_ok());
-
-  let presentation: WasmPresentation = WasmPresentation::new(
-    &subject_doc,
-    signed_credential.to_json().unwrap(),
-    Some("VerifiablePresentation".to_owned()),
-    Some("https://example.org/credentials/3732".to_owned()),
-  )
-  .unwrap();
-
-  let signed_presentation: WasmPresentation = subject_doc
-    .sign_presentation(
-      &presentation.to_json().unwrap(),
-      subject_keys.private(),
-      &JsValue::from_str("#sign-0").unchecked_into(),
-      &WasmProofOptions::default(),
-    )
-    .unwrap();
-
-  // verify the holder's signature
-
-  assert!(WasmPresentationValidator::verify_presentation_signature(
-    &signed_presentation,
-    &subject_doc.to_json().unwrap().unchecked_into(),
-    &WasmVerifierOptions::default(),
-  )
-  .is_ok());
-
-  // validate the presentation
-  assert!(WasmPresentationValidator::validate(
-    &signed_presentation,
-    &subject_doc.to_json().unwrap().unchecked_into(),
-    issuers.unchecked_ref(),
-    &WasmPresentationValidationOptions::default(),
-    WasmFailFast::FirstError,
-  )
-  .is_ok());
 }
 
 // This test should be matched by a test with equivalent test vector in Rust

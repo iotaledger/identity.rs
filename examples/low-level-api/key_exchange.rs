@@ -5,15 +5,15 @@
 //!
 //! cargo run --example key_exchange
 
-use identity::crypto::KeyType;
-use identity::crypto::X25519;
-use identity::did::MethodScope;
-use identity::iota::Receipt;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::TangleResolve;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaVerificationMethod;
-use identity::prelude::*;
+use identity_iota::client::Receipt;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::TangleResolve;
+use identity_iota::crypto::KeyType;
+use identity_iota::crypto::X25519;
+use identity_iota::did::MethodScope;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::prelude::*;
 
 mod create_did;
 

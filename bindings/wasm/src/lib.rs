@@ -5,6 +5,7 @@
 #![allow(deprecated)]
 #![allow(clippy::upper_case_acronyms)]
 #![allow(clippy::unused_unit)]
+#![allow(clippy::await_holding_refcell_ref)] // complains about RefCell<Account> in future_to_promise, should only panic in multithreaded code/web workers
 
 #[macro_use]
 extern crate serde;
@@ -23,6 +24,7 @@ pub mod common;
 pub mod credential;
 pub mod crypto;
 pub mod did;
+pub mod revocation;
 pub mod tangle;
 
 /// Initializes the console error panic hook for better error messages

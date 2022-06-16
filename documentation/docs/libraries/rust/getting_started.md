@@ -10,8 +10,8 @@ keywords:
 
 ## Requirements
 
-- [Rust](https://www.rust-lang.org/) (>= 1.51)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51)
+- [Rust](https://www.rust-lang.org/) (>= 1.60)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.60)
 
 ## Include the Library
 
@@ -19,20 +19,20 @@ To include IOTA Identity in your project add it as a dependency in your `Cargo.t
 
 ### Latest Stable Release
 
-This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
+This version is published to crates.io and is **stable**, following semantic versioning.
 
-```rust
+```toml
 [dependencies]
-identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+identity_iota = { version = "0.6" }
 ```
 
 ### Development Release
 
 This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
 
-```rust
+```toml
 [dependencies]
-identity = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+identity_iota = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 ```
 
 

@@ -3,22 +3,28 @@
 
 use std::str::FromStr;
 
-use identity::core::OneOrMany;
-use identity::core::OneOrSet;
-use identity::core::OrderedSet;
-use identity::core::Timestamp;
-use identity::core::Url;
-use identity::crypto::PrivateKey;
-use identity::crypto::ProofOptions;
-use identity::did::verifiable::VerifiableProperties;
-use identity::did::MethodScope;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaDocument;
-use identity::iota_core::IotaVerificationMethod;
-use identity::iota_core::MessageId;
-use identity::iota_core::NetworkName;
+use identity_iota::core::OneOrMany;
+use identity_iota::core::OneOrSet;
+use identity_iota::core::OrderedSet;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::Presentation;
+use identity_iota::crypto::PrivateKey;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::verifiable::VerifiableProperties;
+use identity_iota::did::MethodScope;
+use identity_iota::did::DID;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDIDUrl;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota_core::MessageId;
+use identity_iota::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
+use crate::account::wasm_account::UOneOrManyNumber;
+use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
 use crate::credential::WasmPresentation;
@@ -26,7 +32,7 @@ use crate::crypto::WasmKeyPair;
 use crate::crypto::WasmProof;
 use crate::crypto::WasmProofOptions;
 use crate::did::wasm_method_relationship::WasmMethodRelationship;
-use crate::did::OptionMethodScope;
+use crate::did::RefMethodScope;
 use crate::did::WasmDID;
 use crate::did::WasmDIDUrl;
 use crate::did::WasmDiffMessage;
@@ -208,15 +214,19 @@ impl WasmDocument {
   }
 
   /// Add a new {@link Service} to the document.
+  ///
+  /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
-    Ok(self.0.insert_service(service.0.clone()))
+  pub fn insert_service(&mut self, service: &WasmService) -> bool {
+    self.0.insert_service(service.0.clone())
   }
 
   /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
+  ///
+  /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
-    self.0.remove_service(&did.0).wasm_result()
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> bool {
+    self.0.remove_service(&did.0)
   }
 
   // ===========================================================================
@@ -270,10 +280,10 @@ impl WasmDocument {
   pub fn resolve_method(
     &self,
     query: &UDIDUrlQuery,
-    scope: OptionMethodScope,
+    scope: Option<RefMethodScope>,
   ) -> Result<Option<WasmVerificationMethod>> {
     let method_query: String = query.into_serde().wasm_result()?;
-    let method_scope: Option<MethodScope> = scope.into_serde().wasm_result()?;
+    let method_scope: Option<MethodScope> = scope.map(|js| js.into_serde().wasm_result()).transpose()?;
 
     let method: Option<&IotaVerificationMethod> = if let Some(scope) = method_scope {
       self.0.resolve_method(&method_query, Some(scope))
@@ -375,15 +385,21 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = signCredential)]
   pub fn sign_credential(
     &self,
-    data: &JsValue,
+    credential: &WasmCredential,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmCredential> {
-    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
-    let data: WasmCredential = WasmCredential::from_json(&json)?;
+    let mut data: Credential = credential.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-    Ok(data)
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmCredential::from(data))
   }
 
   /// Creates a signature for the given `Presentation` with the specified DID Document
@@ -392,15 +408,21 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = signPresentation)]
   pub fn sign_presentation(
     &self,
-    data: &JsValue,
+    presentation: &WasmPresentation,
     privateKey: Vec<u8>,
     methodQuery: &UDIDUrlQuery,
     options: &WasmProofOptions,
   ) -> Result<WasmPresentation> {
-    let json: JsValue = self.sign_data(data, privateKey, methodQuery, options)?;
-    let data: WasmPresentation = WasmPresentation::from_json(&json)?;
+    let mut data: Presentation = presentation.0.clone();
+    let private_key: PrivateKey = privateKey.into();
+    let method_query: String = methodQuery.into_serde().wasm_result()?;
+    let options: ProofOptions = options.0.clone();
 
-    Ok(data)
+    self
+      .0
+      .sign_data(&mut data, &private_key, &method_query, options)
+      .wasm_result()?;
+    Ok(WasmPresentation::from(data))
   }
 
   /// Creates a signature for the given `data` with the specified DID Document
@@ -487,7 +509,7 @@ impl WasmDocument {
       .diff(
         &other.0,
         MessageId::from_str(message_id)
-          .map_err(identity::iota_core::Error::InvalidMessage)
+          .map_err(identity_iota::iota_core::Error::InvalidMessage)
           .wasm_result()?,
         key.0.private(),
         &method_query,
@@ -541,7 +563,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
     let message_id = MessageId::from_str(message_id)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     IotaDocument::diff_index(&message_id).wasm_result()
   }
@@ -597,7 +619,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = setMetadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.metadata.previous_message_id = message_id;
     Ok(())
@@ -607,6 +629,36 @@ impl WasmDocument {
   #[wasm_bindgen]
   pub fn proof(&self) -> Option<WasmProof> {
     self.0.proof.clone().map(WasmProof::from)
+  }
+
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  #[wasm_bindgen(js_name = revokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn revoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let mut service_id: IotaDIDUrl = self.0.id().to_url();
+    service_id.set_fragment(Some(fragment)).wasm_result()?;
+
+    self
+      .0
+      .revoke_credentials(&service_id, credentials_indices.as_slice())
+      .wasm_result()
+  }
+
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  #[wasm_bindgen(js_name = unrevokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn unrevoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let mut service_id: IotaDIDUrl = self.0.id().to_url();
+    service_id.set_fragment(Some(fragment)).wasm_result()?;
+
+    self
+      .0
+      .unrevoke_credentials(&service_id, credentials_indices.as_slice())
+      .wasm_result()
   }
 
   // ===========================================================================
@@ -662,9 +714,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayVerificationMethods;
-
-  #[wasm_bindgen(typescript_type = "Map<string, any>")]
-  pub type MapStringAny;
 
   #[wasm_bindgen(typescript_type = "Timestamp | undefined")]
   pub type OptionTimestamp;

@@ -1,11 +1,11 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::Ed25519;
-use identity::crypto::PrivateKey;
-use identity::crypto::PublicKey;
-use identity::crypto::Sign;
-use identity::crypto::Verify;
+use identity_iota::crypto::Ed25519;
+use identity_iota::crypto::PrivateKey;
+use identity_iota::crypto::PublicKey;
+use identity_iota::crypto::Sign;
+use identity_iota::crypto::Verify;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;

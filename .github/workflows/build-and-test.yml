@@ -11,6 +11,7 @@ on:
       - main
       - dev
       - epic/*
+      - support/*
     paths:
       - '.github/workflows/build-and-test.yml'
       - '.github/actions/**'
@@ -107,7 +108,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --release
+          args: --all --all-features --release
 
       - name: Run Rust examples
         # run examples only on ubuntu for now
@@ -175,7 +176,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
@@ -190,13 +191,13 @@ jobs:
         with:
           name: identity-wasm-bindings-build
           path: bindings/wasm
-    
+
       - name: Run Wasm examples
         run: npm run test:examples
         working-directory: bindings/wasm
 
   build-and-test-stronghold-nodejs:
-    needs: 
+    needs:
       - check-for-run-condition
       - build-wasm
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' }}

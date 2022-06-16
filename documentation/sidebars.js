@@ -37,51 +37,47 @@ module.exports = {
             ],
         },
         {
-            'Decentralized Identifiers (DID)': [
-                'decentralized_identifiers/overview',
-                'decentralized_identifiers/create',
-                'decentralized_identifiers/update',
-                'decentralized_identifiers/secure',
-                'decentralized_identifiers/resolve',
-                'decentralized_identifiers/resolve_history',
-                'decentralized_identifiers/private_tangle',
-            ],
-            'Verifiable Credentials': [
-                'verifiable_credentials/overview',
-                'verifiable_credentials/create',
-                'verifiable_credentials/revoke',
-                'verifiable_credentials/verifiable_presentations',
-            ],
-            'DID Communication': [
-                'did_communications/overview',
-                'did_communications/did_comm_messages',
-                'did_communications/protocols',
-            ],
-            'Advanced Concepts': [
-                'advanced/overview',
-                'advanced/client',
-                'advanced/did_messages',
-                'advanced/storage_adapter',
-                'advanced/signature_schemes',
-
-            ]
+          type: 'category',
+          label: 'Concepts',
+          collapsed: false,
+          items: [
+            {
+              'Decentralized Identifiers (DID)': [
+                  'concepts/decentralized_identifiers/overview',
+                  'concepts/decentralized_identifiers/create',
+                  'concepts/decentralized_identifiers/update',
+                  'concepts/decentralized_identifiers/resolve',
+                  'concepts/decentralized_identifiers/private_tangle',
+              ],
+              'Verifiable Credentials': [
+                  'concepts/verifiable_credentials/overview',
+                  'concepts/verifiable_credentials/create',
+                  'concepts/verifiable_credentials/revoke',
+                  'concepts/verifiable_credentials/verifiable_presentations',
+              ],
+              'Advanced Concepts': [
+                  'concepts/advanced/overview',
+                  'concepts/advanced/did_messages',
+                  'concepts/advanced/storage_interface',
+  
+              ]
+            },
+          ],
         },
         {
             type: 'category',
             label: 'Programming Languages',
             collapsed: true,
             items: [
+                'libraries/overview',
                 {
                     type: 'category',
                     label: 'Rust',
                     collapsed: true,
                     items: [
                         'libraries/rust/getting_started',
-                        'libraries/rust/cheat_sheet',
                         'libraries/rust/api_reference',
-                        'libraries/rust/troubleshooting',
                     ],
-
                 },
                 {
                     type: 'category',
@@ -89,9 +85,7 @@ module.exports = {
                     collapsed: true,
                     items: [
                         'libraries/wasm/getting_started',
-                        'libraries/wasm/cheat_sheet',
                         'libraries/wasm/api_reference',
-                        'libraries/wasm/troubleshooting',
                     ],
                 },
             ],
@@ -99,13 +93,14 @@ module.exports = {
         {
           type: 'category',
           label: 'Tutorials',
-          items:['tutorials/validate_university_degree']
+          items:['tutorials/overview','tutorials/validate_university_degree']
         },
         {
           type: 'category',
           label: 'Specifications',
           collapsed: true,
           items: [
+            'specs/overview',
             {
               type: 'category',
               label: 'IOTA DID',

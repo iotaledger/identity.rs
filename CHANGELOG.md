@@ -1,5 +1,41 @@
 # Changelog
 
+## [v0.6.0](https://github.com/iotaledger/identity.rs/tree/v0.6.0) (2022-06-15)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0...v0.6.0)
+ 
+The main feature of this release is the addition of the `RevocationBitmap2022` specification, offering efficient credential revocation on-Tangle. This is the replacement for the `MerkleKeyCollection` removed in v0.5.0, which offered similar functionality but fundamentally failed to scale beyond a few thousand revocations. 
+
+ Other changes include encryption support using Elliptic Curve Diffie-Hellman (ECDH) and quality of life improvements for verifiable credential and presentation types in the Wasm bindings. 
+
+ DID Documents created with v0.5.0 remain compatible with v0.6.0. This will be the last major release prior to changes for the Stardust update. 
+
+
+
+### Changed
+
+- Rename crates to use underscores [\#895](https://github.com/iotaledger/identity.rs/pull/895)
+- Change `remove_service` to return boolean [\#877](https://github.com/iotaledger/identity.rs/pull/877)
+- Change `DIDUrl::join` to borrow self [\#871](https://github.com/iotaledger/identity.rs/pull/871)
+- Add `BaseEncoding` to replace `encode_b58`, `decode_b58`, `encode_multibase`, `decode_multibase` [\#870](https://github.com/iotaledger/identity.rs/pull/870)
+- Add `RevocationBitmap2022`, bump MSRV to 1.60 [\#861](https://github.com/iotaledger/identity.rs/pull/861)
+- Add Wasm `Credential` and `Presentation` field getters and constructors [\#815](https://github.com/iotaledger/identity.rs/pull/815)
+- Add Diffie-Hellman key exchange for encryption to `Account` [\#809](https://github.com/iotaledger/identity.rs/pull/809)
+
+### Added
+
+- Implement `ECDH-ES+A256KW` for `Storage` encryption [\#867](https://github.com/iotaledger/identity.rs/pull/867)
+- Add Client option for retry publishing behaviour [\#820](https://github.com/iotaledger/identity.rs/pull/820)
+- Implement `Storage` test suite [\#791](https://github.com/iotaledger/identity.rs/pull/791)
+
+### Patch
+
+- Unpin iota-crypto version [\#834](https://github.com/iotaledger/identity.rs/pull/834)
+
+### Removed
+
+- Remove unused resolution code [\#862](https://github.com/iotaledger/identity.rs/pull/862)
+
 ## [v0.5.0](https://github.com/iotaledger/identity.rs/tree/v0.5.0) (2022-03-31)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.4.0...v0.5.0)

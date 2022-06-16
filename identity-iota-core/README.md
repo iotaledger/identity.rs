@@ -1,1 +1,0 @@
-The IOTA Identity Library
