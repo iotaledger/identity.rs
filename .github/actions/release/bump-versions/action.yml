@@ -53,6 +53,14 @@ runs:
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
 
+    # cargo workspaces ignores examples/ but cargo release still tries to version it during publishing.
+    - name: Bump Rust examples version
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: examples
+      run: |
+        cargo set-version ${{ inputs.version }}
+
     - name: Bump Wasm bindings crate version
       shell: bash
       if: ${{inputs.release-target == 'wasm'}}
