@@ -5,7 +5,7 @@ module.exports = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'identity-rs',
+                id: 'identity-rs-0.5',
                 path: path.resolve(__dirname, 'docs'),
                 routeBasePath: 'identity.rs',
                 sidebarPath: path.resolve(__dirname, 'sidebars.js'),
@@ -13,7 +13,7 @@ module.exports = {
                 remarkPlugins: [require('remark-code-import'), require('remark-import-partial'), require('remark-remove-comments')],
                 versions: {
                     current: {
-                        label: '0.5.0',
+                        label: '0.5',
                         badge: true
                     },
                 },
