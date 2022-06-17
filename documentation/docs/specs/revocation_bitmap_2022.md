@@ -1,6 +1,6 @@
 ---
-title: RevocationBitmap2022 Specification
-sidebar_label: RevocationBitmap2022 Specification
+title: Revocation Bitmap 2022 Specification
+sidebar_label: Revocation Bitmap 2022 Specification
 description: The specification for the embedded revocation bitmap.
 image: /img/Identity_icon.png
 keywords:
@@ -11,19 +11,19 @@ keywords:
   - bitmap
 ---
 
-# RevocationBitmap2022
+# Revocation Bitmap 2022
 
 ## Abstract
 
-This specification describes an on-tangle mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview) embedded in an issuer's DID document.
+This specification describes an on-Tangle mechanism for publishing the revocation status of [Verifiable Credentials](../concepts/verifiable_credentials/overview) embedded in an issuer's DID document.
 
 ## Introduction
 
-Revocation gives an issuer the possibility to invalidate a credential they issued before its natural expiration date. To that end, issuers embed an identifier in the credential's `credentialStatus` field and verifiers can lookup that identifier in a list to check whether the credential is valid. This document specifies a mechanism of embedding such a list, in form of a bitmap, in an issuer's DID document, where each bitmap index corresponds to a credential the issuer has issued. This mechanism is space-efficient, enables a verifier to check a credential's status in a privacy-preserving manner and without requiring additional lookups or external resources.
+Revocation gives an issuer the capability to invalidate a credential they issued before its natural expiration date. To achieve this, issuers can embed an identifier in the `credentialStatus` field of a credential. Verifiers can then lookup that identifier in a separate list, to check whether the credential is still valid. This document specifies a mechanism of embedding such a list, in form of a bitmap, in the DID document of the issuer, where each bitmap index corresponds to a credential they have issued. This mechanism is space-efficient and enables a verifier to check a credential's status in a privacy-preserving manner and without requiring additional lookups or external resources.
 
 ## Revocation Bitmap Concept
 
-The revocation status of a verifiable credential is expressed as a binary value. The issuer keeps a bitmap of indices corresponding to verifiable credentials it has issued. If the binary value of the index in the bitmap is 1 (one), the verifiable credential is revoked, if it is 0 (zero) it is not revoked.
+The revocation status of a verifiable credential is expressed as a binary value. The issuer keeps a bitmap of indices corresponding to verifiable credentials they have issued. If the binary value of the index in the bitmap is 1 (one), the verifiable credential is revoked, if it is 0 (zero) it is not revoked.
 
 ## Data Model
 
@@ -31,56 +31,13 @@ The revocation status of a verifiable credential is expressed as a binary value.
 
 For an issuer to enable verifiers to check the status of a verifiable credential, the [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) property MUST be specified with the following properties:
 
-- **id**: A [DID URL](https://www.w3.org/TR/did-core/#did-url-syntax) that can be resolved to a service of the issuer which contains the revocation bitmap;
-- **type**: the string `"RevocationBitmap2022"`;
-- **revocationBitmapIndex**: an unsigned, 32-bit integer expressed as a string, which is the index of the verifiable credential's revocation status in the issuer's revocation bitmap;
+| Property | Description |
+| :--- | :--- |
+| `id` | The constraints on the `id` property are listed in the [Verifiable Credentials Data Model specification](https://www.w3.org/TR/vc-data-model/). The `id` MUST be a [DID URL](https://www.w3.org/TR/did-core/#did-url-syntax) that resolves to a [Revocation Bitmap Service](#revocation-bitmap-service) in the DID Document of the issuer. |
+| `type` | The `type` property MUST be `"RevocationBitmap2022"`. |
+| `revocationBitmapIndex` | The `revocationBitmapIndex` property MUST be an unsigned, 32-bit integer expressed as a string. This is the index of the credential in the issuer's revocation bitmap. Each index SHOULD be unique among all credentials linking to the same [Revocation Bitmap Service](#revocation-bitmap-service). |
 
-### Revocation Bitmap Service
-
-In order to allow verfiers to check the status of a verifiable credential, the DID document of the issuer may contain a service that MUST have the following properties:
-
-- **id**: a URL identifying the revocation bitmap;
-- **type**: the string `"RevocationBitmap2022"`;
-- **serviceEndpoint**: a `data` URL [[RFC2397](https://datatracker.ietf.org/doc/html/rfc2397)] embedding a revocation bitmap generated according to the [bitmap generation algorithm](#Bitmap-Generation-Algorithm). The `<mediatype>` MUST be `application/octet-stream` and the `base64` attribute MUST be set.
-
-## Algorithms
-
-The following algorithms describe how to generate and validate revocation bitmaps.
-
-### Bitmap Generation Algorithm
-
-The following process MUST be followed when producing a `RevocationBitmap2022`:
-
-1. Let **bitmap** be a [_roaring bitmap_](https://roaringbitmap.org/) where each bit is initialized to 0 (zero).
-2. For each revoked credential with an **identifier** not exceeding an unsigned, 32-bit integer, set the bit in **bitmap** at index **identifier** to 1.
-3. Generate the **bitmap serialization** according to the [roaring bitmap serialization format](https://github.com/RoaringBitmap/RoaringFormatSpec/) using the **bitmap** as input.
-4. Generate a **compressed bitmap** by using the ZLIB compression algorithm [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)] on the bitmap serialization and base64-encoding [[RFC4648](https://datatracker.ietf.org/doc/html/rfc4648)] the result.
-5. Return the **compressed bitmap**.
-
-### Bitmap Expansion Algorithm
-
-The following process MUST be followed when expanding a compressed revocation list bitmap.
-
-1. Let **compressed bitmap** be a compressed revocation bitmap generated using the above algorithm.
-2. Generate an **uncompressed bitmap** by base64-decoding [[RFC4648](https://datatracker.ietf.org/doc/html/rfc4648)] the **compressed bitmap** and further decompressing using ZLIB [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)].
-3. Generate the **bitmap** by deserializing the **uncompressed bitmap** according to the [roaring bitmap serialization format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
-4. Return the **bitmap**.
-
-### Validation Algorithm
-
-The following steps MUST be followed when checking whether a verifiable credential is revoked:
-
-1. Let **credential** be a verifiable credential containing a `credentialStatus` whose `type` is `RevocationBitmap2022`.
-2. Let **revocation bitmap uri** be the `id` field of the **credential**'s `credentialStatus`.
-3. Verify all proofs associated with the **credential**. If a proof fails, return a validation error.
-4. Resolve the **revocation bitmap uri** to a **revocation bitmap service**, and verify that its type is `RevocationBitmap2022`. Return an error otherwise.
-5. Let **compressed bitmap** be the `<data>` part of the `serviceEndpoint` data URL [[RFC2397](https://datatracker.ietf.org/doc/html/rfc2397)] of **revocation bitmap service**.
-6. Generate a **revocation bitmap** by applying the [bitmap expansion algorithm](#Bitmap-Expansion-Algorithm) to the **compressed bitmap**.
-7. Let **revocation index** be the integer value of the `revocationBitmapIndex` property of the **credential**.
-8. Let **revoked** be the value of the bit at index **revocation index** in the **revocation bitmap**.
-9. Return `true` if **revoked** is 1, `false` otherwise.
-
-## Example
+#### Example
 
 An example of a verifiable credential with a `credentialStatus` of type `RevocationBitmap2022`.
 
@@ -110,7 +67,19 @@ An example of a verifiable credential with a `credentialStatus` of type `Revocat
 }
 ```
 
-and the corresponding issuer's DID document where credential `"5"` in the `#revocation` service is revoked:
+### Revocation Bitmap Service
+
+To allow verifiers to check the status of a [Revocation Bitmap Status](#revocation-bitmap-status), the DID document of the credential issuer MUST contain a [service](https://www.w3.org/TR/did-core/#services) with the following properties:
+
+| Property | Description |
+| :--- | :--- |
+| `id` | The constraints on the `id` property are listed in the [DID Core service specification](https://www.w3.org/TR/did-core/#services). The `id` property MUST be a DID URL uniquely identifying the revocation bitmap. |
+| `type` | The `type` property MUST be `"RevocationBitmap2022"`. |
+| `serviceEndpoint` | The `serviceEndpoint` MUST be generated according to the [service endpoint generation algorithm](#service-endpoint-generation-algorithm). |
+
+#### Example
+
+An example of an issuer's DID document where credential `"5"` in the `#revocation` service is revoked:
 
 ```json
 {
@@ -141,25 +110,62 @@ and the corresponding issuer's DID document where credential `"5"` in the `#revo
 }
 ```
 
+## Algorithms
+
+The following algorithms define how to generate, expand and validate revocation bitmaps.
+
+### Service Endpoint Generation Algorithm
+
+The following process MUST be followed when producing a `RevocationBitmap2022` to embed in a service endpoint:
+
+1. Let **bitmap** be a [_roaring bitmap_](https://roaringbitmap.org/) where each bit is initialized to 0.
+2. For each revoked credential with an **index** not exceeding an unsigned, 32-bit integer, set the corresponding bit in **bitmap** at **index** to 1.
+3. Generate the **bitmap serialization** according to the [roaring bitmap serialization format](https://github.com/RoaringBitmap/RoaringFormatSpec/) using the **bitmap** as input.
+4. Generate a **compressed bitmap** by using the ZLIB compression algorithm [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)] on the **bitmap serialization** and base64-encoding [[RFC4648](https://datatracker.ietf.org/doc/html/rfc4648)] the result.
+5. Create the **service endpoint** by embedding the **compressed bitmap** in a data URL [[RFC2397](https://datatracker.ietf.org/doc/html/rfc2397)]. On the data url, the `<mediatype>` MUST be `application/octet-stream` and the `base64` attribute MUST be set.
+6. Return the **service endpoint**.
+
+### Service Endpoint Expansion Algorithm
+
+The following process MUST be followed when expanding the endpoint from a service of type `RevocationBitmap2022`:
+
+1. Let **service endpoint** be a data url generated using the [service endpoint generation algorithm](#service-endpoint-generation-algorithm).
+2. The `<mediatype>` of the **service endpoint** MUST be `application/octet-stream` and the `base64` attribute MUST be set, return an error otherwise. Let **compressed bitmap** be the `<data>` part of the data url.
+3. Generate an **uncompressed bitmap** by base64-decoding [[RFC4648](https://datatracker.ietf.org/doc/html/rfc4648)] the **compressed bitmap** and then decompressing the result using ZLIB [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)].
+4. Generate the **bitmap** by deserializing the **uncompressed bitmap** according to the [roaring bitmap serialization format](https://github.com/RoaringBitmap/RoaringFormatSpec/).
+5. Return the **bitmap**.
+
+### Validation Algorithm
+
+The following steps MUST be followed when checking whether a verifiable credential is revoked:
+
+1. Let **credential** be a verifiable credential containing a `credentialStatus` whose `type` is `RevocationBitmap2022`.
+2. Let **revocation bitmap URL** be the `id` field of the **credential**'s `credentialStatus`.
+3. Resolve the **revocation bitmap URL** to a **revocation bitmap service** in the issuer's DID document, and verify that the service `type` is `RevocationBitmap2022`. Return an error otherwise.
+4. Expand the endpoint of the **revocation bitmap service** into a **revocation bitmap** according to the [service endpoint expansion algorithm](#service-endpoint-expansion-algorithm).
+5. Let **revocation index** be the integer value of the `revocationBitmapIndex` property of the **credential**.
+6. Let **revoked** be the value of the bit at index **revocation index** in the **revocation bitmap**.
+7. Return `true` if **revoked** is 1, `false` otherwise.
+
 ## Test Vectors
 
 This section provides test vectors to validate implementations against.
 
 ### Test Vector 1
 
-The following data url decodes to a bitmap of length 0 where no index is revoked:
+The following data URL decodes to a bitmap of length 0 where no index is revoked:
 
 `"data:application/octet-stream;base64,ZUp5ek1tQUFBd0FES0FCcg=="`
 
 ### Test Vector 2
 
-The following data url decodes to a bitmap of length 3 where indices `5`, `398`, and `67000` are revoked:
+The following data URL decodes to a bitmap of length 3 where indices `5`, `398`, and `67000` are revoked:
 
 `"data:application/octet-stream;base64,ZUp5ek1tQmdZR0lBQVVZZ1pHQ1FBR0laSUdabDZHUGN3UW9BRXVvQjlB"`.
 
 ### Test Vector 3
 
-The following data url decodes to a bitmap of length 16384 where all indices are revoked:
+The following data URL decodes to a bitmap of length 16384 where all indices are revoked:
 
 `"data:application/octet-stream;base64,ZUp6dHhERVJBQ0FNQkxESEFWS1lXZkN2Q3E0MmFESmtyMlNrM0ROckFLQ2RBQUFBQUFBQTMzbGhHZm9q"`
 
@@ -169,14 +175,22 @@ This section describes the rationale behind some of the design decisions of this
 
 ### Compression
 
-Knowing that messages published to the Tangle cannot exceed [32 KiB](https://github.com/iotaledger/tips/blob/main/tips/TIP-0006/tip-0006.md#message-validation) in size and that the greater the message the more it will cost, the use of compression was assessed.
+Considering that messages published to the Tangle cannot exceed [32 KiB](https://github.com/iotaledger/tips/blob/main/tips/TIP-0006/tip-0006.md#message-validation) in size, and that larger messages have increased requirements, the use of compression was assessed.
 
-Although the difference in overall size for the compressed DID document is not significant when adding a compressed bitmap, the size of the decompressed document increases significantly when the bitmap is not compressed. Taking into account that the computational effort to compress and decompress the revocation bitmap would be a cost that only verifiers have to deal with, and that every other user would benefit from a lower memory footprint, we opted for compressing the revocation bitmap.
+ZLIB [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)] was chosen for having a free and open source software licence and being one of the most widely used compression schemes, which enhances the accessibility of this specification. Some other assessed algorithms had only marginally better compression ratios but far fewer existing implementations in different programming languages.
+
+### Compressed Bitstring vs. Roaring Bitmap
+
+Because of their space efficiency, a roaring bitmap is preferred for representing a bitmap in-memory. To avoid the dependency on roaring bitmap, we considered to use a compressed bitstring as the serialization format. However, serialization of such a bitstring is 2-3x slower compared to roaring's serialization format, which becomes an issue on resource-constrained devices (e.g. smartphones) or in web browsers.
+
+### Comparison to `RevocationList2020`
+
+The [RevocationList2020 specification](https://w3c-ccg.github.io/vc-status-rl-2020/) describes a revocation mechanism using a verifiable credential that contains a bitmap, similar to the `RevocationBitmap2022` approach. The credential is hosted outside of the DID document and the verifier thus needs to fetch it from an external resource, likely one controlled by the issuer. This has privacy implications as the issuer can track where a fetch request for the credential came from and infering who the credential was verified by and for what purpose. The issuer can also potentially infer which credential was checked. Because `RevocationBitmap2022` is embedded in the DID document, which can be obtained without the issuer's knowledge, this approach does not suffer from those shortcomings. See also the [privacy considerations](#privacy-considerations).
+
+A downside of embedding the revocation list in the DID document is that storage in a distributed ledger (DLT) is usually more expensive than storage outside of it. The DLT might also impose message size limitations, capping the total number of revocations that can be done (see also [compression](#compression)).
 
 ### Privacy Considerations
 
 Because the revocation bitmap is embedded in the DID document, and thus available without contacting the issuer directly, the issuer cannot correlate how a holder uses their credential. Because of that, it is not necessary for the bitmap to have a minimum size.
 
-### Compressed Bitstring vs. Roaring Bitmap
-
-Because of their space efficiency, a roaring bitmap is preferred for representing a bitmap in-memory. To avoid the dependency on roaring bitmap, we considered to use a compressed bitstring as the serialization format. However, serialization of such a bitstring is 2-3x slower compared to roaring's serialization format, which becomes an issue on resource-constrained devices (e.g. smartphones) or in web browsers.
+An observer finding a service of type `RevocationBitmap2022` in a DID document can infer that this DID belongs to an issuer. However, DIDs of issuers tend to be publicly known, in contrast to DIDs of other entities, so this is unlikely to present an issue. External observers can monitor the frequency of revocations and potentially the total number of issued credentials, depending on how the issuer assigns credential indices (e.g. starting from 0 and incrementing the index for each issued credential).
