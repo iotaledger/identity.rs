@@ -106,8 +106,8 @@ const I_STATUS: &'static str = r#"
 interface Status {
   /** A URL identifying the credential status. */
   readonly id: string;
-  /** The type(s) of the credential status. */
-  readonly types: string | Array<string>;
+  /** The type of the credential status. */
+  readonly type: string;
   /** Additional properties of the credential status. */
   readonly [properties: string]: unknown;
 }"#;

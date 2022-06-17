@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account_storage::EncryptionAlgorithm;
+use identity_iota::account_storage::EncryptionAlgorithm;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -20,6 +20,12 @@ impl WasmEncryptionAlgorithm {
   #[wasm_bindgen(js_name = A256GCM)]
   pub fn aes256gcm() -> WasmEncryptionAlgorithm {
     Self(EncryptionAlgorithm::AES256GCM)
+  }
+
+  /// Returns the length of the cipher's key.
+  #[wasm_bindgen(js_name = keyLength)]
+  pub fn key_length(&self) -> usize {
+    self.0.key_length()
   }
 
   /// Serializes `EncryptionAlgorithm` as a JSON object.

@@ -8,8 +8,8 @@ inputs:
     description: 'the version to release under (e.g. `1.2.3-dev.1`)'
     required: true
   dry-run:
-    description: 'will not publish if set, but only log the potential result'
-    required: false
+    description: "'true' = only log potential result; 'false' = publish'"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -28,5 +28,7 @@ runs:
 
     - name: Publish library to crates.io
       shell: sh
-      # add to non-dry run `--no-confirm`
-      run: cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ ${{ inputs.dry-run }} == '' ]; then echo --execute; fi) ${{ inputs.version }}
+      run: |
+        echo "dry-run: '${{ inputs.dry-run }}'"
+        echo "version: '${{ inputs.version }}'"
+        cargo release --workspace --token ${{ inputs.crates-token }} --isolated --no-dev-version --no-push --no-tag --verbose $(if [ "${{ inputs.dry-run }}" = "false" ]; then echo --execute --no-confirm; fi) ${{ inputs.version }}

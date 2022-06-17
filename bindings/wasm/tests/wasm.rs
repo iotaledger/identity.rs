@@ -3,8 +3,8 @@
 
 use std::borrow::Cow;
 
-use identity::core::Timestamp;
-use identity::iota_core::IotaDID;
+use identity_iota::core::Timestamp;
+use identity_iota::iota_core::IotaDID;
 use identity_wasm::account::types::WasmKeyLocation;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

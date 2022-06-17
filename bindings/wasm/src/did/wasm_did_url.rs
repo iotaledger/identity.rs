@@ -1,7 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota_core::IotaDIDUrl;
+use identity_iota::did::DIDUrl;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDIDUrl;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
@@ -102,5 +104,11 @@ impl_wasm_clone!(WasmDIDUrl, DIDUrl);
 impl From<IotaDIDUrl> for WasmDIDUrl {
   fn from(did_url: IotaDIDUrl) -> Self {
     Self(did_url)
+  }
+}
+
+impl From<WasmDIDUrl> for DIDUrl<IotaDID> {
+  fn from(wasm_did_url: WasmDIDUrl) -> Self {
+    wasm_did_url.0
   }
 }

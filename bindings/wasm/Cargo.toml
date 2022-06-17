@@ -1,6 +1,6 @@
 [package]
-name = "identity-wasm"
-version = "0.5.0"
+name = "identity_wasm"
+version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -20,18 +20,18 @@ async-trait = { version = "0.1", default-features = false }
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }
-proc-typescript = { version = "0.1.0", path = "./proc-typescript" }
+proc_typescript = { version = "0.1.0", path = "./proc_typescript" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 serde_repr = { version = "0.1", default-features = false }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
-[dependencies.identity]
-version = "=0.5.0"
-path = "../../identity"
+[dependencies.identity_iota]
+version = "=0.6.0"
+path = "../../identity_iota"
 default-features = false
-features = ["account", "storage-test-suite", "unstable-encryption"]
+features = ["account", "storage-test-suite", "unstable-encryption", "revocation-bitmap"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }

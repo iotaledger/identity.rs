@@ -4,9 +4,9 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use identity::account::UpdateError::MissingRequiredField;
-use identity::core::OneOrMany;
-use identity::did::MethodRelationship;
+use identity_iota::account::UpdateError::MissingRequiredField;
+use identity_iota::core::OneOrMany;
+use identity_iota::did::MethodRelationship;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

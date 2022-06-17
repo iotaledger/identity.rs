@@ -6,21 +6,21 @@
 //!
 //! cargo run --example did_history
 
-use identity::core::json;
-use identity::core::FromJson;
-use identity::core::Timestamp;
-use identity::crypto::KeyPair;
-use identity::did::MethodScope;
-use identity::did::Service;
-use identity::did::DID;
-use identity::iota::Client;
-use identity::iota::DocumentHistory;
-use identity::iota::Receipt;
-use identity::iota::Result;
-use identity::iota_core::IotaDocument;
-use identity::iota_core::IotaService;
-use identity::iota_core::IotaVerificationMethod;
-use identity::prelude::*;
+use identity_iota::client::Client;
+use identity_iota::client::DocumentHistory;
+use identity_iota::client::Receipt;
+use identity_iota::client::Result;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Timestamp;
+use identity_iota::crypto::KeyPair;
+use identity_iota::did::MethodScope;
+use identity_iota::did::Service;
+use identity_iota::did::DID;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaService;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::prelude::*;
 
 mod create_did;
 
@@ -120,7 +120,7 @@ async fn main() -> Result<()> {
     int_doc_2.remove_method(&int_doc_2.id().to_url().join("#keys-1")?)?;
 
     // Remove the #linked-domain-1 Service
-    int_doc_2.remove_service(&int_doc_2.id().to_url().join("#linked-domain-1")?)?;
+    int_doc_2.remove_service(&int_doc_2.id().to_url().join("#linked-domain-1")?);
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     let keys_2: KeyPair = KeyPair::new(KeyType::Ed25519)?;

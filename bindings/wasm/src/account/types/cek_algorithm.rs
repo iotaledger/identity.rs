@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account_storage::CekAlgorithm;
+use identity_iota::account_storage::CekAlgorithm;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
@@ -21,6 +21,12 @@ impl WasmCekAlgorithm {
   #[wasm_bindgen(js_name = EcdhEs)]
   pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
     Self(CekAlgorithm::ECDH_ES(agreement.clone().into()))
+  }
+
+  /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+  #[wasm_bindgen(js_name = EcdhEsA256Kw)]
+  pub fn ecdh_es_a256kw(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
+    Self(CekAlgorithm::ECDH_ES_A256KW(agreement.clone().into()))
   }
 
   /// Serializes `CekAlgorithm` as a JSON object.
