@@ -1,6 +1,6 @@
 [package]
-name = "identity-stardust"
-version = "0.5.0"
+name = "identity_stardust"
+version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
