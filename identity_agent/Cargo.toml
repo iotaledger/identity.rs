@@ -1,5 +1,5 @@
 [package]
-name = "identity-actor"
+name = "identity_agent"
 version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
@@ -8,7 +8,7 @@ keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "A peer-to-peer identity communication framework"
+description = "A peer-to-peer communication framework for building digital agents on IOTA identity"
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
