@@ -23,12 +23,12 @@ use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::actor::SystemState;
 use crate::didcomm::AbstractDidCommActor;
-use crate::didcomm::ActorIdentity;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommActorMap;
 use crate::didcomm::DidCommActorWrapper;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
+use crate::didcomm::DidCommSystemIdentity;
 use crate::didcomm::DidCommSystemState;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
@@ -37,7 +37,7 @@ use crate::p2p::NetCommander;
 /// A builder for [`DidCommSystem`]s to customize its configuration and attach actors.
 pub struct DidCommSystemBuilder {
   inner: SystemBuilder,
-  identity: Option<ActorIdentity>,
+  identity: Option<DidCommSystemIdentity>,
   didcomm_actors: DidCommActorMap,
 }
 
@@ -66,9 +66,9 @@ impl DidCommSystemBuilder {
     self
   }
 
-  /// Set the [`ActorIdentity`] that will be used for DIDComm related tasks, such as en- and decryption.
+  /// Set the [`DidCommSystemIdentity`] that will be used for DIDComm related tasks, such as en- and decryption.
   #[must_use]
-  pub fn identity(mut self, identity: ActorIdentity) -> Self {
+  pub fn identity(mut self, identity: DidCommSystemIdentity) -> Self {
     self.identity = Some(identity);
     self
   }

@@ -36,5 +36,9 @@ identity_account = { version = "=0.6.0", path = "../identity_account", default-f
 pretty_env_logger = { version = "0.4", default-features = false }
 
 [[bench]]
-name = "benchmark"
+name = "remote_account_benchmark"
+harness = false
+
+[[bench]]
+name = "agent_benchmark"
 harness = false

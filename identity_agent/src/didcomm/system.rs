@@ -32,10 +32,10 @@ use crate::p2p::ThreadRequest;
 ///
 /// Note: Currently an incomplete implementation.
 #[derive(Debug, Clone)]
-pub struct ActorIdentity {
+pub struct DidCommSystemIdentity {
   // TODO: This type is meant to be used in a future update.
   #[allow(dead_code)]
-  pub(crate) document: IotaDocument,
+  pub document: IotaDocument,
 }
 
 /// The internal state of a [`System`].
@@ -46,11 +46,11 @@ pub struct DidCommSystemState {
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
   #[allow(dead_code)]
-  pub(crate) identity: ActorIdentity,
+  pub(crate) identity: DidCommSystemIdentity,
 }
 
 impl DidCommSystemState {
-  pub(crate) fn new(actors: DidCommActorMap, identity: ActorIdentity) -> Self {
+  pub(crate) fn new(actors: DidCommActorMap, identity: DidCommSystemIdentity) -> Self {
     Self {
       actors,
       threads_receiver: DashMap::new(),

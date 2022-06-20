@@ -14,9 +14,9 @@ use libp2p::PeerId;
 
 use crate::actor::System;
 use crate::actor::SystemBuilder;
-use crate::didcomm::ActorIdentity;
 use crate::didcomm::DidCommSystem;
 use crate::didcomm::DidCommSystemBuilder;
+use crate::didcomm::DidCommSystemIdentity;
 
 fn try_init_logger() {
   let _ = pretty_env_logger::try_init();
@@ -78,10 +78,10 @@ async fn default_listening_didcomm_system(
   (listening_system, addrs, peer_id)
 }
 
-fn default_identity() -> ActorIdentity {
+fn default_identity() -> DidCommSystemIdentity {
   let keypair: KeyPair = KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
 
-  ActorIdentity {
+  DidCommSystemIdentity {
     document: IotaDocument::new(&keypair).unwrap(),
   }
 }

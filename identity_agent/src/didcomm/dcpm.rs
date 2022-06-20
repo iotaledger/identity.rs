@@ -39,11 +39,17 @@ impl<T> DidCommPlaintextMessage<T> {
     }
   }
 
-  pub(crate) fn thread_id(&self) -> &ThreadId {
+  /// Returns the `ThreadId` of the message.
+  pub fn thread_id(&self) -> &ThreadId {
     match self.thid.as_ref() {
       Some(thid) => thid,
       None => &self.id,
     }
+  }
+
+  /// Returns the body of the message.
+  pub fn body(&self) -> &T {
+    &self.body
   }
 }
 
