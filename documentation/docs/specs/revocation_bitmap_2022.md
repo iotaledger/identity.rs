@@ -1,6 +1,6 @@
 ---
-title: Revocation Bitmap 2022 Specification
-sidebar_label: Revocation Bitmap 2022 Specification
+title: Revocation Bitmap
+sidebar_label: Revocation Bitmap
 description: The specification for the embedded revocation bitmap.
 image: /img/Identity_icon.png
 keywords:
@@ -173,24 +173,29 @@ The following data URL decodes to a bitmap of length 16384 where all indices are
 
 This section describes the rationale behind some of the design decisions of this specification.
 
-### Compression
+### Compression and maximum size
 
 Considering that messages published to the Tangle cannot exceed [32 KiB](https://github.com/iotaledger/tips/blob/main/tips/TIP-0006/tip-0006.md#message-validation) in size, and that larger messages have increased requirements, the use of compression was assessed.
+The precise size of a serialized bitmap varies based on the number and distribution of revoked indices. When indices are revoked uniformly randomly, roughly 100,000 - 200,000 can be achieved in a DID Document with compression, and significantly more if consecutive indices are revoked.
 
-ZLIB [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)] was chosen for having a free and open source software licence and being one of the most widely used compression schemes, which enhances the accessibility of this specification. Some other assessed algorithms had only marginally better compression ratios but far fewer existing implementations in different programming languages.
+ZLIB [[RFC 1950](https://datatracker.ietf.org/doc/html/rfc1950)] was chosen for having a free and open source software licence and being one of the most widely used compression schemes, which enhances the accessibility of this specification. Some other assessed algorithms produced only marginally better compression ratios but had far fewer existing implementations across different programming languages.
 
 ### Compressed Bitstring vs. Roaring Bitmap
 
-Because of their space efficiency, a roaring bitmap is preferred for representing a bitmap in-memory. To avoid the dependency on roaring bitmap, we considered to use a compressed bitstring as the serialization format. However, serialization of such a bitstring is 2-3x slower compared to roaring's serialization format, which becomes an issue on resource-constrained devices (e.g. smartphones) or in web browsers.
+Because of its space efficiency, a roaring bitmap is preferred for representing a bitmap in-memory. To avoid the dependency on roaring bitmap, we considered using a compressed bitstring as the serialization format. However, serialization of such a bitstring was 2-3x slower compared to roaring's serialization format, which becomes an issue on resource-constrained devices (e.g. smartphones) or in web browsers.
 
-### Comparison to `RevocationList2020`
+### Comparison to `RevocationList2020` and `StatusList2021`
 
-The [RevocationList2020 specification](https://w3c-ccg.github.io/vc-status-rl-2020/) describes a revocation mechanism using a verifiable credential that contains a bitmap, similar to the `RevocationBitmap2022` approach. The credential is hosted outside of the DID document and the verifier thus needs to fetch it from an external resource, likely one controlled by the issuer. This has privacy implications as the issuer can track where a fetch request for the credential came from and infering who the credential was verified by and for what purpose. The issuer can also potentially infer which credential was checked. Because `RevocationBitmap2022` is embedded in the DID document, which can be obtained without the issuer's knowledge, this approach does not suffer from those shortcomings. See also the [privacy considerations](#privacy-considerations).
+The [RevocationList2020 specification](https://w3c-ccg.github.io/vc-status-rl-2020/) and [StatusList2021 specification](https://w3c-ccg.github.io/vc-status-list-2021/) both describe a similar revocation mechanism using a verifiable credential that contains a bitmap, similar to the `RevocationBitmap2022` approach. The credential is hosted outside of the DID document and the verifier thus needs to fetch it from an external resource, likely one controlled by the issuer. This has privacy implications as the issuer can track where a fetch request for the credential came from and potentially infer who the credential was verified by and for what purpose. The issuer can also potentially infer which credential was checked. Because `RevocationBitmap2022` is embedded in the issuer's DID document, which can be obtained without the their knowledge, this approach does not suffer from these privacy shortcomings. See also the [privacy considerations](#privacy-considerations).
 
-A downside of embedding the revocation list in the DID document is that storage in a distributed ledger (DLT) is usually more expensive than storage outside of it. The DLT might also impose message size limitations, capping the total number of revocations that can be done (see also [compression](#compression)).
+A downside of embedding the revocation list in the DID document is that storage in a distributed ledger (DLT) is usually more expensive than other storage hosting solutions. The DLT might also impose message size limitations, capping the total number of revocations that can be done (see also [compression](#compression)).
+
+Another difference is that `RevocationList2020` specifies a minimum initial size of 131,072 for its bitstring, to mitigate the  potential for correlating individuals when few credentials have been issued. `RevocationBitmap2022` uses a roaring bitmap instead of a bitstring, so the maximum size is not fixed (apart from the upper bound of an unsigned 32-bit integer). This means the bitmap cannot be used to correlate small populations without more information not present in the bitmap itself. However, both schemes still reveal publicly how many credentials have been revoked, which could be used to infer other information if more knowledge about how an issuer assigns credential revocation indexes is known.
+
+`StatusList2021` specifically allows for explicitly stating the purpose of the list, currently either _revocation_ or _suspension_. This specification does not mandate that revoked credentials cannot be unrevoked, which means a `RevocationBitmap2022` can effectively also be used as a suspension list.
 
 ### Privacy Considerations
 
-Because the revocation bitmap is embedded in the DID document, and thus available without contacting the issuer directly, the issuer cannot correlate how a holder uses their credential. Because of that, it is not necessary for the bitmap to have a minimum size.
+Because the revocation bitmap is embedded in the DID document, and thus available without contacting the issuer directly, the issuer cannot correlate how a holder uses their credential.
 
 An observer finding a service of type `RevocationBitmap2022` in a DID document can infer that this DID belongs to an issuer. However, DIDs of issuers tend to be publicly known, in contrast to DIDs of other entities, so this is unlikely to present an issue. External observers can monitor the frequency of revocations and potentially the total number of issued credentials, depending on how the issuer assigns credential indices (e.g. starting from 0 and incrementing the index for each issued credential).
