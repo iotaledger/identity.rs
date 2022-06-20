@@ -1,0 +1,65 @@
+[package]
+name = "identity_iota_client"
+version = "0.6.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity", "did"]
+license = "Apache-2.0"
+readme = "./README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+description = "Tangle Client integration for the IOTA DID Method."
+
+[dependencies]
+async-trait = { version = "0.1", default-features = false }
+bee-rest-api = { version = "0.1.7", default-features = false }
+brotli = { version = "3.3", default-features = false, features = ["std"] }
+form_urlencoded = { version = "1.0" }
+futures = { version = "0.3" }
+identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.6.0", path = "../identity_credential" }
+identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
+itertools = { version = "0.10" }
+lazy_static = { version = "1.4", default-features = false }
+log = { version = "0.4", default-features = false }
+num-derive = { version = "0.3", default-features = false }
+num-traits = { version = "0.2", default-features = false, features = ["std"] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde_repr = { version = "0.1", default-features = false }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0", default-features = false }
+
+[dependencies.iota-client]
+version = "1.2.0"
+features = ["tls"]
+default-features = false
+
+[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
+version = "1.2.0"
+default-features = false
+features = ["wasm"]
+
+[dependencies.iota-crypto]
+version = ">=0.7, <0.10"
+default-features = false
+features = ["blake2b"]
+
+[dev-dependencies]
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
+tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
+
+[features]
+default = ["async", "revocation-bitmap"]
+
+# Enables async runtime support (Tokio)
+async = ["iota-client/async"]
+
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity_iota_core/revocation-bitmap"]
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,17 +1,18 @@
 [workspace]
 resolver = "2"
 members = [
-  "identity",
-  # "identity-comm",
-  "identity-account",
-  "identity-account-storage",
+  # "identity_comm",
+  "identity_account",
+  "identity_account_storage",
   "identity-actor",
-  "identity-core",
-  "identity-credential",
-  "identity-did",
-  "identity-diff",
-  "identity-iota",
-  "identity-iota-core",
+  "identity_core",
+  "identity_credential",
+  "identity_did",
+  "identity_diff",
+  "identity_iota",
+  "identity_iota_client",
+  "identity_iota_core",
+
   "examples",
 ]
 

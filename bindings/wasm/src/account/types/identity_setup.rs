@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account::IdentitySetup;
-use identity::crypto::PrivateKey;
+use identity_iota::account::IdentitySetup;
+use identity_iota::crypto::PrivateKey;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]

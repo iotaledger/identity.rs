@@ -31,34 +31,42 @@ runs:
         command: install
         args: -f --no-default-features --features "add set-version" --version ^0.8 cargo-edit
 
-    - name: Replace identity version in Wasm bindings
+    - name: Replace identity_iota version in Wasm bindings
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
       working-directory: bindings/wasm
       run: |
-        cargo add identity@=${{ inputs.version }} --path=../../identity
-    
-    - name: Replace identity version in stronghold nodejs bindings
+        cargo add identity_iota@=${{ inputs.version }} --path=../../identity_iota
+
+    - name: Replace identity versions in stronghold nodejs bindings
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
       working-directory: bindings/stronghold-nodejs
       run: |
-        cargo add identity-core@=${{ inputs.version }} --path=../../identity-core
-        cargo add identity-iota-core@=${{ inputs.version }} --path=../../identity-iota-core
-        cargo add identity-account-storage@=${{ inputs.version }} --path=../../identity-account-storage
-    
-    - name: Bump Rust crate version
+        cargo add identity_core@=${{ inputs.version }} --path=../../identity_core
+        cargo add identity_iota_core@=${{ inputs.version }} --path=../../identity_iota_core
+        cargo add identity_account_storage@=${{ inputs.version }} --path=../../identity_account_storage
+
+    - name: Bump Rust crate versions
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
       run: |
         cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+
+    # cargo workspaces ignores examples/ but cargo release still tries to version it during publishing.
+    - name: Bump Rust examples version
+      shell: bash
+      if: ${{inputs.release-target == 'rust'}}
+      working-directory: examples
+      run: |
+        cargo set-version ${{ inputs.version }}
 
     - name: Bump Wasm bindings crate version
       shell: bash
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/wasm
       run: |
-        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y
+        cargo workspaces version --force "*" --no-git-commit --exact custom ${{ inputs.version }} -y -a
 
     - name: Bump stronghold nodejs bindings crate version
       shell: bash

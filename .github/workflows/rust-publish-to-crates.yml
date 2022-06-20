@@ -1,0 +1,31 @@
+name: Rust publish to crates.io
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish Rust under (e.g. `1.2.3-dev.1`)'
+        required: true
+      branch:
+        description: 'Branch to run publish from'
+        required: true
+      dry-run:
+        description: 'Run in dry-run mode'
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  publish-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - name: Publish to crates.io
+        uses: './.github/actions/publish/publish-rust'
+        with:
+          version: ${{ github.event.inputs.version }}
+          crates-token: ${{ secrets.CRATES_IO_TOKEN }}
+          dry-run: ${{ github.event.inputs.dry-run }}

@@ -12,6 +12,7 @@ import { revokeVC } from "./revoke_vc";
 import { signing } from "./signing";
 import { storageTestSuite } from "./custom_storage";
 import { unchecked } from "./unchecked";
+import { encryption } from "./encryption";
 
 async function main() {
     //Check if an example is mentioned
@@ -36,6 +37,8 @@ async function main() {
             return await unchecked();
         case "multiple_identities":
             return await multipleIdentities();
+        case "encryption":
+            return await encryption();
         case "create_vc":
             return await createVC();
         case "create_vp":

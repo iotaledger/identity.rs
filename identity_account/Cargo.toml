@@ -1,0 +1,42 @@
+[package]
+name = "identity_account"
+version = "0.6.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity", "did"]
+license = "Apache-2.0"
+readme = "./README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+description = "High-level interface for managing IOTA DID Documents."
+
+[dependencies]
+identity_account_storage = { version = "=0.6.0", path = "../identity_account_storage", default-features = false }
+identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
+identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false }
+identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
+log = { version = "0.4", default-features = false }
+paste = { version = "1.0" }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0" }
+
+[dev-dependencies]
+futures = { version = "0.3" }
+rusty-fork = { version = "0.3" }
+tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
+
+[features]
+default = ["stronghold", "async", "send-sync-storage", "encryption", "revocation-bitmap"]
+mem-client = []
+stronghold = ["identity_account_storage/stronghold"]
+async = ["identity_iota_client/async"]
+send-sync-storage = ["identity_account_storage/send-sync-storage"]
+# Enables encryption and decryption functionality.
+encryption = ["identity_account_storage/encryption"]
+
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity_iota_client/revocation-bitmap"]

@@ -1,19 +1,19 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::Context;
-use identity::core::Object;
-use identity::core::OneOrMany;
-use identity::core::Timestamp;
-use identity::core::Url;
-use identity::credential::CredentialBuilder;
-use identity::credential::Evidence;
-use identity::credential::Issuer;
-use identity::credential::Policy;
-use identity::credential::RefreshService;
-use identity::credential::Schema;
-use identity::credential::Status;
-use identity::credential::Subject;
+use identity_iota::core::Context;
+use identity_iota::core::Object;
+use identity_iota::core::OneOrMany;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::Evidence;
+use identity_iota::credential::Issuer;
+use identity_iota::credential::Policy;
+use identity_iota::credential::RefreshService;
+use identity_iota::credential::Schema;
+use identity_iota::credential::Status;
+use identity_iota::credential::Subject;
 use wasm_bindgen::prelude::*;
 
 use proc_typescript::typescript;
@@ -71,9 +71,7 @@ impl TryFrom<ICredential> for CredentialBuilder {
       builder = builder.expiration_date(expiration_date);
     }
     if let Some(credential_status) = credential_status {
-      for status in credential_status.into_vec() {
-        builder = builder.status(status);
-      }
+      builder = builder.status(credential_status);
     }
     if let Some(credential_schema) = credential_schema {
       for schema in credential_schema.into_vec() {
@@ -117,7 +115,7 @@ struct ICredentialHelper {
   /// The JSON-LD context(s) applicable to the `Credential`.
   #[typescript(type = "string | Record<string, any> | Array<string | Record<string, any>>")]
   context: Option<OneOrMany<Context>>,
-  /// A unique URI referencing the subject of the `Credential`.
+  /// A unique URI that may be used to identify the `Credential`.
   #[typescript(type = "string")]
   id: Option<String>,
   /// One or more URIs defining the type of the `Credential`. Contains the base context by default.
@@ -136,8 +134,8 @@ struct ICredentialHelper {
   #[typescript(name = "expirationDate", type = "Timestamp")]
   expiration_date: Option<Timestamp>,
   /// Information used to determine the current status of the `Credential`.
-  #[typescript(name = "credentialStatus", type = "Status | Array<Status>")]
-  credential_status: Option<OneOrMany<Status>>,
+  #[typescript(name = "credentialStatus", type = "Status")]
+  credential_status: Option<Status>,
   /// Information used to assist in the enforcement of a specific `Credential` structure.
   #[typescript(name = "credentialSchema", type = "Schema | Array<Schema>")]
   credential_schema: Option<OneOrMany<Schema>>,

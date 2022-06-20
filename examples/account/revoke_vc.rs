@@ -11,23 +11,27 @@
 //!
 //! cargo run --example account_revoke_vc
 
-use identity::account::Account;
-use identity::account::AccountBuilder;
-use identity::account::IdentitySetup;
-use identity::account::MethodContent;
-use identity::account::Result;
-use identity::core::json;
-use identity::core::FromJson;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
-use identity::credential::Subject;
-use identity::crypto::ProofOptions;
-use identity::did::DID;
-use identity::iota::CredentialValidationOptions;
-use identity::iota::CredentialValidator;
-use identity::iota::ResolvedIotaDocument;
-use identity::iota::Resolver;
+use identity_iota::account::Account;
+use identity_iota::account::AccountBuilder;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::MethodContent;
+use identity_iota::account::Result;
+use identity_iota::client::CredentialValidationOptions;
+use identity_iota::client::CredentialValidator;
+use identity_iota::client::ResolvedIotaDocument;
+use identity_iota::client::Resolver;
+use identity_iota::client::ValidationError;
+use identity_iota::core::json;
+use identity_iota::core::FromJson;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::RevocationBitmapStatus;
+use identity_iota::credential::Status;
+use identity_iota::credential::Subject;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::RevocationBitmap;
+use identity_iota::did::DID;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -51,6 +55,19 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
+  // Create a new empty revocation bitmap. No credential is revoked yet.
+  let revocation_bitmap: RevocationBitmap = RevocationBitmap::new();
+
+  // Add the RevocationBitmap as a service endpoint to allow verifiers to check the credential status.
+  issuer
+    .update_identity()
+    .create_service()
+    .fragment("my-revocation-service")
+    .type_(RevocationBitmap::TYPE)
+    .endpoint(revocation_bitmap.to_endpoint()?)
+    .apply()
+    .await?;
+
   // Create a credential subject indicating the degree earned by Alice.
   let subject: Subject = Subject::from_json_value(json!({
     "id": "did:iota:B8DucnzULJ9E8cmaReYoePU2b7UKE9WKxyEVov8tQA7H",
@@ -59,23 +76,63 @@ async fn main() -> Result<()> {
     "GPA": "4.0",
   }))?;
 
-  // Build credential using subject above and issuer.
+  // Create an unsigned `UniversityDegree` credential for Alice.
+  // The issuer also chooses a unique `RevocationBitmap` index to be able to revoke it later.
+  let service_url = issuer.did().to_url().join("#my-revocation-service")?;
+  let credential_index: u32 = 5;
+  let status: Status = RevocationBitmapStatus::new(service_url, credential_index).into();
+
+  // Build credential using subject above, status, and issuer.
   let mut credential: Credential = CredentialBuilder::default()
     .id(Url::parse("https://example.edu/credentials/3732")?)
     .issuer(Url::parse(issuer.did().as_str())?)
     .type_("UniversityDegreeCredential")
+    .status(status)
     .subject(subject)
     .build()?;
 
   // Sign the Credential with the issuer's verification method.
   issuer.sign("#key-1", &mut credential, ProofOptions::default()).await?;
 
+  let validation_result = CredentialValidator::validate(
+    &credential,
+    &issuer.document(),
+    &CredentialValidationOptions::default(),
+    identity_iota::client::FailFast::FirstError,
+  );
+
+  // The credential wasn't revoked, so we expect the validation to succeed.
+  assert!(validation_result.is_ok());
+
   // ===========================================================================
-  // Revoke the Verifiable Credential.
+  // Revocation of the Verifiable Credential.
   // ===========================================================================
 
-  // Remove the public key that signed the VC from the issuer's DID document
-  // This effectively revokes the VC as it will no longer be able to be verified.
+  // Update the RevocationBitmap service in the issuer's DID Document.
+  // This revokes the credential's unique index.
+  issuer
+    .revoke_credentials("my-revocation-service", &[credential_index])
+    .await?;
+
+  let validation_result = CredentialValidator::validate(
+    &credential,
+    &issuer.document(),
+    &CredentialValidationOptions::default(),
+    identity_iota::client::FailFast::FirstError,
+  );
+
+  // We expect validation to no longer succeed because the credential was revoked.
+  assert!(matches!(
+    validation_result.unwrap_err().validation_errors[0],
+    ValidationError::Revoked
+  ));
+
+  // ===========================================================================
+  // Alternative revocation of the Verifiable Credential.
+  // ===========================================================================
+
+  // By removing the verification method, that signed the credential, from the issuer's DID document,
+  // we effectively revoke the credential, as it will no longer be possible to validate the signature.
   issuer
     .update_identity()
     .delete_method()
@@ -83,18 +140,19 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
-  // Check the verifiable credential is revoked.
+  // We expect the verifiable credential to be revoked.
   let resolver: Resolver = Resolver::new().await?;
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve_credential_issuer(&credential).await?;
   let validation_result = CredentialValidator::validate(
     &credential,
     &resolved_issuer_doc,
     &CredentialValidationOptions::default(),
-    identity::iota::FailFast::FirstError,
+    identity_iota::client::FailFast::FirstError,
   );
 
   println!("VC validation result: {:?}", validation_result);
   assert!(validation_result.is_err());
+
   println!("Credential successfully revoked!");
 
   Ok(())

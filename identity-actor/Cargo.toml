@@ -1,6 +1,6 @@
 [package]
 name = "identity-actor"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
@@ -14,9 +14,9 @@ description = "A peer-to-peer identity communication framework"
 async-trait = { version = "0.1", default-features = false }
 dashmap = { version = "5.1", default-features = false }
 futures = { version = "0.3", default-features = false }
-identity-core = { version = "=0.5.0", path = "../identity-core", default-features = false }
-identity-iota = { version = "=0.5.0", path = "../identity-iota", default-features = false, features = ["async"] }
-identity-iota-core = { version = "=0.5.0", path = "../identity-iota-core", default-features = false }
+identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
+identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false, features = ["async"] }
+identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
 libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
@@ -31,7 +31,7 @@ uuid = { version = "*", features = ["wasm-bindgen"] }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
-identity-account = { version = "=0.5.0", path = "../identity-account", default-features = false, features = ["send-sync-storage"] }
+identity_account = { version = "=0.6.0", path = "../identity_account", default-features = false, features = ["send-sync-storage"] }
 pretty_env_logger = { version = "0.4", default-features = false }
 
 [[bench]]

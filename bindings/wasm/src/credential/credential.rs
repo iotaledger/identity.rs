@@ -1,10 +1,10 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::Context;
-use identity::core::Object;
-use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
+use identity_iota::core::Context;
+use identity_iota::core::Object;
+use identity_iota::credential::Credential;
+use identity_iota::credential::CredentialBuilder;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -65,7 +65,7 @@ impl WasmCredential {
       .map(|value| value.unchecked_into::<ArrayContext>())
   }
 
-  /// Returns a copy of the unique `URI` referencing the subject of the `Credential`.
+  /// Returns a copy of the unique `URI` identifying the `Credential` .
   #[wasm_bindgen]
   pub fn id(&self) -> Option<String> {
     self.0.id.as_ref().map(|url| url.to_string())

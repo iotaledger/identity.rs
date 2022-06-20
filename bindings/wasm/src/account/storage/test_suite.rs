@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::account_storage::StorageTestSuite;
+use identity_iota::account_storage::StorageTestSuite;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
@@ -52,3 +52,22 @@ expose_to_wasm!(key_generate_test, keyGenerateTest);
 expose_to_wasm!(key_delete_test, keyDeleteTest);
 expose_to_wasm!(key_insert_test, keyInsertTest);
 expose_to_wasm!(key_sign_ed25519_test, keySignEd25519Test);
+
+#[wasm_bindgen(js_class = StorageTestSuite)]
+impl WasmStorageTestSuite {
+  #[wasm_bindgen(js_name = encryptionTest)]
+  pub fn encryption_test(alice_storage: WasmStorage, bob_storage: WasmStorage) -> PromiseVoid {
+    let promise = future_to_promise(async move {
+      StorageTestSuite::encryption_test(alice_storage, bob_storage)
+        .await
+        .map_err(|err| {
+          let errors: Vec<String> = err.chain().map(|error| error.to_string()).collect();
+          let output: String = AsRef::<[String]>::as_ref(&errors).join(": ");
+          JsValue::from_str(&output)
+        })
+        .map(|_| JsValue::undefined())
+    });
+
+    promise.unchecked_into::<PromiseVoid>()
+  }
+}

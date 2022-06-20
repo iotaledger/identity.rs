@@ -5,15 +5,15 @@
 
 use std::path::PathBuf;
 
-use identity::account::Account;
-use identity::account::IdentitySetup;
-use identity::account::MethodContent;
-use identity::account::Result;
-use identity::account_storage::Stronghold;
-use identity::core::Url;
-use identity::did::MethodRelationship;
-use identity::iota::ExplorerUrl;
-use identity::iota_core::IotaDID;
+use identity_iota::account::Account;
+use identity_iota::account::IdentitySetup;
+use identity_iota::account::MethodContent;
+use identity_iota::account::Result;
+use identity_iota::account_storage::Stronghold;
+use identity_iota::client::ExplorerUrl;
+use identity_iota::core::Url;
+use identity_iota::did::MethodRelationship;
+use identity_iota::iota_core::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {

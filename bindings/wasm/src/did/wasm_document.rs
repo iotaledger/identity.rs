@@ -3,24 +3,27 @@
 
 use std::str::FromStr;
 
-use identity::core::OneOrMany;
-use identity::core::OneOrSet;
-use identity::core::OrderedSet;
-use identity::core::Timestamp;
-use identity::core::Url;
-use identity::credential::Credential;
-use identity::credential::Presentation;
-use identity::crypto::PrivateKey;
-use identity::crypto::ProofOptions;
-use identity::did::verifiable::VerifiableProperties;
-use identity::did::MethodScope;
-use identity::iota_core::IotaDID;
-use identity::iota_core::IotaDocument;
-use identity::iota_core::IotaVerificationMethod;
-use identity::iota_core::MessageId;
-use identity::iota_core::NetworkName;
+use identity_iota::core::OneOrMany;
+use identity_iota::core::OneOrSet;
+use identity_iota::core::OrderedSet;
+use identity_iota::core::Timestamp;
+use identity_iota::core::Url;
+use identity_iota::credential::Credential;
+use identity_iota::credential::Presentation;
+use identity_iota::crypto::PrivateKey;
+use identity_iota::crypto::ProofOptions;
+use identity_iota::did::verifiable::VerifiableProperties;
+use identity_iota::did::MethodScope;
+use identity_iota::did::DID;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDIDUrl;
+use identity_iota::iota_core::IotaDocument;
+use identity_iota::iota_core::IotaVerificationMethod;
+use identity_iota::iota_core::MessageId;
+use identity_iota::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
 
+use crate::account::wasm_account::UOneOrManyNumber;
 use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
@@ -211,15 +214,19 @@ impl WasmDocument {
   }
 
   /// Add a new {@link Service} to the document.
+  ///
+  /// Returns `true` if the service was added.
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: &WasmService) -> Result<bool> {
-    Ok(self.0.insert_service(service.0.clone()))
+  pub fn insert_service(&mut self, service: &WasmService) -> bool {
+    self.0.insert_service(service.0.clone())
   }
 
   /// Remove a {@link Service} identified by the given {@link DIDUrl} from the document.
+  ///
+  /// Returns `true` if a service was removed.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
-    self.0.remove_service(&did.0).wasm_result()
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> bool {
+    self.0.remove_service(&did.0)
   }
 
   // ===========================================================================
@@ -502,7 +509,7 @@ impl WasmDocument {
       .diff(
         &other.0,
         MessageId::from_str(message_id)
-          .map_err(identity::iota_core::Error::InvalidMessage)
+          .map_err(identity_iota::iota_core::Error::InvalidMessage)
           .wasm_result()?,
         key.0.private(),
         &method_query,
@@ -556,7 +563,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = diffIndex)]
   pub fn diff_index(message_id: &str) -> Result<String> {
     let message_id = MessageId::from_str(message_id)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     IotaDocument::diff_index(&message_id).wasm_result()
   }
@@ -612,7 +619,7 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = setMetadataPreviousMessageId)]
   pub fn set_metadata_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message_id: MessageId = MessageId::from_str(value)
-      .map_err(identity::iota_core::Error::InvalidMessage)
+      .map_err(identity_iota::iota_core::Error::InvalidMessage)
       .wasm_result()?;
     self.0.metadata.previous_message_id = message_id;
     Ok(())
@@ -622,6 +629,36 @@ impl WasmDocument {
   #[wasm_bindgen]
   pub fn proof(&self) -> Option<WasmProof> {
     self.0.proof.clone().map(WasmProof::from)
+  }
+
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  #[wasm_bindgen(js_name = revokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn revoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let mut service_id: IotaDIDUrl = self.0.id().to_url();
+    service_id.set_fragment(Some(fragment)).wasm_result()?;
+
+    self
+      .0
+      .revoke_credentials(&service_id, credentials_indices.as_slice())
+      .wasm_result()
+  }
+
+  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  #[wasm_bindgen(js_name = unrevokeCredentials)]
+  #[allow(non_snake_case)]
+  pub fn unrevoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let mut service_id: IotaDIDUrl = self.0.id().to_url();
+    service_id.set_fragment(Some(fragment)).wasm_result()?;
+
+    self
+      .0
+      .unrevoke_credentials(&service_id, credentials_indices.as_slice())
+      .wasm_result()
   }
 
   // ===========================================================================

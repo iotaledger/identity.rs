@@ -14,8 +14,14 @@ used to store identities, and the same <a href="#Client">Client</a> used to publ
 This means a builder can be reconfigured in-between account creations, without affecting
 the configuration of previously built accounts.</p>
 </dd>
+<dt><a href="#AgreementInfo">AgreementInfo</a></dt>
+<dd><p>Agreement information used as the input for the concat KDF.</p>
+</dd>
 <dt><a href="#AutoSave">AutoSave</a></dt>
 <dd></dd>
+<dt><a href="#CekAlgorithm">CekAlgorithm</a></dt>
+<dd><p>Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).</p>
+</dd>
 <dt><a href="#ChainState">ChainState</a></dt>
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
@@ -49,6 +55,12 @@ the configuration of previously built accounts.</p>
 </dd>
 <dt><a href="#Ed25519">Ed25519</a></dt>
 <dd></dd>
+<dt><a href="#EncryptedData">EncryptedData</a></dt>
+<dd><p>The structure returned after encrypting data</p>
+</dd>
+<dt><a href="#EncryptionAlgorithm">EncryptionAlgorithm</a></dt>
+<dd><p>Supported content encryption algorithms.</p>
+</dd>
 <dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
 <dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
@@ -107,6 +119,9 @@ merged with one or more <code>DiffMessages</code>.</p>
 <dt><a href="#ResolverBuilder">ResolverBuilder</a></dt>
 <dd><p>Builder for configuring [<code>Clients</code>][Client] when constructing a [<code>Resolver</code>].</p>
 </dd>
+<dt><a href="#RevocationBitmap">RevocationBitmap</a></dt>
+<dd><p>A compressed bitmap for managing credential revocation.</p>
+</dd>
 <dt><a href="#Service">Service</a></dt>
 <dd><p>A DID Document Service used to enable trusted interactions associated
 with a DID subject.</p>
@@ -140,6 +155,23 @@ See <code>IVerifierOptions</code>.</p>
 <dl>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
+<dt><a href="#StatusCheck">StatusCheck</a></dt>
+<dd><p>Controls validation behaviour when checking whether or not a credential has been revoked by its
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a>.</p>
+</dd>
+<dt><a href="#Strict">Strict</a></dt>
+<dd><p>Validate the status if supported, reject any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+<p>Only <code>RevocationBitmap2022</code> is currently supported.</p>
+<p>This is the default.</p>
+</dd>
+<dt><a href="#SkipUnsupported">SkipUnsupported</a></dt>
+<dd><p>Validate the status if supported, skip any unsupported
+<a href="https://www.w3.org/TR/vc-data-model/#status"><code>credentialStatus</code></a> types.</p>
+</dd>
+<dt><a href="#SkipAll">SkipAll</a></dt>
+<dd><p>Skip all status checks.</p>
+</dd>
 <dt><a href="#SubjectHolderRelationship">SubjectHolderRelationship</a></dt>
 <dd><p>Declares how credential subjects must relate to the presentation holder during validation.
 See <code>PresentationValidationOptions::subject_holder_relationship</code>.</p>
@@ -165,9 +197,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#MethodRelationship">MethodRelationship</a></dt>
 <dd></dd>
 </dl>
 
@@ -193,10 +225,6 @@ publishing to the Tangle.
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -210,6 +238,14 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, credentialIndices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+    * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
@@ -248,50 +284,6 @@ Detaches the given relationship from the given method, if the method exists.
 | --- | --- |
 | options | <code>DetachMethodRelationshipOptions</code> | 
 
-<a name="Account+deleteService"></a>
-
-### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a Service if it exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteServiceOptions</code> | 
-
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+setController"></a>
-
-### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the controllers of the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetControllerOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
 <a name="Account+did"></a>
 
 ### account.did() ⇒ [<code>DID</code>](#DID)
@@ -314,6 +306,10 @@ Returns the auto-save configuration value.
 
 ### account.document() ⇒ [<code>Document</code>](#Document)
 Returns a copy of the document managed by the `Account`.
+
+Note: the returned document only has a valid signature after publishing an integration chain update.
+In general, for use cases where the signature is required, it is advisable to resolve the
+document from the Tangle.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+resolveIdentity"></a>
@@ -419,6 +415,110 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
+<a name="Account+revokeCredentials"></a>
+
+### account.revokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+If the document has a `RevocationBitmap` service identified by `fragment`,
+revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="Account+unrevokeCredentials"></a>
+
+### account.unrevokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+If the document has a `RevocationBitmap` service identified by `fragment`,
+unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="Account+encryptData"></a>
+
+### account.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
+Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+
+Returns an [`EncryptedData`] instance.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| plaintext | <code>Uint8Array</code> | 
+| associated_data | <code>Uint8Array</code> | 
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
+| public_key | <code>Uint8Array</code> | 
+
+<a name="Account+decryptData"></a>
+
+### account.decryptData(data, encryption_algorithm, cek_algorithm, fragment) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
+Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+`cek_algorithm`.
+
+Returns the decrypted text.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| data | [<code>EncryptedData</code>](#EncryptedData) | 
+| encryption_algorithm | [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm) | 
+| cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
+| fragment | <code>string</code> | 
+
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
+
+<a name="Account+deleteService"></a>
+
+### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a Service if it exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteServiceOptions</code> | 
+
+<a name="Account+setController"></a>
+
+### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the controllers of the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetControllerOptions</code> | 
+
 <a name="Account+createService"></a>
 
 ### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -487,6 +587,78 @@ by the [Client](#Client) used to publish it.
 | --- | --- |
 | identity_setup | <code>IdentitySetup</code> \| <code>undefined</code> | 
 
+<a name="AgreementInfo"></a>
+
+## AgreementInfo
+Agreement information used as the input for the concat KDF.
+
+**Kind**: global class  
+
+* [AgreementInfo](#AgreementInfo)
+    * [new AgreementInfo(apu, apv, pub_info, priv_info)](#new_AgreementInfo_new)
+    * _instance_
+        * [.apu()](#AgreementInfo+apu) ⇒ <code>Uint8Array</code>
+        * [.apv()](#AgreementInfo+apv) ⇒ <code>Uint8Array</code>
+        * [.pubInfo()](#AgreementInfo+pubInfo) ⇒ <code>Uint8Array</code>
+        * [.privInfo()](#AgreementInfo+privInfo) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#AgreementInfo+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#AgreementInfo.fromJSON) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+
+<a name="new_AgreementInfo_new"></a>
+
+### new AgreementInfo(apu, apv, pub_info, priv_info)
+Creates an `AgreementInfo` Object.
+
+
+| Param | Type |
+| --- | --- |
+| apu | <code>Uint8Array</code> | 
+| apv | <code>Uint8Array</code> | 
+| pub_info | <code>Uint8Array</code> | 
+| priv_info | <code>Uint8Array</code> | 
+
+<a name="AgreementInfo+apu"></a>
+
+### agreementInfo.apu() ⇒ <code>Uint8Array</code>
+Returns a copy of `apu'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+apv"></a>
+
+### agreementInfo.apv() ⇒ <code>Uint8Array</code>
+Returns a copy of `apv'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+pubInfo"></a>
+
+### agreementInfo.pubInfo() ⇒ <code>Uint8Array</code>
+Returns a copy of `pubInfo'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+privInfo"></a>
+
+### agreementInfo.privInfo() ⇒ <code>Uint8Array</code>
+Returns a copy of `privInfo'
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo+toJSON"></a>
+
+### agreementInfo.toJSON() ⇒ <code>any</code>
+Serializes `AgreementInfo` as a JSON object.
+
+**Kind**: instance method of [<code>AgreementInfo</code>](#AgreementInfo)  
+<a name="AgreementInfo.fromJSON"></a>
+
+### AgreementInfo.fromJSON(json_value) ⇒ [<code>AgreementInfo</code>](#AgreementInfo)
+Deserializes `AgreementInfo` from a JSON object.
+
+**Kind**: static method of [<code>AgreementInfo</code>](#AgreementInfo)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
 <a name="AutoSave"></a>
 
 ## AutoSave
@@ -536,6 +708,60 @@ Save after every N actions.
 Deserializes `AutoSave` from a JSON object.
 
 **Kind**: static method of [<code>AutoSave</code>](#AutoSave)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="CekAlgorithm"></a>
+
+## CekAlgorithm
+Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).
+
+**Kind**: global class  
+
+* [CekAlgorithm](#CekAlgorithm)
+    * _instance_
+        * [.toJSON()](#CekAlgorithm+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.EcdhEs(agreement)](#CekAlgorithm.EcdhEs) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.EcdhEsA256Kw(agreement)](#CekAlgorithm.EcdhEsA256Kw) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+        * [.fromJSON(json_value)](#CekAlgorithm.fromJSON) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+
+<a name="CekAlgorithm+toJSON"></a>
+
+### cekAlgorithm.toJSON() ⇒ <code>any</code>
+Serializes `CekAlgorithm` as a JSON object.
+
+**Kind**: instance method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+<a name="CekAlgorithm.EcdhEs"></a>
+
+### CekAlgorithm.EcdhEs(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+
+<a name="CekAlgorithm.EcdhEsA256Kw"></a>
+
+### CekAlgorithm.EcdhEsA256Kw(agreement) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| agreement | [<code>AgreementInfo</code>](#AgreementInfo) | 
+
+<a name="CekAlgorithm.fromJSON"></a>
+
+### CekAlgorithm.fromJSON(json_value) ⇒ [<code>CekAlgorithm</code>](#CekAlgorithm)
+Deserializes `CekAlgorithm` from a JSON object.
+
+**Kind**: static method of [<code>CekAlgorithm</code>](#CekAlgorithm)  
 
 | Param | Type |
 | --- | --- |
@@ -763,7 +989,7 @@ Returns a copy of the JSON-LD context(s) applicable to the `Credential`.
 <a name="Credential+id"></a>
 
 ### credential.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` referencing the subject of the `Credential`.
+Returns a copy of the unique `URI` identifying the `Credential` .
 
 **Kind**: instance method of [<code>Credential</code>](#Credential)  
 <a name="Credential+type"></a>
@@ -949,6 +1175,7 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.checkIssuedOnOrBefore(credential, timestamp)](#CredentialValidator.checkIssuedOnOrBefore)
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
     * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
+    * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1058,6 +1285,21 @@ Validate that the relationship between the `holder` and the credential subjects 
 | credential | [<code>Credential</code>](#Credential) | 
 | holder_url | <code>string</code> | 
 | relationship | <code>number</code> | 
+
+<a name="CredentialValidator.checkStatus"></a>
+
+### CredentialValidator.checkStatus(credential, trustedIssuers, statusCheck)
+Checks whether the credential status has been revoked.
+
+Only supports `BitmapRevocation2022`.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
+| trustedIssuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| statusCheck | <code>number</code> | 
 
 <a name="DID"></a>
 
@@ -1260,7 +1502,7 @@ Sets the `query` component of the `DIDUrl`.
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment to this `DIDUrl`.
+Append a string representing a path, query, and/or fragment, returning a new `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
@@ -1512,7 +1754,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.properties()](#Document+properties) ⇒ <code>Map.&lt;string, any&gt;</code>
         * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
-        * [.removeService(did)](#Document+removeService)
+        * [.removeService(did)](#Document+removeService) ⇒ <code>boolean</code>
         * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
@@ -1540,6 +1782,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
+        * [.revokeCredentials(fragment, credentialIndices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(fragment, credentialIndices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -1651,6 +1895,8 @@ Return a set of all [Services](#Service) in the document.
 ### document.insertService(service) ⇒ <code>boolean</code>
 Add a new [Service](#Service) to the document.
 
+Returns `true` if the service was added.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1659,8 +1905,10 @@ Add a new [Service](#Service) to the document.
 
 <a name="Document+removeService"></a>
 
-### document.removeService(did)
+### document.removeService(did) ⇒ <code>boolean</code>
 Remove a [Service](#Service) identified by the given [DIDUrl](#DIDUrl) from the document.
+
+Returns `true` if a service was removed.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -2002,6 +2250,32 @@ Sets the previous integration chain message id.
 Returns a copy of the proof.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+revokeCredentials"></a>
+
+### document.revokeCredentials(fragment, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `fragment`,
+revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
+<a name="Document+unrevokeCredentials"></a>
+
+### document.unrevokeCredentials(fragment, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `fragment`,
+unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| fragment | <code>string</code> | 
+| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+
 <a name="Document+toJSON"></a>
 
 ### document.toJSON() ⇒ <code>any</code>
@@ -2347,6 +2621,108 @@ to canonicalize JSON messages.
 | message | <code>Uint8Array</code> | 
 | signature | <code>Uint8Array</code> | 
 | publicKey | <code>Uint8Array</code> | 
+
+<a name="EncryptedData"></a>
+
+## EncryptedData
+The structure returned after encrypting data
+
+**Kind**: global class  
+
+* [EncryptedData](#EncryptedData)
+    * _instance_
+        * [.nonce()](#EncryptedData+nonce) ⇒ <code>Uint8Array</code>
+        * [.associatedData()](#EncryptedData+associatedData) ⇒ <code>Uint8Array</code>
+        * [.ciphertext()](#EncryptedData+ciphertext) ⇒ <code>Uint8Array</code>
+        * [.tag()](#EncryptedData+tag) ⇒ <code>Uint8Array</code>
+        * [.toJSON()](#EncryptedData+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json_value)](#EncryptedData.fromJSON) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+
+<a name="EncryptedData+nonce"></a>
+
+### encryptedData.nonce() ⇒ <code>Uint8Array</code>
+Returns a copy of the nonce
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+associatedData"></a>
+
+### encryptedData.associatedData() ⇒ <code>Uint8Array</code>
+Returns a copy of the associated data
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+ciphertext"></a>
+
+### encryptedData.ciphertext() ⇒ <code>Uint8Array</code>
+Returns a copy of the ciphertext
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+tag"></a>
+
+### encryptedData.tag() ⇒ <code>Uint8Array</code>
+Returns a copy of the tag
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData+toJSON"></a>
+
+### encryptedData.toJSON() ⇒ <code>any</code>
+Serializes `EncryptedData` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptedData</code>](#EncryptedData)  
+<a name="EncryptedData.fromJSON"></a>
+
+### EncryptedData.fromJSON(json_value) ⇒ [<code>EncryptedData</code>](#EncryptedData)
+Deserializes `EncryptedData` from a JSON object.
+
+**Kind**: static method of [<code>EncryptedData</code>](#EncryptedData)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
+
+<a name="EncryptionAlgorithm"></a>
+
+## EncryptionAlgorithm
+Supported content encryption algorithms.
+
+**Kind**: global class  
+
+* [EncryptionAlgorithm](#EncryptionAlgorithm)
+    * _instance_
+        * [.keyLength()](#EncryptionAlgorithm+keyLength) ⇒ <code>number</code>
+        * [.toJSON()](#EncryptionAlgorithm+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.A256GCM()](#EncryptionAlgorithm.A256GCM) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+        * [.fromJSON(json_value)](#EncryptionAlgorithm.fromJSON) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+
+<a name="EncryptionAlgorithm+keyLength"></a>
+
+### encryptionAlgorithm.keyLength() ⇒ <code>number</code>
+Returns the length of the cipher's key.
+
+**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm+toJSON"></a>
+
+### encryptionAlgorithm.toJSON() ⇒ <code>any</code>
+Serializes `EncryptionAlgorithm` as a JSON object.
+
+**Kind**: instance method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm.A256GCM"></a>
+
+### EncryptionAlgorithm.A256GCM() ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+AES GCM using 256-bit key.
+
+**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+<a name="EncryptionAlgorithm.fromJSON"></a>
+
+### EncryptionAlgorithm.fromJSON(json_value) ⇒ [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)
+Deserializes `EncryptionAlgorithm` from a JSON object.
+
+**Kind**: static method of [<code>EncryptionAlgorithm</code>](#EncryptionAlgorithm)  
+
+| Param | Type |
+| --- | --- |
+| json_value | <code>any</code> | 
 
 <a name="ExplorerUrl"></a>
 
@@ -3069,7 +3445,7 @@ Returns a copy of the JSON-LD context(s) applicable to the `Presentation`.
 <a name="Presentation+id"></a>
 
 ### presentation.id() ⇒ <code>string</code> \| <code>undefined</code>
-Returns a copy of the unique `URI` of the `Presentation`.
+Returns a copy of the unique `URI` identifying the `Presentation`.
 
 **Kind**: instance method of [<code>Presentation</code>](#Presentation)  
 <a name="Presentation+type"></a>
@@ -3868,6 +4244,96 @@ NOTE: replaces any previous `Client` or `Config` with the same network name.
 Constructs a new [`Resolver`] based on the builder configuration.
 
 **Kind**: instance method of [<code>ResolverBuilder</code>](#ResolverBuilder)  
+<a name="RevocationBitmap"></a>
+
+## RevocationBitmap
+A compressed bitmap for managing credential revocation.
+
+**Kind**: global class  
+
+* [RevocationBitmap](#RevocationBitmap)
+    * [new RevocationBitmap()](#new_RevocationBitmap_new)
+    * _instance_
+        * [.isRevoked(index)](#RevocationBitmap+isRevoked) ⇒ <code>boolean</code>
+        * [.revoke(index)](#RevocationBitmap+revoke) ⇒ <code>boolean</code>
+        * [.unrevoke(index)](#RevocationBitmap+unrevoke) ⇒ <code>boolean</code>
+        * [.len()](#RevocationBitmap+len) ⇒ <code>number</code>
+        * [.toEndpoint()](#RevocationBitmap+toEndpoint) ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+    * _static_
+        * [.type()](#RevocationBitmap.type) ⇒ <code>string</code>
+        * [.fromEndpoint(endpoint)](#RevocationBitmap.fromEndpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+
+<a name="new_RevocationBitmap_new"></a>
+
+### new RevocationBitmap()
+Creates a new `RevocationBitmap` instance.
+
+<a name="RevocationBitmap+isRevoked"></a>
+
+### revocationBitmap.isRevoked(index) ⇒ <code>boolean</code>
+Returns `true` if the credential at the given `index` is revoked.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+revoke"></a>
+
+### revocationBitmap.revoke(index) ⇒ <code>boolean</code>
+Mark the given index as revoked.
+
+Returns true if the index was absent from the set.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+unrevoke"></a>
+
+### revocationBitmap.unrevoke(index) ⇒ <code>boolean</code>
+Mark the index as not revoked.
+
+Returns true if the index was present in the set.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="RevocationBitmap+len"></a>
+
+### revocationBitmap.len() ⇒ <code>number</code>
+Returns the number of revoked credentials.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap+toEndpoint"></a>
+
+### revocationBitmap.toEndpoint() ⇒ <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code>
+Return the bitmap as a data url embedded in a service endpoint.
+
+**Kind**: instance method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap.type"></a>
+
+### RevocationBitmap.type() ⇒ <code>string</code>
+The name of the service type.
+
+**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+<a name="RevocationBitmap.fromEndpoint"></a>
+
+### RevocationBitmap.fromEndpoint(endpoint) ⇒ [<code>RevocationBitmap</code>](#RevocationBitmap)
+Construct a `RevocationBitmap` from a data `url`.
+
+**Kind**: static method of [<code>RevocationBitmap</code>](#RevocationBitmap)  
+
+| Param | Type |
+| --- | --- |
+| endpoint | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>Map.&lt;string, Array.&lt;string&gt;&gt;</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -4014,6 +4480,7 @@ interface method.
     * [.keyDeleteTest(storage)](#StorageTestSuite.keyDeleteTest) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.keyInsertTest(storage)](#StorageTestSuite.keyInsertTest) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.keySignEd25519Test(storage)](#StorageTestSuite.keySignEd25519Test) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.encryptionTest(alice_storage, bob_storage)](#StorageTestSuite.encryptionTest) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="StorageTestSuite.didCreateGenerateKeyTest"></a>
 
@@ -4086,6 +4553,16 @@ interface method.
 | Param | Type |
 | --- | --- |
 | storage | <code>Storage</code> | 
+
+<a name="StorageTestSuite.encryptionTest"></a>
+
+### StorageTestSuite.encryptionTest(alice_storage, bob_storage) ⇒ <code>Promise.&lt;void&gt;</code>
+**Kind**: static method of [<code>StorageTestSuite</code>](#StorageTestSuite)  
+
+| Param | Type |
+| --- | --- |
+| alice_storage | <code>Storage</code> | 
+| bob_storage | <code>Storage</code> | 
 
 <a name="Timestamp"></a>
 
@@ -4385,6 +4862,37 @@ This is possible because Ed25519 is birationally equivalent to Curve25519 used b
 
 ## DIDMessageEncoding
 **Kind**: global variable  
+<a name="StatusCheck"></a>
+
+## StatusCheck
+Controls validation behaviour when checking whether or not a credential has been revoked by its
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+
+**Kind**: global variable  
+<a name="Strict"></a>
+
+## Strict
+Validate the status if supported, reject any unsupported
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+
+Only `RevocationBitmap2022` is currently supported.
+
+This is the default.
+
+**Kind**: global variable  
+<a name="SkipUnsupported"></a>
+
+## SkipUnsupported
+Validate the status if supported, skip any unsupported
+[`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+
+**Kind**: global variable  
+<a name="SkipAll"></a>
+
+## SkipAll
+Skip all status checks.
+
+**Kind**: global variable  
 <a name="SubjectHolderRelationship"></a>
 
 ## SubjectHolderRelationship
@@ -4432,13 +4940,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="MethodRelationship"></a>
-
-## MethodRelationship
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="MethodRelationship"></a>
+
+## MethodRelationship
 **Kind**: global variable  
 <a name="start"></a>
 

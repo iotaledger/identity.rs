@@ -1,15 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Result;
-use crate::error::WasmResult;
-use identity::iota::CredentialValidationOptions;
-use identity::iota::FailFast;
-use identity::iota::PresentationValidationOptions;
-use identity::iota::SubjectHolderRelationship;
+use identity_iota::client::CredentialValidationOptions;
+use identity_iota::client::FailFast;
+use identity_iota::client::PresentationValidationOptions;
+use identity_iota::client::StatusCheck;
+use identity_iota::client::SubjectHolderRelationship;
 use serde_repr::Deserialize_repr;
 use serde_repr::Serialize_repr;
 use wasm_bindgen::prelude::*;
+
+use crate::error::Result;
+use crate::error::WasmResult;
 
 /// Options to declare validation criteria when validating credentials.
 #[wasm_bindgen(js_name = CredentialValidationOptions)]
@@ -109,6 +111,36 @@ impl From<WasmPresentationValidationOptions> for PresentationValidationOptions {
   }
 }
 
+/// Controls validation behaviour when checking whether or not a credential has been revoked by its
+/// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status).
+#[wasm_bindgen(js_name = StatusCheck)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
+pub enum WasmStatusCheck {
+  /// Validate the status if supported, reject any unsupported
+  /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+  ///
+  /// Only `RevocationBitmap2022` is currently supported.
+  ///
+  /// This is the default.
+  Strict = 0,
+  /// Validate the status if supported, skip any unsupported
+  /// [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) types.
+  SkipUnsupported = 1,
+  /// Skip all status checks.
+  SkipAll = 2,
+}
+
+impl From<WasmStatusCheck> for StatusCheck {
+  fn from(status_check: WasmStatusCheck) -> Self {
+    match status_check {
+      WasmStatusCheck::Strict => Self::Strict,
+      WasmStatusCheck::SkipUnsupported => Self::SkipUnsupported,
+      WasmStatusCheck::SkipAll => Self::SkipAll,
+    }
+  }
+}
+
 /// Declares how credential subjects must relate to the presentation holder during validation.
 /// See `PresentationValidationOptions::subject_holder_relationship`.
 ///
@@ -151,13 +183,18 @@ extern "C" {
 const I_CREDENTIAL_VALIDATION_OPTIONS: &'static str = r#"
 /** Holds options to create a new `CredentialValidationOptions`. */
 interface ICredentialValidationOptions {
-    /**  Declare that the credential is **not** considered valid if it expires before this `Timestamp`.
+    /** Declare that the credential is **not** considered valid if it expires before this `Timestamp`.
      * Uses the current datetime during validation if not set. */
     readonly earliestExpiryDate?: Timestamp;
 
     /** Declare that the credential is **not** considered valid if it was issued later than this `Timestamp`.
      * Uses the current datetime during validation if not set. */
     readonly latestIssuanceDate?: Timestamp;
+
+    /** Validation behaviour for `credentialStatus`.
+     *
+     * Default: `StatusCheck.Strict`. */
+    readonly status?: StatusCheck;
 
     /** Options which affect the verification of the signature on the credential. */
     readonly verifierOptions?: VerifierOptions;
@@ -175,7 +212,7 @@ interface IPresentationValidationOptions {
     readonly presentationVerifierOptions?: VerifierOptions;
 
     /** Declare how the presentation's credential subjects must relate to the holder.
-     * 
+     *
      * Default: SubjectHolderRelationship.AlwaysSubject
      */
     readonly subjectHolderRelationship?: SubjectHolderRelationship;

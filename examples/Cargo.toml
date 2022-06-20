@@ -1,11 +1,12 @@
 [package]
 name = "examples"
-version = "0.1.0"
+version = "0.6.0"
 edition = "2021"
 publish = false
+release = false
 
 [dependencies]
-identity = { path = "../identity", features = ["account", "stronghold"] }
+identity_iota = { path = "../identity_iota" }
 pretty_env_logger = { version = "0.4" }
 rand = { version = "0.8" }
 tokio = { version = "1.17.0", features = ["full"] }
@@ -42,6 +43,10 @@ path = "account/signing.rs"
 [[example]]
 name = "account_unchecked"
 path = "account/unchecked.rs"
+
+[[example]]
+name = "account_encryption"
+path = "account/encryption.rs"
 
 [[example]]
 name = "create_did"
