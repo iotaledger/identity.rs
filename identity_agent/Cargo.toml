@@ -15,7 +15,7 @@ async-trait = { version = "0.1", default-features = false }
 dashmap = { version = "5.1", default-features = false }
 futures = { version = "0.3", default-features = false }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-# TODO: Remove `revocation-bitmap` feature when fixed.
+# TODO: Remove features when this crate can be used without them.
 identity_iota_client = { version = "=0.6.0", path = "../identity_iota_client", default-features = false, features = ["async", "revocation-bitmap"] }
 identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
 libp2p = { version = "0.45", default-features = false, features = ["tcp-tokio", "dns-tokio", "websocket", "request-response", "noise", "yamux"] }
@@ -32,7 +32,8 @@ uuid = { version = "*", features = ["wasm-bindgen"] }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
-identity_account = { version = "=0.6.0", path = "../identity_account", default-features = false, features = ["send-sync-storage"] }
+# TODO: Remove features when this crate can be used without them.
+identity_account = { version = "=0.6.0", path = "../identity_account", default-features = false, features = ["send-sync-storage", "encryption"] }
 pretty_env_logger = { version = "0.4", default-features = false }
 
 [[bench]]
