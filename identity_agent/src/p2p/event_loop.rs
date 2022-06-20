@@ -24,14 +24,14 @@ use libp2p::TransportError;
 
 use crate::actor::Endpoint;
 use crate::actor::RequestMode;
-use crate::p2p::ActorRequestResponseCodec;
+use crate::p2p::AgentRequestResponseCodec;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 use crate::p2p::SwarmCommand;
 
 /// The background loop that handles libp2p swarm events and `NetCommander` commands simultaneously.
 pub(crate) struct EventLoop {
-  swarm: Swarm<RequestResponse<ActorRequestResponseCodec>>,
+  swarm: Swarm<RequestResponse<AgentRequestResponseCodec>>,
   command_channel: mpsc::Receiver<SwarmCommand>,
   await_response: HashMap<RequestId, oneshot::Sender<Result<ResponseMessage, OutboundFailure>>>,
   await_response_sent: HashMap<RequestId, oneshot::Sender<Result<(), InboundFailure>>>,
@@ -39,8 +39,10 @@ pub(crate) struct EventLoop {
 }
 
 impl EventLoop {
+  /// Create a new `EventLoop` from the given `swarm` and the receiving end of a channel. The sender
+  /// part needs to be passed to a `NetCommander`, which allows it to send request to this loop.
   pub(crate) fn new(
-    swarm: Swarm<RequestResponse<ActorRequestResponseCodec>>,
+    swarm: Swarm<RequestResponse<AgentRequestResponseCodec>>,
     command_channel: mpsc::Receiver<SwarmCommand>,
   ) -> Self {
     EventLoop {
@@ -52,6 +54,8 @@ impl EventLoop {
     }
   }
 
+  /// Block on this event loop until it terminates, simultaneously handling incoming events from peers
+  /// as well as request from the corresponding `NetCommander`.
   pub(crate) async fn run<F>(mut self, event_handler: F)
   where
     F: Fn(InboundRequest),
@@ -72,11 +76,6 @@ impl EventLoop {
     }
   }
 
-  // This is where events coming from all peers are handled.
-  // This is the intended place for didcomm authentication to take place, setup the sender-authenticated
-  // encryption and from that point forward, transparently encrypt and decrypt messages.
-  // Once encryption is taken care of, this handler then distributes messages based on ThreadIds, so
-  // higher layers can easily await_message(thread_id).
   async fn handle_swarm_event<F, THandleErr>(
     &mut self,
     event: SwarmEvent<RequestResponseEvent<RequestMessage, ResponseMessage>, THandleErr>,
@@ -137,7 +136,7 @@ impl EventLoop {
   fn handle_command(&mut self, command: SwarmCommand) -> ControlFlow<()> {
     match command {
       SwarmCommand::SendRequest {
-        peer,
+        peer_id: peer,
         request,
         response_channel,
       } => {
@@ -176,7 +175,10 @@ impl EventLoop {
           }
         }
       },
-      SwarmCommand::AddAddresses { peer, addresses } => {
+      SwarmCommand::AddAddresses {
+        peer_id: peer,
+        addresses,
+      } => {
         for addr in addresses {
           self.swarm.behaviour_mut().add_address(&peer, addr);
         }

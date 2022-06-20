@@ -34,7 +34,7 @@ use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-/// A builder for [`DidCommSystem`]s that allows for customizing its configuration and attaching actors.
+/// A builder for [`DidCommSystem`]s to customize its configuration and attach actors.
 pub struct DidCommSystemBuilder {
   inner: SystemBuilder,
   identity: Option<ActorIdentity>,
@@ -42,7 +42,7 @@ pub struct DidCommSystemBuilder {
 }
 
 impl DidCommSystemBuilder {
-  /// Create a new builder in the default configuration.
+  /// Create a new builder with the default configuration.
   pub fn new() -> DidCommSystemBuilder {
     Self {
       inner: SystemBuilder::new(),
@@ -77,8 +77,8 @@ impl DidCommSystemBuilder {
   ///
   /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
   ///
-  /// Calling this method multiple times with requests that have the same `Endpoint`
-  /// will detach the previous actor.
+  /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
+  /// will overwrite the previous attachment.
   pub fn attach_didcomm<REQ, ACT>(&mut self, actor: ACT)
   where
     ACT: DidCommActor<REQ> + Send + Sync,
@@ -90,12 +90,7 @@ impl DidCommSystemBuilder {
     );
   }
 
-  /// Attaches an [`Actor`] to this system.
-  ///
-  /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
-  ///
-  /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
-  /// will overwrite the previous attachment.
+  /// See [`SystemBuilder::attach`].
   pub fn attach<REQ, ACT>(&mut self, actor: ACT)
   where
     ACT: Actor<REQ> + Send + Sync,

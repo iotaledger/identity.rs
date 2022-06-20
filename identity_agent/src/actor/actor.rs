@@ -19,12 +19,12 @@ pub(crate) type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>
 /// Actors handle one or more requests by implementing this trait one or more times
 /// for different `ActorRequest` types.
 ///
-/// The requests for an actor are handled synchronously, meaning that the caller waits for
+/// The requests for an actor are handled synchronously, meaning that the calling agent waits for
 /// the actor to return its result before continuing.
 #[async_trait::async_trait]
 pub trait Actor<REQ: ActorRequest>: Debug + 'static {
   /// Called when the system receives a request of type `REQ`.
-  /// The result will be returned to the calling peer.
+  /// The result will be returned to the calling agent.
   async fn handle(&self, request: RequestContext<REQ>) -> REQ::Response;
 }
 
@@ -35,7 +35,7 @@ pub(crate) trait AbstractActor: Debug + Send + Sync + 'static {
 }
 
 /// A wrapper around synchronous actor implementations that is used for
-/// type erasure together with [`AbstractSyncActor`].
+/// type erasure together with [`AbstractActor`].
 #[derive(Debug)]
 pub(crate) struct ActorWrapper<ACT, REQ>
 where
@@ -89,7 +89,7 @@ where
 #[inline(always)]
 fn serialize_response<REQ: ActorRequest>(input: &REQ::Response) -> Result<Vec<u8>, RemoteSendError> {
   log::debug!(
-    "Attempt serialization into {:?}",
+    "attempt serialization into {:?}",
     std::any::type_name::<REQ::Response>()
   );
 

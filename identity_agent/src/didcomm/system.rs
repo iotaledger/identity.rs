@@ -60,12 +60,16 @@ impl DidCommSystemState {
   }
 }
 
-/// An actor system fowards incoming requests to attached actors and can be used to send requests to remote actors.
+/// An actor system can be used to send requests to remote agents, and fowards incoming requests
+/// to attached actors.
 ///
 /// An actor system is a frontend for an event loop running in the background, which invokes
 /// user-attached actors. Systems can be cloned without cloning the event loop, and doing so
 /// is a cheap operation.
 /// Actors are attached at system build time, using the [`DidCommSystemBuilder`](crate::didcomm::DidCommSystemBuilder).
+///
+/// A `DidCommSystem` supports attachement of both [`Actor`](crate::actor::Actor)s and
+/// [`DidCommActor`](crate::didcomm::DidCommActor)s.
 ///
 /// After shutting down the event loop of a system using [`DidCommSystem::shutdown`], other clones of the
 /// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
@@ -80,9 +84,9 @@ impl DidCommSystem {
     self.system.commander_mut()
   }
 
-  /// Let this actor handle the given `request`, by invoking a handler function.
-  /// This consumes the actor because it passes the actor to the handler.
-  /// The actor will thus typically be cloned before calling this method.
+  /// Let this system handle the given `request`, by invoking the appropriate actor, if attached.
+  /// This consumes the system because it passes itself to the actor.
+  /// The system will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(self, request: InboundRequest) {
     match request.request_mode {
       RequestMode::Asynchronous => self.handle_async_request(request),
@@ -121,15 +125,15 @@ impl DidCommSystem {
   }
 
   /// See [`System::send_request`].
-  pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
-    self.system.send_request(peer, request).await
+  pub async fn send_request<REQ: ActorRequest>(&mut self, peer_id: PeerId, request: REQ) -> ActorResult<REQ::Response> {
+    self.system.send_request(peer_id, request).await
   }
 
-  /// Sends an asynchronous message to a peer. To receive a potential response, use [`DidCommSystem::await_message`],
+  /// Sends an asynchronous message to a peer. To receive a possible response, use [`DidCommSystem::await_message`],
   /// with the same `thread_id`.
   pub async fn send_message<REQ: DidCommRequest>(
     &mut self,
-    peer: PeerId,
+    peer_id: PeerId,
     thread_id: &ThreadId,
     message: REQ,
   ) -> ActorResult<()> {
@@ -149,7 +153,7 @@ impl DidCommSystem {
     log::debug!("sending `{}` message", endpoint);
     let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
-    let response = self.commander_mut().send_request(peer, message).await?;
+    let response = self.commander_mut().send_request(peer_id, message).await?;
 
     serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {
@@ -164,6 +168,7 @@ impl DidCommSystem {
 
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
   /// [`DidCommSystem::send_message`] was called on the same `thread_id` previously.
+  ///
   /// This will return a timeout error if no message is received within the duration passed
   /// to [`DidCommSystemBuilder::timeout`](crate::didcomm::DidCommSystemBuilder::timeout).
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
@@ -200,7 +205,7 @@ impl DidCommSystem {
     // The logic is that for every received message on a thread,
     // there must be a preceding send_message on that same thread.
     // Note that on the receiving actor, the very first message of a protocol
-    // is not awaited through await_message, so it does not need to follow that logic.
+    // is not awaited through await_message, so it does not need to follow these rules.
     self.state.threads_sender.insert(thread_id.to_owned(), sender);
     self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
   }

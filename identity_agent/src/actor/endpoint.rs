@@ -11,8 +11,8 @@ use serde::Serialize;
 use crate::actor::Error;
 use crate::actor::Result as ActorResult;
 
-/// A path-like identifier for an actor request. As an example, `identity/create`
-/// could be an endpoint of the request "create" within the "identity" namespace.
+/// A path-like identifier for an actor request. As an example, `identity/resolve`
+/// could be the endpoint of the "resolve" request within the "identity" namespace.
 ///
 /// The namespace and request are separated by a slash and only allow alphabetic ascii characters and `_`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -22,10 +22,11 @@ pub struct Endpoint {
 }
 
 impl Endpoint {
-  /// Validates the endpoint.
+  /// Checks whether the given `string` is a valid [`Endpoint`].
   fn validate(string: &str) -> ActorResult<()> {
     let mut split: Split<'_, char> = string.split('/');
 
+    // Once the Never (`!`) type lands in stable Rust, we can try to map the `None` variant to ! instead.
     let namespace: &str = split.next().expect("split always returns at least one element");
     let request: &str = split.next().ok_or(Error::InvalidEndpoint)?;
 

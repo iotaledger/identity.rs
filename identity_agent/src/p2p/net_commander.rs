@@ -32,10 +32,14 @@ impl NetCommander {
   }
 
   /// Send the `request` to `peer` and returns the response.
-  pub(crate) async fn send_request(&mut self, peer: PeerId, request: RequestMessage) -> ActorResult<ResponseMessage> {
+  pub(crate) async fn send_request(
+    &mut self,
+    peer_id: PeerId,
+    request: RequestMessage,
+  ) -> ActorResult<ResponseMessage> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
-      peer,
+      peer_id,
       request,
       response_channel: sender,
     };
@@ -80,8 +84,10 @@ impl NetCommander {
   }
 
   /// Add additional `addresses` to listen on.
-  pub(crate) async fn add_addresses(&mut self, peer: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
-    self.send_command(SwarmCommand::AddAddresses { peer, addresses }).await
+  pub(crate) async fn add_addresses(&mut self, peer_id: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
+    self
+      .send_command(SwarmCommand::AddAddresses { peer_id, addresses })
+      .await
   }
 
   /// Returns all addresses the event loop is listening on.
@@ -121,7 +127,7 @@ impl NetCommander {
 #[derive(Debug)]
 pub(crate) enum SwarmCommand {
   SendRequest {
-    peer: PeerId,
+    peer_id: PeerId,
     request: RequestMessage,
     response_channel: oneshot::Sender<Result<ResponseMessage, OutboundFailure>>,
   },
@@ -136,7 +142,7 @@ pub(crate) enum SwarmCommand {
     response_channel: oneshot::Sender<Result<Multiaddr, TransportError<std::io::Error>>>,
   },
   AddAddresses {
-    peer: PeerId,
+    peer_id: PeerId,
     addresses: OneOrMany<Multiaddr>,
   },
   GetAddresses {

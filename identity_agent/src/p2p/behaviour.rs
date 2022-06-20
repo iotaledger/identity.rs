@@ -13,23 +13,23 @@ use libp2p::request_response::RequestResponseCodec;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 
-/// The protocol of the identity actor.
+/// The protocol of the agent.
 #[derive(Debug, Clone)]
-pub(crate) struct ActorProtocol();
+pub(crate) struct AgentProtocol();
 
 /// Defines the request and response types for the libp2p RequestResponse layer.
 #[derive(Clone)]
-pub(crate) struct ActorRequestResponseCodec();
+pub(crate) struct AgentRequestResponseCodec();
 
-impl ProtocolName for ActorProtocol {
+impl ProtocolName for AgentProtocol {
   fn protocol_name(&self) -> &[u8] {
-    "/actor/0.1.0".as_bytes()
+    "/agent/0.1.0".as_bytes()
   }
 }
 
 #[async_trait::async_trait]
-impl RequestResponseCodec for ActorRequestResponseCodec {
-  type Protocol = ActorProtocol;
+impl RequestResponseCodec for AgentRequestResponseCodec {
+  type Protocol = AgentProtocol;
   type Request = RequestMessage;
   type Response = ResponseMessage;
 

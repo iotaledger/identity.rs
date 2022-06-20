@@ -5,10 +5,10 @@ use libp2p::request_response::OutboundFailure;
 
 use crate::didcomm::ThreadId;
 
-/// The `Result` type for the actor.
+/// The `Result` type for the agent.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Errors that can occur during actor execution.
+/// Errors that can occur during agent execution.
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -47,7 +47,7 @@ pub enum Error {
   IdentityMissing,
 }
 
-/// Errors that can occur on the remote actor.
+/// Errors that can occur on the remote agent.
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
@@ -96,7 +96,7 @@ impl From<RemoteSendError> for Error {
   }
 }
 
-/// A type indicating whether an error occured locally or remotely.
+/// The location of an error, either locally or remotely.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum ErrorLocation {
   /// The error occured locally.
@@ -112,6 +112,6 @@ impl std::fmt::Display for ErrorLocation {
       ErrorLocation::Remote => "remote",
     };
 
-    write!(f, "{}", display)
+    f.write_str(display)
   }
 }

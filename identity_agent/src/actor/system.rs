@@ -26,7 +26,7 @@ use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 
-/// An actor system can be used to send requests to remote actors, and fowards incoming requests
+/// An actor system can be used to send requests to remote agents, and fowards incoming requests
 /// to attached actors.
 ///
 /// An actor system is a frontend for an event loop running in the background, which invokes
@@ -72,8 +72,8 @@ impl System {
   }
 
   /// Start listening on the given `address`. Returns the first address that the system started listening on, which may
-  /// be different from `address` itself, e.g. when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when passing a
-  /// single address, multiple addresses may end up being listened on. To obtain all those addresses, use
+  /// be different from `address` itself, for example when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when
+  /// passing a single address, multiple addresses may end up being listened on. To obtain all those addresses, use
   /// [`System::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
   /// and should thus not be relied upon.
   pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
@@ -95,14 +95,16 @@ impl System {
     // Consuming self drops the internal commander. If this is the last copy of the commander,
     // the event loop will break as a result. However, if copies exist, such as in running handlers,
     // this function will return while the event loop keeps running. Ideally we could then join on the background task
-    // to wait for all handlers to finish gracefully. However, not all spawn functions return a JoinHandle,
-    // such as wasm_bindgen_futures::spawn_local. The current alternative is to use a non-graceful exit,
-    // which breaks the event loop immediately and returns an error through all open channels that require a result.
+    // to wait for all handlers to finish gracefully. This was not implemented that way, because of a previous
+    // dependency on wasm_bindgen_futures::spawn_local which does not return a JoinHandle. It would be an option,
+    // now that we're using tokio exclusively.
+    // The current implementation uses a non-graceful exit, which breaks the event loop immediately
+    // and returns an error through all open channels that require a result.
     self.commander_mut().shutdown().await
   }
 
   /// Associate the given `peer_id` with an `address`. This `address`, or another one that was added,
-  /// will be use to send requests to this [`PeerId`].
+  /// will be use to send requests to `peer_id`.
   pub async fn add_peer_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
     self
       .commander_mut()
@@ -111,7 +113,7 @@ impl System {
   }
 
   /// Associate the given `peer_id` with multiple `addresses`. One of the `addresses`, or another one that was added,
-  /// will be use to send requests to this [`PeerId`].
+  /// will be use to send requests to `peer_id`.
   pub async fn add_peer_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
     self
       .commander_mut()
@@ -119,11 +121,11 @@ impl System {
       .await
   }
 
-  /// Sends a synchronous request to a peer and returns its response.
+  /// Sends a synchronous request to an agent, identified through `peer_id`, and returns its response.
   ///
-  /// An address needs to be available for the given `peer`, which can be added
+  /// An address needs to be available for the given `peer_id`, which can be added
   /// with [`System::add_peer_address`] or [`System::add_peer_addresses`].
-  pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, request: REQ) -> ActorResult<REQ::Response> {
+  pub async fn send_request<REQ: ActorRequest>(&mut self, peer_id: PeerId, request: REQ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();
 
@@ -137,7 +139,7 @@ impl System {
 
     let request: RequestMessage = RequestMessage::new(endpoint, request_mode, request_vec);
 
-    let response: ResponseMessage = self.commander_mut().send_request(peer, request).await?;
+    let response: ResponseMessage = self.commander_mut().send_request(peer_id, request).await?;
 
     let response: Vec<u8> =
       serde_json::from_slice::<Result<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {
@@ -155,8 +157,8 @@ impl System {
     })
   }
 
-  /// Let this system handle the given `request`, by invoking a handler function.
-  /// This consumes the system because it passes itself to the handler.
+  /// Let this system handle the given `request`, by invoking the appropriate actor, if attached.
+  /// This consumes the system because it passes itself to the actor.
   /// The system will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(mut self, request: InboundRequest) {
     if request.request_mode == RequestMode::Synchronous {

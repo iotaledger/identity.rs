@@ -37,13 +37,13 @@ use crate::actor::Error;
 use crate::actor::Result as ActorResult;
 use crate::actor::System;
 use crate::actor::SystemState;
-use crate::p2p::ActorProtocol;
-use crate::p2p::ActorRequestResponseCodec;
+use crate::p2p::AgentProtocol;
+use crate::p2p::AgentRequestResponseCodec;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-/// A builder for [`System`]s that allows for customizing its configuration and attaching actors.
+/// A builder for [`System`]s to customize its configuration and attach actors.
 pub struct SystemBuilder {
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: ActorConfig,
@@ -51,7 +51,7 @@ pub struct SystemBuilder {
 }
 
 impl SystemBuilder {
-  /// Create a new builder in the default configuration.
+  /// Create a new builder with the default configuration.
   pub fn new() -> SystemBuilder {
     Self {
       keypair: None,
@@ -60,7 +60,7 @@ impl SystemBuilder {
     }
   }
 
-  /// Set the keypair from which the `PeerId` of the actor is derived.
+  /// Set the keypair from which the `PeerId` of the system is derived.
   ///
   /// If unset, a new keypair is generated.
   #[must_use]
@@ -109,7 +109,7 @@ impl SystemBuilder {
     self.build_with_transport(transport).await
   }
 
-  /// Build the actor with a custom transport.
+  /// Build the system with a custom transport.
   pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<System>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
@@ -161,13 +161,13 @@ impl SystemBuilder {
       (noise_keypair, peer_id)
     };
 
-    let swarm: Swarm<RequestResponse<ActorRequestResponseCodec>> = {
+    let swarm: Swarm<RequestResponse<AgentRequestResponseCodec>> = {
       let mut config: RequestResponseConfig = RequestResponseConfig::default();
       config.set_request_timeout(self.config.timeout);
 
       let behaviour = RequestResponse::new(
-        ActorRequestResponseCodec(),
-        iter::once((ActorProtocol(), ProtocolSupport::Full)),
+        AgentRequestResponseCodec(),
+        iter::once((AgentProtocol(), ProtocolSupport::Full)),
         config,
       );
 

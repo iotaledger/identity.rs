@@ -52,7 +52,7 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
 
 pub(crate) async fn presentation_holder_handler(
   mut system: DidCommSystem,
-  peer: PeerId,
+  peer_id: PeerId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
 ) -> ActorResult<()> {
   let request: DidCommPlaintextMessage<PresentationRequest> = match request {
@@ -61,7 +61,7 @@ pub(crate) async fn presentation_holder_handler(
       log::debug!("holder: sending presentation offer");
       let thread_id = ThreadId::new();
       system
-        .send_message(peer, &thread_id, PresentationOffer::default())
+        .send_message(peer_id, &thread_id, PresentationOffer::default())
         .await?;
 
       let req = system.await_message(&thread_id).await;
@@ -74,7 +74,7 @@ pub(crate) async fn presentation_holder_handler(
   let thread_id = request.thread_id();
 
   log::debug!("holder: sending presentation");
-  system.send_message(peer, thread_id, Presentation::default()).await?;
+  system.send_message(peer_id, thread_id, Presentation::default()).await?;
 
   let _result: DidCommPlaintextMessage<PresentationResult> = system.await_message(thread_id).await?;
   log::debug!("holder: received presentation result");
@@ -84,7 +84,7 @@ pub(crate) async fn presentation_holder_handler(
 
 pub(crate) async fn presentation_verifier_handler(
   mut system: DidCommSystem,
-  peer: PeerId,
+  peer_id: PeerId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
 ) -> ActorResult<()> {
   let thread_id: ThreadId = if let Some(offer) = offer {
@@ -95,7 +95,7 @@ pub(crate) async fn presentation_verifier_handler(
 
   log::debug!("verifier: sending request");
   system
-    .send_message(peer, &thread_id, PresentationRequest::default())
+    .send_message(peer_id, &thread_id, PresentationRequest::default())
     .await?;
 
   log::debug!("verifier: awaiting presentation");
@@ -104,7 +104,7 @@ pub(crate) async fn presentation_verifier_handler(
 
   log::debug!("verifier: sending presentation result");
   system
-    .send_message(peer, &thread_id, PresentationResult::default())
+    .send_message(peer_id, &thread_id, PresentationResult::default())
     .await?;
   Ok(())
 }

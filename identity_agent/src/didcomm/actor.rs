@@ -24,7 +24,7 @@ use crate::p2p::ResponseMessage;
 /// A DidCommActor handles one or more requests by implementing this trait one or more times
 /// for different `DidCommRequest` types.
 ///
-/// The requests for a DIDComm actor are handled asynchronously, meaning that the caller does
+/// The requests for a DidCommActor are handled asynchronously, meaning that the calling agent does
 /// not wait for the actor to complete its invocation. If that is desired, the [`Actor`](crate::actor::Actor) trait
 /// should be implemented instead.
 #[async_trait::async_trait]
@@ -33,7 +33,7 @@ pub trait DidCommActor<REQ: DidCommRequest>: Debug + 'static {
   async fn handle(&self, actor: DidCommSystem, request: RequestContext<REQ>);
 }
 
-/// A trait that wraps a DIDComm actor implementation and erases its type.
+/// A trait that wraps a DidCommActor implementation and erases its type.
 /// This allows holding actors with different concrete types in the same collection.
 pub(crate) trait AbstractDidCommActor: Debug + Send + Sync + 'static {
   fn handle(&self, actor: DidCommSystem, request: InboundRequest) -> BoxFuture<'_, ()>;
