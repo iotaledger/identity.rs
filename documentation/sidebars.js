@@ -52,7 +52,7 @@ module.exports = {
               'Verifiable Credentials': [
                   'concepts/verifiable_credentials/overview',
                   'concepts/verifiable_credentials/create',
-                  'concepts/verifiable_credentials/revoke',
+                  'concepts/verifiable_credentials/revocation',
                   'concepts/verifiable_credentials/verifiable_presentations',
               ],
               'Advanced Concepts': [
@@ -101,6 +101,7 @@ module.exports = {
           collapsed: true,
           items: [
             'specs/overview',
+            'specs/revocation_bitmap_2022',
             {
               type: 'category',
               label: 'IOTA DID',
