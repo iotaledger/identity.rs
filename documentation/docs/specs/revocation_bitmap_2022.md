@@ -143,7 +143,7 @@ The following steps MUST be followed when checking whether a verifiable credenti
 2. Let **revocation bitmap URL** be the `id` field of the **credential**'s `credentialStatus`.
 3. Resolve the **revocation bitmap URL** to a **revocation bitmap service** in the issuer's DID document, and verify that the service `type` is `RevocationBitmap2022`. Return an error otherwise.
 4. Expand the endpoint of the **revocation bitmap service** into a **revocation bitmap** according to the [service endpoint expansion algorithm](#service-endpoint-expansion-algorithm).
-5. Let **revocation index** be the integer value of the `revocationBitmapIndex` property of the **credential**.
+5. Let **revocation index** be the integer value of the `revocationBitmapIndex` property contained in the `credentialStatus` of the **credential**.
 6. Let **revoked** be the value of the bit at index **revocation index** in the **revocation bitmap**.
 7. Return `true` if **revoked** is 1, `false` otherwise.
 
@@ -192,7 +192,7 @@ A downside of embedding the revocation list in the DID document is that storage 
 
 Another difference is that `RevocationList2020` specifies a minimum initial size of 131,072 for its bitstring, to mitigate the  potential for correlating individuals when few credentials have been issued. `RevocationBitmap2022` uses a roaring bitmap instead of a bitstring, so the maximum size is not fixed (apart from the upper bound of an unsigned 32-bit integer). This means the bitmap cannot be used to correlate small populations without more information not present in the bitmap itself. However, both schemes still reveal publicly how many credentials have been revoked, which could be used to infer other information if more knowledge about how an issuer assigns credential revocation indexes is known.
 
-`StatusList2021` specifically allows for explicitly stating the purpose of the list, currently either _revocation_ or _suspension_. This specification does not mandate that revoked credentials cannot be unrevoked, which means a `RevocationBitmap2022` can effectively also be used as a suspension list.
+`StatusList2021` allows for explicitly stating the purpose of the list, currently either _revocation_ or _suspension_. This specification does not mandate that revoked credentials cannot be unrevoked, which means a `RevocationBitmap2022` can effectively also be used as a suspension list.
 
 ### Privacy Considerations
 
