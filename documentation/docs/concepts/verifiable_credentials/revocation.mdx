@@ -1,0 +1,62 @@
+---
+title: Verifiable Credential Revocation
+sidebar_label: Revocation
+description: Explain how a VC can be revoked
+image: /img/Identity_icon.png
+keywords:
+  - verifiable
+  - credentials
+  - revoke
+  - revocation
+---
+
+import revoke_vc_rs from "!!raw-loader!../../../../examples/account/revoke_vc.rs";
+import CodeSnippet from "../../../src/components/CodeSnippetComponent";
+
+## Overview
+
+The [example](#example) below demonstrates two methods that an issuer can use to revoke a verifiable credential using the IOTA Identity Framework:
+
+1. By using the [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) field in a credential and linking to a revocation bitmap, using the [`RevocationBitmap2022`](../../specs/revocation_bitmap_2022).
+2. By removing the verification method that signed the credential. This invalidates all credentials that were signed with that verification method.
+
+## Revocation Bitmap
+
+One of the ways for an issuer to control the status of its credentials is by using a revocation list. At the most basic level, revocation information for all verifiable credentials issued by an issuer are expressed as simple binary values. The issuer keeps a list of all verifiable credentials it has issued in a bitmap. Each verifiable credential is associated with a unique index in the list. If the binary value of the index in the bitmap is 1 (one), the verifiable credential is revoked, if it is 0 (zero) it is not revoked.
+
+For example, with this approach the issuer adds an index to a credential in the `credentialStatus` field, such as `"5"`. This part of the credential might then look like this:
+
+```json
+"credentialStatus": {
+  "id": "did:iota:EvaQhPXXsJsGgxSXGhZGMCvTt63KuAFtaGThx6a5nSpw#revocation",
+  "type": "RevocationBitmap2022",
+  "revocationBitmapIndex": "5"
+},
+```
+
+The verifier uses the `id` field (`did:iota:EvaQhPXXsJsGgxSXGhZGMCvTt63KuAFtaGThx6a5nSpw#revocation`) to look up the service in the issuer's DID document. This is an example of such a service:
+
+```json
+{
+  "id": "did:iota:EvaQhPXXsJsGgxSXGhZGMCvTt63KuAFtaGThx6a5nSpw#revocation",
+  "type": "RevocationBitmap2022",
+  "serviceEndpoint": "data:application/octet-stream;base64,ZUp5ek1tQmdZR1NBQUFFZ1ptVUFBQWZPQUlF"
+}
+```
+
+During verification the verifier decodes the revocation bitmap embedded in the `data` url. This bitmap written as a bitstring looks like this: `000001`. Here, the 5th bit is set, which means the credential with that index is revoked, while all other credentials aren't revoked.
+
+## Removing the verification method
+
+A less efficient alternative is to remove the verification method that signed the credential from the DID Document of the issuer. This means the VC can no longer be validated. However, this would invalidate every VC signed with that verification method, meaning the issuer would have to sign every VC with a different key to retain precise control over which credential is revoked.
+
+## Example {#example}
+
+The following code exemplifies how you can revoke a [Verifiable Credential (VC)](overview).
+
+<CodeSnippet 
+    nodeReplitLink="https://replit.com/@IOTAFoundation/revoke-vc-06?lite=true"
+    rustContent={revoke_vc_rs}
+    nodeGithubLink = "https://github.com/iotaledger/identity.rs/blob/support/v0.6/bindings/wasm/examples-account/src/revoke_vc.ts"
+    rustGithubLink = "https://github.com/iotaledger/identity.rs/blob/support/v0.6/examples/account/revoke_vc.rs"
+/>
