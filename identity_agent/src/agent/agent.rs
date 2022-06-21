@@ -11,11 +11,11 @@ use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
 
 use crate::agent::errors::ErrorLocation;
-use crate::agent::AbstractActor;
-use crate::agent::ActorRequest;
+use crate::agent::AbstractHandler;
 use crate::agent::AgentState;
 use crate::agent::Endpoint;
 use crate::agent::Error;
+use crate::agent::HandlerRequest;
 use crate::agent::RemoteSendError;
 use crate::agent::RequestContext;
 use crate::agent::RequestMode;
@@ -25,21 +25,21 @@ use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 
-/// A map from an endpoint to the actor that handles its requests.
-pub(crate) type ActorMap = HashMap<Endpoint, Box<dyn AbstractActor>>;
+/// A map from an endpoint to the handler that handles its requests.
+pub(crate) type HandlerMap = HashMap<Endpoint, Box<dyn AbstractHandler>>;
 
 /// The cryptographic identifier of an agent on the network.
 pub type AgentId = libp2p::PeerId;
 
 /// An agent can be used to send requests to other, remote agents, and fowards incoming requests
-/// to attached actors.
+/// to attached handlers.
 ///
 /// An agent is a frontend for an event loop running in the background, which invokes
-/// user-attached actors. Agents can be cloned without cloning the event loop, and doing so
+/// user-attached handlers. Agents can be cloned without cloning the event loop, and doing so
 /// is a cheap operation.
-/// Actors are attached at agent build time, using the [`AgentBuilder`](crate::actor::AgentBuilder).
+/// Handlers are attached at agent build time, using the [`AgentBuilder`](crate::agent::AgentBuilder).
 ///
-/// After shutting down the event loop of a agent using [`Agent::shutdown`], other clones of the
+/// After shutting down the event loop of an agent using [`Agent::shutdown`], other clones of the
 /// agent will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Debug)]
 pub struct Agent {
@@ -91,10 +91,10 @@ impl Agent {
   }
 
   /// Shut this agent down. This will break the event loop in the background immediately,
-  /// returning an error for all current actors that interact with their copy of the
+  /// returning an error for all current handlers that interact with their copy of the
   /// agent or those waiting on messages. The agent will thus stop listening on all addresses.
   ///
-  /// Calling this and other methods, which interact with the event loop, on a agent that was shutdown
+  /// Calling this and other methods, which interact with the event loop, on an agent that was shutdown
   /// will return [`Error::Shutdown`].
   pub async fn shutdown(mut self) -> AgentResult<()> {
     // Consuming self drops the internal commander. If this is the last copy of the commander,
@@ -130,7 +130,7 @@ impl Agent {
   ///
   /// An address needs to be available for the given `agent_id`, which can be added
   /// with [`Agent::add_agent_address`] or [`Agent::add_agent_addresses`].
-  pub async fn send_request<REQ: ActorRequest>(
+  pub async fn send_request<REQ: HandlerRequest>(
     &mut self,
     agent_id: AgentId,
     request: REQ,
@@ -166,8 +166,8 @@ impl Agent {
     })
   }
 
-  /// Let this agent handle the given `request`, by invoking the appropriate actor, if attached.
-  /// This consumes the agent because it passes itself to the actor.
+  /// Let this agent handle the given `request`, by invoking the appropriate handler, if attached.
+  /// This consumes the agent because it passes itself to the handler.
   /// The agent will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(mut self, request: InboundRequest) {
     if request.request_mode == RequestMode::Synchronous {
@@ -196,11 +196,11 @@ impl Agent {
   #[inline(always)]
   pub(crate) fn handle_sync_request(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
-      match self.state.actors.get(&request.endpoint) {
-        Some(actor) => {
+      match self.state.handlers.get(&request.endpoint) {
+        Some(handler) => {
           let context: RequestContext<Vec<u8>> =
             RequestContext::new(request.input, request.peer_id, request.endpoint.clone());
-          let result: Result<Vec<u8>, RemoteSendError> = actor.handle(context).await;
+          let result: Result<Vec<u8>, RemoteSendError> = handler.handle(context).await;
 
           if let Err(error) = send_response(
             self.commander_mut(),
@@ -239,12 +239,12 @@ pub(crate) async fn send_response<T: serde::Serialize>(
 }
 
 #[inline(always)]
-async fn endpoint_not_found(actor: &mut Agent, request: InboundRequest) {
+async fn endpoint_not_found(handler: &mut Agent, request: InboundRequest) {
   let response: Result<Vec<u8>, RemoteSendError> =
     Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
 
   let send_result = send_response(
-    actor.commander_mut(),
+    handler.commander_mut(),
     response,
     request.response_channel,
     request.request_id,

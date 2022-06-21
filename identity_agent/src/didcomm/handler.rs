@@ -19,55 +19,55 @@ use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::ResponseMessage;
 
-/// Actors are objects that encapsulate state and behavior.
+/// Handlers are objects that encapsulate state and behavior.
 ///
-/// A DidCommActor handles one or more requests by implementing this trait one or more times
+/// A DidCommHandler handles one or more requests by implementing this trait one or more times
 /// for different `DidCommRequest` types.
 ///
-/// The requests for a DidCommActor are handled asynchronously, meaning that the calling agent does
-/// not wait for the actor to complete its invocation. If that is desired, the [`Actor`](crate::actor::Actor) trait
-/// should be implemented instead.
+/// The requests for a DidCommHandler are handled asynchronously, meaning that the calling agent does
+/// not wait for the handler to complete its invocation. If that is desired, the [`Handler`](crate::agent::Handler)
+/// trait should be implemented instead.
 #[async_trait::async_trait]
-pub trait DidCommActor<REQ: DidCommRequest>: Debug + 'static {
+pub trait DidCommHandler<REQ: DidCommRequest>: Debug + 'static {
   /// Called when the agent receives a request of type `REQ`.
-  async fn handle(&self, actor: DidCommAgent, request: RequestContext<REQ>);
+  async fn handle(&self, handler: DidCommAgent, request: RequestContext<REQ>);
 }
 
-/// A trait that wraps a DidCommActor implementation and erases its type.
-/// This allows holding actors with different concrete types in the same collection.
-pub(crate) trait AbstractDidCommActor: Debug + Send + Sync + 'static {
-  fn handle(&self, actor: DidCommAgent, request: InboundRequest) -> BoxFuture<'_, ()>;
+/// A trait that wraps a DidCommHandler implementation and erases its type.
+/// This allows holding handlers with different concrete types in the same collection.
+pub(crate) trait AbstractDidCommHandler: Debug + Send + Sync + 'static {
+  fn handle(&self, handler: DidCommAgent, request: InboundRequest) -> BoxFuture<'_, ()>;
 }
 
-/// A wrapper around asynchronous actor implementations that is used for
-/// type erasure together with [`AbstractAsyncActor`].
+/// A wrapper around asynchronous handler implementations that is used for
+/// type erasure together with [`AbstractAsyncHandler`].
 #[derive(Debug)]
-pub(crate) struct DidCommActorWrapper<ACT, REQ>
+pub(crate) struct DidCommHandlerWrapper<ACT, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
-  ACT: DidCommActor<REQ> + Send + Sync,
+  ACT: DidCommHandler<REQ> + Send + Sync,
 {
-  actor: ACT,
+  handler: ACT,
   _phantom_req: PhantomData<REQ>,
 }
 
-impl<ACT, REQ> DidCommActorWrapper<ACT, REQ>
+impl<ACT, REQ> DidCommHandlerWrapper<ACT, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
-  ACT: DidCommActor<REQ> + Send + Sync,
+  ACT: DidCommHandler<REQ> + Send + Sync,
 {
-  pub(crate) fn new(actor: ACT) -> Self {
+  pub(crate) fn new(handler: ACT) -> Self {
     Self {
-      actor,
+      handler,
       _phantom_req: PhantomData,
     }
   }
 }
 
-impl<ACT, REQ> AbstractDidCommActor for DidCommActorWrapper<ACT, REQ>
+impl<ACT, REQ> AbstractDidCommHandler for DidCommHandlerWrapper<ACT, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
-  ACT: DidCommActor<REQ> + Send + Sync,
+  ACT: DidCommHandler<REQ> + Send + Sync,
 {
   fn handle(&self, mut agent: DidCommAgent, request: InboundRequest) -> BoxFuture<'_, ()> {
     let future: _ = async move {
@@ -75,7 +75,7 @@ where
         RemoteSendError::DeserializationFailure {
           location: ErrorLocation::Remote,
           context: format!(
-            "deserializing the received bytes into the actor's expected type `{}`",
+            "deserializing the received bytes into the handler's expected type `{}`",
             std::any::type_name::<REQ>()
           ),
           error_message: error.to_string(),
@@ -111,7 +111,7 @@ where
 
       let context: RequestContext<REQ> = RequestContext::new(req, request.peer_id, request.endpoint);
 
-      self.actor.handle(agent, context).await;
+      self.handler.handle(agent, context).await;
     };
 
     Box::pin(future)

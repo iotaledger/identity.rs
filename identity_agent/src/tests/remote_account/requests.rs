@@ -7,8 +7,8 @@ use identity_iota_core::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::agent::ActorRequest;
 use crate::agent::Endpoint;
+use crate::agent::HandlerRequest;
 use crate::tests::remote_account::RemoteAccountError;
 
 /// Can be sent to a `RemoteAccount` to instruct it to create an identity.
@@ -21,7 +21,7 @@ impl From<IdentityCreate> for IdentitySetup {
   }
 }
 
-impl ActorRequest for IdentityCreate {
+impl HandlerRequest for IdentityCreate {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
   fn endpoint() -> Endpoint {
@@ -33,7 +33,7 @@ impl ActorRequest for IdentityCreate {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct IdentityList;
 
-impl ActorRequest for IdentityList {
+impl HandlerRequest for IdentityList {
   type Response = Vec<IotaDID>;
 
   fn endpoint() -> Endpoint {
@@ -45,7 +45,7 @@ impl ActorRequest for IdentityList {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct IdentityGet(pub(crate) IotaDID);
 
-impl ActorRequest for IdentityGet {
+impl HandlerRequest for IdentityGet {
   type Response = Result<IotaDocument, RemoteAccountError>;
 
   fn endpoint() -> Endpoint {

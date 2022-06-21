@@ -11,7 +11,7 @@ use serde::Serialize;
 use crate::agent::Error;
 use crate::agent::Result as AgentResult;
 
-/// A path-like identifier for an actor request. As an example, `identity/resolve`
+/// A path-like identifier for a handler request. As an example, `identity/resolve`
 /// could be the endpoint of the "resolve" request within the "identity" namespace.
 ///
 /// The namespace and request are separated by a slash and only allow alphabetic ascii characters and `_`.

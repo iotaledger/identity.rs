@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod actor;
 mod didcomm;
+mod handler;
 mod presentation;
 mod remote_account;
 

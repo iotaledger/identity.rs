@@ -17,11 +17,11 @@ pub enum RequestMode {
   Asynchronous,
 }
 
-/// A request sent to an actor with a response of type `Response`.
+/// A request sent to a handler with a response of type `Response`.
 ///
 /// This request is sent synchronously, which means waiting for
 /// the result of that invocation on the remote agent.
-pub trait ActorRequest: Debug + Serialize + DeserializeOwned + Send + 'static {
+pub trait HandlerRequest: Debug + Serialize + DeserializeOwned + Send + 'static {
   /// The response type for this request.
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 

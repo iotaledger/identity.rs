@@ -10,7 +10,7 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use tokio::sync::Mutex;
 
-use crate::agent::Actor;
+use crate::agent::Handler;
 use crate::agent::RequestContext;
 use crate::tests::remote_account::IdentityCreate;
 use crate::tests::remote_account::IdentityGet;
@@ -26,14 +26,14 @@ pub(crate) struct RemoteAccount {
 }
 
 #[async_trait::async_trait]
-impl Actor<IdentityList> for RemoteAccount {
+impl Handler<IdentityList> for RemoteAccount {
   async fn handle(&self, _: RequestContext<IdentityList>) -> Vec<IotaDID> {
     self.accounts.iter().map(|entry| entry.key().to_owned()).collect()
   }
 }
 
 #[async_trait::async_trait]
-impl Actor<IdentityCreate> for RemoteAccount {
+impl Handler<IdentityCreate> for RemoteAccount {
   async fn handle(&self, request: RequestContext<IdentityCreate>) -> Result<IotaDocument, RemoteAccountError> {
     let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
     let doc = account.document().to_owned();
@@ -43,7 +43,7 @@ impl Actor<IdentityCreate> for RemoteAccount {
 }
 
 #[async_trait::async_trait]
-impl Actor<IdentityGet> for RemoteAccount {
+impl Handler<IdentityGet> for RemoteAccount {
   async fn handle(&self, request: RequestContext<IdentityGet>) -> Result<IotaDocument, RemoteAccountError> {
     self
       .accounts

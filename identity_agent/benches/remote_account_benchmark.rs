@@ -77,9 +77,9 @@ mod remote_account {
   use identity_account::account::Account;
   use identity_account::account::AccountBuilder;
   use identity_account::types::IdentitySetup;
-  use identity_agent::agent::Actor;
-  use identity_agent::agent::ActorRequest;
   use identity_agent::agent::Endpoint;
+  use identity_agent::agent::Handler;
+  use identity_agent::agent::HandlerRequest;
   use identity_agent::agent::RequestContext;
   use identity_iota_core::did::IotaDID;
   use identity_iota_core::document::IotaDocument;
@@ -115,7 +115,7 @@ mod remote_account {
     }
   }
 
-  impl ActorRequest for IdentityCreate {
+  impl HandlerRequest for IdentityCreate {
     type Response = Result<IotaDocument, RemoteAccountError>;
 
     fn endpoint() -> Endpoint {
@@ -124,7 +124,7 @@ mod remote_account {
   }
 
   #[async_trait::async_trait]
-  impl Actor<IdentityCreate> for RemoteAccount {
+  impl Handler<IdentityCreate> for RemoteAccount {
     async fn handle(&self, request: RequestContext<IdentityCreate>) -> Result<IotaDocument, RemoteAccountError> {
       let account: Account = self.builder.lock().await.create_identity(request.input.into()).await?;
       let doc = account.document().to_owned();

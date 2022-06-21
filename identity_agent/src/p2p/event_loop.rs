@@ -195,7 +195,7 @@ impl EventLoop {
           let _ = self.swarm.remove_listener(listener);
           let err = TransportError::Other(std::io::Error::new(
             std::io::ErrorKind::Interrupted,
-            "actor was shut down",
+            "handler was shut down",
           ));
 
           let _ = channel.send(Err(err));

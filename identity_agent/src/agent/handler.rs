@@ -6,64 +6,64 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
-use crate::agent::ActorRequest;
 use crate::agent::ErrorLocation;
+use crate::agent::HandlerRequest;
 use crate::agent::RemoteSendError;
 use crate::agent::RequestContext;
 
 /// A boxed future that is `Send`.
 pub(crate) type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>>;
 
-/// Actors are objects that encapsulate state and behavior.
+/// Handlers are objects that encapsulate state and behavior.
 ///
-/// Actors handle one or more requests by implementing this trait one or more times
-/// for different `ActorRequest` types.
+/// Handlers handle one or more requests by implementing this trait one or more times
+/// for different `HandlerRequest` types.
 ///
-/// The requests for an actor are handled synchronously, meaning that the calling agent waits for
-/// the actor to return its result before continuing.
+/// The requests for a handler are handled synchronously, meaning that the calling agent waits for
+/// the handler to return its result before continuing.
 #[async_trait::async_trait]
-pub trait Actor<REQ: ActorRequest>: Debug + 'static {
+pub trait Handler<REQ: HandlerRequest>: Debug + 'static {
   /// Called when the agent receives a request of type `REQ`.
   /// The result will be returned to the calling agent.
   async fn handle(&self, request: RequestContext<REQ>) -> REQ::Response;
 }
 
-/// A trait that wraps a synchronous actor implementation and erases its type.
-/// This allows holding actors with different concrete types in the same collection.
-pub(crate) trait AbstractActor: Debug + Send + Sync + 'static {
+/// A trait that wraps a synchronous handler implementation and erases its type.
+/// This allows holding handlers with different concrete types in the same collection.
+pub(crate) trait AbstractHandler: Debug + Send + Sync + 'static {
   fn handle(&self, request: RequestContext<Vec<u8>>) -> BoxFuture<'_, Result<Vec<u8>, RemoteSendError>>;
 }
 
-/// A wrapper around synchronous actor implementations that is used for
-/// type erasure together with [`AbstractActor`].
+/// A wrapper around synchronous handler implementations that is used for
+/// type erasure together with [`AbstractHandler`].
 #[derive(Debug)]
-pub(crate) struct ActorWrapper<ACT, REQ>
+pub(crate) struct HandlerWrapper<ACT, REQ>
 where
-  REQ: ActorRequest + Send + Sync,
-  ACT: Actor<REQ> + Send + Sync,
+  REQ: HandlerRequest + Send + Sync,
+  ACT: Handler<REQ> + Send + Sync,
 {
-  actor: ACT,
+  handler: ACT,
   _phantom_req: PhantomData<REQ>,
 }
 
-impl<ACT, REQ> ActorWrapper<ACT, REQ>
+impl<ACT, REQ> HandlerWrapper<ACT, REQ>
 where
-  REQ: ActorRequest + Send + Sync,
-  ACT: Actor<REQ> + Send + Sync,
+  REQ: HandlerRequest + Send + Sync,
+  ACT: Handler<REQ> + Send + Sync,
 {
-  pub(crate) fn new(actor: ACT) -> Self {
+  pub(crate) fn new(handler: ACT) -> Self {
     Self {
-      actor,
+      handler,
       _phantom_req: PhantomData,
     }
   }
 }
 
-impl<ACT, REQ> AbstractActor for ActorWrapper<ACT, REQ>
+impl<ACT, REQ> AbstractHandler for HandlerWrapper<ACT, REQ>
 where
-  REQ: ActorRequest + Send + Sync,
+  REQ: HandlerRequest + Send + Sync,
   REQ::Response: Send,
-  ACT: Actor<REQ> + Send + Sync,
+  ACT: Handler<REQ> + Send + Sync,
 {
   fn handle(&self, request: RequestContext<Vec<u8>>) -> BoxFuture<'_, Result<Vec<u8>, RemoteSendError>> {
     let future = async move {
@@ -78,7 +78,7 @@ where
         })?;
 
       let req: RequestContext<REQ> = request.convert(req);
-      let result: REQ::Response = self.actor.handle(req).await;
+      let result: REQ::Response = self.handler.handle(req).await;
       serialize_response::<REQ>(&result)
     };
 
@@ -87,7 +87,7 @@ where
 }
 
 #[inline(always)]
-fn serialize_response<REQ: ActorRequest>(input: &REQ::Response) -> Result<Vec<u8>, RemoteSendError> {
+fn serialize_response<REQ: HandlerRequest>(input: &REQ::Response) -> Result<Vec<u8>, RemoteSendError> {
   log::debug!(
     "attempt serialization into {:?}",
     std::any::type_name::<REQ::Response>()

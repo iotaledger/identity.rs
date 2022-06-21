@@ -3,7 +3,7 @@
 
 use std::time::Duration;
 
-/// Configuration options for a [`Agent`](crate::actor::Agent).
+/// Configuration options for a [`Agent`](crate::handler::Agent).
 #[derive(Debug, Clone)]
 pub(crate) struct AgentConfig {
   pub(crate) timeout: Duration,

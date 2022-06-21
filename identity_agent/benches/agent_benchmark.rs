@@ -17,10 +17,10 @@ use identity_agent::Multiaddr;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_iota_core::document::IotaDocument;
-use test_actor::PresentationRequest;
-use test_actor::TestActor;
+use test_handler::PresentationRequest;
+use test_handler::TestHandler;
 
-use crate::test_actor::PresentationOffer;
+use crate::test_handler::PresentationOffer;
 
 async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
@@ -28,7 +28,7 @@ async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
     document: IotaDocument::new(&KeyPair::new(KeyType::Ed25519).unwrap()).unwrap(),
   });
 
-  builder.attach_didcomm(TestActor);
+  builder.attach_didcomm(TestHandler);
 
   let mut receiver: DidCommAgent = builder.build().await.unwrap();
 
@@ -91,18 +91,18 @@ criterion_group!(benches, bench_send_didcomm_messages);
 
 criterion_main!(benches);
 
-mod test_actor {
+mod test_handler {
   use identity_agent::agent::Endpoint;
   use identity_agent::agent::RequestContext;
-  use identity_agent::didcomm::DidCommActor;
   use identity_agent::didcomm::DidCommAgent;
+  use identity_agent::didcomm::DidCommHandler;
   use identity_agent::didcomm::DidCommPlaintextMessage;
   use identity_agent::didcomm::DidCommRequest;
   use serde::Deserialize;
   use serde::Serialize;
 
   #[derive(Debug, Clone)]
-  pub struct TestActor;
+  pub struct TestHandler;
 
   #[derive(Clone, Debug, Deserialize, Serialize, Default)]
   pub(crate) struct PresentationRequest(u8);
@@ -123,7 +123,7 @@ mod test_actor {
   }
 
   #[async_trait::async_trait]
-  impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for TestActor {
+  impl DidCommHandler<DidCommPlaintextMessage<PresentationRequest>> for TestHandler {
     async fn handle(
       &self,
       mut agent: DidCommAgent,

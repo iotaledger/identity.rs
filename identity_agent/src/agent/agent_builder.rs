@@ -27,15 +27,15 @@ use libp2p::websocket::WsConfig;
 use libp2p::yamux::YamuxConfig;
 use libp2p::Swarm;
 
-use crate::agent::AbstractActor;
-use crate::agent::Actor;
-use crate::agent::ActorMap;
-use crate::agent::ActorRequest;
-use crate::agent::ActorWrapper;
+use crate::agent::AbstractHandler;
 use crate::agent::Agent;
 use crate::agent::AgentConfig;
 use crate::agent::AgentState;
 use crate::agent::Error;
+use crate::agent::Handler;
+use crate::agent::HandlerMap;
+use crate::agent::HandlerRequest;
+use crate::agent::HandlerWrapper;
 use crate::agent::Result as AgentResult;
 use crate::p2p::AgentProtocol;
 use crate::p2p::AgentRequestResponseCodec;
@@ -43,11 +43,11 @@ use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-/// A builder for [`Agent`]s to customize its configuration and attach actors.
+/// A builder for [`Agent`]s to customize its configuration and attach handlers.
 pub struct AgentBuilder {
   pub(crate) keypair: Option<Keypair>,
   pub(crate) config: AgentConfig,
-  pub(crate) actors: ActorMap,
+  pub(crate) handlers: HandlerMap,
 }
 
 impl AgentBuilder {
@@ -56,7 +56,7 @@ impl AgentBuilder {
     Self {
       keypair: None,
       config: AgentConfig::default(),
-      actors: HashMap::new(),
+      handlers: HashMap::new(),
     }
   }
 
@@ -76,25 +76,25 @@ impl AgentBuilder {
     self
   }
 
-  /// Attaches an [`Actor`] to this agent.
+  /// Attaches a [`Handler`] to this agent.
   ///
-  /// This means that when the agent receives a request of type `REQ`, it will invoke this actor.
+  /// This means that when the agent receives a request of type `REQ`, it will invoke this handler.
   ///
-  /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
+  /// Calling this method with a `REQ` type whose endpoint is already attached to a handler
   /// will overwrite the previous attachment.
-  pub fn attach<REQ, ACT>(&mut self, actor: ACT)
+  pub fn attach<REQ, ACT>(&mut self, handler: ACT)
   where
-    ACT: Actor<REQ> + Send + Sync,
-    REQ: ActorRequest + Send + Sync,
+    ACT: Handler<REQ> + Send + Sync,
+    REQ: HandlerRequest + Send + Sync,
     REQ::Response: Send,
   {
-    self.actors.insert(
+    self.handlers.insert(
       REQ::endpoint(),
-      Box::new(ActorWrapper::new(actor)) as Box<dyn AbstractActor>,
+      Box::new(HandlerWrapper::new(handler)) as Box<dyn AbstractHandler>,
     );
   }
 
-  /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
+  /// Build the handler with a default transport which supports DNS, TCP and WebSocket capabilities.
   pub async fn build(self) -> AgentResult<Agent> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
@@ -123,10 +123,10 @@ impl AgentBuilder {
       tokio::spawn(fut);
     });
 
-    let (event_loop, actor_state, net_commander): (EventLoop, AgentState, NetCommander) =
+    let (event_loop, handler_state, net_commander): (EventLoop, AgentState, NetCommander) =
       self.build_constituents(transport, executor.clone()).await?;
 
-    let agent: Agent = Agent::new(net_commander, Arc::new(actor_state));
+    let agent: Agent = Agent::new(net_commander, Arc::new(handler_state));
     let agent_clone: Agent = agent.clone();
 
     let event_handler = move |event: InboundRequest| {
@@ -190,7 +190,7 @@ impl AgentBuilder {
     let agent_state: AgentState = AgentState {
       agent_id,
       config: self.config,
-      actors: self.actors,
+      handlers: self.handlers,
     };
 
     Ok((event_loop, agent_state, net_commander))

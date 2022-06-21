@@ -10,17 +10,17 @@ use identity_iota_core::document::IotaDocument;
 use libp2p::Multiaddr;
 use serde::de::DeserializeOwned;
 
-use crate::agent::ActorRequest;
 use crate::agent::Agent;
 use crate::agent::AgentId;
 use crate::agent::Endpoint;
 use crate::agent::Error;
 use crate::agent::ErrorLocation;
+use crate::agent::HandlerRequest;
 use crate::agent::RemoteSendError;
 use crate::agent::RequestMode;
 use crate::agent::Result as AgentResult;
 use crate::didcomm::dcpm::DidCommPlaintextMessage;
-use crate::didcomm::AbstractDidCommActor;
+use crate::didcomm::AbstractDidCommHandler;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::ThreadId;
 use crate::p2p::InboundRequest;
@@ -41,7 +41,7 @@ pub struct DidCommAgentIdentity {
 /// The internal state of a [`Agent`].
 #[derive(Debug)]
 pub struct DidCommAgentState {
-  pub(crate) actors: DidCommActorMap,
+  pub(crate) handlers: DidCommHandlerMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
@@ -50,9 +50,9 @@ pub struct DidCommAgentState {
 }
 
 impl DidCommAgentState {
-  pub(crate) fn new(actors: DidCommActorMap, identity: DidCommAgentIdentity) -> Self {
+  pub(crate) fn new(handlers: DidCommHandlerMap, identity: DidCommAgentIdentity) -> Self {
     Self {
-      actors,
+      handlers,
       threads_receiver: DashMap::new(),
       threads_sender: DashMap::new(),
       identity,
@@ -60,18 +60,19 @@ impl DidCommAgentState {
   }
 }
 
-/// An actor agent can be used to send requests to remote agents, and fowards incoming requests
-/// to attached actors.
+/// An agent can be used to send requests to other, remote agents, and fowards incoming requests
+/// to attached handlers.
 ///
-/// An actor agent is a frontend for an event loop running in the background, which invokes
-/// user-attached actors. Agents can be cloned without cloning the event loop, and doing so
+/// An agent is a frontend for an event loop running in the background, which invokes
+/// user-attached handlers. Agents can be cloned without cloning the event loop, and doing so
 /// is a cheap operation.
-/// Actors are attached at agent build time, using the [`DidCommAgentBuilder`](crate::didcomm::DidCommAgentBuilder).
 ///
-/// A `DidCommAgent` supports attachement of both [`Actor`](crate::actor::Actor)s and
-/// [`DidCommActor`](crate::didcomm::DidCommActor)s.
+/// Handlers are attached at agent build time, using the [`DidCommAgentBuilder`](crate::didcomm::DidCommAgentBuilder).
 ///
-/// After shutting down the event loop of a agent using [`DidCommAgent::shutdown`], other clones of the
+/// A `DidCommAgent` supports attachement of both [`Handler`](crate::agent::Handler)s and
+/// [`DidCommHandler`](crate::didcomm::DidCommHandler)s.
+///
+/// After shutting down the event loop of an agent using [`DidCommAgent::shutdown`], other clones of the
 /// agent will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Debug, Clone)]
 pub struct DidCommAgent {
@@ -84,8 +85,8 @@ impl DidCommAgent {
     self.agent.commander_mut()
   }
 
-  /// Let this agent handle the given `request`, by invoking the appropriate actor, if attached.
-  /// This consumes the agent because it passes itself to the actor.
+  /// Let this agent handle the given `request`, by invoking the appropriate handler, if attached.
+  /// This consumes the agent because it passes itself to the handler.
   /// The agent will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(self, request: InboundRequest) {
     match request.request_mode {
@@ -125,7 +126,7 @@ impl DidCommAgent {
   }
 
   /// See [`Agent::send_request`].
-  pub async fn send_request<REQ: ActorRequest>(
+  pub async fn send_request<REQ: HandlerRequest>(
     &mut self,
     agent_id: AgentId,
     request: REQ,
@@ -208,7 +209,7 @@ impl DidCommAgent {
 
     // The logic is that for every received message on a thread,
     // there must be a preceding send_message on that same thread.
-    // Note that on the receiving actor, the very first message of a protocol
+    // Note that on the receiving handler, the very first message of a protocol
     // is not awaited through await_message, so it does not need to follow these rules.
     self.state.threads_sender.insert(thread_id.to_owned(), sender);
     self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
@@ -217,24 +218,24 @@ impl DidCommAgent {
   #[inline(always)]
   pub(crate) fn handle_async_request(mut self, request: InboundRequest) {
     let _ = tokio::spawn(async move {
-      match self.state.actors.get(&request.endpoint) {
-        Some(actor) => {
-          let handler: &dyn AbstractDidCommActor = actor.as_ref();
+      match self.state.handlers.get(&request.endpoint) {
+        Some(handler) => {
+          let handler: &dyn AbstractDidCommHandler = handler.as_ref();
 
           handler.handle(self.clone(), request).await;
         }
         None => {
-          actor_not_found(&mut self, request).await;
+          handler_not_found(&mut self, request).await;
         }
       }
     });
   }
 }
 
-/// Invoked when no actor was found that can handle the received request.
+/// Invoked when no handler was found that can handle the received request.
 /// Attempts to find a thread waiting for the received message,
 /// otherwise returns an error to the peer.
-async fn actor_not_found(actor: &mut DidCommAgent, request: InboundRequest) {
+async fn handler_not_found(handler: &mut DidCommAgent, request: InboundRequest) {
   let result: Result<(), RemoteSendError> =
     match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
       Err(error) => Err(RemoteSendError::DeserializationFailure {
@@ -245,7 +246,7 @@ async fn actor_not_found(actor: &mut DidCommAgent, request: InboundRequest) {
       Ok(plaintext_msg) => {
         let thread_id = plaintext_msg.thread_id();
 
-        match actor.state.threads_sender.remove(thread_id) {
+        match handler.state.threads_sender.remove(thread_id) {
           Some(sender) => {
             let thread_request = ThreadRequest {
               endpoint: request.endpoint,
@@ -275,7 +276,7 @@ async fn actor_not_found(actor: &mut DidCommAgent, request: InboundRequest) {
     };
 
   let send_result = crate::agent::send_response(
-    actor.commander_mut(),
+    handler.commander_mut(),
     result,
     request.response_channel,
     request.request_id,
@@ -287,5 +288,5 @@ async fn actor_not_found(actor: &mut DidCommAgent, request: InboundRequest) {
   }
 }
 
-/// A map from an endpoint to the actor that handles its requests.
-pub(crate) type DidCommActorMap = HashMap<Endpoint, Box<dyn AbstractDidCommActor>>;
+/// A map from an endpoint to the handler that handles its requests.
+pub(crate) type DidCommHandlerMap = HashMap<Endpoint, Box<dyn AbstractDidCommHandler>>;

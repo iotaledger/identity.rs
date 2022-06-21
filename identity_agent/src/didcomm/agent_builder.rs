@@ -15,30 +15,30 @@ use libp2p::tcp::TokioTcpConfig;
 use libp2p::websocket::WsConfig;
 use libp2p::Transport;
 
-use crate::agent::Actor;
-use crate::agent::ActorRequest;
 use crate::agent::Agent;
 use crate::agent::AgentBuilder;
 use crate::agent::AgentState;
 use crate::agent::Error;
+use crate::agent::Handler;
+use crate::agent::HandlerRequest;
 use crate::agent::Result as AgentResult;
-use crate::didcomm::AbstractDidCommActor;
-use crate::didcomm::DidCommActor;
-use crate::didcomm::DidCommActorMap;
-use crate::didcomm::DidCommActorWrapper;
+use crate::didcomm::AbstractDidCommHandler;
 use crate::didcomm::DidCommAgent;
 use crate::didcomm::DidCommAgentIdentity;
 use crate::didcomm::DidCommAgentState;
+use crate::didcomm::DidCommHandler;
+use crate::didcomm::DidCommHandlerMap;
+use crate::didcomm::DidCommHandlerWrapper;
 use crate::didcomm::DidCommRequest;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-/// A builder for [`DidCommAgent`]s to customize its configuration and attach actors.
+/// A builder for [`DidCommAgent`]s to customize its configuration and attach handlers.
 pub struct DidCommAgentBuilder {
   inner: AgentBuilder,
   identity: Option<DidCommAgentIdentity>,
-  didcomm_actors: DidCommActorMap,
+  didcomm_handlers: DidCommHandlerMap,
 }
 
 impl DidCommAgentBuilder {
@@ -47,7 +47,7 @@ impl DidCommAgentBuilder {
     Self {
       inner: AgentBuilder::new(),
       identity: None,
-      didcomm_actors: HashMap::new(),
+      didcomm_handlers: HashMap::new(),
     }
   }
 
@@ -73,31 +73,31 @@ impl DidCommAgentBuilder {
     self
   }
 
-  /// Attaches a [`DidCommActor`] to this agent.
+  /// Attaches a [`DidCommHandler`] to this agent.
   ///
-  /// This means that when the agent receives a request of type `REQ`, it will invoke this actor.
+  /// This means that when the agent receives a request of type `REQ`, it will invoke this handler.
   ///
-  /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
+  /// Calling this method with a `REQ` type whose endpoint is already attached to a handler
   /// will overwrite the previous attachment.
-  pub fn attach_didcomm<REQ, ACT>(&mut self, actor: ACT)
+  pub fn attach_didcomm<REQ, ACT>(&mut self, handler: ACT)
   where
-    ACT: DidCommActor<REQ> + Send + Sync,
+    ACT: DidCommHandler<REQ> + Send + Sync,
     REQ: DidCommRequest + Send + Sync,
   {
-    self.didcomm_actors.insert(
+    self.didcomm_handlers.insert(
       REQ::endpoint(),
-      Box::new(DidCommActorWrapper::new(actor)) as Box<dyn AbstractDidCommActor>,
+      Box::new(DidCommHandlerWrapper::new(handler)) as Box<dyn AbstractDidCommHandler>,
     );
   }
 
   /// See [`AgentBuilder::attach`].
-  pub fn attach<REQ, ACT>(&mut self, actor: ACT)
+  pub fn attach<REQ, ACT>(&mut self, handler: ACT)
   where
-    ACT: Actor<REQ> + Send + Sync,
-    REQ: ActorRequest + Send + Sync,
+    ACT: Handler<REQ> + Send + Sync,
+    REQ: HandlerRequest + Send + Sync,
     REQ::Response: Send,
   {
-    self.inner.attach(actor);
+    self.inner.attach(handler);
   }
 
   /// See [`AgentBuilder::build`].
@@ -129,13 +129,13 @@ impl DidCommAgentBuilder {
       tokio::spawn(fut);
     });
 
-    let (event_loop, actor_state, net_commander): (EventLoop, AgentState, NetCommander) =
+    let (event_loop, handler_state, net_commander): (EventLoop, AgentState, NetCommander) =
       self.inner.build_constituents(transport, executor.clone()).await?;
 
     let state: DidCommAgentState =
-      DidCommAgentState::new(self.didcomm_actors, self.identity.ok_or(Error::IdentityMissing)?);
+      DidCommAgentState::new(self.didcomm_handlers, self.identity.ok_or(Error::IdentityMissing)?);
 
-    let agent: Agent = Agent::new(net_commander, Arc::new(actor_state));
+    let agent: Agent = Agent::new(net_commander, Arc::new(handler_state));
 
     let didcomm_agent: DidCommAgent = DidCommAgent {
       agent,

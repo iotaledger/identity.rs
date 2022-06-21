@@ -12,13 +12,13 @@ use identity_iota_core::did::IotaDID;
 use libp2p::request_response::OutboundFailure;
 use libp2p::Multiaddr;
 
-use crate::agent::Actor;
-use crate::agent::ActorRequest;
 use crate::agent::Agent;
 use crate::agent::AgentBuilder;
 use crate::agent::Endpoint;
 use crate::agent::Error;
 use crate::agent::ErrorLocation;
+use crate::agent::Handler;
+use crate::agent::HandlerRequest;
 use crate::agent::RequestContext;
 use crate::agent::Result as AgentResult;
 use crate::tests::default_listening_agent;
@@ -28,22 +28,22 @@ use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
 
 #[tokio::test]
-async fn test_actor_end_to_end() -> AgentResult<()> {
+async fn test_handler_end_to_end() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
-  struct MyActor {
+  struct MyHandler {
     counter: Arc<AtomicU32>,
   }
 
-  // Define our request types and implement ActorRequest for them.
+  // Define our request types and implement HandlerRequest for them.
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct Increment(u32);
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct Decrement(u32);
 
-  impl ActorRequest for Increment {
+  impl HandlerRequest for Increment {
     type Response = u32;
 
     fn endpoint() -> Endpoint {
@@ -51,7 +51,7 @@ async fn test_actor_end_to_end() -> AgentResult<()> {
     }
   }
 
-  impl ActorRequest for Decrement {
+  impl HandlerRequest for Decrement {
     type Response = u32;
 
     fn endpoint() -> Endpoint {
@@ -59,33 +59,33 @@ async fn test_actor_end_to_end() -> AgentResult<()> {
     }
   }
 
-  // States that MyActor can handle messages of type `Increment`.
+  // States that MyHandler can handle messages of type `Increment`.
   #[async_trait::async_trait]
-  impl Actor<Increment> for MyActor {
+  impl Handler<Increment> for MyHandler {
     async fn handle(&self, request: RequestContext<Increment>) -> u32 {
       self.counter.fetch_add(request.input.0, Ordering::SeqCst);
       self.counter.load(Ordering::SeqCst)
     }
   }
 
-  // States that MyActor can handle messages of type `Decrement`.
+  // States that MyHandler can handle messages of type `Decrement`.
   #[async_trait::async_trait]
-  impl Actor<Decrement> for MyActor {
+  impl Handler<Decrement> for MyHandler {
     async fn handle(&self, request: RequestContext<Decrement>) -> u32 {
       self.counter.fetch_sub(request.input.0, Ordering::SeqCst);
       self.counter.load(Ordering::SeqCst)
     }
   }
 
-  let actor = MyActor {
+  let handler = MyHandler {
     counter: Arc::new(AtomicU32::new(0)),
   };
 
-  // Create a new agent and attach the actor.
+  // Create a new agent and attach the handler.
   // Each attachment is for one request type, so we have to do it twice.
   let mut builder = AgentBuilder::new();
-  builder.attach::<Increment, _>(actor.clone());
-  builder.attach::<Decrement, _>(actor.clone());
+  builder.attach::<Increment, _>(handler.clone());
+  builder.attach::<Decrement, _>(handler.clone());
 
   // Build the listening agent and let it listen on a default address.
   let mut listening_agent: Agent = builder.build().await.unwrap();
@@ -114,12 +114,12 @@ async fn test_actor_end_to_end() -> AgentResult<()> {
 async fn test_unknown_request_returns_error() -> AgentResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, agent_id) = default_listening_agent(|builder| builder).await;
+  let (listening_handler, addrs, agent_id) = default_listening_agent(|builder| builder).await;
 
-  let mut sending_actor = default_sending_agent(|builder| builder).await;
-  sending_actor.add_agent_addresses(agent_id, addrs).await.unwrap();
+  let mut sending_handler = default_sending_agent(|builder| builder).await;
+  sending_handler.add_agent_addresses(agent_id, addrs).await.unwrap();
 
-  let result = sending_actor
+  let result = sending_handler
     .send_request(
       agent_id,
       IdentityGet(
@@ -132,21 +132,21 @@ async fn test_unknown_request_returns_error() -> AgentResult<()> {
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
 
-  listening_actor.shutdown().await.unwrap();
-  sending_actor.shutdown().await.unwrap();
+  listening_handler.shutdown().await.unwrap();
+  sending_handler.shutdown().await.unwrap();
 
   Ok(())
 }
 
 /// Test that agent2 can send a request to agent1 if it was previously sent a request from agent1.
 #[tokio::test]
-async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
+async fn test_handlers_can_communicate_bidirectionally() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct Dummy(u8);
 
-  impl ActorRequest for Dummy {
+  impl HandlerRequest for Dummy {
     type Response = ();
 
     fn endpoint() -> Endpoint {
@@ -155,24 +155,24 @@ async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
   }
 
   #[derive(Debug, Clone)]
-  struct TestActor(Arc<AtomicBool>);
+  struct TestHandler(Arc<AtomicBool>);
 
   #[async_trait::async_trait]
-  impl Actor<Dummy> for TestActor {
+  impl Handler<Dummy> for TestHandler {
     async fn handle(&self, _req: RequestContext<Dummy>) {
       self.0.store(true, std::sync::atomic::Ordering::SeqCst);
     }
   }
 
-  let actor1 = TestActor(Arc::new(AtomicBool::new(false)));
-  let actor2 = TestActor(Arc::new(AtomicBool::new(false)));
+  let handler1 = TestHandler(Arc::new(AtomicBool::new(false)));
+  let handler2 = TestHandler(Arc::new(AtomicBool::new(false)));
 
   let mut agent1_builder = AgentBuilder::new();
-  agent1_builder.attach(actor1.clone());
+  agent1_builder.attach(handler1.clone());
   let mut agent1: Agent = agent1_builder.build().await.unwrap();
 
   let mut agent2_builder = AgentBuilder::new();
-  agent2_builder.attach(actor2.clone());
+  agent2_builder.attach(handler2.clone());
   let mut agent2: Agent = agent2_builder.build().await.unwrap();
 
   agent2
@@ -191,23 +191,23 @@ async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
   agent1.shutdown().await.unwrap();
   agent2.shutdown().await.unwrap();
 
-  assert!(actor1.0.load(std::sync::atomic::Ordering::SeqCst));
-  assert!(actor2.0.load(std::sync::atomic::Ordering::SeqCst));
+  assert!(handler1.0.load(std::sync::atomic::Ordering::SeqCst));
+  assert!(handler2.0.load(std::sync::atomic::Ordering::SeqCst));
 
   Ok(())
 }
 
 #[tokio::test]
-async fn test_interacting_with_shutdown_actor_returns_error() {
+async fn test_interacting_with_shutdown_handler_returns_error() {
   try_init_logger();
 
-  let (listening_actor, _, _) = default_listening_agent(|builder| builder).await;
+  let (listening_handler, _, _) = default_listening_agent(|builder| builder).await;
 
-  let mut actor_clone = listening_actor.clone();
+  let mut handler_clone = listening_handler.clone();
 
-  listening_actor.shutdown().await.unwrap();
+  listening_handler.shutdown().await.unwrap();
 
-  assert!(matches!(actor_clone.addresses().await.unwrap_err(), Error::Shutdown));
+  assert!(matches!(handler_clone.addresses().await.unwrap_err(), Error::Shutdown));
 }
 
 #[tokio::test]
@@ -215,10 +215,10 @@ async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()>
   try_init_logger();
 
   #[derive(Debug)]
-  struct TestActor;
+  struct TestHandler;
 
   #[async_trait::async_trait]
-  impl Actor<IdentityList> for TestActor {
+  impl Handler<IdentityList> for TestHandler {
     async fn handle(&self, _: RequestContext<IdentityList>) -> Vec<IotaDID> {
       tokio::time::sleep(std::time::Duration::from_millis(50)).await;
       vec![]
@@ -226,7 +226,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()>
   }
 
   let (listening_agent, addrs, agent_id) = default_listening_agent(|mut builder| {
-    builder.attach(TestActor);
+    builder.attach(TestHandler);
     builder
   })
   .await;
@@ -236,13 +236,13 @@ async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()>
 
   let mut sender1 = sending_agent.clone();
 
-  // Ensure that an actor shutdown returns errors through open channels,
+  // Ensure that a handler shutdown returns errors through open channels,
   // such as `EventLoop::await_response`.
   // We do not test all `EventLoop::await*` fields, because some are
   // much harder to test than others.
   // We poll the futures once to ensure that the channels are created,
-  // before shutting the actor down. If we would call these methods after shutdown,
-  // they would immediately return a shutdown error (see test_interacting_with_shutdown_actor_returns_error),
+  // before shutting the handler down. If we would call these methods after shutdown,
+  // they would immediately return a shutdown error (see test_interacting_with_shutdown_handler_returns_error),
   // hence the need for manual polling.
   // On the next poll after shutdown, we expect the errors.
 
@@ -277,7 +277,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   struct CustomRequest2(u8);
 
-  impl ActorRequest for CustomRequest {
+  impl HandlerRequest for CustomRequest {
     type Response = String;
 
     fn endpoint() -> Endpoint {
@@ -285,7 +285,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
     }
   }
 
-  impl ActorRequest for CustomRequest2 {
+  impl HandlerRequest for CustomRequest2 {
     type Response = u32;
 
     fn endpoint() -> Endpoint {
@@ -294,25 +294,25 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
   }
 
   #[derive(Debug)]
-  struct TestActor;
+  struct TestHandler;
 
   #[async_trait::async_trait]
-  impl Actor<CustomRequest2> for TestActor {
+  impl Handler<CustomRequest2> for TestHandler {
     async fn handle(&self, _: RequestContext<CustomRequest2>) -> u32 {
       42
     }
   }
 
-  let (listening_actor, addrs, agent_id) = default_listening_agent(|mut builder| {
-    builder.attach(TestActor);
+  let (listening_handler, addrs, agent_id) = default_listening_agent(|mut builder| {
+    builder.attach(TestHandler);
     builder
   })
   .await;
 
-  let mut sending_actor: Agent = AgentBuilder::new().build().await.unwrap();
-  sending_actor.add_agent_addresses(agent_id, addrs).await.unwrap();
+  let mut sending_handler: Agent = AgentBuilder::new().build().await.unwrap();
+  sending_handler.add_agent_addresses(agent_id, addrs).await.unwrap();
 
-  let result = sending_actor.send_request(agent_id, CustomRequest(13)).await;
+  let result = sending_handler.send_request(agent_id, CustomRequest(13)).await;
 
   assert!(matches!(
     result.unwrap_err(),
@@ -327,7 +327,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   struct CustomRequest3(String);
 
-  impl ActorRequest for CustomRequest3 {
+  impl HandlerRequest for CustomRequest3 {
     type Response = String;
 
     fn endpoint() -> Endpoint {
@@ -335,7 +335,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
     }
   }
 
-  let result = sending_actor
+  let result = sending_handler
     .send_request(agent_id, CustomRequest3("13".to_owned()))
     .await;
 
@@ -347,8 +347,8 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
     }
   ));
 
-  listening_actor.shutdown().await.unwrap();
-  sending_actor.shutdown().await.unwrap();
+  listening_handler.shutdown().await.unwrap();
+  sending_handler.shutdown().await.unwrap();
 
   Ok(())
 }

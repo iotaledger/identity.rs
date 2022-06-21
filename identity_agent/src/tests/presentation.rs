@@ -14,8 +14,8 @@ use crate::agent::AgentId;
 use crate::agent::Endpoint;
 use crate::agent::RequestContext;
 use crate::agent::Result as AgentResult;
-use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommAgent;
+use crate::didcomm::DidCommHandler;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::ThreadId;
@@ -30,27 +30,27 @@ impl DidCommState {
 }
 
 #[async_trait::async_trait]
-impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommState {
+impl DidCommHandler<DidCommPlaintextMessage<PresentationRequest>> for DidCommState {
   async fn handle(&self, agent: DidCommAgent, request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>) {
     log::debug!("holder: received presentation request");
 
     let result = presentation_holder_handler(agent, request.agent_id, Some(request.input)).await;
 
     if let Err(err) = result {
-      log::error!("presentation holder actor errored: {err:?}");
+      log::error!("presentation holder handler errored: {err:?}");
     }
   }
 }
 
 #[async_trait::async_trait]
-impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
+impl DidCommHandler<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
   async fn handle(&self, agent: DidCommAgent, request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
     log::debug!("verifier: received offer from {}", request.agent_id);
 
     let result = presentation_verifier_handler(agent, request.agent_id, Some(request.input)).await;
 
     if let Err(err) = result {
-      log::error!("presentation verifier actor errored: {err:?}");
+      log::error!("presentation verifier handler errored: {err:?}");
     }
   }
 }

@@ -41,9 +41,9 @@ pub enum Error {
   ThreadNotFound(ThreadId),
   #[error("awaiting message timed out on thread `{0}`")]
   AwaitTimeout(ThreadId),
-  #[error("actor was shutdown")]
+  #[error("handler was shutdown")]
   Shutdown,
-  #[error("actor identity missing")]
+  #[error("handler identity missing")]
   IdentityMissing,
 }
 

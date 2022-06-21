@@ -6,15 +6,15 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::agent::Actor;
-use crate::agent::ActorRequest;
 use crate::agent::AgentId;
 use crate::agent::Endpoint;
 use crate::agent::Error;
+use crate::agent::Handler;
+use crate::agent::HandlerRequest;
 use crate::agent::RequestContext;
 use crate::agent::Result as AgentResult;
-use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommAgent;
+use crate::didcomm::DidCommHandler;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::ThreadId;
@@ -28,15 +28,15 @@ use crate::tests::presentation::PresentationRequest;
 use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
 
-/// Ensure the DidCommAgent supports actors working with `ActorRequest`s (rather than `DidCommRequest`s).
+/// Ensure the DidCommAgent supports handlers working with `HandlerRequest`s (rather than `DidCommRequest`s).
 #[tokio::test]
-async fn test_didcomm_agent_supports_actor_requests() -> AgentResult<()> {
+async fn test_didcomm_agent_supports_handler_requests() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct SyncDummy(u16);
 
-  impl ActorRequest for SyncDummy {
+  impl HandlerRequest for SyncDummy {
     type Response = u16;
 
     fn endpoint() -> Endpoint {
@@ -45,17 +45,17 @@ async fn test_didcomm_agent_supports_actor_requests() -> AgentResult<()> {
   }
 
   #[derive(Debug)]
-  struct TestActor;
+  struct TestHandler;
 
   #[async_trait::async_trait]
-  impl Actor<SyncDummy> for TestActor {
+  impl Handler<SyncDummy> for TestHandler {
     async fn handle(&self, request: RequestContext<SyncDummy>) -> u16 {
       request.input.0
     }
   }
 
-  let (listening_actor, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
-    builder.attach(TestActor);
+  let (listening_handler, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
+    builder.attach(TestHandler);
     builder
   })
   .await;
@@ -67,7 +67,7 @@ async fn test_didcomm_agent_supports_actor_requests() -> AgentResult<()> {
 
   assert_eq!(result.unwrap(), 42);
 
-  listening_actor.shutdown().await.unwrap();
+  listening_handler.shutdown().await.unwrap();
   sending_agent.shutdown().await.unwrap();
 
   Ok(())
@@ -77,7 +77,7 @@ async fn test_didcomm_agent_supports_actor_requests() -> AgentResult<()> {
 async fn test_unknown_thread_returns_error() -> AgentResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, agent_id) = default_listening_didcomm_agent(|builder| builder).await;
+  let (listening_handler, addrs, agent_id) = default_listening_didcomm_agent(|builder| builder).await;
 
   let mut sending_agent = default_sending_didcomm_agent(|builder| builder).await;
   sending_agent.add_agent_addresses(agent_id, addrs).await.unwrap();
@@ -91,7 +91,7 @@ async fn test_unknown_thread_returns_error() -> AgentResult<()> {
     }
   }
 
-  // Send a message that no handling actor on the remote agent exists for
+  // Send a message that no handling handler on the remote agent exists for
   // which causes the remote agent to look for a potential thread that is waiting for this message,
   // but no such thread exists either, so an error is returned.
   let result = sending_agent
@@ -100,7 +100,7 @@ async fn test_unknown_thread_returns_error() -> AgentResult<()> {
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
 
-  listening_actor.shutdown().await.unwrap();
+  listening_handler.shutdown().await.unwrap();
   sending_agent.shutdown().await.unwrap();
 
   Ok(())
@@ -109,13 +109,13 @@ async fn test_unknown_thread_returns_error() -> AgentResult<()> {
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> AgentResult<()> {
   try_init_logger();
-  let actor: DidCommState = DidCommState::new();
+  let handler: DidCommState = DidCommState::new();
 
   let mut holder_agent: DidCommAgent = default_sending_didcomm_agent(|builder| builder).await;
 
-  // Attach the DidCommState actor to the listening agent, so it can handle PresentationOffer requests.
+  // Attach the DidCommState handler to the listening agent, so it can handle PresentationOffer requests.
   let (verifier_agent, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
-    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
+    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(handler.clone());
     builder
   })
   .await;
@@ -141,11 +141,11 @@ async fn test_didcomm_presentation_holder_initiates() -> AgentResult<()> {
 async fn test_didcomm_presentation_verifier_initiates() -> AgentResult<()> {
   try_init_logger();
 
-  let actor = DidCommState::new();
+  let handler = DidCommState::new();
 
-  // Attach the DidCommState actor to the listening agent, so it can handle PresentationRequest requests.
+  // Attach the DidCommState handler to the listening agent, so it can handle PresentationRequest requests.
   let (holder_agent, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
-    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
+    builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(handler.clone());
     builder
   })
   .await;
@@ -191,15 +191,15 @@ async fn test_await_message_returns_timeout_error() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
-  struct MyActor;
+  struct MyHandler;
 
   #[async_trait::async_trait]
-  impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for MyActor {
+  impl DidCommHandler<DidCommPlaintextMessage<PresentationOffer>> for MyHandler {
     async fn handle(&self, _: DidCommAgent, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {}
   }
 
-  let (listening_actor, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
-    builder.attach_didcomm(MyActor);
+  let (listening_handler, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
+    builder.attach_didcomm(MyHandler);
     builder
   })
   .await;
@@ -220,7 +220,7 @@ async fn test_await_message_returns_timeout_error() -> AgentResult<()> {
 
   assert!(matches!(result.unwrap_err(), Error::AwaitTimeout(_)));
 
-  listening_actor.shutdown().await.unwrap();
+  listening_handler.shutdown().await.unwrap();
   sending_agent.shutdown().await.unwrap();
 
   Ok(())
@@ -231,11 +231,11 @@ async fn test_handler_finishes_execution_after_shutdown() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
-  struct TestActor {
+  struct TestHandler {
     was_called: Arc<AtomicBool>,
   }
 
-  impl TestActor {
+  impl TestHandler {
     fn new() -> Self {
       Self {
         was_called: Arc::new(AtomicBool::new(false)),
@@ -244,17 +244,17 @@ async fn test_handler_finishes_execution_after_shutdown() -> AgentResult<()> {
   }
 
   #[async_trait::async_trait]
-  impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for TestActor {
+  impl DidCommHandler<DidCommPlaintextMessage<PresentationOffer>> for TestHandler {
     async fn handle(&self, _: DidCommAgent, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
       tokio::time::sleep(Duration::from_millis(25)).await;
       self.was_called.store(true, Ordering::SeqCst);
     }
   }
 
-  let test_actor = TestActor::new();
+  let test_handler = TestHandler::new();
 
   let (listening_agent, addrs, agent_id) = default_listening_didcomm_agent(|mut builder| {
-    builder.attach_didcomm(test_actor.clone());
+    builder.attach_didcomm(test_handler.clone());
     builder
   })
   .await;
@@ -267,15 +267,15 @@ async fn test_handler_finishes_execution_after_shutdown() -> AgentResult<()> {
     .await
     .unwrap();
 
-  // Shut down the agent that executes the actor, and wait for some time to allow the handler to finish.
-  // Even though we shut the agent down, we expect the task that the actor is running in to finish.
+  // Shut down the agent that executes the handler, and wait for some time to allow the handler to finish.
+  // Even though we shut the agent down, we expect the task that the handler is running in to finish.
   listening_agent.shutdown().await.unwrap();
 
   tokio::time::sleep(Duration::from_millis(50)).await;
 
   sending_agent.shutdown().await.unwrap();
 
-  assert!(test_actor.was_called.load(Ordering::SeqCst));
+  assert!(test_handler.was_called.load(Ordering::SeqCst));
 
   Ok(())
 }
