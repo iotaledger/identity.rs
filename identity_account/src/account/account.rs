@@ -557,7 +557,8 @@ mod account_revocation {
   use crate::account::PublishOptions;
   use crate::Result;
   use identity_did::did::DID;
-  use identity_iota_client::tangle::{Client, SharedPtr};
+  use identity_iota_client::tangle::Client;
+  use identity_iota_client::tangle::SharedPtr;
   use identity_iota_core::did::IotaDIDUrl;
 
   impl<C> Account<C>
@@ -600,10 +601,13 @@ mod account_encryption {
   use super::Account;
   use crate::Error;
   use crate::Result;
+  use identity_account_storage::types::CekAlgorithm;
+  use identity_account_storage::types::EncryptedData;
+  use identity_account_storage::types::EncryptionAlgorithm;
   use identity_account_storage::types::KeyLocation;
-  use identity_account_storage::types::{CekAlgorithm, EncryptedData, EncryptionAlgorithm};
   use identity_core::crypto::PublicKey;
-  use identity_iota_client::tangle::{Client, SharedPtr};
+  use identity_iota_client::tangle::Client;
+  use identity_iota_client::tangle::SharedPtr;
   use identity_iota_core::document::IotaVerificationMethod;
 
   impl<C> Account<C>

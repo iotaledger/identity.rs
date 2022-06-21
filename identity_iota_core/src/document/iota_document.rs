@@ -22,8 +22,6 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::document::CoreDocument;
-#[cfg(feature = "revocation-bitmap")]
-use identity_did::revocation::RevocationBitmap;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::DocumentSigner;
@@ -612,52 +610,62 @@ impl IotaDocument {
       })
       .collect()
   }
+}
 
-  /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
-  /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-  #[cfg(feature = "revocation-bitmap")]
-  pub fn revoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
-    self.update_revocation_bitmap(service_id, |revocation_bitmap| {
-      // Revoke all given credential indices.
-      for credential in credential_indices {
-        revocation_bitmap.revoke(*credential);
-      }
-    })
-  }
+#[cfg(feature = "revocation-bitmap")]
+mod iota_document_revocation {
+  use super::IotaDocument;
+  use crate::did::IotaDID;
+  use crate::did::IotaDIDUrl;
+  use crate::Error;
+  use crate::Result;
+  use identity_did::revocation::RevocationBitmap;
+  use identity_did::service::Service;
 
-  /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
-  /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-  #[cfg(feature = "revocation-bitmap")]
-  pub fn unrevoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
-    self.update_revocation_bitmap(service_id, |revocation_bitmap| {
-      // Unrevoke all given credential indices.
-      for credential in credential_indices {
-        revocation_bitmap.unrevoke(*credential);
-      }
-    })
-  }
+  impl IotaDocument {
+    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+    /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub fn revoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
+      self.update_revocation_bitmap(service_id, |revocation_bitmap| {
+        // Revoke all given credential indices.
+        for credential in credential_indices {
+          revocation_bitmap.revoke(*credential);
+        }
+      })
+    }
 
-  #[cfg(feature = "revocation-bitmap")]
-  fn update_revocation_bitmap<F>(&mut self, service_id: &IotaDIDUrl, f: F) -> Result<()>
-  where
-    F: FnOnce(&mut RevocationBitmap),
-  {
-    let service: &mut Service<IotaDID> = self
-      .core_document_mut()
-      .service_mut()
-      .iter_mut_unchecked()
-      .find(|service| service.id() == service_id)
-      .ok_or(Error::RevocationError(identity_did::Error::InvalidService(
-        "invalid id - service not found",
-      )))?;
+    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+    /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub fn unrevoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
+      self.update_revocation_bitmap(service_id, |revocation_bitmap| {
+        // Unrevoke all given credential indices.
+        for credential in credential_indices {
+          revocation_bitmap.unrevoke(*credential);
+        }
+      })
+    }
 
-    let mut revocation_bitmap: RevocationBitmap = (&*service).try_into().map_err(Error::RevocationError)?;
+    fn update_revocation_bitmap<F>(&mut self, service_id: &IotaDIDUrl, f: F) -> Result<()>
+    where
+      F: FnOnce(&mut RevocationBitmap),
+    {
+      let service: &mut Service<IotaDID> = self
+        .core_document_mut()
+        .service_mut()
+        .iter_mut_unchecked()
+        .find(|service| service.id() == service_id)
+        .ok_or(Error::RevocationError(identity_did::Error::InvalidService(
+          "invalid id - service not found",
+        )))?;
 
-    f(&mut revocation_bitmap);
+      let mut revocation_bitmap: RevocationBitmap = (&*service).try_into().map_err(Error::RevocationError)?;
 
-    std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
+      f(&mut revocation_bitmap);
 
-    Ok(())
+      std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
+
+      Ok(())
+    }
   }
 }
 
@@ -725,6 +733,7 @@ mod tests {
   use identity_core::crypto::KeyType;
   use identity_core::utils::BaseEncoding;
   use identity_did::did::DID;
+  use identity_did::revocation::RevocationBitmap;
   use identity_did::verifiable::VerifiableProperties;
   use identity_did::verification::MethodData;
 
