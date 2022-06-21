@@ -1,14 +1,17 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
 use async_trait::async_trait;
+#[cfg(feature = "encryption")]
 use crypto::ciphers::aes::Aes256Gcm;
+#[cfg(feature = "encryption")]
 use crypto::ciphers::traits::Aead;
+#[cfg(feature = "encryption")]
 use crypto::hashes::sha::Sha256;
+#[cfg(feature = "encryption")]
 use crypto::hashes::Digest;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
@@ -17,6 +20,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
+#[cfg(feature = "encryption")]
 use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
@@ -413,6 +417,7 @@ impl Storage for MemStore {
   }
 }
 
+#[cfg(feature = "encryption")]
 fn try_encrypt(
   key: &[u8],
   algorithm: &EncryptionAlgorithm,
@@ -441,6 +446,7 @@ fn try_encrypt(
   }
 }
 
+#[cfg(feature = "encryption")]
 fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData) -> Result<Vec<u8>> {
   match algorithm {
     EncryptionAlgorithm::AES256GCM => {
@@ -461,6 +467,7 @@ fn try_decrypt(key: &[u8], algorithm: &EncryptionAlgorithm, data: &EncryptedData
 }
 
 /// The Concat KDF (using SHA-256) as defined in Section 5.8.1 of NIST.800-56A
+#[cfg(feature = "encryption")]
 fn concat_kdf(
   alg: &'static str,
   len: usize,
@@ -530,6 +537,7 @@ impl Default for MemStore {
 }
 
 /// Generate a random content encryption key of suitable length for `encryption_algorithm`.
+#[cfg(feature = "encryption")]
 fn generate_content_encryption_key(encryption_algorithm: EncryptionAlgorithm) -> Result<Vec<u8>> {
   let mut bytes: Vec<u8> = vec![0; encryption_algorithm.key_length()];
   crypto::utils::rand::fill(bytes.as_mut()).map_err(Error::EncryptionFailure)?;
