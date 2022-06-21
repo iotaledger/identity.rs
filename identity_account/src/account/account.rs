@@ -581,7 +581,6 @@ mod account_revocation {
 
     /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
     /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    #[cfg(feature = "revocation-bitmap")]
     pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
       // Find the service to be updated.
       let mut service_id: IotaDIDUrl = self.did().to_url();
@@ -617,7 +616,6 @@ mod account_encryption {
     /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
     ///
     /// Returns an [`EncryptedData`] instance.
-    #[cfg(feature = "encryption")]
     pub async fn encrypt_data(
       &self,
       plaintext: &[u8],
@@ -644,7 +642,6 @@ mod account_encryption {
     /// `cek_algorithm`.
     ///
     /// Returns the decrypted text.
-    #[cfg(feature = "encryption")]
     pub async fn decrypt_data(
       &self,
       data: EncryptedData,
