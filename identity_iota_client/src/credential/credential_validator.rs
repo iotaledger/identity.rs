@@ -7,10 +7,13 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
+#[cfg(feature = "revocation-bitmap")]
 use identity_credential::credential::RevocationBitmapStatus;
+#[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
 use identity_did::verifiable::VerifierOptions;
 use identity_iota_core::did::IotaDID;
+#[cfg(feature = "revocation-bitmap")]
 use identity_iota_core::did::IotaDIDUrl;
 use identity_iota_core::document::IotaDocument;
 
@@ -19,6 +22,7 @@ use crate::Result;
 use super::errors::CompoundCredentialValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+#[cfg(feature = "revocation-bitmap")]
 use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
@@ -179,6 +183,7 @@ impl CredentialValidator {
   /// Checks whether the credential status has been revoked.
   ///
   /// Only supports `BitmapRevocation2022`.
+  #[cfg(feature = "revocation-bitmap")]
   pub fn check_status<T, D: AsRef<IotaDocument>>(
     credential: &Credential<T>,
     trusted_issuers: &[D],
@@ -220,6 +225,7 @@ impl CredentialValidator {
 
   /// Check the given `status` against the matching [`RevocationBitmap`] service in the
   /// issuer's DID Document.
+  #[cfg(feature = "revocation-bitmap")]
   fn check_revocation_bitmap_status<D: AsRef<IotaDocument>>(
     issuer: D,
     status: RevocationBitmapStatus,
@@ -276,15 +282,19 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
+    #[cfg(feature = "revocation-bitmap")]
     let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
 
-    let validation_units_error_iter = issuance_date_validation
+    let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
       .chain(subject_holder_validation)
-      .chain(signature_validation)
-      .chain(revocation_validation)
-      .filter_map(|result| result.err());
+      .chain(signature_validation);
+
+    #[cfg(feature = "revocation-bitmap")]
+    let validation_units_iter = validation_units_iter.chain(revocation_validation);
+
+    let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
       FailFast::FirstError => validation_units_error_iter.take(1).collect(),
       FailFast::AllErrors => validation_units_error_iter.collect(),

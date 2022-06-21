@@ -56,6 +56,7 @@ pub mod did {
 
   pub use identity_did::document::*;
   pub use identity_did::error::*;
+  #[cfg(feature = "revocation-bitmap")]
   pub use identity_did::revocation::*;
   pub use identity_did::service::*;
   pub use identity_did::utils::*;
