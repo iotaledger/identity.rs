@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::atomic::AtomicBool;
-use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::time::Duration;
 
-use libp2p::Multiaddr;
 use libp2p::PeerId;
 
 use crate::actor::Actor;
@@ -19,9 +18,7 @@ use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
-use crate::didcomm::DidCommSystemBuilder;
 use crate::didcomm::ThreadId;
-use crate::tests::default_identity;
 use crate::tests::default_listening_didcomm_system;
 use crate::tests::default_sending_didcomm_system;
 use crate::tests::presentation::presentation_holder_handler;
@@ -32,110 +29,7 @@ use crate::tests::presentation::PresentationRequest;
 use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
 
-#[tokio::test]
-async fn test_didcomm_end_to_end() -> ActorResult<()> {
-  try_init_logger();
-
-  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  struct TestRequest(u32);
-
-  impl DidCommRequest for TestRequest {
-    fn endpoint() -> Endpoint {
-      "test/request".try_into().unwrap()
-    }
-  }
-
-  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  struct TestRequestAlt(u32);
-
-  impl DidCommRequest for TestRequestAlt {
-    fn endpoint() -> Endpoint {
-      "test/request_alt".try_into().unwrap()
-    }
-  }
-
-  #[derive(Debug, Clone)]
-  struct MyActor {
-    counter: Arc<AtomicU32>,
-  }
-
-  #[async_trait::async_trait]
-  impl DidCommActor<DidCommPlaintextMessage<TestRequest>> for MyActor {
-    async fn handle(&self, mut system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<TestRequest>>) {
-      self.counter.fetch_add(request.input.body.0, Ordering::SeqCst);
-
-      system
-        .send_message(request.peer_id, request.input.thread_id(), TestRequestAlt(21))
-        .await
-        .unwrap();
-
-      let message: DidCommPlaintextMessage<TestRequestAlt> =
-        system.await_message(request.input.thread_id()).await.unwrap();
-
-      assert_eq!(message.body.0, 1337);
-
-      system
-        .send_message(request.peer_id, request.input.thread_id(), TestRequestAlt(7))
-        .await
-        .unwrap();
-    }
-  }
-
-  let mut builder = DidCommSystemBuilder::new().identity(default_identity());
-
-  let actor = MyActor {
-    counter: Arc::new(AtomicU32::new(0)),
-  };
-  builder.attach_didcomm(actor.clone());
-
-  let mut listening_system: DidCommSystem = builder.build().await.unwrap();
-
-  let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let _ = listening_system.start_listening(addr).await.unwrap();
-  let addrs = listening_system.addresses().await.unwrap();
-
-  let peer_id = listening_system.peer_id();
-
-  let mut sending_system = DidCommSystemBuilder::new()
-    .identity(default_identity())
-    .build()
-    .await
-    .unwrap();
-
-  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
-
-  let thread_id = ThreadId::new();
-
-  sending_system
-    .send_message(peer_id, &thread_id, TestRequest(42))
-    .await
-    .unwrap();
-
-  let message: DidCommPlaintextMessage<TestRequestAlt> = sending_system.await_message(&thread_id).await.unwrap();
-
-  assert_eq!(message.body.0, 21);
-
-  sending_system
-    .send_message(peer_id, &thread_id, TestRequestAlt(1337))
-    .await
-    .unwrap();
-
-  let message: DidCommPlaintextMessage<TestRequestAlt> = sending_system.await_message(&thread_id).await.unwrap();
-
-  assert_eq!(message.body.0, 7);
-  assert_eq!(actor.counter.load(std::sync::atomic::Ordering::SeqCst), 42);
-
-  // Allow background tasks to finish.
-  // The test also succeeds without this, but might cause the background tasks to panic or log an error.
-  tokio::task::yield_now().await;
-
-  listening_system.shutdown().await.unwrap();
-  sending_system.shutdown().await.unwrap();
-
-  Ok(())
-}
-
-/// Ensure the DidCommSystem supports actors working with `ActorRequest`s.
+/// Ensure the DidCommSystem supports actors working with `ActorRequest`s (rather than `DidCommRequest`s).
 #[tokio::test]
 async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
   try_init_logger();
@@ -190,16 +84,19 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-  struct AsyncDummy(u16);
+  struct DidCommTestRequest(u16);
 
-  impl DidCommRequest for AsyncDummy {
+  impl DidCommRequest for DidCommTestRequest {
     fn endpoint() -> Endpoint {
       "unknown/thread".try_into().unwrap()
     }
   }
 
+  // Send a message that no handling actor on the remote agent exists for
+  // which causes the remote agent to look for a potential thread that is waiting for this message,
+  // but no such thread exists either, so an error is returned.
   let result = sending_system
-    .send_message(peer_id, &ThreadId::new(), AsyncDummy(42))
+    .send_message(peer_id, &ThreadId::new(), DidCommTestRequest(42))
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
@@ -213,10 +110,11 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   try_init_logger();
-  let actor: DidCommState = DidCommState::new().await;
+  let actor: DidCommState = DidCommState::new();
 
   let mut holder_system: DidCommSystem = default_sending_didcomm_system(|builder| builder).await;
 
+  // Attach the DidCommState actor to the listening system, so it can handle PresentationOffer requests.
   let (verifier_system, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
     builder
@@ -225,6 +123,7 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
 
   holder_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
+  // Holder initiates the presentation protocol.
   presentation_holder_handler(holder_system.clone(), peer_id, None)
     .await
     .unwrap();
@@ -243,8 +142,9 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
 async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
   try_init_logger();
 
-  let actor = DidCommState::new().await;
+  let actor = DidCommState::new();
 
+  // Attach the DidCommState actor to the listening system, so it can handle PresentationRequest requests.
   let (holder_system, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
     builder
@@ -254,6 +154,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
 
   verifier_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
+  // Verifier initiates the presentation protocol.
   presentation_verifier_handler(verifier_system.clone(), peer_id, None)
     .await
     .unwrap();
@@ -270,6 +171,7 @@ async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
 
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
 
+  // Send a request without adding an address first.
   let result = sending_system.send_request(PeerId::random(), IdentityList).await;
 
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
@@ -304,7 +206,7 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   .await;
 
   let mut sending_system: DidCommSystem =
-    default_sending_didcomm_system(|builder| builder.timeout(std::time::Duration::from_millis(50))).await;
+    default_sending_didcomm_system(|builder| builder.timeout(Duration::from_millis(50))).await;
 
   sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
 
@@ -314,6 +216,7 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
     .await
     .unwrap();
 
+  // We attempt to await a message, but the remote agent never sends one, so we expect a timeout.
   let result = sending_system.await_message::<()>(&thread_id).await;
 
   assert!(matches!(result.unwrap_err(), Error::AwaitTimeout(_)));
@@ -344,14 +247,14 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
   #[async_trait::async_trait]
   impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for TestActor {
     async fn handle(&self, _: DidCommSystem, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
-      tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+      tokio::time::sleep(Duration::from_millis(25)).await;
       self.was_called.store(true, Ordering::SeqCst);
     }
   }
 
   let test_actor = TestActor::new();
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
+  let (listening_system, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm(test_actor.clone());
     builder
   })
@@ -365,13 +268,15 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
     .await
     .unwrap();
 
-  listening_actor.shutdown().await.unwrap();
+  // Shut down the system that executes the actor, and wait for some time to allow the handler to finish.
+  // Even though we shut the system down, we expect the task that the actor is running in to finish.
+  listening_system.shutdown().await.unwrap();
 
-  tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+  tokio::time::sleep(Duration::from_millis(50)).await;
 
   sending_system.shutdown().await.unwrap();
 
-  assert!(test_actor.was_called.load(std::sync::atomic::Ordering::SeqCst));
+  assert!(test_actor.was_called.load(Ordering::SeqCst));
 
   Ok(())
 }

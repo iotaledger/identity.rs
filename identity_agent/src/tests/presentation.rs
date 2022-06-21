@@ -1,6 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! A conceptual implementation of the IOTA DIDComm presentation protocol.
+//! It merely sends the appropriate messages back and forth, but without any actual content.
+//! It exists to prove the concept for the DIDComm agent.
+//!
+//! See for details: https://wiki.iota.org/identity.rs/specs/didcomm/protocols/presentation.
+
 use libp2p::PeerId;
 
 use serde::Deserialize;
@@ -19,7 +25,7 @@ use crate::didcomm::ThreadId;
 pub(crate) struct DidCommState;
 
 impl DidCommState {
-  pub(crate) async fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self
   }
 }
@@ -50,6 +56,10 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
   }
 }
 
+/// The presentation protocol for the handler.
+///
+/// If `request` is `None`, the holder initiates the protocol, otherwise the verifier initiated
+/// by sending a `PresentationRequest`.
 pub(crate) async fn presentation_holder_handler(
   mut system: DidCommSystem,
   peer_id: PeerId,
@@ -82,6 +92,10 @@ pub(crate) async fn presentation_holder_handler(
   Ok(())
 }
 
+/// The presentation protocol for the verifier.
+///
+/// If `offer` is `None`, the verifier initiates the protocol, otherwise the holder initiated
+/// by sending a `PresentationOffer`.
 pub(crate) async fn presentation_verifier_handler(
   mut system: DidCommSystem,
   peer_id: PeerId,
