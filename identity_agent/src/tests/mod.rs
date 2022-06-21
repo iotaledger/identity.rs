@@ -11,77 +11,75 @@ use identity_iota_core::document::IotaDocument;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 
+use crate::agent::Agent;
+use crate::agent::AgentBuilder;
 use crate::agent::AgentId;
-use crate::agent::System;
-use crate::agent::SystemBuilder;
-use crate::didcomm::DidCommSystem;
-use crate::didcomm::DidCommSystemBuilder;
-use crate::didcomm::DidCommSystemIdentity;
+use crate::didcomm::DidCommAgent;
+use crate::didcomm::DidCommAgentBuilder;
+use crate::didcomm::DidCommAgentIdentity;
 
 fn try_init_logger() {
   let _ = pretty_env_logger::try_init();
 }
 
-async fn default_listening_system(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -> (System, Vec<Multiaddr>, AgentId) {
+async fn default_listening_agent(f: impl FnOnce(AgentBuilder) -> AgentBuilder) -> (Agent, Vec<Multiaddr>, AgentId) {
   let id_keys = Keypair::generate_ed25519();
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = SystemBuilder::new().keypair(id_keys);
+  let mut builder = AgentBuilder::new().keypair(id_keys);
 
   builder = f(builder);
 
-  let mut listening_system: System = builder.build().await.unwrap();
+  let mut listening_agent: Agent = builder.build().await.unwrap();
 
-  let _ = listening_system.start_listening(addr).await.unwrap();
-  let addrs = listening_system.addresses().await.unwrap();
+  let _ = listening_agent.start_listening(addr).await.unwrap();
+  let addrs = listening_agent.addresses().await.unwrap();
 
-  let agent_id = listening_system.agent_id();
+  let agent_id = listening_agent.agent_id();
 
-  (listening_system, addrs, agent_id)
+  (listening_agent, addrs, agent_id)
 }
 
-async fn default_sending_system(f: impl FnOnce(SystemBuilder) -> SystemBuilder) -> System {
-  let mut builder = SystemBuilder::new();
+async fn default_sending_agent(f: impl FnOnce(AgentBuilder) -> AgentBuilder) -> Agent {
+  let mut builder = AgentBuilder::new();
 
   builder = f(builder);
 
   builder.build().await.unwrap()
 }
 
-async fn default_sending_didcomm_system(f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder) -> DidCommSystem {
-  let mut builder = DidCommSystemBuilder::new().identity(default_identity());
+async fn default_sending_didcomm_agent(f: impl FnOnce(DidCommAgentBuilder) -> DidCommAgentBuilder) -> DidCommAgent {
+  let mut builder = DidCommAgentBuilder::new().identity(default_identity());
 
   builder = f(builder);
 
   builder.build().await.unwrap()
 }
 
-async fn default_listening_didcomm_system(
-  f: impl FnOnce(DidCommSystemBuilder) -> DidCommSystemBuilder,
-) -> (DidCommSystem, Vec<Multiaddr>, AgentId) {
+async fn default_listening_didcomm_agent(
+  f: impl FnOnce(DidCommAgentBuilder) -> DidCommAgentBuilder,
+) -> (DidCommAgent, Vec<Multiaddr>, AgentId) {
   let id_keys = Keypair::generate_ed25519();
 
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = DidCommSystemBuilder::new()
-    .keypair(id_keys)
-    .identity(default_identity());
+  let mut builder = DidCommAgentBuilder::new().keypair(id_keys).identity(default_identity());
 
   builder = f(builder);
 
-  let mut listening_system: DidCommSystem = builder.build().await.unwrap();
+  let mut listening_agent: DidCommAgent = builder.build().await.unwrap();
 
-  let _ = listening_system.start_listening(addr).await.unwrap();
-  let addrs = listening_system.addresses().await.unwrap();
+  let _ = listening_agent.start_listening(addr).await.unwrap();
+  let addrs = listening_agent.addresses().await.unwrap();
 
-  let agent_id = listening_system.agent_id();
+  let agent_id = listening_agent.agent_id();
 
-  (listening_system, addrs, agent_id)
+  (listening_agent, addrs, agent_id)
 }
 
-fn default_identity() -> DidCommSystemIdentity {
+fn default_identity() -> DidCommAgentIdentity {
   let keypair: KeyPair = KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
 
-  DidCommSystemIdentity {
+  DidCommAgentIdentity {
     document: IotaDocument::new(&keypair).unwrap(),
   }
 }

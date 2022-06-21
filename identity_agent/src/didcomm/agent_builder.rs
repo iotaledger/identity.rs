@@ -17,48 +17,48 @@ use libp2p::Transport;
 
 use crate::agent::Actor;
 use crate::agent::ActorRequest;
+use crate::agent::Agent;
+use crate::agent::AgentBuilder;
+use crate::agent::AgentState;
 use crate::agent::Error;
 use crate::agent::Result as AgentResult;
-use crate::agent::System;
-use crate::agent::SystemBuilder;
-use crate::agent::SystemState;
 use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommActorMap;
 use crate::didcomm::DidCommActorWrapper;
+use crate::didcomm::DidCommAgent;
+use crate::didcomm::DidCommAgentIdentity;
+use crate::didcomm::DidCommAgentState;
 use crate::didcomm::DidCommRequest;
-use crate::didcomm::DidCommSystem;
-use crate::didcomm::DidCommSystemIdentity;
-use crate::didcomm::DidCommSystemState;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-/// A builder for [`DidCommSystem`]s to customize its configuration and attach actors.
-pub struct DidCommSystemBuilder {
-  inner: SystemBuilder,
-  identity: Option<DidCommSystemIdentity>,
+/// A builder for [`DidCommAgent`]s to customize its configuration and attach actors.
+pub struct DidCommAgentBuilder {
+  inner: AgentBuilder,
+  identity: Option<DidCommAgentIdentity>,
   didcomm_actors: DidCommActorMap,
 }
 
-impl DidCommSystemBuilder {
+impl DidCommAgentBuilder {
   /// Create a new builder with the default configuration.
-  pub fn new() -> DidCommSystemBuilder {
+  pub fn new() -> DidCommAgentBuilder {
     Self {
-      inner: SystemBuilder::new(),
+      inner: AgentBuilder::new(),
       identity: None,
       didcomm_actors: HashMap::new(),
     }
   }
 
-  /// See [`SystemBuilder::keypair`].
+  /// See [`AgentBuilder::keypair`].
   #[must_use]
   pub fn keypair(mut self, keypair: Keypair) -> Self {
     self.inner.keypair = Some(keypair);
     self
   }
 
-  /// Sets the timeout for [`DidCommSystem::await_message`] and the underlying libp2p
+  /// Sets the timeout for [`DidCommAgent::await_message`] and the underlying libp2p
   /// [`RequestResponse`](libp2p::request_response::RequestResponse) protocol.
   #[must_use]
   pub fn timeout(mut self, timeout: Duration) -> Self {
@@ -66,16 +66,16 @@ impl DidCommSystemBuilder {
     self
   }
 
-  /// Set the [`DidCommSystemIdentity`] that will be used for DIDComm related tasks, such as en- and decryption.
+  /// Set the [`DidCommAgentIdentity`] that will be used for DIDComm related tasks, such as en- and decryption.
   #[must_use]
-  pub fn identity(mut self, identity: DidCommSystemIdentity) -> Self {
+  pub fn identity(mut self, identity: DidCommAgentIdentity) -> Self {
     self.identity = Some(identity);
     self
   }
 
-  /// Attaches a [`DidCommActor`] to this system.
+  /// Attaches a [`DidCommActor`] to this agent.
   ///
-  /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
+  /// This means that when the agent receives a request of type `REQ`, it will invoke this actor.
   ///
   /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
   /// will overwrite the previous attachment.
@@ -90,7 +90,7 @@ impl DidCommSystemBuilder {
     );
   }
 
-  /// See [`SystemBuilder::attach`].
+  /// See [`AgentBuilder::attach`].
   pub fn attach<REQ, ACT>(&mut self, actor: ACT)
   where
     ACT: Actor<REQ> + Send + Sync,
@@ -100,8 +100,8 @@ impl DidCommSystemBuilder {
     self.inner.attach(actor);
   }
 
-  /// See [`SystemBuilder::build`].
-  pub async fn build(self) -> AgentResult<DidCommSystem> {
+  /// See [`AgentBuilder::build`].
+  pub async fn build(self) -> AgentResult<DidCommAgent> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
         .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
@@ -115,8 +115,8 @@ impl DidCommSystemBuilder {
     self.build_with_transport(transport).await
   }
 
-  /// See [`SystemBuilder::build_with_transport`].
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> AgentResult<DidCommSystem>
+  /// See [`AgentBuilder::build_with_transport`].
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> AgentResult<DidCommAgent>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -129,32 +129,32 @@ impl DidCommSystemBuilder {
       tokio::spawn(fut);
     });
 
-    let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
+    let (event_loop, actor_state, net_commander): (EventLoop, AgentState, NetCommander) =
       self.inner.build_constituents(transport, executor.clone()).await?;
 
-    let state: DidCommSystemState =
-      DidCommSystemState::new(self.didcomm_actors, self.identity.ok_or(Error::IdentityMissing)?);
+    let state: DidCommAgentState =
+      DidCommAgentState::new(self.didcomm_actors, self.identity.ok_or(Error::IdentityMissing)?);
 
-    let system: System = System::new(net_commander, Arc::new(actor_state));
+    let agent: Agent = Agent::new(net_commander, Arc::new(actor_state));
 
-    let didcomm_system: DidCommSystem = DidCommSystem {
-      system,
+    let didcomm_agent: DidCommAgent = DidCommAgent {
+      agent,
       state: Arc::new(state),
     };
 
-    let didcomm_system_clone: DidCommSystem = didcomm_system.clone();
+    let didcomm_agent_clone: DidCommAgent = didcomm_agent.clone();
 
     let event_handler = move |event: InboundRequest| {
-      didcomm_system_clone.clone().handle_request(event);
+      didcomm_agent_clone.clone().handle_request(event);
     };
 
     executor.exec(event_loop.run(event_handler).boxed());
 
-    Ok(didcomm_system)
+    Ok(didcomm_agent)
   }
 }
 
-impl Default for DidCommSystemBuilder {
+impl Default for DidCommAgentBuilder {
   fn default() -> Self {
     Self::new()
   }

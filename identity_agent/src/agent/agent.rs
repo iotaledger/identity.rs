@@ -13,13 +13,13 @@ use libp2p::Multiaddr;
 use crate::agent::errors::ErrorLocation;
 use crate::agent::AbstractActor;
 use crate::agent::ActorRequest;
+use crate::agent::AgentState;
 use crate::agent::Endpoint;
 use crate::agent::Error;
 use crate::agent::RemoteSendError;
 use crate::agent::RequestContext;
 use crate::agent::RequestMode;
 use crate::agent::Result as AgentResult;
-use crate::agent::SystemState;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
@@ -31,25 +31,25 @@ pub(crate) type ActorMap = HashMap<Endpoint, Box<dyn AbstractActor>>;
 /// The cryptographic identifier of an agent on the network.
 pub type AgentId = libp2p::PeerId;
 
-/// An actor system can be used to send requests to remote agents, and fowards incoming requests
+/// An agent can be used to send requests to other, remote agents, and fowards incoming requests
 /// to attached actors.
 ///
-/// An actor system is a frontend for an event loop running in the background, which invokes
-/// user-attached actors. Systems can be cloned without cloning the event loop, and doing so
+/// An agent is a frontend for an event loop running in the background, which invokes
+/// user-attached actors. Agents can be cloned without cloning the event loop, and doing so
 /// is a cheap operation.
-/// Actors are attached at system build time, using the [`SystemBuilder`](crate::actor::SystemBuilder).
+/// Actors are attached at agent build time, using the [`AgentBuilder`](crate::actor::AgentBuilder).
 ///
-/// After shutting down the event loop of a system using [`System::shutdown`], other clones of the
-/// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
+/// After shutting down the event loop of a agent using [`Agent::shutdown`], other clones of the
+/// agent will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Debug)]
-pub struct System {
+pub struct Agent {
   commander: NetCommander,
-  state: Arc<SystemState>,
+  state: Arc<AgentState>,
 }
 
-impl Clone for System {
-  /// Produce a shallow copy of the system, which uses the same event loop as the
-  /// system that it was cloned from.
+impl Clone for Agent {
+  /// Produce a shallow copy of the agent, which uses the same event loop as the
+  /// agent that it was cloned from.
   fn clone(&self) -> Self {
     Self {
       commander: self.commander.clone(),
@@ -58,16 +58,16 @@ impl Clone for System {
   }
 }
 
-impl System {
-  pub(crate) fn new(commander: NetCommander, state: Arc<SystemState>) -> System {
+impl Agent {
+  pub(crate) fn new(commander: NetCommander, state: Arc<AgentState>) -> Agent {
     Self { commander, state }
   }
 
-  pub(crate) fn state(&self) -> &SystemState {
+  pub(crate) fn state(&self) -> &AgentState {
     self.state.as_ref()
   }
 
-  /// Returns the [`AgentId`] that other peers can securely identify this system with.
+  /// Returns the [`AgentId`] that other peers can securely identify this agent with.
   pub fn agent_id(&self) -> AgentId {
     self.state().agent_id
   }
@@ -76,10 +76,10 @@ impl System {
     &mut self.commander
   }
 
-  /// Start listening on the given `address`. Returns the first address that the system started listening on, which may
+  /// Start listening on the given `address`. Returns the first address that the agent started listening on, which may
   /// be different from `address` itself, for example when passing addresses like `/ip4/0.0.0.0/tcp/0`. Even when
   /// passing a single address, multiple addresses may end up being listened on. To obtain all those addresses, use
-  /// [`System::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
+  /// [`Agent::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
   /// and should thus not be relied upon.
   pub async fn start_listening(&mut self, address: Multiaddr) -> AgentResult<Multiaddr> {
     self.commander_mut().start_listening(address).await
@@ -90,11 +90,11 @@ impl System {
     self.commander_mut().get_addresses().await
   }
 
-  /// Shut this system down. This will break the event loop in the background immediately,
+  /// Shut this agent down. This will break the event loop in the background immediately,
   /// returning an error for all current actors that interact with their copy of the
-  /// system or those waiting on messages. The system will thus stop listening on all addresses.
+  /// agent or those waiting on messages. The agent will thus stop listening on all addresses.
   ///
-  /// Calling this and other methods, which interact with the event loop, on a system that was shutdown
+  /// Calling this and other methods, which interact with the event loop, on a agent that was shutdown
   /// will return [`Error::Shutdown`].
   pub async fn shutdown(mut self) -> AgentResult<()> {
     // Consuming self drops the internal commander. If this is the last copy of the commander,
@@ -129,7 +129,7 @@ impl System {
   /// Sends a synchronous request to an agent, identified through `agent_id`, and returns its response.
   ///
   /// An address needs to be available for the given `agent_id`, which can be added
-  /// with [`System::add_agent_address`] or [`System::add_agent_addresses`].
+  /// with [`Agent::add_agent_address`] or [`Agent::add_agent_addresses`].
   pub async fn send_request<REQ: ActorRequest>(
     &mut self,
     agent_id: AgentId,
@@ -166,9 +166,9 @@ impl System {
     })
   }
 
-  /// Let this system handle the given `request`, by invoking the appropriate actor, if attached.
-  /// This consumes the system because it passes itself to the actor.
-  /// The system will thus typically be cloned before calling this method.
+  /// Let this agent handle the given `request`, by invoking the appropriate actor, if attached.
+  /// This consumes the agent because it passes itself to the actor.
+  /// The agent will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(mut self, request: InboundRequest) {
     if request.request_mode == RequestMode::Synchronous {
       self.handle_sync_request(request)
@@ -239,7 +239,7 @@ pub(crate) async fn send_response<T: serde::Serialize>(
 }
 
 #[inline(always)]
-async fn endpoint_not_found(actor: &mut System, request: InboundRequest) {
+async fn endpoint_not_found(actor: &mut Agent, request: InboundRequest) {
   let response: Result<Vec<u8>, RemoteSendError> =
     Err(RemoteSendError::UnexpectedRequest(request.endpoint.to_string()));
 

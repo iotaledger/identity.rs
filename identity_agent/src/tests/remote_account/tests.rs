@@ -4,8 +4,8 @@
 use identity_iota_core::document::IotaDocument;
 
 use crate::agent::Result as AgentResult;
-use crate::tests::default_listening_system;
-use crate::tests::default_sending_system;
+use crate::tests::default_listening_agent;
+use crate::tests::default_sending_agent;
 use crate::tests::remote_account::IdentityCreate;
 use crate::tests::remote_account::IdentityGet;
 use crate::tests::remote_account::IdentityList;
@@ -16,7 +16,7 @@ use crate::tests::try_init_logger;
 async fn test_remote_account() -> AgentResult<()> {
   try_init_logger();
 
-  let (receiver, receiver_addrs, receiver_agent_id) = default_listening_system(|mut builder| {
+  let (receiver, receiver_addrs, receiver_agent_id) = default_listening_agent(|mut builder| {
     let remote_account = RemoteAccount::new().unwrap();
     builder.attach::<IdentityCreate, _>(remote_account.clone());
     builder.attach::<IdentityList, _>(remote_account.clone());
@@ -24,7 +24,7 @@ async fn test_remote_account() -> AgentResult<()> {
     builder
   })
   .await;
-  let mut sender = default_sending_system(|builder| builder).await;
+  let mut sender = default_sending_agent(|builder| builder).await;
 
   sender
     .add_agent_addresses(receiver_agent_id, receiver_addrs)

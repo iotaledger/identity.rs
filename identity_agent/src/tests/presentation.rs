@@ -15,9 +15,9 @@ use crate::agent::Endpoint;
 use crate::agent::RequestContext;
 use crate::agent::Result as AgentResult;
 use crate::didcomm::DidCommActor;
+use crate::didcomm::DidCommAgent;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
-use crate::didcomm::DidCommSystem;
 use crate::didcomm::ThreadId;
 
 #[derive(Debug, Clone)]
@@ -31,10 +31,10 @@ impl DidCommState {
 
 #[async_trait::async_trait]
 impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommState {
-  async fn handle(&self, system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>) {
+  async fn handle(&self, agent: DidCommAgent, request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>) {
     log::debug!("holder: received presentation request");
 
-    let result = presentation_holder_handler(system, request.agent_id, Some(request.input)).await;
+    let result = presentation_holder_handler(agent, request.agent_id, Some(request.input)).await;
 
     if let Err(err) = result {
       log::error!("presentation holder actor errored: {err:?}");
@@ -44,10 +44,10 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for DidCommState
 
 #[async_trait::async_trait]
 impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
-  async fn handle(&self, system: DidCommSystem, request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
+  async fn handle(&self, agent: DidCommAgent, request: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {
     log::debug!("verifier: received offer from {}", request.agent_id);
 
-    let result = presentation_verifier_handler(system, request.agent_id, Some(request.input)).await;
+    let result = presentation_verifier_handler(agent, request.agent_id, Some(request.input)).await;
 
     if let Err(err) = result {
       log::error!("presentation verifier actor errored: {err:?}");
@@ -60,7 +60,7 @@ impl DidCommActor<DidCommPlaintextMessage<PresentationOffer>> for DidCommState {
 /// If `request` is `None`, the holder initiates the protocol, otherwise the verifier initiated
 /// by sending a `PresentationRequest`.
 pub(crate) async fn presentation_holder_handler(
-  mut system: DidCommSystem,
+  mut agent: DidCommAgent,
   agent_id: AgentId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
 ) -> AgentResult<()> {
@@ -69,11 +69,11 @@ pub(crate) async fn presentation_holder_handler(
     None => {
       log::debug!("holder: sending presentation offer");
       let thread_id = ThreadId::new();
-      system
+      agent
         .send_message(agent_id, &thread_id, PresentationOffer::default())
         .await?;
 
-      let req = system.await_message(&thread_id).await;
+      let req = agent.await_message(&thread_id).await;
       log::debug!("holder: received presentation request");
 
       req?
@@ -83,11 +83,9 @@ pub(crate) async fn presentation_holder_handler(
   let thread_id = request.thread_id();
 
   log::debug!("holder: sending presentation");
-  system
-    .send_message(agent_id, thread_id, Presentation::default())
-    .await?;
+  agent.send_message(agent_id, thread_id, Presentation::default()).await?;
 
-  let _result: DidCommPlaintextMessage<PresentationResult> = system.await_message(thread_id).await?;
+  let _result: DidCommPlaintextMessage<PresentationResult> = agent.await_message(thread_id).await?;
   log::debug!("holder: received presentation result");
 
   Ok(())
@@ -98,7 +96,7 @@ pub(crate) async fn presentation_holder_handler(
 /// If `offer` is `None`, the verifier initiates the protocol, otherwise the holder initiated
 /// by sending a `PresentationOffer`.
 pub(crate) async fn presentation_verifier_handler(
-  mut system: DidCommSystem,
+  mut agent: DidCommAgent,
   agent_id: AgentId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
 ) -> AgentResult<()> {
@@ -109,16 +107,16 @@ pub(crate) async fn presentation_verifier_handler(
   };
 
   log::debug!("verifier: sending request");
-  system
+  agent
     .send_message(agent_id, &thread_id, PresentationRequest::default())
     .await?;
 
   log::debug!("verifier: awaiting presentation");
-  let presentation: DidCommPlaintextMessage<Presentation> = system.await_message(&thread_id).await?;
+  let presentation: DidCommPlaintextMessage<Presentation> = agent.await_message(&thread_id).await?;
   log::debug!("verifier: received presentation: {:?}", presentation);
 
   log::debug!("verifier: sending presentation result");
-  system
+  agent
     .send_message(agent_id, &thread_id, PresentationResult::default())
     .await?;
   Ok(())

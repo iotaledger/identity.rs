@@ -5,27 +5,27 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
+use identity_agent::agent::Agent;
+use identity_agent::agent::AgentBuilder;
 use identity_agent::agent::AgentId;
-use identity_agent::agent::System;
-use identity_agent::agent::SystemBuilder;
 use identity_agent::Multiaddr;
 
 use remote_account::IdentityCreate;
 use remote_account::RemoteAccount;
 
-async fn setup() -> (System, AgentId, System) {
+async fn setup() -> (Agent, AgentId, Agent) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = SystemBuilder::new();
+  let mut builder = AgentBuilder::new();
 
   let remote_account = RemoteAccount::new().unwrap();
   builder.attach::<IdentityCreate, _>(remote_account);
 
-  let mut receiver: System = builder.build().await.unwrap();
+  let mut receiver: Agent = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
   let receiver_agent_id = receiver.agent_id();
 
-  let mut sender: System = SystemBuilder::new().build().await.unwrap();
+  let mut sender: Agent = AgentBuilder::new().build().await.unwrap();
 
   sender.add_agent_address(receiver_agent_id, addr).await.unwrap();
 
@@ -47,7 +47,7 @@ fn bench_create_remote_account(c: &mut Criterion) {
   for size in ITERATIONS.iter() {
     group.bench_function(BenchmarkId::from_parameter(size), |bencher| {
       bencher.to_async(&runtime).iter(|| {
-        let mut sender_clone: System = sender.clone();
+        let mut sender_clone: Agent = sender.clone();
 
         async move {
           sender_clone

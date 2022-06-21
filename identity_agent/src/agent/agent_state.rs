@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::agent::ActorMap;
+use crate::agent::AgentConfig;
 use crate::agent::AgentId;
-use crate::agent::SystemConfig;
 
-/// The internal state of a `System`.
+/// The internal state of a `Agent`.
 #[derive(Debug)]
-pub(crate) struct SystemState {
+pub(crate) struct AgentState {
   pub(crate) agent_id: AgentId,
-  pub(crate) config: SystemConfig,
+  pub(crate) config: AgentConfig,
   pub(crate) actors: ActorMap,
 }

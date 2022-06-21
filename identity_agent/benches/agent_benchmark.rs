@@ -7,10 +7,10 @@ use criterion::BenchmarkId;
 use criterion::Criterion;
 
 use identity_agent::agent::AgentId;
+use identity_agent::didcomm::DidCommAgent;
+use identity_agent::didcomm::DidCommAgentBuilder;
+use identity_agent::didcomm::DidCommAgentIdentity;
 use identity_agent::didcomm::DidCommPlaintextMessage;
-use identity_agent::didcomm::DidCommSystem;
-use identity_agent::didcomm::DidCommSystemBuilder;
-use identity_agent::didcomm::DidCommSystemIdentity;
 use identity_agent::didcomm::ThreadId;
 use identity_agent::Multiaddr;
 
@@ -22,21 +22,21 @@ use test_actor::TestActor;
 
 use crate::test_actor::PresentationOffer;
 
-async fn setup() -> (DidCommSystem, AgentId, DidCommSystem) {
+async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
-  let mut builder = DidCommSystemBuilder::new().identity(DidCommSystemIdentity {
+  let mut builder = DidCommAgentBuilder::new().identity(DidCommAgentIdentity {
     document: IotaDocument::new(&KeyPair::new(KeyType::Ed25519).unwrap()).unwrap(),
   });
 
   builder.attach_didcomm(TestActor);
 
-  let mut receiver: DidCommSystem = builder.build().await.unwrap();
+  let mut receiver: DidCommAgent = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
   let receiver_agent_id = receiver.agent_id();
 
-  let mut sender: DidCommSystem = DidCommSystemBuilder::new()
-    .identity(DidCommSystemIdentity {
+  let mut sender: DidCommAgent = DidCommAgentBuilder::new()
+    .identity(DidCommAgentIdentity {
       document: IotaDocument::new(&KeyPair::new(KeyType::Ed25519).unwrap()).unwrap(),
     })
     .build()
@@ -63,7 +63,7 @@ fn bench_send_didcomm_messages(c: &mut Criterion) {
   for size in ITERATIONS.iter() {
     group.bench_function(BenchmarkId::from_parameter(size), |bencher| {
       bencher.to_async(&runtime).iter(|| {
-        let mut sender_clone: DidCommSystem = sender.clone();
+        let mut sender_clone: DidCommAgent = sender.clone();
 
         let thread_id: ThreadId = ThreadId::new();
 
@@ -95,9 +95,9 @@ mod test_actor {
   use identity_agent::agent::Endpoint;
   use identity_agent::agent::RequestContext;
   use identity_agent::didcomm::DidCommActor;
+  use identity_agent::didcomm::DidCommAgent;
   use identity_agent::didcomm::DidCommPlaintextMessage;
   use identity_agent::didcomm::DidCommRequest;
-  use identity_agent::didcomm::DidCommSystem;
   use serde::Deserialize;
   use serde::Serialize;
 
@@ -126,10 +126,10 @@ mod test_actor {
   impl DidCommActor<DidCommPlaintextMessage<PresentationRequest>> for TestActor {
     async fn handle(
       &self,
-      mut system: DidCommSystem,
+      mut agent: DidCommAgent,
       request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
     ) {
-      system
+      agent
         .send_message(
           request.agent_id,
           request.input.thread_id(),

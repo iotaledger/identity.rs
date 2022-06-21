@@ -14,15 +14,15 @@ use libp2p::Multiaddr;
 
 use crate::agent::Actor;
 use crate::agent::ActorRequest;
+use crate::agent::Agent;
+use crate::agent::AgentBuilder;
 use crate::agent::Endpoint;
 use crate::agent::Error;
 use crate::agent::ErrorLocation;
 use crate::agent::RequestContext;
 use crate::agent::Result as AgentResult;
-use crate::agent::System;
-use crate::agent::SystemBuilder;
-use crate::tests::default_listening_system;
-use crate::tests::default_sending_system;
+use crate::tests::default_listening_agent;
+use crate::tests::default_sending_agent;
 use crate::tests::remote_account::IdentityGet;
 use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
@@ -81,31 +81,31 @@ async fn test_actor_end_to_end() -> AgentResult<()> {
     counter: Arc::new(AtomicU32::new(0)),
   };
 
-  // Create a new system and attach the actor.
+  // Create a new agent and attach the actor.
   // Each attachment is for one request type, so we have to do it twice.
-  let mut builder = SystemBuilder::new();
+  let mut builder = AgentBuilder::new();
   builder.attach::<Increment, _>(actor.clone());
   builder.attach::<Decrement, _>(actor.clone());
 
-  // Build the listening system and let it listen on a default address.
-  let mut listening_system: System = builder.build().await.unwrap();
+  // Build the listening agent and let it listen on a default address.
+  let mut listening_agent: Agent = builder.build().await.unwrap();
 
-  let _ = listening_system
+  let _ = listening_agent
     .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
     .await
     .unwrap();
-  let addresses = listening_system.addresses().await.unwrap();
-  let agent_id = listening_system.agent_id();
+  let addresses = listening_agent.addresses().await.unwrap();
+  let agent_id = listening_agent.agent_id();
 
-  let mut sender_system: System = SystemBuilder::new().build().await.unwrap();
-  // Add on which which addresses sender_system can reach agent_id.
-  sender_system.add_agent_addresses(agent_id, addresses).await.unwrap();
+  let mut sender_agent: Agent = AgentBuilder::new().build().await.unwrap();
+  // Add on which which addresses sender_agent can reach agent_id.
+  sender_agent.add_agent_addresses(agent_id, addresses).await.unwrap();
 
-  assert_eq!(sender_system.send_request(agent_id, Increment(3)).await.unwrap(), 3);
-  assert_eq!(sender_system.send_request(agent_id, Decrement(2)).await.unwrap(), 1);
+  assert_eq!(sender_agent.send_request(agent_id, Increment(3)).await.unwrap(), 3);
+  assert_eq!(sender_agent.send_request(agent_id, Decrement(2)).await.unwrap(), 1);
 
-  listening_system.shutdown().await.unwrap();
-  sender_system.shutdown().await.unwrap();
+  listening_agent.shutdown().await.unwrap();
+  sender_agent.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -114,9 +114,9 @@ async fn test_actor_end_to_end() -> AgentResult<()> {
 async fn test_unknown_request_returns_error() -> AgentResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, agent_id) = default_listening_system(|builder| builder).await;
+  let (listening_actor, addrs, agent_id) = default_listening_agent(|builder| builder).await;
 
-  let mut sending_actor = default_sending_system(|builder| builder).await;
+  let mut sending_actor = default_sending_agent(|builder| builder).await;
   sending_actor.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   let result = sending_actor
@@ -138,7 +138,7 @@ async fn test_unknown_request_returns_error() -> AgentResult<()> {
   Ok(())
 }
 
-/// Test that system2 can send a request to system1 if it was previously sent a request from system1.
+/// Test that agent2 can send a request to agent1 if it was previously sent a request from agent1.
 #[tokio::test]
 async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
   try_init_logger();
@@ -167,29 +167,29 @@ async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
   let actor1 = TestActor(Arc::new(AtomicBool::new(false)));
   let actor2 = TestActor(Arc::new(AtomicBool::new(false)));
 
-  let mut system1_builder = SystemBuilder::new();
-  system1_builder.attach(actor1.clone());
-  let mut system1: System = system1_builder.build().await.unwrap();
+  let mut agent1_builder = AgentBuilder::new();
+  agent1_builder.attach(actor1.clone());
+  let mut agent1: Agent = agent1_builder.build().await.unwrap();
 
-  let mut system2_builder = SystemBuilder::new();
-  system2_builder.attach(actor2.clone());
-  let mut system2: System = system2_builder.build().await.unwrap();
+  let mut agent2_builder = AgentBuilder::new();
+  agent2_builder.attach(actor2.clone());
+  let mut agent2: Agent = agent2_builder.build().await.unwrap();
 
-  system2
+  agent2
     .start_listening("/ip4/0.0.0.0/tcp/0".try_into().unwrap())
     .await
     .unwrap();
 
-  let addr: Multiaddr = system2.addresses().await.unwrap().into_iter().next().unwrap();
+  let addr: Multiaddr = agent2.addresses().await.unwrap().into_iter().next().unwrap();
 
-  system1.add_agent_address(system2.agent_id(), addr).await.unwrap();
+  agent1.add_agent_address(agent2.agent_id(), addr).await.unwrap();
 
-  system1.send_request(system2.agent_id(), Dummy(42)).await.unwrap();
+  agent1.send_request(agent2.agent_id(), Dummy(42)).await.unwrap();
 
-  system2.send_request(system1.agent_id(), Dummy(43)).await.unwrap();
+  agent2.send_request(agent1.agent_id(), Dummy(43)).await.unwrap();
 
-  system1.shutdown().await.unwrap();
-  system2.shutdown().await.unwrap();
+  agent1.shutdown().await.unwrap();
+  agent2.shutdown().await.unwrap();
 
   assert!(actor1.0.load(std::sync::atomic::Ordering::SeqCst));
   assert!(actor2.0.load(std::sync::atomic::Ordering::SeqCst));
@@ -201,7 +201,7 @@ async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
 async fn test_interacting_with_shutdown_actor_returns_error() {
   try_init_logger();
 
-  let (listening_actor, _, _) = default_listening_system(|builder| builder).await;
+  let (listening_actor, _, _) = default_listening_agent(|builder| builder).await;
 
   let mut actor_clone = listening_actor.clone();
 
@@ -225,16 +225,16 @@ async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()>
     }
   }
 
-  let (listening_system, addrs, agent_id) = default_listening_system(|mut builder| {
+  let (listening_agent, addrs, agent_id) = default_listening_agent(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
-  let mut sending_system: System = SystemBuilder::new().build().await.unwrap();
-  sending_system.add_agent_addresses(agent_id, addrs).await.unwrap();
+  let mut sending_agent: Agent = AgentBuilder::new().build().await.unwrap();
+  sending_agent.add_agent_addresses(agent_id, addrs).await.unwrap();
 
-  let mut sender1 = sending_system.clone();
+  let mut sender1 = sending_agent.clone();
 
   // Ensure that an actor shutdown returns errors through open channels,
   // such as `EventLoop::await_response`.
@@ -251,7 +251,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()>
   let result = futures::poll!(&mut send_request_future);
   assert!(matches!(result, Poll::Pending));
 
-  sending_system.shutdown().await.unwrap();
+  sending_agent.shutdown().await.unwrap();
 
   let result = send_request_future.await;
   assert!(matches!(
@@ -259,7 +259,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()>
     Error::OutboundFailure(OutboundFailure::ConnectionClosed)
   ));
 
-  listening_system.shutdown().await.unwrap();
+  listening_agent.shutdown().await.unwrap();
 
   Ok(())
 }
@@ -303,13 +303,13 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
     }
   }
 
-  let (listening_actor, addrs, agent_id) = default_listening_system(|mut builder| {
+  let (listening_actor, addrs, agent_id) = default_listening_agent(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
-  let mut sending_actor: System = SystemBuilder::new().build().await.unwrap();
+  let mut sending_actor: Agent = AgentBuilder::new().build().await.unwrap();
   sending_actor.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   let result = sending_actor.send_request(agent_id, CustomRequest(13)).await;

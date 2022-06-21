@@ -13,8 +13,8 @@ use crate::agent::Endpoint;
 use crate::agent::ErrorLocation;
 use crate::agent::RemoteSendError;
 use crate::agent::RequestContext;
+use crate::didcomm::DidCommAgent;
 use crate::didcomm::DidCommRequest;
-use crate::didcomm::DidCommSystem;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::ResponseMessage;
@@ -29,14 +29,14 @@ use crate::p2p::ResponseMessage;
 /// should be implemented instead.
 #[async_trait::async_trait]
 pub trait DidCommActor<REQ: DidCommRequest>: Debug + 'static {
-  /// Called when the system receives a request of type `REQ`.
-  async fn handle(&self, actor: DidCommSystem, request: RequestContext<REQ>);
+  /// Called when the agent receives a request of type `REQ`.
+  async fn handle(&self, actor: DidCommAgent, request: RequestContext<REQ>);
 }
 
 /// A trait that wraps a DidCommActor implementation and erases its type.
 /// This allows holding actors with different concrete types in the same collection.
 pub(crate) trait AbstractDidCommActor: Debug + Send + Sync + 'static {
-  fn handle(&self, actor: DidCommSystem, request: InboundRequest) -> BoxFuture<'_, ()>;
+  fn handle(&self, actor: DidCommAgent, request: InboundRequest) -> BoxFuture<'_, ()>;
 }
 
 /// A wrapper around asynchronous actor implementations that is used for
@@ -69,7 +69,7 @@ where
   REQ: DidCommRequest + Send + Sync,
   ACT: DidCommActor<REQ> + Send + Sync,
 {
-  fn handle(&self, mut system: DidCommSystem, request: InboundRequest) -> BoxFuture<'_, ()> {
+  fn handle(&self, mut agent: DidCommAgent, request: InboundRequest) -> BoxFuture<'_, ()> {
     let future: _ = async move {
       let req: REQ = match serde_json::from_slice::<'_, REQ>(&request.input).map_err(|error| {
         RemoteSendError::DeserializationFailure {
@@ -84,7 +84,7 @@ where
         Ok(req) => {
           // Acknowledge request was received and understood.
           send_didcomm_response(
-            system.commander_mut(),
+            agent.commander_mut(),
             Ok(()),
             &request.endpoint,
             request.response_channel,
@@ -96,7 +96,7 @@ where
         }
         Err(err) => {
           send_didcomm_response(
-            system.commander_mut(),
+            agent.commander_mut(),
             Result::<(), RemoteSendError>::Err(err),
             &request.endpoint,
             request.response_channel,
@@ -111,7 +111,7 @@ where
 
       let context: RequestContext<REQ> = RequestContext::new(req, request.peer_id, request.endpoint);
 
-      self.actor.handle(system, context).await;
+      self.actor.handle(agent, context).await;
     };
 
     Box::pin(future)

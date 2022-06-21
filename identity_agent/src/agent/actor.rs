@@ -23,7 +23,7 @@ pub(crate) type BoxFuture<'me, T> = Pin<Box<dyn Future<Output = T> + Send + 'me>
 /// the actor to return its result before continuing.
 #[async_trait::async_trait]
 pub trait Actor<REQ: ActorRequest>: Debug + 'static {
-  /// Called when the system receives a request of type `REQ`.
+  /// Called when the agent receives a request of type `REQ`.
   /// The result will be returned to the calling agent.
   async fn handle(&self, request: RequestContext<REQ>) -> REQ::Response;
 }

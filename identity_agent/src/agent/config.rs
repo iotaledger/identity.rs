@@ -3,13 +3,13 @@
 
 use std::time::Duration;
 
-/// Configuration options for a [`System`](crate::actor::System).
+/// Configuration options for a [`Agent`](crate::actor::Agent).
 #[derive(Debug, Clone)]
-pub(crate) struct SystemConfig {
+pub(crate) struct AgentConfig {
   pub(crate) timeout: Duration,
 }
 
-impl Default for SystemConfig {
+impl Default for AgentConfig {
   fn default() -> Self {
     Self {
       timeout: Duration::from_secs(30),

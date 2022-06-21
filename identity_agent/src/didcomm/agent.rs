@@ -11,6 +11,7 @@ use libp2p::Multiaddr;
 use serde::de::DeserializeOwned;
 
 use crate::agent::ActorRequest;
+use crate::agent::Agent;
 use crate::agent::AgentId;
 use crate::agent::Endpoint;
 use crate::agent::Error;
@@ -18,7 +19,6 @@ use crate::agent::ErrorLocation;
 use crate::agent::RemoteSendError;
 use crate::agent::RequestMode;
 use crate::agent::Result as AgentResult;
-use crate::agent::System;
 use crate::didcomm::dcpm::DidCommPlaintextMessage;
 use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::DidCommRequest;
@@ -28,29 +28,29 @@ use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ThreadRequest;
 
-/// The identity of a [`DidCommSystem`].
+/// The identity of a [`DidCommAgent`].
 ///
 /// Note: Currently an incomplete implementation.
 #[derive(Debug, Clone)]
-pub struct DidCommSystemIdentity {
+pub struct DidCommAgentIdentity {
   // TODO: This type is meant to be used in a future update.
   #[allow(dead_code)]
   pub document: IotaDocument,
 }
 
-/// The internal state of a [`System`].
+/// The internal state of a [`Agent`].
 #[derive(Debug)]
-pub struct DidCommSystemState {
+pub struct DidCommAgentState {
   pub(crate) actors: DidCommActorMap,
   pub(crate) threads_receiver: DashMap<ThreadId, oneshot::Receiver<ThreadRequest>>,
   pub(crate) threads_sender: DashMap<ThreadId, oneshot::Sender<ThreadRequest>>,
   // TODO: See above.
   #[allow(dead_code)]
-  pub(crate) identity: DidCommSystemIdentity,
+  pub(crate) identity: DidCommAgentIdentity,
 }
 
-impl DidCommSystemState {
-  pub(crate) fn new(actors: DidCommActorMap, identity: DidCommSystemIdentity) -> Self {
+impl DidCommAgentState {
+  pub(crate) fn new(actors: DidCommActorMap, identity: DidCommAgentIdentity) -> Self {
     Self {
       actors,
       threads_receiver: DashMap::new(),
@@ -60,80 +60,80 @@ impl DidCommSystemState {
   }
 }
 
-/// An actor system can be used to send requests to remote agents, and fowards incoming requests
+/// An actor agent can be used to send requests to remote agents, and fowards incoming requests
 /// to attached actors.
 ///
-/// An actor system is a frontend for an event loop running in the background, which invokes
-/// user-attached actors. Systems can be cloned without cloning the event loop, and doing so
+/// An actor agent is a frontend for an event loop running in the background, which invokes
+/// user-attached actors. Agents can be cloned without cloning the event loop, and doing so
 /// is a cheap operation.
-/// Actors are attached at system build time, using the [`DidCommSystemBuilder`](crate::didcomm::DidCommSystemBuilder).
+/// Actors are attached at agent build time, using the [`DidCommAgentBuilder`](crate::didcomm::DidCommAgentBuilder).
 ///
-/// A `DidCommSystem` supports attachement of both [`Actor`](crate::actor::Actor)s and
+/// A `DidCommAgent` supports attachement of both [`Actor`](crate::actor::Actor)s and
 /// [`DidCommActor`](crate::didcomm::DidCommActor)s.
 ///
-/// After shutting down the event loop of a system using [`DidCommSystem::shutdown`], other clones of the
-/// system will receive [`Error::Shutdown`] when attempting to interact with the event loop.
+/// After shutting down the event loop of a agent using [`DidCommAgent::shutdown`], other clones of the
+/// agent will receive [`Error::Shutdown`] when attempting to interact with the event loop.
 #[derive(Debug, Clone)]
-pub struct DidCommSystem {
-  pub(crate) system: System,
-  pub(crate) state: Arc<DidCommSystemState>,
+pub struct DidCommAgent {
+  pub(crate) agent: Agent,
+  pub(crate) state: Arc<DidCommAgentState>,
 }
 
-impl DidCommSystem {
+impl DidCommAgent {
   pub(crate) fn commander_mut(&mut self) -> &mut NetCommander {
-    self.system.commander_mut()
+    self.agent.commander_mut()
   }
 
-  /// Let this system handle the given `request`, by invoking the appropriate actor, if attached.
-  /// This consumes the system because it passes itself to the actor.
-  /// The system will thus typically be cloned before calling this method.
+  /// Let this agent handle the given `request`, by invoking the appropriate actor, if attached.
+  /// This consumes the agent because it passes itself to the actor.
+  /// The agent will thus typically be cloned before calling this method.
   pub(crate) fn handle_request(self, request: InboundRequest) {
     match request.request_mode {
       RequestMode::Asynchronous => self.handle_async_request(request),
-      RequestMode::Synchronous => self.system.handle_sync_request(request),
+      RequestMode::Synchronous => self.agent.handle_sync_request(request),
     }
   }
 
-  /// See [`System::start_listening`].
+  /// See [`Agent::start_listening`].
   pub async fn start_listening(&mut self, address: Multiaddr) -> AgentResult<Multiaddr> {
-    self.system.start_listening(address).await
+    self.agent.start_listening(address).await
   }
 
-  /// See [`System::agent_id`].
+  /// See [`Agent::agent_id`].
   pub fn agent_id(&self) -> AgentId {
-    self.system.agent_id()
+    self.agent.agent_id()
   }
 
-  /// See [`System::addresses`].
+  /// See [`Agent::addresses`].
   pub async fn addresses(&mut self) -> AgentResult<Vec<Multiaddr>> {
-    self.system.addresses().await
+    self.agent.addresses().await
   }
 
-  /// See [`System::add_agent_address`].
+  /// See [`Agent::add_agent_address`].
   pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> AgentResult<()> {
-    self.system.add_agent_address(agent_id, address).await
+    self.agent.add_agent_address(agent_id, address).await
   }
 
-  /// See [`System::add_agent_addresses`].
+  /// See [`Agent::add_agent_addresses`].
   pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> AgentResult<()> {
-    self.system.add_agent_addresses(agent_id, addresses).await
+    self.agent.add_agent_addresses(agent_id, addresses).await
   }
 
-  /// See [`System::shutdown`].
+  /// See [`Agent::shutdown`].
   pub async fn shutdown(self) -> AgentResult<()> {
-    self.system.shutdown().await
+    self.agent.shutdown().await
   }
 
-  /// See [`System::send_request`].
+  /// See [`Agent::send_request`].
   pub async fn send_request<REQ: ActorRequest>(
     &mut self,
     agent_id: AgentId,
     request: REQ,
   ) -> AgentResult<REQ::Response> {
-    self.system.send_request(agent_id, request).await
+    self.agent.send_request(agent_id, request).await
   }
 
-  /// Sends an asynchronous message to a peer. To receive a possible response, use [`DidCommSystem::await_message`],
+  /// Sends an asynchronous message to a peer. To receive a possible response, use [`DidCommAgent::await_message`],
   /// with the same `thread_id`.
   pub async fn send_message<REQ: DidCommRequest>(
     &mut self,
@@ -171,17 +171,17 @@ impl DidCommSystem {
   }
 
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
-  /// [`DidCommSystem::send_message`] was called on the same `thread_id` previously.
+  /// [`DidCommAgent::send_message`] was called on the same `thread_id` previously.
   ///
   /// This will return a timeout error if no message is received within the duration passed
-  /// to [`DidCommSystemBuilder::timeout`](crate::didcomm::DidCommSystemBuilder::timeout).
+  /// to [`DidCommAgentBuilder::timeout`](crate::didcomm::DidCommAgentBuilder::timeout).
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
   ) -> AgentResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receiving + Deserialization
-      let inbound_request = tokio::time::timeout(self.system.state().config.timeout, receiver.1)
+      let inbound_request = tokio::time::timeout(self.agent.state().config.timeout, receiver.1)
         .await
         .map_err(|_| Error::AwaitTimeout(receiver.0.clone()))?
         .map_err(|_| Error::ThreadNotFound(receiver.0))?;
@@ -234,7 +234,7 @@ impl DidCommSystem {
 /// Invoked when no actor was found that can handle the received request.
 /// Attempts to find a thread waiting for the received message,
 /// otherwise returns an error to the peer.
-async fn actor_not_found(actor: &mut DidCommSystem, request: InboundRequest) {
+async fn actor_not_found(actor: &mut DidCommAgent, request: InboundRequest) {
   let result: Result<(), RemoteSendError> =
     match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {
       Err(error) => Err(RemoteSendError::DeserializationFailure {

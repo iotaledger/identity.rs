@@ -32,35 +32,35 @@ use crate::agent::Actor;
 use crate::agent::ActorMap;
 use crate::agent::ActorRequest;
 use crate::agent::ActorWrapper;
+use crate::agent::Agent;
+use crate::agent::AgentConfig;
+use crate::agent::AgentState;
 use crate::agent::Error;
 use crate::agent::Result as AgentResult;
-use crate::agent::System;
-use crate::agent::SystemConfig;
-use crate::agent::SystemState;
 use crate::p2p::AgentProtocol;
 use crate::p2p::AgentRequestResponseCodec;
 use crate::p2p::EventLoop;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 
-/// A builder for [`System`]s to customize its configuration and attach actors.
-pub struct SystemBuilder {
+/// A builder for [`Agent`]s to customize its configuration and attach actors.
+pub struct AgentBuilder {
   pub(crate) keypair: Option<Keypair>,
-  pub(crate) config: SystemConfig,
+  pub(crate) config: AgentConfig,
   pub(crate) actors: ActorMap,
 }
 
-impl SystemBuilder {
+impl AgentBuilder {
   /// Create a new builder with the default configuration.
-  pub fn new() -> SystemBuilder {
+  pub fn new() -> AgentBuilder {
     Self {
       keypair: None,
-      config: SystemConfig::default(),
+      config: AgentConfig::default(),
       actors: HashMap::new(),
     }
   }
 
-  /// Set the keypair from which the `AgentId` of the system is derived.
+  /// Set the keypair from which the `AgentId` of the agent is derived.
   ///
   /// If unset, a new keypair is generated.
   #[must_use]
@@ -76,9 +76,9 @@ impl SystemBuilder {
     self
   }
 
-  /// Attaches an [`Actor`] to this system.
+  /// Attaches an [`Actor`] to this agent.
   ///
-  /// This means that when the system receives a request of type `REQ`, it will invoke this actor.
+  /// This means that when the agent receives a request of type `REQ`, it will invoke this actor.
   ///
   /// Calling this method with a `REQ` type whose endpoint is already attached to an actor
   /// will overwrite the previous attachment.
@@ -95,7 +95,7 @@ impl SystemBuilder {
   }
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
-  pub async fn build(self) -> AgentResult<System> {
+  pub async fn build(self) -> AgentResult<Agent> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
         .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
@@ -109,8 +109,8 @@ impl SystemBuilder {
     self.build_with_transport(transport).await
   }
 
-  /// Build the system with a custom transport.
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> AgentResult<System>
+  /// Build the agent with a custom transport.
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> AgentResult<Agent>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -123,27 +123,27 @@ impl SystemBuilder {
       tokio::spawn(fut);
     });
 
-    let (event_loop, actor_state, net_commander): (EventLoop, SystemState, NetCommander) =
+    let (event_loop, actor_state, net_commander): (EventLoop, AgentState, NetCommander) =
       self.build_constituents(transport, executor.clone()).await?;
 
-    let system: System = System::new(net_commander, Arc::new(actor_state));
-    let system_clone: System = system.clone();
+    let agent: Agent = Agent::new(net_commander, Arc::new(actor_state));
+    let agent_clone: Agent = agent.clone();
 
     let event_handler = move |event: InboundRequest| {
-      system_clone.clone().handle_request(event);
+      agent_clone.clone().handle_request(event);
     };
 
     executor.exec(event_loop.run(event_handler).boxed());
 
-    Ok(system)
+    Ok(agent)
   }
 
-  /// Build the system constituents with a custom transport and custom executor.
+  /// Build the agent constituents with a custom transport and custom executor.
   pub(crate) async fn build_constituents<TRA>(
     self,
     transport: TRA,
     executor: Box<dyn Executor + Send>,
-  ) -> AgentResult<(EventLoop, SystemState, NetCommander)>
+  ) -> AgentResult<(EventLoop, AgentState, NetCommander)>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -187,17 +187,17 @@ impl SystemBuilder {
     let event_loop = EventLoop::new(swarm, cmd_receiver);
     let net_commander = NetCommander::new(cmd_sender);
 
-    let system_state: SystemState = SystemState {
+    let agent_state: AgentState = AgentState {
       agent_id,
       config: self.config,
       actors: self.actors,
     };
 
-    Ok((event_loop, system_state, net_commander))
+    Ok((event_loop, agent_state, net_commander))
   }
 }
 
-impl Default for SystemBuilder {
+impl Default for AgentBuilder {
   fn default() -> Self {
     Self::new()
   }
