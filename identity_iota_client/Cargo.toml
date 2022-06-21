@@ -32,7 +32,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 version = "1.2.0"
-features = ["tls"]
+features = ["async", "tls"]
 default-features = false
 
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies.iota-client]
@@ -50,10 +50,7 @@ proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
 [features]
-default = ["async", "revocation-bitmap"]
-
-# Enables async runtime support (Tokio)
-async = ["iota-client/async"]
+default = ["revocation-bitmap"]
 
 # Enables revocation with `RevocationBitmap2022`.
 revocation-bitmap = ["identity_iota_core/revocation-bitmap"]
