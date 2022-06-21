@@ -34,7 +34,7 @@ Describes relevant concepts of SSI and how to utilize them in the library.
 
 Explains the DID standard from W3C and how to manipulate DID Documents.
 
-### [Chapter 3.2: Verifiable Credentials (VC)](http://localhost:3000/identity.rs/concepts/verifiable_credentials/overview)
+### [Chapter 3.2: Verifiable Credentials (VC)](./concepts/verifiable_credentials/overview)
 
 Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
 
