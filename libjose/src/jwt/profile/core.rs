@@ -4,9 +4,9 @@
 use core::time::Duration;
 
 #[cfg(feature = "std")]
-use std::time::AgentTime;
+use std::time::SystemTime;
 #[cfg(not(feature = "std"))]
-type AgentTime = ();
+type SystemTime = ();
 
 use crate::error::Error;
 use crate::error::Result;
@@ -220,8 +220,8 @@ impl CoreProfile {
 /// Validation options for time-related claims and properties.
 #[derive(Clone, Copy, Debug)]
 pub struct TimeCop {
-  /// A specific time for temporal validations. Defaults to `AgentTime::now()`.
-  current: Option<AgentTime>,
+  /// A specific time for temporal validations. Defaults to `SystemTime::now()`.
+  current: Option<SystemTime>,
   /// The maximum allowed time of the issued-at claim (iat).
   max_iat: Option<Duration>,
   /// The minimum allowed time of the issued-at claim (iat).
@@ -238,7 +238,7 @@ impl TimeCop {
     }
   }
 
-  pub fn set_current(&mut self, value: AgentTime) {
+  pub fn set_current(&mut self, value: SystemTime) {
     self.current = Some(value);
   }
 
@@ -254,8 +254,8 @@ impl TimeCop {
   fn resolve_current(&self) -> Duration {
     self
       .current
-      .unwrap_or_else(AgentTime::now)
-      .duration_since(AgentTime::UNIX_EPOCH)
+      .unwrap_or_else(SystemTime::now)
+      .duration_since(SystemTime::UNIX_EPOCH)
       .expect("Epoch Fail")
   }
 }

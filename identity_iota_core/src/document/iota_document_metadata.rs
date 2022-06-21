@@ -34,7 +34,7 @@ pub struct IotaDocumentMetadata {
 }
 
 impl IotaDocumentMetadata {
-  /// Creates a new `IotaDocumentMetadata` with the current agent datetime used for `created` and
+  /// Creates a new `IotaDocumentMetadata` with the current system datetime used for `created` and
   /// `updated` timestamps.
   pub fn new() -> Self {
     let now: Timestamp = Timestamp::now_utc();
