@@ -14,7 +14,7 @@ use libp2p::PeerId;
 use libp2p::TransportError;
 
 use crate::actor::Error;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 
@@ -36,7 +36,7 @@ impl NetCommander {
     &mut self,
     peer_id: PeerId,
     request: RequestMessage,
-  ) -> ActorResult<ResponseMessage> {
+  ) -> AgentResult<ResponseMessage> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendRequest {
       peer_id,
@@ -57,7 +57,7 @@ impl NetCommander {
     data: Vec<u8>,
     channel: ResponseChannel<ResponseMessage>,
     request_id: RequestId,
-  ) -> ActorResult<Result<(), InboundFailure>> {
+  ) -> AgentResult<Result<(), InboundFailure>> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::SendResponse {
       response: data,
@@ -70,7 +70,7 @@ impl NetCommander {
   }
 
   /// Start listening on the given address.
-  pub(crate) async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
+  pub(crate) async fn start_listening(&mut self, address: Multiaddr) -> AgentResult<Multiaddr> {
     let (sender, receiver) = oneshot::channel();
     let command = SwarmCommand::StartListening {
       address,
@@ -84,14 +84,14 @@ impl NetCommander {
   }
 
   /// Add additional `addresses` to listen on.
-  pub(crate) async fn add_addresses(&mut self, peer_id: PeerId, addresses: OneOrMany<Multiaddr>) -> ActorResult<()> {
+  pub(crate) async fn add_addresses(&mut self, peer_id: PeerId, addresses: OneOrMany<Multiaddr>) -> AgentResult<()> {
     self
       .send_command(SwarmCommand::AddAddresses { peer_id, addresses })
       .await
   }
 
   /// Returns all addresses the event loop is listening on.
-  pub(crate) async fn get_addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
+  pub(crate) async fn get_addresses(&mut self) -> AgentResult<Vec<Multiaddr>> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::GetAddresses {
@@ -102,7 +102,7 @@ impl NetCommander {
   }
 
   /// Shut down the event loop. This will return `Error::Shutdown` from all outstanding requests.
-  pub(crate) async fn shutdown(&mut self) -> ActorResult<()> {
+  pub(crate) async fn shutdown(&mut self) -> AgentResult<()> {
     let (sender, receiver) = oneshot::channel();
     self
       .send_command(SwarmCommand::Shutdown {
@@ -113,7 +113,7 @@ impl NetCommander {
   }
 
   /// Send a command to the event loop.
-  async fn send_command(&mut self, command: SwarmCommand) -> ActorResult<()> {
+  async fn send_command(&mut self, command: SwarmCommand) -> AgentResult<()> {
     poll_fn(|cx| self.command_sender.poll_ready(cx))
       .await
       .map_err(|_| Error::Shutdown)?;

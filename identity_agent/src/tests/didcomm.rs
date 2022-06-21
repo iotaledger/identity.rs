@@ -12,7 +12,7 @@ use crate::actor::AgentId;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RequestContext;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
@@ -30,7 +30,7 @@ use crate::tests::try_init_logger;
 
 /// Ensure the DidCommSystem supports actors working with `ActorRequest`s (rather than `DidCommRequest`s).
 #[tokio::test]
-async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
+async fn test_didcomm_system_supports_actor_requests() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -74,7 +74,7 @@ async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_unknown_thread_returns_error() -> ActorResult<()> {
+async fn test_unknown_thread_returns_error() -> AgentResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, agent_id) = default_listening_didcomm_system(|builder| builder).await;
@@ -107,7 +107,7 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
+async fn test_didcomm_presentation_holder_initiates() -> AgentResult<()> {
   try_init_logger();
   let actor: DidCommState = DidCommState::new();
 
@@ -138,7 +138,7 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
+async fn test_didcomm_presentation_verifier_initiates() -> AgentResult<()> {
   try_init_logger();
 
   let actor = DidCommState::new();
@@ -165,7 +165,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
+async fn test_sending_to_unconnected_peer_returns_error() -> AgentResult<()> {
   try_init_logger();
 
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
@@ -187,7 +187,7 @@ async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
+async fn test_await_message_returns_timeout_error() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
@@ -227,7 +227,7 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
+async fn test_handler_finishes_execution_after_shutdown() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]

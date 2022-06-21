@@ -13,7 +13,7 @@ use serde::Serialize;
 use crate::actor::AgentId;
 use crate::actor::Endpoint;
 use crate::actor::RequestContext;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
@@ -63,7 +63,7 @@ pub(crate) async fn presentation_holder_handler(
   mut system: DidCommSystem,
   agent_id: AgentId,
   request: Option<DidCommPlaintextMessage<PresentationRequest>>,
-) -> ActorResult<()> {
+) -> AgentResult<()> {
   let request: DidCommPlaintextMessage<PresentationRequest> = match request {
     Some(request) => request,
     None => {
@@ -101,7 +101,7 @@ pub(crate) async fn presentation_verifier_handler(
   mut system: DidCommSystem,
   agent_id: AgentId,
   offer: Option<DidCommPlaintextMessage<PresentationOffer>>,
-) -> ActorResult<()> {
+) -> AgentResult<()> {
   let thread_id: ThreadId = if let Some(offer) = offer {
     offer.thread_id().to_owned()
   } else {

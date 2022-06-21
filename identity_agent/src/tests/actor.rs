@@ -18,7 +18,7 @@ use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
 use crate::actor::RequestContext;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::tests::default_listening_system;
@@ -28,7 +28,7 @@ use crate::tests::remote_account::IdentityList;
 use crate::tests::try_init_logger;
 
 #[tokio::test]
-async fn test_actor_end_to_end() -> ActorResult<()> {
+async fn test_actor_end_to_end() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
@@ -111,7 +111,7 @@ async fn test_actor_end_to_end() -> ActorResult<()> {
 }
 
 #[tokio::test]
-async fn test_unknown_request_returns_error() -> ActorResult<()> {
+async fn test_unknown_request_returns_error() -> AgentResult<()> {
   try_init_logger();
 
   let (listening_actor, addrs, agent_id) = default_listening_system(|builder| builder).await;
@@ -140,7 +140,7 @@ async fn test_unknown_request_returns_error() -> ActorResult<()> {
 
 /// Test that system2 can send a request to system1 if it was previously sent a request from system1.
 #[tokio::test]
-async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
+async fn test_actors_can_communicate_bidirectionally() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -211,7 +211,7 @@ async fn test_interacting_with_shutdown_actor_returns_error() {
 }
 
 #[tokio::test]
-async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()> {
+async fn test_shutdown_returns_errors_through_open_channels() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug)]
@@ -265,7 +265,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
 }
 
 #[tokio::test]
-async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> ActorResult<()> {
+async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentResult<()> {
   try_init_logger();
 
   // Define two types with identical serialization results, but different `Response` types.

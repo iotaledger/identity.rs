@@ -17,7 +17,7 @@ use crate::actor::Error;
 use crate::actor::ErrorLocation;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestMode;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::actor::System;
 use crate::didcomm::dcpm::DidCommPlaintextMessage;
 use crate::didcomm::AbstractDidCommActor;
@@ -95,7 +95,7 @@ impl DidCommSystem {
   }
 
   /// See [`System::start_listening`].
-  pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> AgentResult<Multiaddr> {
     self.system.start_listening(address).await
   }
 
@@ -105,22 +105,22 @@ impl DidCommSystem {
   }
 
   /// See [`System::addresses`].
-  pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
+  pub async fn addresses(&mut self) -> AgentResult<Vec<Multiaddr>> {
     self.system.addresses().await
   }
 
   /// See [`System::add_agent_address`].
-  pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> ActorResult<()> {
+  pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> AgentResult<()> {
     self.system.add_agent_address(agent_id, address).await
   }
 
   /// See [`System::add_agent_addresses`].
-  pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
+  pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> AgentResult<()> {
     self.system.add_agent_addresses(agent_id, addresses).await
   }
 
   /// See [`System::shutdown`].
-  pub async fn shutdown(self) -> ActorResult<()> {
+  pub async fn shutdown(self) -> AgentResult<()> {
     self.system.shutdown().await
   }
 
@@ -129,7 +129,7 @@ impl DidCommSystem {
     &mut self,
     agent_id: AgentId,
     request: REQ,
-  ) -> ActorResult<REQ::Response> {
+  ) -> AgentResult<REQ::Response> {
     self.system.send_request(agent_id, request).await
   }
 
@@ -140,7 +140,7 @@ impl DidCommSystem {
     agent_id: AgentId,
     thread_id: &ThreadId,
     message: REQ,
-  ) -> ActorResult<()> {
+  ) -> AgentResult<()> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();
 
@@ -178,7 +178,7 @@ impl DidCommSystem {
   pub async fn await_message<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
-  ) -> ActorResult<DidCommPlaintextMessage<T>> {
+  ) -> AgentResult<DidCommPlaintextMessage<T>> {
     if let Some(receiver) = self.state.threads_receiver.remove(thread_id) {
       // Receiving + Deserialization
       let inbound_request = tokio::time::timeout(self.system.state().config.timeout, receiver.1)

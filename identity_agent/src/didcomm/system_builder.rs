@@ -18,7 +18,7 @@ use libp2p::Transport;
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
 use crate::actor::Error;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::actor::System;
 use crate::actor::SystemBuilder;
 use crate::actor::SystemState;
@@ -101,7 +101,7 @@ impl DidCommSystemBuilder {
   }
 
   /// See [`SystemBuilder::build`].
-  pub async fn build(self) -> ActorResult<DidCommSystem> {
+  pub async fn build(self) -> AgentResult<DidCommSystem> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
         .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
@@ -116,7 +116,7 @@ impl DidCommSystemBuilder {
   }
 
   /// See [`SystemBuilder::build_with_transport`].
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<DidCommSystem>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> AgentResult<DidCommSystem>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,

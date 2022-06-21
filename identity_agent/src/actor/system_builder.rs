@@ -33,7 +33,7 @@ use crate::actor::ActorMap;
 use crate::actor::ActorRequest;
 use crate::actor::ActorWrapper;
 use crate::actor::Error;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::actor::System;
 use crate::actor::SystemConfig;
 use crate::actor::SystemState;
@@ -95,7 +95,7 @@ impl SystemBuilder {
   }
 
   /// Build the actor with a default transport which supports DNS, TCP and WebSocket capabilities.
-  pub async fn build(self) -> ActorResult<System> {
+  pub async fn build(self) -> AgentResult<System> {
     let transport: _ = {
       let dns_tcp_transport: TokioDnsConfig<_> = TokioDnsConfig::system(TokioTcpConfig::new().nodelay(true))
         .map_err(|err| Error::TransportError("building transport", libp2p::TransportError::Other(err)))?;
@@ -110,7 +110,7 @@ impl SystemBuilder {
   }
 
   /// Build the system with a custom transport.
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> ActorResult<System>
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> AgentResult<System>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -143,7 +143,7 @@ impl SystemBuilder {
     self,
     transport: TRA,
     executor: Box<dyn Executor + Send>,
-  ) -> ActorResult<(EventLoop, SystemState, NetCommander)>
+  ) -> AgentResult<(EventLoop, SystemState, NetCommander)>
   where
     TRA: Transport + Sized + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,

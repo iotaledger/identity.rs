@@ -3,7 +3,7 @@
 
 use identity_iota_core::document::IotaDocument;
 
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::tests::default_listening_system;
 use crate::tests::default_sending_system;
 use crate::tests::remote_account::IdentityCreate;
@@ -13,7 +13,7 @@ use crate::tests::remote_account::RemoteAccount;
 use crate::tests::try_init_logger;
 
 #[tokio::test]
-async fn test_remote_account() -> ActorResult<()> {
+async fn test_remote_account() -> AgentResult<()> {
   try_init_logger();
 
   let (receiver, receiver_addrs, receiver_agent_id) = default_listening_system(|mut builder| {

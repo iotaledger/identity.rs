@@ -9,7 +9,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::actor::Error;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 
 /// A path-like identifier for an actor request. As an example, `identity/resolve`
 /// could be the endpoint of the "resolve" request within the "identity" namespace.
@@ -23,7 +23,7 @@ pub struct Endpoint {
 
 impl Endpoint {
   /// Checks whether the given `string` is a valid [`Endpoint`].
-  fn validate(string: &str) -> ActorResult<()> {
+  fn validate(string: &str) -> AgentResult<()> {
     let mut split: Split<'_, char> = string.split('/');
 
     // Once the Never (`!`) type lands in stable Rust, we can try to map the `None` variant to ! instead.

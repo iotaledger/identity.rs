@@ -18,7 +18,7 @@ use crate::actor::Error;
 use crate::actor::RemoteSendError;
 use crate::actor::RequestContext;
 use crate::actor::RequestMode;
-use crate::actor::Result as ActorResult;
+use crate::actor::Result as AgentResult;
 use crate::actor::SystemState;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
@@ -81,12 +81,12 @@ impl System {
   /// passing a single address, multiple addresses may end up being listened on. To obtain all those addresses, use
   /// [`System::addresses`]. Note that even when the same address is passed, the returned address is not deterministic,
   /// and should thus not be relied upon.
-  pub async fn start_listening(&mut self, address: Multiaddr) -> ActorResult<Multiaddr> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> AgentResult<Multiaddr> {
     self.commander_mut().start_listening(address).await
   }
 
   /// Return all addresses that are currently being listened on.
-  pub async fn addresses(&mut self) -> ActorResult<Vec<Multiaddr>> {
+  pub async fn addresses(&mut self) -> AgentResult<Vec<Multiaddr>> {
     self.commander_mut().get_addresses().await
   }
 
@@ -96,7 +96,7 @@ impl System {
   ///
   /// Calling this and other methods, which interact with the event loop, on a system that was shutdown
   /// will return [`Error::Shutdown`].
-  pub async fn shutdown(mut self) -> ActorResult<()> {
+  pub async fn shutdown(mut self) -> AgentResult<()> {
     // Consuming self drops the internal commander. If this is the last copy of the commander,
     // the event loop will break as a result. However, if copies exist, such as in running handlers,
     // this function will return while the event loop keeps running. Ideally we could then join on the background task
@@ -110,7 +110,7 @@ impl System {
 
   /// Associate the given `agent_id` with an `address`. This `address`, or another one that was added,
   /// will be use to send requests to `agent_id`.
-  pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> ActorResult<()> {
+  pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> AgentResult<()> {
     self
       .commander_mut()
       .add_addresses(agent_id, OneOrMany::One(address))
@@ -119,7 +119,7 @@ impl System {
 
   /// Associate the given `agent_id` with multiple `addresses`. One of the `addresses`, or another one that was added,
   /// will be use to send requests to `agent_id`.
-  pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
+  pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> AgentResult<()> {
     self
       .commander_mut()
       .add_addresses(agent_id, OneOrMany::Many(addresses))
@@ -134,7 +134,7 @@ impl System {
     &mut self,
     agent_id: AgentId,
     request: REQ,
-  ) -> ActorResult<REQ::Response> {
+  ) -> AgentResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();
 
@@ -229,7 +229,7 @@ pub(crate) async fn send_response<T: serde::Serialize>(
   response: Result<T, RemoteSendError>,
   channel: ResponseChannel<ResponseMessage>,
   request_id: RequestId,
-) -> ActorResult<Result<(), InboundFailure>> {
+) -> AgentResult<Result<(), InboundFailure>> {
   let response: Vec<u8> = serde_json::to_vec(&response).map_err(|err| crate::actor::Error::SerializationFailure {
     location: ErrorLocation::Local,
     context: "send response".to_owned(),
