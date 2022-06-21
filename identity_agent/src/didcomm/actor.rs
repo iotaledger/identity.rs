@@ -8,11 +8,11 @@ use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use serde::Serialize;
 
-use crate::actor::BoxFuture;
-use crate::actor::Endpoint;
-use crate::actor::ErrorLocation;
-use crate::actor::RemoteSendError;
-use crate::actor::RequestContext;
+use crate::agent::BoxFuture;
+use crate::agent::Endpoint;
+use crate::agent::ErrorLocation;
+use crate::agent::RemoteSendError;
+use crate::agent::RequestContext;
 use crate::didcomm::DidCommRequest;
 use crate::didcomm::DidCommSystem;
 use crate::p2p::InboundRequest;
@@ -125,7 +125,7 @@ async fn send_didcomm_response<T: Serialize>(
   channel: ResponseChannel<ResponseMessage>,
   request_id: RequestId,
 ) {
-  match crate::actor::send_response(commander, response, channel, request_id).await {
+  match crate::agent::send_response(commander, response, channel, request_id).await {
     Ok(Err(err)) => {
       log::error!(
         "could not send error for request on endpoint `{}` due to: {err:?}",

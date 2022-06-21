@@ -13,8 +13,8 @@ use libp2p::Multiaddr;
 use libp2p::PeerId;
 use libp2p::TransportError;
 
-use crate::actor::Error;
-use crate::actor::Result as AgentResult;
+use crate::agent::Error;
+use crate::agent::Result as AgentResult;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
 

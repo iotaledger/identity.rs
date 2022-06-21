@@ -10,7 +10,7 @@
   rustdoc::private_doc_tests
 )]
 
-pub mod actor;
+pub mod agent;
 pub mod didcomm;
 mod p2p;
 #[cfg(test)]

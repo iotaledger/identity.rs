@@ -5,9 +5,9 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use identity_agent::actor::AgentId;
-use identity_agent::actor::System;
-use identity_agent::actor::SystemBuilder;
+use identity_agent::agent::AgentId;
+use identity_agent::agent::System;
+use identity_agent::agent::SystemBuilder;
 use identity_agent::Multiaddr;
 
 use remote_account::IdentityCreate;
@@ -77,10 +77,10 @@ mod remote_account {
   use identity_account::account::Account;
   use identity_account::account::AccountBuilder;
   use identity_account::types::IdentitySetup;
-  use identity_agent::actor::Actor;
-  use identity_agent::actor::ActorRequest;
-  use identity_agent::actor::Endpoint;
-  use identity_agent::actor::RequestContext;
+  use identity_agent::agent::Actor;
+  use identity_agent::agent::ActorRequest;
+  use identity_agent::agent::Endpoint;
+  use identity_agent::agent::RequestContext;
   use identity_iota_core::did::IotaDID;
   use identity_iota_core::document::IotaDocument;
   use serde::Deserialize;

@@ -6,8 +6,8 @@ use std::fmt::Debug;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::actor::Endpoint;
-use crate::actor::RequestMode;
+use crate::agent::Endpoint;
+use crate::agent::RequestMode;
 
 /// A request message containing some opaque data together with the endpoint it is inteded for and its request mode.
 #[derive(Debug, Serialize, Deserialize)]

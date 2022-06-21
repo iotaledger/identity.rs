@@ -6,8 +6,8 @@ use std::fmt::Debug;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::actor::Endpoint;
-use crate::actor::RequestMode;
+use crate::agent::Endpoint;
+use crate::agent::RequestMode;
 
 /// A message that can be sent to a remote actor without an explicit response.
 ///

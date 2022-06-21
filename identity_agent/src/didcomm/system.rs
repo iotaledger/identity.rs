@@ -10,15 +10,15 @@ use identity_iota_core::document::IotaDocument;
 use libp2p::Multiaddr;
 use serde::de::DeserializeOwned;
 
-use crate::actor::ActorRequest;
-use crate::actor::AgentId;
-use crate::actor::Endpoint;
-use crate::actor::Error;
-use crate::actor::ErrorLocation;
-use crate::actor::RemoteSendError;
-use crate::actor::RequestMode;
-use crate::actor::Result as AgentResult;
-use crate::actor::System;
+use crate::agent::ActorRequest;
+use crate::agent::AgentId;
+use crate::agent::Endpoint;
+use crate::agent::Error;
+use crate::agent::ErrorLocation;
+use crate::agent::RemoteSendError;
+use crate::agent::RequestMode;
+use crate::agent::Result as AgentResult;
+use crate::agent::System;
 use crate::didcomm::dcpm::DidCommPlaintextMessage;
 use crate::didcomm::AbstractDidCommActor;
 use crate::didcomm::DidCommRequest;
@@ -274,7 +274,7 @@ async fn actor_not_found(actor: &mut DidCommSystem, request: InboundRequest) {
       }
     };
 
-  let send_result = crate::actor::send_response(
+  let send_result = crate::agent::send_response(
     actor.commander_mut(),
     result,
     request.response_channel,

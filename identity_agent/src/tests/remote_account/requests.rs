@@ -7,8 +7,8 @@ use identity_iota_core::document::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::actor::ActorRequest;
-use crate::actor::Endpoint;
+use crate::agent::ActorRequest;
+use crate::agent::Endpoint;
 use crate::tests::remote_account::RemoteAccountError;
 
 /// Can be sent to a `RemoteAccount` to instruct it to create an identity.

@@ -8,8 +8,8 @@ use std::str::Split;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::actor::Error;
-use crate::actor::Result as AgentResult;
+use crate::agent::Error;
+use crate::agent::Result as AgentResult;
 
 /// A path-like identifier for an actor request. As an example, `identity/resolve`
 /// could be the endpoint of the "resolve" request within the "identity" namespace.
@@ -95,8 +95,8 @@ impl From<Endpoint> for String {
 mod tests {
   use identity_core::convert::FromJson;
 
-  use crate::actor::Endpoint;
-  use crate::actor::Error;
+  use crate::agent::Endpoint;
+  use crate::agent::Error;
 
   #[test]
   fn test_endpoint_invalid() {

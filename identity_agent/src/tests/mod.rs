@@ -11,9 +11,9 @@ use identity_iota_core::document::IotaDocument;
 use libp2p::identity::Keypair;
 use libp2p::Multiaddr;
 
-use crate::actor::AgentId;
-use crate::actor::System;
-use crate::actor::SystemBuilder;
+use crate::agent::AgentId;
+use crate::agent::System;
+use crate::agent::SystemBuilder;
 use crate::didcomm::DidCommSystem;
 use crate::didcomm::DidCommSystemBuilder;
 use crate::didcomm::DidCommSystemIdentity;

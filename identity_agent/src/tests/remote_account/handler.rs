@@ -10,8 +10,8 @@ use identity_iota_core::did::IotaDID;
 use identity_iota_core::document::IotaDocument;
 use tokio::sync::Mutex;
 
-use crate::actor::Actor;
-use crate::actor::RequestContext;
+use crate::agent::Actor;
+use crate::agent::RequestContext;
 use crate::tests::remote_account::IdentityCreate;
 use crate::tests::remote_account::IdentityGet;
 use crate::tests::remote_account::IdentityList;

@@ -10,16 +10,16 @@ use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
 
-use crate::actor::errors::ErrorLocation;
-use crate::actor::AbstractActor;
-use crate::actor::ActorRequest;
-use crate::actor::Endpoint;
-use crate::actor::Error;
-use crate::actor::RemoteSendError;
-use crate::actor::RequestContext;
-use crate::actor::RequestMode;
-use crate::actor::Result as AgentResult;
-use crate::actor::SystemState;
+use crate::agent::errors::ErrorLocation;
+use crate::agent::AbstractActor;
+use crate::agent::ActorRequest;
+use crate::agent::Endpoint;
+use crate::agent::Error;
+use crate::agent::RemoteSendError;
+use crate::agent::RequestContext;
+use crate::agent::RequestMode;
+use crate::agent::Result as AgentResult;
+use crate::agent::SystemState;
 use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
@@ -230,7 +230,7 @@ pub(crate) async fn send_response<T: serde::Serialize>(
   channel: ResponseChannel<ResponseMessage>,
   request_id: RequestId,
 ) -> AgentResult<Result<(), InboundFailure>> {
-  let response: Vec<u8> = serde_json::to_vec(&response).map_err(|err| crate::actor::Error::SerializationFailure {
+  let response: Vec<u8> = serde_json::to_vec(&response).map_err(|err| crate::agent::Error::SerializationFailure {
     location: ErrorLocation::Local,
     context: "send response".to_owned(),
     error_message: err.to_string(),

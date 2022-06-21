@@ -3,7 +3,7 @@
 
 use identity_iota_core::document::IotaDocument;
 
-use crate::actor::Result as AgentResult;
+use crate::agent::Result as AgentResult;
 use crate::tests::default_listening_system;
 use crate::tests::default_sending_system;
 use crate::tests::remote_account::IdentityCreate;

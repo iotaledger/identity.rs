@@ -6,7 +6,7 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 
-use identity_agent::actor::AgentId;
+use identity_agent::agent::AgentId;
 use identity_agent::didcomm::DidCommPlaintextMessage;
 use identity_agent::didcomm::DidCommSystem;
 use identity_agent::didcomm::DidCommSystemBuilder;
@@ -92,8 +92,8 @@ criterion_group!(benches, bench_send_didcomm_messages);
 criterion_main!(benches);
 
 mod test_actor {
-  use identity_agent::actor::Endpoint;
-  use identity_agent::actor::RequestContext;
+  use identity_agent::agent::Endpoint;
+  use identity_agent::agent::RequestContext;
   use identity_agent::didcomm::DidCommActor;
   use identity_agent::didcomm::DidCommPlaintextMessage;
   use identity_agent::didcomm::DidCommRequest;

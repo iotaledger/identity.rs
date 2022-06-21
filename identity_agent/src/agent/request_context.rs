@@ -1,8 +1,8 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::actor::AgentId;
-use crate::actor::Endpoint;
+use crate::agent::AgentId;
+use crate::agent::Endpoint;
 
 /// A request paired with some context such as the sender's peer id.
 #[non_exhaustive]

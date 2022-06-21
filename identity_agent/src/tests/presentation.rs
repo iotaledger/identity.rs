@@ -10,10 +10,10 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::actor::AgentId;
-use crate::actor::Endpoint;
-use crate::actor::RequestContext;
-use crate::actor::Result as AgentResult;
+use crate::agent::AgentId;
+use crate::agent::Endpoint;
+use crate::agent::RequestContext;
+use crate::agent::Result as AgentResult;
 use crate::didcomm::DidCommActor;
 use crate::didcomm::DidCommPlaintextMessage;
 use crate::didcomm::DidCommRequest;
