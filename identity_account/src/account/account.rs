@@ -11,20 +11,10 @@ use identity_account_storage::crypto::RemoteEd25519;
 use identity_account_storage::crypto::RemoteKey;
 use identity_account_storage::identity::ChainState;
 use identity_account_storage::storage::Storage;
-#[cfg(feature = "encryption")]
-use identity_account_storage::types::CekAlgorithm;
-#[cfg(feature = "encryption")]
-use identity_account_storage::types::EncryptedData;
-#[cfg(feature = "encryption")]
-use identity_account_storage::types::EncryptionAlgorithm;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
-#[cfg(feature = "encryption")]
-use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
-#[cfg(feature = "revocation-bitmap")]
-use identity_did::did::DID;
 use identity_iota_client::chain::DocumentChain;
 use identity_iota_client::document::ResolvedIotaDocument;
 use identity_iota_client::tangle::Client;
@@ -318,86 +308,6 @@ where
     Ok(())
   }
 
-  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
-  /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-  #[cfg(feature = "revocation-bitmap")]
-  pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
-    // Find the service to be updated.
-    let mut service_id: IotaDIDUrl = self.did().to_url();
-    service_id.set_fragment(Some(fragment))?;
-
-    self.document.revoke_credentials(&service_id, credential_indices)?;
-
-    self.increment_actions();
-    self.publish_internal(false, PublishOptions::default()).await?;
-    Ok(())
-  }
-
-  /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
-  /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-  #[cfg(feature = "revocation-bitmap")]
-  pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
-    // Find the service to be updated.
-    let mut service_id: IotaDIDUrl = self.did().to_url();
-    service_id.set_fragment(Some(fragment))?;
-
-    self.document.unrevoke_credentials(&service_id, credential_indices)?;
-
-    self.increment_actions();
-    self.publish_internal(false, PublishOptions::default()).await?;
-    Ok(())
-  }
-
-  /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
-  ///
-  /// Returns an [`EncryptedData`] instance.
-  #[cfg(feature = "encryption")]
-  pub async fn encrypt_data(
-    &self,
-    plaintext: &[u8],
-    associated_data: &[u8],
-    encryption_algorithm: &EncryptionAlgorithm,
-    cek_algorithm: &CekAlgorithm,
-    public_key: PublicKey,
-  ) -> Result<EncryptedData> {
-    self
-      .storage()
-      .data_encrypt(
-        self.did(),
-        plaintext.to_vec(),
-        associated_data.to_vec(),
-        encryption_algorithm,
-        cek_algorithm,
-        public_key,
-      )
-      .await
-      .map_err(Into::into)
-  }
-
-  /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
-  /// `cek_algorithm`.
-  ///
-  /// Returns the decrypted text.
-  #[cfg(feature = "encryption")]
-  pub async fn decrypt_data(
-    &self,
-    data: EncryptedData,
-    encryption_algorithm: &EncryptionAlgorithm,
-    cek_algorithm: &CekAlgorithm,
-    fragment: &str,
-  ) -> Result<Vec<u8>> {
-    let method: &IotaVerificationMethod = self
-      .document()
-      .resolve_method(fragment, None)
-      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
-    let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
-    self
-      .storage()
-      .data_decrypt(self.did(), data, encryption_algorithm, cek_algorithm, &private_key)
-      .await
-      .map_err(Into::into)
-  }
-
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
@@ -638,5 +548,116 @@ where
     }
 
     Ok(())
+  }
+}
+
+#[cfg(feature = "revocation-bitmap")]
+mod account_revocation {
+  use super::Account;
+  use crate::account::PublishOptions;
+  use crate::Result;
+  use identity_did::did::DID;
+  use identity_iota_client::tangle::{Client, SharedPtr};
+  use identity_iota_core::did::IotaDIDUrl;
+
+  impl<C> Account<C>
+  where
+    C: SharedPtr<Client>,
+  {
+    /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
+    /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+      // Find the service to be updated.
+      let mut service_id: IotaDIDUrl = self.did().to_url();
+      service_id.set_fragment(Some(fragment))?;
+
+      self.document.revoke_credentials(&service_id, credential_indices)?;
+
+      self.increment_actions();
+      self.publish_internal(false, PublishOptions::default()).await?;
+      Ok(())
+    }
+
+    /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
+    /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    #[cfg(feature = "revocation-bitmap")]
+    pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+      // Find the service to be updated.
+      let mut service_id: IotaDIDUrl = self.did().to_url();
+      service_id.set_fragment(Some(fragment))?;
+
+      self.document.unrevoke_credentials(&service_id, credential_indices)?;
+
+      self.increment_actions();
+      self.publish_internal(false, PublishOptions::default()).await?;
+      Ok(())
+    }
+  }
+}
+
+#[cfg(feature = "encryption")]
+mod account_encryption {
+  use super::Account;
+  use crate::Error;
+  use crate::Result;
+  use identity_account_storage::types::KeyLocation;
+  use identity_account_storage::types::{CekAlgorithm, EncryptedData, EncryptionAlgorithm};
+  use identity_core::crypto::PublicKey;
+  use identity_iota_client::tangle::{Client, SharedPtr};
+  use identity_iota_core::document::IotaVerificationMethod;
+
+  impl<C> Account<C>
+  where
+    C: SharedPtr<Client>,
+  {
+    /// Encrypts the given `plaintext` with the specified `encryption_algorithm` and `cek_algorithm`.
+    ///
+    /// Returns an [`EncryptedData`] instance.
+    #[cfg(feature = "encryption")]
+    pub async fn encrypt_data(
+      &self,
+      plaintext: &[u8],
+      associated_data: &[u8],
+      encryption_algorithm: &EncryptionAlgorithm,
+      cek_algorithm: &CekAlgorithm,
+      public_key: PublicKey,
+    ) -> Result<EncryptedData> {
+      self
+        .storage()
+        .data_encrypt(
+          self.did(),
+          plaintext.to_vec(),
+          associated_data.to_vec(),
+          encryption_algorithm,
+          cek_algorithm,
+          public_key,
+        )
+        .await
+        .map_err(Into::into)
+    }
+
+    /// Decrypts the given `data` with the key identified by `fragment` using the given `encryption_algorithm` and
+    /// `cek_algorithm`.
+    ///
+    /// Returns the decrypted text.
+    #[cfg(feature = "encryption")]
+    pub async fn decrypt_data(
+      &self,
+      data: EncryptedData,
+      encryption_algorithm: &EncryptionAlgorithm,
+      cek_algorithm: &CekAlgorithm,
+      fragment: &str,
+    ) -> Result<Vec<u8>> {
+      let method: &IotaVerificationMethod = self
+        .document()
+        .resolve_method(fragment, None)
+        .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
+      let private_key: KeyLocation = KeyLocation::from_verification_method(method)?;
+      self
+        .storage()
+        .data_decrypt(self.did(), data, encryption_algorithm, cek_algorithm, &private_key)
+        .await
+        .map_err(Into::into)
+    }
   }
 }
