@@ -20,8 +20,10 @@ use identity_account_storage::types::EncryptionAlgorithm;
 use identity_account_storage::types::KeyLocation;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::ProofOptions;
+#[cfg(feature = "encryption")]
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
+#[cfg(feature = "revocation-bitmap")]
 use identity_did::did::DID;
 use identity_iota_client::chain::DocumentChain;
 use identity_iota_client::document::ResolvedIotaDocument;
@@ -318,6 +320,7 @@ where
 
   /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
   /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  #[cfg(feature = "revocation-bitmap")]
   pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
     // Find the service to be updated.
     let mut service_id: IotaDIDUrl = self.did().to_url();
@@ -332,6 +335,7 @@ where
 
   /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
   /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+  #[cfg(feature = "revocation-bitmap")]
   pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
     // Find the service to be updated.
     let mut service_id: IotaDIDUrl = self.did().to_url();
