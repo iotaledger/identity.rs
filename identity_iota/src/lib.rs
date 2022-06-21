@@ -139,9 +139,9 @@ pub mod prelude {
   pub use identity_iota_core::document::IotaDocument;
 }
 
-#[cfg(feature = "actor")]
-pub mod actor {
-  //! Identity actor types
+#[cfg(feature = "unstable-agent")]
+pub mod agent {
+  //! Identity agent types
 
-  pub use identity_actor::*;
+  pub use identity_agent::*;
 }
