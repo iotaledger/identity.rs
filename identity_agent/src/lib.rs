@@ -17,4 +17,3 @@ mod p2p;
 mod tests;
 
 pub use libp2p::Multiaddr;
-pub use libp2p::PeerId;

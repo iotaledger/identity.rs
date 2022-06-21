@@ -5,15 +5,15 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
+use identity_agent::actor::AgentId;
 use identity_agent::actor::System;
 use identity_agent::actor::SystemBuilder;
 use identity_agent::Multiaddr;
-use identity_agent::PeerId;
 
 use remote_account::IdentityCreate;
 use remote_account::RemoteAccount;
 
-async fn setup() -> (System, PeerId, System) {
+async fn setup() -> (System, AgentId, System) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
   let mut builder = SystemBuilder::new();
 
@@ -23,13 +23,13 @@ async fn setup() -> (System, PeerId, System) {
   let mut receiver: System = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
-  let receiver_peer_id = receiver.peer_id();
+  let receiver_agent_id = receiver.agent_id();
 
   let mut sender: System = SystemBuilder::new().build().await.unwrap();
 
-  sender.add_peer_address(receiver_peer_id, addr).await.unwrap();
+  sender.add_agent_address(receiver_agent_id, addr).await.unwrap();
 
-  (receiver, receiver_peer_id, sender)
+  (receiver, receiver_agent_id, sender)
 }
 
 fn bench_create_remote_account(c: &mut Criterion) {
@@ -40,7 +40,7 @@ fn bench_create_remote_account(c: &mut Criterion) {
     .build()
     .unwrap();
 
-  let (receiver, receiver_peer_id, sender) = runtime.block_on(setup());
+  let (receiver, receiver_agent_id, sender) = runtime.block_on(setup());
 
   let mut group = c.benchmark_group("create remote account");
 
@@ -51,7 +51,7 @@ fn bench_create_remote_account(c: &mut Criterion) {
 
         async move {
           sender_clone
-            .send_request(receiver_peer_id, IdentityCreate::default())
+            .send_request(receiver_agent_id, IdentityCreate::default())
             .await
             .unwrap()
             .unwrap();

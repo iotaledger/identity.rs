@@ -95,14 +95,14 @@ async fn test_actor_end_to_end() -> ActorResult<()> {
     .await
     .unwrap();
   let addresses = listening_system.addresses().await.unwrap();
-  let peer_id = listening_system.peer_id();
+  let agent_id = listening_system.agent_id();
 
   let mut sender_system: System = SystemBuilder::new().build().await.unwrap();
-  // Add on which which addresses sender_system can reach peer_id.
-  sender_system.add_peer_addresses(peer_id, addresses).await.unwrap();
+  // Add on which which addresses sender_system can reach agent_id.
+  sender_system.add_agent_addresses(agent_id, addresses).await.unwrap();
 
-  assert_eq!(sender_system.send_request(peer_id, Increment(3)).await.unwrap(), 3);
-  assert_eq!(sender_system.send_request(peer_id, Decrement(2)).await.unwrap(), 1);
+  assert_eq!(sender_system.send_request(agent_id, Increment(3)).await.unwrap(), 3);
+  assert_eq!(sender_system.send_request(agent_id, Decrement(2)).await.unwrap(), 1);
 
   listening_system.shutdown().await.unwrap();
   sender_system.shutdown().await.unwrap();
@@ -114,14 +114,14 @@ async fn test_actor_end_to_end() -> ActorResult<()> {
 async fn test_unknown_request_returns_error() -> ActorResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_system(|builder| builder).await;
+  let (listening_actor, addrs, agent_id) = default_listening_system(|builder| builder).await;
 
   let mut sending_actor = default_sending_system(|builder| builder).await;
-  sending_actor.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_actor.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   let result = sending_actor
     .send_request(
-      peer_id,
+      agent_id,
       IdentityGet(
         "did:iota:FFFAH6qct9KGQcSenG1iaw2Nj9jP7Zmug2zcmTpF4942"
           .try_into()
@@ -182,11 +182,11 @@ async fn test_actors_can_communicate_bidirectionally() -> ActorResult<()> {
 
   let addr: Multiaddr = system2.addresses().await.unwrap().into_iter().next().unwrap();
 
-  system1.add_peer_address(system2.peer_id(), addr).await.unwrap();
+  system1.add_agent_address(system2.agent_id(), addr).await.unwrap();
 
-  system1.send_request(system2.peer_id(), Dummy(42)).await.unwrap();
+  system1.send_request(system2.agent_id(), Dummy(42)).await.unwrap();
 
-  system2.send_request(system1.peer_id(), Dummy(43)).await.unwrap();
+  system2.send_request(system1.agent_id(), Dummy(43)).await.unwrap();
 
   system1.shutdown().await.unwrap();
   system2.shutdown().await.unwrap();
@@ -225,14 +225,14 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
     }
   }
 
-  let (listening_system, addrs, peer_id) = default_listening_system(|mut builder| {
+  let (listening_system, addrs, agent_id) = default_listening_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
   let mut sending_system: System = SystemBuilder::new().build().await.unwrap();
-  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   let mut sender1 = sending_system.clone();
 
@@ -246,7 +246,7 @@ async fn test_shutdown_returns_errors_through_open_channels() -> ActorResult<()>
   // hence the need for manual polling.
   // On the next poll after shutdown, we expect the errors.
 
-  let send_request_future = sender1.send_request(peer_id, IdentityList);
+  let send_request_future = sender1.send_request(agent_id, IdentityList);
   pin_mut!(send_request_future);
   let result = futures::poll!(&mut send_request_future);
   assert!(matches!(result, Poll::Pending));
@@ -303,16 +303,16 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> ActorR
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_system(|mut builder| {
+  let (listening_actor, addrs, agent_id) = default_listening_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
   let mut sending_actor: System = SystemBuilder::new().build().await.unwrap();
-  sending_actor.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_actor.add_agent_addresses(agent_id, addrs).await.unwrap();
 
-  let result = sending_actor.send_request(peer_id, CustomRequest(13)).await;
+  let result = sending_actor.send_request(agent_id, CustomRequest(13)).await;
 
   assert!(matches!(
     result.unwrap_err(),
@@ -336,7 +336,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> ActorR
   }
 
   let result = sending_actor
-    .send_request(peer_id, CustomRequest3("13".to_owned()))
+    .send_request(agent_id, CustomRequest3("13".to_owned()))
     .await;
 
   assert!(matches!(

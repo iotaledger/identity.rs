@@ -9,7 +9,6 @@ use libp2p::request_response::InboundFailure;
 use libp2p::request_response::RequestId;
 use libp2p::request_response::ResponseChannel;
 use libp2p::Multiaddr;
-use libp2p::PeerId;
 
 use crate::actor::errors::ErrorLocation;
 use crate::actor::AbstractActor;
@@ -25,6 +24,12 @@ use crate::p2p::InboundRequest;
 use crate::p2p::NetCommander;
 use crate::p2p::RequestMessage;
 use crate::p2p::ResponseMessage;
+
+/// A map from an endpoint to the actor that handles its requests.
+pub(crate) type ActorMap = HashMap<Endpoint, Box<dyn AbstractActor>>;
+
+/// The cryptographic identifier of an agent on the network.
+pub type AgentId = libp2p::PeerId;
 
 /// An actor system can be used to send requests to remote agents, and fowards incoming requests
 /// to attached actors.
@@ -62,9 +67,9 @@ impl System {
     self.state.as_ref()
   }
 
-  /// Returns the [`PeerId`] that other peers can securely identify this system with.
-  pub fn peer_id(&self) -> PeerId {
-    self.state().peer_id
+  /// Returns the [`AgentId`] that other peers can securely identify this system with.
+  pub fn agent_id(&self) -> AgentId {
+    self.state().agent_id
   }
 
   pub(crate) fn commander_mut(&mut self) -> &mut NetCommander {
@@ -103,29 +108,33 @@ impl System {
     self.commander_mut().shutdown().await
   }
 
-  /// Associate the given `peer_id` with an `address`. This `address`, or another one that was added,
-  /// will be use to send requests to `peer_id`.
-  pub async fn add_peer_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
+  /// Associate the given `agent_id` with an `address`. This `address`, or another one that was added,
+  /// will be use to send requests to `agent_id`.
+  pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> ActorResult<()> {
     self
       .commander_mut()
-      .add_addresses(peer_id, OneOrMany::One(address))
+      .add_addresses(agent_id, OneOrMany::One(address))
       .await
   }
 
-  /// Associate the given `peer_id` with multiple `addresses`. One of the `addresses`, or another one that was added,
-  /// will be use to send requests to `peer_id`.
-  pub async fn add_peer_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
+  /// Associate the given `agent_id` with multiple `addresses`. One of the `addresses`, or another one that was added,
+  /// will be use to send requests to `agent_id`.
+  pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
     self
       .commander_mut()
-      .add_addresses(peer_id, OneOrMany::Many(addresses))
+      .add_addresses(agent_id, OneOrMany::Many(addresses))
       .await
   }
 
-  /// Sends a synchronous request to an agent, identified through `peer_id`, and returns its response.
+  /// Sends a synchronous request to an agent, identified through `agent_id`, and returns its response.
   ///
-  /// An address needs to be available for the given `peer_id`, which can be added
-  /// with [`System::add_peer_address`] or [`System::add_peer_addresses`].
-  pub async fn send_request<REQ: ActorRequest>(&mut self, peer_id: PeerId, request: REQ) -> ActorResult<REQ::Response> {
+  /// An address needs to be available for the given `agent_id`, which can be added
+  /// with [`System::add_agent_address`] or [`System::add_agent_addresses`].
+  pub async fn send_request<REQ: ActorRequest>(
+    &mut self,
+    agent_id: AgentId,
+    request: REQ,
+  ) -> ActorResult<REQ::Response> {
     let endpoint: Endpoint = REQ::endpoint();
     let request_mode: RequestMode = REQ::request_mode();
 
@@ -139,7 +148,7 @@ impl System {
 
     let request: RequestMessage = RequestMessage::new(endpoint, request_mode, request_vec);
 
-    let response: ResponseMessage = self.commander_mut().send_request(peer_id, request).await?;
+    let response: ResponseMessage = self.commander_mut().send_request(agent_id, request).await?;
 
     let response: Vec<u8> =
       serde_json::from_slice::<Result<Vec<u8>, RemoteSendError>>(&response.0).map_err(|err| {
@@ -214,9 +223,6 @@ impl System {
     });
   }
 }
-
-/// A map from an endpoint to the actor that handles its requests.
-pub(crate) type ActorMap = HashMap<Endpoint, Box<dyn AbstractActor>>;
 
 pub(crate) async fn send_response<T: serde::Serialize>(
   commander: &mut NetCommander,

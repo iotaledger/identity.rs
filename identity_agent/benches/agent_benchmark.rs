@@ -6,13 +6,13 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 
+use identity_agent::actor::AgentId;
 use identity_agent::didcomm::DidCommPlaintextMessage;
 use identity_agent::didcomm::DidCommSystem;
 use identity_agent::didcomm::DidCommSystemBuilder;
 use identity_agent::didcomm::DidCommSystemIdentity;
 use identity_agent::didcomm::ThreadId;
 use identity_agent::Multiaddr;
-use identity_agent::PeerId;
 
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -22,7 +22,7 @@ use test_actor::TestActor;
 
 use crate::test_actor::PresentationOffer;
 
-async fn setup() -> (DidCommSystem, PeerId, DidCommSystem) {
+async fn setup() -> (DidCommSystem, AgentId, DidCommSystem) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
   let mut builder = DidCommSystemBuilder::new().identity(DidCommSystemIdentity {
     document: IotaDocument::new(&KeyPair::new(KeyType::Ed25519).unwrap()).unwrap(),
@@ -33,7 +33,7 @@ async fn setup() -> (DidCommSystem, PeerId, DidCommSystem) {
   let mut receiver: DidCommSystem = builder.build().await.unwrap();
 
   let addr = receiver.start_listening(addr).await.unwrap();
-  let receiver_peer_id = receiver.peer_id();
+  let receiver_agent_id = receiver.agent_id();
 
   let mut sender: DidCommSystem = DidCommSystemBuilder::new()
     .identity(DidCommSystemIdentity {
@@ -43,9 +43,9 @@ async fn setup() -> (DidCommSystem, PeerId, DidCommSystem) {
     .await
     .unwrap();
 
-  sender.add_peer_address(receiver_peer_id, addr).await.unwrap();
+  sender.add_agent_address(receiver_agent_id, addr).await.unwrap();
 
-  (receiver, receiver_peer_id, sender)
+  (receiver, receiver_agent_id, sender)
 }
 
 fn bench_send_didcomm_messages(c: &mut Criterion) {
@@ -56,7 +56,7 @@ fn bench_send_didcomm_messages(c: &mut Criterion) {
     .build()
     .unwrap();
 
-  let (receiver, receiver_peer_id, sender) = runtime.block_on(setup());
+  let (receiver, receiver_agent_id, sender) = runtime.block_on(setup());
 
   let mut group = c.benchmark_group("send didcomm messages");
 
@@ -69,7 +69,7 @@ fn bench_send_didcomm_messages(c: &mut Criterion) {
 
         async move {
           sender_clone
-            .send_message(receiver_peer_id, &thread_id, PresentationRequest::default())
+            .send_message(receiver_agent_id, &thread_id, PresentationRequest::default())
             .await
             .unwrap();
 
@@ -131,7 +131,7 @@ mod test_actor {
     ) {
       system
         .send_message(
-          request.peer_id,
+          request.agent_id,
           request.input.thread_id(),
           PresentationOffer(request.input.body().0 as u16),
         )

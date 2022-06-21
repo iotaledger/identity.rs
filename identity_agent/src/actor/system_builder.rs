@@ -29,13 +29,13 @@ use libp2p::Swarm;
 
 use crate::actor::AbstractActor;
 use crate::actor::Actor;
-use crate::actor::ActorConfig;
 use crate::actor::ActorMap;
 use crate::actor::ActorRequest;
 use crate::actor::ActorWrapper;
 use crate::actor::Error;
 use crate::actor::Result as ActorResult;
 use crate::actor::System;
+use crate::actor::SystemConfig;
 use crate::actor::SystemState;
 use crate::p2p::AgentProtocol;
 use crate::p2p::AgentRequestResponseCodec;
@@ -46,7 +46,7 @@ use crate::p2p::NetCommander;
 /// A builder for [`System`]s to customize its configuration and attach actors.
 pub struct SystemBuilder {
   pub(crate) keypair: Option<Keypair>,
-  pub(crate) config: ActorConfig,
+  pub(crate) config: SystemConfig,
   pub(crate) actors: ActorMap,
 }
 
@@ -55,12 +55,12 @@ impl SystemBuilder {
   pub fn new() -> SystemBuilder {
     Self {
       keypair: None,
-      config: ActorConfig::default(),
+      config: SystemConfig::default(),
       actors: HashMap::new(),
     }
   }
 
-  /// Set the keypair from which the `PeerId` of the system is derived.
+  /// Set the keypair from which the `AgentId` of the system is derived.
   ///
   /// If unset, a new keypair is generated.
   #[must_use]
@@ -152,13 +152,13 @@ impl SystemBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
-    let (noise_keypair, peer_id) = {
+    let (noise_keypair, agent_id) = {
       let keypair: Keypair = self.keypair.unwrap_or_else(Keypair::generate_ed25519);
       let noise_keypair = NoiseKeypair::<X25519Spec>::new()
         .into_authentic(&keypair)
         .expect("ed25519 keypair should be convertible into x25519");
-      let peer_id = keypair.public().to_peer_id();
-      (noise_keypair, peer_id)
+      let agent_id = keypair.public().to_peer_id();
+      (noise_keypair, agent_id)
     };
 
     let swarm: Swarm<RequestResponse<AgentRequestResponseCodec>> = {
@@ -177,7 +177,7 @@ impl SystemBuilder {
         .multiplex(YamuxConfig::default())
         .boxed();
 
-      SwarmBuilder::new(transport, behaviour, peer_id)
+      SwarmBuilder::new(transport, behaviour, agent_id)
         .executor(executor)
         .build()
     };
@@ -188,7 +188,7 @@ impl SystemBuilder {
     let net_commander = NetCommander::new(cmd_sender);
 
     let system_state: SystemState = SystemState {
-      peer_id,
+      agent_id,
       config: self.config,
       actors: self.actors,
     };

@@ -8,10 +8,10 @@ use dashmap::DashMap;
 use futures::channel::oneshot;
 use identity_iota_core::document::IotaDocument;
 use libp2p::Multiaddr;
-use libp2p::PeerId;
 use serde::de::DeserializeOwned;
 
 use crate::actor::ActorRequest;
+use crate::actor::AgentId;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::ErrorLocation;
@@ -99,9 +99,9 @@ impl DidCommSystem {
     self.system.start_listening(address).await
   }
 
-  /// See [`System::peer_id`].
-  pub fn peer_id(&self) -> PeerId {
-    self.system.peer_id()
+  /// See [`System::agent_id`].
+  pub fn agent_id(&self) -> AgentId {
+    self.system.agent_id()
   }
 
   /// See [`System::addresses`].
@@ -109,14 +109,14 @@ impl DidCommSystem {
     self.system.addresses().await
   }
 
-  /// See [`System::add_peer_address`].
-  pub async fn add_peer_address(&mut self, peer_id: PeerId, address: Multiaddr) -> ActorResult<()> {
-    self.system.add_peer_address(peer_id, address).await
+  /// See [`System::add_agent_address`].
+  pub async fn add_agent_address(&mut self, agent_id: AgentId, address: Multiaddr) -> ActorResult<()> {
+    self.system.add_agent_address(agent_id, address).await
   }
 
-  /// See [`System::add_peer_addresses`].
-  pub async fn add_peer_addresses(&mut self, peer_id: PeerId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
-    self.system.add_peer_addresses(peer_id, addresses).await
+  /// See [`System::add_agent_addresses`].
+  pub async fn add_agent_addresses(&mut self, agent_id: AgentId, addresses: Vec<Multiaddr>) -> ActorResult<()> {
+    self.system.add_agent_addresses(agent_id, addresses).await
   }
 
   /// See [`System::shutdown`].
@@ -125,15 +125,19 @@ impl DidCommSystem {
   }
 
   /// See [`System::send_request`].
-  pub async fn send_request<REQ: ActorRequest>(&mut self, peer_id: PeerId, request: REQ) -> ActorResult<REQ::Response> {
-    self.system.send_request(peer_id, request).await
+  pub async fn send_request<REQ: ActorRequest>(
+    &mut self,
+    agent_id: AgentId,
+    request: REQ,
+  ) -> ActorResult<REQ::Response> {
+    self.system.send_request(agent_id, request).await
   }
 
   /// Sends an asynchronous message to a peer. To receive a possible response, use [`DidCommSystem::await_message`],
   /// with the same `thread_id`.
   pub async fn send_message<REQ: DidCommRequest>(
     &mut self,
-    peer_id: PeerId,
+    agent_id: AgentId,
     thread_id: &ThreadId,
     message: REQ,
   ) -> ActorResult<()> {
@@ -153,7 +157,7 @@ impl DidCommSystem {
     log::debug!("sending `{}` message", endpoint);
     let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
-    let response = self.commander_mut().send_request(peer_id, message).await?;
+    let response = self.commander_mut().send_request(agent_id, message).await?;
 
     serde_json::from_slice::<Result<(), RemoteSendError>>(&response.0).map_err(|err| {
       Error::DeserializationFailure {

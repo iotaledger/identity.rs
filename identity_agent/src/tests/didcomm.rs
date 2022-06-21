@@ -6,10 +6,9 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 
-use libp2p::PeerId;
-
 use crate::actor::Actor;
 use crate::actor::ActorRequest;
+use crate::actor::AgentId;
 use crate::actor::Endpoint;
 use crate::actor::Error;
 use crate::actor::RequestContext;
@@ -55,16 +54,16 @@ async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
     }
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
+  let (listening_actor, addrs, agent_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach(TestActor);
     builder
   })
   .await;
 
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
-  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
-  let result = sending_system.send_request(peer_id, SyncDummy(42)).await;
+  let result = sending_system.send_request(agent_id, SyncDummy(42)).await;
 
   assert_eq!(result.unwrap(), 42);
 
@@ -78,10 +77,10 @@ async fn test_didcomm_system_supports_actor_requests() -> ActorResult<()> {
 async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   try_init_logger();
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_system(|builder| builder).await;
+  let (listening_actor, addrs, agent_id) = default_listening_didcomm_system(|builder| builder).await;
 
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
-  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
   struct DidCommTestRequest(u16);
@@ -96,7 +95,7 @@ async fn test_unknown_thread_returns_error() -> ActorResult<()> {
   // which causes the remote agent to look for a potential thread that is waiting for this message,
   // but no such thread exists either, so an error is returned.
   let result = sending_system
-    .send_message(peer_id, &ThreadId::new(), DidCommTestRequest(42))
+    .send_message(agent_id, &ThreadId::new(), DidCommTestRequest(42))
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
@@ -115,16 +114,16 @@ async fn test_didcomm_presentation_holder_initiates() -> ActorResult<()> {
   let mut holder_system: DidCommSystem = default_sending_didcomm_system(|builder| builder).await;
 
   // Attach the DidCommState actor to the listening system, so it can handle PresentationOffer requests.
-  let (verifier_system, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
+  let (verifier_system, addrs, agent_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm::<DidCommPlaintextMessage<PresentationOffer>, _>(actor.clone());
     builder
   })
   .await;
 
-  holder_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  holder_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   // Holder initiates the presentation protocol.
-  presentation_holder_handler(holder_system.clone(), peer_id, None)
+  presentation_holder_handler(holder_system.clone(), agent_id, None)
     .await
     .unwrap();
 
@@ -145,17 +144,17 @@ async fn test_didcomm_presentation_verifier_initiates() -> ActorResult<()> {
   let actor = DidCommState::new();
 
   // Attach the DidCommState actor to the listening system, so it can handle PresentationRequest requests.
-  let (holder_system, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
+  let (holder_system, addrs, agent_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm::<DidCommPlaintextMessage<PresentationRequest>, _>(actor.clone());
     builder
   })
   .await;
   let mut verifier_system = default_sending_didcomm_system(|builder| builder).await;
 
-  verifier_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  verifier_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   // Verifier initiates the presentation protocol.
-  presentation_verifier_handler(verifier_system.clone(), peer_id, None)
+  presentation_verifier_handler(verifier_system.clone(), agent_id, None)
     .await
     .unwrap();
 
@@ -172,12 +171,12 @@ async fn test_sending_to_unconnected_peer_returns_error() -> ActorResult<()> {
   let mut sending_system = default_sending_didcomm_system(|builder| builder).await;
 
   // Send a request without adding an address first.
-  let result = sending_system.send_request(PeerId::random(), IdentityList).await;
+  let result = sending_system.send_request(AgentId::random(), IdentityList).await;
 
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
 
   let result = sending_system
-    .send_message(PeerId::random(), &ThreadId::new(), PresentationOffer::default())
+    .send_message(AgentId::random(), &ThreadId::new(), PresentationOffer::default())
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
@@ -199,7 +198,7 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
     async fn handle(&self, _: DidCommSystem, _: RequestContext<DidCommPlaintextMessage<PresentationOffer>>) {}
   }
 
-  let (listening_actor, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
+  let (listening_actor, addrs, agent_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm(MyActor);
     builder
   })
@@ -208,11 +207,11 @@ async fn test_await_message_returns_timeout_error() -> ActorResult<()> {
   let mut sending_system: DidCommSystem =
     default_sending_didcomm_system(|builder| builder.timeout(Duration::from_millis(50))).await;
 
-  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   let thread_id = ThreadId::new();
   sending_system
-    .send_message(peer_id, &thread_id, PresentationOffer::default())
+    .send_message(agent_id, &thread_id, PresentationOffer::default())
     .await
     .unwrap();
 
@@ -254,17 +253,17 @@ async fn test_handler_finishes_execution_after_shutdown() -> ActorResult<()> {
 
   let test_actor = TestActor::new();
 
-  let (listening_system, addrs, peer_id) = default_listening_didcomm_system(|mut builder| {
+  let (listening_system, addrs, agent_id) = default_listening_didcomm_system(|mut builder| {
     builder.attach_didcomm(test_actor.clone());
     builder
   })
   .await;
 
   let mut sending_system: DidCommSystem = default_sending_didcomm_system(|builder| builder).await;
-  sending_system.add_peer_addresses(peer_id, addrs).await.unwrap();
+  sending_system.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   sending_system
-    .send_message(peer_id, &ThreadId::new(), PresentationOffer::default())
+    .send_message(agent_id, &ThreadId::new(), PresentationOffer::default())
     .await
     .unwrap();
 
