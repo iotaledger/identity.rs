@@ -104,9 +104,9 @@ mod tests {
       output: Object,
     }
 
-    const TV_1_BYTES: &'static [u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
-    const TV_2_BYTES: &'static [u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
-    const TEST_VECTOR_BYTES: [&'static [u8]; 2] = [TV_1_BYTES, TV_2_BYTES];
+    const TV_1_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
+    const TV_2_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
+    const TEST_VECTOR_BYTES: [&[u8]; 2] = [TV_1_BYTES, TV_2_BYTES];
 
     for tv_bytes in TEST_VECTOR_BYTES {
       let TestVector {
