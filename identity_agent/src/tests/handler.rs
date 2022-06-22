@@ -323,7 +323,7 @@ async fn test_endpoint_type_mismatch_results_in_serialization_errors() -> AgentR
   ));
 
   // Define a third type that has a different serialization result.
-  // We expect a deserialization error on the peer.
+  // We expect a deserialization error on the remote agent.
   #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
   struct CustomRequest3(String);
 

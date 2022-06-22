@@ -165,7 +165,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> AgentResult<()> {
 }
 
 #[tokio::test]
-async fn test_sending_to_unconnected_peer_returns_error() -> AgentResult<()> {
+async fn test_sending_to_an_unconnected_agent_returns_error() -> AgentResult<()> {
   try_init_logger();
 
   let mut sending_agent = default_sending_didcomm_agent(|builder| builder).await;

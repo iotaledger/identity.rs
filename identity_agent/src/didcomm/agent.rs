@@ -134,7 +134,7 @@ impl DidCommAgent {
     self.agent.send_request(agent_id, request).await
   }
 
-  /// Sends an asynchronous message to a peer. To receive a possible response, use [`DidCommAgent::await_message`],
+  /// Sends an asynchronous message to an agent. To receive a possible response, use [`DidCommAgent::await_message`],
   /// with the same `thread_id`.
   pub async fn send_message<REQ: DidCommRequest>(
     &mut self,
@@ -234,7 +234,7 @@ impl DidCommAgent {
 
 /// Invoked when no handler was found that can handle the received request.
 /// Attempts to find a thread waiting for the received message,
-/// otherwise returns an error to the peer.
+/// otherwise returns an error to the calling agent.
 async fn handler_not_found(handler: &mut DidCommAgent, request: InboundRequest) {
   let result: Result<(), RemoteSendError> =
     match serde_json::from_slice::<DidCommPlaintextMessage<serde_json::Value>>(&request.input) {

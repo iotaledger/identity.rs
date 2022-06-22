@@ -104,7 +104,7 @@ where
           )
           .await;
 
-          // Abort because there is no request to handle and/or the peer is unresponsive.
+          // Abort because there is no request to handle and/or the calling agent is unresponsive.
           return;
         }
       };

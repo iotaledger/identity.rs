@@ -31,7 +31,7 @@ impl NetCommander {
     NetCommander { command_sender }
   }
 
-  /// Send the `request` to `peer` and returns the response.
+  /// Send the `request` to `peer_id` and returns the response.
   pub(crate) async fn send_request(
     &mut self,
     peer_id: PeerId,

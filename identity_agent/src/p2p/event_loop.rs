@@ -54,8 +54,8 @@ impl EventLoop {
     }
   }
 
-  /// Block on this event loop until it terminates, simultaneously handling incoming events from peers
-  /// as well as request from the corresponding `NetCommander`.
+  /// Block on this event loop until it terminates, simultaneously handling incoming events from other agents
+  /// as well as request from the corresponding `NetCommander`s.
   pub(crate) async fn run<F>(mut self, event_handler: F)
   where
     F: Fn(InboundRequest),
