@@ -143,5 +143,8 @@ pub mod prelude {
 pub mod agent {
   //! Identity agent types
 
-  pub use identity_agent::*;
+  pub use identity_agent::agent::*;
+  pub use identity_agent::didcomm::*;
+  pub use identity_agent::IdentityKeypair;
+  pub use identity_agent::Multiaddr;
 }

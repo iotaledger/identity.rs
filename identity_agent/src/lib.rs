@@ -16,4 +16,5 @@ mod p2p;
 #[cfg(test)]
 mod tests;
 
+pub use libp2p::identity::Keypair as IdentityKeypair;
 pub use libp2p::Multiaddr;
