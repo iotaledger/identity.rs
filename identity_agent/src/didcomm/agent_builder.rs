@@ -58,7 +58,7 @@ impl DidCommAgentBuilder {
     self
   }
 
-  /// Sets the timeout for [`DidCommAgent::await_message`] and the underlying libp2p
+  /// Sets the timeout for [`DidCommAgent::await_didcomm_request`] and the underlying libp2p
   /// [`RequestResponse`](libp2p::request_response::RequestResponse) protocol.
   #[must_use]
   pub fn timeout(mut self, timeout: Duration) -> Self {

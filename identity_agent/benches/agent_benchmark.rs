@@ -69,11 +69,12 @@ fn bench_send_didcomm_messages(c: &mut Criterion) {
 
         async move {
           sender_clone
-            .send_message(receiver_agent_id, &thread_id, PresentationRequest::default())
+            .send_didcomm_request(receiver_agent_id, &thread_id, PresentationRequest::default())
             .await
             .unwrap();
 
-          let _: DidCommPlaintextMessage<PresentationOffer> = sender_clone.await_message(&thread_id).await.unwrap();
+          let _: DidCommPlaintextMessage<PresentationOffer> =
+            sender_clone.await_didcomm_request(&thread_id).await.unwrap();
         }
       });
     });
@@ -130,7 +131,7 @@ mod test_handler {
       request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>,
     ) {
       agent
-        .send_message(
+        .send_didcomm_request(
           request.agent_id,
           request.input.thread_id(),
           PresentationOffer(request.input.body().0 as u16),

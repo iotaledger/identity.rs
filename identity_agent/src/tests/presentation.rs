@@ -70,10 +70,10 @@ pub(crate) async fn presentation_holder_handler(
       log::debug!("holder: sending presentation offer");
       let thread_id = ThreadId::new();
       agent
-        .send_message(agent_id, &thread_id, PresentationOffer::default())
+        .send_didcomm_request(agent_id, &thread_id, PresentationOffer::default())
         .await?;
 
-      let req = agent.await_message(&thread_id).await;
+      let req = agent.await_didcomm_request(&thread_id).await;
       log::debug!("holder: received presentation request");
 
       req?
@@ -83,9 +83,11 @@ pub(crate) async fn presentation_holder_handler(
   let thread_id = request.thread_id();
 
   log::debug!("holder: sending presentation");
-  agent.send_message(agent_id, thread_id, Presentation::default()).await?;
+  agent
+    .send_didcomm_request(agent_id, thread_id, Presentation::default())
+    .await?;
 
-  let _result: DidCommPlaintextMessage<PresentationResult> = agent.await_message(thread_id).await?;
+  let _result: DidCommPlaintextMessage<PresentationResult> = agent.await_didcomm_request(thread_id).await?;
   log::debug!("holder: received presentation result");
 
   Ok(())
@@ -108,16 +110,16 @@ pub(crate) async fn presentation_verifier_handler(
 
   log::debug!("verifier: sending request");
   agent
-    .send_message(agent_id, &thread_id, PresentationRequest::default())
+    .send_didcomm_request(agent_id, &thread_id, PresentationRequest::default())
     .await?;
 
   log::debug!("verifier: awaiting presentation");
-  let presentation: DidCommPlaintextMessage<Presentation> = agent.await_message(&thread_id).await?;
+  let presentation: DidCommPlaintextMessage<Presentation> = agent.await_didcomm_request(&thread_id).await?;
   log::debug!("verifier: received presentation: {:?}", presentation);
 
   log::debug!("verifier: sending presentation result");
   agent
-    .send_message(agent_id, &thread_id, PresentationResult::default())
+    .send_didcomm_request(agent_id, &thread_id, PresentationResult::default())
     .await?;
   Ok(())
 }

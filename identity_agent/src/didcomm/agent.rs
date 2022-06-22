@@ -134,9 +134,10 @@ impl DidCommAgent {
     self.agent.send_request(agent_id, request).await
   }
 
-  /// Sends an asynchronous message to an agent. To receive a possible response, use [`DidCommAgent::await_message`],
-  /// with the same `thread_id`.
-  pub async fn send_message<REQ: DidCommRequest>(
+  /// Sends an asynchronous DIDComm request to an agent.
+  ///
+  /// To receive a possible response, call [`DidCommAgent::await_didcomm_request`] with the same `thread_id`.
+  pub async fn send_didcomm_request<REQ: DidCommRequest>(
     &mut self,
     agent_id: AgentId,
     thread_id: &ThreadId,
@@ -155,7 +156,8 @@ impl DidCommAgent {
       error_message: err.to_string(),
     })?;
 
-    log::debug!("sending `{}` message", endpoint);
+    log::debug!("sending DIDComm request on endpoint `{endpoint}`");
+
     let message: RequestMessage = RequestMessage::new(endpoint, request_mode, dcpm_vec);
 
     let response = self.commander_mut().send_request(agent_id, message).await?;
@@ -172,11 +174,11 @@ impl DidCommAgent {
   }
 
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
-  /// [`DidCommAgent::send_message`] was called on the same `thread_id` previously.
+  /// [`DidCommAgent::send_didcomm_request`] was called on the same `thread_id` previously.
   ///
   /// This will return a timeout error if no message is received within the duration passed
   /// to [`DidCommAgentBuilder::timeout`](crate::didcomm::DidCommAgentBuilder::timeout).
-  pub async fn await_message<T: DeserializeOwned + Send + 'static>(
+  pub async fn await_didcomm_request<T: DeserializeOwned + Send + 'static>(
     &mut self,
     thread_id: &ThreadId,
   ) -> AgentResult<DidCommPlaintextMessage<T>> {
@@ -208,9 +210,9 @@ impl DidCommAgent {
     let (sender, receiver) = oneshot::channel();
 
     // The logic is that for every received message on a thread,
-    // there must be a preceding send_message on that same thread.
+    // there must be a preceding `send_didcomm_request` on that same thread.
     // Note that on the receiving handler, the very first message of a protocol
-    // is not awaited through await_message, so it does not need to follow these rules.
+    // is not awaited through `await_didcomm_request`, so it does not need to follow these rules.
     self.state.threads_sender.insert(thread_id.to_owned(), sender);
     self.state.threads_receiver.insert(thread_id.to_owned(), receiver);
   }
@@ -254,7 +256,7 @@ async fn handler_not_found(handler: &mut DidCommAgent, request: InboundRequest) 
             };
 
             if sender.1.send(thread_request).is_err() {
-              log::warn!("unable to send request for thread id `{thread_id}`");
+              log::warn!("unable to send request with thread id `{thread_id}`");
             }
 
             Ok(())

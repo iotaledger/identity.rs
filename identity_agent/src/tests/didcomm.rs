@@ -95,7 +95,7 @@ async fn test_unknown_thread_returns_error() -> AgentResult<()> {
   // which causes the remote agent to look for a potential thread that is waiting for this message,
   // but no such thread exists either, so an error is returned.
   let result = sending_agent
-    .send_message(agent_id, &ThreadId::new(), DidCommTestRequest(42))
+    .send_didcomm_request(agent_id, &ThreadId::new(), DidCommTestRequest(42))
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::UnexpectedRequest(_)));
@@ -176,7 +176,7 @@ async fn test_sending_to_an_unconnected_agent_returns_error() -> AgentResult<()>
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
 
   let result = sending_agent
-    .send_message(AgentId::random(), &ThreadId::new(), PresentationOffer::default())
+    .send_didcomm_request(AgentId::random(), &ThreadId::new(), PresentationOffer::default())
     .await;
 
   assert!(matches!(result.unwrap_err(), Error::OutboundFailure(_)));
@@ -187,7 +187,7 @@ async fn test_sending_to_an_unconnected_agent_returns_error() -> AgentResult<()>
 }
 
 #[tokio::test]
-async fn test_await_message_returns_timeout_error() -> AgentResult<()> {
+async fn test_await_didcomm_request_returns_timeout_error() -> AgentResult<()> {
   try_init_logger();
 
   #[derive(Debug, Clone)]
@@ -211,12 +211,12 @@ async fn test_await_message_returns_timeout_error() -> AgentResult<()> {
 
   let thread_id = ThreadId::new();
   sending_agent
-    .send_message(agent_id, &thread_id, PresentationOffer::default())
+    .send_didcomm_request(agent_id, &thread_id, PresentationOffer::default())
     .await
     .unwrap();
 
   // We attempt to await a message, but the remote agent never sends one, so we expect a timeout.
-  let result = sending_agent.await_message::<()>(&thread_id).await;
+  let result = sending_agent.await_didcomm_request::<()>(&thread_id).await;
 
   assert!(matches!(result.unwrap_err(), Error::AwaitTimeout(_)));
 
@@ -263,7 +263,7 @@ async fn test_handler_finishes_execution_after_shutdown() -> AgentResult<()> {
   sending_agent.add_agent_addresses(agent_id, addrs).await.unwrap();
 
   sending_agent
-    .send_message(agent_id, &ThreadId::new(), PresentationOffer::default())
+    .send_didcomm_request(agent_id, &ThreadId::new(), PresentationOffer::default())
     .await
     .unwrap();
 

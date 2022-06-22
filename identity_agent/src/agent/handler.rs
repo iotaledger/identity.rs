@@ -89,7 +89,7 @@ where
 #[inline(always)]
 fn serialize_response<REQ: HandlerRequest>(input: &REQ::Response) -> Result<Vec<u8>, RemoteSendError> {
   log::debug!(
-    "attempt serialization into {:?}",
+    "attempt response serialization into {:?}",
     std::any::type_name::<REQ::Response>()
   );
 

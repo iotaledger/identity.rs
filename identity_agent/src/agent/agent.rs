@@ -101,8 +101,8 @@ impl Agent {
     // the event loop will break as a result. However, if copies exist, such as in running handlers,
     // this function will return while the event loop keeps running. Ideally we could then join on the background task
     // to wait for all handlers to finish gracefully. This was not implemented that way, because of a previous
-    // dependency on wasm_bindgen_futures::spawn_local which does not return a JoinHandle. It would be an option,
-    // now that we're using tokio exclusively.
+    // dependency on wasm_bindgen_futures::spawn_local which does not return a JoinHandle. It would be an option to
+    // change it, now that we're using tokio exclusively.
     // The current implementation uses a non-graceful exit, which breaks the event loop immediately
     // and returns an error through all open channels that require a result.
     self.commander_mut().shutdown().await
@@ -144,7 +144,7 @@ impl Agent {
       error_message: err.to_string(),
     })?;
 
-    log::debug!("Sending `{}` message", endpoint);
+    log::debug!("sending request on endpoint `{endpoint}`");
 
     let request: RequestMessage = RequestMessage::new(endpoint, request_mode, request_vec);
 
