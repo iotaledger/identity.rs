@@ -15,6 +15,7 @@ use libp2p::core::Executor;
 use libp2p::core::Transport;
 use libp2p::dns::TokioDnsConfig;
 use libp2p::identity::Keypair;
+use libp2p::noise::AuthenticKeypair;
 use libp2p::noise::Keypair as NoiseKeypair;
 use libp2p::noise::NoiseConfig;
 use libp2p::noise::X25519Spec;
@@ -30,6 +31,7 @@ use libp2p::Swarm;
 use crate::agent::AbstractHandler;
 use crate::agent::Agent;
 use crate::agent::AgentConfig;
+use crate::agent::AgentId;
 use crate::agent::AgentState;
 use crate::agent::Error;
 use crate::agent::Handler;
@@ -152,7 +154,7 @@ impl AgentBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
-    let (noise_keypair, agent_id) = {
+    let (noise_keypair, agent_id): (AuthenticKeypair<_>, AgentId) = {
       let keypair: Keypair = self.keypair.unwrap_or_else(Keypair::generate_ed25519);
       let noise_keypair = NoiseKeypair::<X25519Spec>::new()
         .into_authentic(&keypair)
@@ -171,7 +173,7 @@ impl AgentBuilder {
         config,
       );
 
-      let transport = transport
+      let transport: _ = transport
         .upgrade(upgrade::Version::V1)
         .authenticate(NoiseConfig::xx(noise_keypair).into_authenticated())
         .multiplex(YamuxConfig::default())
@@ -182,10 +184,10 @@ impl AgentBuilder {
         .build()
     };
 
-    let (cmd_sender, cmd_receiver) = mpsc::channel(10);
+    let (cmd_sender, cmd_receiver): _ = mpsc::channel(10);
 
-    let event_loop = EventLoop::new(swarm, cmd_receiver);
-    let net_commander = NetCommander::new(cmd_sender);
+    let event_loop: EventLoop = EventLoop::new(swarm, cmd_receiver);
+    let net_commander: NetCommander = NetCommander::new(cmd_sender);
 
     let agent_state: AgentState = AgentState {
       agent_id,
