@@ -4,7 +4,7 @@ version = "0.6.0"
 authors = ["IOTA Stiftung"]
 edition = "2021"
 homepage = "https://www.iota.org"
-keywords = ["iota", "tangle", "identity"]
+keywords = ["iota", "tangle", "identity", "p2p", "agent"]
 license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
@@ -25,10 +25,6 @@ serde_json = { version = "1.0", default-features = false }
 thiserror = { version = "1.0", default-features = false }
 tokio = { version = "1.15", default-features = false, features = ["rt", "time"] }
 uuid = { version = "0.8", default-features = false, features = ["v4", "serde"] }
-
-[target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
-libp2p = { version = "*", features = ["wasm-bindgen", "wasm-ext", "wasm-ext-websocket"] }
-uuid = { version = "*", features = ["wasm-bindgen"] }
 
 [dev-dependencies]
 criterion = { version = "0.3", default-features = false, features = ["stable"] }
