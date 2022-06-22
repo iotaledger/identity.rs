@@ -8,7 +8,6 @@ use async_trait::async_trait;
 #[cfg(feature = "encryption")]
 use crypto::ciphers::aes::Aes256Gcm;
 #[cfg(feature = "encryption")]
-#[cfg(feature = "encryption")]
 use crypto::ciphers::aes_kw::Aes256Kw;
 #[cfg(feature = "encryption")]
 use crypto::ciphers::traits::Aead;
@@ -300,7 +299,7 @@ impl Storage for MemStore {
           memstore_encryption::concat_kdf(cek_algorithm.name(), Aes256Kw::KEY_LENGTH, &shared_secret, agreement)
             .map_err(Error::EncryptionFailure)?;
 
-        let cek: Vec<u8> = generate_content_encryption_key(*encryption_algorithm)?;
+        let cek: Vec<u8> = memstore_encryption::generate_content_encryption_key(*encryption_algorithm)?;
 
         let mut encrypted_cek: Vec<u8> = vec![0; cek.len() + Aes256Kw::BLOCK];
         let aes_kw: Aes256Kw<'_> = Aes256Kw::new(derived_secret.as_ref());
@@ -520,6 +519,13 @@ mod memstore_encryption {
 
     Ok(output)
   }
+
+  /// Generate a random content encryption key of suitable length for `encryption_algorithm`.
+  pub(crate) fn generate_content_encryption_key(encryption_algorithm: EncryptionAlgorithm) -> Result<Vec<u8>> {
+    let mut bytes: Vec<u8> = vec![0; encryption_algorithm.key_length()];
+    crypto::utils::rand::fill(bytes.as_mut()).map_err(Error::EncryptionFailure)?;
+    Ok(bytes)
+  }
 }
 
 impl Debug for MemStore {
@@ -540,14 +546,6 @@ impl Default for MemStore {
   fn default() -> Self {
     Self::new()
   }
-}
-
-/// Generate a random content encryption key of suitable length for `encryption_algorithm`.
-#[cfg(feature = "encryption")]
-fn generate_content_encryption_key(encryption_algorithm: EncryptionAlgorithm) -> Result<Vec<u8>> {
-  let mut bytes: Vec<u8> = vec![0; encryption_algorithm.key_length()];
-  crypto::utils::rand::fill(bytes.as_mut()).map_err(Error::EncryptionFailure)?;
-  Ok(bytes)
 }
 
 #[cfg(test)]

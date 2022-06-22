@@ -282,9 +282,6 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
-    #[cfg(feature = "revocation-bitmap")]
-    let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
-
     let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
@@ -292,7 +289,10 @@ impl CredentialValidator {
       .chain(signature_validation);
 
     #[cfg(feature = "revocation-bitmap")]
-    let validation_units_iter = validation_units_iter.chain(revocation_validation);
+    let validation_units_iter = {
+      let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
+      validation_units_iter.chain(revocation_validation)
+    };
 
     let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
