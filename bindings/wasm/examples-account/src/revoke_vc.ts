@@ -16,9 +16,9 @@ import {
 
 /**
  This example shows how to revoke a verifiable credential.
- The Verifiable Credential is revoked by actually removing a verification method (public key) from the DID Document of the Issuer.
- As such, the Verifiable Credential can no longer be validated.
- This would invalidate every Verifiable Credential signed with the same public key, therefore the issuer would have to sign every VC with a different key.
+ It demonstrates two methods for revocation. The first uses a revocation bitmap of type `RevocationBitmap2022`,
+ while the second method simply removes the verification method (public key) that signed the credential
+ from the DID Document of the issuer.
 
  Note that this example uses the "main" network, if you are writing code against the test network then most function
  calls will need to include information about the network, since this is not automatically inferred from the

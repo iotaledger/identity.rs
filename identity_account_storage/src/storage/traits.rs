@@ -14,8 +14,11 @@ use identity_iota_core::tangle::NetworkName;
 
 use crate::error::Result;
 use crate::identity::ChainState;
+#[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
+#[cfg(feature = "encryption")]
 use crate::types::EncryptedData;
+#[cfg(feature = "encryption")]
 use crate::types::EncryptionAlgorithm;
 use crate::types::KeyLocation;
 use crate::types::Signature;

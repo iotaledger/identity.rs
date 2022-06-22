@@ -32,10 +32,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
-
-# Enables async runtime support (Tokio).
-async = ["identity_iota_client/async"]
+default = ["account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity_account", "identity_account_storage"]
