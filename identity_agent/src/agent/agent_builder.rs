@@ -82,9 +82,9 @@ impl AgentBuilder {
   ///
   /// Calling this method with a `REQ` type whose endpoint is already attached to a handler
   /// will overwrite the previous attachment.
-  pub fn attach<REQ, ACT>(&mut self, handler: ACT)
+  pub fn attach<REQ, HND>(&mut self, handler: HND)
   where
-    ACT: Handler<REQ> + Send + Sync,
+    HND: Handler<REQ> + Send + Sync,
     REQ: HandlerRequest + Send + Sync,
     REQ::Response: Send,
   {

@@ -37,21 +37,21 @@ pub(crate) trait AbstractHandler: Debug + Send + Sync + 'static {
 /// A wrapper around synchronous handler implementations that is used for
 /// type erasure together with [`AbstractHandler`].
 #[derive(Debug)]
-pub(crate) struct HandlerWrapper<ACT, REQ>
+pub(crate) struct HandlerWrapper<HND, REQ>
 where
   REQ: HandlerRequest + Send + Sync,
-  ACT: Handler<REQ> + Send + Sync,
+  HND: Handler<REQ> + Send + Sync,
 {
-  handler: ACT,
+  handler: HND,
   _phantom_req: PhantomData<REQ>,
 }
 
-impl<ACT, REQ> HandlerWrapper<ACT, REQ>
+impl<HND, REQ> HandlerWrapper<HND, REQ>
 where
   REQ: HandlerRequest + Send + Sync,
-  ACT: Handler<REQ> + Send + Sync,
+  HND: Handler<REQ> + Send + Sync,
 {
-  pub(crate) fn new(handler: ACT) -> Self {
+  pub(crate) fn new(handler: HND) -> Self {
     Self {
       handler,
       _phantom_req: PhantomData,
@@ -59,11 +59,11 @@ where
   }
 }
 
-impl<ACT, REQ> AbstractHandler for HandlerWrapper<ACT, REQ>
+impl<HND, REQ> AbstractHandler for HandlerWrapper<HND, REQ>
 where
   REQ: HandlerRequest + Send + Sync,
   REQ::Response: Send,
-  ACT: Handler<REQ> + Send + Sync,
+  HND: Handler<REQ> + Send + Sync,
 {
   fn handle(&self, request: RequestContext<Vec<u8>>) -> BoxFuture<'_, Result<Vec<u8>, RemoteSendError>> {
     let future = async move {

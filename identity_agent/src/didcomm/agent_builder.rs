@@ -79,9 +79,9 @@ impl DidCommAgentBuilder {
   ///
   /// Calling this method with a `REQ` type whose endpoint is already attached to a handler
   /// will overwrite the previous attachment.
-  pub fn attach_didcomm<REQ, ACT>(&mut self, handler: ACT)
+  pub fn attach_didcomm<REQ, HND>(&mut self, handler: HND)
   where
-    ACT: DidCommHandler<REQ> + Send + Sync,
+    HND: DidCommHandler<REQ> + Send + Sync,
     REQ: DidCommRequest + Send + Sync,
   {
     self.didcomm_handlers.insert(
@@ -91,9 +91,9 @@ impl DidCommAgentBuilder {
   }
 
   /// See [`AgentBuilder::attach`].
-  pub fn attach<REQ, ACT>(&mut self, handler: ACT)
+  pub fn attach<REQ, HND>(&mut self, handler: HND)
   where
-    ACT: Handler<REQ> + Send + Sync,
+    HND: Handler<REQ> + Send + Sync,
     REQ: HandlerRequest + Send + Sync,
     REQ::Response: Send,
   {

@@ -42,21 +42,21 @@ pub(crate) trait AbstractDidCommHandler: Debug + Send + Sync + 'static {
 /// A wrapper around asynchronous handler implementations that is used for
 /// type erasure together with [`AbstractAsyncHandler`].
 #[derive(Debug)]
-pub(crate) struct DidCommHandlerWrapper<ACT, REQ>
+pub(crate) struct DidCommHandlerWrapper<HND, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
-  ACT: DidCommHandler<REQ> + Send + Sync,
+  HND: DidCommHandler<REQ> + Send + Sync,
 {
-  handler: ACT,
+  handler: HND,
   _phantom_req: PhantomData<REQ>,
 }
 
-impl<ACT, REQ> DidCommHandlerWrapper<ACT, REQ>
+impl<HND, REQ> DidCommHandlerWrapper<HND, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
-  ACT: DidCommHandler<REQ> + Send + Sync,
+  HND: DidCommHandler<REQ> + Send + Sync,
 {
-  pub(crate) fn new(handler: ACT) -> Self {
+  pub(crate) fn new(handler: HND) -> Self {
     Self {
       handler,
       _phantom_req: PhantomData,
@@ -64,10 +64,10 @@ where
   }
 }
 
-impl<ACT, REQ> AbstractDidCommHandler for DidCommHandlerWrapper<ACT, REQ>
+impl<HND, REQ> AbstractDidCommHandler for DidCommHandlerWrapper<HND, REQ>
 where
   REQ: DidCommRequest + Send + Sync,
-  ACT: DidCommHandler<REQ> + Send + Sync,
+  HND: DidCommHandler<REQ> + Send + Sync,
 {
   fn handle(&self, mut agent: DidCommAgent, request: InboundRequest) -> BoxFuture<'_, ()> {
     let future: _ = async move {
