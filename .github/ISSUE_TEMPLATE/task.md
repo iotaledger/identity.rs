@@ -14,10 +14,10 @@ Describe the task, this may be scoped beyond a single PR.
 Describe the motivation for the feature to be developed.
 
 ## Resources
-Link to any resources relevant for the task such as Issues, PRs, reference implementations, or specifications.
+Link to any resources relevant for the task such as issues, PRs, reference implementations, or specifications.
 
 ## To-do list
-Create a task-specific to-do list . Please link PRs that match the To-do list item behind the item after it has been submitted.
+Create a task-specific to-do list. Please link PRs that match the TODO list item behind the item after it has been submitted.
 
 - [ ] Item one
 - [ ] Item two
