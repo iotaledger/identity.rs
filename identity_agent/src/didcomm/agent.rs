@@ -60,10 +60,10 @@ impl DidCommAgentState {
   }
 }
 
-/// An agent can be used to send requests to other, remote agents, and fowards incoming requests
-/// to attached handlers.
+/// A [`DidCommAgent`] is an extension of an [`Agent`] with support for sending and awaiting [`DidCommRequest`]s.
 ///
-/// An agent is a frontend for an event loop running in the background, which invokes
+/// An agent can be used to send requests to other, remote agents, and fowards incoming requests
+/// to attached handlers. It is a frontend for an event loop running in the background, which invokes
 /// user-attached handlers. Agents can be cloned without cloning the event loop, and doing so
 /// is a cheap operation.
 ///
