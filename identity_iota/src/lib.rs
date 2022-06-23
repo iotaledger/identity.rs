@@ -139,3 +139,13 @@ pub mod prelude {
   pub use identity_iota_client::Result;
   pub use identity_iota_core::document::IotaDocument;
 }
+
+#[cfg(feature = "unstable-agent")]
+pub mod agent {
+  //! Identity agent types
+
+  pub use identity_agent::agent::*;
+  pub use identity_agent::didcomm::*;
+  pub use identity_agent::IdentityKeypair;
+  pub use identity_agent::Multiaddr;
+}
