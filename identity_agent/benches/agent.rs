@@ -3,7 +3,6 @@
 
 use criterion::criterion_group;
 use criterion::criterion_main;
-use criterion::BenchmarkId;
 use criterion::Criterion;
 use identity_agent::agent::Agent;
 use identity_agent::agent::AgentBuilder;
@@ -32,9 +31,7 @@ async fn setup() -> (Agent, AgentId, Agent) {
   (receiver, receiver_agent_id, sender)
 }
 
-fn bench_create_remote_account(c: &mut Criterion) {
-  static ITERATIONS: &[usize] = &[100, 10_000, 100_000];
-
+fn bench_remote_account(c: &mut Criterion) {
   let runtime = tokio::runtime::Builder::new_multi_thread()
     .enable_all()
     .build()
@@ -42,23 +39,21 @@ fn bench_create_remote_account(c: &mut Criterion) {
 
   let (receiver, receiver_agent_id, sender) = runtime.block_on(setup());
 
-  let mut group = c.benchmark_group("create remote account");
+  let mut group = c.benchmark_group("remote_account");
 
-  for size in ITERATIONS.iter() {
-    group.bench_function(BenchmarkId::from_parameter(size), |bencher| {
-      bencher.to_async(&runtime).iter(|| {
-        let mut sender_clone: Agent = sender.clone();
+  group.bench_function("IdentityCreate", |bencher| {
+    bencher.to_async(&runtime).iter(|| {
+      let mut sender_clone: Agent = sender.clone();
 
-        async move {
-          sender_clone
-            .send_request(receiver_agent_id, IdentityCreate::default())
-            .await
-            .unwrap()
-            .unwrap();
-        }
-      });
+      async move {
+        sender_clone
+          .send_request(receiver_agent_id, IdentityCreate::default())
+          .await
+          .unwrap()
+          .unwrap();
+      }
     });
-  }
+  });
 
   group.finish();
 
@@ -68,7 +63,7 @@ fn bench_create_remote_account(c: &mut Criterion) {
   });
 }
 
-criterion_group!(benches, bench_create_remote_account);
+criterion_group!(benches, bench_remote_account);
 
 criterion_main!(benches);
 

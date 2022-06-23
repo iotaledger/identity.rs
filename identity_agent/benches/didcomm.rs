@@ -3,7 +3,6 @@
 
 use criterion::criterion_group;
 use criterion::criterion_main;
-use criterion::BenchmarkId;
 use criterion::Criterion;
 
 use identity_agent::agent::AgentId;
@@ -17,10 +16,9 @@ use identity_agent::Multiaddr;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_iota_core::document::IotaDocument;
+use test_handler::PresentationOffer;
 use test_handler::PresentationRequest;
 use test_handler::TestHandler;
-
-use crate::test_handler::PresentationOffer;
 
 async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
   let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
@@ -48,9 +46,7 @@ async fn setup() -> (DidCommAgent, AgentId, DidCommAgent) {
   (receiver, receiver_agent_id, sender)
 }
 
-fn bench_send_didcomm_messages(c: &mut Criterion) {
-  static ITERATIONS: &[usize] = &[100, 10_000, 100_000];
-
+fn bench_didcomm_requests(c: &mut Criterion) {
   let runtime = tokio::runtime::Builder::new_multi_thread()
     .enable_all()
     .build()
@@ -58,27 +54,25 @@ fn bench_send_didcomm_messages(c: &mut Criterion) {
 
   let (receiver, receiver_agent_id, sender) = runtime.block_on(setup());
 
-  let mut group = c.benchmark_group("send didcomm messages");
+  let mut group = c.benchmark_group("didcomm_requests");
 
-  for size in ITERATIONS.iter() {
-    group.bench_function(BenchmarkId::from_parameter(size), |bencher| {
-      bencher.to_async(&runtime).iter(|| {
-        let mut sender_clone: DidCommAgent = sender.clone();
+  group.bench_function("send and await", |bencher| {
+    bencher.to_async(&runtime).iter(|| {
+      let mut sender_clone: DidCommAgent = sender.clone();
 
-        let thread_id: ThreadId = ThreadId::new();
+      let thread_id: ThreadId = ThreadId::new();
 
-        async move {
-          sender_clone
-            .send_didcomm_request(receiver_agent_id, &thread_id, PresentationRequest::default())
-            .await
-            .unwrap();
+      async move {
+        sender_clone
+          .send_didcomm_request(receiver_agent_id, &thread_id, PresentationRequest::default())
+          .await
+          .unwrap();
 
-          let _: DidCommPlaintextMessage<PresentationOffer> =
-            sender_clone.await_didcomm_request(&thread_id).await.unwrap();
-        }
-      });
+        let _: DidCommPlaintextMessage<PresentationOffer> =
+          sender_clone.await_didcomm_request(&thread_id).await.unwrap();
+      }
     });
-  }
+  });
 
   group.finish();
 
@@ -88,7 +82,7 @@ fn bench_send_didcomm_messages(c: &mut Criterion) {
   });
 }
 
-criterion_group!(benches, bench_send_didcomm_messages);
+criterion_group!(benches, bench_didcomm_requests);
 
 criterion_main!(benches);
 
