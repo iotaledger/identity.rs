@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 #![warn(
   rust_2018_idioms,
