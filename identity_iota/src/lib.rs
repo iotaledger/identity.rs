@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
@@ -141,6 +142,7 @@ pub mod prelude {
 }
 
 #[cfg(feature = "unstable-agent")]
+#[cfg_attr(docsrs, doc(cfg(feature = "unstable-agent")))]
 pub mod agent {
   //! Identity agent types
 
