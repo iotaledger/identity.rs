@@ -5,7 +5,7 @@ use crate::agent::AgentConfig;
 use crate::agent::AgentId;
 use crate::agent::HandlerMap;
 
-/// The internal state of a `Agent`.
+/// The internal state of an `Agent`.
 #[derive(Debug)]
 pub(crate) struct AgentState {
   pub(crate) agent_id: AgentId,

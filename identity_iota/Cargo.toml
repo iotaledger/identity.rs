@@ -62,7 +62,7 @@ unstable-encryption = ["identity_account/encryption"]
 
 # Enables support for the unstable identity agent.
 # Breaking changes to types and functions behind this flag are not covered by semver.
-unstable-agent = ["identity_agent"]
+unstable-agent = ["dep:identity_agent"]
 
 [package.metadata.docs.rs]
 # To build locally:

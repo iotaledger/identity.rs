@@ -38,7 +38,7 @@ pub struct DidCommAgentIdentity {
   pub document: IotaDocument,
 }
 
-/// The internal state of a [`Agent`].
+/// The internal state of a [`DidCommAgent`].
 #[derive(Debug)]
 pub struct DidCommAgentState {
   pub(crate) handlers: DidCommHandlerMap,
@@ -69,8 +69,8 @@ impl DidCommAgentState {
 ///
 /// Handlers are attached at agent build time, using the [`DidCommAgentBuilder`](crate::didcomm::DidCommAgentBuilder).
 ///
-/// A `DidCommAgent` supports attachement of both [`Handler`](crate::agent::Handler)s and
-/// [`DidCommHandler`](crate::didcomm::DidCommHandler)s.
+/// While an [`Agent`] only supports attachements of synchronous [`Handler`](crate::agent::Handler)s,
+/// a [`DidCommAgent`] additionally supports asynchronous [`DidCommHandler`](crate::didcomm::DidCommHandler)s.
 ///
 /// After shutting down the event loop of an agent using [`DidCommAgent::shutdown`], other clones of the
 /// agent will receive [`Error::Shutdown`] when attempting to interact with the event loop.
@@ -175,6 +175,7 @@ impl DidCommAgent {
 
   /// Wait for a message on a given `thread_id`. This can only be called successfully if
   /// [`DidCommAgent::send_didcomm_request`] was called on the same `thread_id` previously.
+  /// Calling `send_didcomm_request` multiple times still only allows to await one message on the thread.
   ///
   /// This will return a timeout error if no message is received within the duration passed
   /// to [`DidCommAgentBuilder::timeout`](crate::didcomm::DidCommAgentBuilder::timeout).

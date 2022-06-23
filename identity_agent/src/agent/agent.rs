@@ -47,6 +47,7 @@ pub struct Agent {
   state: Arc<AgentState>,
 }
 
+// Implement Clone for the sake of documenting that it is a cheap operation in this case.
 impl Clone for Agent {
   /// Produce a shallow copy of the agent, which uses the same event loop as the
   /// agent that it was cloned from.
