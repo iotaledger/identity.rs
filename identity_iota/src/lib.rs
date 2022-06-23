@@ -142,6 +142,7 @@ pub mod prelude {
 }
 
 #[cfg(feature = "unstable-agent")]
+#[cfg_attr(docsrs, doc(cfg(feature = "unstable-agent")))]
 pub mod agent {
   //! Identity agent types
 
