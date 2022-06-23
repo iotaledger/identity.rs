@@ -1,6 +1,6 @@
 # IOTA Identity Agent
 
-The identity agent is a peer-to-peer communication framework for building digital agents on IOTA Identity. It is intended to host implementations of the [DIDComm protocols](https://wiki.iota.org/identity.rs/specs/didcomm/overview) with future updates. Together with these protocols, this will, for example, allow for did-authenticated communication between two identities to exchange verifiable credentials or presentations.
+The identity agent is a peer-to-peer communication framework for building SSI agents on IOTA Identity. It is intended to host implementations of the [DIDComm protocols](https://wiki.iota.org/identity.rs/specs/didcomm/overview) with future updates. Together with these protocols, this will, for example, allow for did-authenticated communication between two identities to exchange verifiable credentials or presentations.
 
 For a high-level and less technical introduction, see the [blog post](https://blog.iota.org/the-iota-identity-actor-explained/) on the agent (formerly known as identity actor).
 
@@ -12,7 +12,7 @@ We use libp2p because it can easily secure transports using the noise protocol, 
 
 ## Building an agent
 
-```rust
+```rust,ignore
 let id_keys: IdentityKeypair = IdentityKeypair::generate_ed25519();
 let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse()?;
 
@@ -30,7 +30,7 @@ To build a minimal working agent, we generate a new `IdentityKeypair` from which
 
 To make the agent do something useful, we need handlers. A handler is some state with associated behavior that processes incoming requests. It will be invoked if the agent is able to deserialize the incoming request to the type the handler expects. The `Handler` is a trait that looks like this:
 
-```rust
+```rust,ignore
 #[async_trait::async_trait]
 pub trait Handler<REQ: HandlerRequest>: Debug + 'static {
   async fn handle(&self, request: RequestContext<REQ>) -> REQ::Response;
@@ -43,7 +43,7 @@ pub trait Handler<REQ: HandlerRequest>: Debug + 'static {
 
 Here is an example of a handler being attached on an `AgentBuilder`. We implement `RemoteAccounts`, an exemplary type that manages `Account`s remotely.
 
-```rust
+```rust,ignore
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RemoteAccountsError {
   IdentityNotFound,
@@ -97,7 +97,7 @@ An agent that receives a request will check whether a handler is attached that c
 
 To invoke a handler on a remote agent, we send a type that implements `HandlerRequest`, such as `RemoteAccountsGet`.
 
-```rust
+```rust,ignore
 let mut agent: Agent = builder.build().await?;
 
 agent.add_agent_address(remote_agent_id, addr).await?;
@@ -113,7 +113,7 @@ After building the agent and adding the address of the remote agent, we can send
 
 We've just seen an example of a synchronous request, one where we invoke a handler on a remote agent and wait for it to finish execution and return a result. Next to the `Agent` type we also have a `DidCommAgent` type. The latter additionally supports an asynchronous mode, where we send a request without waiting for the result of the handler invocation. Instead, we can explicitly await a request:
 
-```rust
+```rust,ignore
 async fn didcomm_protocol(agent_id: AgentId, didcomm_agent: &DidCommAgent) -> AgentResult<()> {
   let thread_id: ThreadId = ThreadId::new();
 
@@ -139,7 +139,7 @@ There are currently no examples for the agent in the `examples` directory. This 
 
 The async mode didcomm examples are worth explaining a little more. The implementation difficulty for these protocols comes mostly because of how flexible they are. In the presentation protocol for example, both the holder and verifier can initiate the exchange. On the agent level this means either calling the protocol explicitly to initiate it, or attaching a handler to let the agent handle the protocol in the background when a remote agent initiates. Thus, there is one function that implements the actual protocol for each of the roles (i.e. _holder_ and _verifier_ in the `presentation` protocol). As an example, this is what the signature of the holder role would look like:
 
-```rust
+```rust,ignore
 pub(crate) async fn presentation_holder_handler(
   mut agent: DidCommAgent,
   agent_id: AgentId,
@@ -149,7 +149,7 @@ pub(crate) async fn presentation_holder_handler(
 
 The holder can call this function to initiate the protocol imperatively by passing `None` as `request`. On the other hand, if the verifier initiates, the holder defines a handler that will inject the received `request`:
 
-```rust
+```rust,ignore
 #[async_trait::async_trait]
 impl DidCommHandler<DidCommPlaintextMessage<PresentationRequest>> for DidCommState {
   async fn handle(&self, agent: DidCommAgent, request: RequestContext<DidCommPlaintextMessage<PresentationRequest>>) {
@@ -164,7 +164,7 @@ impl DidCommHandler<DidCommPlaintextMessage<PresentationRequest>> for DidCommSta
 
 and attaches it:
 
-```rust
+```rust,ignore
 didcomm_builder.attach::<DidCommPlaintextMessage<PresentationRequest>, _>(DidCommState::new());
 ```
 
