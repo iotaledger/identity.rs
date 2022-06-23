@@ -10,7 +10,7 @@ use crate::agent::Endpoint;
 pub struct RequestContext<T> {
   /// The request type.
   pub input: T,
-  /// The peer id of the sender.
+  /// The [`AgentId`] of the sender.
   pub agent_id: AgentId,
   /// The [`Endpoint`] of this request.
   pub endpoint: Endpoint,
