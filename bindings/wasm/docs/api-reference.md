@@ -581,7 +581,6 @@ The identity is stored locally in the `Storage`. The DID network is automaticall
 by the [Client](#Client) used to publish it.
 
 **Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
-**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
 
 | Param | Type |
 | --- | --- |
@@ -2036,7 +2035,7 @@ on the same document. This is intended for signing updates to a document where a
 capability invocation method is rotated or replaced entirely.
 
 NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-verification method. See [Document.verifyDocument](Document.verifyDocument).
+verification method. See [#Document+verifyDocument](#Document+verifyDocument).
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -2593,7 +2592,7 @@ Length in bytes of an Ed25519 signature.
 ### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
 Computes an EdDSA signature using an Ed25519 private key.
 
-NOTE: this differs from [Document.signData](Document.signData) which uses JCS
+NOTE: this differs from [#Document+signData](#Document+signData) which uses JCS
 to canonicalize JSON messages.
 
 The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
@@ -2611,7 +2610,7 @@ Other implementations often use another format. See [this blog post](https://blo
 ### Ed25519.verify(message, signature, publicKey)
 Verifies an EdDSA signature against an Ed25519 public key.
 
-NOTE: this differs from [Document.verifyData](Document.verifyData) which uses JCS
+NOTE: this differs from [#Document+verifyData](#Document+verifyData) which uses JCS
 to canonicalize JSON messages.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
