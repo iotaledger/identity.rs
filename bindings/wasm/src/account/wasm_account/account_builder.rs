@@ -90,7 +90,6 @@ impl WasmAccountBuilder {
   ///
   /// The identity is stored locally in the `Storage`. The DID network is automatically determined
   /// by the {@link Client} used to publish it.
-  ///
   #[wasm_bindgen(js_name = createIdentity)]
   pub fn create_identity(&mut self, identity_setup: Option<WasmIdentitySetup>) -> Result<PromiseAccount> {
     let setup: IdentitySetup = identity_setup.map(IdentitySetup::from).unwrap_or_default();
