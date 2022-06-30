@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.1](https://github.com/iotaledger/identity.rs/tree/v0.6.1) (2022-06-30)
+
+[Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.6.0...v0.6.1)
+
+### Patch
+
+- Update stronghold to 0.6.4 [\#930](https://github.com/iotaledger/identity.rs/pull/930)
+
 ## [v0.6.0](https://github.com/iotaledger/identity.rs/tree/v0.6.0) (2022-06-15)
 
 [Full Changelog](https://github.com/iotaledger/identity.rs/compare/v0.5.0...v0.6.0)

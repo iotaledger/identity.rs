@@ -28,7 +28,7 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.identity_iota]
-version = "=0.6.0"
+version = "=0.6.1"
 path = "../../identity_iota"
 default-features = false
 features = ["account", "storage-test-suite", "unstable-encryption", "revocation-bitmap"]
