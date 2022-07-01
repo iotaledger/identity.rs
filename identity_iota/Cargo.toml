@@ -2,7 +2,6 @@
 name = "identity_iota"
 version = "0.6.1"
 authors = ["IOTA Stiftung"]
-documentation = "https://wiki.iota.org/identity.rs/introduction"
 edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "did", "ssi"]
