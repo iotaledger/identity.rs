@@ -123,10 +123,17 @@ impl IotaDocument {
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
   /// let keypair = KeyPair::new(KeyType::Ed25519).unwrap();
-  /// let document = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key")).unwrap();
+  /// let document =
+  ///   IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key"))
+  ///     .unwrap();
   /// assert_eq!(document.id().network_str(), "dev");
   /// assert_eq!(
-  ///   document.default_signing_method().unwrap().id().fragment().unwrap(),
+  ///   document
+  ///     .default_signing_method()
+  ///     .unwrap()
+  ///     .id()
+  ///     .fragment()
+  ///     .unwrap(),
   ///   "auth-key"
   /// );
   /// ```
@@ -668,8 +675,6 @@ mod iota_document_revocation {
     }
   }
 }
-
-impl<'a, 'b, 'c> IotaDocument {}
 
 impl From<(IotaCoreDocument, IotaDocumentMetadata, Option<Proof>)> for IotaDocument {
   fn from((document, metadata, proof): (IotaCoreDocument, IotaDocumentMetadata, Option<Proof>)) -> Self {
