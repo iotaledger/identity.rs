@@ -58,8 +58,10 @@ cargo run --example getting_started
 
 ## API Reference
 
-If you would like to build the [API Reference](api_reference) yourself from source, you can do so by running the following command:
+The API reference for the Rust library can be found on [docs.rs](https://docs.rs/identity_iota/0.6.1/identity_iota/index.html).
 
-```rust
-cargo doc --document-private-items --no-deps --open
+If you would like to build the documentation locally you can do so with the following command:
+
+```
+RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc -p identity_iota --all-features --no-deps --open
 ```

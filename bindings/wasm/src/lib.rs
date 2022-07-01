@@ -4,6 +4,8 @@
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
 #![allow(clippy::upper_case_acronyms)]
+// wasm_bindgen calls drop on non-Drop types. When/If this is fixed, this can be removed (no issue to link here yet).
+#![allow(clippy::drop_non_drop)]
 #![allow(clippy::unused_unit)]
 #![allow(clippy::await_holding_refcell_ref)] // complains about RefCell<Account> in future_to_promise, should only panic in multithreaded code/web workers
 

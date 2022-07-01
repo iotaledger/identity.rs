@@ -194,7 +194,7 @@ impl IotaDID {
 
     if segments.count() == 2 && segments.network() == Self::DEFAULT_NETWORK {
       let method_id: String = segments.tag().to_string();
-      let _ = did
+      did
         .set_method_id(method_id)
         .expect("this method_id is from a valid did");
     }
