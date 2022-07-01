@@ -76,7 +76,6 @@ module.exports = {
                     collapsed: true,
                     items: [
                         'libraries/rust/getting_started',
-                        'libraries/rust/api_reference',
                     ],
                 },
                 {
