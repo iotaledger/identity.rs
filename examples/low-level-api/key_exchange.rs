@@ -99,6 +99,6 @@ pub async fn run() -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  let _ = run().await?;
+  run().await?;
   Ok(())
 }
