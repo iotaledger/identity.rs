@@ -792,6 +792,72 @@ where
   }
 }
 
+#[cfg(feature = "revocation-bitmap")]
+mod core_document_revocation {
+  use identity_core::common::KeyComparable;
+
+  use crate::did::DID;
+  use crate::revocation::RevocationBitmap;
+  use crate::service::Service;
+  use crate::utils::DIDUrlQuery;
+  use crate::utils::Queryable;
+  use crate::Error;
+  use crate::Result;
+
+  use super::CoreDocument;
+
+  impl<D, T, U, V> CoreDocument<D, T, U, V>
+  where
+    D: DID + KeyComparable,
+  {
+    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+    /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_id: Q, credential_indices: &[u32]) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self.update_revocation_bitmap(service_id, |revocation_bitmap| {
+        // Revoke all given credential indices.
+        for credential in credential_indices {
+          revocation_bitmap.revoke(*credential);
+        }
+      })
+    }
+
+    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+    /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_id: Q, credential_indices: &[u32]) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self.update_revocation_bitmap(service_id, |revocation_bitmap| {
+        // Unrevoke all given credential indices.
+        for credential in credential_indices {
+          revocation_bitmap.unrevoke(*credential);
+        }
+      })
+    }
+
+    fn update_revocation_bitmap<'query, 'me, F, Q>(&'me mut self, service_id: Q, f: F) -> Result<()>
+    where
+      F: FnOnce(&mut RevocationBitmap),
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      let service: &mut Service<D, V> = self
+        .service_mut()
+        .query_mut(service_id)
+        .ok_or(Error::InvalidService("invalid id - service not found"))?;
+
+      let mut revocation_bitmap: RevocationBitmap = RevocationBitmap::try_from(&*service)?;
+      f(&mut revocation_bitmap);
+
+      std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
+
+      Ok(())
+    }
+  }
+}
+
 // =============================================================================
 // Signature Extensions
 // =============================================================================

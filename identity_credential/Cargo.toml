@@ -18,11 +18,12 @@ identity_did = { version = "=0.6.0", path = "../identity_did", default-features 
 itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
-serde_repr = { version = "0.1", default-features = false }
+serde_repr = { version = "0.1", default-features = false, optional = true }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dev-dependencies]
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 serde_json = { version = "1.0", default-features = false }
 
 [package.metadata.docs.rs]
@@ -33,5 +34,5 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["revocation-bitmap", "validator"]
-revocation-bitmap = []
-validator = ["dep:itertools", "dep:erased-serde"]
+revocation-bitmap = ["identity_did/revocation-bitmap"]
+validator = ["dep:itertools", "dep:erased-serde", "dep:serde_repr"]

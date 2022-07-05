@@ -1,8 +1,9 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Serialize;
 use std::str::FromStr;
+
+use serde::Serialize;
 
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
@@ -302,6 +303,8 @@ impl CredentialValidator {
 
 #[cfg(test)]
 mod tests {
+  use proptest::proptest;
+
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
@@ -309,15 +312,14 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_credential::credential::Status;
-  use identity_credential::credential::Subject;
   use identity_did::did::DID;
-  use identity_iota_core::document::IotaDocument;
-  use identity_iota_core::document::IotaService;
-  use proptest::proptest;
+  use identity_did::document::CoreDocument;
+  use identity_did::service::Service;
 
-  use crate::credential::test_utils;
-  use crate::credential::CredentialValidationOptions;
+  use crate::credential::Status;
+  use crate::credential::Subject;
+  use crate::validator::test_utils;
+  use crate::validator::CredentialValidationOptions;
 
   use super::*;
 
@@ -350,7 +352,7 @@ mod tests {
 
   // Setup parameters shared by many of the tests in this module
   struct Setup {
-    issuer_doc: IotaDocument,
+    issuer_doc: CoreDocument,
     issuer_key: KeyPair,
     unsigned_credential: Credential,
     issuance_date: Timestamp,
@@ -418,12 +420,10 @@ mod tests {
       issuance_date,
     } = Setup::new();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // declare the credential validation parameters
@@ -490,12 +490,10 @@ mod tests {
       issuance_date,
     } = Setup::new();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // declare the credential validation parameters
@@ -530,15 +528,13 @@ mod tests {
       expiration_date,
     } = Setup::new();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
-    // declare the credential validation parameters
 
+    // declare the credential validation parameters
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -558,12 +554,10 @@ mod tests {
     } = Setup::new();
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // the credential was not signed by this issuer
@@ -607,12 +601,10 @@ mod tests {
 
     let (_, other_keys) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        other_keys.private(), // sign with other keys
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(other_keys.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // run the validation unit
@@ -778,7 +770,7 @@ mod tests {
     }
 
     // Add a RevocationBitmap status to the credential.
-    let service_url: IotaDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let service_url: CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
     let index: u32 = 42;
     credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
 
@@ -796,13 +788,13 @@ mod tests {
 
     // Add a RevocationBitmap service to the issuer.
     let bitmap: RevocationBitmap = RevocationBitmap::new();
-    assert!(issuer_doc.insert_service(
-      IotaService::builder(Object::new())
+    assert!(issuer_doc.service_mut().append(
+      Service::builder(Object::new())
         .id(service_url.clone())
         .type_(RevocationBitmap::TYPE)
         .service_endpoint(bitmap.to_endpoint().unwrap())
         .build()
-        .unwrap(),
+        .unwrap()
     ));
 
     // 3: un-revoked index always succeeds.
@@ -835,12 +827,10 @@ mod tests {
     } = Setup::new();
 
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
     credential.credential_subject = OneOrMany::default();
@@ -877,12 +867,10 @@ mod tests {
 
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
     credential.credential_subject = OneOrMany::default();
@@ -918,12 +906,10 @@ mod tests {
 
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
     credential.credential_subject = OneOrMany::default();

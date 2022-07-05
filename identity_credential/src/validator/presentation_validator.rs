@@ -13,11 +13,11 @@ use identity_did::verifiable::VerifierOptions;
 
 use crate::presentation::Presentation;
 
-use super::CredentialValidator;
 use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+use super::CredentialValidator;
 use super::FailFast;
 use super::PresentationValidationOptions;
 use super::ValidatorDocument;
@@ -221,8 +221,8 @@ impl PresentationValidator {
   ///
   /// Fails if the holder field is missing or not a valid DID.
   pub fn extract_holder<D: DID, T, U>(presentation: &Presentation<T, U>) -> std::result::Result<D, ValidationError>
-    where
-      <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  where
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
   {
     let holder: &Url = presentation
       .holder
@@ -245,9 +245,9 @@ mod tests {
 
   use crate::credential::Credential;
   use crate::presentation::PresentationBuilder;
+  use crate::validator::test_utils;
   use crate::validator::CredentialValidationOptions;
   use crate::validator::SubjectHolderRelationship;
-  use crate::validator::test_utils;
 
   use super::*;
 
@@ -319,21 +319,17 @@ mod tests {
       } = setup;
       // sign the credential
       issuer_foo_doc
-        .sign_data(
-          credential_foo,
-          issuer_foo_key.private(),
-          issuer_foo_doc.default_signing_method().unwrap().id(),
-          ProofOptions::default(),
-        )
+        .signer(issuer_foo_key.private())
+        .options(ProofOptions::default())
+        .method(issuer_foo_doc.methods().next().unwrap().id())
+        .sign(credential_foo)
         .unwrap();
 
       issuer_bar_doc
-        .sign_data(
-          credential_bar,
-          issuer_bar_key.private(),
-          issuer_bar_doc.default_signing_method().unwrap().id(),
-          ProofOptions::default(),
-        )
+        .signer(issuer_bar_key.private())
+        .options(ProofOptions::default())
+        .method(issuer_bar_doc.methods().next().unwrap().id())
+        .sign(credential_bar)
         .unwrap();
       setup
     }
@@ -354,14 +350,11 @@ mod tests {
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
     // sign the presentation using subject_foo's document and private key
-
     subject_foo_doc
-      .sign_data(
-        &mut presentation,
-        subject_foo_key.private(),
-        subject_foo_doc.default_signing_method().unwrap().id(),
-        ProofOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()),
-      )
+      .signer(subject_foo_key.private())
+      .options(ProofOptions::new().challenge("475a7984-1bb5-4c4c-a56f-822bccd46440".to_owned()))
+      .method(subject_foo_doc.methods().next().unwrap().id())
+      .sign(&mut presentation)
       .unwrap();
 
     // validate the presentation
@@ -385,7 +378,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     ))
-      .is_ok());
+    .is_ok());
   }
 
   #[test]
@@ -403,14 +396,11 @@ mod tests {
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
     // sign the presentation using subject_foo's document and private key
-
     subject_foo_doc
-      .sign_data(
-        &mut presentation,
-        subject_foo_key.private(),
-        subject_foo_doc.default_signing_method().unwrap().id(),
-        ProofOptions::new().challenge("some challenge".to_owned()),
-      )
+      .signer(subject_foo_key.private())
+      .options(ProofOptions::new().challenge("some challenge".to_owned()))
+      .method(subject_foo_doc.methods().next().unwrap().id())
+      .sign(&mut presentation)
       .unwrap();
 
     // check the validation unit
@@ -424,7 +414,7 @@ mod tests {
       &holder_doc,
       &presentation_verifier_options,
     )
-      .is_err());
+    .is_err());
 
     // now check that full_validation also fails
     let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
@@ -445,7 +435,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-      .unwrap_err();
+    .unwrap_err();
 
     assert_eq!(error.presentation_validation_errors.len(), 1);
     assert!(error.credential_errors.is_empty());
@@ -471,14 +461,11 @@ mod tests {
 
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
     // sign the presentation using subject_foo's document and private key
-
     subject_foo_doc
-      .sign_data(
-        &mut presentation,
-        subject_foo_key.private(),
-        subject_foo_doc.default_signing_method().unwrap().id(),
-        ProofOptions::new().challenge("some challenge".to_owned()),
-      )
+      .signer(subject_foo_key.private())
+      .options(ProofOptions::new().challenge("some challenge".to_owned()))
+      .method(subject_foo_doc.methods().next().unwrap().id())
+      .sign(&mut presentation)
       .unwrap();
 
     // validate the presentation
@@ -501,7 +488,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-      .unwrap_err();
+    .unwrap_err();
     assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
     assert!(matches!(
       error.credential_errors.get(&1),
@@ -527,12 +514,10 @@ mod tests {
     credential_bar.non_transferable = Some(true);
     // sign the credential
     issuer_bar_doc
-      .sign_data(
-        &mut credential_bar,
-        issuer_bar_key.private(),
-        issuer_bar_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_bar_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_bar_doc.methods().next().unwrap().id())
+      .sign(&mut credential_bar)
       .unwrap();
 
     // create a presentation where the subject of the first credential is the holder.
@@ -540,14 +525,11 @@ mod tests {
     let mut presentation = build_presentation(&subject_foo_doc, [credential_foo, credential_bar].to_vec());
 
     // sign the presentation using subject_foo's document and private key.
-
     subject_foo_doc
-      .sign_data(
-        &mut presentation,
-        subject_foo_key.private(),
-        subject_foo_doc.default_signing_method().unwrap().id(),
-        ProofOptions::new().challenge("some challenge".to_owned()),
-      )
+      .signer(subject_foo_key.private())
+      .options(ProofOptions::new().challenge("some challenge".to_owned()))
+      .method(subject_foo_doc.methods().next().unwrap().id())
+      .sign(&mut presentation)
       .unwrap();
 
     // validate the presentation
@@ -573,7 +555,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-      .unwrap_err();
+    .unwrap_err();
 
     assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
     let validation_errors_credential_idx1 = &error.credential_errors.get(&1).unwrap().validation_errors;
@@ -594,7 +576,7 @@ mod tests {
       &options,
       FailFast::FirstError,
     )
-      .is_ok());
+    .is_ok());
     // finally check that full_validation now does not pass if we declare that the subject must always be the holder.
     let options = options.subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
@@ -605,7 +587,7 @@ mod tests {
       &options,
       FailFast::FirstError,
     )
-      .is_err());
+    .is_err());
   }
 
   #[test]
@@ -638,14 +620,11 @@ mod tests {
       .build()
       .unwrap();
     // sign the presentation using subject_foo's document and private key
-
     subject_foo_doc
-      .sign_data(
-        &mut presentation,
-        subject_foo_key.private(),
-        subject_foo_doc.default_signing_method().unwrap().id(),
-        ProofOptions::new().challenge("some challenge".to_owned()),
-      )
+      .signer(subject_foo_key.private())
+      .options(ProofOptions::new().challenge("some challenge".to_owned()))
+      .method(subject_foo_doc.methods().next().unwrap().id())
+      .sign(&mut presentation)
       .unwrap();
 
     // validate the presentation
@@ -673,15 +652,15 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-      .unwrap_err();
+    .unwrap_err();
 
     assert_eq!(
       1,
       presentation_validation_errors.len()
         + credential_errors
-        .values()
-        .map(|error| error.validation_errors.len())
-        .sum::<usize>()
+          .values()
+          .map(|error| error.validation_errors.len())
+          .sum::<usize>()
     );
   }
 
@@ -716,12 +695,10 @@ mod tests {
     // sign the presentation using subject_foo's document and private key
 
     subject_foo_doc
-      .sign_data(
-        &mut presentation,
-        subject_foo_key.private(),
-        subject_foo_doc.default_signing_method().unwrap().id(),
-        ProofOptions::new().challenge("some challenge".to_owned()),
-      )
+      .signer(subject_foo_key.private())
+      .options(ProofOptions::new().challenge("some challenge".to_owned()))
+      .method(subject_foo_doc.methods().next().unwrap().id())
+      .sign(&mut presentation)
       .unwrap();
 
     // validate the presentation
@@ -750,14 +727,14 @@ mod tests {
       &presentation_validation_options,
       FailFast::AllErrors,
     )
-      .unwrap_err();
+    .unwrap_err();
 
     assert!(
       presentation_validation_errors.len()
         + credential_errors
-        .values()
-        .map(|error| error.validation_errors.len())
-        .sum::<usize>()
+          .values()
+          .map(|error| error.validation_errors.len())
+          .sum::<usize>()
         >= 6
     );
   }
