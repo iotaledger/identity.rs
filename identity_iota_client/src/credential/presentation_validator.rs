@@ -16,6 +16,7 @@ use super::errors::ValidationError;
 use super::FailFast;
 use super::PresentationValidationOptions;
 use crate::credential::credential_validator::CredentialValidator;
+use crate::credential::ValidatorDocument;
 
 /// A struct for validating [`Presentation`]s.
 #[derive(Debug, Clone)]
@@ -188,13 +189,17 @@ impl PresentationValidator {
     fail_fast: FailFast,
   ) -> Result<(), BTreeMap<usize, CompoundCredentialValidationError>> {
     let number_of_credentials = presentation.verifiable_credential.len();
+    let issuers: Vec<&dyn ValidatorDocument> = issuers
+      .iter()
+      .map(|issuer| issuer.as_ref() as &dyn ValidatorDocument)
+      .collect();
     let credential_errors_iter = presentation
       .verifiable_credential
       .iter()
       .map(|credential| {
         CredentialValidator::validate_extended(
           credential,
-          issuers,
+          &issuers,
           &options.shared_validation_options,
           presentation
             .holder

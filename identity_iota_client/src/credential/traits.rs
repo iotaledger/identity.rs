@@ -15,7 +15,7 @@ use crate::credential::traits::private::Verifiable;
 ///
 /// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
 /// A blanket implementation is provided for the [`Document`] trait, which can be implemented
-/// instead to be compatible.
+/// instead to be compatible. Any changes to this trait will be considered non-breaking.
 pub trait ValidatorDocument: Sealed {
   fn did_str(&self) -> &str;
 
@@ -23,7 +23,7 @@ pub trait ValidatorDocument: Sealed {
     &self,
     data: &dyn Verifiable,
     options: &VerifierOptions,
-  ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+  ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap>;
@@ -75,6 +75,6 @@ where
       .ok_or(identity_did::Error::InvalidService(
         "revocation bitmap service not found",
       ))
-      .and_then(|service| RevocationBitmap::try_from(service))
+      .and_then(RevocationBitmap::try_from)
   }
 }

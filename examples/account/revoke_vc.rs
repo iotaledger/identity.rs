@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
 
   let validation_result = CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
     identity_iota::client::FailFast::FirstError,
   );
@@ -117,7 +117,7 @@ async fn main() -> Result<()> {
 
   let validation_result = CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
     identity_iota::client::FailFast::FirstError,
   );
@@ -146,7 +146,7 @@ async fn main() -> Result<()> {
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve_credential_issuer(&credential).await?;
   let validation_result = CredentialValidator::validate(
     &credential,
-    &resolved_issuer_doc,
+    &resolved_issuer_doc.document,
     &CredentialValidationOptions::default(),
     identity_iota::client::FailFast::FirstError,
   );

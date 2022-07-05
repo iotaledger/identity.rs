@@ -9,7 +9,7 @@ pub trait GetSignature {
   fn signature(&self) -> Option<&Proof>;
 }
 
-impl<'a, T> GetSignature for Box<T>
+impl<T> GetSignature for Box<T>
 where
   T: GetSignature,
 {

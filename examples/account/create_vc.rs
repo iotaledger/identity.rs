@@ -79,7 +79,7 @@ pub async fn create_vc() -> Result<String> {
   // that the issuance date is not in the future and that the expiration date is not in the past:
   CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
     FailFast::FirstError,
   )

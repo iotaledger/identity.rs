@@ -1,24 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Serialize;
+
+use identity_core::crypto::GetSignature;
+
 use crate::did::DID;
-use crate::document::CoreDocument;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
-use crate::utils::Queryable;
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodScope;
 use crate::verification::VerificationMethod;
 use crate::Result;
-use identity_core::common::KeyComparable;
-use identity_core::crypto::GetSignature;
-use serde::Serialize;
 
 /// Common operations for DID Documents.
 // TODO: add sign_data, split sign/verify to separate trait as first step towards
 //       supporting custom signature schemes.
 //       Remove DocumentSigner?
 //       Add DocumentMut for mutable function returns?
+//       Blanket impl for &T, &mut T, Box<T> etc.?
 pub trait Document {
   type D: DID;
   type U;
