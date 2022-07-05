@@ -179,14 +179,10 @@ async fn test_handlers_can_communicate_bidirectionally() -> AgentResult<()> {
     .start_listening("/ip4/0.0.0.0/tcp/0".try_into().unwrap())
     .await
     .unwrap();
-  // tokio::time::sleep(core::time::Duration::from_secs(2)).await;
 
-  // let addr: Multiaddr = agent2.addresses().await.unwrap().into_iter().next().unwrap();
-  //
-  // agent1.add_agent_address(agent2.agent_id(), addr).await.unwrap();
-  let addrs: Vec<Multiaddr> = agent2.addresses().await.unwrap();
+  let addr: Multiaddr = agent2.addresses().await.unwrap().into_iter().next().unwrap();
 
-  agent1.add_agent_addresses(agent2.agent_id(), addrs).await.unwrap();
+  agent1.add_agent_address(agent2.agent_id(), addr).await.unwrap();
 
   agent1.send_request(agent2.agent_id(), Dummy(42)).await.unwrap();
 

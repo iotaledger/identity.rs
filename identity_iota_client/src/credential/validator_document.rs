@@ -8,8 +8,8 @@ use identity_did::revocation::RevocationBitmap;
 use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::VerifierOptions;
 
-use crate::credential::traits::private::Sealed;
-use crate::credential::traits::private::Verifiable;
+use crate::credential::validator_document::private::Sealed;
+use crate::credential::validator_document::private::Verifiable;
 
 /// Abstraction over DID Documents for validating presentations and credentials.
 ///

@@ -18,6 +18,7 @@ use crate::chain::DocumentHistory;
 use crate::credential::FailFast;
 use crate::credential::PresentationValidationOptions;
 use crate::credential::PresentationValidator;
+use crate::credential::ValidatorDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
@@ -186,28 +187,36 @@ where
     presentation: &Presentation<U, V>,
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
-    holder: Option<&ResolvedIotaDocument>,
-    issuers: Option<&[ResolvedIotaDocument]>,
+    holder: Option<&dyn ValidatorDocument>,
+    issuers: Option<&[&dyn ValidatorDocument]>,
   ) -> Result<()> {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
         PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
       }
       (Some(holder), None) => {
-        let issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
-        PresentationValidator::validate(presentation, holder, &issuers, options, fail_fast)
+        let resolved_issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
+        let issuers: Vec<&dyn ValidatorDocument> = resolved_issuers
+          .iter()
+          .map(|resolved| &resolved.document as &dyn ValidatorDocument)
+          .collect();
+        PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
       }
       (None, Some(issuers)) => {
         let holder: ResolvedIotaDocument = self.resolve_presentation_holder(presentation).await?;
-        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
+        PresentationValidator::validate(presentation, &holder.document, issuers, options, fail_fast)
       }
       (None, None) => {
-        let (holder, issuers): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) = futures::future::try_join(
+        let (holder, resolved_issuers): (ResolvedIotaDocument, Vec<ResolvedIotaDocument>) = futures::future::try_join(
           self.resolve_presentation_holder(presentation),
           self.resolve_presentation_issuers(presentation),
         )
         .await?;
-        PresentationValidator::validate(presentation, &holder, &issuers, options, fail_fast)
+        let issuers: Vec<&dyn ValidatorDocument> = resolved_issuers
+          .iter()
+          .map(|resolved| &resolved.document as &dyn ValidatorDocument)
+          .collect();
+        PresentationValidator::validate(presentation, &holder.document, &issuers, options, fail_fast)
       }
     }
     .map_err(Into::into)

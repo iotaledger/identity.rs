@@ -3,11 +3,15 @@
 
 use std::collections::BTreeMap;
 
-use identity_credential::presentation::Presentation;
-use identity_did::verifiable::VerifierOptions;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
 use serde::Serialize;
+
+use identity_credential::presentation::Presentation;
+use identity_did::did::CoreDID;
+use identity_did::did::DID;
+use identity_did::verifiable::VerifierOptions;
+
+use crate::credential::credential_validator::CredentialValidator;
+use crate::credential::ValidatorDocument;
 
 use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
@@ -15,8 +19,6 @@ use super::errors::SignerContext;
 use super::errors::ValidationError;
 use super::FailFast;
 use super::PresentationValidationOptions;
-use crate::credential::credential_validator::CredentialValidator;
-use crate::credential::ValidatorDocument;
 
 /// A struct for validating [`Presentation`]s.
 #[derive(Debug, Clone)]
@@ -54,10 +56,10 @@ impl PresentationValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<U: Serialize, V: Serialize, D: AsRef<IotaDocument>>(
+  pub fn validate<U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
-    holder: &D,
-    issuers: &[D],
+    holder: &dyn ValidatorDocument,
+    issuers: &[&dyn ValidatorDocument],
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> PresentationValidationResult {
@@ -110,29 +112,28 @@ impl PresentationValidator {
   /// # Errors
   /// Fails if the `holder` does not match the `presentation`'s holder property.
   /// Fails if signature verification against the holder document fails.
-  pub fn verify_presentation_signature<U: Serialize, V: Serialize, D: AsRef<IotaDocument>>(
+  pub fn verify_presentation_signature<U: Serialize, V: Serialize, DOC: ValidatorDocument + ?Sized>(
     presentation: &Presentation<U, V>,
-    holder: &D,
+    holder: &DOC,
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    let did: IotaDID = presentation
+    let did: CoreDID = presentation
       .holder
       .as_ref()
       .ok_or(ValidationError::MissingPresentationHolder)
       .and_then(|value| {
-        IotaDID::parse(value.as_str()).map_err(|error| ValidationError::SignerUrl {
+        CoreDID::parse(value.as_str()).map_err(|error| ValidationError::SignerUrl {
           source: error.into(),
           signer_ctx: SignerContext::Holder,
         })
       })?;
-    if &did != holder.as_ref().id() {
+    if did.as_str() != holder.did_str() {
       return Err(ValidationError::DocumentMismatch(SignerContext::Holder));
     }
     holder
-      .as_ref()
       .verify_data(&presentation, options)
-      .map_err(|error| ValidationError::Signature {
-        source: error.into(),
+      .map_err(|err| ValidationError::Signature {
+        source: err,
         signer_ctx: SignerContext::Holder,
       })
   }
@@ -149,9 +150,9 @@ impl PresentationValidator {
   // The following properties are validated according to `options`:
   // - the semantic structure of the presentation,
   // - the holder's signature,
-  fn validate_presentation_without_credentials<U: Serialize, V: Serialize, D: AsRef<IotaDocument>>(
+  fn validate_presentation_without_credentials<U: Serialize, V: Serialize, DOC: ValidatorDocument + ?Sized>(
     presentation: &Presentation<U, V>,
-    holder: &D,
+    holder: &DOC,
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> Result<(), Vec<ValidationError>> {
@@ -182,24 +183,20 @@ impl PresentationValidator {
   // - the relationship between the holder and the credential subjects,
   // - the signatures and some properties of the constituent credentials (see
   // [`CredentialValidator::validate`]).
-  fn validate_credentials<U, V: Serialize, D: AsRef<IotaDocument>>(
+  fn validate_credentials<U, V: Serialize>(
     presentation: &Presentation<U, V>,
-    issuers: &[D],
+    issuers: &[&dyn ValidatorDocument],
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> Result<(), BTreeMap<usize, CompoundCredentialValidationError>> {
     let number_of_credentials = presentation.verifiable_credential.len();
-    let issuers: Vec<&dyn ValidatorDocument> = issuers
-      .iter()
-      .map(|issuer| issuer.as_ref() as &dyn ValidatorDocument)
-      .collect();
     let credential_errors_iter = presentation
       .verifiable_credential
       .iter()
       .map(|credential| {
         CredentialValidator::validate_extended(
           credential,
-          &issuers,
+          issuers,
           &options.shared_validation_options,
           presentation
             .holder
@@ -236,14 +233,15 @@ mod tests {
   use identity_credential::presentation::PresentationBuilder;
   use identity_iota_core::document::IotaDocument;
 
-  use super::*;
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;
   use crate::credential::SubjectHolderRelationship;
 
+  use super::*;
+
   fn build_presentation(holder: &IotaDocument, credentials: Vec<Credential>) -> Presentation {
     let mut builder = PresentationBuilder::default()
-      .id(Url::parse("http://example.org/credentials/3732").unwrap())
+      .id(Url::parse("https://example.org/credentials/3732").unwrap())
       .holder(Url::parse(holder.id().as_ref()).unwrap());
     for credential in credentials {
       builder = builder.credential(credential);
@@ -367,13 +365,11 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
-
     let holder_doc = subject_foo_doc;
     assert!(dbg!(PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      &[&issuer_foo_doc, &issuer_bar_doc],
       &presentation_validation_options,
       FailFast::FirstError
     ))
@@ -406,7 +402,6 @@ mod tests {
       .unwrap();
 
     // check the validation unit
-    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
     let presentation_verifier_options = VerifierOptions::default().challenge("another challenge".to_owned()); //validate with another challenge
 
     let holder_doc = subject_foo_doc;
@@ -434,7 +429,7 @@ mod tests {
     let error = PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      &[&issuer_foo_doc, &issuer_bar_doc],
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -486,13 +481,11 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
-
     let holder_doc = subject_foo_doc;
     let error = PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      &[&issuer_foo_doc, &issuer_bar_doc],
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -557,14 +550,14 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
+    let trusted_issuers: &[&dyn ValidatorDocument] = &[&issuer_foo_doc, &issuer_bar_doc];
 
     let holder_doc = subject_foo_doc;
 
     let error = PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -585,7 +578,7 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      trusted_issuers,
       &options,
       FailFast::FirstError,
     )
@@ -596,7 +589,7 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      trusted_issuers,
       &options,
       FailFast::FirstError,
     )
@@ -654,7 +647,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
+    let trusted_issuers: &[&dyn ValidatorDocument] = &[&issuer_foo_doc, &issuer_bar_doc];
 
     let holder_document = subject_foo_doc;
 
@@ -664,19 +657,19 @@ mod tests {
     } = PresentationValidator::validate(
       &presentation,
       &holder_document,
-      &trusted_issuers,
+      trusted_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
     )
     .unwrap_err();
 
-    assert!(
+    assert_eq!(
+      1,
       presentation_validation_errors.len()
         + credential_errors
           .values()
           .map(|error| error.validation_errors.len())
           .sum::<usize>()
-        == 1
     );
   }
 
@@ -731,7 +724,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers = [issuer_foo_doc, issuer_bar_doc];
+    let trusted_issuers: &[&dyn ValidatorDocument] = &[&issuer_foo_doc, &issuer_bar_doc];
 
     let holder_doc = subject_foo_doc;
 
@@ -741,7 +734,7 @@ mod tests {
     } = PresentationValidator::validate(
       &presentation,
       &holder_doc,
-      &trusted_issuers,
+      trusted_issuers,
       &presentation_validation_options,
       FailFast::AllErrors,
     )
