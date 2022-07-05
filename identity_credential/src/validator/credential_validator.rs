@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use serde::Serialize;
+use std::str::FromStr;
 
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_did::did::{CoreDID, CoreDIDUrl};
+use identity_did::did::CoreDID;
+use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 #[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
@@ -116,12 +118,7 @@ impl CredentialValidator {
     trusted_issuers: &[&dyn ValidatorDocument],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    let issuer_did: CoreDID =
-      CoreDID::parse(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
-        source: err.into(),
-        signer_ctx: SignerContext::Issuer,
-      })?;
-
+    let issuer_did: CoreDID = Self::extract_issuer(credential)?;
     trusted_issuers
       .iter()
       .find(|issuer_doc| issuer_doc.did_str() == issuer_did.as_str())
@@ -192,19 +189,16 @@ impl CredentialValidator {
           if status_check == StatusCheck::SkipUnsupported {
             return Ok(());
           }
-          return Err(ValidationError::InvalidStatus(
-            crate::Error::InvalidStatus(format!("unsupported type '{}'", status.type_)),
-          ));
+          return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+            "unsupported type '{}'",
+            status.type_
+          ))));
         }
         let status: RevocationBitmapStatus =
           RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
 
         // Check the credential index against the issuer's DID Document.
-        let issuer_did: CoreDID =
-          CoreDID::parse(credential.issuer.url().as_str()).map_err(|e| ValidationError::SignerUrl {
-            source: e.into(),
-            signer_ctx: SignerContext::Issuer,
-          })?;
+        let issuer_did: CoreDID = Self::extract_issuer(credential)?;
         trusted_issuers
           .iter()
           .find(|issuer| issuer.did_str() == issuer_did.as_str())
@@ -288,6 +282,21 @@ impl CredentialValidator {
     } else {
       Err(CompoundCredentialValidationError { validation_errors })
     }
+  }
+
+  /// Utility for extracting the issuer field of a [`Credential`] as a DID.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the issuer field is not a valid DID.
+  pub fn extract_issuer<D: DID, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
+  where
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Issuer,
+      source: err.into(),
+    })
   }
 }
 

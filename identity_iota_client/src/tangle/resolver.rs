@@ -7,9 +7,9 @@ use std::sync::Arc;
 
 use serde::Serialize;
 
-use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_credential::validator::CredentialValidator;
 use identity_credential::validator::FailFast;
 use identity_credential::validator::PresentationValidationOptions;
 use identity_credential::validator::PresentationValidator;
@@ -108,12 +108,7 @@ where
     &self,
     credential: &Credential<U>,
   ) -> Result<ResolvedIotaDocument> {
-    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str()).map_err(|err| {
-      Error::IsolatedValidationError(identity_credential::validator::ValidationError::SignerUrl {
-        signer_ctx: identity_credential::validator::SignerContext::Issuer,
-        source: err.into(),
-      })
-    })?;
+    let issuer: IotaDID = CredentialValidator::extract_issuer(credential).map_err(Error::IsolatedValidationError)?;
     self.resolve(&issuer).await
   }
 
@@ -131,14 +126,8 @@ where
     let issuers: HashSet<IotaDID> = presentation
       .verifiable_credential
       .iter()
-      .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
-      .map(|url_result| {
-        url_result.map_err(|error| {
-          Error::IsolatedValidationError(identity_credential::validator::ValidationError::SignerUrl {
-            signer_ctx: identity_credential::validator::SignerContext::Issuer,
-            source: error.into(),
-          })
-        })
+      .map(|credential| {
+        CredentialValidator::extract_issuer::<IotaDID, V>(credential).map_err(Error::IsolatedValidationError)
       })
       .collect::<Result<_>>()?;
 
@@ -155,15 +144,8 @@ where
     &self,
     presentation: &Presentation<U, V>,
   ) -> Result<ResolvedIotaDocument> {
-    let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
-      identity_credential::validator::ValidationError::MissingPresentationHolder,
-    ))?;
-    let holder: IotaDID = IotaDID::parse(holder_url.as_str()).map_err(|error| {
-      Error::IsolatedValidationError(identity_credential::validator::ValidationError::SignerUrl {
-        signer_ctx: identity_credential::validator::SignerContext::Holder,
-        source: error.into(),
-      })
-    })?;
+    let holder: IotaDID =
+      PresentationValidator::extract_holder(presentation).map_err(Error::IsolatedValidationError)?;
     self.resolve(&holder).await
   }
 

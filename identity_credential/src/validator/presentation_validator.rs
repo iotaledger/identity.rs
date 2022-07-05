@@ -2,20 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use serde::Serialize;
 
+use identity_core::common::Url;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 
 use crate::presentation::Presentation;
 
+use super::CredentialValidator;
 use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
-use super::CredentialValidator;
 use super::FailFast;
 use super::PresentationValidationOptions;
 use super::ValidatorDocument;
@@ -117,16 +119,7 @@ impl PresentationValidator {
     holder: &DOC,
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    let did: CoreDID = presentation
-      .holder
-      .as_ref()
-      .ok_or(ValidationError::MissingPresentationHolder)
-      .and_then(|value| {
-        CoreDID::parse(value.as_str()).map_err(|error| ValidationError::SignerUrl {
-          source: error.into(),
-          signer_ctx: SignerContext::Holder,
-        })
-      })?;
+    let did: CoreDID = Self::extract_holder(presentation)?;
     if did.as_str() != holder.did_str() {
       return Err(ValidationError::DocumentMismatch(SignerContext::Holder));
     }
@@ -221,6 +214,25 @@ impl PresentationValidator {
       Err(credential_errors)
     }
   }
+
+  /// Utility for extracting the holder field of a [`Presentation`] as a DID.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the holder field is missing or not a valid DID.
+  pub fn extract_holder<D: DID, T, U>(presentation: &Presentation<T, U>) -> std::result::Result<D, ValidationError>
+    where
+      <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    let holder: &Url = presentation
+      .holder
+      .as_ref()
+      .ok_or(ValidationError::MissingPresentationHolder)?;
+    D::from_str(holder.as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Issuer,
+      source: err.into(),
+    })
+  }
 }
 
 #[cfg(test)]
@@ -229,17 +241,17 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_credential::credential::Credential;
-  use identity_credential::presentation::PresentationBuilder;
-  use identity_iota_core::document::IotaDocument;
+  use identity_did::document::CoreDocument;
 
-  use crate::credential::test_utils;
-  use crate::credential::CredentialValidationOptions;
-  use crate::credential::SubjectHolderRelationship;
+  use crate::credential::Credential;
+  use crate::presentation::PresentationBuilder;
+  use crate::validator::CredentialValidationOptions;
+  use crate::validator::SubjectHolderRelationship;
+  use crate::validator::test_utils;
 
   use super::*;
 
-  fn build_presentation(holder: &IotaDocument, credentials: Vec<Credential>) -> Presentation {
+  fn build_presentation(holder: &CoreDocument, credentials: Vec<Credential>) -> Presentation {
     let mut builder = PresentationBuilder::default()
       .id(Url::parse("https://example.org/credentials/3732").unwrap())
       .holder(Url::parse(holder.id().as_ref()).unwrap());
@@ -252,14 +264,14 @@ mod tests {
   // Convenience struct for setting up tests.
   struct TestSetup {
     // issuer of credential_foo
-    issuer_foo_doc: IotaDocument,
+    issuer_foo_doc: CoreDocument,
     issuer_foo_key: KeyPair,
     // subject of credential_foo
-    subject_foo_doc: IotaDocument,
+    subject_foo_doc: CoreDocument,
     subject_foo_key: KeyPair,
     credential_foo: Credential,
     // issuer of credential_bar
-    issuer_bar_doc: IotaDocument,
+    issuer_bar_doc: CoreDocument,
     issuer_bar_key: KeyPair,
     credential_bar: Credential,
   }
@@ -371,9 +383,9 @@ mod tests {
       &holder_doc,
       &[&issuer_foo_doc, &issuer_bar_doc],
       &presentation_validation_options,
-      FailFast::FirstError
+      FailFast::FirstError,
     ))
-    .is_ok());
+      .is_ok());
   }
 
   #[test]
@@ -410,9 +422,9 @@ mod tests {
     assert!(PresentationValidator::verify_presentation_signature(
       &presentation,
       &holder_doc,
-      &presentation_verifier_options
+      &presentation_verifier_options,
     )
-    .is_err());
+      .is_err());
 
     // now check that full_validation also fails
     let issued_before = Timestamp::parse("2030-01-01T00:00:00Z").unwrap();
@@ -433,7 +445,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-    .unwrap_err();
+      .unwrap_err();
 
     assert_eq!(error.presentation_validation_errors.len(), 1);
     assert!(error.credential_errors.is_empty());
@@ -489,7 +501,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-    .unwrap_err();
+      .unwrap_err();
     assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
     assert!(matches!(
       error.credential_errors.get(&1),
@@ -561,7 +573,7 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-    .unwrap_err();
+      .unwrap_err();
 
     assert!(error.presentation_validation_errors.is_empty() && error.credential_errors.len() == 1);
     let validation_errors_credential_idx1 = &error.credential_errors.get(&1).unwrap().validation_errors;
@@ -582,7 +594,7 @@ mod tests {
       &options,
       FailFast::FirstError,
     )
-    .is_ok());
+      .is_ok());
     // finally check that full_validation now does not pass if we declare that the subject must always be the holder.
     let options = options.subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject);
 
@@ -593,7 +605,7 @@ mod tests {
       &options,
       FailFast::FirstError,
     )
-    .is_err());
+      .is_err());
   }
 
   #[test]
@@ -661,15 +673,15 @@ mod tests {
       &presentation_validation_options,
       FailFast::FirstError,
     )
-    .unwrap_err();
+      .unwrap_err();
 
     assert_eq!(
       1,
       presentation_validation_errors.len()
         + credential_errors
-          .values()
-          .map(|error| error.validation_errors.len())
-          .sum::<usize>()
+        .values()
+        .map(|error| error.validation_errors.len())
+        .sum::<usize>()
     );
   }
 
@@ -738,14 +750,14 @@ mod tests {
       &presentation_validation_options,
       FailFast::AllErrors,
     )
-    .unwrap_err();
+      .unwrap_err();
 
     assert!(
       presentation_validation_errors.len()
         + credential_errors
-          .values()
-          .map(|error| error.validation_errors.len())
-          .sum::<usize>()
+        .values()
+        .map(|error| error.validation_errors.len())
+        .sum::<usize>()
         >= 6
     );
   }

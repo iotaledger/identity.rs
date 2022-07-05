@@ -17,7 +17,7 @@ brotli = { version = "3.3", default-features = false, features = ["std"] }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
-identity_credential = { version = "=0.6.0", path = "../identity_credential" }
+identity_credential = { version = "=0.6.0", path = "../identity_credential", default-feature = false, features = ["validator"] }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 identity_iota_core = { version = "=0.6.0", path = "../identity_iota_core", default-features = false }
 itertools = { version = "0.10" }
@@ -52,7 +52,7 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 default = ["revocation-bitmap"]
 
 # Enables revocation with `RevocationBitmap2022`.
-revocation-bitmap = ["identity_iota_core/revocation-bitmap"]
+revocation-bitmap = ["identity_iota_core/revocation-bitmap", "identity_credential/revocation-bitmap"]
 
 [package.metadata.docs.rs]
 # To build locally:
