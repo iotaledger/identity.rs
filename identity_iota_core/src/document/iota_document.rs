@@ -22,6 +22,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::document::CoreDocument;
+use identity_did::document::Document;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::DocumentSigner;
@@ -448,7 +449,7 @@ impl IotaDocument {
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     self.document.verify_data(data, options).map_err(Into::into)
   }
@@ -616,6 +617,41 @@ impl IotaDocument {
         }
       })
       .collect()
+  }
+}
+
+impl Document for IotaDocument {
+  type D = IotaDID;
+  type U = Object;
+  type V = Object;
+
+  fn id(&self) -> &Self::D {
+    IotaDocument::id(self)
+  }
+
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.core_document().resolve_service(query)
+  }
+
+  fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.core_document().resolve_method(query, scope)
+  }
+
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_did::Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    self.core_document().verify_data(data, options)
   }
 }
 

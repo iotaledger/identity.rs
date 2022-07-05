@@ -10,8 +10,8 @@ pub trait GetSignature {
 }
 
 impl<'a, T> GetSignature for Box<T>
-  where
-    T: GetSignature,
+where
+  T: GetSignature,
 {
   fn signature(&self) -> Option<&Proof> {
     (*self).as_ref().signature()

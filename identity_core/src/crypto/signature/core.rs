@@ -83,7 +83,7 @@ pub trait Verifier<Public: ?Sized>: Named {
   /// Extracts and verifies a proof [signature][`Proof`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
   where
-    T: serde::Serialize + GetSignature + ?Sized,
+    T: Serialize + GetSignature + ?Sized,
   {
     let signature: &Proof = data.signature().ok_or(Error::MissingSignature)?;
 

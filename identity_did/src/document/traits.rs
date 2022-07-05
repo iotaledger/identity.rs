@@ -1,21 +1,24 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Serialize;
-use identity_core::common::KeyComparable;
-use identity_core::crypto::GetSignature;
 use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::service::Service;
-use crate::utils::{DIDUrlQuery, Queryable};
+use crate::utils::DIDUrlQuery;
+use crate::utils::Queryable;
 use crate::verifiable::VerifierOptions;
-use crate::verification::{MethodScope, VerificationMethod};
+use crate::verification::MethodScope;
+use crate::verification::VerificationMethod;
 use crate::Result;
+use identity_core::common::KeyComparable;
+use identity_core::crypto::GetSignature;
+use serde::Serialize;
 
 /// Common operations for DID Documents.
 // TODO: add sign_data, split sign/verify to separate trait as first step towards
 //       supporting custom signature schemes.
 //       Remove DocumentSigner?
+//       Add DocumentMut for mutable function returns?
 pub trait Document {
   type D: DID;
   type U;
@@ -70,12 +73,9 @@ pub trait Document {
   // }
 
   /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
-  fn resolve_service<'query, 'me, Q>(
-    &'me self,
-    query: Q,
-  ) -> Option<&Service<Self::D, Self::V>>
-    where
-      Q: Into<DIDUrlQuery<'query>>;
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>;
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
@@ -84,8 +84,8 @@ pub trait Document {
     query: Q,
     scope: Option<MethodScope>,
   ) -> Option<&VerificationMethod<Self::D, Self::U>>
-    where
-      Q: Into<DIDUrlQuery<'query>>;
+  where
+    Q: Into<DIDUrlQuery<'query>>;
 
   /// Verifies the signature of the provided data.
   ///
@@ -94,32 +94,6 @@ pub trait Document {
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
   fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
-    where
-      X: Serialize + GetSignature + ?Sized;
-}
-impl<D, T, U, V> Document for CoreDocument<D, T, U, V>
   where
-    D: DID + KeyComparable,
-{
-  type D = D;
-  type U = U;
-  type V = V;
-
-  fn id(&self) -> &D {
-    CoreDocument::id(self)
-  }
-
-  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>> where Q: Into<DIDUrlQuery<'query>> {
-    self
-      .service()
-      .query(query.into())
-  }
-
-  fn resolve_method<'query, 'me, Q>(&'me self, query: Q, scope: Option<MethodScope>) -> Option<&VerificationMethod<D, U>> where Q: Into<DIDUrlQuery<'query>> {
-    CoreDocument::resolve_method(self, query, scope)
-  }
-
-  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()> where X: Serialize + GetSignature + ?Sized {
-    CoreDocument::verify_data(self, data, options)
-  }
+    X: Serialize + GetSignature + ?Sized;
 }

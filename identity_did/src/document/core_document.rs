@@ -25,13 +25,14 @@ use identity_core::crypto::Verifier;
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
 use crate::did::DID;
+use crate::document::Document;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
-use crate::verifiable::{DocumentSigner};
+use crate::verifiable::DocumentSigner;
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodRef;
 use crate::verification::MethodRelationship;
@@ -750,6 +751,44 @@ where
     }
 
     Ok(())
+  }
+}
+
+impl<D, T, U, V> Document for CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
+  type D = D;
+  type U = U;
+  type V = V;
+
+  fn id(&self) -> &Self::D {
+    CoreDocument::id(self)
+  }
+
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.service().query(query.into())
+  }
+
+  fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    CoreDocument::resolve_method(self, query, scope)
+  }
+
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    CoreDocument::verify_data(self, data, options)
   }
 }
 
