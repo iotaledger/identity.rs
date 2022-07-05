@@ -31,7 +31,7 @@ use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDUrlQuery;
 use crate::utils::Queryable;
-use crate::verifiable::DocumentSigner;
+use crate::verifiable::{DocumentSigner};
 use crate::verifiable::VerifierOptions;
 use crate::verification::MethodRef;
 use crate::verification::MethodRelationship;
@@ -672,7 +672,7 @@ where
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     let signature: &Proof = data.signature().ok_or(Error::InvalidSignature("missing signature"))?;
 
@@ -736,7 +736,7 @@ where
   /// serialization fails, or the verification operation fails.
   fn do_verify<X>(method: &VerificationMethod<D, U>, data: &X) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     let public_key: Vec<u8> = method.data().try_decode()?;
 

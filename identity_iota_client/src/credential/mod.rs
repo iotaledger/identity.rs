@@ -14,10 +14,12 @@ pub use self::validation_options::FailFast;
 pub use self::validation_options::PresentationValidationOptions;
 pub use self::validation_options::StatusCheck;
 pub use self::validation_options::SubjectHolderRelationship;
+pub use self::traits::ValidatorDocument;
 
 mod credential_validator;
 mod errors;
 mod presentation_validator;
 #[cfg(test)]
 mod test_utils;
+mod traits;
 mod validation_options;

@@ -73,17 +73,17 @@ pub trait Signer<Secret: ?Sized>: Named {
 // =============================================================================
 // =============================================================================
 
-/// A common interface for digital signature verification
+/// A common interface for digital signature verification.
 pub trait Verifier<Public: ?Sized>: Named {
   /// Verifies the authenticity of `data` and `signature`.
   fn verify<T>(data: &T, signature: &ProofValue, public: &Public) -> Result<()>
   where
-    T: Serialize;
+    T: Serialize + ?Sized;
 
   /// Extracts and verifies a proof [signature][`Proof`] from the given `data`.
   fn verify_signature<T>(data: &T, public: &Public) -> Result<()>
   where
-    T: Serialize + GetSignature,
+    T: serde::Serialize + GetSignature + ?Sized,
   {
     let signature: &Proof = data.signature().ok_or(Error::MissingSignature)?;
 
@@ -93,7 +93,7 @@ pub trait Verifier<Public: ?Sized>: Named {
 
     signature.hide_value();
 
-    Self::verify(&data, signature.value(), public)?;
+    Self::verify(data, signature.value(), public)?;
 
     signature.show_value();
 

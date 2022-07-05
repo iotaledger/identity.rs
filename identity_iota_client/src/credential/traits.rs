@@ -1,0 +1,72 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::error::Error;
+use identity_core::crypto::GetSignature;
+use identity_did::did::DID;
+use identity_did::document::Document;
+use identity_did::revocation::RevocationBitmap;
+use identity_did::utils::DIDUrlQuery;
+use identity_did::verifiable::VerifierOptions;
+
+use crate::credential::traits::private::Sealed;
+
+/// Abstraction over DID Documents for validating presentations and credentials.
+///
+/// NOTE: this is a sealed trait and not intended to be used externally or implemented manually.
+/// There is a blanket implementation for the [`Document`] trait which downstream DID Document
+/// developers should implement to be compatible.
+pub trait ValidatorDocument: Sealed {
+  fn did_str(&self) -> &str;
+
+  // TODO: remove generic parameter from Credential...
+  // fn verify<T>(&self, credential: &Credential<T>, options: &VerifierOptions) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+  fn verify(&self, data: &dyn Verifiable, options: &VerifierOptions) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap>;
+}
+
+mod private {
+  use super::*;
+
+  pub trait Sealed {}
+
+  impl<T> Sealed for T where T: Document {}
+}
+
+/// Workaround to satisfy the trait bounds [`serde::Serialize`] + [`GetSignature`] with dynamic
+/// dispatch in an object-safe way.
+pub trait Verifiable: erased_serde::Serialize + GetSignature {}
+
+impl<T> Verifiable for T where T: erased_serde::Serialize + GetSignature {}
+
+impl<'a> serde::Serialize for dyn Verifiable + 'a {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer
+  {
+    erased_serde::serialize(self, serializer)
+  }
+}
+
+impl<DOC> ValidatorDocument for DOC
+where DOC: Document
+{
+  fn did_str(&self) -> &str {
+    self.id().as_str()
+  }
+
+  fn verify(&self, data: &dyn Verifiable, options: &VerifierOptions) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    self.verify_data(data, options).map_err(Into::into)
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap> {
+    self
+      .resolve_service(query)
+      .ok_or(identity_did::Error::InvalidService(
+        "revocation bitmap service not found",
+      ))
+      .and_then(|service| RevocationBitmap::try_from(service))
+  }
+}
