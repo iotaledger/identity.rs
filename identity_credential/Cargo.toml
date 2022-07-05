@@ -8,13 +8,17 @@ keywords = ["iota", "tangle", "identity"]
 license = "Apache-2.0"
 readme = "./README.md"
 repository = "https://github.com/iotaledger/identity.rs"
+rust-version = "1.60"
 description = "An implementation of the Verifiable Credentials standard."
 
 [dependencies]
+erased-serde = { version = "0.3.21", default-features = false, features = ["std"], optional = true }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+itertools = { version = "0.10", default-features = false, features = ["use_std"], optional = true }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+serde_repr = { version = "0.1", default-features = false }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 
@@ -28,5 +32,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["revocation-bitmap"]
+default = ["revocation-bitmap", "validator"]
 revocation-bitmap = []
+validator = ["dep:itertools", "dep:erased-serde"]

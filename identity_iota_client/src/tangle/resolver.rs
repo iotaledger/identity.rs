@@ -5,20 +5,21 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use serde::Serialize;
+
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
+use identity_credential::validator::FailFast;
+use identity_credential::validator::PresentationValidationOptions;
+use identity_credential::validator::PresentationValidator;
+use identity_credential::validator::ValidatorDocument;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
 use identity_iota_core::tangle::NetworkName;
-use serde::Serialize;
 
 use crate::chain::ChainHistory;
 use crate::chain::DocumentHistory;
-use crate::credential::FailFast;
-use crate::credential::PresentationValidationOptions;
-use crate::credential::PresentationValidator;
-use crate::credential::ValidatorDocument;
 use crate::document::ResolvedIotaDocument;
 use crate::error::Error;
 use crate::error::Result;
@@ -107,10 +108,10 @@ where
     &self,
     credential: &Credential<U>,
   ) -> Result<ResolvedIotaDocument> {
-    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str()).map_err(|error| {
-      Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
-        signer_ctx: crate::credential::SignerContext::Issuer,
-        source: error.into(),
+    let issuer: IotaDID = IotaDID::parse(credential.issuer.url().as_str()).map_err(|err| {
+      Error::IsolatedValidationError(identity_credential::validator::ValidationError::SignerUrl {
+        signer_ctx: identity_credential::validator::SignerContext::Issuer,
+        source: err.into(),
       })
     })?;
     self.resolve(&issuer).await
@@ -133,8 +134,8 @@ where
       .map(|credential| IotaDID::parse(credential.issuer.url().as_str()))
       .map(|url_result| {
         url_result.map_err(|error| {
-          Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
-            signer_ctx: crate::credential::SignerContext::Issuer,
+          Error::IsolatedValidationError(identity_credential::validator::ValidationError::SignerUrl {
+            signer_ctx: identity_credential::validator::SignerContext::Issuer,
             source: error.into(),
           })
         })
@@ -155,11 +156,11 @@ where
     presentation: &Presentation<U, V>,
   ) -> Result<ResolvedIotaDocument> {
     let holder_url: &Url = presentation.holder.as_ref().ok_or(Error::IsolatedValidationError(
-      crate::credential::ValidationError::MissingPresentationHolder,
+      identity_credential::validator::ValidationError::MissingPresentationHolder,
     ))?;
     let holder: IotaDID = IotaDID::parse(holder_url.as_str()).map_err(|error| {
-      Error::IsolatedValidationError(crate::credential::ValidationError::SignerUrl {
-        signer_ctx: crate::credential::SignerContext::Holder,
+      Error::IsolatedValidationError(identity_credential::validator::ValidationError::SignerUrl {
+        signer_ctx: identity_credential::validator::SignerContext::Holder,
         source: error.into(),
       })
     })?;

@@ -6,19 +6,15 @@ use serde::Serialize;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_credential::credential::Credential;
-#[cfg(feature = "revocation-bitmap")]
-use identity_credential::credential::RevocationBitmapStatus;
-use identity_did::did::CoreDID;
+use identity_did::did::{CoreDID, CoreDIDUrl};
 use identity_did::did::DID;
 #[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
 use identity_did::verifiable::VerifierOptions;
-use identity_iota_core::did::IotaDID;
-#[cfg(feature = "revocation-bitmap")]
-use identity_iota_core::did::IotaDIDUrl;
 
-use crate::credential::ValidatorDocument;
+use crate::credential::Credential;
+#[cfg(feature = "revocation-bitmap")]
+use crate::credential::RevocationBitmapStatus;
 
 use super::errors::CompoundCredentialValidationError;
 use super::errors::SignerContext;
@@ -28,6 +24,7 @@ use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
+use super::ValidatorDocument;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -196,15 +193,15 @@ impl CredentialValidator {
             return Ok(());
           }
           return Err(ValidationError::InvalidStatus(
-            identity_credential::Error::InvalidStatus(format!("unsupported type '{}'", status.type_)),
+            crate::Error::InvalidStatus(format!("unsupported type '{}'", status.type_)),
           ));
         }
         let status: RevocationBitmapStatus =
           RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
 
         // Check the credential index against the issuer's DID Document.
-        let issuer_did: IotaDID =
-          IotaDID::parse(credential.issuer.url().as_str()).map_err(|e| ValidationError::SignerUrl {
+        let issuer_did: CoreDID =
+          CoreDID::parse(credential.issuer.url().as_str()).map_err(|e| ValidationError::SignerUrl {
             source: e.into(),
             signer_ctx: SignerContext::Issuer,
           })?;
@@ -224,7 +221,7 @@ impl CredentialValidator {
     issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: IotaDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+    let issuer_service_url: CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
@@ -296,8 +293,6 @@ impl CredentialValidator {
 
 #[cfg(test)]
 mod tests {
-  use proptest::proptest;
-
   use identity_core::common::Duration;
   use identity_core::common::Object;
   use identity_core::common::OneOrMany;
@@ -310,6 +305,7 @@ mod tests {
   use identity_did::did::DID;
   use identity_iota_core::document::IotaDocument;
   use identity_iota_core::document::IotaService;
+  use proptest::proptest;
 
   use crate::credential::test_utils;
   use crate::credential::CredentialValidationOptions;

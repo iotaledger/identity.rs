@@ -5,20 +5,20 @@ use std::collections::BTreeMap;
 
 use serde::Serialize;
 
-use identity_credential::presentation::Presentation;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::verifiable::VerifierOptions;
 
-use crate::credential::credential_validator::CredentialValidator;
-use crate::credential::ValidatorDocument;
+use crate::presentation::Presentation;
 
 use super::errors::CompoundCredentialValidationError;
 use super::errors::CompoundPresentationValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+use super::CredentialValidator;
 use super::FailFast;
 use super::PresentationValidationOptions;
+use super::ValidatorDocument;
 
 /// A struct for validating [`Presentation`]s.
 #[derive(Debug, Clone)]

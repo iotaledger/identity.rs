@@ -8,8 +8,8 @@ use identity_did::revocation::RevocationBitmap;
 use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::VerifierOptions;
 
-use crate::credential::validator_document::private::Sealed;
-use crate::credential::validator_document::private::Verifiable;
+use self::private::Sealed;
+use self::private::Verifiable;
 
 /// Abstraction over DID Documents for validating presentations and credentials.
 ///
@@ -17,14 +17,27 @@ use crate::credential::validator_document::private::Verifiable;
 /// A blanket implementation is provided for the [`Document`] trait, which can be implemented
 /// instead to be compatible. Any changes to this trait will be considered non-breaking.
 pub trait ValidatorDocument: Sealed {
+  /// Returns the string identifier of the DID Document.
   fn did_str(&self) -> &str;
 
+  /// Verifies the signature of the provided data against the DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, data
+  /// serialization fails, or the verification operation fails.
   fn verify_data(
     &self,
     data: &dyn Verifiable,
     options: &VerifierOptions,
   ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 
+  /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the referenced service is not found, or is not a
+  /// valid `RevocationBitmap2022` service.
   #[cfg(feature = "revocation-bitmap")]
   fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap>;
 }

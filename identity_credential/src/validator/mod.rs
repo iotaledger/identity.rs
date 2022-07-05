@@ -3,6 +3,8 @@
 
 //! Verifiable Credential and Presentation validators.
 
+#![cfg(feature = "validator")]
+
 pub use self::credential_validator::CredentialValidator;
 pub use self::errors::CompoundCredentialValidationError;
 pub use self::errors::CompoundPresentationValidationError;
