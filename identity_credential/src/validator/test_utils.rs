@@ -27,7 +27,7 @@ pub(super) fn generate_document_with_keys() -> (CoreDocument, KeyPair) {
   .unwrap();
   let document: CoreDocument = CoreDocument::builder(Object::new())
     .id(did.clone())
-    .verification_method(VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "#sign-0").unwrap())
+    .verification_method(VerificationMethod::new(did, KeyType::Ed25519, keypair.public(), "#root").unwrap())
     .build()
     .unwrap();
   (document, keypair)
