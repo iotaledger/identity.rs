@@ -10,7 +10,7 @@ use identity_iota::client::ClientBuilder;
 use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::client::Resolver;
 use identity_iota::client::ResolverBuilder;
-use identity_iota::core::Url;
+use identity_iota::credential::PresentationValidator;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::NetworkName;
 use js_sys::Promise;
@@ -215,14 +215,7 @@ impl WasmResolver {
   pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseResolvedDocument> {
     // TODO: reimplemented function to avoid cloning the entire presentation.
     //       Would be solved with Rc internal representation, pending memory leak discussions.
-    let holder_url: &Url = presentation
-      .0
-      .holder
-      .as_ref()
-      .ok_or(identity_iota::client::ValidationError::MissingPresentationHolder)
-      .map_err(identity_iota::client::Error::from)
-      .wasm_result()?;
-    let holder: IotaDID = IotaDID::parse(holder_url.as_str()).wasm_result()?;
+    let holder: IotaDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
 
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
