@@ -13,12 +13,11 @@ use crate::verification::MethodScope;
 use crate::verification::VerificationMethod;
 use crate::Result;
 
-/// Common operations for DID Documents.
 // TODO: add sign_data, split sign/verify to separate trait as first step towards
-//       supporting custom signature schemes.
-//       Remove DocumentSigner?
+//       supporting custom signature schemes. Replace DocumentSigner with trait?
 //       Add DocumentMut for mutable function returns?
 //       Blanket impl for &T, &mut T, Box<T> etc.?
+/// Common operations for DID Documents.
 pub trait Document {
   type D: DID;
   type U;
@@ -26,51 +25,6 @@ pub trait Document {
 
   /// Returns a reference to the `Document` id.
   fn id(&self) -> &Self::D;
-
-  // /// Returns a reference to the `CoreDocument` controller.
-  // pub fn controller(&self) -> Option<&OneOrSet<D>> {
-  //   self.controller.as_ref()
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` alsoKnownAs set.
-  // pub fn also_known_as(&self) -> &OrderedSet<Url> {
-  //   &self.also_known_as
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` verificationMethod set.
-  // pub fn verification_method(&self) -> &OrderedSet<VerificationMethod<D, U>> {
-  //   &self.verification_method
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` authentication set.
-  // pub fn authentication(&self) -> &OrderedSet<MethodRef<D, U>> {
-  //   &self.authentication
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` assertionMethod set.
-  // pub fn assertion_method(&self) -> &OrderedSet<MethodRef<D, U>> {
-  //   &self.assertion_method
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` keyAgreement set.
-  // pub fn key_agreement(&self) -> &OrderedSet<MethodRef<D, U>> {
-  //   &self.key_agreement
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` capabilityDelegation set.
-  // pub fn capability_delegation(&self) -> &OrderedSet<MethodRef<D, U>> {
-  //   &self.capability_delegation
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` capabilityInvocation set.
-  // pub fn capability_invocation(&self) -> &OrderedSet<MethodRef<D, U>> {
-  //   &self.capability_invocation
-  // }
-  //
-  // /// Returns a reference to the `CoreDocument` service set.
-  // pub fn service(&self) -> &OrderedSet<Service<D, V>> {
-  //   &self.service
-  // }
 
   /// Returns the first [`Service`] with an `id` property matching the provided `query`, if present.
   fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
