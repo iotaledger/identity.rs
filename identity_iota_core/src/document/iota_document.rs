@@ -666,27 +666,31 @@ mod iota_document_revocation {
   use super::IotaDocument;
 
   impl IotaDocument {
-    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
     /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_id: Q, credential_indices: &[u32]) -> Result<()>
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
       self
         .core_document_mut()
-        .revoke_credentials(service_id, credential_indices)
+        .revoke_credentials(service_query, credential_indices)
         .map_err(Error::RevocationError)
     }
 
-    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
+    /// If the document has a [`RevocationBitmap`] service with an id by `service_query`,
     /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_id: Q, credential_indices: &[u32]) -> Result<()>
+    pub fn unrevoke_credentials<'query, 'me, Q>(
+      &'me mut self,
+      service_query: Q,
+      credential_indices: &[u32],
+    ) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
       self
         .core_document_mut()
-        .unrevoke_credentials(service_id, credential_indices)
+        .unrevoke_credentials(service_query, credential_indices)
         .map_err(Error::RevocationError)
     }
   }

@@ -71,7 +71,7 @@ impl CredentialValidator {
   ) -> CredentialValidationResult {
     Self::validate_extended(
       credential,
-      std::slice::from_ref(&(issuer as &dyn ValidatorDocument)),
+      std::slice::from_ref(&issuer.as_validator()),
       options,
       None,
       fail_fast,

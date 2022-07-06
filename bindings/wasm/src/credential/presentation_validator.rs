@@ -1,15 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::credential::PresentationValidator;
+use identity_iota::credential::ValidatorDocument;
 use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
 use wasm_bindgen::prelude::*;
 
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayDocumentOrArrayResolvedDocument;
+use crate::did::ArrayDocumentOrResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmDID;
 use crate::did::WasmVerifierOptions;
@@ -51,13 +52,14 @@ impl WasmPresentationValidator {
   pub fn validate(
     presentation: &WasmPresentation,
     holder: &DocumentOrResolvedDocument,
-    issuers: &ArrayDocumentOrArrayResolvedDocument,
+    issuers: &ArrayDocumentOrResolvedDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let holder: ResolvedIotaDocument = holder.into_serde().wasm_result()?;
-    let issuers: Vec<ResolvedIotaDocument> = issuers.into_serde().wasm_result()?;
-    PresentationValidator::validate(&presentation.0, &holder, &issuers, &options.0, fail_fast.into()).wasm_result()
+    let holder: IotaDocument = holder.into_serde().wasm_result()?;
+    let issuers: Vec<IotaDocument> = issuers.into_serde().wasm_result()?;
+    let issuer_refs: Vec<&dyn ValidatorDocument> = issuers.iter().map(ValidatorDocument::as_validator).collect();
+    PresentationValidator::validate(&presentation.0, &holder, &issuer_refs, &options.0, fail_fast.into()).wasm_result()
   }
 
   /// Verify the presentation's signature using the resolved document of the holder.
@@ -74,7 +76,7 @@ impl WasmPresentationValidator {
     holder: &DocumentOrResolvedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let holder: ResolvedIotaDocument = holder.into_serde().wasm_result()?;
+    let holder: IotaDocument = holder.into_serde().wasm_result()?;
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 

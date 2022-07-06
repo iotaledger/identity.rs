@@ -6,6 +6,7 @@ use identity_iota::core::Url;
 use identity_iota::credential::CredentialValidator;
 use identity_iota::credential::StatusCheck;
 use identity_iota::credential::ValidationError;
+use identity_iota::credential::ValidatorDocument;
 use identity_iota::iota_core::IotaDID;
 use identity_iota::iota_core::IotaDocument;
 use wasm_bindgen::prelude::*;
@@ -13,7 +14,7 @@ use wasm_bindgen::prelude::*;
 use crate::common::WasmTimestamp;
 use crate::credential::validation_options::WasmFailFast;
 use crate::credential::validation_options::WasmStatusCheck;
-use crate::did::ArrayDocumentOrArrayResolvedDocument;
+use crate::did::ArrayDocumentOrResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
 use crate::did::WasmDID;
 use crate::did::WasmVerifierOptions;
@@ -100,11 +101,13 @@ impl WasmCredentialValidator {
   #[wasm_bindgen(js_name = verifySignature)]
   pub fn verify_signature(
     credential: &WasmCredential,
-    trusted_issuers: &ArrayDocumentOrArrayResolvedDocument,
+    trusted_issuers: &ArrayDocumentOrResolvedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let trusted_issuers: Vec<ResolvedIotaDocument> = trusted_issuers.into_serde().wasm_result()?;
-    CredentialValidator::verify_signature(&credential.0, trusted_issuers.as_slice(), &options.0).wasm_result()
+    let trusted_issuers: Vec<IotaDocument> = trusted_issuers.into_serde().wasm_result()?;
+    let issuer_refs: Vec<&dyn ValidatorDocument> =
+      trusted_issuers.iter().map(ValidatorDocument::as_validator).collect();
+    CredentialValidator::verify_signature(&credential.0, &issuer_refs, &options.0).wasm_result()
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
@@ -125,12 +128,13 @@ impl WasmCredentialValidator {
   #[allow(non_snake_case)]
   pub fn check_status(
     credential: &WasmCredential,
-    trustedIssuers: &ArrayDocumentOrArrayResolvedDocument,
+    trustedIssuers: &ArrayDocumentOrResolvedDocument,
     statusCheck: WasmStatusCheck,
   ) -> Result<()> {
     let trusted_issuers: Vec<IotaDocument> = trustedIssuers.into_serde().wasm_result()?;
+    let issuer_refs: Vec<&dyn ValidatorDocument> = trusted_issuers.iter().map(|issuer| issuer.as_validator()).collect();
     let status_check: StatusCheck = StatusCheck::from(statusCheck);
-    CredentialValidator::check_status(&credential.0, trusted_issuers.as_slice(), status_check).wasm_result()
+    CredentialValidator::check_status(&credential.0, &issuer_refs, status_check).wasm_result()
   }
 
   /// Utility for extracting the issuer field of a `Credential` as a DID.

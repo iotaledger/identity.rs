@@ -35,8 +35,8 @@ extern "C" {
   #[wasm_bindgen(typescript_type = "Document | ResolvedDocument")]
   pub type DocumentOrResolvedDocument;
 
-  #[wasm_bindgen(typescript_type = "Array<Document> | Array<ResolvedDocument>")]
-  pub type ArrayDocumentOrArrayResolvedDocument;
+  #[wasm_bindgen(typescript_type = "Array<Document | ResolvedDocument>")]
+  pub type ArrayDocumentOrResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = ResolvedDocument)]

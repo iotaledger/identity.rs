@@ -11,6 +11,7 @@ const {
     Presentation,
     ProofOptions,
     RevocationBitmap,
+    Resolver,
     Service,
     KeyPair,
     VerifierOptions,

@@ -17,6 +17,15 @@ use self::private::Verifiable;
 /// A blanket implementation is provided for the [`Document`] trait, which can be implemented
 /// instead to be compatible. Any changes to this trait will be considered non-breaking.
 pub trait ValidatorDocument: Sealed {
+  /// Convenience function for casting self to the required trait.
+  /// Equivalent to `self as &dyn ValidatorDocument`.
+  fn as_validator(&self) -> &dyn ValidatorDocument
+  where
+    Self: Sized,
+  {
+    self as &dyn ValidatorDocument
+  }
+
   /// Returns the string identifier of the DID Document.
   fn did_str(&self) -> &str;
 
@@ -50,7 +59,7 @@ mod private {
   impl<T> Sealed for T where T: Document {}
 
   /// Object-safe trait workaround to satisfy the trait bounds
-  /// [`serde::Serialize`] + [`GetSignature`] with dynamic dispatch.
+  /// [`serde::Serialize`] + [`GetSignature`].
   pub trait Verifiable: erased_serde::Serialize + GetSignature {}
 
   impl<T> Verifiable for T where T: erased_serde::Serialize + GetSignature {}

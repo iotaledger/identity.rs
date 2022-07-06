@@ -181,7 +181,7 @@ where
         let resolved_issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
         let issuers: Vec<&dyn ValidatorDocument> = resolved_issuers
           .iter()
-          .map(|resolved| &resolved.document as &dyn ValidatorDocument)
+          .map(|resolved| resolved.document.as_validator())
           .collect();
         PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
       }
@@ -197,7 +197,7 @@ where
         .await?;
         let issuers: Vec<&dyn ValidatorDocument> = resolved_issuers
           .iter()
-          .map(|resolved| &resolved.document as &dyn ValidatorDocument)
+          .map(|resolved| resolved.document.as_validator())
           .collect();
         PresentationValidator::validate(presentation, &holder.document, &issuers, options, fail_fast)
       }
