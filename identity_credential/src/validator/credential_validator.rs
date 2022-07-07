@@ -121,8 +121,8 @@ impl CredentialValidator {
       .and_then(|issuer| {
         issuer
           .verify_data(credential, options)
-          .map_err(|error| ValidationError::Signature {
-            source: error,
+          .map_err(|err| ValidationError::Signature {
+            source: err.into(),
             signer_ctx: SignerContext::Issuer,
           })
       })

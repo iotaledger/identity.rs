@@ -126,7 +126,7 @@ impl PresentationValidator {
     holder
       .verify_data(&presentation, options)
       .map_err(|err| ValidationError::Signature {
-        source: err,
+        source: err.into(),
         signer_ctx: SignerContext::Holder,
       })
   }

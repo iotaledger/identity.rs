@@ -36,11 +36,7 @@ pub trait ValidatorDocument: Sealed {
   ///
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the verification operation fails.
-  fn verify_data(
-    &self,
-    data: &dyn Verifiable,
-    options: &VerifierOptions,
-  ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()>;
 
   /// Extracts the `RevocationBitmap` from the referenced service in the DID Document.
   ///
@@ -81,11 +77,7 @@ impl ValidatorDocument for &dyn ValidatorDocument {
     (*self).did_str()
   }
 
-  fn verify_data(
-    &self,
-    data: &dyn Verifiable,
-    options: &VerifierOptions,
-  ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
     (*self).verify_data(data, options)
   }
 
@@ -103,11 +95,7 @@ where
     self.id().as_str()
   }
 
-  fn verify_data(
-    &self,
-    data: &dyn Verifiable,
-    options: &VerifierOptions,
-  ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+  fn verify_data(&self, data: &dyn Verifiable, options: &VerifierOptions) -> identity_did::Result<()> {
     self.verify_data(data, options).map_err(Into::into)
   }
 
