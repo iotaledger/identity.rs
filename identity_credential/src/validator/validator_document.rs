@@ -17,7 +17,8 @@ use self::private::Verifiable;
 /// A blanket implementation is provided for the [`Document`] trait, which can be implemented
 /// instead to be compatible. Any changes to this trait will be considered non-breaking.
 pub trait ValidatorDocument: Sealed {
-  /// Convenience function for casting self to the required trait.
+  /// Convenience function for casting self to the trait.
+  ///
   /// Equivalent to `self as &dyn ValidatorDocument`.
   fn as_validator(&self) -> &dyn ValidatorDocument
   where
@@ -57,6 +58,7 @@ mod private {
   pub trait Sealed {}
 
   impl<T> Sealed for T where T: Document {}
+  impl Sealed for &dyn ValidatorDocument {}
 
   /// Object-safe trait workaround to satisfy the trait bounds
   /// [`serde::Serialize`] + [`GetSignature`].
@@ -71,6 +73,25 @@ mod private {
     {
       erased_serde::serialize(self, serializer)
     }
+  }
+}
+
+impl ValidatorDocument for &dyn ValidatorDocument {
+  fn did_str(&self) -> &str {
+    (*self).did_str()
+  }
+
+  fn verify_data(
+    &self,
+    data: &dyn Verifiable,
+    options: &VerifierOptions,
+  ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    (*self).verify_data(data, options)
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap> {
+    (*self).resolve_revocation_bitmap(query)
   }
 }
 

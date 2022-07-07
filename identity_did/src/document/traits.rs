@@ -51,3 +51,38 @@ pub trait Document {
   where
     X: Serialize + GetSignature + ?Sized;
 }
+
+impl<DOC: Document> Document for &DOC {
+  type D = DOC::D;
+  type U = DOC::U;
+  type V = DOC::V;
+
+  fn id(&self) -> &Self::D {
+    DOC::id(self)
+  }
+
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    DOC::resolve_service(self, query)
+  }
+
+  fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    DOC::resolve_method(self, query, scope)
+  }
+
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    DOC::verify_data(self, data, options)
+  }
+}

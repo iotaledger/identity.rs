@@ -58,10 +58,10 @@ impl PresentationValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<U: Serialize, V: Serialize>(
+  pub fn validate<HDOC: ValidatorDocument + ?Sized, IDOC: ValidatorDocument, U: Serialize, V: Serialize>(
     presentation: &Presentation<U, V>,
-    holder: &dyn ValidatorDocument,
-    issuers: &[&dyn ValidatorDocument],
+    holder: &HDOC,
+    issuers: &[IDOC],
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> PresentationValidationResult {
@@ -176,9 +176,9 @@ impl PresentationValidator {
   // - the relationship between the holder and the credential subjects,
   // - the signatures and some properties of the constituent credentials (see
   // [`CredentialValidator::validate`]).
-  fn validate_credentials<U, V: Serialize>(
+  fn validate_credentials<DOC: ValidatorDocument, U, V: Serialize>(
     presentation: &Presentation<U, V>,
-    issuers: &[&dyn ValidatorDocument],
+    issuers: &[DOC],
     options: &PresentationValidationOptions,
     fail_fast: FailFast,
   ) -> Result<(), BTreeMap<usize, CompoundCredentialValidationError>> {
@@ -544,8 +544,7 @@ mod tests {
       .presentation_verifier_options(presentation_verifier_options)
       .subject_holder_relationship(SubjectHolderRelationship::SubjectOnNonTransferable);
 
-    let trusted_issuers: &[&dyn ValidatorDocument] = &[&issuer_foo_doc, &issuer_bar_doc];
-
+    let trusted_issuers = &[issuer_foo_doc, issuer_bar_doc];
     let holder_doc = subject_foo_doc;
 
     let error = PresentationValidator::validate(
@@ -638,8 +637,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers: &[&dyn ValidatorDocument] = &[&issuer_foo_doc, &issuer_bar_doc];
-
+    let trusted_issuers = &[issuer_foo_doc, issuer_bar_doc];
     let holder_document = subject_foo_doc;
 
     let CompoundPresentationValidationError {
@@ -713,8 +711,7 @@ mod tests {
       .shared_validation_options(credential_validation_options)
       .presentation_verifier_options(presentation_verifier_options);
 
-    let trusted_issuers: &[&dyn ValidatorDocument] = &[&issuer_foo_doc, &issuer_bar_doc];
-
+    let trusted_issuers = &[issuer_foo_doc, issuer_bar_doc];
     let holder_doc = subject_foo_doc;
 
     let CompoundPresentationValidationError {

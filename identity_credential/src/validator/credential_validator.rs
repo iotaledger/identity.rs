@@ -69,13 +69,7 @@ impl CredentialValidator {
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
-    Self::validate_extended(
-      credential,
-      std::slice::from_ref(&issuer.as_validator()),
-      options,
-      None,
-      fail_fast,
-    )
+    Self::validate_extended(credential, std::slice::from_ref(issuer), options, None, fail_fast)
   }
 
   /// Validates the semantic structure of the [`Credential`].
@@ -114,9 +108,9 @@ impl CredentialValidator {
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  pub fn verify_signature<T: Serialize>(
+  pub fn verify_signature<DOC: ValidatorDocument, T: Serialize>(
     credential: &Credential<T>,
-    trusted_issuers: &[&dyn ValidatorDocument],
+    trusted_issuers: &[DOC],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
     let issuer_did: CoreDID = Self::extract_issuer(credential)?;
@@ -173,9 +167,9 @@ impl CredentialValidator {
   ///
   /// Only supports `BitmapRevocation2022`.
   #[cfg(feature = "revocation-bitmap")]
-  pub fn check_status<T>(
+  pub fn check_status<DOC: ValidatorDocument, T>(
     credential: &Credential<T>,
-    trusted_issuers: &[&dyn ValidatorDocument],
+    trusted_issuers: &[DOC],
     status_check: StatusCheck,
   ) -> ValidationUnitResult {
     if status_check == StatusCheck::SkipAll {
@@ -204,7 +198,7 @@ impl CredentialValidator {
           .iter()
           .find(|issuer| issuer.did_str() == issuer_did.as_str())
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-          .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(*issuer, status))
+          .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(issuer, status))
       }
     }
   }
@@ -233,9 +227,9 @@ impl CredentialValidator {
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<T: Serialize>(
+  pub(crate) fn validate_extended<DOC: ValidatorDocument, T: Serialize>(
     credential: &Credential<T>,
-    issuers: &[&dyn ValidatorDocument],
+    issuers: &[DOC],
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,

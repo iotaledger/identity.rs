@@ -16,6 +16,7 @@ use identity_credential::validator::PresentationValidator;
 use identity_credential::validator::ValidatorDocument;
 use identity_iota_core::did::IotaDID;
 use identity_iota_core::diff::DiffMessage;
+use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
 
 use crate::chain::ChainHistory;
@@ -175,15 +176,12 @@ where
   ) -> Result<()> {
     match (holder, issuers) {
       (Some(holder), Some(issuers)) => {
-        PresentationValidator::validate(presentation, holder, issuers, options, fail_fast)
+        PresentationValidator::validate(presentation, &holder, issuers, options, fail_fast)
       }
       (Some(holder), None) => {
         let resolved_issuers: Vec<ResolvedIotaDocument> = self.resolve_presentation_issuers(presentation).await?;
-        let issuers: Vec<&dyn ValidatorDocument> = resolved_issuers
-          .iter()
-          .map(|resolved| resolved.document.as_validator())
-          .collect();
-        PresentationValidator::validate(presentation, holder, issuers.as_slice(), options, fail_fast)
+        let issuers: Vec<IotaDocument> = resolved_issuers.into_iter().map(|resolved| resolved.document).collect();
+        PresentationValidator::validate(presentation, &holder, issuers.as_slice(), options, fail_fast)
       }
       (None, Some(issuers)) => {
         let holder: ResolvedIotaDocument = self.resolve_presentation_holder(presentation).await?;
@@ -195,10 +193,7 @@ where
           self.resolve_presentation_issuers(presentation),
         )
         .await?;
-        let issuers: Vec<&dyn ValidatorDocument> = resolved_issuers
-          .iter()
-          .map(|resolved| resolved.document.as_validator())
-          .collect();
+        let issuers: Vec<IotaDocument> = resolved_issuers.into_iter().map(|resolved| resolved.document).collect();
         PresentationValidator::validate(presentation, &holder.document, &issuers, options, fail_fast)
       }
     }
@@ -459,7 +454,7 @@ mod tests {
           .subject_holder_relationship(SubjectHolderRelationship::AlwaysSubject),
         FailFast::FirstError,
         Some(&subject_doc),
-        Some(&[&issuer_iota_doc, &issuer_core_doc])
+        Some(&[issuer_iota_doc.as_validator(), issuer_core_doc.as_validator()])
       )
       .await
       .is_ok());
@@ -502,7 +497,7 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &subject_doc,
-      &[&issuer_iota_doc, &issuer_core_doc],
+      &[issuer_iota_doc.as_validator(), issuer_core_doc.as_validator()],
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -512,7 +507,7 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &issuer_iota_doc,
-      &[&issuer_iota_doc, &issuer_core_doc],
+      &[issuer_iota_doc.as_validator(), issuer_core_doc.as_validator()],
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -520,7 +515,7 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &issuer_core_doc,
-      &[&issuer_iota_doc, &issuer_core_doc],
+      &[issuer_iota_doc.as_validator(), issuer_core_doc.as_validator()],
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -530,7 +525,7 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &subject_doc,
-      &[&issuer_core_doc],
+      &[issuer_core_doc.as_validator()],
       &presentation_validation_options,
       FailFast::FirstError,
     )
@@ -550,17 +545,18 @@ mod tests {
     assert!(PresentationValidator::validate(
       &presentation,
       &subject_doc,
-      &[&issuer_iota_doc, &subject_doc],
+      &[issuer_iota_doc.as_validator(), subject_doc.as_validator()],
       &presentation_validation_options,
       FailFast::FirstError,
     )
     .is_err());
 
     // INVALID: excluding all issuers fails.
+    let empty_issuers: &[&dyn ValidatorDocument] = &[];
     assert!(PresentationValidator::validate(
       &presentation,
       &subject_doc,
-      &[],
+      empty_issuers,
       &presentation_validation_options,
       FailFast::FirstError,
     )
