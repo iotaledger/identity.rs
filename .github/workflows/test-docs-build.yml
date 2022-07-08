@@ -12,7 +12,7 @@ on:
       - epic/*
       - support/*
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -21,8 +21,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Test Build
+
+      - name: Test Wiki Build
         # TODO Add 'yarn build' as last line once broken links are fixed
         run: |
           cd documentation
           yarn install --immutable
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Test Rust Documentation
+        uses: actions-rs/cargo@v1
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        with:
+          command: doc
+          args: --all-features --no-deps --workspace
