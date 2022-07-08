@@ -52,9 +52,7 @@ impl CredentialValidator {
   /// calling this method.
   ///
   /// ## The state of the issuer's DID Document
-  /// The caller must ensure that `issuer` represents an up-to-date DID Document. The convenience method
-  /// [`Resolver::resolve_credential_issuer`](crate::tangle::Resolver::resolve_credential_issuer()) can help extract
-  /// the latest available state of the issuer's DID Document.
+  /// The caller must ensure that `issuer` represents an up-to-date DID Document.
   ///
   /// ## Properties that are not validated
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:

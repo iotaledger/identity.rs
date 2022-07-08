@@ -46,10 +46,7 @@ impl PresentationValidator {
   /// calling this method.
   ///
   /// ## The state of the supplied DID Documents.
-  /// The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date. The convenience methods
-  /// [`Resolver::resolve_presentation_holder`](crate::tangle::Resolver::resolve_presentation_holder())
-  /// and [`Resolver::resolve_presentation_issuers`](crate::tangle::Resolver::resolve_presentation_issuers())
-  /// can help extract the latest available states of these DID Documents.
+  /// The caller must ensure that the DID Documents in `holder` and `issuers` are up-to-date.
   ///
   /// ## Properties that are not validated
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
