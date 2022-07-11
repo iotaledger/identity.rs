@@ -4,7 +4,6 @@
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
-#![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
@@ -21,7 +20,6 @@ pub use self::error::Error;
 pub use self::error::Result;
 
 pub mod chain;
-pub mod credential;
 pub mod document;
 pub mod tangle;
 

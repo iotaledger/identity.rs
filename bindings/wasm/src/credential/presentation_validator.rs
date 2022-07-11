@@ -1,17 +1,20 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::credential::PresentationValidator;
+use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
+use wasm_bindgen::prelude::*;
+
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayDocumentOrArrayResolvedDocument;
+use crate::did::ArrayDocumentOrResolvedDocument;
 use crate::did::DocumentOrResolvedDocument;
+use crate::did::WasmDID;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use identity_iota::client::PresentationValidator;
-use identity_iota::client::ResolvedIotaDocument;
-use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = PresentationValidator, inspectable)]
 pub struct WasmPresentationValidator;
@@ -48,12 +51,12 @@ impl WasmPresentationValidator {
   pub fn validate(
     presentation: &WasmPresentation,
     holder: &DocumentOrResolvedDocument,
-    issuers: &ArrayDocumentOrArrayResolvedDocument,
+    issuers: &ArrayDocumentOrResolvedDocument,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
   ) -> Result<()> {
-    let holder: ResolvedIotaDocument = holder.into_serde().wasm_result()?;
-    let issuers: Vec<ResolvedIotaDocument> = issuers.into_serde().wasm_result()?;
+    let holder: IotaDocument = holder.into_serde().wasm_result()?;
+    let issuers: Vec<IotaDocument> = issuers.into_serde().wasm_result()?;
     PresentationValidator::validate(&presentation.0, &holder, &issuers, &options.0, fail_fast.into()).wasm_result()
   }
 
@@ -71,7 +74,7 @@ impl WasmPresentationValidator {
     holder: &DocumentOrResolvedDocument,
     options: &WasmVerifierOptions,
   ) -> Result<()> {
-    let holder: ResolvedIotaDocument = holder.into_serde().wasm_result()?;
+    let holder: IotaDocument = holder.into_serde().wasm_result()?;
     PresentationValidator::verify_presentation_signature(&presentation.0, &holder, &options.0).wasm_result()
   }
 
@@ -79,5 +82,16 @@ impl WasmPresentationValidator {
   #[wasm_bindgen(js_name = checkStructure)]
   pub fn check_structure(presentation: &WasmPresentation) -> Result<()> {
     PresentationValidator::check_structure(&presentation.0).wasm_result()
+  }
+
+  /// Utility for extracting the holder field of a `Presentation` as a DID.
+  ///
+  /// ### Errors
+  ///
+  /// Fails if the holder field is missing or not a valid DID.
+  #[wasm_bindgen(js_name = extractHolder)]
+  pub fn extract_holder(presentation: &WasmPresentation) -> Result<WasmDID> {
+    let did: IotaDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
+    Ok(WasmDID::from(did))
   }
 }

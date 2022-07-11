@@ -10,8 +10,10 @@ use identity_iota::client::ClientBuilder;
 use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::client::Resolver;
 use identity_iota::client::ResolverBuilder;
-use identity_iota::core::Url;
+use identity_iota::credential::PresentationValidator;
+use identity_iota::credential::ValidatorDocument;
 use identity_iota::iota_core::IotaDID;
+use identity_iota::iota_core::IotaDocument;
 use identity_iota::iota_core::NetworkName;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -27,7 +29,8 @@ use crate::credential::WasmCredential;
 use crate::credential::WasmFailFast;
 use crate::credential::WasmPresentation;
 use crate::credential::WasmPresentationValidationOptions;
-use crate::did::ArrayResolvedDocument;
+use crate::did::ArrayDocumentOrResolvedDocument;
+use crate::did::DocumentOrResolvedDocument;
 use crate::did::PromiseArrayResolvedDocument;
 use crate::did::PromiseResolvedDocument;
 use crate::did::UWasmDID;
@@ -45,10 +48,6 @@ extern "C" {
   // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<Resolver>")]
   pub type PromiseResolver;
-
-  // Workaround for lack of &Option<Type>/Option<&Type> support.
-  #[wasm_bindgen(typescript_type = "ResolvedDocument")]
-  pub type RefResolvedDocument;
 }
 
 #[wasm_bindgen(js_class = Resolver)]
@@ -215,14 +214,7 @@ impl WasmResolver {
   pub fn resolve_presentation_holder(&self, presentation: &WasmPresentation) -> Result<PromiseResolvedDocument> {
     // TODO: reimplemented function to avoid cloning the entire presentation.
     //       Would be solved with Rc internal representation, pending memory leak discussions.
-    let holder_url: &Url = presentation
-      .0
-      .holder
-      .as_ref()
-      .ok_or(identity_iota::client::ValidationError::MissingPresentationHolder)
-      .map_err(identity_iota::client::Error::from)
-      .wasm_result()?;
-    let holder: IotaDID = IotaDID::parse(holder_url.as_str()).wasm_result()?;
+    let holder: IotaDID = PresentationValidator::extract_holder(&presentation.0).wasm_result()?;
 
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let promise: Promise = future_to_promise(async move {
@@ -260,25 +252,29 @@ impl WasmResolver {
     presentation: &WasmPresentation,
     options: &WasmPresentationValidationOptions,
     fail_fast: WasmFailFast,
-    holder: Option<RefResolvedDocument>,
-    issuers: Option<ArrayResolvedDocument>,
+    holder: Option<DocumentOrResolvedDocument>,
+    issuers: Option<ArrayDocumentOrResolvedDocument>,
   ) -> Result<PromiseVoid> {
     // TODO: reimplemented function to avoid cloning the entire presentation and validation options.
     // Would be solved with Rc internal representation, pending memory leak discussions.
-    let holder: Option<ResolvedIotaDocument> = holder.map(|js| js.into_serde().wasm_result()).transpose()?;
-    let issuers: Option<Vec<ResolvedIotaDocument>> = issuers.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let holder: Option<IotaDocument> = holder.map(|js| js.into_serde().wasm_result()).transpose()?;
+    let issuers: Option<Vec<IotaDocument>> = issuers.map(|js| js.into_serde().wasm_result()).transpose()?;
+
     let resolver: Rc<Resolver<Rc<Client>>> = Rc::clone(&self.0);
     let presentation: WasmPresentation = presentation.clone();
     let options: WasmPresentationValidationOptions = options.clone();
 
     let promise: Promise = future_to_promise(async move {
+      let issuer_refs: Option<Vec<&dyn ValidatorDocument>> = issuers
+        .as_ref()
+        .map(|issuers| issuers.iter().map(ValidatorDocument::as_validator).collect());
       resolver
         .verify_presentation(
           &presentation.0,
           &options.0,
           fail_fast.into(),
-          holder.as_ref(),
-          issuers.as_deref(),
+          holder.as_ref().map(ValidatorDocument::as_validator),
+          issuer_refs.as_deref(),
         )
         .await
         .map(|_| JsValue::UNDEFINED)

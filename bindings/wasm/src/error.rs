@@ -97,7 +97,7 @@ impl_wasm_error_from!(
   identity_iota::did::Error,
   identity_iota::did::DIDError,
   identity_iota::iota_core::Error,
-  identity_iota::client::ValidationError
+  identity_iota::credential::ValidationError
 );
 
 // Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
@@ -177,8 +177,8 @@ impl From<serde_json::Error> for WasmError<'_> {
   }
 }
 
-impl From<identity_iota::client::CompoundCredentialValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::client::CompoundCredentialValidationError) -> Self {
+impl From<identity_iota::credential::CompoundCredentialValidationError> for WasmError<'_> {
+  fn from(error: identity_iota::credential::CompoundCredentialValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundCredentialValidationError"),
       message: Cow::Owned(error.to_string()),
@@ -186,8 +186,8 @@ impl From<identity_iota::client::CompoundCredentialValidationError> for WasmErro
   }
 }
 
-impl From<identity_iota::client::CompoundPresentationValidationError> for WasmError<'_> {
-  fn from(error: identity_iota::client::CompoundPresentationValidationError) -> Self {
+impl From<identity_iota::credential::CompoundPresentationValidationError> for WasmError<'_> {
+  fn from(error: identity_iota::credential::CompoundPresentationValidationError) -> Self {
     Self {
       name: Cow::Borrowed("CompoundPresentationValidationError"),
       message: Cow::Owned(error.to_string()),

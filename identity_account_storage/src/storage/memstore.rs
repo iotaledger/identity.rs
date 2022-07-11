@@ -549,6 +549,7 @@ impl Default for MemStore {
 }
 
 #[cfg(test)]
+#[cfg(feature = "storage-test-suite")]
 mod tests {
   use crate::storage::Storage;
   use crate::storage::StorageTestSuite;

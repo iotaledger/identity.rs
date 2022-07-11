@@ -180,9 +180,9 @@ async fn test_handlers_can_communicate_bidirectionally() -> AgentResult<()> {
     .await
     .unwrap();
 
-  let addr: Multiaddr = agent2.addresses().await.unwrap().into_iter().next().unwrap();
+  let addrs: Vec<Multiaddr> = agent2.addresses().await.unwrap();
 
-  agent1.add_agent_address(agent2.agent_id(), addr).await.unwrap();
+  agent1.add_agent_addresses(agent2.agent_id(), addrs).await.unwrap();
 
   agent1.send_request(agent2.agent_id(), Dummy(42)).await.unwrap();
 

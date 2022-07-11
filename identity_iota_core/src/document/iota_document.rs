@@ -5,6 +5,10 @@ use core::fmt;
 use core::fmt::Debug;
 use core::fmt::Display;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::common::OneOrSet;
 use identity_core::common::OrderedSet;
@@ -22,6 +26,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::document::CoreDocument;
+use identity_did::document::Document;
 use identity_did::service::Service;
 use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::DocumentSigner;
@@ -33,9 +38,6 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
-use serde;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::did::IotaDID;
 use crate::did::IotaDIDUrl;
@@ -448,7 +450,7 @@ impl IotaDocument {
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     self.document.verify_data(data, options).map_err(Into::into)
   }
@@ -619,59 +621,79 @@ impl IotaDocument {
   }
 }
 
+impl Document for IotaDocument {
+  type D = IotaDID;
+  type U = Object;
+  type V = Object;
+
+  fn id(&self) -> &Self::D {
+    IotaDocument::id(self)
+  }
+
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.core_document().resolve_service(query)
+  }
+
+  fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.core_document().resolve_method(query, scope)
+  }
+
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> identity_did::Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    self.core_document().verify_data(data, options)
+  }
+}
+
 #[cfg(feature = "revocation-bitmap")]
 mod iota_document_revocation {
-  use super::IotaDocument;
-  use crate::did::IotaDID;
-  use crate::did::IotaDIDUrl;
+  use identity_did::utils::DIDUrlQuery;
+
   use crate::Error;
   use crate::Result;
-  use identity_did::revocation::RevocationBitmap;
-  use identity_did::service::Service;
+
+  use super::IotaDocument;
 
   impl IotaDocument {
-    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
-    /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub fn revoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
-      self.update_revocation_bitmap(service_id, |revocation_bitmap| {
-        // Revoke all given credential indices.
-        for credential in credential_indices {
-          revocation_bitmap.revoke(*credential);
-        }
-      })
-    }
-
-    /// If the document has a [`RevocationBitmap`] service identified by `fragment`,
-    /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub fn unrevoke_credentials(&mut self, service_id: &IotaDIDUrl, credential_indices: &[u32]) -> Result<()> {
-      self.update_revocation_bitmap(service_id, |revocation_bitmap| {
-        // Unrevoke all given credential indices.
-        for credential in credential_indices {
-          revocation_bitmap.unrevoke(*credential);
-        }
-      })
-    }
-
-    fn update_revocation_bitmap<F>(&mut self, service_id: &IotaDIDUrl, f: F) -> Result<()>
+    /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
+    /// service identified by `service_query`, revoke all credentials with a
+    /// `revocationBitmapIndex` in `credential_indices`.
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
     where
-      F: FnOnce(&mut RevocationBitmap),
+      Q: Into<DIDUrlQuery<'query>>,
     {
-      let service: &mut Service<IotaDID> = self
+      self
         .core_document_mut()
-        .service_mut()
-        .iter_mut_unchecked()
-        .find(|service| service.id() == service_id)
-        .ok_or(Error::RevocationError(identity_did::Error::InvalidService(
-          "invalid id - service not found",
-        )))?;
+        .revoke_credentials(service_query, credential_indices)
+        .map_err(Error::RevocationError)
+    }
 
-      let mut revocation_bitmap: RevocationBitmap = (&*service).try_into().map_err(Error::RevocationError)?;
-
-      f(&mut revocation_bitmap);
-
-      std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
-
-      Ok(())
+    /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
+    /// service with an id by `service_query`, unrevoke all credentials with a
+    /// `revocationBitmapIndex` in `credential_indices`.
+    pub fn unrevoke_credentials<'query, 'me, Q>(
+      &'me mut self,
+      service_query: Q,
+      credential_indices: &[u32],
+    ) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self
+        .core_document_mut()
+        .unrevoke_credentials(service_query, credential_indices)
+        .map_err(Error::RevocationError)
     }
   }
 }

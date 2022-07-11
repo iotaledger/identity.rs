@@ -13,13 +13,14 @@ use crate::credential::Status;
 use crate::error::Error;
 use crate::error::Result;
 
-/// Information used to determine the current status of a [`Credential`][crate::credential::Credential].
+/// Information used to determine the current status of a [`Credential`][crate::credential::Credential]
+/// using the `RevocationBitmap2022` specification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RevocationBitmapStatus(Status);
 
 impl RevocationBitmapStatus {
   const INDEX_PROPERTY_NAME: &'static str = "revocationBitmapIndex";
-  /// The type name of the revocation bitmap.
+  /// Type name of the revocation bitmap.
   pub const TYPE: &'static str = "RevocationBitmap2022";
 
   /// Creates a new `RevocationBitmapStatus`.
@@ -33,7 +34,8 @@ impl RevocationBitmapStatus {
     ))
   }
 
-  /// Returns the [`DIDUrl`] of the bitmap status.
+  /// Returns the [`DIDUrl`] of the `RevocationBitmapStatus`, which should resolve
+  /// to a `RevocationBitmap2022` service in a DID Document.
   pub fn id<D: DID>(&self) -> Result<DIDUrl<D>> {
     DIDUrl::parse(self.0.id.as_str())
       .map_err(|err| Error::InvalidStatus(format!("invalid DID Url '{}': {:?}", self.0.id, err)))
