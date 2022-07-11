@@ -36,7 +36,7 @@ impl WasmEd25519 {
 
   /// Computes an EdDSA signature using an Ed25519 private key.
   ///
-  /// NOTE: this differs from {@link #Document+signData} which uses JCS
+  /// NOTE: this differs from [Document.signData](#Document+signData) which uses JCS
   /// to canonicalize JSON messages.
   ///
   /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
