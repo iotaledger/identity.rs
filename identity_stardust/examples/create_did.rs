@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
 
   // Create an empty DID Document.
   // All new Stardust DID Documents initially use a placeholder DID,
-  // "did:stardust:00000000000000000000000000000000".
+  // "did:stardust:0x00000000000000000000000000000000".
   let document: StardustDocument = StardustDocument::new();
   println!("DID Document {:#}", document);
 

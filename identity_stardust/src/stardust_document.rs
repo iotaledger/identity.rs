@@ -35,8 +35,7 @@ pub struct StardustDocument(CoreDocument<CoreDID>);
 // Tag is 64-bytes long, matching the hex-encoding of the Alias ID (without 0x prefix).
 // TODO: should we just keep the 0x prefix in the tag? Other DID methods like did:ethr do...
 lazy_static! {
-  static ref PLACEHOLDER_DID: CoreDID =
-    { CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap() };
+  static ref PLACEHOLDER_DID: CoreDID = CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap();
 }
 
 impl StardustDocument {
