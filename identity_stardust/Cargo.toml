@@ -28,10 +28,10 @@ features = ["tls"]
 default-features = false
 
 [dev-dependencies]
+anyhow = { version = "1.0.57" }
+iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
-iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
-anyhow = { version = "1.0.57" }
 
 [package.metadata.docs.rs]
 # To build locally:
