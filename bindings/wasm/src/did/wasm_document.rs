@@ -349,7 +349,7 @@ impl WasmDocument {
   /// capability invocation method is rotated or replaced entirely.
   ///
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-  /// verification method. See {@link Document.verifyDocument}.
+  /// verification method. See [Document.verifyDocument](#Document+verifyDocument).
   #[wasm_bindgen(js_name = signDocument)]
   pub fn sign_document(
     &self,
