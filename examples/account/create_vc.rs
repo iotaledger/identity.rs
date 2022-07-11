@@ -12,16 +12,15 @@ use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
-
-use identity_iota::client::CredentialValidationOptions;
-use identity_iota::client::CredentialValidator;
-use identity_iota::client::FailFast;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::CredentialValidationOptions;
+use identity_iota::credential::CredentialValidator;
+use identity_iota::credential::FailFast;
 use identity_iota::credential::Subject;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::DID;
@@ -79,7 +78,7 @@ pub async fn create_vc() -> Result<String> {
   // that the issuance date is not in the future and that the expiration date is not in the past:
   CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
     FailFast::FirstError,
   )

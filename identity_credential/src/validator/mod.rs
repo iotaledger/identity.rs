@@ -14,6 +14,7 @@ pub use self::validation_options::FailFast;
 pub use self::validation_options::PresentationValidationOptions;
 pub use self::validation_options::StatusCheck;
 pub use self::validation_options::SubjectHolderRelationship;
+pub use self::validator_document::ValidatorDocument;
 
 mod credential_validator;
 mod errors;
@@ -21,3 +22,4 @@ mod presentation_validator;
 #[cfg(test)]
 mod test_utils;
 mod validation_options;
+mod validator_document;

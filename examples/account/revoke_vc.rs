@@ -17,19 +17,20 @@ use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
-use identity_iota::client::CredentialValidationOptions;
-use identity_iota::client::CredentialValidator;
 use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::client::Resolver;
-use identity_iota::client::ValidationError;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::CredentialValidationOptions;
+use identity_iota::credential::CredentialValidator;
+use identity_iota::credential::FailFast;
 use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
+use identity_iota::credential::ValidationError;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::RevocationBitmap;
 use identity_iota::did::DID;
@@ -97,9 +98,9 @@ async fn main() -> Result<()> {
 
   let validation_result = CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
-    identity_iota::client::FailFast::FirstError,
+    FailFast::FirstError,
   );
 
   // The credential wasn't revoked, so we expect the validation to succeed.
@@ -117,9 +118,9 @@ async fn main() -> Result<()> {
 
   let validation_result = CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
-    identity_iota::client::FailFast::FirstError,
+    FailFast::FirstError,
   );
 
   // We expect validation to no longer succeed because the credential was revoked.
@@ -146,9 +147,9 @@ async fn main() -> Result<()> {
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve_credential_issuer(&credential).await?;
   let validation_result = CredentialValidator::validate(
     &credential,
-    &resolved_issuer_doc,
+    &resolved_issuer_doc.document,
     &CredentialValidationOptions::default(),
-    identity_iota::client::FailFast::FirstError,
+    FailFast::FirstError,
   );
 
   println!("VC validation result: {:?}", validation_result);

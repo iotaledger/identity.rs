@@ -25,6 +25,7 @@ use identity_core::crypto::Verifier;
 use crate::did::CoreDID;
 use crate::did::DIDUrl;
 use crate::did::DID;
+use crate::document::Document;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
@@ -672,7 +673,7 @@ where
   /// serialization fails, or the verification operation fails.
   pub fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     let signature: &Proof = data.signature().ok_or(Error::InvalidSignature("missing signature"))?;
 
@@ -736,7 +737,7 @@ where
   /// serialization fails, or the verification operation fails.
   fn do_verify<X>(method: &VerificationMethod<D, U>, data: &X) -> Result<()>
   where
-    X: Serialize + GetSignature,
+    X: Serialize + GetSignature + ?Sized,
   {
     let public_key: Vec<u8> = method.data().try_decode()?;
 
@@ -750,6 +751,114 @@ where
     }
 
     Ok(())
+  }
+}
+
+impl<D, T, U, V> Document for CoreDocument<D, T, U, V>
+where
+  D: DID + KeyComparable,
+{
+  type D = D;
+  type U = U;
+  type V = V;
+
+  fn id(&self) -> &Self::D {
+    CoreDocument::id(self)
+  }
+
+  fn resolve_service<'query, 'me, Q>(&'me self, query: Q) -> Option<&Service<Self::D, Self::V>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    self.service().query(query.into())
+  }
+
+  fn resolve_method<'query, 'me, Q>(
+    &'me self,
+    query: Q,
+    scope: Option<MethodScope>,
+  ) -> Option<&VerificationMethod<Self::D, Self::U>>
+  where
+    Q: Into<DIDUrlQuery<'query>>,
+  {
+    CoreDocument::resolve_method(self, query, scope)
+  }
+
+  fn verify_data<X>(&self, data: &X, options: &VerifierOptions) -> Result<()>
+  where
+    X: Serialize + GetSignature + ?Sized,
+  {
+    CoreDocument::verify_data(self, data, options)
+  }
+}
+
+#[cfg(feature = "revocation-bitmap")]
+mod core_document_revocation {
+  use identity_core::common::KeyComparable;
+
+  use crate::did::DID;
+  use crate::revocation::RevocationBitmap;
+  use crate::service::Service;
+  use crate::utils::DIDUrlQuery;
+  use crate::utils::Queryable;
+  use crate::Error;
+  use crate::Result;
+
+  use super::CoreDocument;
+
+  impl<D, T, U, V> CoreDocument<D, T, U, V>
+  where
+    D: DID + KeyComparable,
+  {
+    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
+    /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self.update_revocation_bitmap(service_query, |revocation_bitmap| {
+        // Revoke all given credential indices.
+        for credential in credential_indices {
+          revocation_bitmap.revoke(*credential);
+        }
+      })
+    }
+
+    /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
+    /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
+    pub fn unrevoke_credentials<'query, 'me, Q>(
+      &'me mut self,
+      service_query: Q,
+      credential_indices: &[u32],
+    ) -> Result<()>
+    where
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      self.update_revocation_bitmap(service_query, |revocation_bitmap| {
+        // Unrevoke all given credential indices.
+        for credential in credential_indices {
+          revocation_bitmap.unrevoke(*credential);
+        }
+      })
+    }
+
+    fn update_revocation_bitmap<'query, 'me, F, Q>(&'me mut self, service_query: Q, f: F) -> Result<()>
+    where
+      F: FnOnce(&mut RevocationBitmap),
+      Q: Into<DIDUrlQuery<'query>>,
+    {
+      let service: &mut Service<D, V> = self
+        .service_mut()
+        .query_mut(service_query)
+        .ok_or(Error::InvalidService("invalid id - service not found"))?;
+
+      let mut revocation_bitmap: RevocationBitmap = RevocationBitmap::try_from(&*service)?;
+      f(&mut revocation_bitmap);
+
+      std::mem::swap(service.service_endpoint_mut(), &mut revocation_bitmap.to_endpoint()?);
+
+      Ok(())
+    }
   }
 }
 

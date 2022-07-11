@@ -48,6 +48,7 @@ pub mod credential {
   pub use identity_credential::credential::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
+  pub use identity_credential::validator::*;
 }
 
 pub mod did {
@@ -72,7 +73,6 @@ pub mod client {
   //! IOTA DID Tangle client and validators.
 
   pub use identity_iota_client::chain::*;
-  pub use identity_iota_client::credential::*;
   pub use identity_iota_client::document::*;
   pub use identity_iota_client::tangle::*;
 
