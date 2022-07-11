@@ -28,7 +28,7 @@ jobs:
           cd documentation
           yarn install --immutable
 
-      - name: Install stable toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
