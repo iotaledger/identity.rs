@@ -52,7 +52,7 @@ impl WasmEd25519 {
 
   /// Verifies an EdDSA signature against an Ed25519 public key.
   ///
-  /// NOTE: this differs from {@link #Document+verifyData} which uses JCS
+  /// NOTE: this differs from [Document.verifyData](#Document+verifyData) which uses JCS
   /// to canonicalize JSON messages.
   #[allow(non_snake_case)]
   #[wasm_bindgen]
