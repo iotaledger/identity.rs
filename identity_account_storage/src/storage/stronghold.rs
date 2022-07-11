@@ -399,6 +399,7 @@ impl Storage for Stronghold {
 
       store
         .insert(CHAIN_STATE_STORE_KEY.as_bytes().to_vec(), json, None)
+        .map(|_| ())
         .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
     })
   }
@@ -425,6 +426,7 @@ impl Storage for Stronghold {
 
       store
         .insert(DOCUMENT_STORE_KEY.as_bytes().to_vec(), json, None)
+        .map(|_| ())
         .map_err(|err| StrongholdError::Store(StoreOperation::Insert, err).into())
     })
   }

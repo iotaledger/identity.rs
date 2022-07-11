@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! This example shows how to revoke a verifiable credential.
+//! It demonstrates two methods for revocation. The first uses a revocation bitmap of type `RevocationBitmap2022`,
+//! while the second method simply removes the verification method (public key) that signed the credential
+//! from the DID Document of the issuer.
 //!
-//! The Verifiable Credential is revoked by actually removing a verification method (public key)
-//! from the DID Document of the Issuer.
-//! As such, the Verifiable Credential can no longer be validated.
-//! This would invalidate every Verifiable Credential signed with the same public key, therefore the
-//! issuer would have to sign every VC with a different key.
+//! Note that this example uses the "main" network, if you are writing code against the test network then most function
+//! calls will need to include information about the network, since this is not automatically inferred from the
+//! arguments in all cases currently.
 //!
 //! cargo run --example account_revoke_vc
 
@@ -16,19 +17,20 @@ use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
 use identity_iota::account::Result;
-use identity_iota::client::CredentialValidationOptions;
-use identity_iota::client::CredentialValidator;
 use identity_iota::client::ResolvedIotaDocument;
 use identity_iota::client::Resolver;
-use identity_iota::client::ValidationError;
 use identity_iota::core::json;
 use identity_iota::core::FromJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::CredentialValidationOptions;
+use identity_iota::credential::CredentialValidator;
+use identity_iota::credential::FailFast;
 use identity_iota::credential::RevocationBitmapStatus;
 use identity_iota::credential::Status;
 use identity_iota::credential::Subject;
+use identity_iota::credential::ValidationError;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::RevocationBitmap;
 use identity_iota::did::DID;
@@ -96,9 +98,9 @@ async fn main() -> Result<()> {
 
   let validation_result = CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
-    identity_iota::client::FailFast::FirstError,
+    FailFast::FirstError,
   );
 
   // The credential wasn't revoked, so we expect the validation to succeed.
@@ -116,9 +118,9 @@ async fn main() -> Result<()> {
 
   let validation_result = CredentialValidator::validate(
     &credential,
-    &issuer.document(),
+    issuer.document(),
     &CredentialValidationOptions::default(),
-    identity_iota::client::FailFast::FirstError,
+    FailFast::FirstError,
   );
 
   // We expect validation to no longer succeed because the credential was revoked.
@@ -145,9 +147,9 @@ async fn main() -> Result<()> {
   let resolved_issuer_doc: ResolvedIotaDocument = resolver.resolve_credential_issuer(&credential).await?;
   let validation_result = CredentialValidator::validate(
     &credential,
-    &resolved_issuer_doc,
+    &resolved_issuer_doc.document,
     &CredentialValidationOptions::default(),
-    identity_iota::client::FailFast::FirstError,
+    FailFast::FirstError,
   );
 
   println!("VC validation result: {:?}", validation_result);

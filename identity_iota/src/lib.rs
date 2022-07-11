@@ -1,6 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![allow(deprecated)]
 #![doc = include_str!("./../README.md")]
@@ -47,6 +48,7 @@ pub mod credential {
   pub use identity_credential::credential::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
+  pub use identity_credential::validator::*;
 }
 
 pub mod did {
@@ -56,6 +58,7 @@ pub mod did {
 
   pub use identity_did::document::*;
   pub use identity_did::error::*;
+  #[cfg(feature = "revocation-bitmap")]
   pub use identity_did::revocation::*;
   pub use identity_did::service::*;
   pub use identity_did::utils::*;
@@ -70,7 +73,6 @@ pub mod client {
   //! IOTA DID Tangle client and validators.
 
   pub use identity_iota_client::chain::*;
-  pub use identity_iota_client::credential::*;
   pub use identity_iota_client::document::*;
   pub use identity_iota_client::tangle::*;
 
@@ -137,4 +139,15 @@ pub mod prelude {
   pub use identity_iota_client::tangle::Client;
   pub use identity_iota_client::Result;
   pub use identity_iota_core::document::IotaDocument;
+}
+
+#[cfg(feature = "unstable-agent")]
+#[cfg_attr(docsrs, doc(cfg(feature = "unstable-agent")))]
+pub mod agent {
+  //! Identity agent types
+
+  pub use identity_agent::agent::*;
+  pub use identity_agent::didcomm::*;
+  pub use identity_agent::IdentityKeypair;
+  pub use identity_agent::Multiaddr;
 }

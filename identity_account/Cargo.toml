@@ -30,10 +30,9 @@ rusty-fork = { version = "0.3" }
 tokio = { version = "1.17.0", default-features = false, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
-default = ["stronghold", "async", "send-sync-storage", "encryption", "revocation-bitmap"]
+default = ["stronghold", "send-sync-storage", "encryption", "revocation-bitmap"]
 mem-client = []
 stronghold = ["identity_account_storage/stronghold"]
-async = ["identity_iota_client/async"]
 send-sync-storage = ["identity_account_storage/send-sync-storage"]
 # Enables encryption and decryption functionality.
 encryption = ["identity_account_storage/encryption"]

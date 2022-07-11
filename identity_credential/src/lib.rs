@@ -3,7 +3,6 @@
 
 #![forbid(unsafe_code)]
 #![doc = include_str!("./../README.md")]
-#![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
@@ -18,13 +17,15 @@
 
 #[macro_use]
 extern crate lazy_static;
-
 #[macro_use]
 extern crate serde;
+
+pub use self::error::Error;
+pub use self::error::Result;
 
 pub mod credential;
 pub mod error;
 pub mod presentation;
 
-pub use self::error::Error;
-pub use self::error::Result;
+#[cfg(feature = "validator")]
+pub mod validator;

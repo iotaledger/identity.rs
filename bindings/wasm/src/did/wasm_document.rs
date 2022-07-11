@@ -13,15 +13,15 @@ use identity_iota::credential::Presentation;
 use identity_iota::crypto::PrivateKey;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifiableProperties;
+use identity_iota::did::Document;
 use identity_iota::did::MethodScope;
-use identity_iota::did::DID;
 use identity_iota::iota_core::IotaDID;
-use identity_iota::iota_core::IotaDIDUrl;
 use identity_iota::iota_core::IotaDocument;
 use identity_iota::iota_core::IotaVerificationMethod;
 use identity_iota::iota_core::MessageId;
 use identity_iota::iota_core::NetworkName;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::account::wasm_account::UOneOrManyNumber;
 use crate::common::MapStringAny;
@@ -44,7 +44,6 @@ use crate::did::WasmVerificationMethod;
 use crate::did::WasmVerifierOptions;
 use crate::error::Result;
 use crate::error::WasmResult;
-use wasm_bindgen::JsCast;
 
 // =============================================================================
 // =============================================================================
@@ -229,6 +228,14 @@ impl WasmDocument {
     self.0.remove_service(&did.0)
   }
 
+  /// Returns the first {@link Service} with an `id` property matching the provided `query`,
+  /// if present.
+  #[wasm_bindgen(js_name = resolveService)]
+  pub fn resolve_service(&self, query: &UDIDUrlQuery) -> Option<WasmService> {
+    let service_query: String = query.into_serde().ok()?;
+    self.0.resolve_service(&service_query).cloned().map(WasmService::from)
+  }
+
   // ===========================================================================
   // Verification Methods
   // ===========================================================================
@@ -359,7 +366,7 @@ impl WasmDocument {
   /// capability invocation method is rotated or replaced entirely.
   ///
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-  /// verification method. See {@link Document.verifyDocument}.
+  /// verification method. See [Document.verifyDocument](#Document+verifyDocument).
   #[wasm_bindgen(js_name = signDocument)]
   pub fn sign_document(
     &self,
@@ -631,33 +638,35 @@ impl WasmDocument {
     self.0.proof.clone().map(WasmProof::from)
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
   /// revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, credentialIndices: UOneOrManyNumber) -> Result<()> {
+    let query: String = serviceQuery.into_serde().wasm_result()?;
     let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
-    let mut service_id: IotaDIDUrl = self.0.id().to_url();
-    service_id.set_fragment(Some(fragment)).wasm_result()?;
 
     self
       .0
-      .revoke_credentials(&service_id, credentials_indices.as_slice())
+      .revoke_credentials(&query, credentials_indices.as_slice())
       .wasm_result()
   }
 
-  /// If the document has a `RevocationBitmap` service identified by `fragment`,
+  /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
   /// unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(&mut self, fragment: &str, credentialIndices: UOneOrManyNumber) -> Result<()> {
+  pub fn unrevoke_credentials(
+    &mut self,
+    serviceQuery: &UDIDUrlQuery,
+    credentialIndices: UOneOrManyNumber,
+  ) -> Result<()> {
+    let query: String = serviceQuery.into_serde().wasm_result()?;
     let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
-    let mut service_id: IotaDIDUrl = self.0.id().to_url();
-    service_id.set_fragment(Some(fragment)).wasm_result()?;
 
     self
       .0
-      .unrevoke_credentials(&service_id, credentials_indices.as_slice())
+      .unrevoke_credentials(&query, credentials_indices.as_slice())
       .wasm_result()
   }
 
@@ -691,6 +700,7 @@ impl From<WasmDocument> for IotaDocument {
     wasm_document.0
   }
 }
+
 /// Duck-typed union to pass either a string or WasmDIDUrl as a parameter.
 #[wasm_bindgen]
 extern "C" {

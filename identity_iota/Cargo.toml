@@ -2,7 +2,6 @@
 name = "identity_iota"
 version = "0.6.0"
 authors = ["IOTA Stiftung"]
-documentation = "https://wiki.iota.org/identity.rs/introduction"
 edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "did", "ssi"]
@@ -16,6 +15,7 @@ description = "Framework for Self-Sovereign Identity with IOTA DID."
 # identity_comm = { version = "=0.5.0-dev.4", path = "../identity_comm", optional = true }
 identity_account = { version = "=0.6.0", path = "../identity_account", default-features = false, optional = true }
 identity_account_storage = { version = "=0.6.0", path = "../identity_account_storage", default-features = false, optional = true }
+identity_agent = { version = "=0.6.0", path = "../identity_agent", default-features = false, optional = true }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
@@ -31,10 +31,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["async", "account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
-
-# Enables async runtime support (Tokio).
-async = ["identity_iota_client/async"]
+default = ["account", "stronghold", "send-sync-storage", "unstable-encryption", "revocation-bitmap"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity_account", "identity_account_storage"]
@@ -61,6 +58,10 @@ revocation-bitmap = [
 # Enables encryption and decryption functionality.
 # Breaking changes to types and functions behind this flag are not covered by semver.
 unstable-encryption = ["identity_account/encryption"]
+
+# Enables support for the unstable identity agent.
+# Breaking changes to types and functions behind this flag are not covered by semver.
+unstable-agent = ["dep:identity_agent"]
 
 [package.metadata.docs.rs]
 # To build locally:

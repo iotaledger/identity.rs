@@ -1,28 +1,33 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use serde::Serialize;
 
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_credential::credential::Credential;
-use identity_credential::credential::RevocationBitmapStatus;
+use identity_did::did::CoreDID;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
+#[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
 use identity_did::verifiable::VerifierOptions;
-use identity_iota_core::did::IotaDID;
-use identity_iota_core::did::IotaDIDUrl;
-use identity_iota_core::document::IotaDocument;
 
-use crate::Result;
+use crate::credential::Credential;
+#[cfg(feature = "revocation-bitmap")]
+use crate::credential::RevocationBitmapStatus;
 
 use super::errors::CompoundCredentialValidationError;
 use super::errors::SignerContext;
 use super::errors::ValidationError;
+#[cfg(feature = "revocation-bitmap")]
 use super::validation_options::StatusCheck;
 use super::CredentialValidationOptions;
 use super::FailFast;
 use super::SubjectHolderRelationship;
+use super::ValidatorDocument;
 
 /// A struct for validating [`Credential`]s.
 #[derive(Debug, Clone)]
@@ -47,9 +52,7 @@ impl CredentialValidator {
   /// calling this method.
   ///
   /// ## The state of the issuer's DID Document
-  /// The caller must ensure that `issuer` represents an up-to-date DID Document. The convenience method
-  /// [`Resolver::resolve_credential_issuer`](crate::tangle::Resolver::resolve_credential_issuer()) can help extract
-  /// the latest available state of the issuer's DID Document.
+  /// The caller must ensure that `issuer` represents an up-to-date DID Document.
   ///
   /// ## Properties that are not validated
   ///  There are many properties defined in [The Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/) that are **not** validated, such as:
@@ -58,9 +61,9 @@ impl CredentialValidator {
   ///
   /// # Errors
   /// An error is returned whenever a validated condition is not satisfied.
-  pub fn validate<T: Serialize, D: AsRef<IotaDocument>>(
+  pub fn validate<T: Serialize, DOC: ValidatorDocument>(
     credential: &Credential<T>,
-    issuer: &D,
+    issuer: &DOC,
     options: &CredentialValidationOptions,
     fail_fast: FailFast,
   ) -> CredentialValidationResult {
@@ -103,42 +106,24 @@ impl CredentialValidator {
   /// This method immediately returns an error if
   /// the credential issuer' url cannot be parsed to a DID belonging to one of the trusted issuers. Otherwise an attempt
   /// to verify the credential's signature will be made and an error is returned upon failure.
-  pub fn verify_signature<T: Serialize, D: AsRef<IotaDocument>>(
+  pub fn verify_signature<DOC: ValidatorDocument, T: Serialize>(
     credential: &Credential<T>,
-    trusted_issuers: &[D],
+    trusted_issuers: &[DOC],
     options: &VerifierOptions,
   ) -> ValidationUnitResult {
-    // try to extract the corresponding issuer from `trusted_issuers`
-    let extracted_issuer_result: std::result::Result<&IotaDocument, ValidationError> = {
-      let issuer_did: Result<IotaDID> = credential.issuer.url().as_str().parse().map_err(Into::into);
-      match issuer_did {
-        Ok(did) => {
-          // if the issuer_did corresponds to one of the trusted issuers we use the corresponding DID Document to verify
-          // the signature
-          trusted_issuers
-            .iter()
-            .map(|issuer_doc| issuer_doc.as_ref())
-            .find(|issuer_doc| issuer_doc.id() == &did)
-            .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
-        }
-        Err(error) => {
-          // the issuer's url could not be parsed to a valid IotaDID
-          Err(ValidationError::SignerUrl {
-            source: error.into(),
+    let issuer_did: CoreDID = Self::extract_issuer(credential)?;
+    trusted_issuers
+      .iter()
+      .find(|issuer_doc| issuer_doc.did_str() == issuer_did.as_str())
+      .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
+      .and_then(|issuer| {
+        issuer
+          .verify_data(credential, options)
+          .map_err(|err| ValidationError::Signature {
+            source: err.into(),
             signer_ctx: SignerContext::Issuer,
           })
-        }
-      }
-    };
-    // use the extracted document to verify the signature
-    extracted_issuer_result.and_then(|issuer| {
-      issuer
-        .verify_data(credential, options)
-        .map_err(|error| ValidationError::Signature {
-          source: error.into(),
-          signer_ctx: SignerContext::Issuer,
-        })
-    })
+      })
   }
 
   /// Validate that the relationship between the `holder` and the credential subjects is in accordance with
@@ -179,9 +164,10 @@ impl CredentialValidator {
   /// Checks whether the credential status has been revoked.
   ///
   /// Only supports `BitmapRevocation2022`.
-  pub fn check_status<T, D: AsRef<IotaDocument>>(
+  #[cfg(feature = "revocation-bitmap")]
+  pub fn check_status<DOC: ValidatorDocument, T>(
     credential: &Credential<T>,
-    trusted_issuers: &[D],
+    trusted_issuers: &[DOC],
     status_check: StatusCheck,
   ) -> ValidationUnitResult {
     if status_check == StatusCheck::SkipAll {
@@ -196,22 +182,19 @@ impl CredentialValidator {
           if status_check == StatusCheck::SkipUnsupported {
             return Ok(());
           }
-          return Err(ValidationError::InvalidStatus(
-            identity_credential::Error::InvalidStatus(format!("unsupported type '{}'", status.type_)),
-          ));
+          return Err(ValidationError::InvalidStatus(crate::Error::InvalidStatus(format!(
+            "unsupported type '{}'",
+            status.type_
+          ))));
         }
         let status: RevocationBitmapStatus =
           RevocationBitmapStatus::try_from(status.clone()).map_err(ValidationError::InvalidStatus)?;
 
         // Check the credential index against the issuer's DID Document.
-        let issuer_did: IotaDID =
-          IotaDID::parse(credential.issuer.url().as_str()).map_err(|e| ValidationError::SignerUrl {
-            source: e.into(),
-            signer_ctx: SignerContext::Issuer,
-          })?;
+        let issuer_did: CoreDID = Self::extract_issuer(credential)?;
         trusted_issuers
           .iter()
-          .find(|issuer| issuer.as_ref().id() == &issuer_did)
+          .find(|issuer| issuer.did_str() == issuer_did.as_str())
           .ok_or(ValidationError::DocumentMismatch(SignerContext::Issuer))
           .and_then(|issuer| CredentialValidator::check_revocation_bitmap_status(issuer, status))
       }
@@ -220,24 +203,17 @@ impl CredentialValidator {
 
   /// Check the given `status` against the matching [`RevocationBitmap`] service in the
   /// issuer's DID Document.
-  fn check_revocation_bitmap_status<D: AsRef<IotaDocument>>(
-    issuer: D,
+  #[cfg(feature = "revocation-bitmap")]
+  fn check_revocation_bitmap_status<DOC: ValidatorDocument + ?Sized>(
+    issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: IotaDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
-
-    // Lookup service.
-    let service = issuer
-      .as_ref()
-      .service()
-      .iter()
-      .find(|service| &issuer_service_url == service.id())
-      .ok_or(ValidationError::InvalidService(identity_did::Error::InvalidService(
-        "revocation bitmap service not found",
-      )))?;
+    let issuer_service_url: CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
-    let revocation_bitmap: RevocationBitmap = service.try_into().map_err(ValidationError::InvalidService)?;
+    let revocation_bitmap: RevocationBitmap = issuer
+      .resolve_revocation_bitmap(issuer_service_url.into())
+      .map_err(ValidationError::InvalidService)?;
     let index: u32 = status.index().map_err(ValidationError::InvalidStatus)?;
     if revocation_bitmap.is_revoked(index) {
       Err(ValidationError::Revoked)
@@ -249,9 +225,9 @@ impl CredentialValidator {
   // This method takes a slice of issuer's instead of a single issuer in order to better accommodate presentation
   // validation. It also validates the relation ship between a holder and the credential subjects when
   // `relationship_criterion` is Some.
-  pub(crate) fn validate_extended<T: Serialize, D: AsRef<IotaDocument>>(
+  pub(crate) fn validate_extended<DOC: ValidatorDocument, T: Serialize>(
     credential: &Credential<T>,
-    issuers: &[D],
+    issuers: &[DOC],
     options: &CredentialValidationOptions,
     relationship_criterion: Option<(&Url, SubjectHolderRelationship)>,
     fail_fast: FailFast,
@@ -276,15 +252,19 @@ impl CredentialValidator {
         .unwrap_or(Ok(()))
     });
 
-    let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
-
-    let validation_units_error_iter = issuance_date_validation
+    let validation_units_iter = issuance_date_validation
       .chain(expiry_date_validation)
       .chain(structure_validation)
       .chain(subject_holder_validation)
-      .chain(signature_validation)
-      .chain(revocation_validation)
-      .filter_map(|result| result.err());
+      .chain(signature_validation);
+
+    #[cfg(feature = "revocation-bitmap")]
+    let validation_units_iter = {
+      let revocation_validation = std::iter::once_with(|| Self::check_status(credential, issuers, options.status));
+      validation_units_iter.chain(revocation_validation)
+    };
+
+    let validation_units_error_iter = validation_units_iter.filter_map(|result| result.err());
     let validation_errors: Vec<ValidationError> = match fail_fast {
       FailFast::FirstError => validation_units_error_iter.take(1).collect(),
       FailFast::AllErrors => validation_units_error_iter.collect(),
@@ -295,6 +275,21 @@ impl CredentialValidator {
     } else {
       Err(CompoundCredentialValidationError { validation_errors })
     }
+  }
+
+  /// Utility for extracting the issuer field of a [`Credential`] as a DID.
+  ///
+  /// # Errors
+  ///
+  /// Fails if the issuer field is not a valid DID.
+  pub fn extract_issuer<D: DID, T>(credential: &Credential<T>) -> std::result::Result<D, ValidationError>
+  where
+    <D as FromStr>::Err: std::error::Error + Send + Sync + 'static,
+  {
+    D::from_str(credential.issuer.url().as_str()).map_err(|err| ValidationError::SignerUrl {
+      signer_ctx: SignerContext::Issuer,
+      source: err.into(),
+    })
   }
 }
 
@@ -309,14 +304,14 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::ProofOptions;
-  use identity_credential::credential::Status;
-  use identity_credential::credential::Subject;
   use identity_did::did::DID;
-  use identity_iota_core::document::IotaDocument;
-  use identity_iota_core::document::IotaService;
+  use identity_did::document::CoreDocument;
+  use identity_did::service::Service;
 
-  use crate::credential::test_utils;
-  use crate::credential::CredentialValidationOptions;
+  use crate::credential::Status;
+  use crate::credential::Subject;
+  use crate::validator::test_utils;
+  use crate::validator::CredentialValidationOptions;
 
   use super::*;
 
@@ -349,7 +344,7 @@ mod tests {
 
   // Setup parameters shared by many of the tests in this module
   struct Setup {
-    issuer_doc: IotaDocument,
+    issuer_doc: CoreDocument,
     issuer_key: KeyPair,
     unsigned_credential: Credential,
     issuance_date: Timestamp,
@@ -417,12 +412,10 @@ mod tests {
       issuance_date,
     } = Setup::new();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // declare the credential validation parameters
@@ -489,12 +482,10 @@ mod tests {
       issuance_date,
     } = Setup::new();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // declare the credential validation parameters
@@ -529,15 +520,13 @@ mod tests {
       expiration_date,
     } = Setup::new();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
-    // declare the credential validation parameters
 
+    // declare the credential validation parameters
     let issued_on_or_before = issuance_date.checked_add(Duration::days(14)).unwrap();
     let expires_on_or_after = expiration_date.checked_sub(Duration::hours(1)).unwrap();
     let options = CredentialValidationOptions::default()
@@ -557,12 +546,10 @@ mod tests {
     } = Setup::new();
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // the credential was not signed by this issuer
@@ -570,12 +557,7 @@ mod tests {
 
     // check that `verify_signature` returns the expected error
     assert!(matches!(
-      CredentialValidator::verify_signature(
-        &credential,
-        std::slice::from_ref(&other_doc),
-        &VerifierOptions::default()
-      )
-      .unwrap_err(),
+      CredentialValidator::verify_signature(&credential, &[&other_doc], &VerifierOptions::default()).unwrap_err(),
       ValidationError::DocumentMismatch { .. }
     ));
 
@@ -611,22 +593,15 @@ mod tests {
 
     let (_, other_keys) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        other_keys.private(), // sign with other keys
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(other_keys.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
 
     // run the validation unit
     assert!(matches!(
-      CredentialValidator::verify_signature(
-        &credential,
-        std::slice::from_ref(&issuer_doc),
-        &VerifierOptions::default()
-      )
-      .unwrap_err(),
+      CredentialValidator::verify_signature(&credential, &[&issuer_doc], &VerifierOptions::default()).unwrap_err(),
       ValidationError::Signature { .. }
     ));
 
@@ -787,7 +762,7 @@ mod tests {
     }
 
     // Add a RevocationBitmap status to the credential.
-    let service_url: IotaDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let service_url: CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
     let index: u32 = 42;
     credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
 
@@ -805,13 +780,13 @@ mod tests {
 
     // Add a RevocationBitmap service to the issuer.
     let bitmap: RevocationBitmap = RevocationBitmap::new();
-    assert!(issuer_doc.insert_service(
-      IotaService::builder(Object::new())
+    assert!(issuer_doc.service_mut().append(
+      Service::builder(Object::new())
         .id(service_url.clone())
         .type_(RevocationBitmap::TYPE)
         .service_endpoint(bitmap.to_endpoint().unwrap())
         .build()
-        .unwrap(),
+        .unwrap()
     ));
 
     // 3: un-revoked index always succeeds.
@@ -844,12 +819,10 @@ mod tests {
     } = Setup::new();
 
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
     credential.credential_subject = OneOrMany::default();
@@ -886,12 +859,10 @@ mod tests {
 
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
     credential.credential_subject = OneOrMany::default();
@@ -927,12 +898,10 @@ mod tests {
 
     let (other_doc, _) = test_utils::generate_document_with_keys();
     issuer_doc
-      .sign_data(
-        &mut credential,
-        issuer_key.private(),
-        issuer_doc.default_signing_method().unwrap().id(),
-        ProofOptions::default(),
-      )
+      .signer(issuer_key.private())
+      .options(ProofOptions::default())
+      .method(issuer_doc.methods().next().unwrap().id())
+      .sign(&mut credential)
       .unwrap();
     // the credential now has no credential subjects which is not semantically correct
     credential.credential_subject = OneOrMany::default();

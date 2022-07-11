@@ -10,6 +10,8 @@ use identity_iota::account::Account;
 use identity_iota::account::AccountBuilder;
 use identity_iota::account::IdentitySetup;
 use identity_iota::account::MethodContent;
+use identity_iota::account::Result;
+use identity_iota::client::Resolver;
 use identity_iota::core::json;
 use identity_iota::core::Duration;
 use identity_iota::core::FromJson;
@@ -18,19 +20,15 @@ use identity_iota::core::ToJson;
 use identity_iota::core::Url;
 use identity_iota::credential::Credential;
 use identity_iota::credential::CredentialBuilder;
+use identity_iota::credential::CredentialValidationOptions;
+use identity_iota::credential::FailFast;
 use identity_iota::credential::Presentation;
 use identity_iota::credential::PresentationBuilder;
+use identity_iota::credential::PresentationValidationOptions;
 use identity_iota::credential::Subject;
+use identity_iota::credential::SubjectHolderRelationship;
 use identity_iota::crypto::ProofOptions;
 use identity_iota::did::verifiable::VerifierOptions;
-
-use identity_iota::account::Result;
-use identity_iota::client::CredentialValidationOptions;
-use identity_iota::client::FailFast;
-use identity_iota::client::PresentationValidationOptions;
-
-use identity_iota::client::Resolver;
-use identity_iota::client::SubjectHolderRelationship;
 
 #[tokio::main]
 async fn main() -> Result<()> {

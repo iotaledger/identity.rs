@@ -124,9 +124,8 @@ pub enum FailFast {
   FirstError,
 }
 
-/// Options to declare validation criteria for validation methods such as
-/// [`PresentationValidator::validate`](super::PresentationValidator::validate()) and
-/// [`Resolver::verify_presentation`](crate::tangle::Resolver::verify_presentation()).
+/// Criteria for validating a [`Presentation`](crate::presentation::Presentation), such as with
+/// [`PresentationValidator::validate`](crate::validator::PresentationValidator::validate()).
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
 #[serde(rename_all = "camelCase")]

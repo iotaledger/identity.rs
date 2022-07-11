@@ -197,9 +197,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -242,10 +242,10 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
@@ -475,28 +475,6 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
-<a name="Account+setAlsoKnownAs"></a>
-
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
-
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -508,6 +486,17 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
 <a name="Account+setController"></a>
 
 ### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -518,6 +507,17 @@ Sets the controllers of the DID document.
 | Param | Type |
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
+
+<a name="Account+deleteMethod"></a>
+
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DeleteMethodOptions</code> | 
 
 <a name="Account+createService"></a>
 
@@ -581,7 +581,6 @@ The identity is stored locally in the `Storage`. The DID network is automaticall
 by the [Client](#Client) used to publish it.
 
 **Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
-**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
 
 | Param | Type |
 | --- | --- |
@@ -1176,6 +1175,7 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
     * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>DID</code>](#DID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1269,7 +1269,7 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trusted_issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trusted_issuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="CredentialValidator.check_subject_holder_relationship"></a>
@@ -1298,8 +1298,23 @@ Only supports `BitmapRevocation2022`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trustedIssuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> | 
 | statusCheck | <code>number</code> | 
+
+<a name="CredentialValidator.extractIssuer"></a>
+
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>DID</code>](#DID)
+Utility for extracting the issuer field of a `Credential` as a DID.
+
+### Errors
+
+Fails if the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
 
 <a name="DID"></a>
 
@@ -1755,6 +1770,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService) ⇒ <code>boolean</code>
+        * [.resolveService(query)](#Document+resolveService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
         * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
@@ -1782,8 +1798,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.revokeCredentials(fragment, credentialIndices)](#Document+revokeCredentials)
-        * [.unrevokeCredentials(fragment, credentialIndices)](#Document+unrevokeCredentials)
+        * [.revokeCredentials(serviceQuery, credentialIndices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, credentialIndices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -1916,6 +1932,18 @@ Returns `true` if a service was removed.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
+<a name="Document+resolveService"></a>
+
+### document.resolveService(query) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+Returns the first [Service](#Service) with an `id` property matching the provided `query`,
+if present.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
+
 <a name="Document+methods"></a>
 
 ### document.methods() ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
@@ -2036,7 +2064,7 @@ on the same document. This is intended for signing updates to a document where a
 capability invocation method is rotated or replaced entirely.
 
 NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-verification method. See [Document.verifyDocument](Document.verifyDocument).
+verification method. See [Document.verifyDocument](#Document+verifyDocument).
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -2252,28 +2280,28 @@ Returns a copy of the proof.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+revokeCredentials"></a>
 
-### document.revokeCredentials(fragment, credentialIndices)
-If the document has a `RevocationBitmap` service identified by `fragment`,
+### document.revokeCredentials(serviceQuery, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+unrevokeCredentials"></a>
 
-### document.unrevokeCredentials(fragment, credentialIndices)
-If the document has a `RevocationBitmap` service identified by `fragment`,
+### document.unrevokeCredentials(serviceQuery, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+toJSON"></a>
@@ -2593,7 +2621,7 @@ Length in bytes of an Ed25519 signature.
 ### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
 Computes an EdDSA signature using an Ed25519 private key.
 
-NOTE: this differs from [Document.signData](Document.signData) which uses JCS
+NOTE: this differs from [Document.signData](#Document+signData) which uses JCS
 to canonicalize JSON messages.
 
 The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
@@ -2611,7 +2639,7 @@ Other implementations often use another format. See [this blog post](https://blo
 ### Ed25519.verify(message, signature, publicKey)
 Verifies an EdDSA signature against an Ed25519 public key.
 
-NOTE: this differs from [Document.verifyData](Document.verifyData) which uses JCS
+NOTE: this differs from [Document.verifyData](#Document+verifyData) which uses JCS
 to canonicalize JSON messages.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
@@ -3591,6 +3619,7 @@ Deserializes a `PresentationValidationOptions` from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>DID</code>](#DID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -3628,7 +3657,7 @@ An error is returned whenever a validated condition is not satisfied.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
-| issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| issuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -3656,6 +3685,21 @@ Fails if signature verification against the holder document fails.
 
 ### PresentationValidator.checkStructure(presentation)
 Validates the semantic structure of the `Presentation`.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="PresentationValidator.extractHolder"></a>
+
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>DID</code>](#DID)
+Utility for extracting the holder field of a `Presentation` as a DID.
+
+### Errors
+
+Fails if the holder field is missing or not a valid DID.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -4185,8 +4229,8 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
-| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver.builder"></a>
 
@@ -4940,13 +4984,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 
