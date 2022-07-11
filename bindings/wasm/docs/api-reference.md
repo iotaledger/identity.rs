@@ -197,9 +197,9 @@ This variant is the default used if no other variant is specified when construct
 <dt><a href="#FirstError">FirstError</a></dt>
 <dd><p>Return after the first error occurs.</p>
 </dd>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#MethodRelationship">MethodRelationship</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -222,9 +222,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -242,33 +242,11 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-
-<a name="Account+createService"></a>
-
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateServiceOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -283,6 +261,28 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
+
+<a name="Account+detachMethodRelationships"></a>
+
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -475,17 +475,6 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
-
 <a name="Account+deleteService"></a>
 
 ### account.deleteService(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -529,6 +518,17 @@ Deletes a verification method if the method exists.
 | Param | Type |
 | --- | --- |
 | options | <code>DeleteMethodOptions</code> | 
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -581,7 +581,6 @@ The identity is stored locally in the `Storage`. The DID network is automaticall
 by the [Client](#Client) used to publish it.
 
 **Kind**: instance method of [<code>AccountBuilder</code>](#AccountBuilder)  
-**See**: [IdentitySetup](IdentitySetup) to customize the identity creation.  
 
 | Param | Type |
 | --- | --- |
@@ -2065,7 +2064,7 @@ on the same document. This is intended for signing updates to a document where a
 capability invocation method is rotated or replaced entirely.
 
 NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
-verification method. See [Document.verifyDocument](Document.verifyDocument).
+verification method. See [Document.verifyDocument](#Document+verifyDocument).
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -2622,7 +2621,7 @@ Length in bytes of an Ed25519 signature.
 ### Ed25519.sign(message, privateKey) ⇒ <code>Uint8Array</code>
 Computes an EdDSA signature using an Ed25519 private key.
 
-NOTE: this differs from [Document.signData](Document.signData) which uses JCS
+NOTE: this differs from [Document.signData](#Document+signData) which uses JCS
 to canonicalize JSON messages.
 
 The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
@@ -2640,7 +2639,7 @@ Other implementations often use another format. See [this blog post](https://blo
 ### Ed25519.verify(message, signature, publicKey)
 Verifies an EdDSA signature against an Ed25519 public key.
 
-NOTE: this differs from [Document.verifyData](Document.verifyData) which uses JCS
+NOTE: this differs from [Document.verifyData](#Document+verifyData) which uses JCS
 to canonicalize JSON messages.
 
 **Kind**: static method of [<code>Ed25519</code>](#Ed25519)  
@@ -4985,13 +4984,13 @@ Return all errors that occur during validation.
 Return after the first error occurs.
 
 **Kind**: global variable  
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="MethodRelationship"></a>
 
 ## MethodRelationship
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 
