@@ -13,7 +13,7 @@ pub use self::wasm_method_scope::OptionMethodScope;
 pub use self::wasm_method_scope::RefMethodScope;
 pub use self::wasm_method_scope::WasmMethodScope;
 pub use self::wasm_method_type::WasmMethodType;
-pub use self::wasm_resolved_document::ArrayDocumentOrArrayResolvedDocument;
+pub use self::wasm_resolved_document::ArrayDocumentOrResolvedDocument;
 pub use self::wasm_resolved_document::ArrayResolvedDocument;
 pub use self::wasm_resolved_document::DocumentOrResolvedDocument;
 pub use self::wasm_resolved_document::PromiseArrayResolvedDocument;

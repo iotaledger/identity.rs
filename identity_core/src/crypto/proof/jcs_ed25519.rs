@@ -56,7 +56,7 @@ where
 {
   fn verify<X>(data: &X, signature: &ProofValue, public: &T::Public) -> Result<()>
   where
-    X: Serialize,
+    X: Serialize + ?Sized,
   {
     let signature: &str = signature
       .as_signature()

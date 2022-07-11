@@ -222,9 +222,9 @@ publishing to the Tangle.
 **Kind**: global class  
 
 * [Account](#Account)
-    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.createMethod(options)](#Account+createMethod) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.did()](#Account+did) ⇒ [<code>DID</code>](#DID)
     * [.autopublish()](#Account+autopublish) ⇒ <code>boolean</code>
     * [.autosave()](#Account+autosave) ⇒ [<code>AutoSave</code>](#AutoSave)
@@ -242,11 +242,33 @@ publishing to the Tangle.
     * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
-    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.detachMethodRelationships(options)](#Account+detachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.deleteService(options)](#Account+deleteService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.setAlsoKnownAs(options)](#Account+setAlsoKnownAs) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.setController(options)](#Account+setController) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.createService(options)](#Account+createService) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.deleteMethod(options)](#Account+deleteMethod) ⇒ <code>Promise.&lt;void&gt;</code>
+
+<a name="Account+createService"></a>
+
+### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new Service to the DID Document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateServiceOptions</code> | 
+
+<a name="Account+createMethod"></a>
+
+### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Adds a new verification method to the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>CreateMethodOptions</code> | 
 
 <a name="Account+attachMethodRelationships"></a>
 
@@ -261,28 +283,6 @@ it cannot be an embedded method.
 | Param | Type |
 | --- | --- |
 | options | <code>AttachMethodRelationshipOptions</code> | 
-
-<a name="Account+createMethod"></a>
-
-### account.createMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new verification method to the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>CreateMethodOptions</code> | 
-
-<a name="Account+detachMethodRelationships"></a>
-
-### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Detaches the given relationship from the given method, if the method exists.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+did"></a>
 
@@ -475,27 +475,16 @@ Returns the decrypted text.
 | cek_algorithm | [<code>CekAlgorithm</code>](#CekAlgorithm) | 
 | fragment | <code>string</code> | 
 
-<a name="Account+setAlsoKnownAs"></a>
+<a name="Account+detachMethodRelationships"></a>
 
-### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Sets the `alsoKnownAs` property in the DID document.
-
-**Kind**: instance method of [<code>Account</code>](#Account)  
-
-| Param | Type |
-| --- | --- |
-| options | <code>SetAlsoKnownAsOptions</code> | 
-
-<a name="Account+deleteMethod"></a>
-
-### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Deletes a verification method if the method exists.
+### account.detachMethodRelationships(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Detaches the given relationship from the given method, if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>DeleteMethodOptions</code> | 
+| options | <code>DetachMethodRelationshipOptions</code> | 
 
 <a name="Account+deleteService"></a>
 
@@ -508,6 +497,17 @@ Deletes a Service if it exists.
 | --- | --- |
 | options | <code>DeleteServiceOptions</code> | 
 
+<a name="Account+setAlsoKnownAs"></a>
+
+### account.setAlsoKnownAs(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Sets the `alsoKnownAs` property in the DID document.
+
+**Kind**: instance method of [<code>Account</code>](#Account)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>SetAlsoKnownAsOptions</code> | 
+
 <a name="Account+setController"></a>
 
 ### account.setController(options) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -519,16 +519,16 @@ Sets the controllers of the DID document.
 | --- | --- |
 | options | <code>SetControllerOptions</code> | 
 
-<a name="Account+createService"></a>
+<a name="Account+deleteMethod"></a>
 
-### account.createService(options) ⇒ <code>Promise.&lt;void&gt;</code>
-Adds a new Service to the DID Document.
+### account.deleteMethod(options) ⇒ <code>Promise.&lt;void&gt;</code>
+Deletes a verification method if the method exists.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
-| options | <code>CreateServiceOptions</code> | 
+| options | <code>DeleteMethodOptions</code> | 
 
 <a name="AccountBuilder"></a>
 
@@ -1176,6 +1176,7 @@ Deserializes a `CredentialValidationOptions` from a JSON object.
     * [.verifySignature(credential, trusted_issuers, options)](#CredentialValidator.verifySignature)
     * [.check_subject_holder_relationship(credential, holder_url, relationship)](#CredentialValidator.check_subject_holder_relationship)
     * [.checkStatus(credential, trustedIssuers, statusCheck)](#CredentialValidator.checkStatus)
+    * [.extractIssuer(credential)](#CredentialValidator.extractIssuer) ⇒ [<code>DID</code>](#DID)
 
 <a name="CredentialValidator.validate"></a>
 
@@ -1269,7 +1270,7 @@ to verify the credential's signature will be made and an error is returned upon 
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trusted_issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trusted_issuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> | 
 | options | [<code>VerifierOptions</code>](#VerifierOptions) | 
 
 <a name="CredentialValidator.check_subject_holder_relationship"></a>
@@ -1298,8 +1299,23 @@ Only supports `BitmapRevocation2022`.
 | Param | Type |
 | --- | --- |
 | credential | [<code>Credential</code>](#Credential) | 
-| trustedIssuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| trustedIssuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> | 
 | statusCheck | <code>number</code> | 
+
+<a name="CredentialValidator.extractIssuer"></a>
+
+### CredentialValidator.extractIssuer(credential) ⇒ [<code>DID</code>](#DID)
+Utility for extracting the issuer field of a `Credential` as a DID.
+
+### Errors
+
+Fails if the issuer field is not a valid DID.
+
+**Kind**: static method of [<code>CredentialValidator</code>](#CredentialValidator)  
+
+| Param | Type |
+| --- | --- |
+| credential | [<code>Credential</code>](#Credential) | 
 
 <a name="DID"></a>
 
@@ -1755,6 +1771,7 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.service()](#Document+service) ⇒ [<code>Array.&lt;Service&gt;</code>](#Service)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService) ⇒ <code>boolean</code>
+        * [.resolveService(query)](#Document+resolveService) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
         * [.methods()](#Document+methods) ⇒ [<code>Array.&lt;VerificationMethod&gt;</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
@@ -1782,8 +1799,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.revokeCredentials(fragment, credentialIndices)](#Document+revokeCredentials)
-        * [.unrevokeCredentials(fragment, credentialIndices)](#Document+unrevokeCredentials)
+        * [.revokeCredentials(serviceQuery, credentialIndices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, credentialIndices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -1915,6 +1932,18 @@ Returns `true` if a service was removed.
 | Param | Type |
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
+
+<a name="Document+resolveService"></a>
+
+### document.resolveService(query) ⇒ [<code>Service</code>](#Service) \| <code>undefined</code>
+Returns the first [Service](#Service) with an `id` property matching the provided `query`,
+if present.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| query | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 
 <a name="Document+methods"></a>
 
@@ -2252,28 +2281,28 @@ Returns a copy of the proof.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+revokeCredentials"></a>
 
-### document.revokeCredentials(fragment, credentialIndices)
-If the document has a `RevocationBitmap` service identified by `fragment`,
+### document.revokeCredentials(serviceQuery, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+unrevokeCredentials"></a>
 
-### document.unrevokeCredentials(fragment, credentialIndices)
-If the document has a `RevocationBitmap` service identified by `fragment`,
+### document.unrevokeCredentials(serviceQuery, credentialIndices)
+If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| fragment | <code>string</code> | 
+| serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+toJSON"></a>
@@ -3591,6 +3620,7 @@ Deserializes a `PresentationValidationOptions` from a JSON object.
     * [.validate(presentation, holder, issuers, options, fail_fast)](#PresentationValidator.validate)
     * [.verifyPresentationSignature(presentation, holder, options)](#PresentationValidator.verifyPresentationSignature)
     * [.checkStructure(presentation)](#PresentationValidator.checkStructure)
+    * [.extractHolder(presentation)](#PresentationValidator.extractHolder) ⇒ [<code>DID</code>](#DID)
 
 <a name="PresentationValidator.validate"></a>
 
@@ -3628,7 +3658,7 @@ An error is returned whenever a validated condition is not satisfied.
 | --- | --- |
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) | 
-| issuers | [<code>Array.&lt;Document&gt;</code>](#Document) \| [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) | 
+| issuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
 
@@ -3656,6 +3686,21 @@ Fails if signature verification against the holder document fails.
 
 ### PresentationValidator.checkStructure(presentation)
 Validates the semantic structure of the `Presentation`.
+
+**Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
+
+| Param | Type |
+| --- | --- |
+| presentation | [<code>Presentation</code>](#Presentation) | 
+
+<a name="PresentationValidator.extractHolder"></a>
+
+### PresentationValidator.extractHolder(presentation) ⇒ [<code>DID</code>](#DID)
+Utility for extracting the holder field of a `Presentation` as a DID.
+
+### Errors
+
+Fails if the holder field is missing or not a valid DID.
 
 **Kind**: static method of [<code>PresentationValidator</code>](#PresentationValidator)  
 
@@ -4185,8 +4230,8 @@ according to the `fail_fast` parameter.
 | presentation | [<code>Presentation</code>](#Presentation) | 
 | options | [<code>PresentationValidationOptions</code>](#PresentationValidationOptions) | 
 | fail_fast | <code>number</code> | 
-| holder | [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
-| issuers | [<code>Array.&lt;ResolvedDocument&gt;</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| holder | [<code>Document</code>](#Document) \| [<code>ResolvedDocument</code>](#ResolvedDocument) \| <code>undefined</code> | 
+| issuers | <code>Array.&lt;(Document\|ResolvedDocument)&gt;</code> \| <code>undefined</code> | 
 
 <a name="Resolver.builder"></a>
 

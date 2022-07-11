@@ -1,6 +1,12 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota_stronghold::procedures;
+use iota_stronghold::procedures::GenerateKey;
+use iota_stronghold::Client;
+use iota_stronghold::ClientVault;
+use iota_stronghold::Location;
+
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
@@ -9,11 +15,6 @@ use identity_core::crypto::X25519;
 use identity_core::utils::Base::Base16Lower;
 use identity_core::utils::BaseEncoding;
 use identity_iota_core::did::IotaDID;
-use iota_stronghold::procedures;
-use iota_stronghold::procedures::GenerateKey;
-use iota_stronghold::Client;
-use iota_stronghold::ClientVault;
-use iota_stronghold::Location;
 
 use crate::storage::stronghold::aead_decrypt;
 use crate::storage::stronghold::aead_encrypt;
@@ -23,8 +24,6 @@ use crate::storage::stronghold::generate_private_key;
 use crate::storage::stronghold::insert_private_key;
 use crate::storage::stronghold::random_location;
 use crate::storage::stronghold::retrieve_public_key;
-use crate::storage::Storage;
-use crate::storage::StorageTestSuite;
 use crate::stronghold::test_util::random_did;
 use crate::stronghold::test_util::random_key_location;
 use crate::stronghold::test_util::random_string;
@@ -190,74 +189,82 @@ async fn test_ecdhes_encryption() {
   assert_eq!(plaintext.to_vec(), data);
 }
 
-async fn test_stronghold() -> impl Storage {
-  Stronghold::new(&random_temporary_path(), random_string(), Some(false))
-    .await
-    .unwrap()
-}
+#[cfg(feature = "storage-test-suite")]
+mod stronghold_storage_test_suite {
+  use crate::storage::Storage;
+  use crate::storage::StorageTestSuite;
 
-#[tokio::test]
-async fn test_stronghold_did_create_with_private_key() {
-  StorageTestSuite::did_create_private_key_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  use super::*;
 
-#[tokio::test]
-async fn test_stronghold_did_create_generate_key() {
-  StorageTestSuite::did_create_generate_key_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  async fn test_stronghold() -> impl Storage {
+    Stronghold::new(&random_temporary_path(), random_string(), Some(false))
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_key_generate() {
-  StorageTestSuite::key_generate_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_did_create_with_private_key() {
+    StorageTestSuite::did_create_private_key_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_key_delete() {
-  StorageTestSuite::key_delete_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_did_create_generate_key() {
+    StorageTestSuite::did_create_generate_key_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_did_list() {
-  StorageTestSuite::did_list_test(test_stronghold().await).await.unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_key_generate() {
+    StorageTestSuite::key_generate_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_key_insert() {
-  StorageTestSuite::key_insert_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_key_delete() {
+    StorageTestSuite::key_delete_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_key_sign_ed25519() {
-  StorageTestSuite::key_sign_ed25519_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_did_list() {
+    StorageTestSuite::did_list_test(test_stronghold().await).await.unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_key_value_store() {
-  StorageTestSuite::key_value_store_test(test_stronghold().await)
-    .await
-    .unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_key_insert() {
+    StorageTestSuite::key_insert_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_did_purge() {
-  StorageTestSuite::did_purge_test(test_stronghold().await).await.unwrap()
-}
+  #[tokio::test]
+  async fn test_stronghold_key_sign_ed25519() {
+    StorageTestSuite::key_sign_ed25519_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
 
-#[tokio::test]
-async fn test_stronghold_encryption() {
-  StorageTestSuite::encryption_test(test_stronghold().await, test_stronghold().await)
-    .await
-    .unwrap()
+  #[tokio::test]
+  async fn test_stronghold_key_value_store() {
+    StorageTestSuite::key_value_store_test(test_stronghold().await)
+      .await
+      .unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_stronghold_did_purge() {
+    StorageTestSuite::did_purge_test(test_stronghold().await).await.unwrap()
+  }
+
+  #[tokio::test]
+  async fn test_stronghold_encryption() {
+    StorageTestSuite::encryption_test(test_stronghold().await, test_stronghold().await)
+      .await
+      .unwrap()
+  }
 }

@@ -6,23 +6,23 @@
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
-/// This type represents all possible errors that can occur in the library.
+/// This type represents errors that can occur when constructing credentials and presentations.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
-  /// Caused when validating a Credential without a valid base context.
-  #[error("Missing Base Context")]
+  /// Caused when constructing a credential or presentation without a valid base context.
+  #[error("missing base context")]
   MissingBaseContext,
-  /// Caused when validating a Credential without a valid base type.
-  #[error("Missing Base Type")]
+  /// Caused when constructing a credential or presentation without a valid base type.
+  #[error("missing base type")]
   MissingBaseType,
-  /// Caused when validating a Credential without an issuer.
-  #[error("Missing Credential Issuer")]
+  /// Caused when constructing a credential without an issuer.
+  #[error("missing credential issuer")]
   MissingIssuer,
-  /// Caused when validating a Credential without a subject.
-  #[error("Missing Credential Subject")]
+  /// Caused when constructing a credential without a subject.
+  #[error("missing Credential subject")]
   MissingSubject,
-  /// Caused when validating a Credential with a malformed subject.
-  #[error("Invalid Credential Subject")]
+  /// Caused when constructing a credential with a malformed subject.
+  #[error("invalid credential subject")]
   InvalidSubject,
   /// Caused when trying to construct an invalid status.
   #[error("invalid credential status: {0}")]
