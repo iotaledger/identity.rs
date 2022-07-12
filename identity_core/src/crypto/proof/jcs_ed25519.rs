@@ -25,16 +25,16 @@ use crate::utils::BaseEncoding;
 /// Users should use the [`Sign`]/[`Verify`] traits to access
 /// this implementation.
 ///
-/// ## Deviation from the [JCS Ed25519 Signature 2020 specification][SPEC1] 
-/// This implementation follows the specification with the single exception that the third step of the [Proof generation algorithm](https://identity.foundation/JcsEd25519Signature2020/#ProofGeneration) is skipped. 
-/// In other words this implementation does NOT apply the SHA-256 Hash algorithm before signing. 
-/// 
+/// ## Deviation from the [JCS Ed25519 Signature 2020 specification][SPEC1]
+/// This implementation follows the specification with the single exception that the third step of the [Proof generation algorithm](https://identity.foundation/JcsEd25519Signature2020/#ProofGeneration) is skipped.
+/// In other words this implementation does NOT apply the SHA-256 Hash algorithm before signing.
+///
 /// We have chosen to deviate from the specification on this point in order to pass the [official test vectors](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors) as well as achieving compatibility with the reference implementations [for Go](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/golang)
-/// and [for Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java). 
-/// 
-/// See [this Github issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions. 
-/// 
-/// 
+/// and [for Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java).
+///
+/// See [this Github issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions.
+///
+///
 /// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
 /// [SPEC2]: https://w3c-ccg.github.io/ld-proofs/
 pub struct JcsEd25519<T = Ed25519>(PhantomData<T>);
