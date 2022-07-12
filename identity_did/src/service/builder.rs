@@ -17,7 +17,7 @@ where
   D: DID,
 {
   pub(crate) id: Option<DIDUrl<D>>,
-  pub(crate) type_: Option<String>,
+  pub(crate) type_: Vec<String>,
   pub(crate) service_endpoint: Option<ServiceEndpoint>,
   pub(crate) properties: T,
 }
@@ -30,7 +30,7 @@ where
   pub fn new(properties: T) -> Self {
     Self {
       id: None,
-      type_: None,
+      type_: Vec::new(),
       service_endpoint: None,
       properties,
     }
@@ -43,17 +43,26 @@ where
     self
   }
 
-  /// Sets the `type` value of the generated `Service`.
+  /// Appends a `type` value to the generated `Service`.
   #[must_use]
   pub fn type_(mut self, value: impl Into<String>) -> Self {
-    self.type_ = Some(value.into());
+    self.type_.push(value.into());
+    self
+  }
+
+  /// Sets the `type` value of the generated `Service`, overwriting any previous `type` entries.
+  ///
+  /// NOTE: the entries must be unique.
+  #[must_use]
+  pub fn types(mut self, values: &[String]) -> Self {
+    self.type_ = values.to_vec();
     self
   }
 
   /// Sets the `serviceEndpoint` value of the generated `Service`.
   #[must_use]
-  pub fn service_endpoint(mut self, value: ServiceEndpoint) -> Self {
-    self.service_endpoint = Some(value);
+  pub fn service_endpoint(mut self, value: impl Into<ServiceEndpoint>) -> Self {
+    self.service_endpoint = Some(value.into());
     self
   }
 
@@ -71,7 +80,7 @@ where
   fn default() -> Self {
     Self {
       id: None,
-      type_: None,
+      type_: Vec::default(),
       service_endpoint: None,
       properties: T::default(),
     }
@@ -90,7 +99,7 @@ mod tests {
     let _: Service = ServiceBuilder::default()
       .id("did:example:123#service".parse().unwrap())
       .type_("ServiceType")
-      .service_endpoint(Url::parse("https://example.com").unwrap().into())
+      .service_endpoint(Url::parse("https://example.com").unwrap())
       .build()
       .unwrap();
   }
@@ -99,7 +108,7 @@ mod tests {
   fn test_missing_id() {
     let result: Result<Service> = ServiceBuilder::default()
       .type_("ServiceType")
-      .service_endpoint(Url::parse("https://example.com").unwrap().into())
+      .service_endpoint(Url::parse("https://example.com").unwrap())
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }
@@ -109,7 +118,7 @@ mod tests {
     let result: Result<Service> = ServiceBuilder::default()
       .id("did:example:123".parse().unwrap())
       .type_("ServiceType")
-      .service_endpoint(Url::parse("https://example.com").unwrap().into())
+      .service_endpoint(Url::parse("https://example.com").unwrap())
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }
@@ -118,7 +127,7 @@ mod tests {
   fn test_missing_type_() {
     let result: Result<Service> = ServiceBuilder::default()
       .id("did:example:123#service".parse().unwrap())
-      .service_endpoint(Url::parse("https://example.com").unwrap().into())
+      .service_endpoint(Url::parse("https://example.com").unwrap())
       .build();
     assert!(matches!(result.unwrap_err(), Error::InvalidService(_)));
   }

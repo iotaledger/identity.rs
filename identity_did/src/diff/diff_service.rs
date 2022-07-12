@@ -5,8 +5,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
+use identity_core::common::OneOrSet;
 use identity_core::diff::Diff;
-use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 
@@ -26,7 +26,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<<DIDUrl<D> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  type_: Option<DiffString>,
+  type_: Option<<OneOrSet<String> as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
   service_endpoint: Option<<ServiceEndpoint as Diff>::Type>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -50,7 +50,7 @@ where
       type_: if self.type_() == other.type_() {
         None
       } else {
-        Some(self.type_().to_string().diff(&other.type_().to_string())?)
+        Some(self.type_().diff(other.type_())?)
       },
       service_endpoint: if self.service_endpoint() == other.service_endpoint() {
         None
@@ -72,11 +72,11 @@ where
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let type_: String = diff
+    let type_: OneOrSet<String> = diff
       .type_
-      .map(|value| self.type_().to_string().merge(value))
+      .map(|value| self.type_().merge(value))
       .transpose()?
-      .unwrap_or_else(|| self.type_().to_string());
+      .unwrap_or_else(|| self.type_().clone());
 
     let service_endpoint: ServiceEndpoint = diff
       .service_endpoint
@@ -93,7 +93,7 @@ where
     // Use builder to enforce invariants.
     ServiceBuilder::new(properties)
       .id(id)
-      .type_(type_)
+      .types(&type_)
       .service_endpoint(service_endpoint)
       .build()
       .map_err(Error::merge)
@@ -106,7 +106,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.id`"))?;
 
-    let type_: String = diff
+    let type_: OneOrSet<String> = diff
       .type_
       .map(Diff::from_diff)
       .transpose()?
@@ -123,7 +123,7 @@ where
     // Use builder to enforce invariants.
     ServiceBuilder::new(properties)
       .id(id)
-      .type_(type_)
+      .types(&type_)
       .service_endpoint(service_endpoint)
       .build()
       .map_err(Error::convert)
@@ -181,6 +181,7 @@ mod test {
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::convert::ToJson;
+  use identity_core::diff::DiffString;
   use identity_core::diff::DiffVec;
 
   use super::*;
@@ -193,7 +194,7 @@ mod test {
     let controller = controller();
     Service::builder(Object::default())
       .id(controller)
-      .service_endpoint(Url::parse("did:service:1234").unwrap().into())
+      .service_endpoint(Url::parse("did:service:1234").unwrap())
       .type_("test_service")
       .build()
       .unwrap()
@@ -215,18 +216,48 @@ mod test {
   }
 
   #[test]
-  fn test_type() {
+  fn test_type_one() {
     let service = service();
     let mut new = service.clone();
-    *new.type_mut() = "test_service_2".parse().unwrap();
+    *new.type_mut() = OneOrSet::new_one("test_service_2".to_owned());
 
     let diff = service.diff(&new).unwrap();
     assert!(diff.properties.is_none());
     assert!(diff.service_endpoint.is_none());
     assert!(diff.id.is_none());
-    assert_eq!(diff.type_, Some(DiffString(Some("test_service_2".to_string()))));
+    assert!(diff.type_.is_some());
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_type_set() {
+    let service = service();
+
+    // One to set.
+    let mut service_set = service.clone();
+    *service_set.type_mut() =
+      OneOrSet::try_from(vec!["test_service_set_1".to_owned(), "test_service_set_2".to_owned()]).unwrap();
+
+    let diff_set = service.diff(&service_set).unwrap();
+    assert!(diff_set.properties.is_none());
+    assert!(diff_set.service_endpoint.is_none());
+    assert!(diff_set.id.is_none());
+    assert!(diff_set.type_.is_some());
+    let merge = service.merge(diff_set).unwrap();
+    assert_eq!(merge, service_set);
+
+    // Set to one.
+    let mut service_one = service_set.clone();
+    *service_one.type_mut() = OneOrSet::new_one("one_service_type".to_owned());
+
+    let diff_one = service_set.diff(&service_one).unwrap();
+    assert!(diff_one.properties.is_none());
+    assert!(diff_one.service_endpoint.is_none());
+    assert!(diff_one.id.is_none());
+    assert!(diff_one.type_.is_some());
+    let merge = service_set.merge(diff_one).unwrap();
+    assert_eq!(merge, service_one);
   }
 
   #[test]
@@ -357,7 +388,7 @@ mod test {
     {
       let mut updated: Service = service.clone();
       updated.id = CoreDIDUrl::parse("did:test:serde").unwrap();
-      updated.type_ = "TestSerde".into();
+      updated.type_ = OneOrSet::new_one("TestSerde".to_owned());
       updated.service_endpoint = ServiceEndpoint::One(Url::parse("https://test.serde/").unwrap());
       updated.properties.insert("a".into(), 42.into());
       let diff: DiffService = Diff::diff(&service, &updated).unwrap();
@@ -370,7 +401,7 @@ mod test {
   #[test]
   fn test_ordered_set_service_diff_serde() {
     let mut service = service();
-    service.type_ = "".to_string();
+    service.type_ = OneOrSet::from("".to_string());
     let set0: OrderedSet<Service> = OrderedSet::new();
     let set1: OrderedSet<Service> = OrderedSet::try_from(vec![service]).unwrap();
 

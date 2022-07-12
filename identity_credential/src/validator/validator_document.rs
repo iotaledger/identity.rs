@@ -4,8 +4,8 @@
 use identity_core::crypto::GetSignature;
 use identity_did::did::DID;
 use identity_did::document::Document;
+#[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
-use identity_did::utils::DIDUrlQuery;
 use identity_did::verifiable::VerifierOptions;
 
 use self::private::Sealed;
@@ -45,7 +45,10 @@ pub trait ValidatorDocument: Sealed {
   /// Fails if the referenced service is not found, or is not a
   /// valid `RevocationBitmap2022` service.
   #[cfg(feature = "revocation-bitmap")]
-  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap>;
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap>;
 }
 
 mod private {
@@ -82,7 +85,10 @@ impl ValidatorDocument for &dyn ValidatorDocument {
   }
 
   #[cfg(feature = "revocation-bitmap")]
-  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap> {
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap> {
     (*self).resolve_revocation_bitmap(query)
   }
 }
@@ -100,7 +106,10 @@ where
   }
 
   #[cfg(feature = "revocation-bitmap")]
-  fn resolve_revocation_bitmap(&self, query: DIDUrlQuery<'_>) -> identity_did::Result<RevocationBitmap> {
+  fn resolve_revocation_bitmap(
+    &self,
+    query: identity_did::utils::DIDUrlQuery<'_>,
+  ) -> identity_did::Result<RevocationBitmap> {
     self
       .resolve_service(query)
       .ok_or(identity_did::Error::InvalidService(
