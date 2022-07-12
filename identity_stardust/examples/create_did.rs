@@ -6,19 +6,11 @@ use iota_client::bee_block::output::unlock_condition::GovernorAddressUnlockCondi
 use iota_client::bee_block::output::unlock_condition::StateControllerAddressUnlockCondition;
 use iota_client::bee_block::output::unlock_condition::UnlockCondition;
 use iota_client::bee_block::output::AliasId;
-use iota_client::bee_block::output::AliasOutput;
 use iota_client::bee_block::output::AliasOutputBuilder;
 use iota_client::bee_block::output::ByteCostConfig;
 use iota_client::bee_block::output::Feature;
 use iota_client::bee_block::output::Output;
-use iota_client::bee_block::output::OutputId;
-use iota_client::bee_block::payload::transaction::TransactionEssence;
-use iota_client::bee_block::payload::Payload;
-use iota_client::bee_block::Block;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
-use iota_client::crypto::keys::bip39;
-use iota_client::node_api::indexer::query_parameters::QueryParameter;
-use iota_client::request_funds_from_faucet;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
@@ -46,21 +38,21 @@ use identity_stardust::StardustDocument;
 async fn main() -> anyhow::Result<()> {
   // let endpoint = "http://localhost:14265";
   let endpoint = "https://api.alphanet.iotaledger.net";
-  let faucet_auto = format!("{endpoint}/api/plugins/faucet/v1/enqueue");
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
 
   // ===========================================================================
   // Step 1: Create or load your wallet.
   // ===========================================================================
 
-  // let keypair = identity_core::crypto::KeyPair::new(KeyType::Ed25519).unwrap();
+  // let keypair = identity_core::crypto::KeyPair::new(identity_core::crypto::KeyType::Ed25519).unwrap();
   // println!("PrivateKey: {}", keypair.private().to_string());
-  // let mnemonic = bip39::wordlist::encode(keypair.private().as_ref(),&bip39::wordlist::ENGLISH).unwrap();
+  // let mnemonic =
+  // iota_client::crypto::keys::bip39::wordlist::encode(keypair.private().as_ref(),&bip39::wordlist::ENGLISH).unwrap();
 
   // NOTE: this is just a randomly generated mnemonic, REMOVE THIS, never actually commit your seed or mnemonic.
   let mnemonic = "veteran provide abstract express quick another fee dragon trend extend cotton tail dog truly angle napkin lunch dinosaur shrimp odor gain bag media mountain";
   println!("Mnemonic: {}", mnemonic);
-  let secret_manager = SecretManager::Mnemonic(MnemonicSecretManager::try_from_mnemonic(&mnemonic)?);
+  let secret_manager = SecretManager::Mnemonic(MnemonicSecretManager::try_from_mnemonic(mnemonic)?);
 
   // Create a client instance.
   let client = Client::builder()
@@ -74,7 +66,8 @@ async fn main() -> anyhow::Result<()> {
   println!("Wallet address: {address_bech32}");
 
   println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
-  // request_funds_from_faucet(&faucet_auto, &address_bech32).await?;
+  // let faucet_auto = format!("{endpoint}/api/plugins/faucet/v1/enqueue");
+  // iota_client::request_funds_from_faucet(&faucet_auto, &address_bech32).await?;
   // tokio::time::sleep(std::time::Duration::from_secs(15)).await;
 
   // ===========================================================================

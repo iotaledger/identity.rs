@@ -35,11 +35,12 @@ pub struct StardustDocument(CoreDocument<CoreDID>);
 // Tag is 64-bytes long, matching the hex-encoding of the Alias ID (without 0x prefix).
 // TODO: should we just keep the 0x prefix in the tag? Other DID methods like did:ethr do...
 lazy_static! {
-  static ref PLACEHOLDER_DID: CoreDID = CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+  static ref PLACEHOLDER_DID: CoreDID =
+    CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap();
 }
 
 impl StardustDocument {
-  /// Constructs an empty DID Document with a [`placeholder_did`] identifier.
+  /// Constructs an empty DID Document with a [`StardustDocument::placeholder_did`] identifier.
   pub fn new() -> StardustDocument {
     Self(
       // PANIC: constructing an empty DID Document is infallible, caught by tests otherwise.
@@ -86,7 +87,6 @@ impl StardustDocument {
           if let Output::Alias(alias_output) = output {
             let alias_id = alias_output
               .alias_id()
-              .clone()
               .or_from_output_id(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap());
             let document = alias_output.state_metadata();
             let first = alias_output.state_index() == 0;
@@ -113,12 +113,12 @@ impl StardustDocument {
 
   /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
   pub fn deserialize_from_block(block: &Block) -> Result<StardustDocument> {
-    let (alias_id, document, first) = Self::parse_block(&block);
+    let (alias_id, document, first) = Self::parse_block(block);
     Self::deserialize_inner(&alias_id, document, first)
   }
 
   pub fn deserialize_inner(alias_id: &AliasId, document: &[u8], first: bool) -> Result<StardustDocument> {
-    let did: CoreDID = Self::alias_id_to_did(&alias_id)?;
+    let did: CoreDID = Self::alias_id_to_did(alias_id)?;
 
     // Replace the placeholder DID in the Document content for the first Alias Output block.
     // TODO: maybe _always_ do this replacement in case developers forget to replace it?
@@ -129,6 +129,12 @@ impl StardustDocument {
     } else {
       StardustDocument::from_json_slice(document).map_err(Into::into)
     }
+  }
+}
+
+impl Default for StardustDocument {
+  fn default() -> Self {
+    Self::new()
   }
 }
 
@@ -156,8 +162,6 @@ fn get_alias_output_id_from_payload(payload: &Payload) -> OutputId {
 
 #[cfg(test)]
 mod tests {
-  use identity_core::crypto::KeyType;
-
   use super::*;
 
   #[test]
