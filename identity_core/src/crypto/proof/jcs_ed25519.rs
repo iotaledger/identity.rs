@@ -31,7 +31,7 @@ use crate::utils::BaseEncoding;
 /// We deviate from the specification to satisfy the [official test vectors](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors), as well as to achieve compatibility with the official reference implementations for [Go](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/golang)
 /// and [Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java).
 ///
-/// See [this Github issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions.
+/// See [this GitHub issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions.
 ///
 ///
 /// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
