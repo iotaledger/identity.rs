@@ -20,10 +20,19 @@ use crate::utils::BaseEncoding;
 // TODO: Marker trait for Ed25519 implementations (?)
 
 /// An implementation of the [JCS Ed25519 Signature 2020][SPEC1] signature suite
-/// for [Linked Data Proofs][SPEC2].
+/// for [Linked Data Proofs][SPEC2] modified to pass the official test vectors.
 ///
 /// Users should use the [`Sign`]/[`Verify`] traits to access
 /// this implementation.
+///
+/// ## Deviation from the [JCS Ed25519 Signature 2020 specification][SPEC1]
+/// This implementation follows the specification with the single exception that the SHA-256 pre-hash of the input, the third step of the [proof generation algorithm](https://identity.foundation/JcsEd25519Signature2020/#ProofGeneration), is skipped.
+///
+/// We deviate from the specification to satisfy the [official test vectors](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors), as well as to achieve compatibility with the official reference implementations for [Go](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/golang)
+/// and [Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java).
+///
+/// See [this GitHub issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions.
+///
 ///
 /// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
 /// [SPEC2]: https://w3c-ccg.github.io/ld-proofs/
@@ -105,7 +114,7 @@ mod tests {
     }
 
     const TV_1_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
-    const TV_2_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_1.json");
+    const TV_2_BYTES: &[u8] = include_bytes!("../../../tests/fixtures/jcs_ed25519/test_vector_2.json");
     const TEST_VECTOR_BYTES: [&[u8]; 2] = [TV_1_BYTES, TV_2_BYTES];
 
     for tv_bytes in TEST_VECTOR_BYTES {
