@@ -28,8 +28,8 @@ use crate::utils::BaseEncoding;
 /// ## Deviation from the [JCS Ed25519 Signature 2020 specification][SPEC1]
 /// This implementation follows the specification with the single exception that the SHA-256 pre-hash of the input, the third step of the [proof generation algorithm](https://identity.foundation/JcsEd25519Signature2020/#ProofGeneration), is skipped.
 ///
-/// We have chosen to deviate from the specification on this point in order to pass the [official test vectors](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors) as well as achieving compatibility with the reference implementations [for Go](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/golang)
-/// and [for Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java).
+/// We deviate from the specification to satisfy the [official test vectors](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors), as well as to achieve compatibility with the official reference implementations for [Go](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/golang)
+/// and [Java](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/java).
 ///
 /// See [this Github issue](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) for further discussions.
 ///
