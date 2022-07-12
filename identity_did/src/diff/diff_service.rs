@@ -93,7 +93,7 @@ where
     // Use builder to enforce invariants.
     ServiceBuilder::new(properties)
       .id(id)
-      .types(&type_)
+      .types(type_)
       .service_endpoint(service_endpoint)
       .build()
       .map_err(Error::merge)
@@ -123,7 +123,7 @@ where
     // Use builder to enforce invariants.
     ServiceBuilder::new(properties)
       .id(id)
-      .types(&type_)
+      .types(type_)
       .service_endpoint(service_endpoint)
       .build()
       .map_err(Error::convert)

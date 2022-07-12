@@ -54,8 +54,8 @@ where
   ///
   /// NOTE: the entries must be unique.
   #[must_use]
-  pub fn types(mut self, values: &[String]) -> Self {
-    self.type_ = values.to_vec();
+  pub fn types(mut self, values: impl Into<Vec<String>>) -> Self {
+    self.type_ = values.into();
     self
   }
 

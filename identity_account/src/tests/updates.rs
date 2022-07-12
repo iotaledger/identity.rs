@@ -621,7 +621,7 @@ async fn test_insert_service() -> Result<()> {
 
   let update: Update = Update::CreateService {
     fragment: fragment.clone(),
-    type_: "LinkedDomains".to_owned(),
+    types: vec!["LinkedDomains".to_owned()],
     endpoint: ServiceEndpoint::One(Url::parse("https://iota.org").unwrap()),
     properties: None,
   };
@@ -652,7 +652,7 @@ async fn test_remove_service() -> Result<()> {
 
   let update: Update = Update::CreateService {
     fragment: fragment.clone(),
-    type_: "LinkedDomains".to_owned(),
+    types: vec!["LinkedDomains".to_owned()],
     endpoint: ServiceEndpoint::One(Url::parse("https://iota.org").unwrap()),
     properties: None,
   };

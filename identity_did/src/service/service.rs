@@ -219,7 +219,7 @@ mod tests {
     // Set of types.
     let service2: Service = Service::builder(Object::new())
       .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
-      .types(&["LinkedDomains".to_owned(), "OtherService2022".to_owned()])
+      .types(["LinkedDomains".to_owned(), "OtherService2022".to_owned()])
       .service_endpoint(Url::parse("https://iota.org/").unwrap())
       .build()
       .unwrap();
