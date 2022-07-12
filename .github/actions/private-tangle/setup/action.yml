@@ -1,0 +1,13 @@
+name: 'private-tangle-setup'
+description: 'Setup a private tangle'
+runs:
+  using: "composite"
+  steps:
+    - name: Setup private tangle
+      shell: bash
+      run: |
+        git clone https://github.com/iotaledger/hornet.git
+        cd hornet/private_tangle
+        sudo ./cleanup.sh
+        sudo ./bootstrap.sh
+        docker-compose --profile "2-nodes" up -d

@@ -104,6 +104,9 @@ jobs:
           command: build
           args: --workspace --tests --examples --release
 
+      - name: Start private tangle
+        uses: './.github/actions/private-tangle/setup'
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
