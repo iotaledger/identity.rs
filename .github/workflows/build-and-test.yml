@@ -6,7 +6,7 @@ on:
       - main
       - dev
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [ opened, synchronize, reopened, ready_for_review ]
     branches:
       - main
       - dev
@@ -63,7 +63,7 @@ jobs:
 
   build-and-test:
     runs-on: ${{ matrix.os }}
-    needs: [check-for-run-condition, check-for-modification]
+    needs: [ check-for-run-condition, check-for-modification ]
     if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
     strategy:
       fail-fast: false
@@ -117,6 +117,55 @@ jobs:
           cargo read-manifest --manifest-path ./examples/Cargo.toml | \
           jq -r '.targets[].name' | \
           parallel -k -j 4 --retries 3 cargo run --example {} --release
+
+      - name: Stop sccache
+        uses: './.github/actions/rust/sccache/stop-sccache'
+        with:
+          os: ${{matrix.os}}
+
+  build-and-test-stardust:
+    needs: [ check-for-run-condition, check-for-modification ]
+    if: ${{ needs.check-for-run-condition.outputs.should-run == 'true' && needs.check-for-modification.outputs.core-modified == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+    env:
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
+      RUSTC_WRAPPER: sccache
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Rust and cache
+        uses: './.github/actions/rust/rust-setup'
+        with:
+          os: ${{ runner.os }}
+          job: ${{ github.job }}
+          target-cache-enabled: false
+          sccache-enabled: true
+          sccache-path: ${{ matrix.sccache-path }}
+
+      - name: Setup sccache
+        uses: './.github/actions/rust/sccache/setup-sccache'
+        with:
+          os: ${{matrix.os}}
+
+      - name: Build Stardust
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path ./identity_stardust/Cargo.toml --workspace --tests --examples --release
+
+      - name: Run Stardust tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path ./identity_stardust/Cargo.toml --all --all-features --release
 
       - name: Stop sccache
         uses: './.github/actions/rust/sccache/stop-sccache'

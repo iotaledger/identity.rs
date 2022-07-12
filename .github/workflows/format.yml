@@ -41,6 +41,12 @@ jobs:
           command: fmt
           args: --all -- --check
 
+      - name: Stardust fmt check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path ./identity_stardust/Cargo.toml --all -- --check
+
       - name: wasm fmt check
         uses: actions-rs/cargo@v1
         with:
