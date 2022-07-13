@@ -82,7 +82,7 @@ pub(crate) enum Update {
   },
   CreateService {
     fragment: String,
-    type_: String,
+    types: Vec<String>,
     endpoint: ServiceEndpoint,
     properties: Option<Object>,
   },
@@ -198,7 +198,7 @@ impl Update {
       }
       Self::CreateService {
         fragment,
-        type_,
+        types,
         endpoint,
         properties,
       } => {
@@ -214,7 +214,7 @@ impl Update {
         let service: IotaService = Service::builder(properties.unwrap_or_default())
           .id(did_url)
           .service_endpoint(endpoint)
-          .type_(type_)
+          .types(types)
           .build()?;
 
         document.insert_service(service);
@@ -343,16 +343,27 @@ impl_update_builder!(
 /// Create a new service on an identity.
 ///
 /// # Parameters
-/// - `type_`: the type of the service, e.g. `"LinkedDomains"`, required.
+/// - `types`: the type/s of the service, e.g. `"LinkedDomains"`, required.
 /// - `fragment`: the identifier of the service in the document, required.
 /// - `endpoint`: the `ServiceEndpoint` of the service, required.
 /// - `properties`: additional properties of the service, optional.
 CreateService {
   @required fragment String,
-  @required type_ String,
+  @required types Vec<String>,
   @required endpoint ServiceEndpoint,
   @optional properties Object,
 });
+
+impl<'account, C> CreateServiceBuilder<'account, C>
+where
+  C: SharedPtr<Client>,
+{
+  #[must_use]
+  pub fn type_(mut self, value: impl Into<String>) -> Self {
+    self.types.get_or_insert_with(Default::default).push(value.into());
+    self
+  }
+}
 
 impl_update_builder!(
 /// Delete a service on an identity.

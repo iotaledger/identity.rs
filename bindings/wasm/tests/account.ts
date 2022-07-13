@@ -4,11 +4,11 @@ const assert = require('assert');
 const {
     AccountBuilder,
     AutoSave,
-    MethodScope,
-    MethodContent,
     KeyType,
-    MethodType,
     KeyPair,
+    MethodContent,
+    MethodScope,
+    MethodType,
 } = require("../node");
 
 function setupAccountBuilder() {
@@ -96,6 +96,38 @@ describe('Account', function () {
             assert.equal(method2.id().fragment(), fragment2);
             assert.equal(method2.type().toString(), MethodType.X25519KeyAgreementKey2019().toString());
             assert.equal(method2.data().tryDecode().toString(), keypair.public().toString());
+        });
+    });
+    describe('#createService()', function () {
+        it('should take one type and endpoint', async () => {
+            const account = await setupAccount();
+
+            // Test single type & endpoint.
+            const fragment1 = "new-service-1";
+            await account.createService({
+                fragment: fragment1,
+                type: "LinkedDomains",
+                endpoint: "https://example.com/"
+            });
+            const service = account.document().resolveService(fragment1);
+            assert.deepStrictEqual(service.id().fragment(), fragment1);
+            assert.deepStrictEqual(service.type(), ["LinkedDomains"]);
+            assert.deepStrictEqual(service.serviceEndpoint(), "https://example.com/");
+        });
+        it('should take multiple types and endpoints', async () => {
+            const account = await setupAccount();
+
+            // Test multiple types & endpoints.
+            const fragment1 = "new-service-1";
+            await account.createService({
+                fragment: fragment1,
+                type: ["LinkedDomains", "ExampleType"],
+                endpoint: ["https://example.com/", "https://iota.org/"]
+            });
+            const service = account.document().resolveService(fragment1);
+            assert.deepStrictEqual(service.id().fragment(), fragment1);
+            assert.deepStrictEqual(service.type(), ["LinkedDomains", "ExampleType"]);
+            assert.deepStrictEqual(service.serviceEndpoint(), ["https://example.com/", "https://iota.org/"]);
         });
     });
 });

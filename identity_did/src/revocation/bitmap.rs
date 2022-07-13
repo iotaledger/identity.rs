@@ -145,7 +145,7 @@ impl<D: DID + Sized, T> TryFrom<&Service<D, T>> for RevocationBitmap {
   type Error = Error;
 
   fn try_from(service: &Service<D, T>) -> Result<Self> {
-    if service.type_() != Self::TYPE {
+    if !service.type_().contains(Self::TYPE) {
       return Err(Error::InvalidService("invalid type - expected `RevocationBitmap2022`"));
     }
 

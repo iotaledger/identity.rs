@@ -9,7 +9,6 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_did::did::CoreDID;
-use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 #[cfg(feature = "revocation-bitmap")]
 use identity_did::revocation::RevocationBitmap;
@@ -208,7 +207,7 @@ impl CredentialValidator {
     issuer: &DOC,
     status: RevocationBitmapStatus,
   ) -> ValidationUnitResult {
-    let issuer_service_url: CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
+    let issuer_service_url: identity_did::did::CoreDIDUrl = status.id().map_err(ValidationError::InvalidStatus)?;
 
     // Check whether index is revoked.
     let revocation_bitmap: RevocationBitmap = issuer
@@ -762,7 +761,7 @@ mod tests {
     }
 
     // Add a RevocationBitmap status to the credential.
-    let service_url: CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
+    let service_url: identity_did::did::CoreDIDUrl = issuer_doc.id().to_url().join("#revocation-service").unwrap();
     let index: u32 = 42;
     credential.credential_status = Some(RevocationBitmapStatus::new(service_url.clone(), index).into());
 

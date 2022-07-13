@@ -24,6 +24,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::account::wasm_account::UOneOrManyNumber;
+use crate::common::ArrayString;
 use crate::common::MapStringAny;
 use crate::common::WasmTimestamp;
 use crate::credential::WasmCredential;
@@ -701,7 +702,6 @@ impl From<WasmDocument> for IotaDocument {
   }
 }
 
-/// Duck-typed union to pass either a string or WasmDIDUrl as a parameter.
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "DIDUrl | string")]
@@ -718,9 +718,6 @@ extern "C" {
 
   #[wasm_bindgen(typescript_type = "Service[]")]
   pub type ArrayService;
-
-  #[wasm_bindgen(typescript_type = "Array<string>")]
-  pub type ArrayString;
 
   #[wasm_bindgen(typescript_type = "VerificationMethod[]")]
   pub type ArrayVerificationMethods;
