@@ -151,7 +151,7 @@ where
   pub fn contains<U>(&self, item: &U) -> bool
   where
     T: KeyComparable,
-    U: KeyComparable<Key = T::Key>,
+    U: KeyComparable<Key = T::Key> + ?Sized,
   {
     match &self.0 {
       OneOrSetInner::One(inner) => inner.key() == item.key(),
@@ -439,16 +439,16 @@ mod tests {
   fn test_contains() {
     // One.
     let one: OneOrSet<MockKeyU8> = OneOrSet::new_one(MockKeyU8(1));
-    assert!(one.contains(&1));
-    assert!(!one.contains(&2));
-    assert!(!one.contains(&3));
+    assert!(one.contains(&1u8));
+    assert!(!one.contains(&2u8));
+    assert!(!one.contains(&3u8));
 
     // Set.
     let set: OneOrSet<MockKeyU8> = OneOrSet::new_set((1..=3).map(MockKeyU8).collect()).unwrap();
-    assert!(set.contains(&1));
-    assert!(set.contains(&2));
-    assert!(set.contains(&3));
-    assert!(!set.contains(&4));
+    assert!(set.contains(&1u8));
+    assert!(set.contains(&2u8));
+    assert!(set.contains(&3u8));
+    assert!(!set.contains(&4u8));
   }
 
   #[test]

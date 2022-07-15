@@ -43,7 +43,14 @@ jobs:
           args: --all-targets --all-features -- -D warnings
           name: core
 
-      - name: wasm clippy check
+      - name: Stardust clippy check
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --manifest-path ./identity_stardust/Cargo.toml --all-targets --all-features -- -D warnings
+          name: stardust
+
+      - name: Wasm clippy check
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

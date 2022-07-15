@@ -118,7 +118,7 @@ impl<T> OrderedSet<T> {
   pub fn contains<U>(&self, item: &U) -> bool
   where
     T: KeyComparable,
-    U: KeyComparable<Key = T::Key>,
+    U: KeyComparable<Key = T::Key> + ?Sized,
   {
     self.0.iter().any(|other| other.key() == item.key())
   }
@@ -312,22 +312,6 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  impl KeyComparable for &str {
-    type Key = str;
-
-    fn key(&self) -> &Self::Key {
-      self
-    }
-  }
-
-  impl KeyComparable for u8 {
-    type Key = u8;
-
-    fn key(&self) -> &Self::Key {
-      self
-    }
-  }
 
   #[test]
   fn test_ordered_set_works() {

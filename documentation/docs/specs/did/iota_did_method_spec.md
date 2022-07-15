@@ -192,7 +192,9 @@ The proof object is an embedded proof that contains all information to be verifi
 The proof object MUST include a `type` property. This property references a verification method type's signature algorithm, as standardized in the [DID spec registries](https://www.w3.org/TR/did-spec-registries/#verification-method-types) or standardized via the method specification. 
 
 The IOTA Identity implementation currently supports:
-- `JcsEd25519Signature2020`
+- `JcsEd25519Signature2020` 
+
+It must be emphasized that the IOTA Identity implementation of  `JcsEd25519Signature2020` follows the [official specification](https://identity.foundation/JcsEd25519Signature2020/) with the single exception that the SHA-256 pre-hash of the input, the third step of the [proof generation algorithm](https://identity.foundation/JcsEd25519Signature2020/#ProofGeneration), is skipped. See the following two GitHub issues [#22](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/22) and [#26](https://github.com/decentralized-identity/JcsEd25519Signature2020/issues/26) for more context on why this deviation is deemed necessary. 
 
 **Verification Method**
 

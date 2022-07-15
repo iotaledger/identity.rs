@@ -1,14 +1,16 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::deserialize_map_or_any;
-use crate::common::MapStringAny;
+use identity_iota::core::OneOrMany;
 use identity_iota::did::ServiceEndpoint;
 use identity_iota::iota_core::IotaDIDUrl;
 use identity_iota::iota_core::IotaService;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use crate::common::deserialize_map_or_any;
+use crate::common::ArrayString;
+use crate::common::MapStringAny;
 use crate::did::WasmDIDUrl;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -25,13 +27,13 @@ impl WasmService {
   #[wasm_bindgen(constructor)]
   pub fn new(service: IService) -> Result<WasmService> {
     let id: IotaDIDUrl = service.id().into_serde().wasm_result()?;
-    let type_: String = service.type_();
+    let types: OneOrMany<String> = service.type_().into_serde().wasm_result()?;
     let service_endpoint: ServiceEndpoint = deserialize_map_or_any(&service.service_endpoint())?;
     let properties: Option<identity_iota::core::Object> = deserialize_map_or_any(&service.properties())?;
 
     IotaService::builder(properties.unwrap_or_default())
       .id(id)
-      .type_(type_)
+      .types(types)
       .service_endpoint(service_endpoint)
       .build()
       .map(WasmService::from)
@@ -46,8 +48,15 @@ impl WasmService {
 
   /// Returns a copy of the `Service` type.
   #[wasm_bindgen(js_name = type)]
-  pub fn type_(&self) -> String {
-    self.0.type_().to_owned()
+  pub fn type_(&self) -> ArrayString {
+    self
+      .0
+      .type_()
+      .iter()
+      .cloned()
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
   /// Returns a copy of the `Service` endpoint.
@@ -87,13 +96,13 @@ pub(crate) fn service_endpoint_to_js_value(endpoint: &ServiceEndpoint) -> UServi
   match endpoint {
     // string
     ServiceEndpoint::One(url) => JsValue::from_str(url.as_str()).unchecked_into::<UServiceEndpoint>(),
-    // [string]
+    // string[]
     ServiceEndpoint::Set(set) => set
       .iter()
       .map(|url| JsValue::from_str(url.as_str()))
       .collect::<js_sys::Array>()
       .unchecked_into::<UServiceEndpoint>(),
-    // Map<string, [string]>
+    // Map<string, string[]>
     ServiceEndpoint::Map(map) => {
       let js_map: js_sys::Map = js_sys::Map::new();
       for (key, urls) in map.into_iter() {
@@ -125,7 +134,7 @@ extern "C" {
   pub fn id(this: &IService) -> JsValue;
 
   #[wasm_bindgen(method, getter, js_name = type)]
-  pub fn type_(this: &IService) -> String;
+  pub fn type_(this: &IService) -> JsValue;
 
   #[wasm_bindgen(method, getter, js_name = serviceEndpoint)]
   pub fn service_endpoint(this: &IService) -> JsValue;
@@ -152,7 +161,7 @@ interface IService {
      *
      * E.g. "LinkedDomains" or "DIDCommMessaging".
      */
-    readonly type: string;
+    readonly type: string | string[];
 
     /**
      * A URL, set of URLs, or map of URL sets.

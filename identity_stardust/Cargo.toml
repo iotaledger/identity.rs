@@ -1,0 +1,40 @@
+[package]
+name = "identity_stardust"
+version = "0.6.0"
+authors = ["IOTA Stiftung"]
+edition = "2021"
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "stardust", "identity"]
+license = "Apache-2.0"
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+description = "An IOTA Ledger integration for the identity.rs library."
+
+[workspace]
+
+[dependencies]
+identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
+identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
+identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+lazy_static = { version = "1.4", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+strum = { version = "0.21", features = ["derive"] }
+thiserror = { version = "1.0", default-features = false }
+
+[dependencies.iota-client]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "4e7db070a05321c4bd7579acdcc74436865235c0" # develop branch, 2022-07-11
+features = ["tls"]
+default-features = false
+
+[dev-dependencies]
+anyhow = { version = "1.0.57" }
+iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
+proptest = { version = "1.0.0", default-features = false, features = ["std"] }
+tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
