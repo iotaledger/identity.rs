@@ -10,34 +10,32 @@ use std::str::FromStr;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
 use identity_core::convert::FromJson;
+use identity_core::crypto::KeyPair;
 use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
+use identity_did::service::Service;
+use identity_did::service::ServiceEndpoint;
+use identity_did::verification::MethodScope;
+use identity_did::verification::VerificationMethod;
 use iota_client::bee_block::output::AliasId;
 use iota_client::bee_block::output::Output;
 use iota_client::bee_block::output::OutputId;
 use iota_client::bee_block::payload::transaction::TransactionEssence;
 use iota_client::bee_block::payload::Payload;
 use iota_client::bee_block::Block;
-use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::did_or_placeholder::PLACEHOLDER_DID;
 use crate::error::Result;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more diff messages.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct StardustDocument(CoreDocument<CoreDID>);
-
-// Tag is 64-bytes long, matching the hex-encoding of the Alias ID (without 0x prefix).
-// TODO: should we just keep the 0x prefix in the tag? Other DID methods like did:ethr do...
-lazy_static! {
-  static ref PLACEHOLDER_DID: CoreDID =
-    CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap();
-}
+pub struct StardustDocument(pub(crate) CoreDocument<CoreDID>);
 
 impl StardustDocument {
   /// Constructs an empty DID Document with a [`StardustDocument::placeholder_did`] identifier.
@@ -51,10 +49,34 @@ impl StardustDocument {
     )
   }
 
+  /// Temporary implementation.
+  pub fn tmp_add_verification_method(&mut self, keypair: &KeyPair, fragment: &str) -> Result<()> {
+    let method: VerificationMethod =
+      VerificationMethod::new(self.0.id().to_owned(), keypair.type_(), keypair.public(), fragment)?;
+
+    self.0.insert_method(method, MethodScope::VerificationMethod)?;
+
+    Ok(())
+  }
+
+  /// Temporary implementation.
+  pub fn tmp_add_service(&mut self, fragment: &str, type_: &str, endpoint: ServiceEndpoint) -> Result<()> {
+    let service = Service::builder(Object::new())
+      .type_(type_)
+      .id(self.0.id().clone().join(fragment).unwrap())
+      .service_endpoint(endpoint)
+      .build()?;
+
+    self.0.service_mut().append(service);
+
+    Ok(())
+  }
+
   /// Returns the placeholder DID of newly constructed DID Documents,
   /// `"did:stardust:0000000000000000000000000000000000000000000000000000000000000000"`.
   // TODO: generalise to take network name?
   pub fn placeholder_did() -> &'static CoreDID {
+    // &PLACEHOLDER_DID
     &PLACEHOLDER_DID
   }
 
