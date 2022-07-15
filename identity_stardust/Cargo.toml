@@ -16,7 +16,9 @@ description = "An IOTA Ledger integration for the identity.rs library."
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
+iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en", "blake2b"] }
 lazy_static = { version = "1.4", default-features = false }
+prefix-hex = { version = "0.4", default-features = false, features = [] } # Maybe dev dep only?
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
@@ -29,8 +31,8 @@ default-features = false
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
-iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
 [package.metadata.docs.rs]

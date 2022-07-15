@@ -7,7 +7,9 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
+pub use did::StardustDID;
 pub use stardust_document::StardustDocument;
 
+mod did;
 mod error;
 mod stardust_document;
