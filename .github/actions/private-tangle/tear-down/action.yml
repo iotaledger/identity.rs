@@ -9,4 +9,4 @@ runs:
         cd hornet/private_tangle
         docker-compose down
         cd ../..
-        rm -rf hornet
+        sudo rm -rf hornet
