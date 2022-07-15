@@ -36,8 +36,8 @@ use identity_stardust::StardustDocument;
 /// https://github.com/iotaledger/iota.js/blob/79a71d3a2ad03be5bd6148689d083947f3b98476/packages/iota/examples/mint-nft/src/index.ts
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  // let endpoint = "http://localhost:14265";
-  let endpoint = "https://api.alphanet.iotaledger.net";
+  let endpoint = "http://localhost:14265";
+  // let endpoint = "https://api.alphanet.iotaledger.net";
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
 
   // ===========================================================================
