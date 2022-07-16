@@ -13,7 +13,7 @@ use crate::did_or_placeholder::DIDOrPlaceholder;
 use crate::did_or_placeholder::PLACEHOLDER_DID;
 use crate::StardustDocument;
 
-/// The DID document as it is contained in an alias output.
+/// The DID document as it is contained in the state metadata of an alias output.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct StateMetadataDocument(CoreDocument<DIDOrPlaceholder>);
 
@@ -199,7 +199,6 @@ impl From<StardustDocument> for StateMetadataDocument {
 mod tests {
   use identity_core::common::OneOrSet;
   use identity_core::common::Url;
-  use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_did::did::CoreDID;
@@ -222,7 +221,7 @@ mod tests {
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .tmp_add_verification_method(
-        document.id().clone(),
+        document.tmp_id().clone(),
         &keypair,
         "#did-self",
         MethodScope::VerificationMethod,
@@ -241,7 +240,7 @@ mod tests {
 
     document
       .tmp_add_service(
-        document.id().clone(),
+        document.tmp_id().clone(),
         "#my-service",
         "RevocationList2030",
         identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/xyzabc").unwrap()),
@@ -272,11 +271,7 @@ mod tests {
     let mut controllers = Some(controllers);
     std::mem::swap(&mut controllers, document.0.controller_mut());
 
-    println!("document\n{}", document.to_json_pretty().unwrap());
-
     let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document.clone());
-
-    println!("state_metadata_doc\n{}", state_metadata_doc.to_json_pretty().unwrap());
 
     assert!(matches!(
       state_metadata_doc
@@ -325,8 +320,6 @@ mod tests {
     assert!(matches!(controllers.get(1).unwrap(), DIDOrPlaceholder::Placeholder));
 
     let stardust_document = state_metadata_doc.into_stardust_document(&original_did);
-
-    println!("stardust_document\n{}", stardust_document.to_json_pretty().unwrap());
 
     assert_eq!(stardust_document, document);
   }

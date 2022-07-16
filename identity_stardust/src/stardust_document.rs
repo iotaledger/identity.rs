@@ -83,7 +83,8 @@ impl StardustDocument {
     std::mem::swap(self.0.id_mut(), &mut id);
   }
 
-  pub fn id(&self) -> &CoreDID {
+  /// Temporary testing implementation.
+  pub fn tmp_id(&self) -> &CoreDID {
     self.0.id()
   }
 

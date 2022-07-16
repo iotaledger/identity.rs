@@ -27,7 +27,7 @@ pub enum DIDOrPlaceholder {
 }
 
 impl DIDOrPlaceholder {
-  /// Returns the contained core did or computes it from a closure if the type is placeholder.
+  /// Returns the contained [`CoreDID`] or computes it from a closure if the variant is `Placeholder`.
   pub fn unwrap_or_else<F>(self, f: F) -> CoreDID
   where
     F: FnOnce() -> CoreDID,
@@ -141,7 +141,6 @@ impl KeyComparable for DIDOrPlaceholder {
 
 impl From<CoreDID> for DIDOrPlaceholder {
   fn from(did: CoreDID) -> Self {
-    // TODO: Why does putting `did` instead of `&did` here produce a stack overflow (infinite recursion probably)?
     if &did == (&PLACEHOLDER_DID) as &CoreDID {
       DIDOrPlaceholder::Placeholder
     } else {
@@ -173,9 +172,9 @@ mod placeholder_serde {
   where
     D: Deserializer<'de>,
   {
-    struct DidOrPlaceholderVisitor;
+    struct DIDOrPlaceholderVisitor;
 
-    impl<'de> Visitor<'de> for DidOrPlaceholderVisitor {
+    impl<'de> Visitor<'de> for DIDOrPlaceholderVisitor {
       type Value = ();
 
       fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -194,6 +193,6 @@ mod placeholder_serde {
       }
     }
 
-    deserializer.deserialize_str(DidOrPlaceholderVisitor)
+    deserializer.deserialize_str(DIDOrPlaceholderVisitor)
   }
 }

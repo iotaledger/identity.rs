@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   document
     .tmp_add_verification_method(
-      document.id().clone(),
+      document.tmp_id().clone(),
       &keypair,
       "#did-self",
       MethodScope::VerificationMethod,
@@ -110,7 +110,7 @@ async fn main() -> anyhow::Result<()> {
 
   document
     .tmp_add_service(
-      document.id().clone(),
+      document.tmp_id().clone(),
       "#my-service",
       "RevocationList2030",
       identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/d2a749c").unwrap()),
