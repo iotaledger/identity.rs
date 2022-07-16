@@ -14,7 +14,7 @@ use serde::Serialize;
 use crate::did_or_placeholder::DidOrPlaceholder;
 use crate::StardustDocument;
 
-/// The DID document as it is serialized in an alias output.
+/// The DID document as it is contained in an alias output.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct StateMetadataDocument(CoreDocument<DidOrPlaceholder>);
 
@@ -177,11 +177,9 @@ fn reverse_transform_method_ref(
 ) -> MethodRef<CoreDID, Object> {
   match method_ref {
     MethodRef::Embed(method) => MethodRef::Embed(reverse_transform_method(method, did)),
-    MethodRef::Refer(reference) => MethodRef::Refer(
-      reference
-        .clone()
-        .map(|did_or_placeholder| did_or_placeholder.unwrap_or_else(|| did.clone())),
-    ),
+    MethodRef::Refer(reference) => {
+      MethodRef::Refer(reference.map(|did_or_placeholder| did_or_placeholder.unwrap_or_else(|| did.clone())))
+    }
   }
 }
 
@@ -200,12 +198,12 @@ mod tests {
 
   #[test]
   fn test_transformation_roundtrip() {
-    let did = CoreDID::parse("did:stardust:0xffffffffffffffffffffffffffffffff").unwrap();
-    let example_did = CoreDID::parse("did:example:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").unwrap();
-    let key_did = CoreDID::parse("did:key:0xf43958394883939484848484").unwrap();
+    let original_did = CoreDID::parse("did:stardust:8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
+    let example_did = CoreDID::parse("did:example:1zdksdnrjq0ru092sdfsd491cxvs03e0").unwrap();
+    let key_did = CoreDID::parse("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK").unwrap();
 
     let mut document: StardustDocument = StardustDocument::new();
-    document.tmp_set_id(did.clone());
+    document.tmp_set_id(original_did.clone());
 
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
@@ -293,7 +291,7 @@ mod tests {
       DidOrPlaceholder::Placeholder
     ));
 
-    let stardust_document = state_metadata_doc.to_stardust_document(&did);
+    let stardust_document = state_metadata_doc.to_stardust_document(&original_did);
 
     println!("stardust_document\n{}", stardust_document.to_json_pretty().unwrap());
 
