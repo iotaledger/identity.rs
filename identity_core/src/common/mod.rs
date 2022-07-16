@@ -10,6 +10,7 @@ pub use self::object::Object;
 pub use self::object::Value;
 pub use self::one_or_many::OneOrMany;
 pub use self::one_or_set::OneOrSet;
+pub use self::ordered_set::Drain;
 pub use self::ordered_set::OrderedSet;
 pub use self::timestamp::Duration;
 pub use self::timestamp::Timestamp;

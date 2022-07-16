@@ -204,6 +204,28 @@ impl<T> OrderedSet<T> {
 
     index.is_some()
   }
+
+  /// Creates a new draining iterator, removing and returning all the set's elements.
+  pub fn drain(&mut self) -> Drain<'_, T> {
+    Drain {
+      drain: self.0.drain(..),
+    }
+  }
+}
+
+/// A draining iterator for [`OrderedSet`].
+///
+/// This struct is created by the [`OrderedSet::drain`] method.
+pub struct Drain<'set, T> {
+  drain: std::vec::Drain<'set, T>,
+}
+
+impl<'set, T> Iterator for Drain<'set, T> {
+  type Item = T;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self.drain.next()
+  }
 }
 
 impl<T> IntoIterator for OrderedSet<T> {
