@@ -17,73 +17,76 @@ lazy_static::lazy_static! {
   CoreDID::parse("did:0:0").unwrap();
 }
 
+/// A [`CoreDID`] or a placeholder.
 #[derive(Debug, Hash, Clone, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum DidOrPlaceholder {
+pub enum DIDOrPlaceholder {
   #[serde(with = "placeholder_serde")]
   Placeholder,
   Core(CoreDID),
 }
 
-impl DidOrPlaceholder {
+impl DIDOrPlaceholder {
   /// Returns the contained core did or computes it from a closure if the type is placeholder.
   pub fn unwrap_or_else<F>(self, f: F) -> CoreDID
   where
     F: FnOnce() -> CoreDID,
   {
     match self {
-      DidOrPlaceholder::Placeholder => f(),
-      DidOrPlaceholder::Core(did) => did,
+      DIDOrPlaceholder::Placeholder => f(),
+      DIDOrPlaceholder::Core(did) => did,
     }
   }
 
-  /// Replaces itself with `Placeholder` if `replace`.
-  pub fn replace(self, replace: bool) -> Self {
-    if replace {
-      Self::Placeholder
+  /// Creates a new [`DIDOrPlaceholder`] from a `did`.
+  ///
+  /// If `did` matches `original_did`, the `Placeholder` variant is used.
+  pub fn new(did: CoreDID, original_did: &CoreDID) -> Self {
+    if &did == original_did {
+      DIDOrPlaceholder::Placeholder
     } else {
-      self
+      DIDOrPlaceholder::Core(did)
     }
   }
 }
 
-impl DID for DidOrPlaceholder {
+impl DID for DIDOrPlaceholder {
   fn scheme(&self) -> &'static str {
     BaseDIDUrl::SCHEME
   }
 
   fn authority(&self) -> &str {
     match self {
-      DidOrPlaceholder::Core(core_did) => core_did.authority(),
-      DidOrPlaceholder::Placeholder => PLACEHOLDER_DID.authority(),
+      DIDOrPlaceholder::Core(core_did) => core_did.authority(),
+      DIDOrPlaceholder::Placeholder => PLACEHOLDER_DID.authority(),
     }
   }
 
   fn method(&self) -> &str {
     match self {
-      DidOrPlaceholder::Core(core_did) => core_did.method(),
-      DidOrPlaceholder::Placeholder => PLACEHOLDER_DID.method(),
+      DIDOrPlaceholder::Core(core_did) => core_did.method(),
+      DIDOrPlaceholder::Placeholder => PLACEHOLDER_DID.method(),
     }
   }
 
   fn method_id(&self) -> &str {
     match self {
-      DidOrPlaceholder::Core(core_did) => core_did.method_id(),
-      DidOrPlaceholder::Placeholder => PLACEHOLDER_DID.method_id(),
+      DIDOrPlaceholder::Core(core_did) => core_did.method_id(),
+      DIDOrPlaceholder::Placeholder => PLACEHOLDER_DID.method_id(),
     }
   }
 
   fn as_str(&self) -> &str {
     match self {
-      DidOrPlaceholder::Core(core_did) => core_did.as_str(),
-      DidOrPlaceholder::Placeholder => PLACEHOLDER_DID.as_str(),
+      DIDOrPlaceholder::Core(core_did) => core_did.as_str(),
+      DIDOrPlaceholder::Placeholder => PLACEHOLDER_DID.as_str(),
     }
   }
 
   fn into_string(self) -> String {
     match self {
-      DidOrPlaceholder::Core(core_did) => core_did.into_string(),
-      DidOrPlaceholder::Placeholder => PLACEHOLDER_DID.as_str().to_owned(),
+      DIDOrPlaceholder::Core(core_did) => core_did.into_string(),
+      DIDOrPlaceholder::Placeholder => PLACEHOLDER_DID.as_str().to_owned(),
     }
   }
 
@@ -100,7 +103,7 @@ impl DID for DidOrPlaceholder {
   }
 }
 
-impl FromStr for DidOrPlaceholder {
+impl FromStr for DIDOrPlaceholder {
   type Err = DIDError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -112,7 +115,7 @@ impl FromStr for DidOrPlaceholder {
   }
 }
 
-impl TryFrom<BaseDIDUrl> for DidOrPlaceholder {
+impl TryFrom<BaseDIDUrl> for DIDOrPlaceholder {
   type Error = DIDError;
 
   fn try_from(base_did_url: BaseDIDUrl) -> Result<Self, Self::Error> {
@@ -124,25 +127,25 @@ impl TryFrom<BaseDIDUrl> for DidOrPlaceholder {
   }
 }
 
-impl KeyComparable for DidOrPlaceholder {
+impl KeyComparable for DIDOrPlaceholder {
   type Key = CoreDID;
 
   #[inline]
   fn key(&self) -> &Self::Key {
     match self {
-      DidOrPlaceholder::Core(core_did) => core_did,
-      DidOrPlaceholder::Placeholder => &PLACEHOLDER_DID,
+      DIDOrPlaceholder::Core(core_did) => core_did,
+      DIDOrPlaceholder::Placeholder => &PLACEHOLDER_DID,
     }
   }
 }
 
-impl From<CoreDID> for DidOrPlaceholder {
+impl From<CoreDID> for DIDOrPlaceholder {
   fn from(did: CoreDID) -> Self {
     // TODO: Why does putting `did` instead of `&did` here produce a stack overflow (infinite recursion probably)?
     if &did == (&PLACEHOLDER_DID) as &CoreDID {
-      DidOrPlaceholder::Placeholder
+      DIDOrPlaceholder::Placeholder
     } else {
-      DidOrPlaceholder::Core(did)
+      DIDOrPlaceholder::Core(did)
     }
   }
 }

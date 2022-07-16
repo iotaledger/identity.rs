@@ -7,7 +7,7 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
-pub use did_or_placeholder::DidOrPlaceholder;
+pub use did_or_placeholder::DIDOrPlaceholder;
 pub use stardust_document::StardustDocument;
 pub use state_metadata_document::StateMetadataDocument;
 

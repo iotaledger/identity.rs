@@ -108,6 +108,11 @@ impl<T> OrderedSet<T> {
     self.0
   }
 
+  /// Returns a mutable reference to the underlying vector.
+  pub fn as_vec_mut(&mut self) -> &mut Vec<T> {
+    &mut self.0
+  }
+
   /// Clears the `OrderedSet`, removing all values.
   #[inline]
   pub fn clear(&mut self) {
@@ -203,28 +208,6 @@ impl<T> OrderedSet<T> {
     }
 
     index.is_some()
-  }
-
-  /// Creates a new draining iterator, removing and returning all the set's elements.
-  pub fn drain(&mut self) -> Drain<'_, T> {
-    Drain {
-      drain: self.0.drain(..),
-    }
-  }
-}
-
-/// A draining iterator for [`OrderedSet`].
-///
-/// This struct is created by the [`OrderedSet::drain`] method.
-pub struct Drain<'set, T> {
-  drain: std::vec::Drain<'set, T>,
-}
-
-impl<'set, T> Iterator for Drain<'set, T> {
-  type Item = T;
-
-  fn next(&mut self) -> Option<Self::Item> {
-    self.drain.next()
   }
 }
 

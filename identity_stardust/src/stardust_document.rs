@@ -157,7 +157,7 @@ impl StardustDocument {
 
     let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from_json_slice(document)?;
 
-    Ok(state_metadata_doc.to_stardust_document(&did))
+    Ok(state_metadata_doc.into_stardust_document(&did))
   }
 }
 
