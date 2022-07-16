@@ -2,6 +2,8 @@ use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_did::did::CoreDID;
+use identity_did::verification::MethodScope;
 use identity_stardust::StateMetadataDocument;
 use iota_client::bee_block::output::feature::IssuerFeature;
 use iota_client::bee_block::output::feature::MetadataFeature;
@@ -81,22 +83,57 @@ async fn main() -> anyhow::Result<()> {
   // Create an empty DID Document.
   // All new Stardust DID Documents initially use a placeholder DID,
   // "did:stardust:0x00000000000000000000000000000000".
+  let example_did = CoreDID::parse("did:example:0xffffffffffffffff").unwrap();
+  let key_did = CoreDID::parse("did:key:0xf43958394883939484848484").unwrap();
+
   let mut document: StardustDocument = StardustDocument::new();
 
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  document.tmp_add_verification_method(&keypair, "#test").unwrap();
+  document
+    .tmp_add_verification_method(
+      document.id().clone(),
+      &keypair,
+      "#did-self",
+      MethodScope::VerificationMethod,
+    )
+    .unwrap();
 
-  document.tmp_add_service(
-    "#my-service",
-    "RevocationList2030",
-    identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/0xf4c42e9da").unwrap()),
-  )?;
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  document
+    .tmp_add_verification_method(
+      example_did.clone(),
+      &keypair,
+      "#did-foreign",
+      MethodScope::authentication(),
+    )
+    .unwrap();
+
+  document
+    .tmp_add_service(
+      document.id().clone(),
+      "#my-service",
+      "RevocationList2030",
+      identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/d2a749c").unwrap()),
+    )
+    .unwrap();
+
+  document
+    .tmp_add_service(
+      key_did.clone(),
+      "#my-foreign-service",
+      "RevocationList2030",
+      identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/f4c42e9da").unwrap()),
+    )
+    .unwrap();
 
   println!("DID Document {:#}", document);
 
   let state_metadata_doc = StateMetadataDocument::from(document);
 
-  println!("StateMetadataDocument {}", state_metadata_doc.to_json_pretty().unwrap());
+  println!(
+    "StateMetadataDocument\n{}",
+    state_metadata_doc.to_json_pretty().unwrap()
+  );
 
   // Create a new Alias Output with the DID Document as state metadata.
   let byte_cost_config: ByteCostConfig = client.get_byte_cost_config().await?;
@@ -169,8 +206,6 @@ async fn main() -> anyhow::Result<()> {
   let updated_alias_output = AliasOutputBuilder::from(&alias_output) // Not adding any content, previous amount will cover the deposit.
     // Set the explicit Alias ID.
     .with_alias_id(alias_id)
-    // Update the DID Document content to replace the placeholder DID.
-    .with_state_metadata(resolved_document.to_json_vec()?)
     // State controller updates increment the state index.
     .with_state_index(alias_output.state_index() + 1)
     .finish_output()?;
