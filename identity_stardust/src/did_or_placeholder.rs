@@ -14,7 +14,7 @@ use serde::Serialize;
 
 lazy_static::lazy_static! {
   pub static ref PLACEHOLDER_DID: CoreDID =
-  CoreDID::parse("did:stardust:0x0").unwrap();
+  CoreDID::parse("did:0:0").unwrap();
 }
 
 #[derive(Debug, Hash, Clone, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
@@ -23,6 +23,28 @@ pub enum DidOrPlaceholder {
   #[serde(with = "placeholder_serde")]
   Placeholder,
   Core(CoreDID),
+}
+
+impl DidOrPlaceholder {
+  /// Returns the contained core did or computes it from a closure if the type is placeholder.
+  pub fn unwrap_or_else<F>(self, f: F) -> CoreDID
+  where
+    F: FnOnce() -> CoreDID,
+  {
+    match self {
+      DidOrPlaceholder::Placeholder => f(),
+      DidOrPlaceholder::Core(did) => did,
+    }
+  }
+
+  /// Replaces itself with `Placeholder` if `replace`.
+  pub fn replace(self, replace: bool) -> Self {
+    if replace {
+      Self::Placeholder
+    } else {
+      self
+    }
+  }
 }
 
 impl DID for DidOrPlaceholder {
@@ -94,7 +116,11 @@ impl TryFrom<BaseDIDUrl> for DidOrPlaceholder {
   type Error = DIDError;
 
   fn try_from(base_did_url: BaseDIDUrl) -> Result<Self, Self::Error> {
-    CoreDID::try_from(base_did_url).map(Self::Core)
+    if base_did_url.as_str() == PLACEHOLDER_DID.as_str() {
+      Ok(Self::Placeholder)
+    } else {
+      CoreDID::try_from(base_did_url).map(Self::Core)
+    }
   }
 }
 

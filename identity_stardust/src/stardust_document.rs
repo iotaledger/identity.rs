@@ -49,21 +49,26 @@ impl StardustDocument {
     )
   }
 
-  /// Temporary implementation.
-  pub fn tmp_add_verification_method(&mut self, keypair: &KeyPair, fragment: &str) -> Result<()> {
-    let method: VerificationMethod =
-      VerificationMethod::new(self.0.id().to_owned(), keypair.type_(), keypair.public(), fragment)?;
+  /// Temporary testing implementation.
+  pub fn tmp_add_verification_method(
+    &mut self,
+    id: CoreDID,
+    keypair: &KeyPair,
+    fragment: &str,
+    scope: MethodScope,
+  ) -> Result<()> {
+    let method: VerificationMethod = VerificationMethod::new(id, keypair.type_(), keypair.public(), fragment)?;
 
-    self.0.insert_method(method, MethodScope::VerificationMethod)?;
+    self.0.insert_method(method, scope)?;
 
     Ok(())
   }
 
-  /// Temporary implementation.
-  pub fn tmp_add_service(&mut self, fragment: &str, type_: &str, endpoint: ServiceEndpoint) -> Result<()> {
+  /// Temporary testing implementation.
+  pub fn tmp_add_service(&mut self, id: CoreDID, fragment: &str, type_: &str, endpoint: ServiceEndpoint) -> Result<()> {
     let service = Service::builder(Object::new())
       .type_(type_)
-      .id(self.0.id().clone().join(fragment).unwrap())
+      .id(id.join(fragment).unwrap())
       .service_endpoint(endpoint)
       .build()?;
 
@@ -72,11 +77,19 @@ impl StardustDocument {
     Ok(())
   }
 
+  /// Temporary testing implementation.
+  pub fn tmp_set_id(&mut self, mut id: CoreDID) {
+    std::mem::swap(self.0.id_mut(), &mut id);
+  }
+
+  pub fn id(&self) -> &CoreDID {
+    self.0.id()
+  }
+
   /// Returns the placeholder DID of newly constructed DID Documents,
-  /// `"did:stardust:0000000000000000000000000000000000000000000000000000000000000000"`.
+  /// `"did:0:0"`.
   // TODO: generalise to take network name?
   pub fn placeholder_did() -> &'static CoreDID {
-    // &PLACEHOLDER_DID
     &PLACEHOLDER_DID
   }
 
