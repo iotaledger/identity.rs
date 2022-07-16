@@ -147,8 +147,8 @@ impl From<CoreDID> for DidOrPlaceholder {
   }
 }
 
-pub(crate) mod placeholder_serde {
-  //! Provides serialization for the DidOrPlaceholder::Placeholder as a string.
+mod placeholder_serde {
+  //! Provides serialization for DidOrPlaceholder::Placeholder as a string.
 
   use identity_did::did::DID;
   use serde::de::Visitor;
@@ -176,7 +176,7 @@ pub(crate) mod placeholder_serde {
       type Value = ();
 
       fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("a placeholder did")
+        formatter.write_str("the placeholder did `did:0:0`")
       }
 
       fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>

@@ -31,6 +31,7 @@ use serde::Serialize;
 
 use crate::did_or_placeholder::PLACEHOLDER_DID;
 use crate::error::Result;
+use crate::StateMetadataDocument;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more diff messages.
@@ -114,7 +115,7 @@ impl StardustDocument {
     Self::alias_id_to_did(&id)
   }
 
-  fn parse_block(block: &Block) -> (AliasId, &[u8], bool) {
+  fn parse_block(block: &Block) -> (AliasId, &[u8]) {
     match block.payload().unwrap() {
       Payload::Transaction(tx_payload) => {
         let TransactionEssence::Regular(regular) = tx_payload.essence();
@@ -124,8 +125,7 @@ impl StardustDocument {
               .alias_id()
               .or_from_output_id(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap());
             let document = alias_output.state_metadata();
-            let first = alias_output.state_index() == 0;
-            return (alias_id, document, first);
+            return (alias_id, document);
           }
         }
         panic!("No alias output in transaction essence")
@@ -139,31 +139,25 @@ impl StardustDocument {
   /// NOTE: [`AliasId`] is required since it cannot be inferred from the [`Output`] alone
   /// for the first time an Alias Output is published, the transaction payload is required.
   pub fn deserialize_from_output(alias_id: &AliasId, output: &Output) -> Result<StardustDocument> {
-    let (document, first): (&[u8], bool) = match output {
-      Output::Alias(alias_output) => (alias_output.state_metadata(), alias_output.alias_id().is_null()),
+    let document: &[u8] = match output {
+      Output::Alias(alias_output) => alias_output.state_metadata(),
       _ => panic!("not an alias output"),
     };
-    Self::deserialize_inner(alias_id, document, first)
+    Self::deserialize_inner(alias_id, document)
   }
 
   /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
   pub fn deserialize_from_block(block: &Block) -> Result<StardustDocument> {
-    let (alias_id, document, first) = Self::parse_block(block);
-    Self::deserialize_inner(&alias_id, document, first)
+    let (alias_id, document) = Self::parse_block(block);
+    Self::deserialize_inner(&alias_id, document)
   }
 
-  pub fn deserialize_inner(alias_id: &AliasId, document: &[u8], first: bool) -> Result<StardustDocument> {
+  pub fn deserialize_inner(alias_id: &AliasId, document: &[u8]) -> Result<StardustDocument> {
     let did: CoreDID = Self::alias_id_to_did(alias_id)?;
 
-    // Replace the placeholder DID in the Document content for the first Alias Output block.
-    // TODO: maybe _always_ do this replacement in case developers forget to replace it?
-    if first {
-      let json = String::from_utf8(document.to_vec()).unwrap();
-      let replaced = json.replace(Self::placeholder_did().as_str(), did.as_str());
-      StardustDocument::from_json(&replaced).map_err(Into::into)
-    } else {
-      StardustDocument::from_json_slice(document).map_err(Into::into)
-    }
+    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from_json_slice(document)?;
+
+    Ok(state_metadata_doc.to_stardust_document(&did))
   }
 }
 
