@@ -142,15 +142,14 @@ mod tests {
   struct TestSetup {
     document: StardustDocument,
     original_did: CoreDID,
-    example_did: CoreDID,
-    key_did: CoreDID,
+    other_did: CoreDID,
   }
 
   fn test_document() -> TestSetup {
     let original_did =
       CoreDID::parse("did:stardust:8036235b6b5939435a45d68bcea7890eef399209a669c8c263fac7f5089b2ec6").unwrap();
-    let example_did = CoreDID::parse("did:example:1zdksdnrjq0ru092sdfsd491cxvs03e0").unwrap();
-    let key_did = CoreDID::parse("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK").unwrap();
+    let other_did =
+      CoreDID::parse("did:stardust:71b709dff439f1ac9dd2b9c2e28db0807156b378e13bfa3605ce665aa0d0fdca").unwrap();
 
     let mut document: StardustDocument = StardustDocument::new();
     document.tmp_set_id(original_did.clone());
@@ -168,7 +167,7 @@ mod tests {
     let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     document
       .tmp_add_verification_method(
-        example_did.clone(),
+        other_did.clone(),
         &keypair,
         "#did-foreign",
         MethodScope::authentication(),
@@ -186,7 +185,7 @@ mod tests {
 
     document
       .tmp_add_service(
-        key_did.clone(),
+        other_did.clone(),
         "#my-foreign-service",
         "RevocationList2030",
         identity_did::service::ServiceEndpoint::One(Url::parse("https://example.com/0xf4c42e9da").unwrap()),
@@ -203,7 +202,7 @@ mod tests {
       .also_known_as_mut()
       .append(Url::parse("did:example:xyz").unwrap());
 
-    let mut controllers = OneOrSet::new_one(example_did.clone());
+    let mut controllers = OneOrSet::new_one(other_did.clone());
     (&mut controllers).append(original_did.clone());
     let mut controllers = Some(controllers);
     std::mem::swap(&mut controllers, document.0.controller_mut());
@@ -211,8 +210,7 @@ mod tests {
     TestSetup {
       document,
       original_did,
-      example_did,
-      key_did,
+      other_did,
     }
   }
 
@@ -221,8 +219,7 @@ mod tests {
     let TestSetup {
       document,
       original_did,
-      example_did,
-      key_did,
+      other_did,
     } = test_document();
 
     let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from(document.clone());
@@ -244,7 +241,7 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      &example_did
+      &other_did
     );
 
     assert_eq!(
@@ -256,7 +253,7 @@ mod tests {
         .unwrap()
         .id()
         .did(),
-      &key_did
+      &other_did
     );
 
     assert_eq!(
@@ -272,7 +269,7 @@ mod tests {
     );
 
     let controllers = state_metadata_doc.0.controller().unwrap();
-    assert_eq!(controllers.get(0).unwrap(), &example_did);
+    assert_eq!(controllers.get(0).unwrap(), &other_did);
     assert_eq!(controllers.get(1).unwrap(), PLACEHOLDER_DID.as_ref());
 
     let stardust_document = state_metadata_doc.into_stardust_document(&original_did);
