@@ -7,11 +7,9 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
-pub use did_or_placeholder::DIDOrPlaceholder;
 pub use stardust_document::StardustDocument;
-pub use state_metadata_document::StateMetadataDocument;
+pub(crate) use state_metadata_document::*;
 
-mod did_or_placeholder;
 mod error;
 mod stardust_document;
 mod state_metadata_document;

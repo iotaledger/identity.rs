@@ -10,6 +10,7 @@ use std::str::FromStr;
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
 use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
@@ -29,8 +30,8 @@ use iota_client::bee_block::Block;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::did_or_placeholder::PLACEHOLDER_DID;
 use crate::error::Result;
+use crate::state_metadata_document::PLACEHOLDER_DID;
 use crate::StateMetadataDocument;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
@@ -86,6 +87,12 @@ impl StardustDocument {
   /// Temporary testing implementation.
   pub fn tmp_id(&self) -> &CoreDID {
     self.0.id()
+  }
+
+  /// Serializes the document for inclusion in an alias output's state metadata.
+  pub fn into_state_metadata_bytes(self) -> Result<Vec<u8>> {
+    let state_metadata_doc = StateMetadataDocument::from(self);
+    state_metadata_doc.to_json_vec().map_err(Into::into)
   }
 
   /// Returns the placeholder DID of newly constructed DID Documents,
@@ -187,6 +194,14 @@ fn get_alias_output_id_from_payload(payload: &Payload) -> OutputId {
       panic!("No alias output in transaction essence")
     }
     _ => panic!("No tx payload"),
+  }
+}
+
+impl From<StardustDocument> for CoreDocument {
+  fn from(document: StardustDocument) -> Self {
+    // TODO: convert any additional properties (that cannot be inferred from the Output) into
+    //       JSON Object or an alternative struct in CoreDocument.
+    document.0
   }
 }
 

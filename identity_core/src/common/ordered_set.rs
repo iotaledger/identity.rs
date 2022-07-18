@@ -108,11 +108,6 @@ impl<T> OrderedSet<T> {
     self.0
   }
 
-  /// Returns a mutable reference to the underlying vector.
-  pub fn as_vec_mut(&mut self) -> &mut Vec<T> {
-    &mut self.0
-  }
-
   /// Clears the `OrderedSet`, removing all values.
   #[inline]
   pub fn clear(&mut self) {
