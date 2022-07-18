@@ -9,8 +9,6 @@ use std::str::FromStr;
 
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
-use identity_core::convert::FromJson;
-use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
@@ -31,7 +29,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::error::Result;
-use crate::state_metadata_document::PLACEHOLDER_DID;
+use crate::state_metadata::StateMetadataEncoding;
+use crate::state_metadata::PLACEHOLDER_DID;
 use crate::StateMetadataDocument;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
@@ -90,9 +89,9 @@ impl StardustDocument {
   }
 
   /// Serializes the document for inclusion in an alias output's state metadata.
-  pub fn into_state_metadata_bytes(self) -> Result<Vec<u8>> {
+  pub fn into_state_metadata_bytes(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
     let state_metadata_doc = StateMetadataDocument::from(self);
-    state_metadata_doc.to_json_vec().map_err(Into::into)
+    state_metadata_doc.pack(encoding)
   }
 
   /// Returns the placeholder DID of newly constructed DID Documents,
@@ -162,10 +161,7 @@ impl StardustDocument {
 
   pub fn deserialize_inner(alias_id: &AliasId, document: &[u8]) -> Result<StardustDocument> {
     let did: CoreDID = Self::alias_id_to_did(alias_id)?;
-
-    let state_metadata_doc: StateMetadataDocument = StateMetadataDocument::from_json_slice(document)?;
-
-    Ok(state_metadata_doc.into_stardust_document(&did))
+    StateMetadataDocument::unpack(document).map(|doc| doc.into_stardust_document(&did))
   }
 }
 

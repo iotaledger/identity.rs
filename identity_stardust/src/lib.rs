@@ -8,8 +8,8 @@ pub use self::error::Error;
 pub use self::error::Result;
 
 pub use stardust_document::StardustDocument;
-pub(crate) use state_metadata_document::*;
+pub use state_metadata::*;
 
 mod error;
 mod stardust_document;
-mod state_metadata_document;
+mod state_metadata;
