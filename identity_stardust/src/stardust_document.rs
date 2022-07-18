@@ -21,7 +21,7 @@ use iota_client::bee_block::output::OutputId;
 use iota_client::bee_block::payload::transaction::TransactionEssence;
 use iota_client::bee_block::payload::Payload;
 use iota_client::bee_block::Block;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -34,10 +34,10 @@ pub struct StardustDocument(CoreDocument<CoreDID>);
 
 // Tag is 64-bytes long, matching the hex-encoding of the Alias ID (without 0x prefix).
 // TODO: should we just keep the 0x prefix in the tag? Other DID methods like did:ethr do...
-lazy_static! {
-  static ref PLACEHOLDER_DID: CoreDID =
-    CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap();
-}
+
+static PLACEHOLDER_DID: Lazy<CoreDID> = Lazy::new(|| {
+  CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap()
+});
 
 impl StardustDocument {
   /// Constructs an empty DID Document with a [`StardustDocument::placeholder_did`] identifier.

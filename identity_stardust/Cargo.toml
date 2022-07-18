@@ -17,7 +17,7 @@ identity_core = { version = "=0.6.0", path = "../identity_core", default-feature
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
 iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en", "blake2b"] }
-lazy_static = { version = "1.4", default-features = false }
+once_cell = { version = "1", default-features = false, features = ["std"] }
 prefix-hex = { version = "0.4", default-features = false, features = [] } # Maybe dev dep only?
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
