@@ -6,11 +6,10 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::str::FromStr;
-use std::convert::TryInto;
 
+use identity_core::common::KeyComparable;
 use iota_client::bee_block::output::AliasId;
 use once_cell::sync::Lazy;
-use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -39,7 +38,7 @@ const BLAKE2B_256_LEN: usize = 32;
 #[serde(into = "CoreDID", try_from = "CoreDID")]
 pub struct StardustDID(CoreDID);
 
-const INITIAL_ALIAS_ID: &'static str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+const INITIAL_ALIAS_ID: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // StardustDID's have 64-byte tags, matching the hex-encoding of the Alias ID. This value reflects the initial AliasID
 // which is required to be zeroed out.
@@ -138,7 +137,7 @@ impl StardustDID {
   // - `"did:stardust:main:123" -> "did:stardust:123"` is normalized
   // - `"did:stardust:dev:123" -> "did:stardust:dev:123"` is unchanged
   fn normalize(mut did: CoreDID) -> CoreDID {
-    let mut segments_iter = did.method_id().split(":");
+    let mut segments_iter = did.method_id().split(':');
     let normalized_id_string: Option<String> = match (segments_iter.next(), segments_iter.next()) {
       (Some(network), Some(tag)) => (network == Self::DEFAULT_NETWORK).then_some(tag.to_owned()),
       _ => None,
@@ -157,9 +156,9 @@ impl StardustDID {
   ///
   /// Returns `Err` if the input is not a valid network name according to the [`StardustDID`] method specification.
   pub fn check_network<D: DID>(did: &D) -> Result<()> {
-    let mut segment_iter = did.method_id().split(":");
+    let mut segment_iter = did.method_id().split(':');
     let network_name = match (segment_iter.next(), segment_iter.next()) {
-      (Some(network), Some(tag)) => network,
+      (Some(network), Some(_)) => network,
       _ => Self::DEFAULT_NETWORK,
     };
 
@@ -198,7 +197,7 @@ impl StardustDID {
   // TODO: Is it correct to also validate the network here? The current IOTA DID method does NOT do that.
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let id = did.method_id();
-    let mut segments_iter = id.split(":");
+    let mut segments_iter = id.split(':');
     match (segments_iter.next(), segments_iter.next(), segments_iter.next()) {
       // OK if method_id = alias_id
       (Some(tag), None, None) => Self::check_tag_str(tag),
@@ -224,9 +223,9 @@ impl StardustDID {
 
   /// Returns the Tangle `network` name of the `DID`.
   pub fn network_str(&self) -> &str {
-    let mut segments_iter = self.method_id().split(":");
+    let mut segments_iter = self.method_id().split(':');
     match (segments_iter.next(), segments_iter.next()) {
-      (Some(network), Some(tag)) => network,
+      (Some(network), Some(_)) => network,
       // DID network must have been truncated during normalization in the constructor in all other cases
       _ => Self::DEFAULT_NETWORK,
     }
@@ -234,7 +233,7 @@ impl StardustDID {
 
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
-    let mut segments_iter = self.method_id().split(":");
+    let mut segments_iter = self.method_id().split(':');
     match (segments_iter.next(), segments_iter.next()) {
       (Some(_), Some(tag)) => tag,
       // guaranteed by constructors to be a valid tag
@@ -245,11 +244,11 @@ impl StardustDID {
 
   /// Change the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
   //
-  // TODO: Either change this method to take a network (or network name) once that has been ported with the `Client` and
-  // make this method public or remove in favour of another constructor `new_with_network_and_alias`.
+  // TODO: Either change this method to take a network (or network name) once that has been ported with the `Client`
+  // or remove in favour of another constructor `new_with_network_and_alias`.
   //
   // Also consider replacing this with a `setter` in order to be more similar to the JS API.
-  fn with_network(network: &str) -> Self {
+  pub fn with_network(_network: &str) -> Self {
     todo!("implement this once the network/network name has been ported")
   }
 }
@@ -313,6 +312,22 @@ impl FromStr for StardustDID {
   }
 }
 
+impl TryFrom<&str> for StardustDID {
+  type Error = DIDError;
+
+  fn try_from(other: &str) -> std::result::Result<Self, Self::Error> {
+    Self::parse(other)
+  }
+}
+
+impl TryFrom<String> for StardustDID {
+  type Error = DIDError;
+
+  fn try_from(other: String) -> std::result::Result<Self, Self::Error> {
+    Self::parse(other)
+  }
+}
+
 impl Display for StardustDID {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.0)
@@ -371,11 +386,17 @@ impl AsRef<CoreDID> for StardustDID {
   }
 }
 
+impl KeyComparable for StardustDID {
+  type Key = CoreDID;
+
+  #[inline]
+  fn key(&self) -> &Self::Key {
+    self.as_ref()
+  }
+}
+
 #[cfg(test)]
 mod tests {
-
-  use std::sync::atomic::AtomicUsize;
-  use std::sync::atomic::Ordering;
 
   use iota_client::bee_block::output::AliasId;
   use iota_client::bee_block::output::OutputId;

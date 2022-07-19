@@ -3,3 +3,4 @@
 
 mod stardust_did;
 pub use stardust_did::StardustDID;
+pub use stardust_did::StardustDIDUrl;
