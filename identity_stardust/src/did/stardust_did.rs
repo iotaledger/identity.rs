@@ -348,19 +348,15 @@ impl From<AliasId> for StardustDID {
   /// whenever that is not the case one should follow this up with calling [`StardustDID::with_network`].  
   fn from(id: AliasId) -> Self {
     let did_str = format!("did:{}:{}", StardustDID::METHOD, id);
-    Self::parse(did_str).expect(&format!(
-      "transforming an AliasId to a {} DID should be infallible",
-      StardustDID::METHOD
-    ))
+    Self::parse(did_str).unwrap_or_else(|_| panic!("transforming an AliasId to a {} DID should be infallible",
+      StardustDID::METHOD))
   }
 }
 
 impl From<StardustDID> for AliasId {
   fn from(did: StardustDID) -> Self {
-    Self::from_str(did.tag()).expect(&format!(
-      "the tag of a {} DID should always parse to an AliasId",
-      StardustDID::METHOD
-    ))
+    Self::from_str(did.tag()).unwrap_or_else(|_| panic!("the tag of a {} DID should always parse to an AliasId",
+      StardustDID::METHOD))
   }
 }
 
@@ -483,7 +479,7 @@ mod tests {
   #[test]
   fn valid_check_network() {
     let assert_check_network = |input: &str| {
-      let did_core: CoreDID = CoreDID::parse(input).expect(&format!("expected {} to parse to a valid CoreDID", input));
+      let did_core: CoreDID = CoreDID::parse(input).unwrap_or_else(|_| panic!("expected {} to parse to a valid CoreDID", input));
       assert!(
         StardustDID::check_network(&did_core).is_ok(),
         "test: valid_check_network failed with input {}",
@@ -667,7 +663,7 @@ mod tests {
   proptest! {
     #[test]
     fn property_based_valid_parse(alias_id in arbitrary_alias_id()) {
-      let did: String = format!("did:{}:{}",StardustDID::METHOD, alias_id.to_string());
+      let did: String = format!("did:{}:{}",StardustDID::METHOD, alias_id);
       assert!(StardustDID::parse(&did).is_ok());
     }
   }
@@ -676,7 +672,7 @@ mod tests {
     #[test]
     fn property_based_alias_id_roundtrip(alias_id in arbitrary_alias_id()) {
       assert_eq!(
-        AliasId::from(StardustDID::from(alias_id.clone())),
+        AliasId::from(StardustDID::from(alias_id)),
         alias_id
       );
     }
