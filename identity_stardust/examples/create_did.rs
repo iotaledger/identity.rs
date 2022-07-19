@@ -1,4 +1,3 @@
-use identity_core::convert::ToJson;
 use iota_client::bee_block::output::feature::IssuerFeature;
 use iota_client::bee_block::output::feature::MetadataFeature;
 use iota_client::bee_block::output::feature::SenderFeature;
@@ -77,7 +76,9 @@ async fn main() -> anyhow::Result<()> {
   // Create an empty DID Document.
   // All new Stardust DID Documents initially use a placeholder DID,
   // "did:stardust:0x00000000000000000000000000000000".
+
   let document: StardustDocument = StardustDocument::new();
+
   println!("DID Document {:#}", document);
 
   // Create a new Alias Output with the DID Document as state metadata.
@@ -85,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
   let alias_output: Output = AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, AliasId::null())?
     .with_state_index(0)
     .with_foundry_counter(0)
-    .with_state_metadata(document.to_json_vec()?)
+    .with_state_metadata(document.pack()?)
     .add_feature(Feature::Sender(SenderFeature::new(address)))
     .add_feature(Feature::Metadata(MetadataFeature::new(vec![1, 2, 3])?))
     .add_immutable_feature(Feature::Issuer(IssuerFeature::new(address)))
@@ -151,8 +152,6 @@ async fn main() -> anyhow::Result<()> {
   let updated_alias_output = AliasOutputBuilder::from(&alias_output) // Not adding any content, previous amount will cover the deposit.
     // Set the explicit Alias ID.
     .with_alias_id(alias_id)
-    // Update the DID Document content to replace the placeholder DID.
-    .with_state_metadata(resolved_document.to_json_vec()?)
     // State controller updates increment the state index.
     .with_state_index(alias_output.state_index() + 1)
     .finish_output()?;

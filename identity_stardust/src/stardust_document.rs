@@ -9,35 +9,34 @@ use std::str::FromStr;
 
 use identity_core::common::Object;
 use identity_core::convert::FmtJson;
-use identity_core::convert::FromJson;
+use identity_core::crypto::KeyPair;
 use identity_core::utils::Base;
 use identity_core::utils::BaseEncoding;
 use identity_did::did::CoreDID;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
+use identity_did::service::Service;
+use identity_did::service::ServiceEndpoint;
+use identity_did::verification::MethodScope;
+use identity_did::verification::VerificationMethod;
 use iota_client::bee_block::output::AliasId;
 use iota_client::bee_block::output::Output;
 use iota_client::bee_block::output::OutputId;
 use iota_client::bee_block::payload::transaction::TransactionEssence;
 use iota_client::bee_block::payload::Payload;
 use iota_client::bee_block::Block;
-use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::error::Result;
+use crate::state_metadata::StateMetadataEncoding;
+use crate::state_metadata::PLACEHOLDER_DID;
+use crate::StateMetadataDocument;
 
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more diff messages.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct StardustDocument(CoreDocument<CoreDID>);
-
-// Tag is 64-bytes long, matching the hex-encoding of the Alias ID (without 0x prefix).
-// TODO: should we just keep the 0x prefix in the tag? Other DID methods like did:ethr do...
-
-static PLACEHOLDER_DID: Lazy<CoreDID> = Lazy::new(|| {
-  CoreDID::parse("did:stardust:0000000000000000000000000000000000000000000000000000000000000000").unwrap()
-});
+pub struct StardustDocument(pub(crate) CoreDocument<CoreDID>);
 
 impl StardustDocument {
   /// Constructs an empty DID Document with a [`StardustDocument::placeholder_did`] identifier.
@@ -51,8 +50,57 @@ impl StardustDocument {
     )
   }
 
+  /// Temporary testing implementation.
+  pub fn tmp_add_verification_method(
+    &mut self,
+    id: CoreDID,
+    keypair: &KeyPair,
+    fragment: &str,
+    scope: MethodScope,
+  ) -> Result<()> {
+    let method: VerificationMethod = VerificationMethod::new(id, keypair.type_(), keypair.public(), fragment)?;
+
+    self.0.insert_method(method, scope)?;
+
+    Ok(())
+  }
+
+  /// Temporary testing implementation.
+  pub fn tmp_add_service(&mut self, id: CoreDID, fragment: &str, type_: &str, endpoint: ServiceEndpoint) -> Result<()> {
+    let service = Service::builder(Object::new())
+      .type_(type_)
+      .id(id.join(fragment).unwrap())
+      .service_endpoint(endpoint)
+      .build()?;
+
+    self.0.service_mut().append(service);
+
+    Ok(())
+  }
+
+  /// Temporary testing implementation.
+  pub fn tmp_set_id(&mut self, mut id: CoreDID) {
+    std::mem::swap(self.0.id_mut(), &mut id);
+  }
+
+  /// Temporary testing implementation.
+  pub fn tmp_id(&self) -> &CoreDID {
+    self.0.id()
+  }
+
+  /// Serializes the document for inclusion in an alias output's state metadata
+  /// with the default encoding.
+  pub fn pack(self) -> Result<Vec<u8>> {
+    self.pack_with_encoding(StateMetadataEncoding::Json)
+  }
+
+  /// Serializes the document for inclusion in an alias output's state metadata.
+  pub fn pack_with_encoding(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
+    StateMetadataDocument::from(self).pack(encoding)
+  }
+
   /// Returns the placeholder DID of newly constructed DID Documents,
-  /// `"did:stardust:0000000000000000000000000000000000000000000000000000000000000000"`.
+  /// `"did:0:0"`.
   // TODO: generalise to take network name?
   pub fn placeholder_did() -> &'static CoreDID {
     &PLACEHOLDER_DID
@@ -79,7 +127,7 @@ impl StardustDocument {
     Self::alias_id_to_did(&id)
   }
 
-  fn parse_block(block: &Block) -> (AliasId, &[u8], bool) {
+  fn parse_block(block: &Block) -> (AliasId, &[u8]) {
     match block.payload().unwrap() {
       Payload::Transaction(tx_payload) => {
         let TransactionEssence::Regular(regular) = tx_payload.essence();
@@ -89,8 +137,7 @@ impl StardustDocument {
               .alias_id()
               .or_from_output_id(OutputId::new(tx_payload.id(), index.try_into().unwrap()).unwrap());
             let document = alias_output.state_metadata();
-            let first = alias_output.state_index() == 0;
-            return (alias_id, document, first);
+            return (alias_id, document);
           }
         }
         panic!("No alias output in transaction essence")
@@ -104,31 +151,22 @@ impl StardustDocument {
   /// NOTE: [`AliasId`] is required since it cannot be inferred from the [`Output`] alone
   /// for the first time an Alias Output is published, the transaction payload is required.
   pub fn deserialize_from_output(alias_id: &AliasId, output: &Output) -> Result<StardustDocument> {
-    let (document, first): (&[u8], bool) = match output {
-      Output::Alias(alias_output) => (alias_output.state_metadata(), alias_output.alias_id().is_null()),
+    let document: &[u8] = match output {
+      Output::Alias(alias_output) => alias_output.state_metadata(),
       _ => panic!("not an alias output"),
     };
-    Self::deserialize_inner(alias_id, document, first)
+    Self::deserialize_inner(alias_id, document)
   }
 
   /// Deserializes a JSON-encoded `StardustDocument` from an Alias Output block.
   pub fn deserialize_from_block(block: &Block) -> Result<StardustDocument> {
-    let (alias_id, document, first) = Self::parse_block(block);
-    Self::deserialize_inner(&alias_id, document, first)
+    let (alias_id, document) = Self::parse_block(block);
+    Self::deserialize_inner(&alias_id, document)
   }
 
-  pub fn deserialize_inner(alias_id: &AliasId, document: &[u8], first: bool) -> Result<StardustDocument> {
+  pub fn deserialize_inner(alias_id: &AliasId, document: &[u8]) -> Result<StardustDocument> {
     let did: CoreDID = Self::alias_id_to_did(alias_id)?;
-
-    // Replace the placeholder DID in the Document content for the first Alias Output block.
-    // TODO: maybe _always_ do this replacement in case developers forget to replace it?
-    if first {
-      let json = String::from_utf8(document.to_vec()).unwrap();
-      let replaced = json.replace(Self::placeholder_did().as_str(), did.as_str());
-      StardustDocument::from_json(&replaced).map_err(Into::into)
-    } else {
-      StardustDocument::from_json_slice(document).map_err(Into::into)
-    }
+    StateMetadataDocument::unpack(document).map(|doc| doc.into_stardust_document(&did))
   }
 }
 
@@ -157,6 +195,14 @@ fn get_alias_output_id_from_payload(payload: &Payload) -> OutputId {
       panic!("No alias output in transaction essence")
     }
     _ => panic!("No tx payload"),
+  }
+}
+
+impl From<StardustDocument> for CoreDocument {
+  fn from(document: StardustDocument) -> Self {
+    // TODO: convert any additional properties (that cannot be inferred from the Output) into
+    //       JSON Object or an alternative struct in CoreDocument.
+    document.0
   }
 }
 

@@ -277,12 +277,6 @@ impl PartialEq<&'_ str> for CoreDID {
   }
 }
 
-impl PartialEq<&CoreDID> for CoreDID {
-  fn eq(&self, other: &&CoreDID) -> bool {
-    self == other
-  }
-}
-
 impl KeyComparable for CoreDID {
   type Key = CoreDID;
 
