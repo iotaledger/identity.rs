@@ -17,7 +17,7 @@ pub enum Error {
   #[error("{0}")]
   ClientError(#[from] iota_client::error::Error),
   #[error("{0}")]
-  BeeError(#[from] iota_client::bee_block::Error),
+  BeeError(#[from] iota_client::block::Error),
   #[error("invalid state metadata {0}")]
   InvalidStateMetadata(&'static str),
 }

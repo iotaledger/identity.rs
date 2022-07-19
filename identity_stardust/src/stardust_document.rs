@@ -19,12 +19,12 @@ use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
 use identity_did::verification::MethodScope;
 use identity_did::verification::VerificationMethod;
-use iota_client::bee_block::output::AliasId;
-use iota_client::bee_block::output::Output;
-use iota_client::bee_block::output::OutputId;
-use iota_client::bee_block::payload::transaction::TransactionEssence;
-use iota_client::bee_block::payload::Payload;
-use iota_client::bee_block::Block;
+use iota_client::block::output::AliasId;
+use iota_client::block::output::Output;
+use iota_client::block::output::OutputId;
+use iota_client::block::payload::transaction::TransactionEssence;
+use iota_client::block::payload::Payload;
+use iota_client::block::Block;
 use serde::Deserialize;
 use serde::Serialize;
 

@@ -1,14 +1,14 @@
-use iota_client::bee_block::output::feature::IssuerFeature;
-use iota_client::bee_block::output::feature::MetadataFeature;
-use iota_client::bee_block::output::feature::SenderFeature;
-use iota_client::bee_block::output::unlock_condition::GovernorAddressUnlockCondition;
-use iota_client::bee_block::output::unlock_condition::StateControllerAddressUnlockCondition;
-use iota_client::bee_block::output::unlock_condition::UnlockCondition;
-use iota_client::bee_block::output::AliasId;
-use iota_client::bee_block::output::AliasOutputBuilder;
-use iota_client::bee_block::output::ByteCostConfig;
-use iota_client::bee_block::output::Feature;
-use iota_client::bee_block::output::Output;
+use iota_client::block::output::feature::IssuerFeature;
+use iota_client::block::output::feature::MetadataFeature;
+use iota_client::block::output::feature::SenderFeature;
+use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
+use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCondition;
+use iota_client::block::output::unlock_condition::UnlockCondition;
+use iota_client::block::output::AliasId;
+use iota_client::block::output::AliasOutputBuilder;
+use iota_client::block::output::ByteCostConfig;
+use iota_client::block::output::Feature;
+use iota_client::block::output::Output;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
@@ -57,8 +57,7 @@ async fn main() -> anyhow::Result<()> {
   let client = Client::builder()
     .with_node(endpoint)?
     .with_node_sync_disabled()
-    .finish()
-    .await?;
+    .finish()?;
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
   let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
