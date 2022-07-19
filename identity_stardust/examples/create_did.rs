@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
   //println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
   let faucet_auto = format!("{faucet_endpoint}/api/enqueue");
   iota_client::request_funds_from_faucet(&faucet_auto, &address_bech32).await?;
-  tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+  tokio::time::sleep(std::time::Duration::from_secs(60)).await;
 
   // ===========================================================================
   // Step 2: Create and publish a DID Document in an Alias Output.
