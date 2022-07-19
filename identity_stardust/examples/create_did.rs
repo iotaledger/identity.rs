@@ -37,6 +37,7 @@ use identity_stardust::StardustDocument;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   let endpoint = "http://localhost:14265";
+  let faucet_endpoint = "http://localhost:8091";
   // let endpoint = "https://api.alphanet.iotaledger.net";
   let faucet_manual = "https://faucet.alphanet.iotaledger.net";
 
@@ -62,11 +63,11 @@ async fn main() -> anyhow::Result<()> {
     .await?;
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
-  let address_bech32 = address.to_bech32(SHIMMER_TESTNET_BECH32_HRP);
+  let address_bech32 = address.to_bech32("tst");
   println!("Wallet address: {address_bech32}");
 
   //println!("INTERACTION REQUIRED: request faucet funds to the above wallet from {faucet_manual}");
-  let faucet_auto = format!("{endpoint}/api/plugins/faucet/v1/enqueue");
+  let faucet_auto = format!("{faucet_endpoint}/api/enqueue");
   iota_client::request_funds_from_faucet(&faucet_auto, &address_bech32).await?;
   tokio::time::sleep(std::time::Duration::from_secs(15)).await;
 
