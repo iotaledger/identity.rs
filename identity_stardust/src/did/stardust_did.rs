@@ -469,8 +469,8 @@ mod tests {
 
     // Should also work for DID's of the form: did:<method_name>:<valid_stardust_network (or
     // nothing/normalized)>:<alias_id>
-    let did_other_string: String = format!("did:method:{}", VALID_STARDUST_DID_STRING.as_str());
-    let did_other_with_network: String = format!("did:method:test:{}", VALID_STARDUST_DID_STRING.as_str());
+    let did_other_string: String = format!("did:method:{}", VALID_ALIAS_ID_STRING.as_str());
+    let did_other_with_network: String = format!("did:method:test:{}", VALID_ALIAS_ID_STRING.as_str());
     let did_other_core: CoreDID = CoreDID::parse(&did_other_string).unwrap();
     let did_other_with_network_core: CoreDID = CoreDID::parse(&did_other_with_network).unwrap();
 
