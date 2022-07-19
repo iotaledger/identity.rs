@@ -108,7 +108,7 @@ impl StardustDocument {
     &PLACEHOLDER_DID
   }
 
-  /// Returns the DID document [`id`](StardustDID).
+  /// Returns the DID document identifier.
   pub fn id(&self) -> &StardustDID {
     self.document.id()
   }
@@ -237,7 +237,7 @@ impl StardustDocument {
     )
   }
 
-  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the
+  /// Returns the first [`StardustVerificationMethod`] with an `id` property matching the
   /// provided `query` and the verification relationship specified by `scope` if present.
   ///
   /// WARNING: improper usage of this allows violating the uniqueness of the verification method

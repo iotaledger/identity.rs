@@ -11,7 +11,7 @@ use identity_core::convert::FmtJson;
 use serde::Deserialize;
 use serde::Serialize;
 
-/// Additional attributes related to a [`StardustDIDDocument`][crate::StardustDIDDocument].
+/// Additional attributes related to a [`StardustDocument`][crate::StardustDocument].
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct StardustDocumentMetadata {
   // TODO: store created in the immutable metadata, if possible?
