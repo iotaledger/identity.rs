@@ -1,4 +1,3 @@
-use identity_stardust::StateMetadataEncoding;
 use iota_client::bee_block::output::feature::IssuerFeature;
 use iota_client::bee_block::output::feature::MetadataFeature;
 use iota_client::bee_block::output::feature::SenderFeature;
@@ -87,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
   let alias_output: Output = AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, AliasId::null())?
     .with_state_index(0)
     .with_foundry_counter(0)
-    .with_state_metadata(document.into_state_metadata_bytes(StateMetadataEncoding::Json)?)
+    .with_state_metadata(document.pack()?)
     .add_feature(Feature::Sender(SenderFeature::new(address)))
     .add_feature(Feature::Metadata(MetadataFeature::new(vec![1, 2, 3])?))
     .add_immutable_feature(Feature::Issuer(IssuerFeature::new(address)))

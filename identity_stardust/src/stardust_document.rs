@@ -88,10 +88,15 @@ impl StardustDocument {
     self.0.id()
   }
 
+  /// Serializes the document for inclusion in an alias output's state metadata
+  /// with the default encoding.
+  pub fn pack(self) -> Result<Vec<u8>> {
+    self.pack_with_encoding(StateMetadataEncoding::Json)
+  }
+
   /// Serializes the document for inclusion in an alias output's state metadata.
-  pub fn into_state_metadata_bytes(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
-    let state_metadata_doc = StateMetadataDocument::from(self);
-    state_metadata_doc.pack(encoding)
+  pub fn pack_with_encoding(self, encoding: StateMetadataEncoding) -> Result<Vec<u8>> {
+    StateMetadataDocument::from(self).pack(encoding)
   }
 
   /// Returns the placeholder DID of newly constructed DID Documents,

@@ -15,6 +15,6 @@ impl TryFrom<u8> for StateMetadataEncoding {
   type Error = Error;
 
   fn try_from(value: u8) -> Result<Self, Self::Error> {
-    FromPrimitive::from_u8(value).ok_or(Error::InvalidMessageFlags)
+    FromPrimitive::from_u8(value).ok_or(Error::InvalidStateMetadata("unsupported encoding"))
   }
 }

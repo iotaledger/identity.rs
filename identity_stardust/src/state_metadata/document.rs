@@ -59,21 +59,21 @@ impl StateMetadataDocument {
 
   /// Unpack bytes into a [`StateMetadataDocument`].
   pub fn unpack(data: &[u8]) -> Result<Self> {
-    // Check version.
-    let version: StateMetadataVersion = StateMetadataVersion::try_from(*data.get(0).ok_or(
-      identity_did::Error::InvalidDocument("expected data to have at least length 1", None),
-    )?)?;
-    if version != StateMetadataVersion::V1 {
-      return Err(Error::InvalidMessageFlags);
-    }
-
     // Check marker.
-    let marker: &[u8] = data.get(1..4).ok_or(identity_did::Error::InvalidDocument(
-      "expected data to have at least length 4",
+    let marker: &[u8] = data.get(0..3).ok_or(identity_did::Error::InvalidDocument(
+      "expected data to have at least length 3",
       None,
     ))?;
     if marker != DID_MARKER {
-      return Err(Error::InvalidMessageFlags);
+      return Err(Error::InvalidStateMetadata("missing `DID` marker"));
+    }
+
+    // Check version.
+    let version: StateMetadataVersion = StateMetadataVersion::try_from(*data.get(3).ok_or(
+      identity_did::Error::InvalidDocument("expected data to have at least length 4", None),
+    )?)?;
+    if version != StateMetadataVersion::V1 {
+      return Err(Error::InvalidStateMetadata("unsupported version"));
     }
 
     // Decode data.
@@ -93,11 +93,11 @@ impl StateMetadataDocument {
 }
 
 /// Prepends the message flags and marker magic bytes to the data in the following order:
-/// `[version, marker, encoding, data]`.
+/// `[marker, version, encoding, data]`.
 fn add_flags_to_message(mut data: Vec<u8>, version: StateMetadataVersion, encoding: StateMetadataEncoding) -> Vec<u8> {
   let mut buffer: Vec<u8> = Vec::with_capacity(1 + DID_MARKER.len() + 1 + data.len());
-  buffer.push(version as u8);
   buffer.extend_from_slice(DID_MARKER);
+  buffer.push(version as u8);
   buffer.push(encoding as u8);
   buffer.append(&mut data);
   buffer
