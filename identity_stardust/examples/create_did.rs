@@ -133,7 +133,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Output: {output:?}");
 
   // The resolved DID Document replaces the placeholder DID with the correct one.
-  let resolved_document = StardustDocument::deserialize_from_output(&alias_id, &output)?;
+  let resolved_document = StardustDocument::deserialize_from_output(&did, &output)?;
   println!("Resolved Document: {resolved_document:#}");
 
   let alias_output = match output {
@@ -144,8 +144,6 @@ async fn main() -> anyhow::Result<()> {
   // ===========================================================================
   // Step 4: Publish an updated Alias ID. (optional)
   // ===========================================================================
-  // TODO: we could always publish twice on creation to populate the DID (could fail),
-  //       or just infer the DID during resolution (safer).
 
   // Update the Alias Output to contain an explicit ID and DID.
   let updated_alias_output = AliasOutputBuilder::from(&alias_output) // Not adding any content, previous amount will cover the deposit.
