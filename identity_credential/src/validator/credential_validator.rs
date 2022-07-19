@@ -794,7 +794,7 @@ mod tests {
     }
 
     // 4: revoked index.
-    issuer_doc.revoke_credentials(&service_url, &[index]).unwrap();
+    issuer_doc.revoke_indices(&service_url, &[index]).unwrap();
     for (status_check, expected) in [
       (StatusCheck::Strict, false),
       (StatusCheck::SkipUnsupported, false),

@@ -572,7 +572,7 @@ mod account_revocation {
       let mut service_id: IotaDIDUrl = self.did().to_url();
       service_id.set_fragment(Some(fragment))?;
 
-      self.document.revoke_credentials(&service_id, credential_indices)?;
+      self.document.revoke_indices(&service_id, credential_indices)?;
 
       self.increment_actions();
       self.publish_internal(false, PublishOptions::default()).await?;
@@ -586,7 +586,7 @@ mod account_revocation {
       let mut service_id: IotaDIDUrl = self.did().to_url();
       service_id.set_fragment(Some(fragment))?;
 
-      self.document.unrevoke_credentials(&service_id, credential_indices)?;
+      self.document.unrevoke_indices(&service_id, credential_indices)?;
 
       self.increment_actions();
       self.publish_internal(false, PublishOptions::default()).await?;
