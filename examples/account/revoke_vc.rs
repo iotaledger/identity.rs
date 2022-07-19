@@ -113,7 +113,7 @@ async fn main() -> Result<()> {
   // Update the RevocationBitmap service in the issuer's DID Document.
   // This revokes the credential's unique index.
   issuer
-    .revoke_credentials("my-revocation-service", &[credential_index])
+    .revoke_indices("my-revocation-service", &[credential_index])
     .await?;
 
   let validation_result = CredentialValidator::validate(

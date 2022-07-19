@@ -566,13 +566,13 @@ mod account_revocation {
     C: SharedPtr<Client>,
   {
     /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
-    /// `fragment`, revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub async fn revoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+    /// `fragment`, revoke all specified `indices`.
+    pub async fn revoke_indices(&mut self, fragment: &str, indices: &[u32]) -> Result<()> {
       // Find the service to be updated.
       let mut service_id: IotaDIDUrl = self.did().to_url();
       service_id.set_fragment(Some(fragment))?;
 
-      self.document.revoke_indices(&service_id, credential_indices)?;
+      self.document.revoke_indices(&service_id, indices)?;
 
       self.increment_actions();
       self.publish_internal(false, PublishOptions::default()).await?;
@@ -580,13 +580,13 @@ mod account_revocation {
     }
 
     /// If the document has a [`RevocationBitmap`][identity_did::revocation::RevocationBitmap] service identified by
-    /// `fragment`, unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub async fn unrevoke_credentials(&mut self, fragment: &str, credential_indices: &[u32]) -> Result<()> {
+    /// `fragment`, unrevoke all specified `indices`.
+    pub async fn unrevoke_indices(&mut self, fragment: &str, indices: &[u32]) -> Result<()> {
       // Find the service to be updated.
       let mut service_id: IotaDIDUrl = self.did().to_url();
       service_id.set_fragment(Some(fragment))?;
 
-      self.document.unrevoke_indices(&service_id, credential_indices)?;
+      self.document.unrevoke_indices(&service_id, indices)?;
 
       self.increment_actions();
       self.publish_internal(false, PublishOptions::default()).await?;

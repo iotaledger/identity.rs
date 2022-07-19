@@ -86,7 +86,7 @@ async function revokeVC(storage?: Storage) {
 
     // Update the RevocationBitmap service in the issuer's DID Document.
     // This revokes the credential's unique index.
-    await issuer.revokeCredentials("my-revocation-service", 5);
+    await issuer.revokeIndices("my-revocation-service", 5);
 
     // Credential verification now fails.
     try {

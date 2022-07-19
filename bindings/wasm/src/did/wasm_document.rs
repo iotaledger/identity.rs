@@ -640,35 +640,25 @@ impl WasmDocument {
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-  /// revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
-  #[wasm_bindgen(js_name = revokeCredentials)]
+  /// revoke all specified `indices`.
+  #[wasm_bindgen(js_name = revokeIndices)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, credentialIndices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_indices(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
-    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self
-      .0
-      .revoke_credentials(&query, credentials_indices.as_slice())
-      .wasm_result()
+    self.0.revoke_indices(&query, indices.as_slice()).wasm_result()
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-  /// unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
-  #[wasm_bindgen(js_name = unrevokeCredentials)]
+  /// unrevoke all specified `indices`.
+  #[wasm_bindgen(js_name = unrevokeIndices)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(
-    &mut self,
-    serviceQuery: &UDIDUrlQuery,
-    credentialIndices: UOneOrManyNumber,
-  ) -> Result<()> {
+  pub fn unrevoke_indices(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
-    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self
-      .0
-      .unrevoke_credentials(&query, credentials_indices.as_slice())
-      .wasm_result()
+    self.0.unrevoke_indices(&query, indices.as_slice()).wasm_result()
   }
 
   // ===========================================================================
