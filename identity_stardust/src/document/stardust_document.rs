@@ -1,5 +1,5 @@
 // Copyright 2020-2022 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.document
+// SPDX-License-Identifier: Apache-2.0
 
 use core::fmt;
 use core::fmt::Debug;
