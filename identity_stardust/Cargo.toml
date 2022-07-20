@@ -13,6 +13,7 @@ description = "An IOTA Ledger integration for the identity.rs library."
 [workspace]
 
 [dependencies]
+async-trait = { version = "0.1.56", default-features = false }
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }

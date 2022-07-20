@@ -14,8 +14,8 @@ pub enum Error {
   InvalidDID(#[from] identity_did::did::DIDError),
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
-  #[error("{0}")]
-  ClientError(#[from] iota_client::error::Error),
+  #[error("iota client error")]
+  ClientError(#[source] iota_client::error::Error),
   #[error("{0}")]
   BeeError(#[from] iota_client::bee_block::Error),
   #[error("invalid state metadata {0}")]
