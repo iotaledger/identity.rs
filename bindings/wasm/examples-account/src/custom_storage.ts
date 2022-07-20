@@ -1,7 +1,7 @@
 // Copyright 2020-2022 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainState, DID, Document, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite, EncryptionAlgorithm, CekAlgorithm, EncryptedData } from '../../node/identity_wasm.js';
+import { DID, Ed25519, KeyLocation, KeyPair, KeyType, Signature, Storage, StorageTestSuite, EncryptionAlgorithm, CekAlgorithm, EncryptedData } from '../../node/identity_wasm.js';
 
 /** An insecure, in-memory `Storage` implementation that serves as an example.
 This can be passed to the `AccountBuilder` to create accounts with this as the storage. */
@@ -10,17 +10,14 @@ export class MemStore implements Storage {
     // We use strings as keys rather than DIDs or KeyLocations because Maps use
     // referential equality for object keys, and thus a primitive type needs to be used instead.
 
-    // The map from DIDs to chain states.
-    private _chainStates: Map<string, ChainState>;
-    // The map from DIDs to DID documents.
-    private _documents: Map<string, Document>;
+    // The map from DIDs to state.
+    private _state: Map<string, Uint8Array>;
     // The map from DIDs to vaults.
     private _vaults: Map<string, Map<string, KeyPair>>;
 
     /** Creates a new, empty `MemStore` instance. */
     constructor() {
-        this._chainStates = new Map();
-        this._documents = new Map();
+        this._state = new Map();
         this._vaults = new Map();
     }
 
@@ -67,8 +64,7 @@ export class MemStore implements Storage {
         // so we only need to do work if the DID still exists.
         // The return value signals whether the DID was actually removed during this operation.
         if (this._vaults.has(did.toString())) {
-            this._chainStates.delete(did.toString());
-            this._documents.delete(did.toString());
+            this._state.delete(did.toString());
             this._vaults.delete(did.toString());
             return true;
         }
@@ -197,24 +193,14 @@ export class MemStore implements Storage {
         throw new Error('not yet implemented')
     }
 
-    public async chainStateGet(did: DID): Promise<ChainState | undefined> {
-        // Lookup the chain state of the given DID.
-        return this._chainStates.get(did.toString());
+    public async blobGet(did: DID): Promise<Uint8Array | undefined> {
+        // Lookup the state of the given DID.
+        return this._state.get(did.toString());
     }
 
-    public async chainStateSet(did: DID, chainState: ChainState): Promise<void> {
-        // Set the chain state of the given DID.
-        this._chainStates.set(did.toString(), chainState);
-    }
-
-    public async documentGet(did: DID): Promise<Document | undefined> {
-        // Lookup the DID document of the given DID.
-        return this._documents.get(did.toString())
-    }
-
-    public async documentSet(did: DID, document: Document): Promise<void> {
-        // Set the DID document of the given DID.
-        this._documents.set(did.toString(), document);
+    public async blobSet(did: DID, value: Uint8Array): Promise<void> {
+        // Set the state of the given DID.
+        this._state.set(did.toString(), value);
     }
 
     public async flushChanges(): Promise<void> {
