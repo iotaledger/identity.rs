@@ -176,6 +176,7 @@ jobs:
           cargo run --example create_did --release
 
       - name: Tear down private tangle
+        if: always()
         uses: './.github/actions/private-tangle/tear-down'
 
       - name: Stop sccache
