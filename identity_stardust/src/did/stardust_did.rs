@@ -402,7 +402,7 @@ impl KeyComparable for StardustDID {
 #[cfg(test)]
 mod tests {
 
-  use iota_client::bee_block::output::AliasId;
+use iota_client::bee_block::output::AliasId;
   use iota_client::bee_block::output::OutputId;
   use iota_client::bee_block::output::OUTPUT_INDEX_RANGE;
   use iota_client::bee_block::payload::transaction::TransactionId;
@@ -419,6 +419,8 @@ mod tests {
   // output_id copied from https://github.com/iotaledger/bee/blob/30cab4f02e9f5d72ffe137fd9eb09723b4f0fdb6/bee-block/tests/output_id.rs
   // value of AliasID computed from AliasId::from(OutputId).to_string()
   const VALID_ALIAS_ID_STR: &str = "0xf29dd16310c2100fd1bf568b345fb1cc14d71caa3bd9b5ad735d2bd6d455ca3b";
+
+  const LEN_VALID_ALIAS_STR: usize = VALID_ALIAS_ID_STR.len();
 
   static VALID_STARDUST_DID_STRING: Lazy<String> =
     Lazy::new(|| format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STR));
@@ -690,6 +692,7 @@ mod tests {
     })
   }
 
+
   proptest! {
     #[test]
     fn property_based_valid_parse(alias_id in arbitrary_alias_id()) {
@@ -706,6 +709,39 @@ mod tests {
         alias_id
       );
     }
+  }
+
+  fn arbitrary_alias_id_string_replica() -> impl Strategy<Value = String> {
+    proptest::string::string_regex(&format!("0x([a-f]|[0-9]){{{}}}", (LEN_VALID_ALIAS_STR -2))).expect("regex should be ok")
+  }
+
+  proptest!{
+    #[test]
+    fn valid_alias_id_string_replicas(tag in arbitrary_alias_id_string_replica()) {
+      let did : String = format!("did:{}:{}", StardustDID::METHOD, tag); 
+      assert!(
+        StardustDID::parse(did).is_ok()
+      );
+    }
+  }
+
+
+  fn arbitrary_invalid_tag() -> impl Strategy<Value = String> {
+    proptest::string::string_regex("[[:^alpha:]|[a-z]|[1-9]]*").expect("regex should be ok").prop_map(
+      |arb_string| if (arb_string.chars().all(|c|  c.is_ascii_hexdigit() && c.is_ascii_lowercase())  && arb_string.len() == LEN_VALID_ALIAS_STR && arb_string.starts_with("0x")) {
+        // this means we are in the rare case of generating a valid string hence we replace the last 0 with the non ascii character é
+        let mut counter = 0; 
+        arb_string.chars().rev().map(|value| {
+          if value == '0' && counter == 0 {
+            counter += 1;
+            'é'
+          } else {
+            value
+          }
+        }).collect::<String>()
+      } else {
+        arb_string
+      })
   }
 
   // ===========================================================================================================================
