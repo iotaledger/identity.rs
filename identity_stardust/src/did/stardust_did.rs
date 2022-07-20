@@ -411,46 +411,53 @@ mod tests {
 
   use super::*;
 
+  // ===========================================================================================================================
+  // Reusable constants and statics
+  // ===========================================================================================================================
+
   // obtained AliasID from a valid OutputID string
   // output_id copied from https://github.com/iotaledger/bee/blob/30cab4f02e9f5d72ffe137fd9eb09723b4f0fdb6/bee-block/tests/output_id.rs
-  // value of AliasID computed from AliasId::from(OutputId)
-  const VALID_ALIAS_ID_STRING: &str = "0xf29dd16310c2100fd1bf568b345fb1cc14d71caa3bd9b5ad735d2bd6d455ca3b";
+  // value of AliasID computed from AliasId::from(OutputId).to_string()
+  const VALID_ALIAS_ID_STR: &str = "0xf29dd16310c2100fd1bf568b345fb1cc14d71caa3bd9b5ad735d2bd6d455ca3b";
 
   static VALID_STARDUST_DID_STRING: Lazy<String> =
-    Lazy::new(|| format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING));
+    Lazy::new(|| format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STR));
+
+  // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
+  // characters.
+  const VALID_NETWORK_NAMES: [&str; 12] = [
+    "main", "dev", "smr", "rms", "test", "foo", "foobar", "123456", "0", "foo42", "bar123", "42foo",
+  ];
+
+  const INVALID_NETWORK_NAMES: [&str; 10] = [
+    "Main", "fOo", "deV", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0",
+  ];
 
   static VALID_STARDUST_DID_STRINGS: Lazy<Vec<String>> = Lazy::new(|| {
     let network_tag_to_did = |network, tag| format!("did:{}:{}:{}", StardustDID::METHOD, network, tag);
 
-    vec![
-      network_tag_to_did("main", VALID_ALIAS_ID_STRING),
-      network_tag_to_did("dev", VALID_ALIAS_ID_STRING),
-      network_tag_to_did("smr", VALID_ALIAS_ID_STRING),
-      network_tag_to_did("rms", VALID_ALIAS_ID_STRING),
-      network_tag_to_did("test", VALID_ALIAS_ID_STRING),
-      format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING),
-      network_tag_to_did("main", INITIAL_ALIAS_ID),
-      network_tag_to_did("dev", INITIAL_ALIAS_ID),
-      network_tag_to_did("smr", INITIAL_ALIAS_ID),
-      network_tag_to_did("rms", INITIAL_ALIAS_ID),
-      network_tag_to_did("test", INITIAL_ALIAS_ID),
-      format!("did:{}:{}", StardustDID::METHOD, INITIAL_ALIAS_ID),
-    ]
+    let valid_strings: Vec<String> = VALID_NETWORK_NAMES
+      .iter()
+      .flat_map(|network| {
+        [VALID_ALIAS_ID_STR, INITIAL_ALIAS_ID]
+          .iter()
+          .map(move |tag| network_tag_to_did(network, tag))
+      })
+      .collect();
+
+    // in principle the previous binding is not necessary (we could have just returned the value),
+    // but let's just ensure that it contains the expected number of elements first.
+    assert_eq!(valid_strings.len(), 2 * VALID_NETWORK_NAMES.len());
+
+    valid_strings
   });
 
-  // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
-  // characters.
-  const VALID_NETWORK_NAMES: [&str; 7] = ["foo", "foobar", "123456", "0", "foo42", "bar123", "42foo"];
-
-  const INVALID_NETWORK_NAMES: [&str; 8] = ["Foo", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0"];
+  // ===========================================================================================================================
+  // Test check_* methods
+  // ===========================================================================================================================
 
   #[test]
-  fn new_provides_placeholder() {
-    assert_eq!(StardustDID::new().0.as_str(), PLACHEHOLDER_DID_STR.as_str());
-  }
-
-  #[test]
-  fn invalid_method() {
+  fn invalid_check_method() {
     let did_key_core: CoreDID = CoreDID::parse("did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK").unwrap();
     assert!(matches!(
       StardustDID::check_method(&did_key_core),
@@ -462,26 +469,6 @@ mod tests {
   fn valid_check_method() {
     let did_stardust_core: CoreDID = CoreDID::parse(&*VALID_STARDUST_DID_STRING).unwrap();
     assert!(StardustDID::check_method(&did_stardust_core).is_ok());
-  }
-
-  // TODO: Move test once a dedicated struct for network name gets ported along with the client.
-  #[test]
-  fn valid_new_with_network() {
-    for input in VALID_NETWORK_NAMES {
-      assert!(
-        StardustDID::new_with_network(input).is_ok(),
-        "test: valid_new_with_network: failed on input: {}",
-        input,
-      );
-    }
-  }
-
-  // TODO: Move test once a dedicated struct for network name gets ported along with the client.
-  #[test]
-  fn invalid_new_with_network() {
-    for input in INVALID_NETWORK_NAMES {
-      assert!(matches!(StardustDID::new_with_network(input), Err(DIDError::Other(_))));
-    }
   }
 
   #[test]
@@ -540,15 +527,93 @@ mod tests {
   }
 
   #[test]
+  fn valid_check_method_id() {
+    for input in VALID_STARDUST_DID_STRINGS.iter() {
+      let did_core: CoreDID = CoreDID::parse(input).unwrap();
+      assert!(
+        StardustDID::check_method_id(&did_core).is_ok(),
+        "test: valid_check_method_id failed on input {}",
+        input
+      );
+    }
+
+    // Should also work for DID's of the form: did:<method_name>:<valid_stardust_network (or
+    // nothing/normalized)>:<alias_id>
+    let did_other_string: String = format!("did:method:{}", VALID_ALIAS_ID_STR);
+    let did_other_with_network: String = format!("did:method:test:{}", VALID_ALIAS_ID_STR);
+    let did_other_core: CoreDID = CoreDID::parse(&did_other_string).unwrap();
+    let did_other_with_network_core: CoreDID = CoreDID::parse(&did_other_with_network).unwrap();
+
+    assert!(StardustDID::check_method_id(&did_other_core).is_ok());
+    assert!(StardustDID::check_method_id(&did_other_with_network_core).is_ok());
+  }
+
+  #[test]
+  fn invalid_check_method_id() {
+    let invalid_method_id_strings = [
+      // Invalid network name
+      format!("did:method:1234567:{}", VALID_ALIAS_ID_STR),
+      // Too many segments
+      format!("did:method:main:test:{}", VALID_ALIAS_ID_STR),
+      // Tag is not prefixed
+      format!("did:method:{}", &VALID_ALIAS_ID_STR.strip_prefix("0x").unwrap()),
+      // Tag is too long
+      format!(
+        "did:method:{}",
+        &VALID_ALIAS_ID_STR.chars().chain("a".chars()).collect::<String>()
+      ),
+      // Tag is too short (omit last character)
+      format!("did:method:main:{}", &VALID_ALIAS_ID_STR[..65]),
+    ];
+
+    for input in invalid_method_id_strings {
+      let did_core: CoreDID = CoreDID::parse(input).unwrap();
+      assert!(matches!(
+        StardustDID::check_method_id(&did_core),
+        Err(DIDError::InvalidMethodId)
+      ));
+    }
+  }
+
+  // ===========================================================================================================================
+  // Constructors
+  // ===========================================================================================================================
+
+  #[test]
+  fn new_provides_placeholder() {
+    assert_eq!(StardustDID::new().0.as_str(), PLACHEHOLDER_DID_STR.as_str());
+  }
+
+  // TODO: Delete test once a dedicated struct for network name gets ported along with the client.
+  #[test]
+  fn valid_new_with_network() {
+    for input in VALID_NETWORK_NAMES {
+      assert!(
+        StardustDID::new_with_network(input).is_ok(),
+        "test: valid_new_with_network: failed on input: {}",
+        input,
+      );
+    }
+  }
+
+  // TODO: Delete test once a dedicated struct for network name gets ported along with the client.
+  #[test]
+  fn invalid_new_with_network() {
+    for input in INVALID_NETWORK_NAMES {
+      assert!(matches!(StardustDID::new_with_network(input), Err(DIDError::Other(_))));
+    }
+  }
+
+  #[test]
   fn normalization_in_constructors() {
     let did_with_default_network_string: String = format!(
       "did:{}:{}:{}",
       StardustDID::METHOD,
       StardustDID::DEFAULT_NETWORK,
-      VALID_ALIAS_ID_STRING
+      VALID_ALIAS_ID_STR
     );
     let expected_normalization_string_representation: String =
-      format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING);
+      format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STR);
 
     assert_eq!(
       StardustDID::parse(did_with_default_network_string).unwrap().as_str(),
@@ -564,55 +629,6 @@ mod tests {
   }
 
   #[test]
-  fn valid_check_method_id() {
-    for input in VALID_STARDUST_DID_STRINGS.iter() {
-      let did_core: CoreDID = CoreDID::parse(input).unwrap();
-      assert!(
-        StardustDID::check_method_id(&did_core).is_ok(),
-        "test: valid_check_method_id failed on input {}",
-        input
-      );
-    }
-
-    // Should also work for DID's of the form: did:<method_name>:<valid_stardust_network (or
-    // nothing/normalized)>:<alias_id>
-    let did_other_string: String = format!("did:method:{}", VALID_ALIAS_ID_STRING);
-    let did_other_with_network: String = format!("did:method:test:{}", VALID_ALIAS_ID_STRING);
-    let did_other_core: CoreDID = CoreDID::parse(&did_other_string).unwrap();
-    let did_other_with_network_core: CoreDID = CoreDID::parse(&did_other_with_network).unwrap();
-
-    assert!(StardustDID::check_method_id(&did_other_core).is_ok());
-    assert!(StardustDID::check_method_id(&did_other_with_network_core).is_ok());
-  }
-
-  #[test]
-  fn invalid_check_method_id() {
-    let invalid_method_id_strings = [
-      // Invalid network name
-      format!("did:method:1234567:{}", VALID_ALIAS_ID_STRING),
-      // Too many segments
-      format!("did:method:main:test:{}", VALID_ALIAS_ID_STRING),
-      // Tag is not prefixed
-      format!("did:method:{}", &VALID_ALIAS_ID_STRING.strip_prefix("0x").unwrap()),
-      // Tag is too long
-      format!(
-        "did:method:{}",
-        &VALID_ALIAS_ID_STRING.chars().chain("a".chars()).collect::<String>()
-      ),
-      // Tag is too short (omit last character)
-      format!("did:method:main:{}", &VALID_ALIAS_ID_STRING[..65]),
-    ];
-
-    for input in invalid_method_id_strings {
-      let did_core: CoreDID = CoreDID::parse(input).unwrap();
-      assert!(matches!(
-        StardustDID::check_method_id(&did_core),
-        Err(DIDError::InvalidMethodId)
-      ));
-    }
-  }
-
-  #[test]
   fn parse_valid() {
     for did_str in VALID_STARDUST_DID_STRINGS.iter() {
       assert!(StardustDID::parse(&did_str).is_ok());
@@ -622,44 +638,49 @@ mod tests {
   #[test]
 
   fn parse_invalid() {
-    assert!(matches!(
-      StardustDID::parse(format!("dod:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)),
-      Err(DIDError::InvalidScheme)
-    ));
+    let execute_assertions = |valid_alias_id: &str| {
+      assert!(matches!(
+        StardustDID::parse(format!("dod:{}:{}", StardustDID::METHOD, valid_alias_id)),
+        Err(DIDError::InvalidScheme)
+      ));
 
-    assert!(matches!(
-      StardustDID::parse(format!("did:key:{}", VALID_ALIAS_ID_STRING)),
-      Err(DIDError::InvalidMethodName)
-    ));
+      assert!(matches!(
+        StardustDID::parse(format!("did:key:{}", valid_alias_id)),
+        Err(DIDError::InvalidMethodName)
+      ));
 
-    // invalid network name (exceeded six characters)
-    assert!(matches!(
-      StardustDID::parse(format!("did:{}:1234567:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)),
-      Err(DIDError::InvalidMethodId)
-    ));
+      // invalid network name (exceeded six characters)
+      assert!(matches!(
+        StardustDID::parse(format!("did:{}:1234567:{}", StardustDID::METHOD, valid_alias_id)),
+        Err(DIDError::InvalidMethodId)
+      ));
 
-    // invalid network name (contains non ascii character é)
-    assert!(matches!(
-      StardustDID::parse(format!("did:{}:féta:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)),
-      Err(DIDError::InvalidMethodId)
-    ));
+      // invalid network name (contains non ascii character é)
+      assert!(matches!(
+        StardustDID::parse(format!("did:{}:féta:{}", StardustDID::METHOD, valid_alias_id)),
+        Err(DIDError::InvalidMethodId)
+      ));
 
-    // invalid tag
-    assert!(matches!(
-      StardustDID::parse(format!("did:{}:", StardustDID::METHOD)),
-      Err(DIDError::InvalidMethodId)
-    ));
+      // invalid tag
+      assert!(matches!(
+        StardustDID::parse(format!("did:{}:", StardustDID::METHOD)),
+        Err(DIDError::InvalidMethodId)
+      ));
 
-    // too many segments in method_id
-    assert!(matches!(
-      StardustDID::parse(format!(
-        "did:{}:test:foo:{}",
-        StardustDID::METHOD,
-        VALID_ALIAS_ID_STRING
-      )),
-      Err(DIDError::InvalidMethodId)
-    ));
+      // too many segments in method_id
+      assert!(matches!(
+        StardustDID::parse(format!("did:{}:test:foo:{}", StardustDID::METHOD, valid_alias_id)),
+        Err(DIDError::InvalidMethodId)
+      ));
+    };
+
+    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(VALID_ALIAS_ID_STR);
   }
+
+  // ===========================================================================================================================
+  // Parse randomly generated input
+  // ===========================================================================================================================
 
   fn arbitrary_alias_id() -> impl Strategy<Value = AliasId> {
     (proptest::prelude::any::<[u8; 32]>(), OUTPUT_INDEX_RANGE).prop_map(|(bytes, idx)| {
@@ -687,137 +708,146 @@ mod tests {
     }
   }
 
+  // ===========================================================================================================================
+  // Getters
+  // ===========================================================================================================================
   #[test]
   fn test_network() {
-    let did: StardustDID = format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)
-      .parse()
-      .unwrap();
-    assert_eq!(did.network_str(), StardustDID::DEFAULT_NETWORK);
+    let execute_assertions = |valid_alias_id: &str| {
+      let did: StardustDID = format!("did:{}:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.network_str(), StardustDID::DEFAULT_NETWORK);
 
-    let did: StardustDID = format!("did:{}:dev:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)
-      .parse()
-      .unwrap();
-    assert_eq!(did.network_str(), "dev");
+      let did: StardustDID = format!("did:{}:dev:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.network_str(), "dev");
 
-    let did: StardustDID = format!("did:{}:test:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)
-      .parse()
-      .unwrap();
-    assert_eq!(did.network_str(), "test");
+      let did: StardustDID = format!("did:{}:test:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.network_str(), "test");
 
-    let did: StardustDID = format!("did:{}:custom:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)
-      .parse()
-      .unwrap();
-    assert_eq!(did.network_str(), "custom");
+      let did: StardustDID = format!("did:{}:custom:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.network_str(), "custom");
+    };
+
+    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(VALID_ALIAS_ID_STR);
   }
 
   #[test]
   fn test_tag() {
-    let did: StardustDID = format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)
-      .parse()
-      .unwrap();
-    assert_eq!(did.tag(), VALID_ALIAS_ID_STRING);
+    let execute_assertions = |valid_alias_id: &str| {
+      let did: StardustDID = format!("did:{}:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.tag(), valid_alias_id);
 
-    let did: StardustDID = format!("did:{}:main:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)
-      .parse()
-      .unwrap();
-    assert_eq!(did.tag(), VALID_ALIAS_ID_STRING);
+      let did: StardustDID = format!("did:{}:main:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.tag(), valid_alias_id);
+    };
+    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(VALID_ALIAS_ID_STR);
   }
+
+  // ===========================================================================================================================
+  // DIDUrl
+  // ===========================================================================================================================
 
   #[test]
   fn test_parse_did_url_valid() {
-    assert!(StardustDIDUrl::parse(format!("did:{}:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)).is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:{}#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:{}?somequery=somevalue",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:{}?somequery=somevalue#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
+    let execute_assertions = |valid_alias_id: &str| {
+      assert!(StardustDIDUrl::parse(format!("did:{}:{}", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!("did:{}:{}#fragment", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:{}?somequery=somevalue",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:{}?somequery=somevalue#fragment",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
 
-    assert!(StardustDIDUrl::parse(format!("did:{}:main:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)).is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:main:{}#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:main:{}?somequery=somevalue",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:main:{}?somequery=somevalue#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
+      assert!(StardustDIDUrl::parse(format!("did:{}:main:{}", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!("did:{}:main:{}#fragment", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:main:{}?somequery=somevalue",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:main:{}?somequery=somevalue#fragment",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
 
-    assert!(StardustDIDUrl::parse(format!("did:{}:dev:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)).is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:dev:{}#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:dev:{}?somequery=somevalue",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:dev:{}?somequery=somevalue#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
+      assert!(StardustDIDUrl::parse(format!("did:{}:dev:{}", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!("did:{}:dev:{}#fragment", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:dev:{}?somequery=somevalue",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:dev:{}?somequery=somevalue#fragment",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
 
-    assert!(StardustDIDUrl::parse(format!("did:{}:custom:{}", StardustDID::METHOD, VALID_ALIAS_ID_STRING)).is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:custom:{}#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:custom:{}?somequery=somevalue",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
-    assert!(StardustDIDUrl::parse(format!(
-      "did:{}:custom:{}?somequery=somevalue#fragment",
-      StardustDID::METHOD,
-      VALID_ALIAS_ID_STRING
-    ))
-    .is_ok());
+      assert!(StardustDIDUrl::parse(format!("did:{}:custom:{}", StardustDID::METHOD, valid_alias_id)).is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:custom:{}#fragment",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:custom:{}?somequery=somevalue",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
+      assert!(StardustDIDUrl::parse(format!(
+        "did:{}:custom:{}?somequery=somevalue#fragment",
+        StardustDID::METHOD,
+        valid_alias_id
+      ))
+      .is_ok());
+    };
+    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(VALID_ALIAS_ID_STR);
   }
 
   #[test]
-  fn test_setter() {
-    let mut did_url: StardustDIDUrl = StardustDID::parse(VALID_STARDUST_DID_STRING.as_str())
-      .unwrap()
-      .into_url();
+  fn valid_url_setters() {
+    let execute_assertions = |valid_alias_id: &str| {
+      let mut did_url: StardustDIDUrl = StardustDID::parse(format!("did:{}:{}", StardustDID::METHOD, valid_alias_id))
+        .unwrap()
+        .into_url();
 
-    did_url.set_path(Some("/foo")).unwrap();
-    did_url.set_query(Some("diff=true")).unwrap();
-    did_url.set_fragment(Some("foo")).unwrap();
+      did_url.set_path(Some("/foo")).unwrap();
+      did_url.set_query(Some("diff=true")).unwrap();
+      did_url.set_fragment(Some("foo")).unwrap();
 
-    assert_eq!(did_url.path(), Some("/foo"));
-    assert_eq!(did_url.query(), Some("diff=true"));
-    assert_eq!(did_url.fragment(), Some("foo"));
+      assert_eq!(did_url.path(), Some("/foo"));
+      assert_eq!(did_url.query(), Some("diff=true"));
+      assert_eq!(did_url.fragment(), Some("foo"));
+    };
+    execute_assertions(INITIAL_ALIAS_ID);
+    execute_assertions(VALID_ALIAS_ID_STR);
   }
 }
