@@ -31,6 +31,7 @@ use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
 use crate::types::IdentitySetup;
+use crate::types::IdentityState;
 use crate::types::MethodContent;
 use crate::updates::Update;
 use crate::updates::UpdateError;
@@ -131,12 +132,8 @@ async fn test_create_identity_already_exists() -> Result<()> {
       .await
       .unwrap();
 
-    let initial_state = account_setup
-      .storage
-      .document_get(account.did())
-      .await
-      .unwrap()
-      .unwrap();
+    let initial_state: Vec<u8> = account_setup.storage.blob_get(account.did()).await?.unwrap();
+    let initial_state: IdentityState = serde_json::from_slice(&initial_state).unwrap();
 
     let output = Account::create_identity(account_setup.clone(), identity_create).await;
 
@@ -146,10 +143,9 @@ async fn test_create_identity_already_exists() -> Result<()> {
     ));
 
     // Ensure nothing was overwritten in storage
-    assert_eq!(
-      initial_state,
-      account_setup.storage.document_get(account.did()).await?.unwrap()
-    );
+    let account_state: Vec<u8> = account_setup.storage.blob_get(account.did()).await?.unwrap();
+    let account_state: IdentityState = serde_json::from_slice(&account_state).unwrap();
+    assert_eq!(initial_state.document()?, account_state.document()?);
   }
   Ok(())
 }

@@ -382,25 +382,9 @@ impl StorageTestSuite {
       .await
       .context("did_create returned an error")?;
 
-    let chain_state: Option<ChainState> = storage
-      .chain_state_get(&did)
-      .await
-      .context("chain_state_get returned an error")?;
+    let value: Option<Vec<u8>> = storage.blob_get(&did).await.context("blob_get returned an error")?;
 
-    ensure!(
-      chain_state.is_none(),
-      "expected chain_state_get to return `None` for a new DID"
-    );
-
-    let document: Option<IotaDocument> = storage
-      .document_get(&did)
-      .await
-      .context("document_get returned an error")?;
-
-    ensure!(
-      document.is_none(),
-      "expected document_get to return `None` for a new DID"
-    );
+    ensure!(value.is_none(), "expected blob_get to return `None` for a new DID");
 
     let public_key: PublicKey = storage
       .key_public(&did, &location)
@@ -411,42 +395,30 @@ impl StorageTestSuite {
       IotaVerificationMethod::new(did.clone(), KeyType::Ed25519, &public_key, &fragment).unwrap();
 
     let expected_document: IotaDocument = IotaDocument::from_verification_method(method).unwrap();
-
     storage
-      .document_set(&did, &expected_document)
+      .blob_set(&did, &serde_json::to_vec(&expected_document).unwrap())
       .await
-      .context("document_set returned an error")?;
-
-    let document: IotaDocument = storage
-      .document_get(&did)
-      .await
-      .context("document_get returned an error")?
-      .ok_or_else(|| anyhow::Error::msg("expected `Some(_)` to be returned, got `None`"))?;
-
+      .context("blob_set returned an error")?;
+    let value: Option<Vec<u8>> = storage.blob_get(&did).await.context("blob_get returned an error")?;
+    let document: IotaDocument = serde_json::from_slice(&value.unwrap()).unwrap();
     ensure_eq!(
       expected_document,
       document,
-      "expected document to be `{expected_document}`, got `{document}`"
+      "expected `{expected_document}`, got `{document}`"
     );
 
     let mut expected_chain_state: ChainState = ChainState::new();
     expected_chain_state.set_last_integration_message_id(MessageId::new([0xff; 32]));
-
     storage
-      .chain_state_set(&did, &expected_chain_state)
+      .blob_set(&did, &serde_json::to_vec(&expected_chain_state).unwrap())
       .await
-      .context("chain_state_set returned an error")?;
-
-    let chain_state: ChainState = storage
-      .chain_state_get(&did)
-      .await
-      .context("chain_state_get returned an error")?
-      .ok_or_else(|| anyhow::Error::msg("expected `Some(_)` to be returned, got `None`"))?;
-
+      .context("blob_set returned an error")?;
+    let value: Option<Vec<u8>> = storage.blob_get(&did).await.context("blob_get returned an error")?;
+    let chain_state: ChainState = serde_json::from_slice(&value.unwrap()).unwrap();
     ensure_eq!(
       expected_chain_state,
       chain_state,
-      "expected chain state to be `{expected_chain_state:?}`, got `{chain_state:?}`"
+      "expected `{expected_chain_state:?}`, got `{chain_state:?}`"
     );
 
     Ok(())
@@ -474,7 +446,7 @@ impl StorageTestSuite {
     expected_chain_state.set_last_integration_message_id(MessageId::new([0xff; 32]));
 
     storage
-      .chain_state_set(&did, &expected_chain_state)
+      .blob_set(&did, &serde_json::to_vec(&expected_chain_state).unwrap())
       .await
       .context("chain_state_set returned an error")?;
 
@@ -482,15 +454,9 @@ impl StorageTestSuite {
 
     ensure!(purged, "expected did `{did}` to have been purged");
 
-    let chain_state: Option<ChainState> = storage
-      .chain_state_get(&did)
-      .await
-      .context("chain_state_get returned an error")?;
+    let value: Option<Vec<u8>> = storage.blob_get(&did).await.context("blob_get returned an error")?;
 
-    ensure!(
-      chain_state.is_none(),
-      "expected chain_state_get to return `None` after purging"
-    );
+    ensure!(value.is_none(), "expected blob_get to return `None` after purging");
 
     let exists: bool = storage
       .key_exists(&did, &location)

@@ -21,7 +21,6 @@ use identity_core::crypto::Sign;
 #[cfg(feature = "encryption")]
 use identity_core::crypto::X25519;
 use identity_iota_core::did::IotaDID;
-use identity_iota_core::document::IotaDocument;
 use identity_iota_core::tangle::NetworkName;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
@@ -29,7 +28,6 @@ use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::identity::ChainState;
 use crate::storage::Storage;
 #[cfg(feature = "encryption")]
 use crate::types::CekAlgorithm;
@@ -41,10 +39,6 @@ use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::Shared;
 
-// The map from DIDs to chain states.
-type ChainStates = HashMap<IotaDID, ChainState>;
-// The map from DIDs to DID documents.
-type Documents = HashMap<IotaDID, IotaDocument>;
 // The map from DIDs to vaults.
 type Vaults = HashMap<IotaDID, MemVault>;
 // The map from key locations to key pairs, that lives within a DID partition.
@@ -54,9 +48,7 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 pub struct MemStore {
   // Controls whether to print the storages content when debugging.
   expand: bool,
-  // The `Shared<T>` type is simply a light wrapper around `Rwlock<T>`.
-  chain_states: Shared<ChainStates>,
-  documents: Shared<Documents>,
+  data: Shared<HashMap<IotaDID, Vec<u8>>>,
   vaults: Shared<Vaults>,
 }
 
@@ -65,8 +57,7 @@ impl MemStore {
   pub fn new() -> Self {
     Self {
       expand: false,
-      chain_states: Shared::new(HashMap::new()),
-      documents: Shared::new(HashMap::new()),
+      data: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
     }
   }
@@ -132,9 +123,7 @@ impl Storage for MemStore {
     // so we only need to do work if the DID still exists.
     // The return value signals whether the DID was actually removed during this operation.
     if self.vaults.write()?.remove(did).is_some() {
-      let _ = self.documents.write()?.remove(did);
-      let _ = self.chain_states.write()?.remove(did);
-
+      let _ = self.data.write()?.remove(did);
       Ok(true)
     } else {
       Ok(false)
@@ -381,28 +370,16 @@ impl Storage for MemStore {
     }
   }
 
-  async fn chain_state_get(&self, did: &IotaDID) -> Result<Option<ChainState>> {
-    // Lookup the chain state of the given DID.
-    self.chain_states.read().map(|states| states.get(did).cloned())
-  }
-
-  async fn chain_state_set(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
-    // Set the chain state of the given DID.
-    self.chain_states.write()?.insert(did.clone(), chain_state.clone());
+  async fn blob_set(&self, did: &IotaDID, value: &[u8]) -> Result<()> {
+    // Set the arbitrary value for the given DID.
+    self.data.write()?.insert(did.clone(), value.to_vec());
 
     Ok(())
   }
 
-  async fn document_get(&self, did: &IotaDID) -> Result<Option<IotaDocument>> {
-    // Lookup the DID document of the given DID.
-    self.documents.read().map(|documents| documents.get(did).cloned())
-  }
-
-  async fn document_set(&self, did: &IotaDID, document: &IotaDocument) -> Result<()> {
-    // Set the DID document of the given DID.
-    self.documents.write()?.insert(did.clone(), document.clone());
-
-    Ok(())
+  async fn blob_get(&self, did: &IotaDID) -> Result<Option<Vec<u8>>> {
+    // Lookup the value stored of the given DID.
+    self.data.read().map(|data| data.get(did).cloned())
   }
 
   async fn flush_changes(&self) -> Result<()> {
@@ -532,8 +509,7 @@ impl Debug for MemStore {
   fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     if self.expand {
       f.debug_struct("MemStore")
-        .field("chain_states", &self.chain_states)
-        .field("states", &self.documents)
+        .field("data", &self.data)
         .field("vaults", &self.vaults)
         .finish()
     } else {

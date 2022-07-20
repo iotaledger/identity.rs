@@ -26,6 +26,7 @@ parking_lot = { version = "0.12" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"], optional = true }
 seahash = { version = "4.1.0", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+serde_json = { version = "1.0", default-features = false, optional = true }
 strum = { version = "0.24.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0" }
 tokio = { version = "1.17.0", default-features = false, features = ["sync", "fs"], optional = true }
@@ -47,6 +48,6 @@ stronghold = [
 # Enables `Send` + `Sync` bounds for the Storage trait.
 send-sync-storage = []
 # Exposes Storage `test_suite` module.
-storage-test-suite = ["anyhow", "function_name", "rand"]
+storage-test-suite = ["anyhow", "function_name", "rand", "serde_json"]
 # Enables encryption and decryption in the Storage trait.
 encryption = []
