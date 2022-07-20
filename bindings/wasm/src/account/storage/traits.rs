@@ -109,9 +109,9 @@ extern "C" {
     cek_algorithm: WasmCekAlgorithm,
     private_key: WasmKeyLocation,
   ) -> Uint8Array;
-  #[wasm_bindgen(method, js_name = chainStateGet)]
+  #[wasm_bindgen(method, js_name = blobGet)]
   pub fn blob_get(this: &WasmStorage, did: WasmDID) -> PromiseBytes;
-  #[wasm_bindgen(method, js_name = chainStateSet)]
+  #[wasm_bindgen(method, js_name = blobSet)]
   pub fn blob_set(this: &WasmStorage, did: WasmDID, value: Vec<u8>) -> PromiseVoid;
   #[wasm_bindgen(method, js_name = flushChanges)]
   pub fn flush_changes(this: &WasmStorage) -> PromiseVoid;
