@@ -237,8 +237,8 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.revokeIndices(fragment, indices)](#Account+revokeIndices) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.unrevokeIndices(fragment, indices)](#Account+unrevokeIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, indices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.unrevokeCredentials(fragment, indices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -401,9 +401,9 @@ If a DID is managed from distributed accounts, this should be called before maki
 to the identity, to avoid publishing updates that would be ignored.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
-<a name="Account+revokeIndices"></a>
+<a name="Account+revokeCredentials"></a>
 
-### account.revokeIndices(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.revokeCredentials(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
 If the document has a `RevocationBitmap` service identified by `fragment`,
 revoke all specified `indices`.
 
@@ -414,9 +414,9 @@ revoke all specified `indices`.
 | fragment | <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
-<a name="Account+unrevokeIndices"></a>
+<a name="Account+unrevokeCredentials"></a>
 
-### account.unrevokeIndices(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.unrevokeCredentials(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
 If the document has a `RevocationBitmap` service identified by `fragment`,
 unrevoke all specified `indices`.
 
@@ -1798,8 +1798,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.revokeIndices(serviceQuery, indices)](#Document+revokeIndices)
-        * [.unrevokeIndices(serviceQuery, indices)](#Document+unrevokeIndices)
+        * [.revokeCredentials(serviceQuery, indices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, indices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -2278,9 +2278,9 @@ Sets the previous integration chain message id.
 Returns a copy of the proof.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document+revokeIndices"></a>
+<a name="Document+revokeCredentials"></a>
 
-### document.revokeIndices(serviceQuery, indices)
+### document.revokeCredentials(serviceQuery, indices)
 If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 revoke all specified `indices`.
 
@@ -2291,9 +2291,9 @@ revoke all specified `indices`.
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
 | indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
-<a name="Document+unrevokeIndices"></a>
+<a name="Document+unrevokeCredentials"></a>
 
-### document.unrevokeIndices(serviceQuery, indices)
+### document.unrevokeCredentials(serviceQuery, indices)
 If the document has a `RevocationBitmap` service identified by `serviceQuery`,
 unrevoke all specified `indices`.
 

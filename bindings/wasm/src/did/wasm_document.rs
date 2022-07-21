@@ -641,24 +641,24 @@ impl WasmDocument {
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
   /// revoke all specified `indices`.
-  #[wasm_bindgen(js_name = revokeIndices)]
+  #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_indices(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.revoke_indices(&query, indices.as_slice()).wasm_result()
+    self.0.revoke_credentials(&query, indices.as_slice()).wasm_result()
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
   /// unrevoke all specified `indices`.
-  #[wasm_bindgen(js_name = unrevokeIndices)]
+  #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_indices(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
+  pub fn unrevoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
     let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self.0.unrevoke_indices(&query, indices.as_slice()).wasm_result()
+    self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
   }
 
   // ===========================================================================

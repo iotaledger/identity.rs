@@ -813,7 +813,7 @@ mod core_document_revocation {
   {
     /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
     /// revoke all specified `indices`.
-    pub fn revoke_indices<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
@@ -826,7 +826,7 @@ mod core_document_revocation {
 
     /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
     /// unrevoke all specified `indices`.
-    pub fn unrevoke_indices<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
+    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
@@ -1218,8 +1218,8 @@ mod tests {
     let service_id = document.id().to_url().join("#revocation-service").unwrap();
 
     // The methods error if the service doesn't exist.
-    assert!(document.revoke_indices(&service_id, &indices_2).is_err());
-    assert!(document.unrevoke_indices(&service_id, &indices_2).is_err());
+    assert!(document.revoke_credentials(&service_id, &indices_2).is_err());
+    assert!(document.unrevoke_credentials(&service_id, &indices_2).is_err());
 
     // Add service with indices_1 already revoked.
     let mut bitmap: crate::revocation::RevocationBitmap = crate::revocation::RevocationBitmap::new();
@@ -1236,7 +1236,7 @@ mod tests {
     ));
 
     // Revoke indices_2.
-    document.revoke_indices(&service_id, &indices_2).unwrap();
+    document.revoke_credentials(&service_id, &indices_2).unwrap();
     let service: &Service = document.resolve_service(&service_id).unwrap();
     let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
 
@@ -1246,7 +1246,7 @@ mod tests {
     }
 
     // Unrevoke indices_1.
-    document.unrevoke_indices(&service_id, &indices_1).unwrap();
+    document.unrevoke_credentials(&service_id, &indices_1).unwrap();
 
     let service: &Service = document.resolve_service(&service_id).unwrap();
     let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();

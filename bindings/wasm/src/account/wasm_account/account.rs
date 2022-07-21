@@ -277,9 +277,9 @@ impl WasmAccount {
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
   /// revoke all specified `indices`.
-  #[wasm_bindgen(js_name = revokeIndices)]
+  #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_indices(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
+  pub fn revoke_credentials(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
       let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
@@ -287,7 +287,7 @@ impl WasmAccount {
       account
         .as_ref()
         .borrow_mut()
-        .revoke_indices(&fragment, indices.as_slice())
+        .revoke_credentials(&fragment, indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()
@@ -297,9 +297,9 @@ impl WasmAccount {
 
   /// If the document has a `RevocationBitmap` service identified by `fragment`,
   /// unrevoke all specified `indices`.
-  #[wasm_bindgen(js_name = unrevokeIndices)]
+  #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_indices(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
+  pub fn unrevoke_credentials(&mut self, fragment: String, indices: UOneOrManyNumber) -> PromiseVoid {
     let account = self.0.clone();
     future_to_promise(async move {
       let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
@@ -307,7 +307,7 @@ impl WasmAccount {
       account
         .as_ref()
         .borrow_mut()
-        .unrevoke_indices(&fragment, indices.as_slice())
+        .unrevoke_credentials(&fragment, indices.as_slice())
         .await
         .map(|_| JsValue::undefined())
         .wasm_result()

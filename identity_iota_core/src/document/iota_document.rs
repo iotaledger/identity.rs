@@ -668,25 +668,25 @@ mod iota_document_revocation {
   impl IotaDocument {
     /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
     /// service identified by `service_query`, revoke all specified `indices`.
-    pub fn revoke_indices<'query, 'me, Q>(&mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
       self
         .core_document_mut()
-        .revoke_indices(service_query, credential_indices)
+        .revoke_credentials(service_query, credential_indices)
         .map_err(Error::RevocationError)
     }
 
     /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
     /// service with an id by `service_query`, unrevoke all specified `indices`.
-    pub fn unrevoke_indices<'query, 'me, Q>(&'me mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
+    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
       self
         .core_document_mut()
-        .unrevoke_indices(service_query, credential_indices)
+        .unrevoke_credentials(service_query, credential_indices)
         .map_err(Error::RevocationError)
     }
   }
