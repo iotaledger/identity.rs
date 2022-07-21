@@ -680,7 +680,11 @@ mod iota_document_revocation {
 
     /// If the document has a [`RevocationBitmap`](identity_did::revocation::RevocationBitmap)
     /// service with an id by `service_query`, unrevoke all specified `indices`.
-    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
+    pub fn unrevoke_credentials<'query, 'me, Q>(
+      &'me mut self,
+      service_query: Q,
+      credential_indices: &[u32],
+    ) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
