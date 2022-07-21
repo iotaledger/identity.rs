@@ -237,8 +237,8 @@ publishing to the Tangle.
     * [.createSignedData(fragment, data, options)](#Account+createSignedData) ⇒ <code>Promise.&lt;any&gt;</code>
     * [.updateDocumentUnchecked(document)](#Account+updateDocumentUnchecked) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.fetchDocument()](#Account+fetchDocument) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.revokeCredentials(fragment, credentialIndices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
-    * [.unrevokeCredentials(fragment, credentialIndices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.revokeCredentials(fragment, indices)](#Account+revokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
+    * [.unrevokeCredentials(fragment, indices)](#Account+unrevokeCredentials) ⇒ <code>Promise.&lt;void&gt;</code>
     * [.encryptData(plaintext, associated_data, encryption_algorithm, cek_algorithm, public_key)](#Account+encryptData) ⇒ [<code>Promise.&lt;EncryptedData&gt;</code>](#EncryptedData)
     * [.decryptData(data, encryption_algorithm, cek_algorithm, fragment)](#Account+decryptData) ⇒ <code>Promise.&lt;Uint8Array&gt;</code>
     * [.attachMethodRelationships(options)](#Account+attachMethodRelationships) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -403,29 +403,29 @@ to the identity, to avoid publishing updates that would be ignored.
 **Kind**: instance method of [<code>Account</code>](#Account)  
 <a name="Account+revokeCredentials"></a>
 
-### account.revokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.revokeCredentials(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
 If the document has a `RevocationBitmap` service identified by `fragment`,
-revoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+revoke all specified `indices`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Account+unrevokeCredentials"></a>
 
-### account.unrevokeCredentials(fragment, credentialIndices) ⇒ <code>Promise.&lt;void&gt;</code>
+### account.unrevokeCredentials(fragment, indices) ⇒ <code>Promise.&lt;void&gt;</code>
 If the document has a `RevocationBitmap` service identified by `fragment`,
-unrevoke all credentials with a `revocationBitmapIndex` in `credentialIndices`.
+unrevoke all specified `indices`.
 
 **Kind**: instance method of [<code>Account</code>](#Account)  
 
 | Param | Type |
 | --- | --- |
 | fragment | <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Account+encryptData"></a>
 
@@ -1798,8 +1798,8 @@ Deserializes a `DiffMessage` from a JSON object.
         * [.metadataPreviousMessageId()](#Document+metadataPreviousMessageId) ⇒ <code>string</code>
         * [.setMetadataPreviousMessageId(value)](#Document+setMetadataPreviousMessageId)
         * [.proof()](#Document+proof) ⇒ [<code>Proof</code>](#Proof) \| <code>undefined</code>
-        * [.revokeCredentials(serviceQuery, credentialIndices)](#Document+revokeCredentials)
-        * [.unrevokeCredentials(serviceQuery, credentialIndices)](#Document+unrevokeCredentials)
+        * [.revokeCredentials(serviceQuery, indices)](#Document+revokeCredentials)
+        * [.unrevokeCredentials(serviceQuery, indices)](#Document+unrevokeCredentials)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
         * [.clone()](#Document+clone) ⇒ [<code>Document</code>](#Document)
     * _static_
@@ -2280,29 +2280,29 @@ Returns a copy of the proof.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+revokeCredentials"></a>
 
-### document.revokeCredentials(serviceQuery, credentialIndices)
+### document.revokeCredentials(serviceQuery, indices)
 If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+revoke all specified `indices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+unrevokeCredentials"></a>
 
-### document.unrevokeCredentials(serviceQuery, credentialIndices)
+### document.unrevokeCredentials(serviceQuery, indices)
 If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+unrevoke all specified `indices`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | serviceQuery | [<code>DIDUrl</code>](#DIDUrl) \| <code>string</code> | 
-| credentialIndices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
+| indices | <code>number</code> \| <code>Array.&lt;number&gt;</code> | 
 
 <a name="Document+toJSON"></a>
 

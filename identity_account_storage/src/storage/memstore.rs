@@ -6,7 +6,7 @@ use core::fmt::Formatter;
 
 use async_trait::async_trait;
 #[cfg(feature = "encryption")]
-use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::aes_gcm::Aes256Gcm;
 #[cfg(feature = "encryption")]
 use crypto::ciphers::aes_kw::Aes256Kw;
 #[cfg(feature = "encryption")]
@@ -419,7 +419,7 @@ mod memstore_encryption {
   use crate::types::EncryptionAlgorithm;
   use crate::Error;
   use crate::Result;
-  use crypto::ciphers::aes::Aes256Gcm;
+  use crypto::ciphers::aes_gcm::Aes256Gcm;
   use crypto::ciphers::traits::Aead;
   use crypto::hashes::sha::Sha256;
   use crypto::hashes::Digest;

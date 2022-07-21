@@ -4,7 +4,7 @@
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
-use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::aes_gcm::Aes256Gcm;
 use crypto::ciphers::traits::Aead;
 use futures::executor;
 use identity_core::convert::FromJson;

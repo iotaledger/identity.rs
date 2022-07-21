@@ -7,9 +7,9 @@
 pub use self::error::Error;
 pub use self::error::Result;
 
-pub use stardust_document::StardustDocument;
+pub use document::*;
 pub use state_metadata::*;
 
+mod document;
 mod error;
-mod stardust_document;
 mod state_metadata;
