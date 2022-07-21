@@ -175,25 +175,27 @@ impl StardustDID {
 
   /// Returns the Tangle `network` name of the `DID`.
   pub fn network_str(&self) -> &str {
-    if let Some(separator_idx) = self.method_id_separator_idx() {
-      &self.method_id()[..separator_idx]
-    } else {
+    let method_id = self.method_id();
+    let tag_offset = self.tag_offset();
+    if tag_offset == 0 {
       NetworkName::DEFAULT_STARDUST_NETWORK_NAME
+    } else {
+      //  subtract one to not include the delimiter :
+      &method_id[..(tag_offset - 1)]
     }
   }
 
+
   #[inline(always)]
-  fn method_id_separator_idx(&self) -> Option<usize> {
-    self.method_id().find(':')
+  fn tag_offset(&self) -> usize {
+    let method_id = self.method_id();
+    method_id.len() - TAG_CHARS_LEN
   }
 
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
     let method_id = self.method_id();
-    self
-      .method_id_separator_idx()
-      .map(|idx| &method_id[(idx + 1)..])
-      .unwrap_or(method_id)
+    &method_id[self.tag_offset()..]
   }
 
   /// Change the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
