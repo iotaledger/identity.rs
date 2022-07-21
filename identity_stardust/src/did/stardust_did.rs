@@ -64,7 +64,7 @@ impl StardustDID {
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid [`IotaDID`].
+  /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
   pub fn try_from_core(did: CoreDID) -> Result<Self> {
     Self::check_validity(&did)?;
 
@@ -75,7 +75,7 @@ impl StardustDID {
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid [`IotaDID`].
+  /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
     CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_core)
   }
@@ -178,11 +178,12 @@ impl StardustDID {
     Self::check_method(did).and_then(|_| Self::check_method_id(did))
   }
 
-  /// Checks if the given `DID` has a valid IOTA DID `method` (i.e. `"iota"`).
+  /// Checks if the given `DID` has a valid [`StardustDID`] `method` (i.e. `"stardust"`).
   ///
   /// # Errors
-  ///(
-  /// Returns `Err` if the input is not a valid [`IotaDID`].
+  ///
+  /// Returns `Err` if the input represents another method.
+  // TODO: Change the naming in the docs once we remove the code for the current IOTA method.
   pub fn check_method<D: DID>(did: &D) -> Result<()> {
     (did.method() == Self::METHOD)
       .then_some(())
@@ -193,7 +194,7 @@ impl StardustDID {
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid [`IotaDID`].
+  /// Returns `Err` if the input does not have a [`StardustDID`] compliant method id.
   // TODO: Is it correct to also validate the network here? The current IOTA DID method does NOT do that.
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
     let id = did.method_id();
@@ -595,7 +596,7 @@ mod tests {
   }
 
   // ===========================================================================================================================
-  // Constructors
+  // Test constructors
   // ===========================================================================================================================
 
   #[test]
@@ -698,7 +699,7 @@ mod tests {
   }
 
   // ===========================================================================================================================
-  // Parse randomly generated input
+  // Test parse with randomly generated input
   // ===========================================================================================================================
 
   fn arbitrary_alias_id() -> impl Strategy<Value = AliasId> {
@@ -784,7 +785,7 @@ mod tests {
   }
 
   // ===========================================================================================================================
-  // Getters
+  // Test getters
   // ===========================================================================================================================
   #[test]
   fn test_network() {
@@ -832,7 +833,7 @@ mod tests {
   }
 
   // ===========================================================================================================================
-  // DIDUrl
+  // Test DIDUrl
   // ===========================================================================================================================
 
   #[test]
