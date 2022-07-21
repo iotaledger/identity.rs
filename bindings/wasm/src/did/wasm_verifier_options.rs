@@ -10,7 +10,6 @@ use crate::error::WasmResult;
 /// Holds additional proof verification options.
 /// See `IVerifierOptions`.
 #[wasm_bindgen(js_name = VerifierOptions, inspectable)]
-#[derive(Debug)]
 pub struct WasmVerifierOptions(pub(crate) VerifierOptions);
 
 #[wasm_bindgen(js_class = VerifierOptions)]

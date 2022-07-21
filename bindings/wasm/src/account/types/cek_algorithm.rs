@@ -8,21 +8,20 @@ use crate::account::types::WasmAgreementInfo;
 
 /// Supported algorithms used to determine and potentially encrypt the content encryption key (CEK).
 #[wasm_bindgen(js_name = CekAlgorithm, inspectable)]
-#[derive(Clone)]
-pub struct WasmCekAlgorithm(CekAlgorithm);
+pub struct WasmCekAlgorithm(pub(crate) CekAlgorithm);
 
 #[wasm_bindgen(js_class = CekAlgorithm)]
 impl WasmCekAlgorithm {
   /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
   #[wasm_bindgen(js_name = EcdhEs)]
   pub fn ecdh_es(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
-    Self(CekAlgorithm::ECDH_ES(agreement.clone().into()))
+    Self(CekAlgorithm::ECDH_ES(agreement.0.clone()))
   }
 
   /// Elliptic Curve Diffie-Hellman Ephemeral Static key agreement using Concat KDF.
   #[wasm_bindgen(js_name = EcdhEsA256Kw)]
   pub fn ecdh_es_a256kw(agreement: &WasmAgreementInfo) -> WasmCekAlgorithm {
-    Self(CekAlgorithm::ECDH_ES_A256KW(agreement.clone().into()))
+    Self(CekAlgorithm::ECDH_ES_A256KW(agreement.0.clone()))
   }
 }
 

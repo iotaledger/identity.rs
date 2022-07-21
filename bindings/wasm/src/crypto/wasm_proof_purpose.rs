@@ -8,7 +8,6 @@ use wasm_bindgen::prelude::*;
 ///
 /// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 #[wasm_bindgen(js_name = ProofPurpose, inspectable)]
-#[derive(Debug)]
 pub struct WasmProofPurpose(pub(crate) ProofPurpose);
 
 #[wasm_bindgen(js_class = ProofPurpose)]

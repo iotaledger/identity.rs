@@ -9,7 +9,6 @@ use crate::error::WasmResult;
 
 /// Supported verification method data formats.
 #[wasm_bindgen(js_name = MethodData, inspectable)]
-#[derive(Debug)]
 pub struct WasmMethodData(pub(crate) MethodData);
 
 #[wasm_bindgen(js_class = MethodData)]

@@ -14,7 +14,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
-#[derive(Debug)]
 pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]

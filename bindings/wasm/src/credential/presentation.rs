@@ -20,7 +20,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Presentation, inspectable)]
-#[derive(Debug)]
 pub struct WasmPresentation(pub(crate) Presentation);
 
 // Workaround for Typescript type annotations for returned arrays.

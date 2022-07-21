@@ -50,7 +50,6 @@ use crate::error::WasmResult;
 // =============================================================================
 
 #[wasm_bindgen(js_name = Document, inspectable)]
-#[derive(Debug)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
 #[wasm_bindgen(js_class = Document)]

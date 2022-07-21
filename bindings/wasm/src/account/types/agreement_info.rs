@@ -6,8 +6,7 @@ use wasm_bindgen::prelude::*;
 
 /// Agreement information used as the input for the concat KDF.
 #[wasm_bindgen(js_name = AgreementInfo, inspectable)]
-#[derive(Clone)]
-pub struct WasmAgreementInfo(AgreementInfo);
+pub struct WasmAgreementInfo(pub(crate) AgreementInfo);
 
 #[wasm_bindgen(js_class = AgreementInfo)]
 impl WasmAgreementInfo {

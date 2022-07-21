@@ -18,7 +18,6 @@ use crate::error::WasmResult;
 /// situations like these.
 ///
 /// The string representation of that location can be obtained via `canonicalRepr`.
-#[derive(Debug)]
 #[wasm_bindgen(js_name = KeyLocation, inspectable)]
 pub struct WasmKeyLocation(pub(crate) KeyLocation);
 

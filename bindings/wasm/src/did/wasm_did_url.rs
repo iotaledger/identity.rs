@@ -12,7 +12,6 @@ use crate::error::WasmResult;
 
 /// @typicalname didUrl
 #[wasm_bindgen(js_name = DIDUrl, inspectable)]
-#[derive(Debug)]
 pub struct WasmDIDUrl(pub(crate) IotaDIDUrl);
 
 #[wasm_bindgen(js_class = DIDUrl)]

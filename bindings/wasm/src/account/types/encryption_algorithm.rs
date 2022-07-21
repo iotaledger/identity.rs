@@ -6,8 +6,7 @@ use wasm_bindgen::prelude::*;
 
 /// Supported content encryption algorithms.
 #[wasm_bindgen(js_name = EncryptionAlgorithm, inspectable)]
-#[derive(Clone)]
-pub struct WasmEncryptionAlgorithm(EncryptionAlgorithm);
+pub struct WasmEncryptionAlgorithm(pub(crate) EncryptionAlgorithm);
 
 #[wasm_bindgen(js_class = EncryptionAlgorithm)]
 impl WasmEncryptionAlgorithm {

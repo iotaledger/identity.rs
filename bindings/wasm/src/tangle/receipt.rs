@@ -7,7 +7,6 @@ use wasm_bindgen::prelude::*;
 use crate::tangle::WasmNetwork;
 
 #[wasm_bindgen(js_name = Receipt, inspectable)]
-#[derive(Debug)]
 pub struct WasmReceipt(pub(crate) Receipt);
 
 // Workaround for Typescript type annotations on async function returns.

@@ -13,7 +13,6 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = ExplorerUrl)]
-#[derive(Debug)]
 pub struct WasmExplorerUrl(ExplorerUrl);
 
 #[wasm_bindgen(js_class = ExplorerUrl)]

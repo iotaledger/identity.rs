@@ -15,7 +15,6 @@ use crate::error::WasmResult;
 /// An IOTA DID document resolved from the Tangle. Represents an integration chain message possibly
 /// merged with one or more `DiffMessages`.
 #[wasm_bindgen(js_name = ResolvedDocument, inspectable)]
-#[derive(Debug)]
 pub struct WasmResolvedDocument(pub(crate) ResolvedIotaDocument);
 
 #[wasm_bindgen]

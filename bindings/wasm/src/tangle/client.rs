@@ -36,7 +36,6 @@ use crate::tangle::WasmNetwork;
 use crate::tangle::WasmReceipt;
 
 #[wasm_bindgen(js_name = Client)]
-#[derive(Debug)]
 pub struct WasmClient {
   pub(crate) client: Rc<Client>,
 }

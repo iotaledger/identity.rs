@@ -6,7 +6,6 @@ use wasm_bindgen::prelude::*;
 
 /// Supported verification method types.
 #[wasm_bindgen(js_name = MethodType, inspectable)]
-#[derive(Debug)]
 pub struct WasmMethodType(pub(crate) MethodType);
 
 #[wasm_bindgen(js_class = MethodType)]
