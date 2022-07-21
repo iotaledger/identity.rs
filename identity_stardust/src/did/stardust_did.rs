@@ -340,6 +340,12 @@ impl From<StardustDID> for CoreDID {
   }
 }
 
+impl From<StardustDID> for String {
+  fn from(did: StardustDID) -> Self {
+    did.into_string()
+  }
+}
+
 impl From<AliasId> for StardustDID {
   /// Transforms an [`AliasId`] to a [`StardustDID`].
   ///
@@ -359,6 +365,17 @@ impl From<AliasId> for StardustDID {
 
 impl From<StardustDID> for AliasId {
   fn from(did: StardustDID) -> Self {
+    Self::from_str(did.tag()).unwrap_or_else(|_| {
+      panic!(
+        "the tag of a {} DID should always parse to an AliasId",
+        StardustDID::METHOD
+      )
+    })
+  }
+}
+
+impl From<&StardustDID> for AliasId {
+  fn from(did: &StardustDID) -> Self {
     Self::from_str(did.tag()).unwrap_or_else(|_| {
       panic!(
         "the tag of a {} DID should always parse to an AliasId",
