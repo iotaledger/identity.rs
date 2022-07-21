@@ -56,9 +56,8 @@ impl StardustDID {
   pub const METHOD: &'static str = "stardust";
 
   /// The default Tangle network (`"main"`).
-  // TODO: Currently we only have the  Shimmer testnet "rms", once stardust becomes available on main that should
-  // perhaps be the default?,
-  pub const DEFAULT_NETWORK: &'static str = "rms";
+  // TODO: Change to use `NetworkName` once that has been ported.  
+  pub const DEFAULT_NETWORK: &'static str = "main";
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
   ///
@@ -92,7 +91,7 @@ impl StardustDID {
   /// `Err` is returned if the network name does not satisfy the requirements of the [`StardustDID`] method
   /// specification.
   // TODO: consider refactoring to use `NetworkName` once that gets ported along with the `Client`.
-  pub fn new_with_network(network: &str) -> Result<Self> {
+  pub fn placeholder(network: &str) -> Result<Self> {
     Self::check_network_str(network)?;
     CoreDID::parse(&format!("did:stardust:{}:{}", network, INITIAL_ALIAS_ID))
       .map(Self::normalize)
@@ -609,7 +608,7 @@ mod tests {
   fn valid_new_with_network() {
     for input in VALID_NETWORK_NAMES {
       assert!(
-        StardustDID::new_with_network(input).is_ok(),
+        StardustDID::placeholder(input).is_ok(),
         "test: valid_new_with_network: failed on input: {}",
         input,
       );
@@ -620,7 +619,7 @@ mod tests {
   #[test]
   fn invalid_new_with_network() {
     for input in INVALID_NETWORK_NAMES {
-      assert!(matches!(StardustDID::new_with_network(input), Err(DIDError::Other(_))));
+      assert!(matches!(StardustDID::placeholder(input), Err(DIDError::Other(_))));
     }
   }
 
@@ -641,7 +640,7 @@ mod tests {
     );
 
     assert_eq!(
-      StardustDID::new_with_network(StardustDID::DEFAULT_NETWORK)
+      StardustDID::placeholder(StardustDID::DEFAULT_NETWORK)
         .unwrap()
         .as_str(),
       format!("did:stardust:{}", INITIAL_ALIAS_ID)
