@@ -1,0 +1,141 @@
+// Copyright 2020-2022 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::borrow::Cow;
+
+use core::convert::TryFrom;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::ops::Deref;
+use std::fmt::Debug;
+
+use serde::Deserialize;
+use serde::Serialize;
+
+use crate::error::Error;
+use crate::error::Result;
+
+/// Network name compliant with the [`crate::StardustDID`] method specification.
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[repr(transparent)]
+pub struct NetworkName(Cow<'static, str>);
+
+impl NetworkName {
+  pub(crate) const MAX_LENGTH: usize = 6;
+  pub(crate) const DEFAULT_STARDUST_NETWORK_NAME: &'static str = "main";
+
+  /// Creates a new [`NetworkName`] if the name passes validation.
+  pub fn try_from<T>(name: T) -> Result<Self>
+  where
+    T: Into<Cow<'static, str>>,
+  {
+    let name_cow: Cow<'static, str> = name.into();
+    Self::validate_network_name(&name_cow)?;
+    Ok(Self(name_cow))
+  }
+
+  /// Validates whether a string is a spec-compliant IOTA UTXO DID [`NetworkName`].
+  pub fn validate_network_name(name: &str) -> Result<()> {
+    if name.is_empty() {
+      return Err(Error::InvalidNetworkName);
+    }
+
+    if name.len() > Self::MAX_LENGTH {
+      return Err(Error::InvalidNetworkName);
+    };
+
+    if !name.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit()) {
+      return Err(Error::InvalidNetworkName);
+    }
+
+    Ok(())
+  }
+
+  /// Creates a [`NetworkName`] representing the main network.  
+  pub const fn main() -> Self {
+    Self(Cow::Borrowed(Self::DEFAULT_STARDUST_NETWORK_NAME))
+  }
+}
+
+impl Default for NetworkName {
+  fn default() -> Self {
+    Self::main()
+  }
+}
+
+impl AsRef<str> for NetworkName {
+  fn as_ref(&self) -> &str {
+    self.0.as_ref()
+  }
+}
+
+impl From<NetworkName> for Cow<'static, str> {
+  fn from(network_name: NetworkName) -> Self {
+    network_name.0
+  }
+}
+
+impl Deref for NetworkName {
+  type Target = Cow<'static, str>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl TryFrom<&'static str> for NetworkName {
+  type Error = Error;
+
+  fn try_from(name: &'static str) -> Result<Self, Self::Error> {
+    Self::try_from(Cow::Borrowed(name))
+  }
+}
+
+impl TryFrom<String> for NetworkName {
+  type Error = Error;
+
+  fn try_from(name: String) -> Result<Self, Self::Error> {
+    Self::try_from(Cow::Owned(name))
+  }
+}
+
+impl Debug for NetworkName {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_str(self.as_ref())
+  }
+}
+
+impl Display for NetworkName {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_str(self.as_ref())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  // Rules are: at least one character, at most six characters and may only contain digits and/or lowercase ascii
+  // characters.
+  const VALID_NETWORK_NAMES: [&str; 12] = [
+    "main", "dev", "smr", "rms", "test", "foo", "foobar", "123456", "0", "foo42", "bar123", "42foo",
+  ];
+
+  const INVALID_NETWORK_NAMES: [&str; 10] = [
+    "Main", "fOo", "deV", "féta", "", "  ", "foo ", " foo", "1234567", "foobar0",
+  ];
+
+  #[test]
+  fn valid_validate_network_name() {
+    for name in VALID_NETWORK_NAMES {
+      assert!(NetworkName::validate_network_name(name).is_ok());
+    }
+  }
+
+  #[test]
+  fn invalid_validate_network_name() {
+    for name in INVALID_NETWORK_NAMES {
+      assert!(NetworkName::validate_network_name(name).is_err());
+    }
+  }
+}

@@ -12,8 +12,9 @@ pub use state_metadata::*;
 
 pub use did::StardustDID;
 pub use did::StardustDIDUrl;
-
+pub use network::NetworkName;
 mod did;
 mod error;
+mod network;
 mod stardust_document;
 mod state_metadata;

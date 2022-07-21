@@ -9,7 +9,6 @@ use core::str::FromStr;
 
 use identity_core::common::KeyComparable;
 use iota_client::bee_block::output::AliasId;
-use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -19,6 +18,8 @@ use identity_did::did::DIDError;
 use identity_did::did::DIDUrl;
 use identity_did::did::DID;
 
+use crate::NetworkName;
+
 pub type Result<T> = std::result::Result<T, DIDError>;
 
 /// A DID URL conforming to the IOTA Stardust DID method specification.
@@ -26,8 +27,10 @@ pub type Result<T> = std::result::Result<T, DIDError>;
 /// See [`DIDUrl`].
 pub type StardustDIDUrl = DIDUrl<StardustDID>;
 
-// The hash size of BLAKE2b-256 (32-bytes)
-const BLAKE2B_256_LEN: usize = 32;
+// The length of an AliasID, which is a BLAKE2b-256 hash (32-bytes).
+const TAG_BYTES_LEN: usize = 32;
+
+const TAG_CHARS_LEN: usize = "0x".len() + 2 * TAG_BYTES_LEN;
 
 /// A DID conforming to the IOTA UTXO DID method specification.
 ///
@@ -38,26 +41,17 @@ const BLAKE2B_256_LEN: usize = 32;
 #[serde(into = "CoreDID", try_from = "CoreDID")]
 pub struct StardustDID(CoreDID);
 
-const INITIAL_ALIAS_ID: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
-// StardustDID's have 64-byte tags, matching the hex-encoding of the Alias ID. This value reflects the initial AliasID
-// which is required to be zeroed out.
-// once_cell::sync::Lazy is utilized to avoid validating CoreDID::parse every time a
-static PLACHEHOLDER_DID_STR: Lazy<String> = Lazy::new(|| format!("did:stardust:{}", INITIAL_ALIAS_ID));
-static PLACEHOLDER_DID: Lazy<StardustDID> =
-  Lazy::new(|| StardustDID(CoreDID::parse(PLACHEHOLDER_DID_STR.as_str()).unwrap()));
-
 impl StardustDID {
   /// The URL scheme for Decentralized Identifiers.
   pub const SCHEME: &'static str = CoreDID::SCHEME;
 
-  /// The IOTA DID method name (`"stardust"`).
-  // TODO: This will be changed to `iota` before IOTA Identity 0.7 is released.
+  /// The IOTA UTXO DID method name (`"stardust"`).
+  // TODO: This will be changed to `iota` in the future.
   pub const METHOD: &'static str = "stardust";
 
   /// The default Tangle network (`"main"`).
-  // TODO: Change to use `NetworkName` once that has been ported.  
-  pub const DEFAULT_NETWORK: &'static str = "main";
+  // TODO: Change to use `NetworkName` once that has been ported.
+  pub const DEFAULT_NETWORK: NetworkName = NetworkName::main();
 
   /// Converts an owned [`CoreDID`] to a [`StardustDID`].
   ///
@@ -70,6 +64,14 @@ impl StardustDID {
     Ok(Self(Self::normalize(did)))
   }
 
+  /// Constructs a new [`StardustDID`] from a byte representation of the tag and the given network name.
+  pub fn new<T: Into<NetworkName>>(bytes: &[u8; 32], network_name: T) -> Self {
+    let alias_id = AliasId::from(*bytes);
+    let did: String = format!("did:{}:{}:{}", Self::METHOD, network_name.into(), alias_id);
+
+    Self::parse(did).expect("DIDs constructed with new should be valid")
+  }
+
   /// Parses an [`StardustDID`] from the given `input`.
   ///
   /// # Errors
@@ -79,53 +81,9 @@ impl StardustDID {
     CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_core)
   }
 
-  /// Creates a new [`StardustDID`] with the default network. See [`Self::new_with_network`](Self::new_with_network) if
-  /// another network is desired.
-  pub fn new() -> Self {
-    PLACEHOLDER_DID.clone()
-  }
-
-  /// Creates a new [`StardustDID`] with the given network.
-  ///
-  /// # Errors
-  /// `Err` is returned if the network name does not satisfy the requirements of the [`StardustDID`] method
-  /// specification.
-  // TODO: consider refactoring to use `NetworkName` once that gets ported along with the `Client`.
-  pub fn placeholder(network: &str) -> Result<Self> {
-    Self::check_network_str(network)?;
-    CoreDID::parse(&format!("did:stardust:{}:{}", network, INITIAL_ALIAS_ID))
-      .map(Self::normalize)
-      .map(Self)
-  }
-
-  // Check whether the network satisfies the requirements of the [`StardustDID`] method specification.
-  // TODO: Consider removing this code once `NetworkName` is ported together with the `Client`.
-  fn check_network_str(network: &str) -> Result<()> {
-    // TODO: move this logic to a dedicated network (name) struct once work on the stardust `Client` starts.
-    const MAX_NETWORK_CHARACTERS: usize = 6;
-
-    (!network.is_empty())
-      .then_some(())
-      .ok_or(DIDError::Other("invalid network name: no network was provided"))?;
-    (network.len() <= MAX_NETWORK_CHARACTERS)
-      .then_some(())
-      .ok_or(DIDError::Other(
-        "invalid network name: maximum of six characters exceeded",
-      ))?;
-    network
-      .chars()
-      .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit())
-      .then_some(())
-      .ok_or(DIDError::Other(
-        "invalid network name: name does not exclusively consist of lower case ascii characters and digits",
-      ))?;
-
-    Ok(())
-  }
-
   // Check if the tag matches a potential alias_id
   fn check_tag_str(tag: &str) -> Result<()> {
-    prefix_hex::decode::<[u8; BLAKE2B_256_LEN]>(tag)
+    prefix_hex::decode::<[u8; TAG_BYTES_LEN]>(tag)
       .map_err(|_| DIDError::InvalidMethodId)
       .map(|_| ())
   }
@@ -138,7 +96,7 @@ impl StardustDID {
   fn normalize(mut did: CoreDID) -> CoreDID {
     let mut segments_iter = did.method_id().split(':');
     let normalized_id_string: Option<String> = match (segments_iter.next(), segments_iter.next()) {
-      (Some(network), Some(tag)) => (network == Self::DEFAULT_NETWORK).then_some(tag.to_owned()),
+      (Some(network), Some(tag)) => (network == Self::DEFAULT_NETWORK.as_ref()).then_some(tag.to_owned()),
       _ => None,
     };
     if let Some(tag) = normalized_id_string {
@@ -155,13 +113,7 @@ impl StardustDID {
   ///
   /// Returns `Err` if the input is not a valid network name according to the [`StardustDID`] method specification.
   pub fn check_network<D: DID>(did: &D) -> Result<()> {
-    let mut segment_iter = did.method_id().split(':');
-    let network_name = match (segment_iter.next(), segment_iter.next()) {
-      (Some(network), Some(_)) => network,
-      _ => Self::DEFAULT_NETWORK,
-    };
-
-    Self::check_network_str(network_name)
+    todo!()
   }
 
   /// Checks if the given `DID` is syntactically valid according to the [`StardustDID`] method specification.
@@ -202,7 +154,7 @@ impl StardustDID {
       // OK if method_id = alias_id
       (Some(tag), None, None) => Self::check_tag_str(tag),
       // OK if method_id = network_id:alias_id
-      (Some(network), Some(tag), None) => (Self::check_network_str(network).is_ok()
+      (Some(network), Some(tag), None) => (NetworkName::validate_network_name(network).is_ok()
         && Self::check_tag_str(tag).is_ok())
       .then_some(())
       .ok_or(DIDError::InvalidMethodId),
@@ -223,33 +175,33 @@ impl StardustDID {
 
   /// Returns the Tangle `network` name of the `DID`.
   pub fn network_str(&self) -> &str {
-    let mut segments_iter = self.method_id().split(':');
-    match (segments_iter.next(), segments_iter.next()) {
-      (Some(network), Some(_)) => network,
-      // DID network must have been truncated during normalization in the constructor in all other cases
-      _ => Self::DEFAULT_NETWORK,
+    if let Some(separator_idx) = self.method_id_separator_idx() {
+      &self.method_id()[..separator_idx]
+    } else {
+      NetworkName::DEFAULT_STARDUST_NETWORK_NAME
     }
+  }
+
+  #[inline(always)]
+  fn method_id_separator_idx(&self) -> Option<usize> {
+    self.method_id().find(':')
   }
 
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
-    let mut segments_iter = self.method_id().split(':');
-    match (segments_iter.next(), segments_iter.next()) {
-      (Some(_), Some(tag)) => tag,
-      // guaranteed by constructors to be a valid tag
-      (Some(tag), None) => tag,
-      _ => unreachable!("a {} DID should have a tag", StardustDID::METHOD),
-    }
+    let method_id = self.method_id();
+    self
+      .method_id_separator_idx()
+      .map(|idx| &method_id[(idx + 1)..])
+      .unwrap_or(method_id)
   }
 
   /// Change the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
-  //
-  // TODO: Either change this method to take a network (or network name) once that has been ported with the `Client`
-  // or remove in favour of another constructor `new_with_network_and_alias`.
-  //
-  // Also consider replacing this with a `setter` in order to be more similar to the JS API.
-  pub fn with_network(_network: &str) -> Self {
-    todo!("implement this once the network/network name has been ported")
+  pub fn with_network(mut self, network: NetworkName) -> Self {
+    let new_method_id: String = format!("{}:{}", network, self.tag());
+    // unwrap is fine as we are only replacing the network
+    self.0.set_method_id(new_method_id).unwrap();
+    self
   }
 }
 
@@ -423,10 +375,13 @@ mod tests {
   use iota_client::bee_block::output::OutputId;
   use iota_client::bee_block::output::OUTPUT_INDEX_RANGE;
   use iota_client::bee_block::payload::transaction::TransactionId;
+  use once_cell::sync::Lazy;
   use proptest::strategy::Strategy;
   use proptest::*;
 
   use super::*;
+
+  const INITIAL_ALIAS_ID: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   // ===========================================================================================================================
   // Reusable constants and statics
@@ -599,31 +554,6 @@ mod tests {
   // ===========================================================================================================================
 
   #[test]
-  fn new_provides_placeholder() {
-    assert_eq!(StardustDID::new().0.as_str(), PLACHEHOLDER_DID_STR.as_str());
-  }
-
-  // TODO: Delete test once a dedicated struct for network name gets ported along with the client.
-  #[test]
-  fn valid_new_with_network() {
-    for input in VALID_NETWORK_NAMES {
-      assert!(
-        StardustDID::placeholder(input).is_ok(),
-        "test: valid_new_with_network: failed on input: {}",
-        input,
-      );
-    }
-  }
-
-  // TODO: Delete test once a dedicated struct for network name gets ported along with the client.
-  #[test]
-  fn invalid_new_with_network() {
-    for input in INVALID_NETWORK_NAMES {
-      assert!(matches!(StardustDID::placeholder(input), Err(DIDError::Other(_))));
-    }
-  }
-
-  #[test]
   fn normalization_in_constructors() {
     let did_with_default_network_string: String = format!(
       "did:{}:{}:{}",
@@ -637,13 +567,6 @@ mod tests {
     assert_eq!(
       StardustDID::parse(did_with_default_network_string).unwrap().as_str(),
       expected_normalization_string_representation
-    );
-
-    assert_eq!(
-      StardustDID::placeholder(StardustDID::DEFAULT_NETWORK)
-        .unwrap()
-        .as_str(),
-      format!("did:stardust:{}", INITIAL_ALIAS_ID)
     );
   }
 
@@ -698,7 +621,7 @@ mod tests {
   }
 
   // ===========================================================================================================================
-  // Test parse with randomly generated input
+  // Test constructors with randomly generated input
   // ===========================================================================================================================
 
   fn arbitrary_alias_id() -> impl Strategy<Value = AliasId> {
@@ -719,11 +642,23 @@ mod tests {
 
   proptest! {
     #[test]
+    fn property_based_new(bytes in proptest::prelude::any::<[u8;32]>()) {
+      for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
+        // check that this does not panic
+        StardustDID::new(&bytes, network_name);
+      }
+    }
+  }
+
+  proptest! {
+    #[test]
     fn property_based_alias_id_roundtrip(alias_id in arbitrary_alias_id()) {
-      assert_eq!(
-        AliasId::from(StardustDID::from(alias_id)),
-        alias_id
-      );
+      for network_name in VALID_NETWORK_NAMES.iter().map(|name| NetworkName::try_from(*name).unwrap()) {
+        assert_eq!(
+          AliasId::from_str(StardustDID::new(&alias_id, network_name).tag()).unwrap(),
+          alias_id
+        );
+    }
     }
   }
 
@@ -792,7 +727,7 @@ mod tests {
       let did: StardustDID = format!("did:{}:{}", StardustDID::METHOD, valid_alias_id)
         .parse()
         .unwrap();
-      assert_eq!(did.network_str(), StardustDID::DEFAULT_NETWORK);
+      assert_eq!(did.network_str(), StardustDID::DEFAULT_NETWORK.as_ref());
 
       let did: StardustDID = format!("did:{}:dev:{}", StardustDID::METHOD, valid_alias_id)
         .parse()
