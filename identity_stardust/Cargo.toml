@@ -20,7 +20,7 @@ identity_did = { version = "=0.6.0", path = "../identity_did", default-features 
 num-derive = { version = "0.3", default-features = false }
 num-traits = { version = "0.2", default-features = false, features = ["std"] }
 once_cell = { version = "1", default-features = false, features = ["std"] }
-prefix-hex = { version = "0.4", default-features = false, features = [] }
+prefix-hex = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
