@@ -8,9 +8,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 #[wasm_bindgen]
 extern "C" {
   #[wasm_bindgen(typescript_type = "MethodContent | undefined")]
@@ -82,22 +79,9 @@ impl WasmMethodContent {
   pub fn public_x25519(publicKey: Vec<u8>) -> WasmMethodContent {
     Self(WasmMethodContentInner::PublicX25519(publicKey))
   }
-
-  /// Serializes `MethodContent` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes `MethodContent` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json_value: JsValue) -> Result<WasmMethodContent> {
-    json_value
-      .into_serde::<WasmMethodContentInner>()
-      .map(Self)
-      .wasm_result()
-  }
 }
+
+impl_wasm_json!(WasmMethodContent, MethodContent);
 
 impl From<WasmMethodContent> for MethodContent {
   fn from(content: WasmMethodContent) -> Self {

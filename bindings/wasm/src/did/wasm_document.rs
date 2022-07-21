@@ -50,7 +50,7 @@ use crate::error::WasmResult;
 // =============================================================================
 
 #[wasm_bindgen(js_name = Document, inspectable)]
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
 #[wasm_bindgen(js_class = Document)]
@@ -660,24 +660,9 @@ impl WasmDocument {
 
     self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
   }
-
-  // ===========================================================================
-  // JSON
-  // ===========================================================================
-
-  /// Serializes a `Document` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Document` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmDocument> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmDocument, Document);
 impl_wasm_clone!(WasmDocument, Document);
 
 impl From<IotaDocument> for WasmDocument {

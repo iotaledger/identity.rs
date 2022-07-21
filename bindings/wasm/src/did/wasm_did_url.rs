@@ -12,7 +12,7 @@ use crate::error::WasmResult;
 
 /// @typicalname didUrl
 #[wasm_bindgen(js_name = DIDUrl, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub struct WasmDIDUrl(pub(crate) IotaDIDUrl);
 
 #[wasm_bindgen(js_class = DIDUrl)]
@@ -91,14 +91,9 @@ impl WasmDIDUrl {
   pub fn to_string(&self) -> String {
     self.0.to_string()
   }
-
-  /// Serializes a `DIDUrl` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmDIDUrl, DIDUrl);
 impl_wasm_clone!(WasmDIDUrl, DIDUrl);
 
 impl From<IotaDIDUrl> for WasmDIDUrl {

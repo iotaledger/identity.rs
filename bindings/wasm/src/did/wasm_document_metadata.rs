@@ -11,7 +11,7 @@ use crate::common::WasmTimestamp;
 
 /// Additional attributes related to an IOTA DID Document.
 #[wasm_bindgen(js_name = DocumentMetadata, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub struct WasmDocumentMetadata(pub(crate) IotaDocumentMetadata);
 
 // NOTE: these properties are read-only (no setters) to prevent bugs where a clone of the metadata
@@ -36,6 +36,7 @@ impl WasmDocumentMetadata {
   }
 }
 
+impl_wasm_json!(WasmDocumentMetadata, DocumentMetadata);
 impl_wasm_clone!(WasmDocumentMetadata, DocumentMetadata);
 
 impl From<IotaDocumentMetadata> for WasmDocumentMetadata {

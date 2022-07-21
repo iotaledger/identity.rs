@@ -20,7 +20,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Presentation, inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub struct WasmPresentation(pub(crate) Presentation);
 
 // Workaround for Typescript type annotations for returned arrays.
@@ -143,20 +143,9 @@ impl WasmPresentation {
   pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(&self.0.properties)
   }
-
-  /// Serializes a `Presentation` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Presentation` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmPresentation> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmPresentation, Presentation);
 impl_wasm_clone!(WasmPresentation, Presentation);
 
 impl From<Presentation> for WasmPresentation {

@@ -4,12 +4,10 @@
 use identity_iota::client::Receipt;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
 use crate::tangle::WasmNetwork;
 
 #[wasm_bindgen(js_name = Receipt, inspectable)]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug)]
 pub struct WasmReceipt(pub(crate) Receipt);
 
 // Workaround for Typescript type annotations on async function returns.
@@ -46,20 +44,9 @@ impl WasmReceipt {
     // NOTE: do not return u64 to avoid BigInt64Array/BigUint64Array compatibility issues.
     self.0.nonce().to_string()
   }
-
-  /// Serializes a `Receipt` as a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Receipt` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmReceipt> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmReceipt, Receipt);
 impl_wasm_clone!(WasmReceipt, Receipt);
 
 impl From<Receipt> for WasmReceipt {

@@ -25,7 +25,7 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Credential, inspectable)]
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct WasmCredential(pub(crate) Credential);
 
 #[wasm_bindgen(js_class = Credential)]
@@ -200,20 +200,9 @@ impl WasmCredential {
   pub fn properties(&self) -> Result<MapStringAny> {
     MapStringAny::try_from(&self.0.properties)
   }
-
-  /// Serializes a `Credential` to a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `Credential` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmCredential> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmCredential, Credential);
 impl_wasm_clone!(WasmCredential, Credential);
 
 impl From<Credential> for WasmCredential {

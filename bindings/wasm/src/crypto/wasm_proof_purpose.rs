@@ -4,14 +4,11 @@
 use identity_iota::crypto::ProofPurpose;
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::error::WasmResult;
-
 /// Associates a purpose with a {@link Proof}.
 ///
 /// See https://w3c-ccg.github.io/security-vocab/#proofPurpose
 #[wasm_bindgen(js_name = ProofPurpose, inspectable)]
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct WasmProofPurpose(pub(crate) ProofPurpose);
 
 #[wasm_bindgen(js_class = ProofPurpose)]
@@ -29,20 +26,9 @@ impl WasmProofPurpose {
   pub fn authentication() -> WasmProofPurpose {
     WasmProofPurpose(ProofPurpose::Authentication)
   }
-
-  /// Serializes a `ProofPurpose` to a JSON object.
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue> {
-    JsValue::from_serde(&self.0).wasm_result()
-  }
-
-  /// Deserializes a `ProofPurpose` from a JSON object.
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<WasmProofPurpose> {
-    json.into_serde().map(Self).wasm_result()
-  }
 }
 
+impl_wasm_json!(WasmProofPurpose, ProofPurpose);
 impl_wasm_clone!(WasmProofPurpose, ProofPurpose);
 
 impl From<ProofPurpose> for WasmProofPurpose {
