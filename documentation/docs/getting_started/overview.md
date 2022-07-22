@@ -1,6 +1,6 @@
 ---
 description: Using IOTA Identity, a new digital identity can be created by anyone or anything at any time by generating a Decentralized Identifier (DID) combined with Verifiable Credentials
-image: /img/Banner/banner_identity_getting_started.svg
+image: /img/Identity_icon.png
 keywords:
 - Identity
 - verifiable

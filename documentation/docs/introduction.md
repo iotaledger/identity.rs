@@ -1,6 +1,6 @@
 ---
 description: The most important concepts that developers will need to know to utilize IOTA Identity to its full potential.
-image: /img/Banner/banner_identity.svg
+image: /img/Identity_icon.png
 keywords:
 - Identity
 - guide

@@ -1,6 +1,6 @@
 ---
 description: Decentralized Identity defines a new method for identity management and authentication by removing centralized aspects.
-image: /img/Banner/banner_decentralized_identity.svg
+image: /img/Identity_icon.png
 keywords:
 - Self Sovereign Identity
 - decentralized
@@ -21,7 +21,7 @@ The need for verifiable personal information can be fulfilled by digital identit
 
 With digital identity, the user can decide what information to share and with whom they would like to share it. This will maintain and even improve online privacy, while allowing for new features and new business opportunities. Businesses will be able to trust BYOI information, enhancing interactions between company and customer, but also reducing fraudulent cases and endemic security risks.
 
-<iframe width="100%" src="https://www.youtube.com/embed/4YnGFHhxua8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="640" height="360" src="https://www.youtube.com/embed/4YnGFHhxua8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Identity for People
 
