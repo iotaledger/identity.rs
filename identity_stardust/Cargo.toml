@@ -16,20 +16,22 @@ description = "An IOTA Ledger integration for the identity.rs library."
 identity_core = { version = "=0.6.0", path = "../identity_core", default-features = false }
 identity_credential = { version = "=0.6.0", path = "../identity_credential", default-features = false }
 identity_did = { version = "=0.6.0", path = "../identity_did", default-features = false }
-lazy_static = { version = "1.4", default-features = false }
+num-derive = { version = "0.3", default-features = false }
+num-traits = { version = "0.2", default-features = false, features = ["std"] }
+once_cell = { version = "1.13", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "4e7db070a05321c4bd7579acdcc74436865235c0" # develop branch, 2022-07-11
+rev = "2a35c7affe15034fd1b82884966269882bffb23b" # develop branch, 2022-07-18
 features = ["tls"]
 default-features = false
 
 [dev-dependencies]
 anyhow = { version = "1.0.57" }
-iota-crypto = { version = "0.11.0", default-features = false, features = ["bip39", "bip39-en"] }
+iota-crypto = { version = "0.12.1", default-features = false, features = ["bip39", "bip39-en"] }
 proptest = { version = "1.0.0", default-features = false, features = ["std"] }
 tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 
@@ -38,3 +40,8 @@ tokio = { version = "1.17.0", default-features = false, features = ["macros"] }
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["revocation-bitmap"]
+# Enables revocation with `RevocationBitmap2022`.
+revocation-bitmap = ["identity_did/revocation-bitmap"]

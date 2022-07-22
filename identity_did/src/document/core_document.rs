@@ -665,7 +665,8 @@ impl<D, T, U, V> CoreDocument<D, T, U, V>
 where
   D: DID + KeyComparable,
 {
-  /// Verifies the signature of the provided data.
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document.
   ///
   /// # Errors
   ///
@@ -811,32 +812,26 @@ mod core_document_revocation {
     D: DID + KeyComparable,
   {
     /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
-    /// revoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, credential_indices: &[u32]) -> Result<()>
+    /// revoke all specified `indices`.
+    pub fn revoke_credentials<'query, 'me, Q>(&mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
       self.update_revocation_bitmap(service_query, |revocation_bitmap| {
-        // Revoke all given credential indices.
-        for credential in credential_indices {
+        for credential in indices {
           revocation_bitmap.revoke(*credential);
         }
       })
     }
 
     /// If the document has a [`RevocationBitmap`] service identified by `service_query`,
-    /// unrevoke all credentials with a `revocationBitmapIndex` in `credential_indices`.
-    pub fn unrevoke_credentials<'query, 'me, Q>(
-      &'me mut self,
-      service_query: Q,
-      credential_indices: &[u32],
-    ) -> Result<()>
+    /// unrevoke all specified `indices`.
+    pub fn unrevoke_credentials<'query, 'me, Q>(&'me mut self, service_query: Q, indices: &[u32]) -> Result<()>
     where
       Q: Into<DIDUrlQuery<'query>>,
     {
       self.update_revocation_bitmap(service_query, |revocation_bitmap| {
-        // Unrevoke all given credential indices.
-        for credential in credential_indices {
+        for credential in indices {
           revocation_bitmap.unrevoke(*credential);
         }
       })
@@ -898,15 +893,9 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::CoreDID;
-  use crate::did::DID;
-  use crate::document::CoreDocument;
-  use crate::utils::Queryable;
   use crate::verification::MethodData;
-  use crate::verification::MethodRelationship;
-  use crate::verification::MethodScope;
-  use crate::verification::MethodType;
-  use crate::verification::VerificationMethod;
+
+  use super::*;
 
   fn controller() -> CoreDID {
     "did:example:1234".parse().unwrap()
@@ -935,6 +924,35 @@ mod tests {
       .key_agreement(controller.to_url().join("#key-4").unwrap())
       .build()
       .unwrap()
+  }
+
+  #[test]
+  fn test_controller() {
+    // One controller.
+    {
+      let mut document: CoreDocument = document();
+      let expected: CoreDID = CoreDID::parse("did:example:one1234").unwrap();
+      *document.controller_mut() = Some(OneOrSet::new_one(expected.clone()));
+      assert_eq!(document.controller().unwrap().as_slice(), &[expected]);
+      // Unset.
+      *document.controller_mut() = None;
+      assert!(document.controller().is_none());
+    }
+
+    // Many controllers.
+    {
+      let mut document: CoreDocument = document();
+      let expected_controllers: Vec<CoreDID> = vec![
+        CoreDID::parse("did:example:many1234").unwrap(),
+        CoreDID::parse("did:example:many4567").unwrap(),
+        CoreDID::parse("did:example:many8910").unwrap(),
+      ];
+      *document.controller_mut() = Some(expected_controllers.clone().try_into().unwrap());
+      assert_eq!(document.controller().unwrap().as_slice(), &expected_controllers);
+      // Unset.
+      *document.controller_mut() = None;
+      assert!(document.controller().is_none());
+    }
   }
 
   #[rustfmt::skip]
@@ -1188,5 +1206,57 @@ mod tests {
     // Ensure *all* references were removed.
     assert!(document.capability_delegation().query(method3.id()).is_none());
     assert!(document.verification_method().query(method3.id()).is_none());
+  }
+
+  #[cfg(feature = "revocation-bitmap")]
+  #[test]
+  fn test_revocation() {
+    let mut document: CoreDocument = document();
+    let indices_1 = [3, 9, 254, 65536];
+    let indices_2 = [2, 15, 1337, 1000];
+
+    let service_id = document.id().to_url().join("#revocation-service").unwrap();
+
+    // The methods error if the service doesn't exist.
+    assert!(document.revoke_credentials(&service_id, &indices_2).is_err());
+    assert!(document.unrevoke_credentials(&service_id, &indices_2).is_err());
+
+    // Add service with indices_1 already revoked.
+    let mut bitmap: crate::revocation::RevocationBitmap = crate::revocation::RevocationBitmap::new();
+    for index in indices_1.iter() {
+      bitmap.revoke(*index);
+    }
+    assert!(document.service_mut().append(
+      Service::builder(Object::new())
+        .id(service_id.clone())
+        .type_(crate::revocation::RevocationBitmap::TYPE)
+        .service_endpoint(bitmap.to_endpoint().unwrap())
+        .build()
+        .unwrap()
+    ));
+
+    // Revoke indices_2.
+    document.revoke_credentials(&service_id, &indices_2).unwrap();
+    let service: &Service = document.resolve_service(&service_id).unwrap();
+    let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
+
+    // We expect all indices to be revoked now.
+    for index in indices_1.iter().chain(indices_2.iter()) {
+      assert!(decoded_bitmap.is_revoked(*index));
+    }
+
+    // Unrevoke indices_1.
+    document.unrevoke_credentials(&service_id, &indices_1).unwrap();
+
+    let service: &Service = document.resolve_service(&service_id).unwrap();
+    let decoded_bitmap: crate::revocation::RevocationBitmap = service.try_into().unwrap();
+
+    // Expect indices_2 to be revoked, but not indices_1.
+    for index in indices_2 {
+      assert!(decoded_bitmap.is_revoked(index));
+    }
+    for index in indices_1 {
+      assert!(!decoded_bitmap.is_revoked(index));
+    }
   }
 }

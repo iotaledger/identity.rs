@@ -640,35 +640,25 @@ impl WasmDocument {
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-  /// revoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  /// revoke all specified `indices`.
   #[wasm_bindgen(js_name = revokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, credentialIndices: UOneOrManyNumber) -> Result<()> {
+  pub fn revoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
-    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self
-      .0
-      .revoke_credentials(&query, credentials_indices.as_slice())
-      .wasm_result()
+    self.0.revoke_credentials(&query, indices.as_slice()).wasm_result()
   }
 
   /// If the document has a `RevocationBitmap` service identified by `serviceQuery`,
-  /// unrevoke all credentials with a revocationBitmapIndex in `credentialIndices`.
+  /// unrevoke all specified `indices`.
   #[wasm_bindgen(js_name = unrevokeCredentials)]
   #[allow(non_snake_case)]
-  pub fn unrevoke_credentials(
-    &mut self,
-    serviceQuery: &UDIDUrlQuery,
-    credentialIndices: UOneOrManyNumber,
-  ) -> Result<()> {
+  pub fn unrevoke_credentials(&mut self, serviceQuery: &UDIDUrlQuery, indices: UOneOrManyNumber) -> Result<()> {
     let query: String = serviceQuery.into_serde().wasm_result()?;
-    let credentials_indices: OneOrMany<u32> = credentialIndices.into_serde().wasm_result()?;
+    let indices: OneOrMany<u32> = indices.into_serde().wasm_result()?;
 
-    self
-      .0
-      .unrevoke_credentials(&query, credentials_indices.as_slice())
-      .wasm_result()
+    self.0.unrevoke_credentials(&query, indices.as_slice()).wasm_result()
   }
 
   // ===========================================================================

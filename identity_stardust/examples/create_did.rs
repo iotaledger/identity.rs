@@ -1,21 +1,26 @@
-use identity_core::convert::ToJson;
-use iota_client::bee_block::output::feature::IssuerFeature;
-use iota_client::bee_block::output::feature::MetadataFeature;
-use iota_client::bee_block::output::feature::SenderFeature;
-use iota_client::bee_block::output::unlock_condition::GovernorAddressUnlockCondition;
-use iota_client::bee_block::output::unlock_condition::StateControllerAddressUnlockCondition;
-use iota_client::bee_block::output::unlock_condition::UnlockCondition;
-use iota_client::bee_block::output::AliasId;
-use iota_client::bee_block::output::AliasOutputBuilder;
-use iota_client::bee_block::output::ByteCostConfig;
-use iota_client::bee_block::output::Feature;
-use iota_client::bee_block::output::Output;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
+use identity_did::verification::MethodScope;
+use iota_client::block::output::feature::IssuerFeature;
+use iota_client::block::output::feature::MetadataFeature;
+use iota_client::block::output::feature::SenderFeature;
+use iota_client::block::output::unlock_condition::AddressUnlockCondition;
+use iota_client::block::output::unlock_condition::GovernorAddressUnlockCondition;
+use iota_client::block::output::unlock_condition::StateControllerAddressUnlockCondition;
+use iota_client::block::output::unlock_condition::UnlockCondition;
+use iota_client::block::output::AliasId;
+use iota_client::block::output::AliasOutputBuilder;
+use iota_client::block::output::BasicOutputBuilder;
+use iota_client::block::output::ByteCostConfig;
+use iota_client::block::output::Feature;
+use iota_client::block::output::Output;
 use iota_client::constants::SHIMMER_TESTNET_BECH32_HRP;
 use iota_client::secret::mnemonic::MnemonicSecretManager;
 use iota_client::secret::SecretManager;
 use iota_client::Client;
 
 use identity_stardust::StardustDocument;
+use identity_stardust::StardustVerificationMethod;
 
 // PROBLEMS SO FAR:
 // 1) Alias Id is inferred from the block, so we have to use a placeholder DID for creation.
@@ -59,8 +64,7 @@ async fn main() -> anyhow::Result<()> {
   let client = Client::builder()
     .with_node(endpoint)?
     .with_node_sync_disabled()
-    .finish()
-    .await?;
+    .finish()?;
 
   let address = client.get_addresses(&secret_manager).with_range(0..1).get_raw().await?[0];
   let address_bech32 = address.to_bech32("tst");
@@ -78,7 +82,9 @@ async fn main() -> anyhow::Result<()> {
   // Create an empty DID Document.
   // All new Stardust DID Documents initially use a placeholder DID,
   // "did:stardust:0x00000000000000000000000000000000".
+
   let document: StardustDocument = StardustDocument::new();
+
   println!("DID Document {:#}", document);
 
   // Create a new Alias Output with the DID Document as state metadata.
@@ -86,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
   let alias_output: Output = AliasOutputBuilder::new_with_minimum_storage_deposit(byte_cost_config, AliasId::null())?
     .with_state_index(0)
     .with_foundry_counter(0)
-    .with_state_metadata(document.to_json_vec()?)
+    .with_state_metadata(document.pack()?)
     .add_feature(Feature::Sender(SenderFeature::new(address)))
     .add_feature(Feature::Metadata(MetadataFeature::new(vec![1, 2, 3])?))
     .add_immutable_feature(Feature::Issuer(IssuerFeature::new(address)))
@@ -100,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Deposit amount: {}", alias_output.amount());
 
   // Publish to the Tangle ledger.
-  let block = client
+  let block1 = client
     .block()
     .with_secret_manager(&secret_manager)
     .with_outputs(vec![alias_output])?
@@ -108,12 +114,12 @@ async fn main() -> anyhow::Result<()> {
     .await?;
   println!(
     "Transaction with new alias output sent: {endpoint}/api/v2/blocks/{}",
-    block.id()
+    block1.id()
   );
-  let _ = client.retry_until_included(&block.id(), None, None).await?;
+  let _ = client.retry_until_included(&block1.id(), None, None).await?;
 
-  // Infer DID from Alias Output block.
-  let did = StardustDocument::did_from_block(&block)?;
+  // Infer DID from the Alias Output block.
+  let did = StardustDocument::did_from_block(&block1)?;
   println!("DID: {did}");
 
   // ===========================================================================
@@ -127,14 +133,14 @@ async fn main() -> anyhow::Result<()> {
   println!("Alias ID: {alias_id}");
 
   // Query Indexer INX Plugin for the Output of the Alias ID.
-  let output_id = client.alias_output_id(alias_id).await?;
-  println!("Output ID: {output_id}");
-  let response = client.get_output(&output_id).await?;
+  let alias_output_id = client.alias_output_id(alias_id).await?;
+  println!("Output ID: {alias_output_id}");
+  let response = client.get_output(&alias_output_id).await?;
   let output = Output::try_from(&response.output)?;
   println!("Output: {output:?}");
 
   // The resolved DID Document replaces the placeholder DID with the correct one.
-  let resolved_document = StardustDocument::deserialize_from_output(&alias_id, &output)?;
+  let resolved_document = StardustDocument::deserialize_from_output(&did, &output)?;
   println!("Resolved Document: {resolved_document:#}");
 
   let alias_output = match output {
@@ -143,36 +149,80 @@ async fn main() -> anyhow::Result<()> {
   }?;
 
   // ===========================================================================
-  // Step 4: Publish an updated Alias ID. (optional)
+  // Step 4: Publish an updated Alias Output. (optional)
   // ===========================================================================
-  // TODO: we could always publish twice on creation to populate the DID (could fail),
-  //       or just infer the DID during resolution (safer).
 
-  // Update the Alias Output to contain an explicit ID and DID.
-  let updated_alias_output = AliasOutputBuilder::from(&alias_output) // Not adding any content, previous amount will cover the deposit.
+  // Add a new Ed25519 verification method to the DID Document for authentication. (optional)
+  let mut updated_document = resolved_document.clone();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519)?;
+  let method = StardustVerificationMethod::new(
+    updated_document.id().clone(),
+    keypair.type_(),
+    keypair.public(),
+    "#key-0",
+  )?;
+  updated_document.insert_method(method, MethodScope::authentication())?;
+
+  // Update the Alias Output to contain an explicit Alias ID, and the updated DID Document.
+  let byte_cost_config: ByteCostConfig = client.get_byte_cost_config().await?;
+  let updated_alias_output = AliasOutputBuilder::from(&alias_output)
+    // Set the deposit to the new minimum covering the increased size of the DID Document.
+    .with_minimum_storage_deposit(byte_cost_config)
     // Set the explicit Alias ID.
     .with_alias_id(alias_id)
-    // Update the DID Document content to replace the placeholder DID.
-    .with_state_metadata(resolved_document.to_json_vec()?)
-    // State controller updates increment the state index.
+    // Set the updated DID Document.
+    .with_state_metadata(updated_document.pack()?)
+    // State controller updates must increment the state index.
     .with_state_index(alias_output.state_index() + 1)
     .finish_output()?;
 
   println!("Updated output: {updated_alias_output:?}");
 
-  let block = client
+  let block2 = client
     .block()
     .with_secret_manager(&secret_manager)
-    .with_input(output_id.into())?
+    // Omit inputs so it automatically selects a Basic Output to cover the increased amount.
+    // .with_input(alias_output_id.into())?
     .with_outputs(vec![updated_alias_output])?
     .finish()
     .await?;
 
   println!(
-    "Transaction with alias id set sent: {endpoint}/api/v2/blocks/{}",
-    block.id()
+    "Transaction with updated Alias Output sent: {endpoint}/api/v2/blocks/{}",
+    block2.id()
   );
-  let _ = client.retry_until_included(&block.id(), None, None).await?;
+  let _ = client.retry_until_included(&block2.id(), None, None).await?;
+
+  // ===========================================================================
+  // Step 5: Destroy Alias Output. (optional)
+  // ===========================================================================
+
+  // Query Indexer INX Plugin for the latest Output of the Alias ID.
+  let alias_output_id = client.alias_output_id(alias_id).await?;
+  let response = client.get_output(&alias_output_id).await?;
+  let alias_output = Output::try_from(&response.output)?;
+
+  // Consume the Alias Output containing the DID Document, sending its tokens to a new Basic Output.
+  // WARNING: this destroys the DID Document and renders it permanently unrecoverable.
+  let basic_output = BasicOutputBuilder::new_with_amount(alias_output.amount())?
+    .add_unlock_condition(UnlockCondition::Address(AddressUnlockCondition::new(address)))
+    .finish_output()?;
+  let block3 = client
+    .block()
+    .with_secret_manager(&secret_manager)
+    .with_input(alias_output_id.into())?
+    .with_outputs(vec![basic_output])?
+    .finish()
+    .await?;
+
+  println!(
+    "Transaction destroying Alias Output sent: {endpoint}/api/v2/blocks/{}",
+    block3.id()
+  );
+  let _ = client.retry_until_included(&block3.id(), None, None).await?;
+
+  // Consolidate amounts in separate Basic Outputs into a single one.
+  client.consolidate_funds(&secret_manager, 0, 0..1).await?;
 
   Ok(())
 }
