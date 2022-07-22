@@ -1,6 +1,6 @@
 ---
 description: Using IOTA Identity, a new digital identity can be created by anyone or anything at any time by generating a Decentralized Identifier (DID) combined with Verifiable Credentials
-image: /img/Identity_icon.png
+image: /img/Banner/banner_identity_getting_started.svg
 keywords:
 - Identity
 - verifiable
@@ -11,6 +11,8 @@ keywords:
 ---
 
 # Overview
+
+![Identity getting started](/img/Banner/banner_identity_getting_started.svg)
 
 Using the [standards proposed by W3C](https://www.w3.org/TR/did-core/), this section explains the IOTA Identity implementation. You can use this implementation to create a new digital identity for anyone or anything at any time. To do so, you must first generate a [Decentralized Identifier (DID)](../concepts/decentralized_identifiers/overview) that will serve as a reference to the [DID Document](../concepts/decentralized_identifiers/overview#did-documents). The DID Document contains public keys and other mechanisms to enable the subject to prove their association with the DID.
 

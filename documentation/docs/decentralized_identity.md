@@ -1,6 +1,6 @@
 ---
 description: Decentralized Identity defines a new method for identity management and authentication by removing centralized aspects.
-image: /img/Identity_icon.png
+image: /img/Banner/banner_decentralized_identity.svg
 keywords:
 - Self Sovereign Identity
 - decentralized
@@ -9,6 +9,8 @@ keywords:
 - explanation
 ---
 # Introduction to Decentralized Identity
+
+![IOTA Decentralized Identity](/img/Banner/banner_decentralized_identity.svg)
 
 Decentralized Identity or Self-Sovereign Identity (SSI) defines a new method for identity management and authentication. It removes the centralized aspects and puts the Identity subject in full control over its own identity. Decentralized Identity provides a solution for the increasing amount of database breaches, the lack of trust in any digital setting, and the increasingly difficult to comply with privacy legislation, such as GDPR.
 
@@ -19,7 +21,7 @@ The need for verifiable personal information can be fulfilled by digital identit
 
 With digital identity, the user can decide what information to share and with whom they would like to share it. This will maintain and even improve online privacy, while allowing for new features and new business opportunities. Businesses will be able to trust BYOI information, enhancing interactions between company and customer, but also reducing fraudulent cases and endemic security risks.
 
-<iframe width="640" height="360" src="https://www.youtube.com/embed/4YnGFHhxua8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="100%" src="https://www.youtube.com/embed/4YnGFHhxua8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Identity for People
 

@@ -33,9 +33,9 @@ Allows presentation of one or more [verifiable credentials](https://www.w3.org/T
 
 ### Interaction
 
-<div style={{textAlign: 'center'}}>
-
 ![PresentationDiagram](/img/didcomm/presentation.drawio.svg)
+
+<div style={{textAlign: 'center'}}>
 
 <sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
 

@@ -33,9 +33,9 @@ Allows a [holder](#roles) to request a [verifiable credential][VC] from an [issu
 
 ### Interaction
 
-<div style={{textAlign: 'center'}}>
-
 ![IssuanceDiagram](/img/didcomm/issuance.drawio.svg)
+
+<div style={{textAlign: 'center'}}>
 
 <sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
 
