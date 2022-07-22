@@ -76,7 +76,7 @@ impl StardustDID {
   ///
   /// Returns `Err` if the input does not conform to the [`StardustDID`] specification.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_core)
+    CoreDID::parse(input).and_then(Self::try_from_core)
   }
 
   /// Creates a new placeholder [`StardustDID`] with the given network name.
