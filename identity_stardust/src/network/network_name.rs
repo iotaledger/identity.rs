@@ -22,7 +22,9 @@ pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
   pub(crate) const MAX_LENGTH: usize = 6;
-  pub(crate) const DEFAULT_STARDUST_NETWORK_NAME: &'static str = "main";
+  pub(crate) const DEFAULT_STR: &'static str = "main";
+  // Names of networks maintained by the IF that the stardust UTXO based DID method should support
+  const IOTA_NETWORK_NAMES: [&'static str; 4] = [Self::DEFAULT_STR, "dev", "smr", "rms"];
 
   /// Creates a new [`NetworkName`] if the name passes validation.
   pub fn try_from<T>(name: T) -> Result<Self>
@@ -36,6 +38,10 @@ impl NetworkName {
 
   /// Validates whether a string is a spec-compliant IOTA UTXO DID [`NetworkName`].
   pub fn validate_network_name(name: &str) -> Result<()> {
+    if Self::IOTA_NETWORK_NAMES.contains(&name) {
+      return Ok(());
+    }
+
     if name.is_empty() {
       return Err(Error::InvalidNetworkName);
     }
@@ -53,7 +59,7 @@ impl NetworkName {
 
   /// Creates a [`NetworkName`] representing the main network.  
   pub const fn main() -> Self {
-    Self(Cow::Borrowed(Self::DEFAULT_STARDUST_NETWORK_NAME))
+    Self(Cow::Borrowed(Self::DEFAULT_STR))
   }
 }
 

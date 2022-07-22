@@ -113,7 +113,8 @@ impl StardustDID {
   ///
   /// Returns `Err` if the input is not a valid network name according to the [`StardustDID`] method specification.
   pub fn check_network<D: DID>(did: &D) -> Result<()> {
-    todo!()
+    let network_name = Self::denormalize_str(did.method_id()).0;
+    NetworkName::validate_network_name(network_name).map_err(|_| DIDError::Other("invalid network name"))
   }
 
   /// Checks if the given `DID` is syntactically valid according to the [`StardustDID`] method specification.
@@ -148,21 +149,10 @@ impl StardustDID {
   /// Returns `Err` if the input does not have a [`StardustDID`] compliant method id.
   // TODO: Is it correct to also validate the network here? The current IOTA DID method does NOT do that.
   pub fn check_method_id<D: DID>(did: &D) -> Result<()> {
-    let id = did.method_id();
-    let mut segments_iter = id.split(':');
-    match (segments_iter.next(), segments_iter.next(), segments_iter.next()) {
-      // OK if method_id = alias_id
-      (Some(tag), None, None) => Self::check_tag_str(tag),
-      // OK if method_id = network_id:alias_id
-      (Some(network), Some(tag), None) => (NetworkName::validate_network_name(network).is_ok()
-        && Self::check_tag_str(tag).is_ok())
-      .then_some(())
-      .ok_or(DIDError::InvalidMethodId),
-      // Too many segments
-      (_, _, Some(_)) => Err(DIDError::InvalidMethodId),
-      // this last branch is actually unreachable, but needed to satisfy the compiler
-      (None, _, _) => unreachable!("str::split should return at least one element"),
-    }
+    let (network, tag) = Self::denormalize_str(did.method_id());
+    NetworkName::validate_network_name(network)
+      .map_err(|_| DIDError::InvalidMethodId)
+      .and_then(|_| Self::check_tag_str(tag))
   }
 
   /// Returns a `bool` indicating if the given `DID` is valid according to the
@@ -175,27 +165,22 @@ impl StardustDID {
 
   /// Returns the Tangle `network` name of the `DID`.
   pub fn network_str(&self) -> &str {
-    let method_id = self.method_id();
-    let tag_offset = self.tag_offset();
-    if tag_offset == 0 {
-      NetworkName::DEFAULT_STARDUST_NETWORK_NAME
-    } else {
-      //  subtract one to not include the delimiter :
-      &method_id[..(tag_offset - 1)]
-    }
+    Self::denormalize_str(self.method_id()).0
   }
 
-
-  #[inline(always)]
-  fn tag_offset(&self) -> usize {
-    let method_id = self.method_id();
-    method_id.len() - TAG_CHARS_LEN
+  // foo:bar -> (foo,bar)
+  // foo -> (NetworkName::DEFAULT_STR, foo)
+  fn denormalize_str(input: &str) -> (&str, &str) {
+    input
+      .find(':')
+      .map(|idx| input.split_at(idx))
+      .map(|(network, tail)| (network, &tail[1..]))
+      .unwrap_or((NetworkName::DEFAULT_STR, input))
   }
 
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
-    let method_id = self.method_id();
-    &method_id[self.tag_offset()..]
+    Self::denormalize_str(self.method_id()).1
   }
 
   /// Change the network name of this [`StardustDID`] leaving all other segments (did, method, tag) intact.  
@@ -759,7 +744,22 @@ mod tests {
         .unwrap();
       assert_eq!(did.tag(), valid_alias_id);
 
-      let did: StardustDID = format!("did:{}:main:{}", StardustDID::METHOD, valid_alias_id)
+      let did: StardustDID = format!(
+        "did:{}:{}:{}",
+        StardustDID::METHOD,
+        NetworkName::DEFAULT_STR,
+        valid_alias_id
+      )
+      .parse()
+      .unwrap();
+      assert_eq!(did.tag(), valid_alias_id);
+
+      let did: StardustDID = format!("did:{}:dev:{}", StardustDID::METHOD, valid_alias_id)
+        .parse()
+        .unwrap();
+      assert_eq!(did.tag(), valid_alias_id);
+
+      let did: StardustDID = format!("did:{}:custom:{}", StardustDID::METHOD, valid_alias_id)
         .parse()
         .unwrap();
       assert_eq!(did.tag(), valid_alias_id);
